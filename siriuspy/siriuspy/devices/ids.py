@@ -874,15 +874,16 @@ class DELTA(_ID):
         ALL = (DELTA52_10SB, )
 
     PROPERTIES_DEFAULT = _ID.PROPERTIES_DEFAULT + (
-        'PolShift-Mon', 
-        'Pol-Mon',
-        'ChangePol-Cmd',
-        'GainShift-SP', 'GainShift-RB', 'GainShift-Mon',
+        'PParam-Mon',
+        'Pol-SP', 'Pol-RB', 'Pol-Mon', 'ChangePol-Cmd',
+        'KParam-SP', 'KParam-RB', 'KParam-Mon',
+        'KValue-SP', 'KValue-RB', 'KValue-Mon',
+        'Energy-SP', 'Energy-RB', 'Energy-Mon',
         'MaxVelo-SP', 'MaxVelo-RB',
-        'PolModeVelo-SP', 'PolModeVelo-RB',
-        'PolModeAcc-SP', 'PolModeAcc-RB',
-        'GainModeVelo-SP', 'GainModeVelo-RB',
-        'GainModeAcc-SP', 'GainModeAcc-RB',
+        'PParamVelo-SP', 'PParamVelo-RB',
+        'KParamVelo-SP', 'KParamVelo-RB',
+        'PParamAcc-SP', 'PParamAcc-RB',
+        'KParamAcc-SP', 'KParamAcc-RB',
         )
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
@@ -896,6 +897,23 @@ class DELTA(_ID):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+
+    # --- polarization ---
+
+    @property
+    def polarization(self):
+        """."""
+        return self['Pol-Sts']
+
+    @polarization.setter
+    def polarization(self, value):
+        """."""
+        self['Pol-Sel'] = value
+
+    def polarization_mon(self):
+        """."""
+        return self['Pol-Mon']
 
     # --- pparameter ---
 
@@ -978,6 +996,22 @@ class DELTA(_ID):
     def kparameter_mon(self):
         """Return ID kparameter monitor [mm]."""
         return self['GainShift-Mon']
+
+    def cmd_set_pparameter_speed_max(self, phase_speed_max, timeout=None):
+        """Command to set ID max cruise pparam speed for movement [mm/s]."""
+        return self._write_sp('MaxVelo-SP', phase_speed_max, timeout)
+
+    def cmd_set_kparameter_speed_max(self, phase_speed_max, timeout=None):
+        """Command to set ID max cruise kparam speed for movement [mm/s]."""
+        return self._write_sp('MaxVelo-SP', phase_speed_max, timeout)
+
+    def cmd_set_pparameter_speed(self, phase_speed_max, timeout=None):
+        """Command to set ID pparam speed for movement [mm/s]."""
+        return self._write_sp('PParamVelo-SP', phase_speed_max, timeout)
+
+    def cmd_set_kparameter_speed(self, phase_speed_max, timeout=None):
+        """Command to set ID kparam speed for movement [mm/s]."""
+        return self._write_sp('KParamVelo-SP', phase_speed_max, timeout)
 
 
 class WIG(_Device):
