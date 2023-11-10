@@ -263,10 +263,10 @@ class EqualizeBPMs(_FamBPMs):
         self._log('BPMs updated.')
 
         self._log('Acquiring data.')
-        fsamp = self.get_switching_frequency(1)
-        fswtc = self.get_sampling_frequency(1)
-        self.data['freq_switching'] = fsamp
-        self.data['freq_sampling'] = fswtc
+        fswtc = self.get_switching_frequency(1)
+        fsamp = self.get_sampling_frequency(1)
+        self.data['freq_switching'] = fswtc
+        self.data['freq_sampling'] = fsamp
         if None in {fsamp, fswtc}:
             self._log('ERR: Not all BPMs are configured equally.')
             return
@@ -275,11 +275,16 @@ class EqualizeBPMs(_FamBPMs):
             return
 
         posx_gain, posy_gain = [], []
+        posx_offset, posy_offset = [], []
         for bpm in self.bpms:
             posx_gain.append(bpm.posx_gain)
             posy_gain.append(bpm.posy_gain)
+            posx_offset.append(bpm.posx_offset)
+            posy_offset.append(bpm.posy_offset)
         self.data['posx_gain'] = _np.array(posx_gain)
         self.data['posy_gain'] = _np.array(posy_gain)
+        self.data['posx_offset'] = _np.array(posx_offset)
+        self.data['posy_offset'] = _np.array(posy_offset)
         self.data['gains_acq'] = self.get_current_gains()
 
         _time.sleep(0.1)
@@ -408,14 +413,16 @@ class EqualizeBPMs(_FamBPMs):
         gains_new = self.data.get('gains_new')
         posx_gain = self.data.get('posx_gain')
         posy_gain = self.data.get('posy_gain')
+        posx_offset = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
+        posy_offset = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
 
         if gains_new is None:
             self._log('ERR:Missing info. Acquire and process data first.')
 
         orbx_init, orby_init = self._estimate_orbit(
-            mean, gains_init, posx_gain, posy_gain)
+            mean, gains_init, posx_gain, posy_gain, posx_offset, posy_offset)
         orbx_new, orby_new = self._estimate_orbit(
-            mean, gains_new, posx_gain, posy_gain)
+            mean, gains_new, posx_gain, posy_gain, posx_offset, posy_offset)
         # Get the average over both semicycles
         self.data['orbx_init'] = orbx_init.mean(axis=-1)
         self.data['orby_init'] = orby_init.mean(axis=-1)
@@ -554,7 +561,8 @@ class EqualizeBPMs(_FamBPMs):
 
     # ------- auxiliary methods ----------
 
-    def _estimate_orbit(self, mean, gains, posx_gain, posy_gain):
+    def _estimate_orbit(
+            self, mean, gains, posx_gain, posy_gain, posx_offset, posy_offset):
         ant = mean * gains
         # Get pairs of antennas
         ac = ant[:, ::2]
@@ -568,6 +576,9 @@ class EqualizeBPMs(_FamBPMs):
         # Apply Position gains and factor of two missing in previous step
         posx *= posx_gain[:, None] / 2 / 1e3
         posy *= posy_gain[:, None] / 2 / 1e3
+        # Subtract offsets:
+        posx -= posx_offset
+        posy -= posy_offset
         return posx, posy
 
     def _log(self, message, *args, level='INFO', **kwrgs):
