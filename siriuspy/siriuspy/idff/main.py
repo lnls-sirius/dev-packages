@@ -275,6 +275,8 @@ class App(_Callback):
             return 'epu50_ref'
         elif self._const.idname.dev == 'PAPU50':
             return 'papu50_ref'
+        elif self._const.idname.dev == 'DELTA52':
+            return 'delta52_ref'
         return ''
 
     # ----- update pvs methods -----
