@@ -131,7 +131,7 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # RF EVE
-        trgsrc = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtn')
+        trgsrc = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtm')
         pvname = _LLTimeSearch.get_channel_output_port_pvname(trgsrc[0])
         self._llrf_evtcnt_pvname = f'{pvname}EvtCnt-Mon'
         self._everf_dev = _Device(
@@ -145,7 +145,7 @@ class App(_Callback):
 
         # # HL triggers
         self._llrf_trig = _Trigger(
-            trigname='SI-Glob:TI-LLRF-PsMtn', props2init=[
+            trigname='SI-Glob:TI-LLRF-PsMtm', props2init=[
                 'Src-Sel', 'Src-Sts',
                 'DelayRaw-SP', 'DelayRaw-RB',
                 'State-Sel', 'State-Sts',
@@ -154,7 +154,7 @@ class App(_Callback):
             ], auto_monitor_mon=True)
 
         self._bpmpsmtn_trig = _Trigger(
-            trigname='SI-Fam:TI-BPM-PsMtn', props2init=[
+            trigname='SI-Fam:TI-BPM-PsMtm', props2init=[
                 'Src-Sel', 'Src-Sts',
                 'DelayRaw-SP', 'DelayRaw-RB',
                 'State-Sel', 'State-Sts',
@@ -861,7 +861,7 @@ class App(_Callback):
             value = _updt_bit(value, 7, not oko)
         else:
             value += 0b111 << 5
-        # LLRF PsMtn trigger
+        # LLRF PsMtm trigger
         dev = self._llrf_trig
         oko = False
         if dev.connected:
@@ -873,7 +873,7 @@ class App(_Callback):
             value = _updt_bit(value, 10, not oko)
         else:
             value += 0b111 << 8
-        # BPM PsMtn trigger
+        # BPM PsMtm trigger
         dev = self._bpmpsmtn_trig
         oko = False
         if dev.connected:
@@ -1049,10 +1049,10 @@ class App(_Callback):
         self._do_killbeam()
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
-        # verify if RF EVE propagated the event PsMtn
+        # verify if RF EVE propagated the event PsMtm
         new_evtcnt = self._everf_dev[self._llrf_evtcnt_pvname]
         if new_evtcnt == self._everf_evtcnt:
-            self._update_log('WARN:RF EVE did not propagate event PsMtn')
+            self._update_log('WARN:RF EVE did not propagate event PsMtm')
         self._everf_evtcnt = new_evtcnt
         # wait minimum period for BPM to update interlock PVs
         _time.sleep(2)

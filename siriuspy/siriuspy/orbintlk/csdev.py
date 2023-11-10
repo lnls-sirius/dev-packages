@@ -75,10 +75,12 @@ class Const(_csdev.Const):
     DCCT13C4TRIG_CONFIG = (
         ('Src-Sel', 0),
         ('State-Sel', 1),
+        ('Log-Sel', 0)
     )
     DCCT14C4TRIG_CONFIG = (
         ('Src-Sel', 0),
         ('State-Sel', 1),
+        ('Log-Sel', 0)
     )
 
     __EVG_CONFIGS = None
@@ -120,15 +122,21 @@ class Const(_csdev.Const):
             for k, v in fout2configs.items()}
 
         hlevts = _HLTimeSearch.get_hl_events()
-        evtin = int(hlevts['Intlk'].strip('Evt'))
+        evtin0 = int(hlevts['Intlk'].strip('Evt'))
+        evtin2 = int(hlevts['DCT13'].strip('Evt'))
+        evtin3 = int(hlevts['DCT14'].strip('Evt'))
         evtout = int(hlevts['RFKll'].strip('Evt'))
         evgconfigs = [
-            ('IntlkTbl0to15-Sel', 0b010000010000001),
+            ('IntlkTbl0to15-Sel', 0b000000010000001),
             ('IntlkTbl16to27-Sel', 0),
             ('IntlkCtrlRepeat-Sel', 0),
             ('IntlkCtrlRepeatTime-SP', 0),
-            ('IntlkEvtIn0-SP', evtin),
+            ('IntlkEvtIn0-SP', evtin0),
+            ('IntlkEvtIn1-SP', 118),
+            ('IntlkEvtIn2-SP', evtin2),
+            ('IntlkEvtIn3-SP', evtin3),
             ('IntlkEvtOut-SP', evtout),
+            ('IntlkLogEnbl-SP', 0b11111111),
             ]
         evgconfigs.extend([(f'RxEnbl-SP.B{b}', 1) for b in evgrxenbl])
 
