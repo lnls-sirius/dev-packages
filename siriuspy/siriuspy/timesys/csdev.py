@@ -175,10 +175,11 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dbase['Polarity-Sts'] = _dcopy(dic_)
     dbase['Polarity-Sel'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
-    dic_.update(trig_db.get('Log', dict()))
-    dbase['Log-Sts'] = _dcopy(dic_)
-    dbase['Log-Sel'] = dic_
+    if _HLTimeSearch.has_log(hl_trigger):
+        dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
+        dic_.update(trig_db.get('Log', dict()))
+        dbase['Log-Sts'] = _dcopy(dic_)
+        dbase['Log-Sel'] = dic_
 
     # NOTE: we need to add plus 1 to the PVs count due to some unexpected
     # behavior of pcaspy
