@@ -11,6 +11,7 @@ from .device import Device as _Device
 class _ID(_Device):
     """Generic Insertion Device."""
 
+    _SHORT_SHUT_EYE = 0.1  # [s]
     _MOVECHECK_SLEEP = 0.1  # [s]
     _DEF_TIMEOUT = 8  # [s]
 
@@ -21,7 +22,6 @@ class _ID(_Device):
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
-
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
@@ -40,12 +40,12 @@ class _ID(_Device):
     def pparameter_parked(self):
         """Return ID parked pparameter value [mm]."""
         return self.parameters.PPARAM_PARKED
-    
+
     @property
     def kparameter_parked(self):
         """Return ID parked kparameter value [mm]."""
         return self.parameters.KPARAM_PARKED
-    
+
     # --- movement checks ---
 
     @property
@@ -65,6 +65,12 @@ class _ID(_Device):
 
     # --- cmd_wait
 
+    def wait_while_busy(self, timeout=None):
+        """Command wait within timeout while ID control is busy."""
+        return True
+
+    # --- cmd_wait
+
     def cmd_wait_move(self, timeout=None):
         """Wait for phase movement to complete."""
         _time.sleep(APU._MOVECHECK_SLEEP)
@@ -76,6 +82,18 @@ class _ID(_Device):
         return True
 
     # --- private methods ---
+
+    def _move_start(self, cmd_propty, timeout=None):
+        timeout = timeout or self._DEF_TIMEOUT
+
+        # wait for not busy state
+        if not self.wait_while_busy(timeout=timeout):
+            return False
+
+        # send move command
+        self[cmd_propty] = 1
+
+        return True
 
     def _write_sp(self, propties_sp, values, timeout=None, pvs_sp_rb=None):
         timeout = timeout or self._DEF_TIMEOUT
@@ -95,6 +113,16 @@ class _ID(_Device):
                 propty_rb, value, timeout=timeout, comp='eq')
         return success
 
+    def _wait_propty(self, propty, value, timeout=None):
+        """."""
+        t0_ = _time.time()
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
+        while self[propty] != value:
+            _time.sleep(self._SHORT_SHUT_EYE)
+            if _time.time() - t0_ > timeout:
+                return False
+        return True
+
 
 class APU(_ID):
     """APU Insertion Device."""
@@ -112,7 +140,6 @@ class APU(_ID):
 
     TOLERANCE_PHASE = 0.01  # [mm]
 
-    _SHORT_SHUT_EYE = 0.1  # [s]
     _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
     _CMD_MOVE = 3
 
@@ -282,7 +309,6 @@ class PAPU(_ID):
     TOLERANCE_PHASE = 0.01  # [mm]
 
     _SHORT_SHUT_EYE = 0.1  # [s]
-    _default_timeout = 8  # [s]
 
     _properties = (
         'PeriodLength-Cte',
@@ -456,12 +482,6 @@ class PAPU(_ID):
         """Command to disable and break ID phase and gap movements."""
         return self.cmd_move_phase_disable(timeout=timeout)
 
-    # --- cmd_wait
-
-    def wait_while_busy(self, timeout=None):
-        """Command wait within timeout while ID control is busy."""
-        return True
-
     def wait_move_start(self, timeout=None):
         """Command wait until movement starts or timeout."""
         time_init = _time.time()
@@ -474,7 +494,7 @@ class PAPU(_ID):
 
     def cmd_move_stop(self, timeout=None):
         """Command to interrupt and then enable phase movements."""
-        timeout = timeout or self._default_timeout
+        timeout = timeout or self._DEF_TIMEOUT
 
         # wait for not busy state
         if not self.wait_while_busy(timeout=timeout):
@@ -563,20 +583,8 @@ class PAPU(_ID):
 
     # --- private methods ---
 
-    def _move_start(self, cmd_propty, timeout=None):
-        timeout = timeout or self._default_timeout
-
-        # wait for not busy state
-        if not self.wait_while_busy(timeout=timeout):
-            return False
-
-        # send move command
-        self[cmd_propty] = 1
-
-        return True
-
     def _write_sp(self, propties_sp, values, timeout=None):
-        timeout = timeout or self._default_timeout
+        timeout = timeout or self._DEF_TIMEOUT
         if isinstance(propties_sp, str):
             propties_sp = (propties_sp, )
             values = (values, )
@@ -591,7 +599,7 @@ class PAPU(_ID):
         return success
 
     def _wait_propty_values(self, props_values, timeout=None, comp='eq'):
-        timeout = timeout if timeout is not None else self._default_timeout
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
         time0 = _time.time()
         for propty, value in props_values.items():
             timeout_left = max(0, timeout - (_time.time() - time0))
@@ -789,7 +797,7 @@ class EPU(PAPU):
 
     def wait_while_busy(self, timeout=None):
         """Command wait within timeout while ID control is busy."""
-        timeout = timeout or self._default_timeout
+        timeout = timeout or self._DEF_TIMEOUT
         time_init = _time.time()
         while self.is_busy:
             _time.sleep(min(self._SHORT_SHUT_EYE, timeout))
@@ -852,7 +860,7 @@ class EPU(PAPU):
                 print(f'wait_time: {_time.time() - time_init:.3f} s')
                 print()
                 return False
-            _time.sleep(EPU._SHORT_SHUT_EYE)
+            _time.sleep(self._SHORT_SHUT_EYE)
 
         # successfull movement at this point
         return True
@@ -874,15 +882,17 @@ class DELTA(_ID):
         ALL = (DELTA52_10SB, )
 
     PROPERTIES_DEFAULT = _ID.PROPERTIES_DEFAULT + (
-        'PolShift-Mon', 
-        'Pol-Mon',
+        'Pol-Sel', 'Pol-Sts', 'Pol-Mon',
         'ChangePol-Cmd',
-        'GainShift-SP', 'GainShift-RB', 'GainShift-Mon',
         'MaxVelo-SP', 'MaxVelo-RB',
-        'PolModeVelo-SP', 'PolModeVelo-RB',
-        'PolModeAcc-SP', 'PolModeAcc-RB',
-        'GainModeVelo-SP', 'GainModeVelo-RB',
-        'GainModeAcc-SP', 'GainModeAcc-RB',
+        'ParkedPparameter-Cte',
+        'PParam-SP', 'PParam-RB', 'PParam-Mon',
+        'PParamVelo-SP', 'PParamVelo-RB',
+        'PParamAcc-SP', 'PParamAcc-RB',
+        'ParkedKparameter-Cte',
+        'KParam-SP', 'KParam-RB', 'KParam-Mon',
+        'KParamVelo-SP', 'KParamVelo-RB',
+        'KParamAcc-SP', 'KParamAcc-RB',
         )
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
@@ -897,7 +907,29 @@ class DELTA(_ID):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
+    # --- polarization ---
+
+    @property
+    def polarization(self):
+        """Return ID polarization."""
+        return self['Pol-Sts']
+
+    @polarization.setter
+    def polarization(self, value):
+        """Set ID polarization."""
+        self['Pol-Sel'] = value
+
+    @property
+    def polarization_mon(self):
+        """Return ID polarization monitor."""
+        return self['Pol-Mon']
+
     # --- pparameter ---
+
+    @property
+    def pparameter_parked(self):
+        """Return ID parked pparameter value [mm]."""
+        return self['ParkedPparameter-Cte']
 
     @property
     def pparameter_speed_max(self):
@@ -914,26 +946,42 @@ class DELTA(_ID):
     @property
     def pparameter_speed(self):
         """Return pparameter speed readback [mm/s]."""
-        return self['PolModeVelo-RB']
+        return self['PParamVelo-RB']
 
     @property
-    def pparameter_min(self):
+    def pparameter_lims(self):
         """Return ID pparameter lower control limit [mm]."""
-        ctrlvars = self.pv_ctrlvars('PolShift-Mon')
-        return ctrlvars['lower_ctrl_limit']
+        ctrl = self.pv_ctrlvars('PParam-Mon')
+        return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
 
     @property
-    def pparameter_max(self):
-        """Return ID pparameter upper control limit [mm]."""
-        ctrlvars = self.pv_ctrlvars('PolShift-Mon')
-        return ctrlvars['upper_ctrl_limit']
+    def pparameter(self):
+        """Return ID pparameter readback [mm]."""
+        return self['KParam-RB']
 
     @property
     def pparameter_mon(self):
         """Return ID pparameter monitor [mm]."""
-        return self['PolShift-Mon']
-    
+        return self['PParam-Mon']
+
+    def set_pparameter(self, kparam, timeout=None):
+        """Set ID target pparameter for movement [mm]."""
+        return self._write_sp('PParam-SP', kparam, timeout)
+
+    def set_pparameter_speed(self, pparam_speed, timeout=None):
+        """Command to set ID cruise pparam speed for movement [mm/s]."""
+        return self._write_sp('PParamVelo-SP', pparam_speed, timeout)
+
+    def set_pparameter_speed_max(self, pparam_speed_max, timeout=None):
+        """Command to set ID max cruise pparam speed for movement [mm/s]."""
+        return self._write_sp('MaxVelo-SP', pparam_speed_max, timeout)
+
     # --- kparameter ---
+
+    @property
+    def kparameter_parked(self):
+        """Return ID parked kparameter value [mm]."""
+        return self['ParkedKparameter-Cte']
 
     @property
     def kparameter_speed_max(self):
@@ -950,34 +998,118 @@ class DELTA(_ID):
     @property
     def kparameter_speed(self):
         """Return kparameter speed readback [mm/s]."""
-        return self['GainModeVelo-RB']
+        return self['KParamVelo-RB']
+
+    @property
+    def kparameter_lims(self):
+        """Return ID kparameter lower control limit [mm]."""
+        ctrl = self.pv_ctrlvars('KParam-Mon')
+        return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
 
     @property
     def kparameter(self):
         """Return ID kparameter readback [mm]."""
-        return self['Shift-RB']
-    
-    @kparameter.setter
-    def kparameter(self, value):
-        """Set ID kparameter [mm]."""
-        self['Shift-SP'] = value
-
-    @property
-    def kparameter_min(self):
-        """Return ID kparameter lower control limit [mm]."""
-        ctrlvars = self.pv_ctrlvars('Shift-SP')
-        return ctrlvars['lower_ctrl_limit']
-
-    @property
-    def kparameter_max(self):
-        """Return ID kparameter upper control limit [mm]."""
-        ctrlvars = self.pv_ctrlvars('Shift-SP')
-        return ctrlvars['upper_ctrl_limit']
+        return self['KParam-RB']
 
     @property
     def kparameter_mon(self):
         """Return ID kparameter monitor [mm]."""
-        return self['GainShift-Mon']
+        return self['KParam-Mon']
+
+     # --- set methods ---
+
+    def set_kparameter(self, kparam, timeout=None):
+        """Command to set ID target kparameter for movement [mm]."""
+        return self._write_sp('KParam-SP', kparam, timeout)
+
+    def set_kparameter_speed(self, kparam_speed, timeout=None):
+        """Command to set ID cruise kparam speed for movement [mm/s]."""
+        return self._write_sp('KParamVelo-SP', kparam_speed, timeout)
+
+    def set_kparameter_speed_max(self, kparam_speed_max, timeout=None):
+        """Command to set ID max cruise kparam speed for movement [mm/s]."""
+        return self._write_sp('MaxVelo-SP', kparam_speed_max, timeout)
+
+    # --- commands ---
+
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        success = True
+        success &= self.cmd_move_pparam_start(timeout=timeout)
+        success &= self.cmd_move_kparam_start(timeout=timeout)
+        return success
+
+    def cmd_move_pparam_start(self, timeout=None):
+        """Command to start Pparameter movement."""
+        return self._move_start('ChangePparam-Cmd', timeout=timeout)
+
+    def cmd_move_kparam_start(self, timeout=None):
+        """Command to start Kparameter movement."""
+        return self._move_start('ChangeKparam-Cmd', timeout=timeout)
+
+    def cmd_change_polarization_start(self, timeout=None):
+        """Change polarization."""
+        _ = timeout
+        self['ChangePol-Cmd'] = 1
+
+    def cmd_move_park(self, timeout=None):
+        """Move ID to parked config."""
+        return self.move(
+            self.pparameter_parked, self.kparameter_parked, timeout=timeout)
+
+    def move(self, pparam, kparam, timeout=None):
+        """Command to set and start pparam and kparam movements."""
+        # calc ETA
+        dtime_phase = abs(pparam - self.pparameter_mon) / self.pparameter_speed
+        dtime_gap = abs(kparam - self.kparameter_mon) / self.kparameter_speed
+        dtime_max = max(dtime_phase, dtime_gap)
+
+        # additional percentual in ETA
+        tol_gap = 0.01  # [mm]
+        tol_phase = 0.01  # [mm]
+        tol_dtime = 300  # [%]
+        tol_factor = (1 + tol_dtime/100)
+        tol_total = tol_factor * dtime_max + 5
+
+        # set target phase and gap
+        if not self.set_pparameter(phase=pparam, timeout=timeout):
+            return False
+        if not self.set_kparameter(gap=kparam, timeout=timeout):
+            return False
+
+        # command move start
+        if not self.cmd_move_pparam_start(timeout=timeout):
+            return False
+        if not self.cmd_move_kparam_start(timeout=timeout):
+            return False
+
+        # wait for movement within reasonable time
+        time_init = _time.time()
+        while \
+                abs(self.kparameter_mon - kparam) > tol_gap or \
+                abs(self.pparameter_mon - pparam) > tol_phase or \
+                self.is_moving:
+            if _time.time() - time_init > tol_total:
+                print(f'tol_total: {tol_total:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
+                return False
+            _time.sleep(self._SHORT_SHUT_EYE)
+
+        # successfull movement at this point
+        return True
+
+    def change_polarization(self, polarization, timeout=None):
+        """."""
+        t0_ = _time.time()
+        # set desired polarization
+        if not self._write_sp('Pol-Sel', polarization, timeout=timeout):
+            return False
+        # send change polarization command
+        self['ChangePol-Cmd'] = 1
+        timeout -= _time.time() - t0_
+        # wait for polarization value within timeout
+        return self._wait('Pol-Mon', polarization, timeout=timeout, comp='eq')
 
 
 class WIG(_Device):

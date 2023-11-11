@@ -229,12 +229,16 @@ class Device:
             return True
 
         timeout = _DEF_TIMEOUT if timeout is None else timeout
+        timeout = 0 if timeout <= 0 else timeout
         ntrials = int(timeout/_TINY_INTERVAL)
         for _ in range(ntrials):
             _time.sleep(_TINY_INTERVAL)
             if comp_(value):
                 return True
-        return False
+        if comp_(value):
+            return True
+        else:
+            return False
 
     def _wait_float(
             self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
