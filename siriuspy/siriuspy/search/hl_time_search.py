@@ -129,6 +129,13 @@ class HLTimeSearch:
         return all([_LLSearch.has_clock(name) for name in ll_chans])
 
     @classmethod
+    def has_log(cls, hl_trigger):
+        """Return True if hl_trigger can listen to Clocks from EVG."""
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        return all([_LLSearch.has_log(name) for name in ll_chans])
+
+    @classmethod
     def check_hl_triggers_consistency(cls):
         """Check consitency of Triggers definition.
 
