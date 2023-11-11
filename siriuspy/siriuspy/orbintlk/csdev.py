@@ -322,7 +322,7 @@ class Const(_csdev.Const):
             'RetryLock-Cmd': {'type': 'int', 'value': 0},
             'IsLocking-Mon': {
                 'type': 'enum', 'value': self.OffOn.On,
-                'enums': self.OffOn._fields}
+                'enums': self.OffOn._fields},
 
             # Acquisition
             'PsMtmAcqChannel-Sel': {
