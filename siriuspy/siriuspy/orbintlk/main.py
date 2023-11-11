@@ -64,6 +64,8 @@ class App(_Callback):
         self._thread_cbfout = {fout: None for fout in self._const.FOUTS_2_MON}
         self._thread_cbbpm = None
         self._ti_mon_devs = set()
+        self._lock_fails_cnt = dict()
+        self._lock_suspend = False
 
         # devices and connections
         # # EVG
@@ -88,12 +90,20 @@ class App(_Callback):
             'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
             'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
             ])
+        # interlock callback
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
         pvo.add_callback(self._callback_evg_intlk)
         pvo.connection_callbacks.append(self._conn_callback_timing)
+        # rxlock callback
         pvo = self._evg_dev.pv_object('RxLockedLtc-Mon')
         pvo.add_callback(self._callback_evg_rxlock)
+        # lock callback
+        for propty_sp, desired_val in self._const.EVG_CONFIGS.items():
+            propty_rb = propty_sp.replace('SP', 'RB').replace('Sel', 'Sts')
+            pvo = self._evg_dev.pv_object(propty_rb)
+            pvo.add_callback(_part(
+                self._callback_lock, self._evg_dev, propty_sp, desired_val))
 
         # # Fouts
         self._fout_devs = {
@@ -110,11 +120,19 @@ class App(_Callback):
             pvo = dev.pv_object('RxLockedLtc-Mon')
             pvo.add_callback(self._callback_fout_rxlock)
             pvo.connection_callbacks.append(self._conn_callback_timing)
+            pvo = dev.pv_object('RxEnbl-RB')
+            pvo.add_callback(self._callback_fout_lock)
             self._fout2rxenbl[devname] = 0
 
         self._fout_dcct_dev = _Device(
             'CA-RaTim:TI-Fout-2',
             props2init=['RxEnbl-SP', 'RxEnbl-RB'])
+        for propty_sp, desired_val in self._const.FOUT2_CONFIGS.items():
+            propty_rb = propty_sp.replace('SP', 'RB').replace('Sel', 'Sts')
+            pvo = self._fout_dcct_dev.pv_object(propty_rb)
+            pvo.add_callback(_part(
+                self._callback_lock, self._fout_dcct_dev,
+                propty_sp, desired_val))
 
         # # AFC timing
         self._afcti_devs = {
@@ -185,6 +203,20 @@ class App(_Callback):
                 'Status-Mon',
             ], auto_monitor_mon=True)
 
+        trig2config = {
+            self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
+            self._llrf_trig: self._const.LLRFTRIG_CONFIG,
+            self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
+            self._dcct13c4_trig: self._const.DCCT13C4TRIG_CONFIG,
+            self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
+        }
+        for trig, configs in trig2config.items():
+            for prop_sp, desired_val in configs.items():
+                prop_rb = prop_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+                pvo = trig.pv_object(prop_rb)
+                pvo.add_callback(
+                    _part(self._callback_lock, trig, prop_sp, desired_val))
+
         # # BPM devices
         self._orbintlk_dev = _OrbitIntlk()
         for dev in self._orbintlk_dev.devices:
@@ -210,6 +242,10 @@ class App(_Callback):
                 'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
                 'IntlkSet-Cmd',
             ])
+        pvo = self._llrf.pv_object('ILK:BEAM:TRIP')
+        pvo.add_callback(_part(
+            self._callback_lock, self._llrf,
+            'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
 
         # # auxiliary devices
         self._fofb = _FOFB(
@@ -244,6 +280,7 @@ class App(_Callback):
             'IntlkStateConfig-Cmd': self.cmd_state_config,
             'ResetTimingLockLatches-Cmd': self.cmd_reset_ti_lock_latch,
             'ResetAFCTimingRTMClk-Cmd': self.cmd_reset_afcti_rtmclk,
+            'RetryLock-Cmd': self.cmd_retry_lock,
             }
 
         # configuration scanning
@@ -272,6 +309,7 @@ class App(_Callback):
             'PsMtmAcqSamplesPost-SP': self._acq_spost,
             'PsMtmAcqSamplesPost-RB': self._acq_spost,
             'PsMtmAcqConfig-Cmd': 0,
+            'IsLocking-Mon': not self._lock_suspend,
         }
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
@@ -595,6 +633,12 @@ class App(_Callback):
 
         return True
 
+    def cmd_retry_lock(self, value=None):
+        """Command to retry lock configurations."""
+        self._lock_suspend = False
+        self.run_callbacks('IsLocking-Mon', not self._lock_suspend)
+        return True
+
     # --- configure acquisition ---
 
     def set_acq_channel(self, value):
@@ -674,41 +718,6 @@ class App(_Callback):
 
         if not self.set_enable(self._state):
             return False
-        if not self._config_timing():
-            return False
-        if not self._config_llrf():
-            return False
-        return True
-
-    def _config_timing(self):
-        # EVG
-        dev = self._evg_dev
-        for prp, val in self._const.EVG_CONFIGS:
-            dev[prp] = val
-            prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-            if not dev._wait(prp_rb, val):
-                self._update_log(f'ERR:Failed to configure EVG PV {prp:s}')
-                return False
-        # Fout
-        if not self._config_fout_rxenbl():
-            return False
-        # triggers
-        trig2config = {
-            self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
-            self._llrf_trig: self._const.LLRFTRIG_CONFIG,
-            self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
-            self._dcct13c4_trig: self._const.DCCT13C4TRIG_CONFIG,
-            self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
-        }
-        for trig, configs in trig2config.items():
-            for prp, val in configs:
-                name = trig.dev + trig.idx
-                trig[prp] = val
-                prp_rb = prp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-                if not trig._wait(prp_rb, val):
-                    self._update_log(
-                        f'ERR:Failed to configure {name} PV {prp:s}')
-                    return False
         return True
 
     def _config_fout_rxenbl(self):
@@ -728,13 +737,6 @@ class App(_Callback):
             dev._wait('RxEnbl-RB', rxenbl)
             dev['RxLockedLtcRst-Cmd'] = 1
 
-        return True
-
-    def _config_llrf(self):
-        self._llrf['ILK:BEAM:TRIP:S'] = self._llrf_intlk_state
-        if not self._llrf._wait('ILK:BEAM:TRIP', self._llrf_intlk_state):
-            self._update_log('ERR:Failed to configure LLRF.')
-            return False
         return True
 
     def _get_enabled_sections(self):
@@ -1094,6 +1096,41 @@ class App(_Callback):
             self._llrf['IntlkSet-Cmd'] = 1
             _time.sleep(1)
             self._llrf['IntlkSet-Cmd'] = 0
+
+    def _callback_lock(
+            self, device, propty_sp, desired_value, pvname, value, **kwargs):
+        thread = _CAThread(
+            target=self._do_callback_lock,
+            args=(device, propty_sp, desired_value, pvname, value),
+            daemon=True)
+        thread.start()
+
+    def _callback_fout_lock(self, pvname, value, **kwargs):
+        devname = _SiriusPVName(pvname).device_name
+        desired_value = self._fout2rxenbl[devname]
+        device = self._fout_devs[devname]
+        thread = _CAThread(
+            target=self._do_callback_lock,
+            args=(device, 'RxEnbl-SP', desired_value, pvname, value),
+            daemon=True)
+        thread.start()
+
+    def _do_callback_lock(
+            self, device, propty_sp, desired_value, pvname, value):
+        if self._lock_suspend:
+            return
+        cnt = self._lock_fails_cnt.get(pvname, 0)
+        if value != desired_value:
+            self._lock_fails_cnt[pvname] = cnt + 1
+            device[propty] = desired_value
+        else:
+            self._lock_fails_cnt[pvname] = 0
+        if self._lock_fails_cnt[pvname] >= 10:
+            self._update_log(f'FATAL:Fail to lock {pvname}')
+            self._update_log(f'FATAL:Orbit interlock reliability failure')
+            self._do_killbeam()
+            self._lock_suspend = True
+            self.run_callbacks('IsLocking-Mon', not self._lock_suspend)
 
     # --- auxiliary log methods ---
 

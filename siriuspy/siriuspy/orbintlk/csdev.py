@@ -319,6 +319,10 @@ class Const(_csdev.Const):
             'Reset-Cmd': {'type': 'int', 'value': 0},
             'ResetTimingLockLatches-Cmd': {'type': 'int', 'value': 0},
             'ResetAFCTimingRTMClk-Cmd': {'type': 'int', 'value': 0},
+            'RetryLock-Cmd': {'type': 'int', 'value': 0},
+            'IsLocking-Mon': {
+                'type': 'enum', 'value': self.OffOn.On,
+                'enums': self.OffOn._fields}
 
             # Acquisition
             'PsMtmAcqChannel-Sel': {
