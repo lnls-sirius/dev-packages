@@ -82,6 +82,9 @@ class Const(_csdev.Const):
         ('State-Sel', 1),
         ('Log-Sel', 0)
     )
+    FOUT2_CONFIGS = (
+        ('RxEnbl-SP', 0b01000001),
+    )
 
     __EVG_CONFIGS = None
     __FOUTS_2_MON = None
@@ -96,7 +99,7 @@ class Const(_csdev.Const):
         evgchans = set()
         evgrxenbl = list()
         for ch in _LLTimeSearch.get_connections_twds_evg():
-            if ch.dev not in {'BPM', 'DCCTDig'}:
+            if ch.dev != 'BPM':
                 continue
             if ch.sec != 'SI':
                 continue

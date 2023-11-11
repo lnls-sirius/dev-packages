@@ -101,22 +101,20 @@ class App(_Callback):
                 devname,
                 props2init=[
                     'RxEnbl-SP', 'RxEnbl-RB',
-                    'RxEnbl-SP.B0', 'RxEnbl-RB.B0',
-                    'RxEnbl-SP.B1', 'RxEnbl-RB.B1',
-                    'RxEnbl-SP.B2', 'RxEnbl-RB.B2',
-                    'RxEnbl-SP.B3', 'RxEnbl-RB.B3',
-                    'RxEnbl-SP.B4', 'RxEnbl-RB.B4',
-                    'RxEnbl-SP.B5', 'RxEnbl-RB.B5',
-                    'RxEnbl-SP.B6', 'RxEnbl-RB.B6',
-                    'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
                     'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
                 ], auto_monitor_mon=True)
             for devname in self._const.FOUTS_2_MON
         }
-        for dev in self._fout_devs.values():
+        self._fout2rxenbl = dict()
+        for devname, dev in self._fout_devs.items():
             pvo = dev.pv_object('RxLockedLtc-Mon')
             pvo.add_callback(self._callback_fout_rxlock)
             pvo.connection_callbacks.append(self._conn_callback_timing)
+            self._fout2rxenbl[devname] = 0
+
+        self._fout_dcct_dev = _Device(
+            'CA-RaTim:TI-Fout-2',
+            props2init=['RxEnbl-SP', 'RxEnbl-RB'])
 
         # # AFC timing
         self._afcti_devs = {
@@ -714,27 +712,21 @@ class App(_Callback):
         return True
 
     def _config_fout_rxenbl(self):
-        # disable all rxenbl
-        for fout in self._fout_devs.values():
-            fout['RxEnbl-SP'] = 0
-            if not fout._wait('RxEnbl-RB', 0):
-                self._update_log(
-                    f'ERR:Failed to disable {fout.devname} RxEnbl')
-                return False
-
-        # enable only necessary rxenbl
-        for dev in self._ti_mon_devs:
-            if 'Fout' not in dev:
+        fout2rx = dict()
+        for chn in self._ti_mon_devs:
+            if 'Fout' not in chn:
                 continue
-            devname = _SiriusPVName(dev)
-            bit = int(dev[-1])
-            fout = self._fout_devs[devname.device_name]
-            fout[f'RxEnbl-SP.B{bit}'] = 1
-            fout['RxLockedLtcRst-Cmd'] = 1
-            if not fout._wait(f'RxEnbl-SP.B{bit}', 1):
-                self._update_log(
-                    f'ERR:Failed to configure {devname} RxEnbl.B{bit}')
-                return False
+            devname = chn.device_name
+            out = int(chn.propty_name[-1])
+            rx = fout2rx.get(devname, 0)
+            rx += 1 << out
+
+        for fout, rxenbl in fout2rx.items():
+            self._fout2rxenbl[fout] = rxenbl
+            dev = self._fout_devs[fout]
+            dev['RxEnbl-SP'] = rxenbl
+            dev._wait('RxEnbl-RB', rxenbl)
+            dev['RxLockedLtcRst-Cmd'] = 1
 
         return True
 
@@ -867,11 +859,9 @@ class App(_Callback):
         devs = self._fout_devs
         if all(devs[devn].connected for devn in self._const.FOUTS_2_MON):
             okg = True
-            for devname in self._ti_mon_devs:
-                if 'Fout' not in devname:
-                    continue
-                dev = self._fout_devs[_SiriusPVName(devname).device_name]
-                okg &= dev[f'RxEnbl-RB.B{int(devname[-1])}']
+            for devname, rxenbl in self._fout2rxenbl.items():
+                dev = self._fout_devs[devname]
+                okg &= dev['RxEnbl-RB'] == rxenbl
             value = _updt_bit(value, 4, not okg)
         else:
             value += 0b11 << 3
