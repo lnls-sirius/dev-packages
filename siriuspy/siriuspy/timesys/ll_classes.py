@@ -817,7 +817,8 @@ class _EVEDIN(_EVRDIN):
 
 class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los',
+        'Log'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)

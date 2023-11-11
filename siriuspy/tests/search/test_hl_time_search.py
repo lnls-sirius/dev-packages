@@ -39,6 +39,7 @@ class TestHLTimeSearch(TestCase):
         'has_delay_type',
         'has_direction',
         'has_clock',
+        'has_log',
         'check_hl_triggers_consistency',
         'reset',
     )
