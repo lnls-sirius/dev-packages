@@ -513,7 +513,7 @@ class App(_Callback):
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Running)
 
         self._update_log(f'Setting EGun Bias voltage to {value:.2f}V...')
-        if not self.egun_dev.bias.set_voltage(value, tol=0.007*value):
+        if not self.egun_dev.bias.set_voltage(value, tol=abs(0.005*value)):
             self._update_log('ERR:Could not set EGun Bias voltage.')
         else:
             self._update_log(f'Set EGun Bias voltage: {value:.2f}V.')
