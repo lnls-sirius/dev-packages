@@ -26,6 +26,13 @@ class IDFFConfig(_ConfigDBDocument):
         """Return idname corresponding to IDFFConfig."""
         return self._idname
 
+    @idname.setter
+    def idname(self, value):
+        """Set idname."""
+        if value not in _IDSearch.get_idnames():
+            raise ValueError(f'{value} is not a valid idname!')
+        self._idname = value
+
     @property
     def pparameter_pvname(self):
         """Return ID pparameter pvname."""
@@ -178,19 +185,69 @@ class IDFFConfig(_ConfigDBDocument):
         return pol_str
 
     def check_valid_value(self, value):
-        """."""
-        if not super().check_valid_value(value):
-            return False
-        for pol, table in value['polarizations'].items():
-            if pol == _IDSearch.POL_NONE_STR:
-                nrpts = len(table['pparameter'])
-            else:
-                nrpts = len(table['kparameter'])
-            for key, value_ in table.items():
-                if key in ('kparameter', 'pparameter'):
-                    continue
-                if len(value_) != nrpts:
-                    return False
+        """Check consistency of SI_IDFF configuration."""
+        configs = value['polarizations']
+        pvnames = {
+            key: value for key, value in value['pvnames'].items()
+            if key not in ('pparameter', 'kparameter')}
+        corrlabels = set(pvnames.keys())
+
+        # check pvnames in configs
+        pvsconfig = set(pvnames.values())
+        getch = _IDSearch.conv_idname_2_idff_chnames
+        getcv = _IDSearch.conv_idname_2_idff_cvnames
+        getqs = _IDSearch.conv_idname_2_idff_qsnames
+        chnames = [corr + ':Current-SP' for corr in getch(self.idname)]
+        cvnames = [corr + ':Current-SP' for corr in getcv(self.idname)]
+        qsnames = [corr + ':Current-SP' for corr in getqs(self.idname)]
+        pvsidsearch = set(chnames + cvnames + qsnames)
+        symm_diff = pvsconfig ^ pvsidsearch
+
+        if symm_diff:
+            raise ValueError('List of pvnames in config is not consistent')
+
+        # check polarizations in configs
+        pconfig = set(configs.keys()) - set((_IDSearch.POL_NONE_STR, ))
+        pidsearch = set(_IDSearch.conv_idname_2_polarizations(self.idname))
+        symm_diff = pconfig ^ pidsearch
+
+        if symm_diff:
+            raise ValueError(
+                'List of polarizations in config is not consistent')
+
+        # check polarization tables consistency
+        for polarization, table in configs.items():
+            corrtable = {
+                key: value for key, value in table.items()
+                if key not in ('pparameter', 'kparameter')}
+
+            # check 'pparameter'
+            if 'pparameter' not in table:
+                raise ValueError(
+                    'Missing pparameter in polarization configuration.')
+
+            # check 'kparameter'
+            if 'kparameter' not in table:
+                raise ValueError(
+                    'Missing kparameter in polarization configuration.')
+
+            # check corr label list
+            corrlabels_config = set(corrtable.keys())
+            symm_diff = corrlabels ^ corrlabels_config
+            if symm_diff:
+                raise ValueError(
+                    'List of corrlabels in config is not consistent')
+
+            # check nrpts in tables
+            param = 'pparameter' if polarization == 'none' else 'kparameter'
+            nrpts_corrtables = {len(table) for table in corrtable.values()}
+            nrpts_kparameter = set([len(table[param]), ])
+            symm_diff = nrpts_corrtables ^ nrpts_kparameter
+
+            if symm_diff:
+                raise ValueError(
+                    'Corrector tables and kparameter list in config '
+                    'are not consistent')
         return True
 
     def _get_corr_pvnames(self, cname1, cname2):
@@ -232,6 +289,7 @@ class IDFFConfig(_ConfigDBDocument):
                 continue
             kparam = idname + ':' + kparam_propty
             pparam = idname + ':' + pparam_propty
+
             if kparam == kparameter and pparam == pparameter:
                 self._idname = idname
                 break

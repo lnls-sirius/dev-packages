@@ -105,8 +105,8 @@ class IDSearch:
             'polarizations': tuple(
                 item[0] for item in
                 _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
-            'pparameter': 'SI-10SB:ID-DELTA52:PolShift-Mon',
-            'kparameter': 'SI-10SB:ID-DELTA52:GainShift-Mon',
+            'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
+            'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-10SB:PS-CV-1:Current-SP',
@@ -136,7 +136,7 @@ class IDSearch:
     @staticmethod
     def get_idnames(filters=None):
         """Return a sorted and filtered list of all ID names."""
-        idnames_list = list(IDSearch._idname2beamline.keys())
+        idnames_list = list(IDSearch._idname_2_idff.keys())
         idnames = _Filter.process_filters(idnames_list, filters=filters)
         return sorted(idnames)
 
@@ -229,7 +229,7 @@ class IDSearch:
     def conv_idname_2_polarizations(idname):
         """Return ID polarizations (sel)."""
         pols = IDSearch._idname2pol_sel[idname]
-        return tuple(pol[0] for pol in pols)
+        return tuple(pol[0] for pol in pols.values())
 
     @staticmethod
     def conv_idname_2_polarizations_sts(idname):
