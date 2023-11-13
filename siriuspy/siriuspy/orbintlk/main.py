@@ -8,7 +8,7 @@ from functools import partial as _part
 import numpy as _np
 
 from ..util import update_bit as _updt_bit, get_bit as _get_bit
-from ..namesys import SiriusPVName as _SiriusPVName
+from ..namesys import SiriusPVName as _PVName
 from ..search import LLTimeSearch as _LLTimeSearch, \
     HLTimeSearch as _HLTimeSearch
 from ..thread import RepeaterThread as _Repeat
@@ -64,7 +64,7 @@ class App(_Callback):
         self._thread_cbfout = {fout: None for fout in self._const.FOUTS_2_MON}
         self._thread_cbbpm = None
         self._ti_mon_devs = set()
-        self._lock_fails_cnt = dict()
+        self._lock_threads = dict()
         self._lock_suspend = False
 
         # devices and connections
@@ -98,12 +98,6 @@ class App(_Callback):
         # rxlock callback
         pvo = self._evg_dev.pv_object('RxLockedLtc-Mon')
         pvo.add_callback(self._callback_evg_rxlock)
-        # lock callback
-        for propty_sp, desired_val in self._const.EVG_CONFIGS.items():
-            propty_rb = propty_sp.replace('SP', 'RB').replace('Sel', 'Sts')
-            pvo = self._evg_dev.pv_object(propty_rb)
-            pvo.add_callback(_part(
-                self._callback_lock, self._evg_dev, propty_sp, desired_val))
 
         # # Fouts
         self._fout_devs = {
@@ -120,19 +114,11 @@ class App(_Callback):
             pvo = dev.pv_object('RxLockedLtc-Mon')
             pvo.add_callback(self._callback_fout_rxlock)
             pvo.connection_callbacks.append(self._conn_callback_timing)
-            pvo = dev.pv_object('RxEnbl-RB')
-            pvo.add_callback(self._callback_fout_lock)
             self._fout2rxenbl[devname] = 0
 
         self._fout_dcct_dev = _Device(
             'CA-RaTim:TI-Fout-2',
             props2init=['RxEnbl-SP', 'RxEnbl-RB'])
-        for propty_sp, desired_val in self._const.FOUT2_CONFIGS.items():
-            propty_rb = propty_sp.replace('SP', 'RB').replace('Sel', 'Sts')
-            pvo = self._fout_dcct_dev.pv_object(propty_rb)
-            pvo.add_callback(_part(
-                self._callback_lock, self._fout_dcct_dev,
-                propty_sp, desired_val))
 
         # # AFC timing
         self._afcti_devs = {
@@ -203,20 +189,6 @@ class App(_Callback):
                 'Status-Mon',
             ], auto_monitor_mon=True)
 
-        trig2config = {
-            self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
-            self._llrf_trig: self._const.LLRFTRIG_CONFIG,
-            self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
-            self._dcct13c4_trig: self._const.DCCT13C4TRIG_CONFIG,
-            self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
-        }
-        for trig, configs in trig2config.items():
-            for prop_sp, desired_val in configs.items():
-                prop_rb = prop_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
-                pvo = trig.pv_object(prop_rb)
-                pvo.add_callback(
-                    _part(self._callback_lock, trig, prop_sp, desired_val))
-
         # # BPM devices
         self._orbintlk_dev = _OrbitIntlk()
         for dev in self._orbintlk_dev.devices:
@@ -242,10 +214,6 @@ class App(_Callback):
                 'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
                 'IntlkSet-Cmd',
             ])
-        pvo = self._llrf.pv_object('ILK:BEAM:TRIP')
-        pvo.add_callback(_part(
-            self._callback_lock, self._llrf,
-            'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
 
         # # auxiliary devices
         self._fofb = _FOFB(
@@ -280,7 +248,6 @@ class App(_Callback):
             'IntlkStateConfig-Cmd': self.cmd_state_config,
             'ResetTimingLockLatches-Cmd': self.cmd_reset_ti_lock_latch,
             'ResetAFCTimingRTMClk-Cmd': self.cmd_reset_afcti_rtmclk,
-            'RetryLock-Cmd': self.cmd_retry_lock,
             }
 
         # configuration scanning
@@ -309,7 +276,6 @@ class App(_Callback):
             'PsMtmAcqSamplesPost-SP': self._acq_spost,
             'PsMtmAcqSamplesPost-RB': self._acq_spost,
             'PsMtmAcqConfig-Cmd': 0,
-            'IsLocking-Mon': not self._lock_suspend,
         }
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
@@ -349,6 +315,71 @@ class App(_Callback):
 
         self._update_log('Started.')
         self._init = True
+
+        self._init_devices_lock()
+
+    def _init_devices_lock(self):
+        # EVG
+        for propty_sp, desired_val in self._const.EVG_CONFIGS.items():
+            propty_rb = _PVName.from_sp2rb(propty_sp)
+            pvo = self._evg_dev.pv_object(propty_rb)
+            pvo.add_callback(_part(
+                self._callback_lock, self._evg_dev, propty_sp, desired_val))
+
+        # BPM Fouts
+        for devname, dev in self._fout_devs.items():
+            pvo = dev.pv_object('RxEnbl-RB')
+            pvo.add_callback(self._callback_fout_lock)
+
+        # DCCT Fout
+        for propty_sp, desired_val in self._const.FOUT2_CONFIGS.items():
+            propty_rb = _PVName.from_sp2rb(propty_sp)
+            pvo = self._fout_dcct_dev.pv_object(propty_rb)
+            pvo.add_callback(_part(
+                self._callback_lock, self._fout_dcct_dev,
+                propty_sp, desired_val))
+
+        # triggers
+        trig2config = {
+            self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
+            self._llrf_trig: self._const.LLRFTRIG_CONFIG,
+            self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
+            self._dcct13c4_trig: self._const.DCCT13C4TRIG_CONFIG,
+            self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
+        }
+        for trig, configs in trig2config.items():
+            for prop_sp, desired_val in configs.items():
+                prop_rb = _PVName.from_sp2rb(prop_sp)
+                pvo = trig.pv_object(prop_rb)
+                pvo.add_callback(
+                    _part(self._callback_lock, trig, prop_sp, desired_val))
+
+        # LLRF
+        pvo = self._llrf.pv_object('ILK:BEAM:TRIP')
+        pvo.add_callback(_part(
+            self._callback_lock, self._llrf,
+            'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
+
+        # BPM devices
+        prop2lock = [
+            'IntlkEn-Sts',
+            'IntlkMinSumEn-Sts',
+            'IntlkLmtMinSum-RB',
+            'IntlkPosEn-Sts',
+            'IntlkLmtPosMaxX-RB',
+            'IntlkLmtPosMinX-RB',
+            'IntlkLmtPosMaxY-RB',
+            'IntlkLmtPosMinY-RB',
+            'IntlkAngEn-Sts',
+            'IntlkLmtAngMaxX-RB',
+            'IntlkLmtAngMinX-RB',
+            'IntlkLmtAngMaxY-RB',
+            'IntlkLmtAngMinY-RB',
+        ]
+        for dev in self._orbintlk_dev.devices:
+            for prop in prop2lock:
+                pvo = dev.pv_object(prop)
+                pvo.add_callback(self._callback_bpm_lock)
 
     @property
     def pvs_database(self):
@@ -633,12 +664,6 @@ class App(_Callback):
 
         return True
 
-    def cmd_retry_lock(self, value=None):
-        """Command to retry lock configurations."""
-        self._lock_suspend = False
-        self.run_callbacks('IsLocking-Mon', not self._lock_suspend)
-        return True
-
     # --- configure acquisition ---
 
     def set_acq_channel(self, value):
@@ -761,7 +786,7 @@ class App(_Callback):
 
     def _check_devices_status(self, devices):
         for devname in devices:
-            devname = _SiriusPVName(devname)
+            devname = _PVName(devname)
             out = int(devname.propty[-1]) if devname.propty else None
 
             dev = self._evg_dev if 'EVG' in devname else \
@@ -948,7 +973,7 @@ class App(_Callback):
                 'Configuration check took more than planned... '
                 '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
 
-    # --- callbacks ---
+    # --- interlock methods ---
 
     def _callback_evg_intlk(self, value, **kws):
         _ = kws
@@ -982,7 +1007,7 @@ class App(_Callback):
             return
         if not self._init:
             return
-        nam = _SiriusPVName(pvname).device_name
+        nam = _PVName(pvname).device_name
         if self._thread_cbfout[nam] and self._thread_cbfout[nam].is_alive():
             return
         self._thread_cbfout[nam] = _CAThread(
@@ -995,7 +1020,7 @@ class App(_Callback):
             return
         if not self._init:
             return
-        pvname = _SiriusPVName(pvname)
+        pvname = _PVName(pvname)
         configs = self._const.EVG_CONFIGS
         bits = [int(c[0][-1]) for c in configs if 'RxEnbl' in c[0]]
         if all([_get_bit(value, b) for b in bits]):  # all ok
@@ -1008,10 +1033,10 @@ class App(_Callback):
         self._thread_cbevgrx.start()
 
     def _do_callback_rxlock(self, pvname, value):
-        pvname = _SiriusPVName(pvname)
+        pvname = _PVName(pvname)
         devname = pvname.device_name
         if pvname.dev == 'EVG':
-            shouldkill = False
+            is_failure = False
             for bit in range(8):
                 if _get_bit(value, bit):
                     continue
@@ -1019,20 +1044,20 @@ class App(_Callback):
                 self._update_log(f'FATAL:{outnam} of {devname} lost lock')
                 devout = devname.substitute(propty_name=outnam)
                 # verify if this is an orbit interlock reliability failure
-                shouldkill |= devout in self._ti_mon_devs
+                is_failure |= devout in self._ti_mon_devs
         else:
             out = None
             for dev in self._ti_mon_devs:
                 if 'Fout' not in dev:
                     continue
-                dev = _SiriusPVName(dev)
+                dev = _PVName(dev)
                 if dev.device_name == devname:
                     out = int(dev.propty_name[-1])
                     break
-            shouldkill = out is not None and not _get_bit(value, out)
-        if shouldkill:
+            is_failure = out is not None and not _get_bit(value, out)
+        if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
-            self._do_killbeam()
+            self._handle_reliability_failure()
         else:
             # reset rxlock latch
             dev = self._evg_dev if 'EVG' in devname \
@@ -1042,17 +1067,17 @@ class App(_Callback):
     def _conn_callback_timing(self, pvname, conn, **kws):
         if conn:
             return
-        pvname = _SiriusPVName(pvname)
+        pvname = _PVName(pvname)
         self._update_log(f'FATAL:{pvname.device_name} disconnected')
         if not self._state:
             return
         # verify if this is an orbit interlock reliability failure
-        shouldkill = False
+        is_failure = False
         for dev in self._ti_mon_devs:
-            shouldkill |= _SiriusPVName(dev).device_name == pvname.device_name
-        if shouldkill:
+            is_failure |= _PVName(dev).device_name == pvname.device_name
+        if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
-            self._do_killbeam()
+            self._handle_reliability_failure()
 
     def _callback_bpm_intlk(self, pvname, value, **kws):
         _ = kws
@@ -1064,7 +1089,7 @@ class App(_Callback):
             return
         if self._thread_cbbpm and self._thread_cbbpm.is_alive():
             return
-        bpmname = _SiriusPVName(pvname).device_name
+        bpmname = _PVName(pvname).device_name
         self._thread_cbbpm = _CAThread(
             target=self._do_callback_bpm_intlk, args=(bpmname, ), daemon=True)
         self._thread_cbbpm.start()
@@ -1072,7 +1097,7 @@ class App(_Callback):
     def _do_callback_bpm_intlk(self, bpmname):
         self._update_log(f'FATAL:{bpmname} raised orbit interlock.')
         # send kill beam as fast as possible
-        self._do_killbeam()
+        self._handle_reliability_failure()
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE propagated the event PsMtm
@@ -1089,48 +1114,112 @@ class App(_Callback):
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
 
-    def _do_killbeam(self):
-        # if not in dry run, send kill beam
-        if not self._is_dry_run:
-            self._update_log('FATAL:sending soft interlock to LLRF.')
-            self._llrf['IntlkSet-Cmd'] = 1
-            _time.sleep(1)
-            self._llrf['IntlkSet-Cmd'] = 0
+    # --- reliability failure methods ---
+
+    def _check_minsum_requirement(self):
+        monit_sum = self._sofb['SlowSumRaw-Mon']
+        facq_sum = monit_sum * self._monitsum2intlksum_factor
+        return _np.all(facq_sum > self._limits['minsum'])
+
+    def _handle_reliability_failure(self):
+        # if in dry run, do not kill RF
+        if self._is_dry_run:
+            return
+        # if minimum sum condition is not satisfied, do not kill RF
+        if not self._check_minsum_requirement():
+            return
+        # send soft interlock to RF
+        self._update_log('FATAL:sending soft interlock to LLRF.')
+        self._llrf['IntlkSet-Cmd'] = 1
+        _time.sleep(1)
+        self._llrf['IntlkSet-Cmd'] = 0
+
+    # --- device lock methods ---
 
     def _callback_lock(
             self, device, propty_sp, desired_value, pvname, value, **kwargs):
         thread = _CAThread(
-            target=self._do_callback_lock,
+            target=self._start_lock_thread,
             args=(device, propty_sp, desired_value, pvname, value),
             daemon=True)
         thread.start()
 
     def _callback_fout_lock(self, pvname, value, **kwargs):
-        devname = _SiriusPVName(pvname).device_name
+        devname = _PVName(pvname).device_name
         desired_value = self._fout2rxenbl[devname]
         device = self._fout_devs[devname]
         thread = _CAThread(
-            target=self._do_callback_lock,
+            target=self._start_lock_thread,
             args=(device, 'RxEnbl-SP', desired_value, pvname, value),
             daemon=True)
         thread.start()
 
-    def _do_callback_lock(
+    def _callback_bpm_lock(self, pvname, value, **kws):
+        pvname = _PVName(pvname)
+        devname = pvname.device_name
+        propty_rb = pvname.propty
+        propty_sp = _PVName.from_sp2rb(propty_rb)
+        devidx = self._orbintlk_dev.BPM_NAMES.index(devname)
+        device = self._orbintlk_dev.devices[devidx]
+        if propty_rb.endswith('En-Sts'):
+            entyp = 'pos' if 'Pos' in propty_rb else \
+                'ang' if 'Ang' in propty_rb else 'minsum'
+            desired_value = self._enable_lists[entyp][devidx]
+        elif 'Lmt' in propty_rb:
+            limcls = 'pos' if 'Pos' in propty_rb else \
+                'ang' if 'Ang' in propty_rb else 'minsum'
+            limpln = '_x_' if 'X' in propty_rb else '_y_' if 'Y' in propty_rb else ''
+            limtyp = 'min' if 'Min' in propty_rb \
+                else 'max' if 'Max' in propty_rb else ''
+            limname = f'{limcls}{limpln}{limtyp}'
+            desired_value = self._limits[limname][devidx]
+
+        device = self._fout_devs[devname]
+        thread = _CAThread(
+            target=self._start_lock_thread,
+            args=(device, propty_sp, desired_value, pvname, value),
+            daemon=True)
+        thread.start()
+
+    def _start_lock_thread(
             self, device, propty_sp, desired_value, pvname, value):
         if self._lock_suspend:
             return
-        cnt = self._lock_fails_cnt.get(pvname, 0)
-        if value != desired_value:
-            self._lock_fails_cnt[pvname] = cnt + 1
-            device[propty] = desired_value
-        else:
-            self._lock_fails_cnt[pvname] = 0
-        if self._lock_fails_cnt[pvname] >= 10:
+
+        # if there is already a lock thread, return
+        thread = self._lock_threads.get(pvname, None)
+        if thread is not None or thread.is_alive():
+            return
+
+        # else, create lock thread with 10 attempts to lock PV
+        interval = 1 / 50  # little sleep to avoid CPU load
+        thread = _Repeat(
+            interval, self._do_lock,
+            args=(device, propty_sp, desired_value, pvname, value),
+            deamon=True, niter=10, is_cathread=True)
+        self._lock_threads[pvname] = thread
+        thread.start()
+
+    def _do_lock(self, device, propty_sp, desired_value, pvname, value):
+        thread = self._lock_threads[pvname]
+
+        # if value is equal desired, stop thread
+        if value == desired_value:
+            thread.stop()
+
+        # else, apply is value as desired
+        propty_rb = _PVName(pvname).propty
+        device[propty_sp] = desired_value
+
+        # if readback reached desired value, stop thread
+        if device._wait(propty_rb, desired_value, timeout=0.11):
+            thread.stop()
+
+        # if this was the last iteration, raise a reliability failure
+        if thread.cur_iter == thread.niters-1:
             self._update_log(f'FATAL:Fail to lock {pvname}')
-            self._update_log(f'FATAL:Orbit interlock reliability failure')
-            self._do_killbeam()
-            self._lock_suspend = True
-            self.run_callbacks('IsLocking-Mon', not self._lock_suspend)
+            self._update_log('FATAL:Orbit interlock reliability failure')
+            self._handle_reliability_failure()
 
     # --- auxiliary log methods ---
 
@@ -1145,7 +1234,7 @@ class App(_Callback):
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
 
-    # ---------------- File handlers ---------------------
+    # --- file handlers ---
 
     def _load_file(self, intlk, dtype='en'):
         suff = '_enbl_fname' if dtype.startswith('en') else '_lim_fname'
