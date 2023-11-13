@@ -887,10 +887,12 @@ class DELTA(_ID):
         'MaxVelo-SP', 'MaxVelo-RB',
         'ParkedPparameter-Cte',
         'PParam-SP', 'PParam-RB', 'PParam-Mon',
+        'ChangePParam-Cmd',
         'PParamVelo-SP', 'PParamVelo-RB',
         'PParamAcc-SP', 'PParamAcc-RB',
         'ParkedKparameter-Cte',
         'KParam-SP', 'KParam-RB', 'KParam-Mon',
+        'ChangeKParam-Cmd',
         'KParamVelo-SP', 'KParamVelo-RB',
         'KParamAcc-SP', 'KParamAcc-RB',
         )
@@ -1041,11 +1043,11 @@ class DELTA(_ID):
 
     def cmd_move_pparam_start(self, timeout=None):
         """Command to start Pparameter movement."""
-        return self._move_start('ChangePparam-Cmd', timeout=timeout)
+        return self._move_start('ChangePParam-Cmd', timeout=timeout)
 
     def cmd_move_kparam_start(self, timeout=None):
         """Command to start Kparameter movement."""
-        return self._move_start('ChangeKparam-Cmd', timeout=timeout)
+        return self._move_start('ChangeKParam-Cmd', timeout=timeout)
 
     def cmd_change_polarization_start(self, timeout=None):
         """Change polarization."""
