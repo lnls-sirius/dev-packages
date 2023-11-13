@@ -32,7 +32,7 @@ class EqualizeBPMs(_FamBPMs):
         if logger is not None:
             self.logger = logger
         self._proc_method = self.ProcMethods.EABS
-        self._acq_strategy = self.AcqStrategies.AssumeOrder
+        self._acq_strategy = self.AcqStrategies.AcqInvRedGain
         self._acq_inverse_reduced_gain = self.round_gains(0.95)
         self._acq_nrpoints = 2000
         self._acq_timeout = 30
@@ -311,6 +311,71 @@ class EqualizeBPMs(_FamBPMs):
         self.data['antennas'] = _np.array(
             self.get_mturn_signals()).swapaxes(-1, -2)
 
+    def acquire_data_for_checking(self):
+        """."""
+        self._log('Starting Acquisition.')
+
+        init_source = self.trigger.source
+        ini_dly = self.trigger.delay_raw
+        try:
+            self._do_acquire_for_check()
+        except Exception as err:
+            self._log('ERR:Problem with acquisition:')
+            self._log(f'ERR:{str(err)}')
+
+        self.trigger.source = init_source
+        self.trigger.delay_raw = ini_dly
+        self._log('Acquisition Finished!')
+
+    def _do_acquire_for_check(self):
+        # acquire antennas data in FOFB rate
+        self._log('Preparing BPMs')
+        ret = self.cmd_mturn_acq_abort()
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
+                'previous acquistion.')
+            return
+
+        fswtc = self.get_switching_frequency(1)
+        fsamp = self.get_sampling_frequency(1)
+        nrpts = int(fsamp / fswtc)
+
+        self.mturn_reset_flags_and_update_initial_timestamps()
+        ret = self.mturn_config_acquisition(
+            nr_points_after=nrpts, nr_points_before=0,
+            acq_rate='FOFB', repeat=False, external=True)
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not start acquistion.')
+            return
+
+        self.trigger.delay_raw = 0
+        self.trigger.source = self.trigger.source_options.index('Clock3')
+
+        self._log('Waiting BPMs to update')
+        ret = self.mturn_wait_update(timeout=self._acq_timeout)
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
+            return
+        elif ret < 0:
+            self._log(f'ERR: Problem with acquisition. Error code {ret}')
+            return
+        self._log('BPMs updated.')
+
+        self._log('Acquiring data.')
+        if None in {fsamp, fswtc}:
+            self._log('ERR: Not all BPMs are configured equally.')
+            return
+        elif fsamp % (2*fswtc):
+            self._log('ERR: Sampling freq is not multiple of switching freq.')
+            return
+
+        _time.sleep(0.1)
+        self.data['antennas_for_check'] = _np.array(
+            self.get_mturn_signals()).swapaxes(-1, -2)
+
     # --------- Methods for processing ------------
 
     def process_data(self):
@@ -365,8 +430,10 @@ class EqualizeBPMs(_FamBPMs):
         if acq_strategy == self.AcqStrategies.AssumeOrder:
             ants = ants.reshape(nant, nbpm, 2, lsemicyc)
             mean = ants.mean(axis=-1)
-            idp = _np.tile(_np.arange(lsemicyc), (nbpm, 1))
-            idn = idp + lsemicyc
+            # Inverse comes first!:
+            mean = mean[:, :, ::-1]
+            idn = _np.tile(_np.arange(lsemicyc), (nbpm, 1))
+            idp = idn + lsemicyc
         else:
             # Try to find out the two states by looking at different levels in
             # the sum of the four antennas of each BPM.
@@ -580,6 +647,32 @@ class EqualizeBPMs(_FamBPMs):
             axs[-1, j].set_xlabel('BPM Index')
 
         axs[0, 0].legend(loc='best', fontsize='x-small', ncol=2)
+        fig.tight_layout()
+        return fig, axs
+
+    def plot_antennas_for_check(self):
+        """."""
+        antd = self.data.get('antennas_for_check')
+        if antd is None:
+            self._log('ERR:Must acquire data for check first.')
+            return None, None
+
+        fig, axs = _mplt.subplots(
+            4, 1, figsize=(6, 8), sharex=True, sharey=True)
+        ants = 'ABCD'
+        mean = antd.mean(axis=-1)[:, :, None]
+        antd = antd / mean - 1
+        nbpm = antd.shape[1]
+        for j in range(nbpm):
+            cor = _mplt.cm.jet(j/(nbpm-1))
+            for i in range(4):
+                axs[i].plot(antd[i, j], 'o-', color=cor)
+                if not j:
+                    axs[i].set_ylabel(ants[i] + ' [%]')
+                    axs[i].grid(True, alpha=0.5, ls='--', lw=1)
+
+        axs[0].set_title('Relative Variation')
+        axs[-1].set_xlabel('Samples')
         fig.tight_layout()
         return fig, axs
 
