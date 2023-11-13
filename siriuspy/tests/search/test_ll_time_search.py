@@ -54,6 +54,7 @@ class TestLLTimeSearch(TestCase):
         'has_delay_type',
         'has_direction',
         'has_clock',
+        'has_log',
         'get_trigger_name',
         'get_fout_channel',
         'get_evg_channel',

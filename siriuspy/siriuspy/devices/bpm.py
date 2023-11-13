@@ -64,6 +64,10 @@ class BPM(_Device):
         'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
         'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
         'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
+        'SwDirGainA-SP', 'SwDirGainB-SP', 'SwDirGainC-SP', 'SwDirGainD-SP',
+        'SwDirGainA-RB', 'SwDirGainB-RB', 'SwDirGainC-RB', 'SwDirGainD-RB',
+        'SwInvGainA-SP', 'SwInvGainB-SP', 'SwInvGainC-SP', 'SwInvGainD-SP',
+        'SwInvGainA-RB', 'SwInvGainB-RB', 'SwInvGainC-RB', 'SwInvGainD-RB',
         'PosKx-SP', 'PosKx-RB',
         'PosKy-RB', 'PosKy-SP',
         'PosKsum-SP', 'PosKsum-RB',
@@ -201,6 +205,78 @@ class BPM(_Device):
     def switching_period(self):
         """Switching period manifested at BPM readings."""
         return self.switching_rate / self.adcfreq
+
+    @property
+    def gain_direct_a(self):
+        """."""
+        return self['SwDirGainA-RB']
+
+    @gain_direct_a.setter
+    def gain_direct_a(self, val):
+        self['SwDirGainA-SP'] = val
+
+    @property
+    def gain_direct_b(self):
+        """."""
+        return self['SwDirGainB-RB']
+
+    @gain_direct_b.setter
+    def gain_direct_b(self, val):
+        self['SwDirGainB-SP'] = val
+
+    @property
+    def gain_direct_c(self):
+        """."""
+        return self['SwDirGainC-RB']
+
+    @gain_direct_c.setter
+    def gain_direct_c(self, val):
+        self['SwDirGainC-SP'] = val
+
+    @property
+    def gain_direct_d(self):
+        """."""
+        return self['SwDirGainD-RB']
+
+    @gain_direct_d.setter
+    def gain_direct_d(self, val):
+        self['SwDirGainD-SP'] = val
+
+    @property
+    def gain_inverse_a(self):
+        """."""
+        return self['SwInvGainA-RB']
+
+    @gain_inverse_a.setter
+    def gain_inverse_a(self, val):
+        self['SwInvGainA-SP'] = val
+
+    @property
+    def gain_inverse_b(self):
+        """."""
+        return self['SwInvGainB-RB']
+
+    @gain_inverse_b.setter
+    def gain_inverse_b(self, val):
+        self['SwInvGainB-SP'] = val
+
+    @property
+    def gain_inverse_c(self):
+        """."""
+        return self['SwInvGainC-RB']
+
+    @gain_inverse_c.setter
+    def gain_inverse_c(self, val):
+        self['SwInvGainC-SP'] = val
+
+    @property
+    def gain_inverse_d(self):
+        """."""
+        return self['SwInvGainD-RB']
+
+    @gain_inverse_d.setter
+    def gain_inverse_d(self, val):
+        self['SwInvGainD-SP'] = val
 
     @property
     def harmonic_number(self):
@@ -938,13 +1014,13 @@ class FamBPMs(_DeviceSet):
         self._ispost_mortem = ispost_mortem
 
         self._mturn_signals2acq = list(mturn_signals2acq)
-        devs = [BPM(
+        self.bpms = [BPM(
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
 
-        super().__init__(devs, devname=devname)
+        super().__init__(self.bpms[:], devname=devname)
         self._bpm_names = bpm_names
-        self._csbpm = devs[0].csdata
+        self._csbpm = self.bpms[0].csdata
         self._initial_timestamps = None
 
         self._mturn_flags = dict()
@@ -1007,7 +1083,7 @@ class FamBPMs(_DeviceSet):
 
         """
         orbx, orby = [], []
-        for bpm in self._devices:
+        for bpm in self.bpms:
             orbx.append(bpm.posx)
             orby.append(bpm.posy)
         orbx = _np.array(orbx)
@@ -1025,7 +1101,7 @@ class FamBPMs(_DeviceSet):
         sigs = [[] for _ in self._mturn_signals2acq]
 
         mini = int(sys.maxsize)  # a very large integer
-        for bpm in self._devices:
+        for bpm in self.bpms:
             for i, sn in enumerate(self._mturn_signals2acq):
                 sn = 'sum' if sn == 'S' else sn.lower()
                 name = 'mt_' + ('ampl' if sn in 'abcd' else 'pos') + sn
@@ -1047,8 +1123,8 @@ class FamBPMs(_DeviceSet):
 
         """
         tsmps = _np.zeros(
-            (len(self._devices), len(self._mturn_signals2acq)), dtype=float)
-        for i, bpm in enumerate(self._devices):
+            (len(self.bpms), len(self._mturn_signals2acq)), dtype=float)
+        for i, bpm in enumerate(self.bpms):
             for j, s in enumerate(self._mturn_signals2acq):
                 s = 'SUM' if s == 'S' else s
                 pvo = bpm.pv_object(f'GEN_{s}ArrayData')
@@ -1070,7 +1146,7 @@ class FamBPMs(_DeviceSet):
         """
         fs_bpms = {
             dev.get_sampling_frequency(rf_freq, acq_rate)
-            for dev in self.devices}
+            for dev in self.bpms}
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
@@ -1088,7 +1164,7 @@ class FamBPMs(_DeviceSet):
 
         """
         fsw_bpms = {
-            dev.get_switching_frequency(rf_freq) for dev in self.devices}
+            dev.get_switching_frequency(rf_freq) for dev in self.bpms}
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
@@ -1152,7 +1228,7 @@ class FamBPMs(_DeviceSet):
         if ret > 0:
             return -ret
 
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.acq_repeat = repeat
             bpm.acq_channel = acq_rate
             bpm.acq_trigger = trig
@@ -1175,7 +1251,7 @@ class FamBPMs(_DeviceSet):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.acq_ctrl = self._csbpm.AcqEvents.Abort
 
         if wait:
@@ -1194,7 +1270,7 @@ class FamBPMs(_DeviceSet):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for i, bpm in enumerate(self._devices):
+        for i, bpm in enumerate(self.bpms):
             t0_ = _time.time()
             if not bpm.wait_acq_finish(timeout):
                 return i + 1
@@ -1215,7 +1291,7 @@ class FamBPMs(_DeviceSet):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.acq_ctrl = self._csbpm.AcqEvents.Start
         if wait:
             return self.wait_acquisition_start(timeout=timeout)
@@ -1233,7 +1309,7 @@ class FamBPMs(_DeviceSet):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for i, bpm in enumerate(self._devices):
+        for i, bpm in enumerate(self.bpms):
             t0_ = _time.time()
             if not bpm.wait_acq_start(timeout):
                 return i + 1
@@ -1254,7 +1330,7 @@ class FamBPMs(_DeviceSet):
         if mode not in ('direct', 'switching', 1, 3):
             raise ValueError('Value must be in ("direct", "switching", 1, 3).')
 
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.switching_mode = mode
 
     def mturn_update_initial_timestamps(self):
