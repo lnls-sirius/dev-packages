@@ -1272,9 +1272,7 @@ class SILLRFPreAmp(_Device):
         'PINSwEnbl-Cmd', 'PINSwDsbl-Cmd', 'PINSwSts-Mon',
     )
 
-    def __init__(self, devname='', props2init='all'):
-        if not devname:
-            devname = SILLRFPreAmp.DEVICES.SIA01
+    def __init__(self, devname, props2init='all'):
         if devname not in SILLRFPreAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
         super().__init__(devname, props2init=props2init)
