@@ -205,7 +205,14 @@ class App(_Callback):
                 'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
                 'ACQTrigger-Sel', 'ACQTrigger-Sts',
                 'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-                'ACQStatus-Sts'])
+                'ACQStatus-Sts',
+                'INFOFAcqRate-RB', 'INFOMONITRate-RB'])
+        self._monit_rate, self._facq_rate = None, None
+        self._monitsum2intlksum_factor = 1
+        pvo = self._fambpm_dev.devices[0].pv_object('INFOMONITRate-RB')
+        pvo.add_callback(self._callback_get_bpm_rates)
+        pvo = self._fambpm_dev.devices[0].pv_object('INFOFAcqRate-RB')
+        pvo.add_callback(self._callback_get_bpm_rates)
 
         # # RF devices
         self._llrf = _ASLLRF(
@@ -219,7 +226,8 @@ class App(_Callback):
         self._fofb = _FOFB(
             props2init=['LoopState-Sts', ])
         self._sofb = _SOFB(
-            _SOFB.DEVICES.SI, props2init=['LoopState-Sts', ])
+            _SOFB.DEVICES.SI,
+            props2init=['LoopState-Sts', 'SlowSumRaw-Mon'])
 
         # pvs to write methods
         self.map_pv2write = {
@@ -1113,6 +1121,21 @@ class App(_Callback):
             self._update_log('WARN:EVG did not propagate event Intlk')
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
+
+    def _callback_get_bpm_rates(self, pvname, value, **kws):
+        if value is None:
+            return
+        if 'MONIT' in pvname:
+            self._monit_rate = value
+        elif 'FAcq' in pvname:
+            self._facq_rate = value
+        monit = self._monit_rate
+        facq = self._facq_rate
+        if None in [monit, facq]:
+            return
+        frac = monit/facq
+        factor = 2**_np.ceil(_np.log2(frac)) / frac
+        self._monitsum2intlksum_factor = factor
 
     # --- reliability failure methods ---
 
