@@ -885,12 +885,12 @@ class DELTA(_ID):
         'Pol-Sel', 'Pol-Sts', 'Pol-Mon',
         'ChangePol-Cmd',
         'MaxVelo-SP', 'MaxVelo-RB',
-        'ParkedPparameter-Cte',
+        'ParkedPParam-Cte',
         'PParam-SP', 'PParam-RB', 'PParam-Mon',
         'ChangePParam-Cmd',
         'PParamVelo-SP', 'PParamVelo-RB',
         'PParamAcc-SP', 'PParamAcc-RB',
-        'ParkedKparameter-Cte',
+        'ParkedKParam-Cte',
         'KParam-SP', 'KParam-RB', 'KParam-Mon',
         'ChangeKParam-Cmd',
         'KParamVelo-SP', 'KParamVelo-RB',
@@ -931,7 +931,7 @@ class DELTA(_ID):
     @property
     def pparameter_parked(self):
         """Return ID parked pparameter value [mm]."""
-        return self['ParkedPparameter-Cte']
+        return self['ParkedPParam-Cte']
 
     @property
     def pparameter_speed_max(self):
@@ -983,7 +983,7 @@ class DELTA(_ID):
     @property
     def kparameter_parked(self):
         """Return ID parked kparameter value [mm]."""
-        return self['ParkedKparameter-Cte']
+        return self['ParkedKParam-Cte']
 
     @property
     def kparameter_speed_max(self):
