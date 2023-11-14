@@ -344,6 +344,20 @@ class LLTimeSearch:
             raise Exception('Error: ' + name)
 
     @classmethod
+    def has_log(cls, ll_trigger):
+        """Check whether a low level trigger has Log PVs.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return 'AMCFPGAEVR' != name.dev
+
+    @classmethod
     def get_trigger_name(cls, channel):
         """Get name of the trigger associated with channel."""
         chan_tree = cls.get_device_tree(channel)
