@@ -1274,8 +1274,11 @@ class App(_Callback):
                 self._lock_failures.remove(pvname)
             thread.stop()
 
-        # else, apply is value as desired
-        propty_rb = _PVName(pvname).propty
+        # else, apply value as desired
+        if device == self._llrf:
+            propty_rb = propty_sp.replace(':S', '')
+        else:
+            propty_rb = _PVName(pvname).propty
         device[propty_sp] = desired_value
 
         # if readback reached desired value, stop thread
