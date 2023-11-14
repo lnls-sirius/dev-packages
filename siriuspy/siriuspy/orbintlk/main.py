@@ -65,6 +65,7 @@ class App(_Callback):
         self._thread_cbbpm = None
         self._ti_mon_devs = set()
         self._lock_threads = dict()
+        self._lock_failures = set()
         self._lock_suspend = False
 
         # devices and connections
@@ -208,7 +209,7 @@ class App(_Callback):
                 'ACQStatus-Sts',
                 'INFOFAcqRate-RB', 'INFOMONITRate-RB'])
         self._monit_rate, self._facq_rate = None, None
-        self._monitsum2intlksum_factor = 1
+        self._monitsum2intlksum_factor = 0
         pvo = self._fambpm_dev.devices[0].pv_object('INFOMONITRate-RB')
         pvo.add_callback(self._callback_get_bpm_rates)
         pvo = self._fambpm_dev.devices[0].pv_object('INFOFAcqRate-RB')
@@ -228,6 +229,7 @@ class App(_Callback):
         self._sofb = _SOFB(
             _SOFB.DEVICES.SI,
             props2init=['LoopState-Sts', 'SlowSumRaw-Mon'])
+        self._sofb.pv_object('SlowSumRaw-Mon').auto_monitor = True
 
         # pvs to write methods
         self.map_pv2write = {
@@ -327,20 +329,28 @@ class App(_Callback):
         self._init_devices_lock()
 
     def _init_devices_lock(self):
+        self._update_log('Waiting 5s to start locking...')
+        _time.sleep(5)
+
+        conntimeout = self._const.DEF_TIMEOUT
+
         # EVG
-        for propty_sp, desired_val in self._const.EVG_CONFIGS.items():
+        self._evg_dev.wait_for_connection(timeout=conntimeout)
+        for propty_sp, desired_val in self._const.EVG_CONFIGS:
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._evg_dev.pv_object(propty_rb)
             pvo.add_callback(_part(
                 self._callback_lock, self._evg_dev, propty_sp, desired_val))
 
         # BPM Fouts
-        for devname, dev in self._fout_devs.items():
+        for dev in self._fout_devs.values():
+            dev.wait_for_connection(timeout=conntimeout)
             pvo = dev.pv_object('RxEnbl-RB')
             pvo.add_callback(self._callback_fout_lock)
 
         # DCCT Fout
-        for propty_sp, desired_val in self._const.FOUT2_CONFIGS.items():
+        self._fout_dcct_dev.wait_for_connection(timeout=conntimeout)
+        for propty_sp, desired_val in self._const.FOUT2_CONFIGS:
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._fout_dcct_dev.pv_object(propty_rb)
             pvo.add_callback(_part(
@@ -356,13 +366,15 @@ class App(_Callback):
             self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
         }
         for trig, configs in trig2config.items():
-            for prop_sp, desired_val in configs.items():
+            trig.wait_for_connection(timeout=conntimeout)
+            for prop_sp, desired_val in configs:
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = trig.pv_object(prop_rb)
                 pvo.add_callback(
                     _part(self._callback_lock, trig, prop_sp, desired_val))
 
         # LLRF
+        self._llrf.wait_for_connection(timeout=conntimeout)
         pvo = self._llrf.pv_object('ILK:BEAM:TRIP')
         pvo.add_callback(_part(
             self._callback_lock, self._llrf,
@@ -385,6 +397,7 @@ class App(_Callback):
             'IntlkLmtAngMinY-RB',
         ]
         for dev in self._orbintlk_dev.devices:
+            dev.wait_for_connection(timeout=conntimeout)
             for prop in prop2lock:
                 pvo = dev.pv_object(prop)
                 pvo.add_callback(self._callback_bpm_lock)
@@ -1139,17 +1152,40 @@ class App(_Callback):
 
     # --- reliability failure methods ---
 
-    def _check_minsum_requirement(self):
-        monit_sum = self._sofb['SlowSumRaw-Mon']
+    def _check_minsum_requirement(self, monit_sum=None):
+        if monit_sum is None:
+            monit_sum = self._sofb['SlowSumRaw-Mon']
         facq_sum = monit_sum * self._monitsum2intlksum_factor
         return _np.all(facq_sum > self._limits['minsum'])
+
+    def _callback_monitor_sum(self, value, cb_info, **kws):
+        # remove callback if is not anymore in a reliability failure
+        if not self._lock_failures:
+            cb_info[1].remove_callback(cb_info[0])
+
+        # check whether sum value is higher than minsum
+        if not self._check_minsum_requirement(value):
+            return
+
+        # if sum is higher than minsum and there is lock failures,
+        # handle orbit interlock reliability failure
+        self._update_log('FATAL:Orbit interlock reliability failure')
+        for pvn in self._lock_failures:
+            self._update_log(f'FATAL:Fail to lock {pvn}')
+        self._handle_reliability_failure()
+        # and remove callback
+        cb_info[1].remove_callback(cb_info[0])
 
     def _handle_reliability_failure(self):
         # if in dry run, do not kill RF
         if self._is_dry_run:
+            self._update_log('WARN:Dry run running, will not handle')
+            self._update_log('WARN:reliability failure.')
             return
-        # if minimum sum condition is not satisfied, do not kill RF
+        # if minimum sum condition is not satisfied, only monitor sum
         if not self._check_minsum_requirement():
+            pvo = self._sofb.pv_object('SlowSumRaw-Mon')
+            pvo.add_callback(self._callback_monitor_sum)
             return
         # send soft interlock to RF
         self._update_log('FATAL:sending soft interlock to LLRF.')
@@ -1191,13 +1227,13 @@ class App(_Callback):
         elif 'Lmt' in propty_rb:
             limcls = 'pos' if 'Pos' in propty_rb else \
                 'ang' if 'Ang' in propty_rb else 'minsum'
-            limpln = '_x_' if 'X' in propty_rb else '_y_' if 'Y' in propty_rb else ''
-            limtyp = 'min' if 'Min' in propty_rb \
-                else 'max' if 'Max' in propty_rb else ''
+            limpln = '_x_' if 'X' in propty_rb else \
+                '_y_' if 'Y' in propty_rb else ''
+            limtyp = '' if 'MinSum' in propty_rb \
+                else 'max' if 'Max' in propty_rb else 'min'
             limname = f'{limcls}{limpln}{limtyp}'
             desired_value = self._limits[limname][devidx]
 
-        device = self._fout_devs[devname]
         thread = _CAThread(
             target=self._start_lock_thread,
             args=(device, propty_sp, desired_value, pvname, value),
@@ -1211,7 +1247,7 @@ class App(_Callback):
 
         # if there is already a lock thread, return
         thread = self._lock_threads.get(pvname, None)
-        if thread is not None or thread.is_alive():
+        if thread is not None and thread.is_alive():
             return
 
         # else, create lock thread with 10 attempts to lock PV
@@ -1219,7 +1255,7 @@ class App(_Callback):
         thread = _Repeat(
             interval, self._do_lock,
             args=(device, propty_sp, desired_value, pvname, value),
-            deamon=True, niter=10, is_cathread=True)
+            niter=10, is_cathread=True)
         self._lock_threads[pvname] = thread
         thread.start()
 
@@ -1228,6 +1264,8 @@ class App(_Callback):
 
         # if value is equal desired, stop thread
         if value == desired_value:
+            if pvname in self._lock_failures:
+                self._lock_failures.remove(pvname)
             thread.stop()
 
         # else, apply is value as desired
@@ -1236,10 +1274,13 @@ class App(_Callback):
 
         # if readback reached desired value, stop thread
         if device._wait(propty_rb, desired_value, timeout=0.11):
+            if pvname in self._lock_failures:
+                self._lock_failures.remove(pvname)
             thread.stop()
 
         # if this was the last iteration, raise a reliability failure
         if thread.cur_iter == thread.niters-1:
+            self._lock_failures.add(pvname)
             self._update_log(f'FATAL:Fail to lock {pvname}')
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
