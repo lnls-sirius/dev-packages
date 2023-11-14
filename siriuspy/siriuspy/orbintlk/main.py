@@ -777,14 +777,15 @@ class App(_Callback):
         for chn in self._ti_mon_devs:
             if 'Fout' not in chn:
                 continue
-            devname = chn.device_name
+            fout = chn.device_name
             out = int(chn.propty_name[-1])
-            rx = fout2rx.get(devname, 0)
+            rx = fout2rx.get(fout, 0)
             rx += 1 << out
+            fout2rx[fout] = rx
 
-        for fout, rxenbl in fout2rx.items():
+        for fout, dev in self._fout_devs.items():
+            rxenbl = fout2rx.get(fout, 0)
             self._fout2rxenbl[fout] = rxenbl
-            dev = self._fout_devs[fout]
             dev['RxEnbl-SP'] = rxenbl
             dev._wait('RxEnbl-RB', rxenbl)
             dev['RxLockedLtcRst-Cmd'] = 1
