@@ -341,12 +341,14 @@ class App(_Callback):
             pvo = self._evg_dev.pv_object(propty_rb)
             pvo.add_callback(_part(
                 self._callback_lock, self._evg_dev, propty_sp, desired_val))
+            pvo.run_callbacks()
 
         # BPM Fouts
         for dev in self._fout_devs.values():
             dev.wait_for_connection(timeout=conntimeout)
             pvo = dev.pv_object('RxEnbl-RB')
             pvo.add_callback(self._callback_fout_lock)
+            pvo.run_callbacks()
 
         # DCCT Fout
         self._fout_dcct_dev.wait_for_connection(timeout=conntimeout)
@@ -356,6 +358,7 @@ class App(_Callback):
             pvo.add_callback(_part(
                 self._callback_lock, self._fout_dcct_dev,
                 propty_sp, desired_val))
+            pvo.run_callbacks()
 
         # triggers
         trig2config = {
@@ -372,6 +375,7 @@ class App(_Callback):
                 pvo = trig.pv_object(prop_rb)
                 pvo.add_callback(
                     _part(self._callback_lock, trig, prop_sp, desired_val))
+                pvo.run_callbacks()
 
         # LLRF
         self._llrf.wait_for_connection(timeout=conntimeout)
@@ -379,6 +383,7 @@ class App(_Callback):
         pvo.add_callback(_part(
             self._callback_lock, self._llrf,
             'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
+        pvo.run_callbacks()
 
         # BPM devices
         prop2lock = [
@@ -396,11 +401,12 @@ class App(_Callback):
             'IntlkLmtAngMaxY-RB',
             'IntlkLmtAngMinY-RB',
         ]
+        self._orbintlk_dev.wait_for_connection(timeout=conntimeout)
         for dev in self._orbintlk_dev.devices:
-            dev.wait_for_connection(timeout=conntimeout)
             for prop in prop2lock:
                 pvo = dev.pv_object(prop)
                 pvo.add_callback(self._callback_bpm_lock)
+                pvo.run_callbacks()
 
     @property
     def pvs_database(self):
@@ -1217,7 +1223,7 @@ class App(_Callback):
         pvname = _PVName(pvname)
         devname = pvname.device_name
         propty_rb = pvname.propty
-        propty_sp = _PVName.from_sp2rb(propty_rb)
+        propty_sp = _PVName.from_rb2sp(propty_rb)
         devidx = self._orbintlk_dev.BPM_NAMES.index(devname)
         device = self._orbintlk_dev.devices[devidx]
         if propty_rb.endswith('En-Sts'):
