@@ -1089,11 +1089,6 @@ class App(_Callback):
         if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
-        else:
-            # reset rxlock latch
-            dev = self._evg_dev if 'EVG' in devname \
-                else self._fout_devs[devname]
-            dev['RxLockedLtcRst-Cmd'] = 1
 
     def _conn_callback_timing(self, pvname, conn, **kws):
         if conn:
