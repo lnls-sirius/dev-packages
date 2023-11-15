@@ -660,7 +660,8 @@ class App(_Callback):
             if fout['RxLockedLtc-Mon']:
                 continue
             fout['RxLockedLtcRst-Cmd'] = 1
-            msg = 'Reset' if fout._wait('RxLockedLtc-Mon', 1, timeout=3) \
+            rxv = self._fout2rxenbl
+            msg = 'Reset' if fout._wait('RxLockedLtc-Mon', rxv, timeout=3) \
                 else 'ERR:Could not reset'
             self._update_log(f'{msg} {devname} lock latchs.')
             if 'not' in msg:
