@@ -408,6 +408,8 @@ class App(_Callback):
                 pvo.add_callback(self._callback_bpm_lock)
                 pvo.run_callbacks()
 
+        self._update_log('...lock running.')
+
     @property
     def pvs_database(self):
         """Return pvs_database."""
