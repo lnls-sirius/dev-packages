@@ -789,6 +789,7 @@ class App(_Callback):
             dev['RxEnbl-SP'] = rxenbl
             dev._wait('RxEnbl-RB', rxenbl)
             dev['RxLockedLtcRst-Cmd'] = 1
+            dev._wait('RxLockedLtc-Mon', 1)
 
         return True
 
