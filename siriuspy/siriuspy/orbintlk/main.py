@@ -1236,7 +1236,8 @@ class App(_Callback):
                 'minsum' if 'MinSum' in propty_rb else \
                 'gen'
             if entyp == 'gen':
-                desired_value = self._get_gen_bpm_intlk()[devidx]
+                desired_value = self._get_gen_bpm_intlk()[devidx] \
+                    if self._state else 0
             else:
                 desired_value = self._enable_lists[entyp][devidx]
         elif 'Lmt' in propty_rb:
