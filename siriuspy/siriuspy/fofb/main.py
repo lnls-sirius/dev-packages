@@ -111,7 +111,7 @@ class App(_Callback):
 
         self._auxbpm = _Device(
             'SI-01M1:DI-BPM',
-            properties=('INFOFOFBRate-RB', 'INFOMONITRate-RB'))
+            props2init=('INFOFOFBRate-RB', 'INFOMONITRate-RB'))
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(

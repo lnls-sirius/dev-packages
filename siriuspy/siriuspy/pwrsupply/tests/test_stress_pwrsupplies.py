@@ -1,14 +1,16 @@
 #!/usr/bin/env python-sirius
 
 import time
+from importlib.util import find_spec as _find_spec
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from siriuspy.epics import PV
 # from siriuspy.search import PSSearch
 from siriuspy.pwrsupply.pssofb import PSSOFB, PSConnSOFB
-from PRUserial485 import EthBridgeClient
-import matplotlib.pyplot as plt
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient
 
 
 class PVGroup:

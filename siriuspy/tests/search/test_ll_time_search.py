@@ -50,11 +50,15 @@ class TestLLTimeSearch(TestCase):
         'get_final_receivers',
         'get_relations_from_evg',
         'get_relations_twds_evg',
-        'has_clock',
+        'is_digital_input',
         'has_delay_type',
+        'has_direction',
+        'has_clock',
+        'has_log',
         'get_trigger_name',
         'get_fout_channel',
         'get_evg_channel',
+        'get_crates_mapping',
     )
 
     def test_public_interface(self):

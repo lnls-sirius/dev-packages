@@ -2,11 +2,11 @@
 
 import time as _time
 
-from .device import DeviceNC as _DeviceNC
+from .device import Device as _Device
 from ..csdev import Const as _Const
 
 
-class LIModltr(_DeviceNC):
+class LIModltr(_Device):
     """LI LLRF."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -18,7 +18,7 @@ class LIModltr(_DeviceNC):
         LI_MOD2 = 'LI-01:PU-Modltr-2'
         ALL = (LI_MOD1, LI_MOD2)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Remote', 'OutPut_Status', 'RESET',
         'Run/Stop', 'PreHeat', 'Charge_Allowed', 'TrigOut_Allowed',
         'Emer_Stop', 'CPS_ALL', 'Thy_Heat', 'Kly_Heat', 'LV_Rdy_OK',
@@ -27,14 +27,12 @@ class LIModltr(_DeviceNC):
         'RUN_STOP', 'PREHEAT', 'CHARGE', 'TRIGOUT',
         'WRITE_I', 'READI', 'WRITE_V', 'READV')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in LIModltr.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=LIModltr._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def run_stop(self):

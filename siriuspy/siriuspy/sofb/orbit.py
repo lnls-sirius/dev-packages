@@ -4,7 +4,6 @@ import time as _time
 import logging as _log
 from functools import partial as _part
 from threading import Lock, Event as _Event
-import multiprocessing as _mp
 import traceback as _traceback
 
 import numpy as _np
@@ -13,10 +12,10 @@ import bottleneck as _bn
 from .. import util as _util
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..thread import RepeaterThread as _Repeat
-from ..epics import PV as _PV, CAProcessSpawn as _Process, CAThread as _Thread
+from ..epics import PV as _PV, CAThread as _Thread
 
 from .base_class import BaseClass as _BaseClass
-from .bpms import BPM, TimingConfig, TIMEOUT
+from .bpms import BPM, TimingConfig
 
 
 class BaseOrbit(_BaseClass):
@@ -105,6 +104,7 @@ class EpicsOrbit(BaseOrbit):
             'TrigNrShots-SP': self.set_trig_acq_nrshots,
             'PolyCalibration-Sel': self.set_poly_calibration,
             'SyncBPMs-Cmd': self.sync_bpms,
+            'TestDataEnbl-Sel': self.set_test_data_enbl,
             }
         if not self.isring:
             return dbase
@@ -112,7 +112,6 @@ class EpicsOrbit(BaseOrbit):
             'MTurnAcquire-Cmd': self.acquire_mturn_orbit,
             'MTurnIdx-SP': self.set_orbit_multiturn_idx,
             'MTurnDownSample-SP': self.set_mturndownsample,
-            'MTurnSyncTim-Sel': self.set_mturn_sync,
             'MTurnUseMask-Sel': self.set_mturn_usemask,
             'MTurnMaskSplBeg-SP': _part(self.set_mturnmask, beg=True),
             'MTurnMaskSplEnd-SP': _part(self.set_mturnmask, beg=False),
@@ -231,13 +230,8 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SmoothMethod-Sts', meth)
         return True
 
-    def set_spass_mask(self, val, beg=True, is_thread=False):
+    def set_spass_mask(self, val, beg=True):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_spass_mask, (val, ), {'beg': beg, 'is_thread': True}))
-            return True
-
         val = int(val) if val > 0 else 0
         other_mask = self._spass_mask[1 if beg else 0]
         maxsz = self.bpms[0].tbtrate - other_mask - 2
@@ -245,31 +239,10 @@ class EpicsOrbit(BaseOrbit):
         self._spass_mask[0 if beg else 1] = val
         name = 'Beg' if beg else 'End'
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
+        return True
 
-    def set_mturn_sync(self, val, is_thread=False):
+    def set_mturn_usemask(self, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_mturn_sync, (val, ), {'is_thread': True}))
-            return True
-
-        value = _csbpm.DsblEnbl.enabled
-        if val == self._csorb.DsblEnbl.Dsbl:
-            value = _csbpm.DsblEnbl.disabled
-
-        mask = self._get_mask()
-        for i, bpm in enumerate(self.bpms):
-            bpm.put_enable = mask[i]
-            bpm.tbt_sync_enbl = value
-        self.run_callbacks('MTurnSyncTim-Sts', val)
-
-    def set_mturn_usemask(self, val, is_thread=False):
-        """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_mturn_usemask, (val, ), {'is_thread': True}))
-            return True
-
         value = _csbpm.DsblEnbl.enabled
         if val == self._csorb.DsblEnbl.Dsbl:
             value = _csbpm.DsblEnbl.disabled
@@ -280,14 +253,10 @@ class EpicsOrbit(BaseOrbit):
             bpm.tbt_mask_enbl = value
 
         self.run_callbacks('MTurnUseMask-Sts', val)
+        return True
 
-    def set_mturnmask(self, val, beg=True, is_thread=False):
+    def set_mturnmask(self, val, beg=True):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_mturnmask, (val, ), {'beg': beg, 'is_thread': True}))
-            return True
-
         val = int(val) if val > 0 else 0
         bpms = self._get_used_bpms()
         omsk = \
@@ -307,20 +276,17 @@ class EpicsOrbit(BaseOrbit):
 
         name = 'Beg' if beg else 'End'
         self.run_callbacks('MTurnMaskSpl' + name + '-RB', val)
+        return True
 
-    def set_spass_average(self, val, is_thread=False):
+    def set_spass_average(self, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_spass_average, (val, ), {'is_thread': True}))
-            return True
-
         val = int(val) if val > 1 else 1
         with self._lock_raw_orbs:
             self._spass_average = val
             self._reset_orbs()
         self.run_callbacks('SPassAvgNrTurns-RB', val)
         self._prepare_mode()
+        return True
 
     def set_smooth_reset(self, _):
         """."""
@@ -328,13 +294,8 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         return True
 
-    def set_reforb(self, plane, orb, is_thread=False):
+    def set_reforb(self, plane, orb):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_reforb, (plane, orb), {'is_thread': True}))
-            return True
-
         msg = 'Setting New Reference Orbit.'
         self._update_log(msg)
         _log.info(msg)
@@ -358,14 +319,10 @@ class EpicsOrbit(BaseOrbit):
         with self._lock_raw_orbs:
             self._reset_orbs()
         self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
+        return True
 
-    def set_orbit_mode(self, value, is_thread=False):
+    def set_orbit_mode(self, value):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_orbit_mode, (value, ), {'is_thread': True}))
-            return True
-
         omode = self._mode
         acqrate = self._csorb.ACQRATE_SLOWORB
         if self.is_trigmode(value):
@@ -377,6 +334,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         self.run_callbacks('SOFBMode-Sts', value)
         self._prepare_mode(oldmode=omode)
+        return True
 
     def set_sync_with_injection(self, boo):
         """."""
@@ -384,14 +342,30 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SyncWithInjection-Sts', bool(boo))
         return True
 
+    def set_test_data_enbl(self, val, is_thread=False):
+        """."""
+        if not is_thread:
+            self._LQTHREAD.put((
+                self.set_test_data_enbl, (val, ), {'is_thread': True}))
+            return True
+
+        value = _csbpm.DsblEnbl.enabled
+        if val == self._csorb.DsblEnbl.Dsbl:
+            value = _csbpm.DsblEnbl.disabled
+
+        mask = self._get_mask()
+        for i, bpm in enumerate(self.bpms):
+            bpm.put_enable = mask[i]
+            bpm.test_data_enbl = value
+        self.run_callbacks('TestDataEnbl-Sts', val)
+
     def _prepare_mode(self, oldmode=None):
         """."""
         oldmode = self._mode if oldmode is None else oldmode
-        self.set_trig_acq_control(
-            self._csorb.TrigAcqCtrl.Abort, is_thread=True)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
 
         if not self.is_trigmode():
-            self.acq_config_bpms(is_thread=True)
+            self.acq_config_bpms()
             return True
 
         if self.is_singlepass():
@@ -405,27 +379,21 @@ class EpicsOrbit(BaseOrbit):
 
         if self._mode != oldmode:
             self.run_callbacks('TrigAcqChan-Sel', chan)
-            self.set_trig_acq_channel(chan, is_thread=True)
+            self.set_trig_acq_channel(chan)
             self.run_callbacks('TrigAcqRepeat-Sel', rep)
-            self.set_trig_acq_repeat(rep, is_thread=True)
+            self.set_trig_acq_repeat(rep)
             if self.acqtrignrsamples < points:
                 pts = points - self._acqtrignrsamplespre
                 self.run_callbacks('TrigNrSamplesPost-SP', pts)
-                self.set_acq_nrsamples(pts, ispost=True, is_thread=True)
+                self.set_acq_nrsamples(pts, ispost=True)
         self._update_time_vector()
-        self.acq_config_bpms(is_thread=True)
+        self.acq_config_bpms()
 
-        self.set_trig_acq_control(
-            self._csorb.TrigAcqCtrl.Start, is_thread=True)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
         return True
 
-    def set_orbit_multiturn_idx(self, value, is_thread=False):
+    def set_orbit_multiturn_idx(self, value):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_orbit_multiturn_idx, (value, ), {'is_thread': True}))
-            return True
-
         maxidx = self.acqtrignrsamples // self._mturndownsample
         maxidx *= self._acqtrignrshots
         if value >= maxidx:
@@ -439,15 +407,11 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks(
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
         self._update_multiturn_orbit_pvs()
+        return True
 
-    def acq_config_bpms(self, *args, is_thread=False):
+    def acq_config_bpms(self, *args):
         """."""
         _ = args
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.acq_config_bpms, tuple(), {'is_thread': True}))
-            return True
-
         msg = 'Configuring BPMs...'
         self._update_log(msg)
         _log.info(msg)
@@ -471,6 +435,7 @@ class EpicsOrbit(BaseOrbit):
         msg = 'Done configuring BPMs!'
         self._update_log(msg)
         _log.info(msg)
+        return True
 
     def sync_bpms(self, *args):
         """Synchronize BPMs."""
@@ -497,6 +462,9 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         for bpm in self._get_used_bpms():
+            # NOTE: Switching sync must always be enabled
+            bpm.sw_sync_enbl = _csbpm.DsblEnbl.enabled
+
             bpm.tbt_sync_enbl = _csbpm.DsblEnbl.enabled
             bpm.fofb_sync_enbl = _csbpm.DsblEnbl.enabled
             bpm.facq_sync_enbl = _csbpm.DsblEnbl.enabled
@@ -519,26 +487,17 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
 
-    def set_trig_acq_control(self, value, is_thread=False):
+    def set_trig_acq_control(self, value):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_trig_acq_control, (value, ), {'is_thread': True}))
-            return True
-
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
             bpm.put_enable = mask[i]
             bpm.ctrl = value
         self.run_callbacks('TrigAcqCtrl-Sts', value)
+        return True
 
-    def set_trig_acq_channel(self, value, is_thread=False):
+    def set_trig_acq_channel(self, value):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_trig_acq_channel, (value, ), {'is_thread': True}))
-            return True
-
         try:
             val = self._csorb.TrigAcqChan._fields[value]
             val = _csbpm.AcqChan._fields.index(val)
@@ -552,28 +511,19 @@ class EpicsOrbit(BaseOrbit):
 
         self.run_callbacks('TrigAcqChan-Sts', value)
         self._update_time_vector(channel=val)
+        return True
 
-    def set_trig_acq_repeat(self, value, is_thread=False):
+    def set_trig_acq_repeat(self, value):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_trig_acq_repeat, (value, ), {'is_thread': True}))
-            return True
-
         mask = self._get_mask()
         for i, bpm in enumerate(self.bpms):
             bpm.put_enable = mask[i]
             bpm.acq_repeat = value
         self.run_callbacks('TrigAcqRepeat-Sts', value)
+        return True
 
-    def set_acq_nrsamples(self, val, ispost=True, is_thread=False):
+    def set_acq_nrsamples(self, val, ispost=True):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_acq_nrsamples, (val, ),
-                {'ispost': ispost, 'is_thread': True}))
-            return True
-
         val = int(val) if val > 0 else 0
         val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'
@@ -591,14 +541,10 @@ class EpicsOrbit(BaseOrbit):
             setattr(self, '_acqtrignrsamples' + suf, val)
         self.run_callbacks('TrigNrSamples'+suf.title()+'-RB', val)
         self._update_time_vector()
+        return True
 
-    def set_trig_acq_nrshots(self, val, is_thread=False):
+    def set_trig_acq_nrshots(self, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_trig_acq_nrshots, (val, ), {'is_thread': True}))
-            return True
-
         val = int(val) if val > 1 else 1
         val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
@@ -611,14 +557,10 @@ class EpicsOrbit(BaseOrbit):
             self._acqtrignrshots = val
         self.run_callbacks('TrigNrShots-RB', val)
         self._update_time_vector()
+        return True
 
-    def set_poly_calibration(self, val, is_thread=False):
+    def set_poly_calibration(self, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_poly_calibration, (val, ), {'is_thread': True}))
-            return True
-
         value = _csbpm.DsblEnbl.enabled
         if val == self._csorb.DsblEnbl.Dsbl:
             value = _csbpm.DsblEnbl.disabled
@@ -627,14 +569,10 @@ class EpicsOrbit(BaseOrbit):
             bpm.put_enable = mask[i]
             bpm.polycal = value
         self.run_callbacks('PolyCalibration-Sts', val)
+        return True
 
-    def set_mturndownsample(self, val, is_thread=False):
+    def set_mturndownsample(self, val):
         """."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_mturndownsample, (val, ), {'is_thread': True}))
-            return True
-
         val = int(val) if val > 1 else 1
         val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
@@ -642,11 +580,11 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         self.run_callbacks('MTurnDownSample-RB', val)
         self._prepare_mode()
+        return True
 
     def acquire_mturn_orbit(self, _):
         """Acquire Multiturn data from BPMs."""
-        self._LQTHREAD.put((
-            self._update_multiturn_orbits, tuple(), dict(force_update=True)))
+        self._update_multiturn_orbits(force_update=True)
         return True
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
@@ -674,7 +612,7 @@ class EpicsOrbit(BaseOrbit):
         vect = dly + dur/nrst*shots[:, None] + dtime*pts[None, :]
         self._timevector = vect.ravel()
         self.run_callbacks('MTurnTime-Mon', self._timevector)
-        self.set_orbit_multiturn_idx(self._multiturnidx, is_thread=True)
+        self.set_orbit_multiturn_idx(self._multiturnidx)
 
     def _load_ref_orbs(self):
         """."""
@@ -953,8 +891,18 @@ class EpicsOrbit(BaseOrbit):
                 lambda x: x.switching_mode == _csbpm.SwModes.switching, bpms))
         status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
+        # Check if test data is disabled
+        isok = all(map(
+            lambda x: x.test_data_enbl == _csbpm.DsblEnbl.disabled, bpms))
+        status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
+
+        # Check if switching sync is enabled
+        isok = all(map(
+            lambda x: x.sw_sync_enbl == _csbpm.DsblEnbl.enabled, bpms))
+        status = _util.update_bit(v=status, bit_pos=6, bit_val=not isok)
+
         orb_conn = self._sloworb_raw_pv.connected if self.acc == 'SI' else True
-        status = _util.update_bit(v=status, bit_pos=5, bit_val=not orb_conn)
+        status = _util.update_bit(v=status, bit_pos=7, bit_val=not orb_conn)
 
         self._status = status
         self.run_callbacks('OrbStatus-Mon', status)

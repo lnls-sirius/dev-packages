@@ -1,9 +1,6 @@
 """Define Insertion Devices."""
 
 import time as _time
-import numpy as _np
-
-from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _SiriusPVName
 
@@ -14,68 +11,106 @@ class APU(_Device):
     """APU Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
 
         APU22_06SB = 'SI-06SB:ID-APU22'
         APU22_07SP = 'SI-07SP:ID-APU22'
         APU22_08SB = 'SI-08SB:ID-APU22'
         APU22_09SA = 'SI-09SA:ID-APU22'
         APU58_11SP = 'SI-11SP:ID-APU58'
-        ALL = (APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA,
-               APU58_11SP, )
+        ALL = (
+            APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA, APU58_11SP, )
 
-    _properties = (
+    TOLERANCE_PHASE = 0.01  # [mm]
+
+    _SHORT_SHUT_EYE = 0.1  # [s]
+    _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
+    _MOVECHECK_SLEEP = 0.1  # [s]
+    _default_timeout = 8  # [s]
+
+    PROPERTIES_DEFAULT = (
+        'BeamLineCtrlEnbl-Sel', 'BeamLineCtrlEnbl-Sts',
         'DevCtrl-Cmd', 'Moving-Mon',
+        'MaxPhaseSpeed-SP', 'MaxPhaseSpeed-RB',
         'PhaseSpeed-SP', 'PhaseSpeed-Mon',
         'Phase-SP', 'Phase-Mon',
         'Kx-SP', 'Kx-Mon',
-    )
+        )
 
     _DEF_TIMEOUT = 10  # [s]
     _CMD_MOVE = 3
     _MOVECHECK_SLEEP = 0.1  # [s]
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
-        devname = _SiriusPVName(devname)
-
         # check if device exists
         if devname not in APU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(
-            devname, properties=APU._properties, auto_monitor_mon=True)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    @property
+    def period_length(self):
+        """Return ID period length [mm]."""
+        _, length = self.devname.split('APU')
+        return float(length)
+
+    # --- phase speeds ----
+
+    @property
+    def phase_speed(self):
+        """Return phase speed [mm/s]."""
+        return self['PhaseSpeed-RB']
+
+    @property
+    def phase_speed_mon(self):
+        """Return phase speed monitor [mm/s]."""
+        return self['PhaseSpeed-Mon']
+
+    @property
+    def phase_speed_max(self):
+        """Return max phase speed readback [mm/s]."""
+        return self['MaxPhaseSpeed-RB']
+
+    @property
+    def phase_speed_max_lims(self):
+        """Return max phase speed limits."""
+        ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
+
+    # --- phase ---
+
+    @property
+    def phase_parked(self):
+        """Return ID parked phase value [mm]."""
+        return self.period_length / 2
 
     @property
     def phase(self):
         """Return APU phase [mm]."""
-        return self['Phase-Mon']
-
-    @phase.setter
-    def phase(self, value):
-        """Set APU phase [mm]."""
-        self['Phase-SP'] = value
-
-    @property
-    def phase_sp(self):
-        """Return APU phase SP [mm]."""
         return self['Phase-SP']
 
     @property
-    def phase_speed(self):
-        """Return APU phase speed [mm/s]."""
-        return self['PhaseSpeed-Mon']
-
-    @phase_speed.setter
-    def phase_speed(self, value):
-        """Set APU phase_speed [mm/s]."""
-        self['PhaseSpeed-SP'] = value
+    def phase_min(self):
+        """Return ID phase lower control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('Phase-SP')
+        return ctrlvars['lower_ctrl_limit']
 
     @property
-    def phase_speed_sp(self):
-        """Return APU phase speed SP [mm/s]."""
-        return self['PhaseSpeed-SP']
+    def phase_max(self):
+        """Return ID phase upper control limit [mm]."""
+        ctrlvars = self.pv_ctrlvars('Phase-SP')
+        return ctrlvars['upper_ctrl_limit']
+
+    @property
+    def phase_mon(self):
+        """Return APU phase [mm]."""
+        return self['Phase-Mon']
+
+    # --- Kparam methods ---
 
     @property
     def idkx(self):
@@ -87,15 +122,38 @@ class APU(_Device):
         """Set APU Kx."""
         self['Kx-SP'] = value
 
+    # --- movement checks ---
+
     @property
     def is_moving(self):
         """Return True if phase is changing."""
         return round(self['Moving-Mon']) == 1
 
-    def cmd_move(self, timeout=_DEF_TIMEOUT):
-        """."""
-        self['DevCtrl-Cmd'] = APU._CMD_MOVE
-        return True
+    # --- cmd_beamline and cmd_drive
+
+    def cmd_beamline_ctrl_enable(self, timeout=None):
+        """Command enable bealine ID control."""
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
+
+    def cmd_beamline_ctrl_disable(self, timeout=None):
+        """Command disable bealine ID control."""
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
+
+    # --- set methods ---
+
+    def set_phase(self, phase, timeout=None):
+        """Command to set ID target phase for movement [mm]."""
+        return self._write_sp('Phase-SP', phase, timeout)
+
+    def set_phase_speed(self, phase_speed, timeout=None):
+        """Command to set ID cruise phase speed for movement [mm/s]."""
+        return self._write_sp('PhaseSpeed-SP', phase_speed, timeout)
+
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
+        """Command to set ID max cruise phase speed for movement [mm/s]."""
+        return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
+
+    # --- cmd_wait
 
     def wait_move(self):
         """Wait for phase movement to complete."""
@@ -103,12 +161,80 @@ class APU(_Device):
         while self.is_moving:
             _time.sleep(APU._MOVECHECK_SLEEP)
 
+    # -- cmd_move
+
+    def cmd_move_stop(self, timeout=_default_timeout):
+        """Send command to stop ID movement."""
+        self['DevCtrl-Cmd'] = APU._CMD_MOVE_STOP
+        return True
+
+    def cmd_move_start(self, timeout=_default_timeout):
+        """Send command to start ID movement."""
+        self['DevCtrl-Cmd'] = APU._CMD_MOVE_START
+        return True
+
+    def cmd_move_park(self, timeout=None):
+        """Command to set and start ID movement to parked config."""
+        return self.move(self.phase_parked, timeout=timeout)
+
+    def move(self, phase, timeout=None):
+        """Command to set and start phase movements."""
+        # calc ETA
+        dtime_max = abs(phase - self.phase_mon) / self.phase_speed
+
+        # additional percentual in ETA
+        tol_dtime = 300  # [%]
+        tol_factor = (1 + tol_dtime/100)
+        tol_total = tol_factor * dtime_max + 5
+
+        # set target phase and gap
+        if not self.set_phase(phase=phase, timeout=timeout):
+            return False
+
+        # command move start
+        if not self.cmd_move_start(timeout=timeout):
+            return False
+
+        # wait for movement within reasonable time
+        time_init = _time.time()
+        while \
+                abs(self.phase_mon - phase) > self.TOLERANCE_PHASE or \
+                self.is_moving:
+            if _time.time() - time_init > tol_total:
+                print(f'tol_total: {tol_total:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
+                return False
+            _time.sleep(self._SHORT_SHUT_EYE)
+
+        # successfull movement at this point
+        return True
+
+    # --- private methods ---
+
+    def _write_sp(self, propties_sp, values, timeout=None):
+        timeout = timeout or self._default_timeout
+        if isinstance(propties_sp, str):
+            propties_sp = (propties_sp, )
+            values = (values, )
+        success = True
+        for propty_sp, value in zip(propties_sp, values):
+            if propty_sp in ('Phase-SP', 'PhaseSpeed-SP'):
+                propty_rb = propty_sp
+            else:
+                propty_rb = \
+                    propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+            self[propty_sp] = value
+            success &= super()._wait(
+                propty_rb, value, timeout=timeout, comp='eq')
+        return success
+
 
 class PAPU(_Device):
     """PAPU Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
 
         PAPU50_17SA = 'SI-17SA:ID-PAPU50'
         ALL = (PAPU50_17SA, )
@@ -136,19 +262,19 @@ class PAPU(_Device):
         'StopPhase-Cmd', 'ChangePhase-Cmd',
         'Log-Mon',
         )
+    PROPERTIES_DEFAULT = _properties + _properties_papu
 
-    def __init__(self, devname, properties=None, auto_monitor_mon=True):
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
-        devname = _SiriusPVName(devname)
-
         # check if device exists
+        if devname is None:
+            devname = self.DEVICES.PAPU50_17SA
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        properties = properties or self._properties + self._properties_papu
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def period_length(self):
@@ -179,7 +305,7 @@ class PAPU(_Device):
 
     @property
     def phase_speed_max_lims(self):
-        """."""
+        """Return max phase speed limits."""
         ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
         lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
         return lims
@@ -250,7 +376,7 @@ class PAPU(_Device):
             return True
         self['EnblPwrPhase-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1}
-        return self._wait(props_values, timeout=timeout)
+        return self._wait_propty_values(props_values, timeout=timeout)
 
     def cmd_beamline_ctrl_enable(self, timeout=None):
         """Command enable bealine ID control."""
@@ -260,17 +386,17 @@ class PAPU(_Device):
         """Command disable bealine ID control."""
         return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
-    # --- cmd_set ---
+    # --- set methods ---
 
-    def cmd_set_phase(self, phase, timeout=None):
+    def set_phase(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
         return self._write_sp('Phase-SP', phase, timeout)
 
-    def cmd_set_phase_speed(self, phase_speed, timeout=None):
+    def set_phase_speed(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
         return self._write_sp('PhaseSpeed-SP', phase_speed, timeout)
 
-    def cmd_set_phase_speed_max(self, phase_speed_max, timeout=None):
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
@@ -278,11 +404,17 @@ class PAPU(_Device):
 
     def cmd_move_phase_enable(self, timeout=None):
         """Command to release and enable ID phase movement."""
-        return self._write_sp('EnblAndReleasePhase-Sel', 1, timeout)
+        self['EnblAndReleasePhase-Sel'] = 1
+        return super()._wait(
+            'AllowedToChangePhase-Mon',
+            1, timeout=timeout, comp='eq')
 
     def cmd_move_phase_disable(self, timeout=None):
         """Command to disable and break ID phase movement."""
-        return self._write_sp('EnblAndReleasePhase-Sel', 0, timeout)
+        self['EnblAndReleasePhase-Sel'] = 0
+        return super()._wait(
+            'AllowedToChangePhase-Mon',
+            0, timeout=timeout, comp='eq')
 
     def cmd_move_enable(self, timeout=None):
         """Command to release and enable ID phase and gap movements."""
@@ -322,19 +454,33 @@ class PAPU(_Device):
         # check for successful stop
         if not self.wait_while_busy(timeout=timeout):
             return False
+
         success = True
         success &= super()._wait('Moving-Mon', 0, timeout=timeout)
+
         if not success:
             return False
 
         # enable movement again
-        return self.cmd_move_enable(timeout=timeout)
+        status = self.cmd_move_enable(timeout=timeout)
+
+        return status
+
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        success = True
+        success &= self.cmd_move_phase_start(timeout=timeout)
+        return success
 
     def cmd_move_phase_start(self, timeout=None):
         """Command to start phase movement."""
         return self._move_start('ChangePhase-Cmd', timeout=timeout)
 
-    def cmd_move(self, phase, timeout=None):
+    def cmd_move_park(self, timeout=None):
+        """Command to set and start ID movement to parked config."""
+        return self.move(self.phase_parked, timeout=timeout)
+
+    def move(self, phase, timeout=None):
         """Command to set and start phase movements."""
         # calc ETA
         dtime_max = abs(phase - self.phase_mon) / self.phase_speed
@@ -345,7 +491,7 @@ class PAPU(_Device):
         tol_total = tol_factor * dtime_max + 5
 
         # set target phase and gap
-        if not self.cmd_set_phase(phase=phase, timeout=timeout):
+        if not self.set_phase(phase=phase, timeout=timeout):
             return False
 
         # command move start
@@ -355,7 +501,7 @@ class PAPU(_Device):
         # wait for movement within reasonable time
         time_init = _time.time()
         while \
-                abs(self.phase_mon - phase) > PAPU.TOLERANCE_PHASE or \
+                abs(self.phase_mon - phase) > self.TOLERANCE_PHASE or \
                 self.is_moving:
             if _time.time() - time_init > tol_total:
                 print(f'tol_total: {tol_total:.3f} s')
@@ -366,10 +512,6 @@ class PAPU(_Device):
 
         # successfull movement at this point
         return True
-
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.cmd_move(self.phase_parked, timeout=timeout)
 
     # --- cmd_reset
 
@@ -384,13 +526,12 @@ class PAPU(_Device):
     # --- other cmds ---
 
     def cmd_clear_error(self):
-        """."""
+        """Command to clear errors."""
         self['ClearErr-Cmd'] = 1
 
     # --- private methods ---
 
     def _move_start(self, cmd_propty, timeout=None):
-        """."""
         timeout = timeout or self._default_timeout
 
         # wait for not busy state
@@ -419,25 +560,29 @@ class PAPU(_Device):
                 propty_rb, value, timeout=timeout, comp='eq')
         return success
 
-    def _wait(self, props_values, timeout=None, comp='eq'):
-        timeout = timeout or self._default_timeout
-        success = True
+    def _wait_propty_values(self, props_values, timeout=None, comp='eq'):
+        timeout = timeout if timeout is not None else self._default_timeout
+        time0 = _time.time()
         for propty, value in props_values.items():
-            success &= super()._wait(
-                propty, value, timeout=timeout, comp=comp)
-        return success
+            timeout_left = max(0, timeout - (_time.time() - time0))
+            if timeout_left == 0:
+                return False
+            if not super()._wait(
+                    propty, value, timeout=timeout_left, comp=comp):
+                return False
+        return True
 
 
 class EPU(PAPU):
     """EPU Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
 
         EPU50_10SB = 'SI-10SB:ID-EPU50'
         ALL = (EPU50_10SB, )
 
-    _properties = PAPU._properties + (
+    PROPERTIES_DEFAULT = PAPU._properties + (
         'EnblPwrAll-Cmd',
         'PwrGap-Mon',
         'Status-Mon',
@@ -450,17 +595,17 @@ class EPU(PAPU):
         'ChangeGap-Cmd', 'Stop-Cmd',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
-        devname = _SiriusPVName(devname)
-
         # check if device exists
+        if devname is None:
+            devname = self.DEVICES.EPU50_10SB
         if devname not in EPU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(
-            devname, properties=self._properties, auto_monitor_mon=True)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
     @property
     def status(self):
@@ -491,7 +636,7 @@ class EPU(PAPU):
 
     @property
     def gap_speed_max_lims(self):
-        """."""
+        """Return max gap speed limits."""
         ctrl = self.pv_ctrlvars('MaxGapSpeed-SP')
         lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
         return lims
@@ -564,19 +709,19 @@ class EPU(PAPU):
             return True
         self['EnblPwrAll-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1, 'PwrGap-Mon': 1}
-        return self._wait(props_values, timeout=timeout)
+        return self._wait_propty_values(props_values, timeout=timeout)
 
-    # --- cmd_set ---
+    # --- set methods ---
 
-    def cmd_set_gap(self, gap, timeout=None):
+    def set_gap(self, gap, timeout=None):
         """Command to set ID target gap for movement [mm]."""
         return self._write_sp('Gap-SP', gap, timeout)
 
-    def cmd_set_gap_speed(self, gap_speed, timeout=None):
+    def set_gap_speed(self, gap_speed, timeout=None):
         """Command to set ID cruise gap speed for movement [mm/s]."""
         return self._write_sp('GapSpeed-SP', gap_speed, timeout)
 
-    def cmd_set_gap_speed_max(self, gap_speed_max, timeout=None):
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
         """Command to set ID max cruise gap speed for movement [mm/s]."""
         return self._write_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
 
@@ -584,11 +729,17 @@ class EPU(PAPU):
 
     def cmd_move_gap_enable(self, timeout=None):
         """Command to release and enable ID gap movement."""
-        return self._write_sp('EnblAndReleaseGap-Sel', 1, timeout)
+        self['EnblAndReleaseGap-Sel'] = 1
+        return super()._wait(
+            'AllowedToChangeGap-Mon',
+            1, timeout=timeout, comp='eq')
 
     def cmd_move_gap_disable(self, timeout=None):
         """Command to disable and break ID gap movement."""
-        return self._write_sp('EnblAndReleaseGap-Sel', 0, timeout)
+        self['EnblAndReleaseGap-Sel'] = 0
+        return super()._wait(
+            'AllowedToChangeGap-Mon',
+            0, timeout=timeout, comp='eq')
 
     def cmd_move_enable(self, timeout=None):
         """Command to release and enable ID phase and gap movements."""
@@ -618,11 +769,23 @@ class EPU(PAPU):
 
     # -- cmd_move
 
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        success = True
+        success &= self.cmd_move_gap_start(timeout=timeout)
+        success &= self.cmd_move_phase_start(timeout=timeout)
+        return success
+
     def cmd_move_gap_start(self, timeout=None):
         """Command to start gap movement."""
         return self._move_start('ChangeGap-Cmd', timeout=timeout)
 
-    def cmd_move(self, phase, gap, timeout=None):
+    def cmd_move_park(self, timeout=None):
+        """Command to set and start ID movement to parked config."""
+        return self.move(
+            self.phase_parked, self.gap_parked, timeout=timeout)
+
+    def move(self, phase, gap, timeout=None):
         """Command to set and start phase and gap movements."""
         # calc ETA
         dtime_phase = abs(phase - self.phase_mon) / self.phase_speed
@@ -637,9 +800,9 @@ class EPU(PAPU):
         tol_total = tol_factor * dtime_max + 5
 
         # set target phase and gap
-        if not self.cmd_set_phase(phase=phase, timeout=timeout):
+        if not self.set_phase(phase=phase, timeout=timeout):
             return False
-        if not self.cmd_set_gap(gap=gap, timeout=timeout):
+        if not self.set_gap(gap=gap, timeout=timeout):
             return False
 
         # command move start
@@ -664,15 +827,10 @@ class EPU(PAPU):
         # successfull movement at this point
         return True
 
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.cmd_move(
-            self.phase_parked, self.gap_parked, timeout=timeout)
-
     # --- other cmds ---
 
     def cmd_clear_error(self):
-        """."""
+        """Command to clear errors."""
         pass
 
 
@@ -680,23 +838,22 @@ class WIG(_Device):
     """Wiggler Insertion Device."""
 
     class DEVICES:
-        """."""
+        """Device names."""
+
         WIG180_14SB = 'SI-14SB:ID-WIG180'
         ALL = (WIG180_14SB, )
 
     # NOTE: IOC yet to be written!
-    _properties = (
-        'Gap-SP', 'Gap-RB', 'Gap-Mon',
-    )
+    PROPERTIES_DEFAULT = ('Gap-SP', 'Gap-RB', 'Gap-Mon')
 
-    def __init__(self, devname):
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
-        devname = _SiriusPVName(devname)
-
         # check if device exists
+        if devname is None:
+            devname = self.DEVICES.WIG180_14SB
         if devname not in WIG.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
         super().__init__(
-            devname, properties=WIG._properties, auto_monitor_mon=True)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)

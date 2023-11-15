@@ -67,6 +67,9 @@ class BiasFeedback():
             'GPModNoiseStd-SP': self.set_gp_noise_std,
             'GPModKernStd-SP': self.set_gp_kern_std,
             'GPModKernLenScl-SP': self.set_gp_kern_leng,
+            'GPModNoiseStdFit-Sel': self.set_gp_noise_std_fit,
+            'GPModKernStdFit-Sel': self.set_gp_kern_std_fit,
+            'GPModKernLenSclFit-Sel': self.set_gp_kern_leng_fit,
             }
 
     def init_database(self):
@@ -241,6 +244,33 @@ class BiasFeedback():
         self.run_callbacks('GPModKernLenScl-RB', value)
         return True
 
+    def set_gp_noise_std_fit(self, value):
+        """."""
+        if bool(value):
+            self.gpmodel.likelihood.variance.unfix()
+        else:
+            self.gpmodel.likelihood.variance.fix()
+        self.run_callbacks('GPModNoiseStdFit-Sts', value)
+        return True
+
+    def set_gp_kern_std_fit(self, value):
+        """."""
+        if bool(value):
+            self.gpmodel.kern.variance.unfix()
+        else:
+            self.gpmodel.kern.variance.fix()
+        self.run_callbacks('GPModKernStdFit-Sts', value)
+        return True
+
+    def set_gp_kern_leng_fit(self, value):
+        """."""
+        if bool(value):
+            self.gpmodel.kern.lengthscale.unfix()
+        else:
+            self.gpmodel.kern.lengthscale.fix()
+        self.run_callbacks('GPModKernLenSclFit-Sts', value)
+        return True
+
     # ############ Auxiliary Methods ############
     def _callback_to_thread(self, **kwgs):
         if not self.do_update_models or not self.model_update_data:
@@ -264,15 +294,29 @@ class BiasFeedback():
         db_ = self.database['BiasFBGPModKernStd-RB']
         kernel.variance.constrain_bounded(db_['lolim']**2, db_['hilim']**2)
         kernel.variance = db_['value']**2
+        if bool(self.database['BiasFBGPModKernStdFit-Sts']['value']):
+            kernel.variance.unfix()
+        else:
+            kernel.variance.fix()
+
         db_ = self.database['BiasFBGPModKernLenScl-RB']
         kernel.lengthscale.constrain_bounded(db_['lolim'], db_['hilim'])
         kernel.lengthscale = db_['value']
+        if bool(self.database['BiasFBGPModKernLenSclFit-Sts']['value']):
+            kernel.lengthscale.unfix()
+        else:
+            kernel.lengthscale.fix()
 
         gpmodel = gpy.models.GPRegression(x, y, kernel)
         db_ = self.database['BiasFBGPModNoiseStd-RB']
         gpmodel.likelihood.variance.constrain_bounded(
             db_['lolim']**2, db_['hilim']**2)
         gpmodel.likelihood.variance = db_['value']**2
+        if bool(self.database['BiasFBGPModNoiseStdFit-Sts']['value']):
+            gpmodel.likelihood.variance.unfix()
+        else:
+            gpmodel.likelihood.variance.fix()
+
         self.gpmodel = gpmodel
         self._update_predictions()
 

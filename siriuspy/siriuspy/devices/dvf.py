@@ -6,17 +6,19 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 from mathphys.imgproc import Image2D_Fit as _Image2D_Fit
 from mathphys.imgproc import FitGaussianScipy as _FitGaussianScipy
 
-from .device import DeviceNC as _DeviceNC
+from .device import Device as _Device
 
 
-class DVF(_DeviceNC):
+class DVF(_Device):
     """Beam Visualization Device ("Dispositivo de Visualização de Feixe")."""
 
     class DEVICES:
         """Devices names."""
+
         CAX_DVF1 = 'CAX:A:BASLER01'
         CAX_DVF2 = 'CAX:B:BASLER01'
-        ALL = (CAX_DVF1, CAX_DVF2)
+        BO_DVF = 'BO-50U:DI-VLightCam'
+        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF)
 
     _default_timeout = 10  # [s]
 
@@ -29,21 +31,29 @@ class DVF(_DeviceNC):
         'IMAGE_SIZE_X',  # [pixel]
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
-    )
+        )
 
     _dev2params = {
-        DEVICES.CAX_DVF1:
-            _get_namedtuple(
-                'DVFParameters',
-                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
-        DEVICES.CAX_DVF2:
-            _get_namedtuple(
-                'DVFParameters',
-                _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF1: _get_namedtuple(
+            'DVFParameters',
+            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.CAX_DVF2: _get_namedtuple(
+            'DVFParameters',
+            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+        DEVICES.BO_DVF: _get_namedtuple(
+            'DVFParameters',
+            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
         }
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
+        'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
+        'cam1:Width', 'cam1:Width_RBV',
+        'cam1:Height', 'cam1:Height_RBV',
+        'cam1:OffsetX', 'cam1:OffsetX_RBV',
+        'cam1:OffsetY', 'cam1:OffsetY_RBV',
+        'cam1:CenterX', 'cam1:CenterX_RBV',
+        'cam1:CenterY', 'cam1:CenterY_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
@@ -54,9 +64,12 @@ class DVF(_DeviceNC):
         'cam1:DataType', 'cam1:DataType_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
-        'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
         'cam1:Temperature',
         'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
+        'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
+        'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
+        'image1:ArrayData',
         'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
         'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
         'ROI1:MinX', 'ROI1:MinX_RBV',
@@ -66,22 +79,22 @@ class DVF(_DeviceNC):
         'ROI1:EnableX', 'ROI1:EnableX_RBV',
         'ROI1:EnableY', 'ROI1:EnableY_RBV',
         'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
-        'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
-        'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
-        'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
-        'image1:ArrayData',
         'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
-        'HDF1:EnableCallbacks', 'HDF1:EnableCallbacks_RBV',
         )
 
-    def __init__(self, devname, *args, **kwargs):
+    _PROPTY_NAME_MAP = dict()
+
+    def __init__(self, devname, props2init='all', **kwargs):
         """Init."""
-        # check if device exists
         if devname not in DVF.DEVICES.ALL:
             raise NotImplementedError(devname)
-        # call base class constructor
-        super().__init__(devname, properties=self._properties, *args, **kwargs)
+        if devname == DVF.DEVICES.BO_DVF:
+            self._devname = devname
+            props = self.PROPERTIES_DEFAULT
+            self.PROPERTIES_DEFAULT = \
+                [self._get_propty(prop) for prop in props]
+        super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
     def parameters(self):
@@ -134,23 +147,93 @@ class DVF(_DeviceNC):
 
     @property
     def cam_max_sizex(self):
-        """Camera max second dimension size (pixels)."""
+        """Camera max second dimension size [pixel]."""
         return self['cam1:MaxSizeX_RBV']
 
     @property
     def cam_max_sizey(self):
-        """Camera max first dimension size (pixels)."""
+        """Camera max first dimension size [pixel]."""
         return self['cam1:MaxSizeY_RBV']
 
     @property
     def cam_sizex(self):
-        """Camera second dimension size (pixels)."""
+        """Camera second dimension size [pixel]."""
         return self['cam1:SizeX_RBV']
 
     @property
     def cam_sizey(self):
-        """Camera first dimension size (pixels)."""
+        """Camera first dimension size [pixel]."""
         return self['cam1:SizeY_RBV']
+
+    @property
+    def cam_width(self):
+        """Camera image X width [pixels]."""
+        # NOTE: the same as cam_sizex
+        return self['cam1:Width_RBV']
+
+    @cam_width.setter
+    def cam_width(self, value):
+        """Set camera image X width [pixel]."""
+        # NOTE: acquisition has to be turned off and on for
+        # this to take effect on ROI and image1 modules
+        value = int(value)
+        if 0 < self.cam_offsetx + value <= self.cam_max_sizex:
+            self['cam1:Width'] = value
+        else:
+            raise ValueError('Invalid offsetx and width combination!')
+
+    @property
+    def cam_height(self):
+        """Camera image Y height [pixels]."""
+        # NOTE: the same as cam_sizey
+        return self['cam1:Height_RBV']
+
+    @cam_height.setter
+    def cam_height(self, value):
+        """Set camera image Y height [pixel]."""
+        # NOTE: acquisition has to be turned off and on for
+        # this to take effect on ROI and image1 modules
+        value = int(value)
+        if 0 < self.cam_offsety + value <= self.cam_max_sizey:
+            self['cam1:Height'] = value
+        else:
+            raise ValueError('Invalid offsety and height combination!')
+
+    @property
+    def cam_offsetx(self):
+        """Camera image X offset [pixels]."""
+        return self['cam1:OffsetX_RBV']
+
+    @cam_offsetx.setter
+    def cam_offsetx(self, value):
+        """Set camera image X offset [pixel]."""
+        value = int(value)
+        if 0 < value + self.cam_width <= self.cam_max_sizex:
+            self['cam1:OffsetX'] = value
+        else:
+            raise ValueError('Invalid offsetx and width combination!')
+
+    @property
+    def cam_offsety(self):
+        """Camera image Y offset [pixels]."""
+        return self['cam1:OffsetY_RBV']
+
+    @cam_offsety.setter
+    def cam_offsety(self, value):
+        """Set camera image Y offset [pixel]."""
+        value = int(value)
+        if 0 <= value + self.cam_height <= self.cam_max_sizey:
+            self['cam1:OffsetY'] = value
+        else:
+            raise ValueError('Invalid offsety and height combination!')
+
+    @property
+    def cam_roi(self):
+        """Return current ROI (offsetx, offsety, width, height)."""
+        roi = (
+            self.cam_offsetx, self.cam_offsety,
+            self.cam_width, self.cam_height)
+        return roi
 
     @property
     def roi_minx(self):
@@ -174,12 +257,12 @@ class DVF(_DeviceNC):
 
     @property
     def image_sizex(self):
-        """Image second dimension size (pixels)."""
+        """Image second dimension size [pixel]."""
         return self['image1:ArraySize0_RBV']
 
     @property
     def image_sizey(self):
-        """Image first dimension size (pixels)."""
+        """Image first dimension size [pixel]."""
         return self['image1:ArraySize1_RBV']
 
     @property
@@ -189,6 +272,18 @@ class DVF(_DeviceNC):
         data = self['image1:ArrayData']
         image = _np.reshape(data, shape)
         return image
+
+    @property
+    def image_auto_monitor(self):
+        """Image PV auto monitor."""
+        propty = self._get_propty('image1:ArrayData')
+        return self.pv_object(propty).auto_monitor
+
+    @image_auto_monitor.setter
+    def image_auto_monitor(self, value):
+        """Set image PV auto monitor."""
+        propty = self._get_propty('image1:ArrayData')
+        self.pv_object(propty).auto_monitor = bool(value)
 
     @property
     def image_pixel_size(self):
@@ -225,7 +320,7 @@ class DVF(_DeviceNC):
         """Return camera gain auto."""
         return self['cam1:GainAuto_RBV']
 
-    @gain.setter
+    @gain_auto.setter
     def gain_auto(self, value):
         """Set camera gain auto."""
         self['cam1:GainAuto'] = value
@@ -294,7 +389,6 @@ class DVF(_DeviceNC):
             'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
             'image1:EnableCallbacks': 1,  # Enable
             'ffmstream1:EnableCallbacks': 0,  # Disable
-            'HDF1:EnableCallbacks': 0,  # Disable
             'Trans1:EnableCallbacks': 0,  # Disable
         }
 
@@ -304,6 +398,7 @@ class DVF(_DeviceNC):
 
         # check readback values
         for propty, value in props_values.items():
+            propty = self._get_propty(propty)
             if not self._wait(propty + '_RBV', value, timeout=timeout):
                 return False
 
@@ -313,13 +408,71 @@ class DVF(_DeviceNC):
         self.acquisition_time = params.ACQUISITION_TIME_DEFAULT
         return True
 
-    def cmd_acquire_on(self, timeout=None):
+    def cmd_acquire_on(self, timeout=_default_timeout):
         """Tune IOC image acquisition on."""
         return self._set_and_wait('cam1:Acquire', 1, timeout=timeout)
 
-    def cmd_acquire_off(self, timeout=None):
+    def cmd_acquire_off(self, timeout=_default_timeout):
         """Tune IOC image acquisition off."""
         return self._set_and_wait('cam1:Acquire', 0, timeout=timeout)
+
+    def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
+        """Set cam image ROI and reset aquisition."""
+        c_width, c_height = self.cam_width, self.cam_height
+        n_width, n_height = int(width), int(height)
+        
+        if not self.cmd_acquire_off(timeout=timeout):
+            return False
+        if n_width < c_width:
+            self._set_and_wait('cam1:Width', width, timeout=timeout)
+            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+        else:
+            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:Width', width, timeout=timeout)
+        if n_height < c_height:
+            self._set_and_wait('cam1:Height', height, timeout=timeout)
+            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+        else:
+            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:Height', height, timeout=timeout)
+        if not self.cmd_acquire_on(timeout=timeout):
+            return False
+
+        return True
+
+    def cmd_cam_roi_reset(self, timeout=None):
+        """."""
+        return self.cmd_cam_roi_set(
+            offsetx=0, offsety=0,
+            width=self.cam_max_sizex, height=self.cam_max_sizey,
+            timeout=timeout)
+
+    def _get_propty(self, propty):
+        if self.devname != DVF.DEVICES.BO_DVF:
+            return propty
+
+        if DVF.DEVICES.BO_DVF not in DVF._PROPTY_NAME_MAP:
+            DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF] = dict()
+        propty_name_map = DVF._PROPTY_NAME_MAP[DVF.DEVICES.BO_DVF]
+        if propty not in propty_name_map:
+            if ':' in propty:
+                plug, prop = propty.split(':')
+                plug = plug.replace('cam', 'Cam')
+                plug = plug.replace('image', 'Image')
+                plug = plug.replace('Trans', 'Transf')
+                propty = plug + prop
+            propty_name_map[propty] = propty
+        return propty_name_map[propty]
+
+    def __getitem__(self, propty):
+        """Return value of property."""
+        propty = self._get_propty(propty)
+        return super().__getitem__(propty)
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        propty = self._get_propty(propty)
+        return super().__setitem__(propty, value)
 
     @staticmethod
     def conv_devname2parameters(devname):
@@ -330,13 +483,14 @@ class DVF(_DeviceNC):
         """."""
         timeout = timeout or self._default_timeout
         self[propty] = value
+        propty = self._get_propty(propty)
         return self._wait(propty + '_RBV', value, timeout=timeout)
 
 
 class DVFImgProc(DVF):
     """."""
 
-    _properties = DVF._properties + (
+    PROPERTIES_DEFAULT = DVF.PROPERTIES_DEFAULT + (
         'ImgIntensityMax-Mon', 'ImgIntensityMin-Mon',
         'ImgIntensitySum-Mon', 'ImgIsSaturated-Mon',
         'ImgIsWithBeam-Mon',
@@ -363,9 +517,9 @@ class DVFImgProc(DVF):
         'ImgDVFStatus-Mon', 'ImgDVFStatusLabels-Cte',
         )
 
-    def __init__(self, devname, *args, **kwargs):
+    def __init__(self, devname, props2init='all', **kwargs):
         """."""
-        super().__init__(devname=devname, *args, **kwargs)
+        super().__init__(devname=devname, props2init=props2init, **kwargs)
         self._fitgaussian = _FitGaussianScipy()
 
     @property
@@ -547,6 +701,39 @@ class DVFImgProc(DVF):
     def log(self):
         """."""
         return self['ImgLog-Mon']
+
+    def cam_roi_calc(self, roix_fwhm_factor, roiy_fwhm_factor):
+        """Return ROI based on FWHM factors."""
+        multp = 4
+
+        width = 2 * self.roix_fwhm * abs(roix_fwhm_factor)
+        width = int(width)
+        width -= width % multp
+        centerx = self.cam_offsetx + self.roix_center
+        offsetx = int(centerx - width/2)
+        offsetx -= offsetx % multp
+
+        height = 2 * self.roiy_fwhm * abs(roiy_fwhm_factor)
+        height = int(height)
+        height -= height % multp
+        centery = self.cam_offsety + self.roiy_center
+        offsety = int(centery - height/2)
+        offsety -= offsety % multp
+
+        params = (offsetx, offsety, width, height)
+
+        # check parameters, return False if inconsistent
+        if width <= 0 or width > self.cam_max_sizex:
+            return False, params
+        if height <= 0 or height > self.cam_max_sizey:
+            return False, params
+        if offsetx < 0 or offsetx + width >= self.cam_max_sizex:
+            return False, params
+        if offsety < 0 or offsety + height >= self.cam_max_sizey:
+            return False, params
+
+        # all ok, return parameters with True status.
+        return True, params
 
     def create_image2dfit(self):
         """Return a Image2DFit object with current image as data."""

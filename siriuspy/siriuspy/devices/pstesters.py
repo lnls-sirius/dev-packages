@@ -4,11 +4,14 @@ import time as _time
 import numpy as _np
 
 from ..util import get_bit as _get_bit
+from ..namesys import SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _PSC, ETypes as _PSE, \
     PS_LI_INTLK_THRS as _PS_LI_INTLK, \
     get_ps_interlocks as _get_ps_interlocks
-from .device import Device as _Device, Devices as _Devices
+
+from .device import Device as _Device, DeviceSet as _DeviceSet
+from .timing import Trigger as _Trigger
 
 
 DEFAULT_CAP_BANK_VOLT = {
@@ -31,7 +34,7 @@ DEFAULT_CAP_BANK_VOLT = {
     'PA-RaPSF09:PS-DCLink-BO': 240,
     'PA-RaPSC01:PS-DCLink-BO': 300,
     'PA-RaPSC02:PS-DCLink-BO': 300,
-}
+    }
 
 
 class _TesterBase(_Device):
@@ -85,17 +88,13 @@ class _TesterPSBase(_TesterBase):
 class TesterDCLinkFBP(_TesterPSBase):
     """FBP DCLink tester."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Reset-Cmd', 'IntlkSoft-Mon', 'IntlkHard-Mon',
         'OpMode-Sel', 'OpMode-Sts',
         'PwrState-Sel', 'PwrState-Sts',
         'CtrlLoop-Sel', 'CtrlLoop-Sts',
         'Voltage-SP', 'Voltage-Mon',
-    )
-
-    def __init__(self, devname):
-        """Init."""
-        super().__init__(devname, properties=TesterDCLinkFBP._properties)
+        )
 
     def check_intlk(self):
         """Check interlocks."""
@@ -139,7 +138,7 @@ class TesterDCLinkFBP(_TesterPSBase):
 class TesterDCLink(_TesterPSBase):
     """DCLink tester."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Reset-Cmd',
         'OpMode-Sel', 'OpMode-Sts',
         'PwrState-Sel', 'PwrState-Sts',
@@ -147,13 +146,14 @@ class TesterDCLink(_TesterPSBase):
         'CapacitorBankVoltage-SP', 'CapacitorBankVoltageRef-Mon',
         'CapacitorBankVoltage-Mon')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        properties = list(TesterDCLink._properties)
-        self._intlk_pvs = _get_ps_interlocks(psname=devname)
-        properties.extend(self._intlk_pvs)
+        if props2init == 'all':
+            props2init = list(TesterDCLink.PROPERTIES_DEFAULT)
+            self._intlk_pvs = _get_ps_interlocks(psname=devname)
+            props2init.extend(self._intlk_pvs)
 
-        super().__init__(devname, properties)
+        super().__init__(devname, props2init=props2init)
 
     def check_intlk(self):
         """Check interlocks."""
@@ -201,14 +201,11 @@ class TesterDCLinkRegatron(_TesterBase):
 
     _OPMODE_STS_OFF = 4  # READY
     _OPMODE_STS_ON = 8  # RUN
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Reset-Cmd', 'GenIntlk-Mon', 'GenWarn-Mon', 'OpMode-Sts',
         'PwrState-Sel', 'PwrState-Sts',
-        'Voltage-SP', 'VoltageRef-Mon', 'Voltage-Mon')
-
-    def __init__(self, devname):
-        """Init."""
-        super().__init__(devname, TesterDCLinkRegatron._properties)
+        'Voltage-SP', 'VoltageRef-Mon', 'Voltage-Mon',
+        )
 
     def reset(self):
         """Reset."""
@@ -265,22 +262,21 @@ class TesterDCLinkRegatron(_TesterBase):
 class TesterPS(_TesterPSBase):
     """PS tester."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Reset-Cmd',
         'OpMode-Sel', 'OpMode-Sts',
         'PwrState-Sel', 'PwrState-Sts',
         'CtrlLoop-Sel', 'CtrlLoop-Sts',
         'Current-SP', 'CurrentRef-Mon', 'Current-Mon')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        properties = list(TesterPS._properties)
-        self._intlk_pvs = _get_ps_interlocks(psname=devname)
-        properties.extend(self._intlk_pvs)
-        if _PSSearch.conv_psname_2_psmodel(devname) == 'FBP':
-            properties.extend(['SOFBMode-Sel', 'SOFBMode-Sts'])
+        if props2init == 'all':
+            props2init = list(TesterPS.PROPERTIES_DEFAULT)
+            self._intlk_pvs = _get_ps_interlocks(psname=devname)
+            props2init.extend(self._intlk_pvs)
 
-        super().__init__(devname, properties)
+        super().__init__(devname, props2init=props2init)
 
         splims = _PSSearch.conv_psname_2_splims(devname)
         self.test_current = splims['TSTV']
@@ -333,6 +329,9 @@ class TesterPS(_TesterPSBase):
 class TesterPSFBP(TesterPS):
     """PS FBP Tester."""
 
+    PROPERTIES_DEFAULT = TesterPS.PROPERTIES_DEFAULT + \
+        ('SOFBMode-Sel', 'SOFBMode-Sts')
+
     def set_sofbmode(self, state='on'):
         """Set SOFBMode."""
         if state == 'on':
@@ -353,14 +352,16 @@ class TesterPSFBP(TesterPS):
 class TesterPSLinac(_TesterBase):
     """Linac PS tester."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'StatusIntlk-Mon', 'IntlkWarn-Mon',
         'PwrState-Sel', 'PwrState-Sts',
         'Current-SP', 'Current-Mon',
-        'Connected-Mon')
+        'Connected-Mon',
+        )
 
-    def __init__(self, devname):
-        super().__init__(devname, properties=TesterPSLinac._properties)
+    def __init__(self, devname, props2init='all'):
+        """."""
+        super().__init__(devname, props2init=props2init)
 
         self.intlkwarn_bit = _PSE.LINAC_INTLCK_WARN.index('LoadI Over Thrs')
 
@@ -425,22 +426,23 @@ class TesterPSLinac(_TesterBase):
     def _cmp(self, value, target):
         if None in [value, target]:
             return False
-        return abs(value - target) < self.test_tol
+        tol = self.test_tol if target else 10*self.test_tol
+        return abs(value - target) < tol
 
 
 class TesterPSFOFB(_TesterBase):
     """FOFB PS tester."""
 
-    _properties = (
-        'AlarmsAmp-Mon', 'AlarmsAmpLtcRst-Cmd',
+    PROPERTIES_DEFAULT = (
+        'AlarmsAmpLtc-Mon', 'AlarmsAmpLtcRst-Cmd',
         'PwrState-Sel', 'PwrState-Sts',
         'Current-SP', 'CurrentRef-Mon', 'Current-Mon',
         'OpMode-Sel', 'OpMode-Sts',
-    )
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        super().__init__(devname, properties=TesterPSFOFB._properties)
+        super().__init__(devname, props2init=props2init)
 
         splims = _PSSearch.conv_psname_2_splims(devname)
         self.test_current = splims['TSTV']
@@ -462,7 +464,7 @@ class TesterPSFOFB(_TesterBase):
 
     def check_intlk(self):
         """Check interlocks."""
-        return self['AlarmsAmp-Mon'] == 0
+        return self['AlarmsAmpLtc-Mon'] == 0
 
     def set_pwrstate(self, state='on'):
         """Set PwrState."""
@@ -513,23 +515,18 @@ class TesterPSFOFB(_TesterBase):
 class _TesterPUBase(_TesterBase):
     """Tester PU base."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Reset-Cmd',
         'Intlk1-Mon', 'Intlk2-Mon', 'Intlk3-Mon', 'Intlk4-Mon',
         'Intlk5-Mon', 'Intlk6-Mon', 'Intlk7-Mon',
         'PwrState-Sel', 'PwrState-Sts',
         'Pulse-Sel', 'Pulse-Sts',
-        'Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
-    _sept_properties = _properties
-    _kckr_properties = _properties + ('Intlk8-Mon', )
+        'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        if 'Kckr' in devname:
-            properties = _TesterPUBase._kckr_properties
-        else:
-            properties = _TesterPUBase._sept_properties
-        super().__init__(devname, properties=properties)
+        super().__init__(devname, props2init=props2init)
 
         splims = _PSSearch.conv_psname_2_splims(devname)
         self.test_voltage = splims['TSTV']
@@ -537,6 +534,10 @@ class _TesterPUBase(_TesterBase):
 
     def reset(self):
         """Reset."""
+        # if there is no interlock, do not send reset to avoid strange IOC
+        # behavior (Pulse-Sts is enabled when there are no interlock)
+        if self.check_intlk():
+            return
         self['Reset-Cmd'] = 1
 
     def check_intlk(self):
@@ -610,11 +611,14 @@ class _TesterPUBase(_TesterBase):
     def _cmp(self, value, target):
         if None in [value, target]:
             return False
-        return abs(value - target) < self.test_tol
+        tol = self.test_tol if target else self.test_tol*2
+        return abs(value - target) < tol
 
 
 class TesterPUKckr(_TesterPUBase):
     """Kicker tester."""
+
+    PROPERTIES_DEFAULT = _TesterPUBase.PROPERTIES_DEFAULT + ('Intlk8-Mon', )
 
     def check_intlk(self):
         """Check interlocks."""
@@ -644,39 +648,49 @@ class TesterPUSept(_TesterPUBase):
         return status
 
 
-class Trigger(_Device):
-    """Trigger device."""
+class PSTesterFactory:
+    """Factory class for PS and PU testers."""
 
-    _properties = (
-        'State-Sel', 'State-Sts',
-    )
+    @staticmethod
+    def create(devname):
+        """Return tester for PS/PU devname."""
+        devname = _PVName(devname)
+        if devname.sec == 'LI':
+            tester = TesterPSLinac(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FOFB_PS':
+            tester = TesterPSFOFB(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FBP_DCLink':
+            tester = TesterDCLinkFBP(devname)
+        elif 'bo-dclink' in _PSSearch.conv_psname_2_pstype(devname):
+            tester = TesterDCLink(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'REGATRON_DCLink':
+            tester = TesterDCLinkRegatron(devname)
+        elif _PSSearch.conv_psname_2_psmodel(devname) == 'FBP':
+            tester = TesterPSFBP(devname)
+        elif devname.dis == 'PS':
+            tester = TesterPS(devname)
+        elif devname.dis == 'PU' and 'Kckr' in devname.dev:
+            tester = TesterPUKckr(devname)
+        elif devname.dis == 'PU' and 'Sept' in devname.dev:
+            tester = TesterPUSept(devname)
+        else:
+            raise NotImplementedError(
+                f'There is no Tester defined for {devname}.')
+        return tester
 
-    def __init__(self, devname):
-        """Init trigger."""
-        super().__init__(devname, Trigger._properties)
 
-    @property
-    def state(self):
-        """State."""
-        return self['State-Sts']
-
-    @state.setter
-    def state(self, value):
-        self['State-Sel'] = value
-
-
-class Triggers(_Devices):
+class Triggers(_DeviceSet):
     """Triggers."""
 
     def __init__(self, devnames):
         """Init triggers."""
         devices, devrefs = list(), dict()
         for devname in devnames:
-            dev = Trigger(devname)
+            dev = _Trigger(devname, props2init=('State-Sel', 'State-Sts'))
             devrefs[devname] = dev
             devices.append(dev)
         self._devrefs = devrefs
-        super().__init__('', devices=devices)
+        super().__init__(devices)
 
     @property
     def triggers(self):

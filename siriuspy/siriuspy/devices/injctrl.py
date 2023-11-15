@@ -1,10 +1,11 @@
 """Injection control IOC device."""
 
 import numpy as _np
-from .device import Device as _Device
 
 from ..clientarch import Time
 from ..injctrl.csdev import Const as _Const
+
+from .device import Device as _Device
 
 
 class InjCtrl(_Device):
@@ -18,8 +19,9 @@ class InjCtrl(_Device):
     PUModeMon = _Const.PUModeMon
     TopUpSts = _Const.TopUpSts
     BiasFBModelTypes = _Const.BiasFBModelTypes
+    IdleRun = _Const.IdleRunning
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Mode-Sel', 'Mode-Sts',
         'Type-Sel', 'Type-Sts', 'Type-Mon', 'TypeCmdSts-Mon',
         'SglBunBiasVolt-SP', 'SglBunBiasVolt-RB',
@@ -40,7 +42,8 @@ class InjCtrl(_Device):
         'TopUpHeadStartTime-SP', 'TopUpHeadStartTime-RB',
         'TopUpNextInj-Mon',
         'TopUpNrPulses-SP', 'TopUpNrPulses-RB',
-        'InjSysTurnOn-Cmd', 'InjSysTurnOff-Cmd', 'InjSysCmdSts-Mon',
+        'InjSysTurnOn-Cmd', 'InjSysTurnOff-Cmd',
+        'InjSysCmdDone-Mon', 'InjSysCmdSts-Mon',
         'InjSysTurnOnOrder-SP', 'InjSysTurnOnOrder-RB',
         'InjSysTurnOffOrder-SP', 'InjSysTurnOffOrder-RB',
         'RFKillBeam-Cmd', 'RFKillBeam-Mon',
@@ -75,7 +78,7 @@ class InjCtrl(_Device):
         'BiasFBGPModInferenceInjCurr-Mon', 'BiasFBGPModInferenceBias-Mon',
         'BiasFBGPModPredBias-Mon', 'BiasFBGPModPredInjCurrAvg-Mon',
         'BiasFBGPModPredInjCurrStd-Mon',
-    )
+        )
 
     class DEVICES:
         """Devices names."""
@@ -83,7 +86,7 @@ class InjCtrl(_Device):
         AS = 'AS-Glob:AP-InjCtrl'
         ALL = (AS, )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         if devname is None:
             devname = InjCtrl.DEVICES.AS
@@ -91,7 +94,7 @@ class InjCtrl(_Device):
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=InjCtrl._properties)
+        super().__init__(devname, props2init=props2init)
 
     # ----- general injection properties -----
 
@@ -108,6 +111,12 @@ class InjCtrl(_Device):
     def injmode_str(self):
         """Injection mode string (Decay or TopUp or Accum)."""
         return self.InjMode._fields[self['Mode-Sts']]
+
+    def wait_injmode(self, injmode, timeout=None):
+        """Wait Mode-Sts to reach `injmode` value."""
+        if isinstance(injmode, str):
+            injmode = self.InjMode._fields.index(injmode)
+        return self._wait('Mode-Sts', injmode, timeout=timeout)
 
     @property
     def injtype(self):
@@ -129,9 +138,14 @@ class InjCtrl(_Device):
         return self['Type-Mon']
 
     @property
-    def injtype_cmdsts(self):
+    def injtype_cmd_status(self):
         """Injection type command status (Idle or Running)."""
         return self['TypeCmdSts-Mon']
+
+    def wait_injtype_cmd_finish(self, timeout=None):
+        """Wait TypeCmdSts-Mon to reach `Idle` value."""
+        return self._wait(
+            'TypeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
     def bias_volt_sglbun(self):
@@ -152,9 +166,14 @@ class InjCtrl(_Device):
         self['MultBunBiasVolt-SP'] = value
 
     @property
-    def bias_volt_cmdsts(self):
+    def bias_volt_cmd_status(self):
         """Bias voltage command status (Idle or Running)."""
         return self['BiasVoltCmdSts-Mon']
+
+    def wait_bias_volt_cmd_finish(self, timeout=None):
+        """Wait BiasVoltCmdSts-Mon to reach `Idle` value."""
+        return self._wait(
+            'BiasVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
     def filacurr_opvalue(self):
@@ -166,9 +185,14 @@ class InjCtrl(_Device):
         self['FilaOpCurr-SP'] = value
 
     @property
-    def filacurr_cmdsts(self):
+    def filacurr_cmd_status(self):
         """EGun filament current setpoint command status (Idle or Running)."""
         return self['FilaOpCurrCmdSts-Mon']
+
+    def wait_filacurr_cmd_finish(self, timeout=None):
+        """Wait FilaOpCurrCmdSts-Mon to reach `Idle` value."""
+        return self._wait(
+            'FilaOpCurrCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
     def hvolt_opvalue(self):
@@ -180,9 +204,14 @@ class InjCtrl(_Device):
         self['HVOpVolt-SP'] = value
 
     @property
-    def hvolt_cmdsts(self):
+    def hvolt_cmd_status(self):
         """EGun high voltage setpoint command status (Idle or Running)."""
         return self['HVOpVoltCmdSts-Mon']
+
+    def wait_hvolt_cmd_finish(self, timeout=None):
+        """Wait HVOpVoltCmdSts-Mon to reach `Idle` value."""
+        return self._wait(
+            'HVOpVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
     def pumode_delta_posang(self):
@@ -231,9 +260,14 @@ class InjCtrl(_Device):
         return self['PUMode-Mon']
 
     @property
-    def pumode_cmdsts(self):
+    def pumode_cmd_status(self):
         """PU mode command status (Idle or Running)."""
         return self['PUModeCmdSts-Mon']
+
+    def wait_pumode_cmd_finish(self, timeout=None):
+        """Wait PUModeCmdSts-Mon to reach `Idle` value."""
+        return self._wait(
+            'PUModeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     def cmd_change_pumode_to_onaxis(self, timeout=10):
         """Change PUMode to On-Axis injection."""
@@ -589,7 +623,7 @@ class InjCtrl(_Device):
         str
             A string of a list with the reference of the handlers,
             in the order that they are executed in turn on command.
-            Default value: 'bo_rf,as_pu,bo_ps,injbo,li_rf'.
+            Default value: 'bo_rf,as_pu,bo_ps,li_rf'.
         """
         return self['InjSysTurnOnOrder-RB']
 
@@ -611,7 +645,7 @@ class InjCtrl(_Device):
         str
             A string of a list with the reference of the handlers,
             in the order that they are executed in turn off command.
-            Default value: 'bo_rf,li_rf,injbo,as_pu,bo_ps'.
+            Default value: 'bo_rf,li_rf,as_pu,bo_ps'.
         """
         return self['InjSysTurnOffOrder-RB']
 
@@ -620,9 +654,24 @@ class InjCtrl(_Device):
         self['InjSysTurnOffOrder-SP'] = value
 
     @property
-    def injsys_cmdsts(self):
+    def injsys_cmd_status(self):
         """Injection system command status (Idle or Running)."""
         return self['InjSysCmdSts-Mon']
+
+    def wait_injsys_cmd_finish(self, timeout=None):
+        """Wait InjSysCmdSts-Mon to reach `Idle` value."""
+        return self._wait(
+            'InjSysCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+
+    def check_injsys_cmd_completed(self):
+        """Check whether InjSys command completed succesfully."""
+        done = self['InjSysCmdDone-Mon']
+        order = self['InjSysTurnOffOrder-RB']
+        if None in [done, order]:
+            return False
+        done = set(done.split(','))
+        order = set(order.split(','))
+        return done == order
 
     # ----- kill beam properties -----
 
@@ -632,9 +681,14 @@ class InjCtrl(_Device):
         return True
 
     @property
-    def rfkillbeam_cmdsts(self):
+    def rfkillbeam_cmd_status(self):
         """Kill beam command status (Idle or Kill)."""
         return self['RFKillBeam-Mon']
+
+    def wait_rfkillbeam_cmd_finish(self, timeout=None):
+        """Wait RFKillBeam-Mon to reach `Idle` value."""
+        return self._wait(
+            'RFKillBeam-Mon', self.IdleRun.Idle, timeout=timeout)
 
     # ----- diagnostics properties -----
 

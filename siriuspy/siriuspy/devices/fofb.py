@@ -1,5 +1,6 @@
 """FOFB devices."""
 
+import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -8,15 +9,14 @@ from ..namesys import SiriusPVName as _PVName
 from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
 from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
-from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    Devices as _Devices
-from .bpm import BPMLogicalTrigger
+from .device import Device as _Device, DeviceSet as _DeviceSet
+from .afc_acq_core import AFCACQLogicalTrigger
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
 
 
-class _FOFBCtrlBase:
+class FOFBCtrlBase:
     """FOFB Ctrl base."""
 
     _devices = {
@@ -24,10 +24,12 @@ class _FOFBCtrlBase:
     DEVICES = _get_namedtuple('DEVICES', *zip(*_devices.items()))
 
 
-class FOFBCtrlRef(_Device, _FOFBCtrlBase):
+# ---------------- ref device  ----------------
+
+class FOFBCtrlRef(_Device, FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'RefOrbX-SP', 'RefOrbX-RB',
         'RefOrbY-SP', 'RefOrbY-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
@@ -37,17 +39,13 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
         'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
         'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
-    )
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        # check if device exists
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
-
         # call base class constructor
-        super().__init__(
-            devname, properties=FOFBCtrlRef._properties, auto_monitor_mon=True)
+        _Device.__init__(
+            self, devname, props2init=props2init, auto_monitor_mon=True)
 
     @property
     def refx(self):
@@ -144,33 +142,36 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         return True
 
 
-class _DCCDevice(_ProptyDevice):
+# ---------------- DCC devices ----------------
+
+class _DCCDevice(_Device):
     """FOFB Diamond communication controller device."""
 
     DEF_TIMEOUT = 1
     DEF_FMC_BPMCNT = NR_BPM
     DEF_P2P_BPMCNT = 8
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
         'CCEnable-Sel', 'CCEnable-Sts',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
-    )
+        )
     _properties_fmc = (
         'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
         'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon',
-    )
+        )
 
-    def __init__(self, devname, dccname):
+    def __init__(self, devname, dccname, props2init='all'):
         """Init."""
         self.dccname = dccname
 
-        properties = _DCCDevice._properties
-        if 'FMC' in self.dccname:
-            properties += _DCCDevice._properties_fmc
+        if props2init == 'all':
+            props2init = list(_DCCDevice.PROPERTIES_DEFAULT)
+            if 'FMC' in self.dccname:
+                props2init += _DCCDevice._properties_fmc
 
         super().__init__(
-            devname, dccname, properties=properties,
+            devname + ':' + dccname, props2init=props2init,
             auto_monitor_mon=True)
 
     @property
@@ -215,7 +216,7 @@ class _DCCDevice(_ProptyDevice):
         return self['BPMCnt-Mon'] == cnt
 
 
-class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
+class FOFBCtrlDCC(_DCCDevice, FOFBCtrlBase):
     """FOFBCtrl DCC device."""
 
     class PROPDEVICES:
@@ -225,13 +226,11 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
         P2P = 'DCCP2P'
         ALL = (FMC, P2P)
 
-    def __init__(self, devname, dccname):
+    def __init__(self, devname, dccname, props2init='all'):
         """Init."""
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
         if dccname not in self.PROPDEVICES.ALL:
             raise NotImplementedError(dccname)
-        super().__init__(devname, dccname)
+        _DCCDevice.__init__(self, devname, dccname, props2init=props2init)
 
     @property
     def linkpartners(self):
@@ -245,22 +244,21 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
 class BPMDCC(_DCCDevice):
     """BPM DCC device."""
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        # Temporarily remove this check to control new 10SB BPMs
-        # if not _BPMSearch.is_valid_devname(devname):
-        #     raise NotImplementedError(devname)
-        super().__init__(devname, 'DCCP2P')
+        super().__init__(devname, 'DCCP2P', props2init=props2init)
 
 
-class FamFOFBControllers(_Devices):
+# ---------------- Fam devices ----------------
+
+class FamFOFBControllers(_DeviceSet):
     """Family of FOFBCtrl and related BPM devices."""
 
     DEF_TIMEOUT = 10  # [s]
     DEF_DCC_TIMEFRAMELEN = 5000
     DEF_BPMTRIG_RCVSRC = 0
     DEF_BPMTRIG_RCVIN = 5
-    BPM_TRIGS_IDS = [1, 2, 20]
+    BPM_TRIGS_ID = 20
     FOFBCTRL_BPMID_OFFSET = 480
     BPM_DCC_PAIRS = {
         'M1': 'M2',
@@ -279,7 +277,7 @@ class FamFOFBControllers(_Devices):
         lpaw = _np.roll(bpmids, -1)
         self._ctl_ids, self._ctl_part = dict(), dict()
         self._ctl_refs, self._ctl_dccs = dict(), dict()
-        for idx, ctl in enumerate(_FOFBCtrlBase.DEVICES):
+        for idx, ctl in enumerate(FOFBCtrlBase.DEVICES):
             self._ctl_ids[ctl] = bpmids[idx]
             self._ctl_part[ctl] = {lpcw[idx], lpaw[idx]}
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
@@ -292,9 +290,7 @@ class FamFOFBControllers(_Devices):
         for idx, bpm in enumerate(self._bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
-            for trig in self.BPM_TRIGS_IDS:
-                trigname = bpm + ':TRIGGER' + str(trig)
-                self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
+            self._bpm_trgs[bpm] = AFCACQLogicalTrigger(bpm, self.BPM_TRIGS_ID)
         bpm2dsbl = [
             'SI-'+sub+':DI-BPM-'+idx
             for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
@@ -313,7 +309,7 @@ class FamFOFBControllers(_Devices):
         devices.extend(self._bpm_trgs.values())
         devices.append(self._evt_fofb)
 
-        super().__init__('SI-Glob:BS-FOFB', devices)
+        super().__init__(devices, devname='SI-Glob:BS-FOFB')
 
     @property
     def ctrlrefdevs(self):
@@ -332,7 +328,7 @@ class FamFOFBControllers(_Devices):
 
     @property
     def bpmtrigdevs(self):
-        """BPMLogicalTrigger device list."""
+        """AFCACQLogicalTrigger device list."""
         return self._bpm_trgs
 
     @property
@@ -695,7 +691,7 @@ class FamFOFBControllers(_Devices):
         return True
 
 
-class FamFastCorrs(_Devices):
+class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -715,9 +711,11 @@ class FamFastCorrs(_Devices):
             psnames = chn + cvn
         self._psnames = psnames
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
-        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
-                        for psn in self._psnames]
-        super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
+        self._psconv = [
+            StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
+            for psn in self._psnames]
+        super().__init__(
+            self._psdevs + self._psconv, devname='SI-Glob:PS-FCHV')
 
     @property
     def psnames(self):
@@ -946,6 +944,8 @@ class FamFastCorrs(_Devices):
             raise ValueError('Values and indices must have the same size.')
         for i, dev in enumerate(devs):
             impltd = _np.hstack([dev.invrespmat_row_x, dev.invrespmat_row_y])
+            if len(values[i]) != len(impltd):
+                return False
             if not _np.allclose(values[i], impltd, atol=atol):
                 return False
         return True
@@ -1084,6 +1084,8 @@ class FamFastCorrs(_Devices):
         return [self._psdevs[i] for i in indices]
 
 
+# ----------------  HL device  ----------------
+
 class HLFOFB(_Device):
     """Control high level FOFB IOC."""
 
@@ -1093,7 +1095,7 @@ class HLFOFB(_Device):
         SI = 'SI-Glob:AP-FOFB'
         ALL = (SI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'LoopState-Sel', 'LoopState-Sts',
         'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
@@ -1105,6 +1107,7 @@ class HLFOFB(_Device):
         'CorrSetOpModeManual-Cmd',
         'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
+        'CorrSetCurrZeroDuration-SP', 'CorrSetCurrZeroDuration-RB',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
         'CtrlrStatus-Mon', 'CtrlrConfBPMId-Cmd',
@@ -1136,9 +1139,10 @@ class HLFOFB(_Device):
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
     )
 
+    _default_timeout = 10
     _default_timeout_respm = 2 * 60 * 60  # [s]
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         # check if device exists
         if devname is None:
@@ -1149,7 +1153,7 @@ class HLFOFB(_Device):
         self._data = _Const()
 
         # call base class constructor
-        super().__init__(devname, properties=self._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def data(self):
@@ -1164,6 +1168,22 @@ class HLFOFB(_Device):
     @loop_state.setter
     def loop_state(self, value):
         self['LoopState-Sel'] = value
+
+    def cmd_turn_on_loop_state(self, timeout=None):
+        """Turn on loop state."""
+        if self.loop_state == _Const.LoopState.Closed:
+            return True
+        self['LoopState-Sel'] = _Const.LoopState.Closed
+        return self._wait(
+            'LoopState-Sts', _Const.LoopState.Closed, timeout=timeout)
+
+    def cmd_turn_off_loop_state(self, timeout=None):
+        """Turn off loop state."""
+        if self.loop_state == _Const.LoopState.Open:
+            return True
+        self['LoopState-Sel'] = _Const.LoopState.Open
+        return self._wait(
+            'LoopState-Sts', _Const.LoopState.Open, timeout=timeout)
 
     @property
     def loop_gain_h(self):
@@ -1263,7 +1283,18 @@ class HLFOFB(_Device):
     def cmd_corr_set_current_zero(self):
         """Command to set correctors current to zero."""
         self['CorrSetCurrZero-Cmd'] = 1
+        duration = self['CorrSetCurrZeroDuration-RB'] or self._default_timeout
+        _time.sleep(duration)
         return True
+
+    @property
+    def corr_set_current_zero_duration(self):
+        """Duration of command to set correctors current to zero."""
+        return self['CorrSetCurrZeroDuration-RB']
+
+    @corr_set_current_zero_duration.setter
+    def corr_set_current_zero_duration(self, value):
+        self['CorrSetCurrZeroDuration-SP'] = value
 
     @property
     def ch_accsatmax(self):

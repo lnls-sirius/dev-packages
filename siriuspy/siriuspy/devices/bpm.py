@@ -1,11 +1,13 @@
 """BPM devices."""
 
+import sys
 import time as _time
-from threading import Event as _Flag
-import numpy as _np
+# from threading import Event as _Flag
 
-from .device import Device as _Device, Devices as _Devices, \
-    ProptyDevice as _ProptyDevice
+import numpy as _np
+from copy import deepcopy as _dcopy
+
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
 from ..namesys import SiriusPVName as _PVName
@@ -25,33 +27,12 @@ class BPM(_Device):
     ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
-    _properties = (
-        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
-        'RFFEAtt-SP', 'RFFEAtt-RB',
-        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
+    PROPERTIES_ACQ = (
+        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
+        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
-        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
-        'GEN_RawQArrayData',
-        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
-        'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
-        'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
-        'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
-        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
-        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
-        'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
-        'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
-        'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
-        'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
-        'PosKx-SP', 'PosKx-RB',
-        'PosKy-RB', 'PosKy-SP',
-        'PosKsum-SP', 'PosKsum-RB',
-        'PosKq-SP', 'PosKq-RB',
-        'PosXOffset-SP', 'PosXOffset-RB',
-        'PosYOffset-SP', 'PosYOffset-RB',
-        'PosSumOffset-SP', 'PosSumOffset-RB',
-        'PosQOffset-SP', 'PosQOffset-RB',
         'ACQBPMMode-Sel', 'ACQBPMMode-Sts',
         'ACQChannel-Sel', 'ACQChannel-Sts',
         'ACQShots-SP', 'ACQShots-RB',
@@ -67,10 +48,38 @@ class BPM(_Device):
         'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
         'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
         'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
-        'SwTagEn-Sel', 'SwTagEn-Sts', 'SwDivClk-RB',
-        'TbTTagEn-Sel', 'TbTTagEn-Sts',
-        'FAcqTagEn-Sel', 'FAcqTagEn-Sts',
-        'MonitTagEn-Sel', 'MonitTagEn-Sts',
+        )
+
+    PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
+        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
+        'RFFEAtt-SP', 'RFFEAtt-RB',
+        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
+        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
+        'GEN_RawQArrayData',
+        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
+        'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
+        'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
+        'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
+        'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
+        'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
+        'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
+        'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
+        'SwDirGainA-SP', 'SwDirGainB-SP', 'SwDirGainC-SP', 'SwDirGainD-SP',
+        'SwDirGainA-RB', 'SwDirGainB-RB', 'SwDirGainC-RB', 'SwDirGainD-RB',
+        'SwInvGainA-SP', 'SwInvGainB-SP', 'SwInvGainC-SP', 'SwInvGainD-SP',
+        'SwInvGainA-RB', 'SwInvGainB-RB', 'SwInvGainC-RB', 'SwInvGainD-RB',
+        'PosKx-SP', 'PosKx-RB',
+        'PosKy-RB', 'PosKy-SP',
+        'PosKsum-SP', 'PosKsum-RB',
+        'PosKq-SP', 'PosKq-RB',
+        'PosXOffset-SP', 'PosXOffset-RB',
+        'PosYOffset-SP', 'PosYOffset-RB',
+        'PosSumOffset-SP', 'PosSumOffset-RB',
+        'PosQOffset-SP', 'PosQOffset-RB',
+        'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
+        'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
+        'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
+        'MonitPhaseSyncEn-Sel', 'MonitPhaseSyncEn-Sts',
         'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
@@ -81,21 +90,22 @@ class BPM(_Device):
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
-    def __init__(self, devname, auto_monitor_mon=True, ispost_mortem=False):
+    def __init__(
+            self, devname, props2init='all', auto_monitor_mon=True,
+            ispost_mortem=False):
         """."""
         # call base class constructor
-        if not _BPMSearch.is_valid_devname(devname):
-            raise ValueError(devname + ' is not a valid BPM or PBPM name.')
-
         self._ispost_mortem = ispost_mortem
-        properties = {self.get_propname(p) for p in BPM._properties}
 
-        if _BPMSearch.is_photon_bpm(devname):
-            properties -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
-        properties = list(properties)
+        if props2init == 'all' and _BPMSearch.is_photon_bpm(devname):
+            props2init = set(BPM.PROPERTIES_DEFAULT)
+            props2init -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
+            props2init = list(props2init)
+        elif isinstance(props2init, str) and props2init.startswith('acq'):
+            props2init = list(self.PROPERTIES_ACQ)
 
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
         self.csdata = _csbpm
 
     def __str__(self):
@@ -127,6 +137,16 @@ class BPM(_Device):
             stg += f'        - Hysteresis: {self.acq_trig_datahyst:d}\n'
         stg += '\n'
         return stg
+
+    def __getitem__(self, propty):
+        """Return value of property."""
+        propty = self.get_propname(propty)
+        return super().__getitem__(propty)
+
+    def __setitem__(self, propty, value):
+        """Set value of property."""
+        propty = self.get_propname(propty)
+        super().__setitem__(propty, value)
 
     @property
     def is_ok(self):
@@ -197,6 +217,78 @@ class BPM(_Device):
         return self.switching_rate / self.adcfreq
 
     @property
+    def gain_direct_a(self):
+        """."""
+        return self['SwDirGainA-RB']
+
+    @gain_direct_a.setter
+    def gain_direct_a(self, val):
+        self['SwDirGainA-SP'] = val
+
+    @property
+    def gain_direct_b(self):
+        """."""
+        return self['SwDirGainB-RB']
+
+    @gain_direct_b.setter
+    def gain_direct_b(self, val):
+        self['SwDirGainB-SP'] = val
+
+    @property
+    def gain_direct_c(self):
+        """."""
+        return self['SwDirGainC-RB']
+
+    @gain_direct_c.setter
+    def gain_direct_c(self, val):
+        self['SwDirGainC-SP'] = val
+
+    @property
+    def gain_direct_d(self):
+        """."""
+        return self['SwDirGainD-RB']
+
+    @gain_direct_d.setter
+    def gain_direct_d(self, val):
+        self['SwDirGainD-SP'] = val
+
+    @property
+    def gain_inverse_a(self):
+        """."""
+        return self['SwInvGainA-RB']
+
+    @gain_inverse_a.setter
+    def gain_inverse_a(self, val):
+        self['SwInvGainA-SP'] = val
+
+    @property
+    def gain_inverse_b(self):
+        """."""
+        return self['SwInvGainB-RB']
+
+    @gain_inverse_b.setter
+    def gain_inverse_b(self, val):
+        self['SwInvGainB-SP'] = val
+
+    @property
+    def gain_inverse_c(self):
+        """."""
+        return self['SwInvGainC-RB']
+
+    @gain_inverse_c.setter
+    def gain_inverse_c(self, val):
+        self['SwInvGainC-SP'] = val
+
+    @property
+    def gain_inverse_d(self):
+        """."""
+        return self['SwInvGainD-RB']
+
+    @gain_inverse_d.setter
+    def gain_inverse_d(self, val):
+        self['SwInvGainD-SP'] = val
+
+    @property
     def harmonic_number(self):
         """."""
         return self['INFOHarmonicNumber-RB']
@@ -219,12 +311,12 @@ class BPM(_Device):
     @property
     def tbt_sync_enbl(self):
         """."""
-        return self['TbTTagEn-Sts']
+        return self['TbTPhaseSyncEn-Sts']
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        self['TbTTagEn-Sel'] = val
+        self['TbTPhaseSyncEn-Sel'] = val
 
     @property
     def tbt_mask_enbl(self):
@@ -259,12 +351,12 @@ class BPM(_Device):
     @property
     def fofb_sync_enbl(self):
         """."""
-        return self['SwTagEn-Sts']
+        return self['FOFBPhaseSyncEn-Sts']
 
     @fofb_sync_enbl.setter
     def fofb_sync_enbl(self, val):
         """."""
-        self['SwTagEn-Sel'] = val
+        self['FOFBPhaseSyncEn-Sel'] = val
 
     @property
     def fofb_rate(self):
@@ -289,12 +381,12 @@ class BPM(_Device):
     @property
     def facq_sync_enbl(self):
         """."""
-        return self['FAcqTagEn']
+        return self['FAcqPhaseSyncEn-Sts']
 
     @facq_sync_enbl.setter
     def facq_sync_enbl(self, val):
         """."""
-        self['FAcqTagEn-Sel'] = val
+        self['FAcqPhaseSyncEn-Sel'] = val
 
     @property
     def monit_rate(self):
@@ -309,12 +401,12 @@ class BPM(_Device):
     @property
     def monit_sync_enbl(self):
         """."""
-        return self['MonitTagEn-Sts']
+        return self['MonitPhaseSyncEn-Sts']
 
     @monit_sync_enbl.setter
     def monit_sync_enbl(self, val):
         """."""
-        self['MonitTagEn-Sel'] = val
+        self['MonitPhaseSyncEn-Sel'] = val
 
     @property
     def posx_gain(self):
@@ -431,82 +523,82 @@ class BPM(_Device):
     @property
     def mt_posx(self):
         """."""
-        return self[self.get_propname('GEN_XArrayData')] * self.CONV_NM2UM
+        return self['GEN_XArrayData'] * self.CONV_NM2UM
 
     @property
     def mt_posy(self):
         """."""
-        return self[self.get_propname('GEN_YArrayData')] * self.CONV_NM2UM
+        return self['GEN_YArrayData'] * self.CONV_NM2UM
 
     @property
     def mt_possum(self):
         """."""
-        return self[self.get_propname('GEN_SUMArrayData')]
+        return self['GEN_SUMArrayData']
 
     @property
     def mt_posq(self):
         """."""
-        return self[self.get_propname('GEN_QArrayData')]
+        return self['GEN_QArrayData']
 
     @property
     def mt_ampla(self):
         """."""
-        return self[self.get_propname('GEN_AArrayData')]
+        return self['GEN_AArrayData']
 
     @property
     def mt_amplb(self):
         """."""
-        return self[self.get_propname('GEN_BArrayData')]
+        return self['GEN_BArrayData']
 
     @property
     def mt_amplc(self):
         """."""
-        return self[self.get_propname('GEN_CArrayData')]
+        return self['GEN_CArrayData']
 
     @property
     def mt_ampld(self):
         """."""
-        return self[self.get_propname('GEN_DArrayData')]
+        return self['GEN_DArrayData']
 
     @property
     def mt_polyx(self):
         """."""
-        return self[self.get_propname('GEN_PolyXArrayCoeff-RB')]
+        return self['GEN_PolyXArrayCoeff-RB']
 
     @mt_polyx.setter
     def mt_polyx(self, value):
         """."""
-        self[self.get_propname('GEN_PolyXArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolyXArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polyy(self):
         """."""
-        return self[self.get_propname('GEN_PolyYArrayCoeff-RB')]
+        return self['GEN_PolyYArrayCoeff-RB']
 
     @mt_polyy.setter
     def mt_polyy(self, value):
         """."""
-        self[self.get_propname('GEN_PolyYArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolyYArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polysum(self):
         """."""
-        return self[self.get_propname('GEN_PolySUMArrayCoeff-RB')]
+        return self['GEN_PolySUMArrayCoeff-RB']
 
     @mt_polysum.setter
     def mt_polysum(self, value):
         """."""
-        self[self.get_propname('GEN_PolySUMArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolySUMArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polyq(self):
         """."""
-        return self[self.get_propname('GEN_PolyQArrayCoeff-RB')]
+        return self['GEN_PolyQArrayCoeff-RB']
 
     @mt_polyq.setter
     def mt_polyq(self, value):
         """."""
-        self[self.get_propname('GEN_PolyQArrayCoeff-SP')] = _np.array(value)
+        self['GEN_PolyQArrayCoeff-SP'] = _np.array(value)
 
     @property
     def mt_polyxy_enbl(self):
@@ -541,22 +633,22 @@ class BPM(_Device):
     @property
     def mtraw_posx(self):
         """Multi turn raw X array data."""
-        return self[self.get_propname('GEN_RawXArrayData')] * self.CONV_NM2UM
+        return self['GEN_RawXArrayData'] * self.CONV_NM2UM
 
     @property
     def mtraw_posy(self):
         """Multi turn raw Y array data."""
-        return self[self.get_propname('GEN_RawYArrayData')] * self.CONV_NM2UM
+        return self['GEN_RawYArrayData'] * self.CONV_NM2UM
 
     @property
     def mtraw_possum(self):
         """Multi turn raw sum array data."""
-        return self[self.get_propname('GEN_RawSUMArrayData')]
+        return self['GEN_RawSUMArrayData']
 
     @property
     def mtraw_posq(self):
         """Multi turn raw Q array data."""
-        return self[self.get_propname('GEN_RawQArrayData')]
+        return self['GEN_RawQArrayData']
 
     @property
     def sp_posx(self):
@@ -621,42 +713,42 @@ class BPM(_Device):
     @property
     def acq_mode(self):
         """."""
-        return self[self.get_propname('ACQBPMMode-Sts')]
+        return self['ACQBPMMode-Sts']
 
     @acq_mode.setter
     def acq_mode(self, mode):
         """."""
-        self[self.get_propname('ACQBPMMode-Sel')] = mode
+        self['ACQBPMMode-Sel'] = mode
 
     @property
     def acq_ctrl(self):
         """."""
-        return self[self.get_propname('ACQTriggerEvent-Sts')]
+        return self['ACQTriggerEvent-Sts']
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
         """."""
-        self[self.get_propname('ACQTriggerEvent-Sel')] = val
+        self['ACQTriggerEvent-Sel'] = val
 
     @property
     def acq_status(self):
         """."""
-        return self[self.get_propname('ACQStatus-Sts')]
+        return self['ACQStatus-Sts']
 
     @property
     def acq_count(self):
         """Counter of number of acquisitions so far."""
-        return self[self.get_propname('ACQCount-Mon')]
+        return self['ACQCount-Mon']
 
     @property
     def acq_channel(self):
         """."""
-        return self[self.get_propname('ACQChannel-Sts')]
+        return self['ACQChannel-Sts']
 
     @acq_channel.setter
     def acq_channel(self, val):
         """."""
-        self[self.get_propname('ACQChannel-Sel')] = val
+        self['ACQChannel-Sel'] = val
 
     @property
     def acq_channel_str(self):
@@ -666,142 +758,139 @@ class BPM(_Device):
     @property
     def acq_trigger(self):
         """."""
-        return self[self.get_propname('ACQTrigger-Sts')]
+        return self['ACQTrigger-Sts']
 
     @acq_trigger.setter
     def acq_trigger(self, val):
         """."""
-        self[self.get_propname('ACQTrigger-Sel')] = val
+        self['ACQTrigger-Sel'] = val
 
     @property
     def acq_repeat(self):
         """."""
-        return self[self.get_propname('ACQTriggerRep-Sts')]
+        return self['ACQTriggerRep-Sts']
 
     @acq_repeat.setter
     def acq_repeat(self, val):
         """."""
-        self[self.get_propname('ACQTriggerRep-Sel')] = val
+        self['ACQTriggerRep-Sel'] = val
 
     @property
     def acq_update_time(self):
-        """."""
-        return self[self.get_propname('ACQUpdateTime-RB')]  / 1e3
+        """BPMs update time in [s]."""
+        return self['ACQUpdateTime-RB']
 
     @acq_update_time.setter
     def acq_update_time(self, val):
-        """."""
-        self[self.get_propname('ACQUpdateTime-SP')] = val * 1e3
+        """BPMs update time in [s]."""
+        self['ACQUpdateTime-SP'] = val
 
     @property
     def acq_trig_datachan(self):
         """."""
-        return self[self.get_propname('ACQDataTrigChan-Sts')]
+        return self['ACQDataTrigChan-Sts']
 
     @acq_trig_datachan.setter
     def acq_trig_datachan(self, val):
         """."""
-        self[self.get_propname('ACQDataTrigChan-Sel')] = val
+        self['ACQDataTrigChan-Sel'] = val
 
     @property
     def acq_trig_datasel(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataSel-RB')]
+        return self['ACQTriggerDataSel-RB']
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataSel-SP')] = val
+        self['ACQTriggerDataSel-SP'] = val
 
     @property
     def acq_trig_datathres(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataThres-RB')]
+        return self['ACQTriggerDataThres-RB']
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataThres-SP')] = val
+        self['ACQTriggerDataThres-SP'] = val
 
     @property
     def acq_trig_datahyst(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataHyst-RB')]
+        return self['ACQTriggerDataHyst-RB']
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataHyst-SP')] = val
+        self['ACQTriggerDataHyst-SP'] = val
 
     @property
     def acq_trig_datapol(self):
         """."""
-        return self[self.get_propname('ACQTriggerDataPol-RB')]
+        return self['ACQTriggerDataPol-RB']
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self[self.get_propname('ACQTriggerDataPol-SP')] = val
+        self['ACQTriggerDataPol-SP'] = val
 
     @property
     def acq_nrsamples_post(self):
         """."""
-        return self[self.get_propname('ACQSamplesPost-RB')]
+        return self['ACQSamplesPost-RB']
 
     @acq_nrsamples_post.setter
     def acq_nrsamples_post(self, val):
         """."""
-        self[self.get_propname('ACQSamplesPost-SP')] = val
+        self['ACQSamplesPost-SP'] = val
 
     @property
     def acq_nrsamples_pre(self):
         """."""
-        return self[self.get_propname('ACQSamplesPre-RB')]
+        return self['ACQSamplesPre-RB']
 
     @acq_nrsamples_pre.setter
     def acq_nrsamples_pre(self, val):
         """."""
-        self[self.get_propname('ACQSamplesPre-SP')] = val
+        self['ACQSamplesPre-SP'] = val
 
     @property
     def acq_nrshots(self):
         """."""
-        return self[self.get_propname('ACQShots-RB')]
+        return self['ACQShots-RB']
 
     @acq_nrshots.setter
     def acq_nrshots(self, val):
         """."""
-        self[self.get_propname('ACQShots-SP')] = val
+        self['ACQShots-SP'] = val
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            self.get_propname('ACQStatus-Sts'), self.ACQSTATES_FINISHED,
-            timeout=timeout, comp=lambda x, y: x in y)
+            'ACQStatus-Sts', self.ACQSTATES_FINISHED, timeout=timeout,
+            comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            self.get_propname('ACQStatus-Sts'), self.ACQSTATES_STARTED,
-            timeout=timeout, comp=lambda x, y: x in y)
+            'ACQStatus-Sts', self.ACQSTATES_STARTED, timeout=timeout,
+            comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        return self._wait(
-            self.get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Start)
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        return self._wait(
-            self.get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Stop)
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
 
     def cmd_acq_abort(self):
         """Command Abort Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Abort
-        return self._wait(
-            self.get_propname('ACQTriggerEvent-Sts'), _csbpm.AcqEvents.Abort)
+        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Abort)
 
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
@@ -818,28 +907,28 @@ class BPM(_Device):
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbTTagEn-Sts', 0)
+        return self._wait('TbTPhaseSyncEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
         self.fofb_sync_enbl = 1
         _time.sleep(0.1)
         self.fofb_sync_enbl = 0
-        return self._wait('SwTagEn-Sts', 0)
+        return self._wait('FOFBPhaseSyncEn-Sts', 0)
 
     def cmd_sync_facq(self):
         """Synchronize FAcq acquisitions with Timing System."""
         self.facq_sync_enbl = 1
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('FAcqPhaseSyncEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('FAcqTagEn-Sts', 0)
+        return self._wait('MonitPhaseSyncEn-Sts', 0)
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:
@@ -878,6 +967,7 @@ class BPM(_Device):
         return fadc / self.switching_rate
 
     def get_propname(self, prop):
+        """Get appropriate property name in case of triggered acquisitions."""
         if not self._ispost_mortem:
             return prop
         if prop.startswith('GEN'):
@@ -886,12 +976,31 @@ class BPM(_Device):
             return prop.replace('ACQ', 'ACQ_PM')
         return prop
 
+    def _get_pvname(self, propty):
+        propty = self.get_propname(propty)
+        return super()._get_pvname(propty)
 
-class FamBPMs(_Devices):
-    """Family of BPMs."""
+
+class FamBPMs(_DeviceSet):
+    """Family of BPMs.
+
+    Parameters
+    ----------
+        devname (str, optional)
+            Device name. If not provided, defaults to DEVICES.SI.
+            Determine the list of BPM names.
+        bpmnames ((list, tuple), optional)
+            BPM names list. If provided, it takes priority over 'devname'
+            parameter. Defaults to None.
+        ispost_mortem (bool, optional)
+            Whether to control PM acquisition core. Defaults to False.
+    """
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
+    PROPERTIES_ACQ = BPM.PROPERTIES_ACQ
+    PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
+    ALL_MTURN_SIGNALS2ACQ = ('A', 'B', 'C', 'D', 'X', 'Y', 'Q', 'S')
 
     class DEVICES:
         """."""
@@ -900,7 +1009,9 @@ class FamBPMs(_Devices):
         BO = 'BO-Fam:DI-BPM'
         ALL = (BO, SI)
 
-    def __init__(self, devname=None, ispost_mortem=False):
+    def __init__(
+            self, devname=None, bpmnames=None, ispost_mortem=False,
+            props2init='all', mturn_signals2acq=('X', 'Y')):
         """."""
         if devname is None:
             devname = self.DEVICES.SI
@@ -908,22 +1019,24 @@ class FamBPMs(_Devices):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
-        bpm_names = _BPMSearch.get_names(
+        bpm_names = bpmnames or _BPMSearch.get_names(
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
-        devs = [
-            BPM(dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem)
-            for dev in bpm_names]
 
-        super().__init__(devname, devs)
+        self._mturn_signals2acq = list(mturn_signals2acq)
+        self.bpms = [BPM(
+            dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
+            props2init=props2init) for dev in bpm_names]
+
+        super().__init__(self.bpms[:], devname=devname)
         self._bpm_names = bpm_names
-        self._csbpm = devs[0].csdata
+        self._csbpm = self.bpms[0].csdata
         self._initial_timestamps = None
 
         self._mturn_flags = dict()
         # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
         # for bpm in devs:
-        #     pvo = bpm.pv_object(bpm.get_propname('ACQCount-Mon'))
+        #     pvo = bpm.pv_object('ACQCount-Mon')
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._mturn_set_flag)
@@ -937,6 +1050,19 @@ class FamBPMs(_Devices):
     def csbpm(self):
         """Return control system BPM constants class."""
         return self._csbpm
+
+    @property
+    def mturn_signals2acq(self):
+        """Return which signals will be acquired by get_mturn_signals."""
+        return _dcopy(self._mturn_signals2acq)
+
+    @mturn_signals2acq.setter
+    def mturn_signals2acq(self, sigs):
+        sigs = [s.upper() for s in sigs]
+        diff = set(sigs) - set(self.ALL_MTURN_SIGNALS2ACQ)
+        if diff:
+            raise ValueError('The following signals do not exist: '+str(diff))
+        self._mturn_signals2acq = sigs
 
     def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
         """."""
@@ -967,84 +1093,53 @@ class FamBPMs(_Devices):
 
         """
         orbx, orby = [], []
-        for bpm in self._devices:
+        for bpm in self.bpms:
             orbx.append(bpm.posx)
             orby.append(bpm.posy)
         orbx = _np.array(orbx)
         orby = _np.array(orby)
         return orbx, orby
 
-    def get_mturn_orbit(self, return_sum=False):
-        """Get Multiturn orbit matrices.
-
-        Args:
-            return_sum (bool, optional): Whether or not to return BPMs sum.
-                Defaults to False.
+    def get_mturn_signals(self):
+        """Get Multiturn signals matrices.
 
         Returns:
-            orbx (numpy.ndarray, Nx160): Horizontal Orbit.
-            orby (numpy.ndarray, Nx160): Vertical Orbit.
-            possum (numpy.ndarray, Nx160): BPMs Sum signal.
+            list: Each component of the list is an numpy.ndarray with shape
+                (N, 160), containing the values for the signals acquired.
 
         """
-        orbx, orby = [], []
-        if return_sum:
-            possum = []
+        sigs = [[] for _ in self._mturn_signals2acq]
 
-        mini = None
-        for bpm in self._devices:
-            mtx = bpm.mt_posx
-            mty = bpm.mt_posy
-            orbx.append(mtx)
-            orby.append(mty)
+        mini = int(sys.maxsize)  # a very large integer
+        for bpm in self.bpms:
+            for i, sn in enumerate(self._mturn_signals2acq):
+                sn = 'sum' if sn == 'S' else sn.lower()
+                name = 'mt_' + ('ampl' if sn in 'abcd' else 'pos') + sn
+                sigs[i].append(getattr(bpm, name))
+            mini = min(mini, _np.min([s[-1].size for s in sigs]))
 
-            if mini is None:
-                mini = mtx.size
-            mini = _np.min([mini, mtx.size, mty.size])
+        for i, sig in enumerate(sigs):
+            for j, s in enumerate(sig):
+                sig[j] = s[:mini]
+            sigs[i] = _np.array(sig).T
+        return sigs
 
-            if return_sum:
-                mts = bpm.mt_possum
-                possum.append(mts)
-                mini = min(mini, mts.size)
-
-        for i, (obx, oby) in enumerate(zip(orbx, orby)):
-            orbx[i] = obx[:mini]
-            orby[i] = oby[:mini]
-            if return_sum:
-                possum[i] = possum[i][:mini]
-        orbx = _np.array(orbx).T
-        orby = _np.array(orby).T
-
-        if not return_sum:
-            return orbx, orby
-        return orbx, orby, _np.array(possum).T
-
-    def get_mturn_timestamps(self, return_sum=False):
+    def get_mturn_timestamps(self):
         """Get Multiturn data timestamps.
-
-        Args:
-            return_sum (bool, optional): Whether or not to return BPMs sum
-                timestamps. Defaults to False.
 
         Returns:
             tsmps (numpy.ndarray, (160, N)): The i-th row has the timestamp of
-                the i-th bpm for the [horizontal, vertical, sum] signals
-                respectively. If return_sum is False, then N=2 instead of 3.
+                the i-th bpm for the N aquired signals.
 
         """
-        tsmps = _np.zeros((len(self._devices), 2+return_sum), dtype=float)
-        for i, bpm in enumerate(self._devices):
-            pvx = bpm.pv_object(bpm.get_propname('GEN_XArrayData'))
-            pvy = bpm.pv_object(bpm.get_propname('GEN_YArrayData'))
-            vax = pvx.get_timevars(timeout=self.TIMEOUT)
-            vay = pvy.get_timevars()
-            tsmps[i, 0] = pvx.timestamp if vax is None else vax['timestamp']
-            tsmps[i, 1] = pvy.timestamp if vay is None else vay['timestamp']
-            if not return_sum:
-                continue
-            pvs = bpm.pv_object(bpm.get_propname('GEN_SUMArrayData'))
-            vas = pvs.get_timevars()
-            tsmps[i, 2] = pvs.timestamp if vas is None else vas['timestamp']
+        tsmps = _np.zeros(
+            (len(self.bpms), len(self._mturn_signals2acq)), dtype=float)
+        for i, bpm in enumerate(self.bpms):
+            for j, s in enumerate(self._mturn_signals2acq):
+                s = 'SUM' if s == 'S' else s
+                pvo = bpm.pv_object(f'GEN_{s}ArrayData')
+                tv = pvo.get_timevars(timeout=self.TIMEOUT)
+                tsmps[i, j] = pvo.timestamp if tv is None else tv['timestamp']
         return tsmps
 
     def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
@@ -1061,7 +1156,7 @@ class FamBPMs(_Devices):
         """
         fs_bpms = {
             dev.get_sampling_frequency(rf_freq, acq_rate)
-            for dev in self.devices}
+            for dev in self.bpms}
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
@@ -1079,7 +1174,7 @@ class FamBPMs(_Devices):
 
         """
         fsw_bpms = {
-            dev.get_switching_frequency(rf_freq) for dev in self.devices}
+            dev.get_switching_frequency(rf_freq) for dev in self.bpms}
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
@@ -1095,8 +1190,9 @@ class FamBPMs(_Devices):
             nr_points_after (int): number of points after trigger.
             nr_points_before (int): number of points after trigger.
                 Defaults to 0.
-            acq_rate (str, optional): Acquisition rate ('TbT', 'FOFB',
-                'FAcq'). Defaults to 'FAcq'.
+            acq_rate (str, optional): Acquisition rate ('TbT', 'TbTPha',
+                'FOFB', 'FOFBPha', 'FAcq', 'ADC', 'ADCSwp').
+                Defaults to 'FAcq'.
             repeat (bool, optional): Whether or not acquisition should be
                 repetitive. Defaults to True.
             external (bool, optional): Whether or not external trigger should
@@ -1111,10 +1207,18 @@ class FamBPMs(_Devices):
         """
         if acq_rate.lower().startswith('facq'):
             acq_rate = self._csbpm.AcqChan.FAcq
+        elif acq_rate.lower().startswith('fofbpha'):
+            acq_rate = self._csbpm.AcqChan.FOFBPha
         elif acq_rate.lower().startswith('fofb'):
             acq_rate = self._csbpm.AcqChan.FOFB
+        elif acq_rate.lower().startswith('tbtpha'):
+            acq_rate = self._csbpm.AcqChan.TbTPha
         elif acq_rate.lower().startswith('tbt'):
             acq_rate = self._csbpm.AcqChan.TbT
+        elif acq_rate.lower().startswith('adcswp'):
+            acq_rate = self._csbpm.AcqChan.ADCSwp
+        elif acq_rate.lower().startswith('adc'):
+            acq_rate = self._csbpm.AcqChan.ADC
         else:
             raise ValueError(acq_rate + ' is not a valid acquisition rate.')
 
@@ -1132,7 +1236,7 @@ class FamBPMs(_Devices):
         if ret > 0:
             return -ret
 
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.acq_repeat = repeat
             bpm.acq_channel = acq_rate
             bpm.acq_trigger = trig
@@ -1155,7 +1259,7 @@ class FamBPMs(_Devices):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.acq_ctrl = self._csbpm.AcqEvents.Abort
 
         if wait:
@@ -1174,7 +1278,7 @@ class FamBPMs(_Devices):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for i, bpm in enumerate(self._devices):
+        for i, bpm in enumerate(self.bpms):
             t0_ = _time.time()
             if not bpm.wait_acq_finish(timeout):
                 return i + 1
@@ -1195,7 +1299,7 @@ class FamBPMs(_Devices):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.acq_ctrl = self._csbpm.AcqEvents.Start
         if wait:
             return self.wait_acquisition_start(timeout=timeout)
@@ -1213,7 +1317,7 @@ class FamBPMs(_Devices):
                 >0: Index of the first BPM which did not update plus 1.
 
         """
-        for i, bpm in enumerate(self._devices):
+        for i, bpm in enumerate(self.bpms):
             t0_ = _time.time()
             if not bpm.wait_acq_start(timeout):
                 return i + 1
@@ -1234,24 +1338,22 @@ class FamBPMs(_Devices):
         if mode not in ('direct', 'switching', 1, 3):
             raise ValueError('Value must be in ("direct", "switching", 1, 3).')
 
-        for bpm in self._devices:
+        for bpm in self.bpms:
             bpm.switching_mode = mode
 
-    def mturn_update_initial_timestamps(self, consider_sum=False):
+    def mturn_update_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
-        self._initial_timestamps = self.get_mturn_timestamps(
-            return_sum=consider_sum)
+        self._initial_timestamps = self.get_mturn_timestamps()
 
     def mturn_reset_flags(self):
         """Reset Multiturn flags to wait for a new orbit update."""
         for flag in self._mturn_flags.values():
             flag.clear()
 
-    def mturn_reset_flags_and_update_initial_timestamps(
-            self, consider_sum=False):
+    def mturn_reset_flags_and_update_initial_timestamps(self):
         """Set initial state to wait for orbit acquisition to start."""
         self.mturn_reset_flags()
-        self.mturn_update_initial_timestamps(consider_sum)
+        self.mturn_update_initial_timestamps()
 
     def mturn_wait_update_flags(self, timeout=10):
         """Wait for all acquisition flags to be updated.
@@ -1273,8 +1375,7 @@ class FamBPMs(_Devices):
             timeout = max(timeout, 0)
         return 0
 
-    def mturn_wait_update_timestamps(
-            self, timeout=10, consider_sum=False) -> int:
+    def mturn_wait_update_timestamps(self, timeout=10) -> int:
         """Call this method after acquisition to check if data was updated.
 
         For this method to work it is necessary to call
@@ -1284,11 +1385,10 @@ class FamBPMs(_Devices):
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
-            consider_sum (bool, optional): Whether to also wait for sum signal
-                to be updated. Defaults to False.
 
         Returns:
             int: code describing what happened:
+                -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
                 >0: index of the first BPM which did not update plus 1.
@@ -1300,7 +1400,9 @@ class FamBPMs(_Devices):
         tsmp0 = self._initial_timestamps
         while timeout > 0:
             t00 = _time.time()
-            tsmp = self.get_mturn_timestamps(return_sum=consider_sum)
+            tsmp = self.get_mturn_timestamps()
+            if tsmp.size != tsmp0.size:
+                return -2
             errors = _np.any(_np.equal(tsmp, tsmp0), axis=1)
             if not _np.any(errors):
                 return 0
@@ -1309,16 +1411,15 @@ class FamBPMs(_Devices):
 
         return int(_np.nonzero(errors)[0][0])+1
 
-    def mturn_wait_update(self, timeout=10, consider_sum=False) -> int:
+    def mturn_wait_update(self, timeout=10) -> int:
         """Combine all methods to wait update data.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
-            consider_sum (bool, optional): Whether to also wait for sum signal
-                to be updated. Defaults to False.
 
         Returns:
             int: code describing what happened:
+                -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
                 >0: index of the first BPM which did not update plus 1.
@@ -1330,66 +1431,8 @@ class FamBPMs(_Devices):
             return ret
         timeout -= _time.time() - t00
 
-        return self.mturn_wait_update_timestamps(
-            timeout, consider_sum=consider_sum)
+        return self.mturn_wait_update_timestamps(timeout)
 
     def _mturn_set_flag(self, pvname, **kwargs):
         _ = kwargs
         self._mturn_flags[pvname].set()
-
-
-class BPMLogicalTrigger(_ProptyDevice):
-    """BPM Logical Trigger device."""
-
-    _properties = (
-        'RcvSrc-Sel', 'RcvSrc-Sts',
-        'RcvInSel-SP', 'RcvInSel-RB',
-        'TrnSrc-Sel', 'TrnSrc-Sts',
-        'TrnOutSel-SP', 'TrnOutSel-RB',
-    )
-
-    def __init__(self, bpmname, index):
-        """Init."""
-        if not _BPMSearch.is_valid_devname(bpmname):
-            raise NotImplementedError(bpmname)
-        if not 0 <= int(index) <= 23:
-            raise NotImplementedError(index)
-        super().__init__(
-            bpmname, 'TRIGGER'+str(index),
-            properties=BPMLogicalTrigger._properties)
-
-    @property
-    def receiver_source(self):
-        """Receiver source."""
-        return self['RcvSrc-Sts']
-
-    @receiver_source.setter
-    def receiver_source(self, value):
-        self['RcvSrc-Sel'] = value
-
-    @property
-    def receiver_in_sel(self):
-        """Receiver in selection."""
-        return self['RcvInSel-RB']
-
-    @receiver_in_sel.setter
-    def receiver_in_sel(self, value):
-        self['RcvInSel-SP'] = value
-
-    @property
-    def transmitter_source(self):
-        """Transmitter source."""
-        return self['TrnSrc-Sts']
-
-    @transmitter_source.setter
-    def transmitter_source(self, value):
-        self['TrnSrc-Sel'] = value
-
-    @property
-    def transmitter_out_sel(self):
-        """Transmitter out selection."""
-        return self['TrnOutSel-RB']
-
-    @transmitter_out_sel.setter
-    def transmitter_out_sel(self, value):
-        self['TrnOutSel-SP'] = value

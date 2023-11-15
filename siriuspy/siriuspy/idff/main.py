@@ -3,10 +3,13 @@
 import os as _os
 import logging as _log
 import time as _time
+from importlib.util import find_spec as _find_spec
+
 import epics as _epics
 import numpy as _np
 
-from PRUserial485 import EthBridgeClient as _EthBridgeClient
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback

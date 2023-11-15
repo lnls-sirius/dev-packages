@@ -12,6 +12,7 @@ from ..pwrsupply.csdev import Const as _Const, \
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 
 from .device import Device as _Device
+from .timing import Trigger as _Trigger
 
 
 class _PSDev(_Device):
@@ -33,6 +34,8 @@ class _PSDev(_Device):
         'CycleType-Sel', 'CycleType-Sts',
         'CycleNrCycles-SP', 'CycleNrCycles-RB',
         'Wfm-SP', 'Wfm-RB', 'WfmRef-Mon', 'Wfm-Mon',
+        'ScopeDuration-SP', 'ScopeDuration-RB',
+        'ScopeFreq-SP', 'ScopeFreq-RB',
         'CycleFreq-SP', 'CycleFreq-RB',
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
@@ -75,7 +78,7 @@ class _PSDev(_Device):
         'CCoilVVoltage-SP', 'CCoilVVoltage-RB', 'CCoilVVoltage-Mon',
     )
 
-    def __init__(self, devname, auto_monitor_mon=False):
+    def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
         """."""
         devname = _SiriusPVName(devname)
 
@@ -95,9 +98,10 @@ class _PSDev(_Device):
          self._strength_mon_propty,
          properties) = self._set_attributes_properties(devname)
 
-        # call base class constructor
+        if props2init == 'all':
+            props2init = properties
         super().__init__(
-            devname, properties=properties, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
         # private attribute with strength setpoint pv object
         self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
@@ -565,6 +569,26 @@ class PowerSupply(_PSDev):
         self._enum_setter(
             'WfmUpdateAuto-Sel', value, self.WFMUPDATEAUTO)
 
+    @property
+    def scope_freq(self):
+        """Scope frequency [Hz]."""
+        return self['ScopeFreq-RB']
+
+    @scope_freq.setter
+    def scope_freq(self, value):
+        """Set scope frequency [Hz]."""
+        self['ScopeFreq-SP'] = float(value)
+
+    @property
+    def scope_duration(self):
+        """Scope duration [s]."""
+        return self['ScopeDuration-RB']
+
+    @scope_duration.setter
+    def scope_duration(self, value):
+        """Set scope duration [s]."""
+        self['ScopeDuration-SP'] = float(value)
+
     def cmd_slowref(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRef
@@ -613,18 +637,18 @@ class PowerSupplyPU(_PSDev):
             TS_INJ_SEPTF,
             SI_INJ_DPKCKR, SI_INJ_NLKCKR,
             SI_PING_H, SI_PING_V,
-        )
+            )
 
     _properties_timing = ('Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in PowerSupplyPU.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname)
+        super().__init__(devname, props2init=props2init)
 
         # create timing device
         self._dev_timing = self._create_timing_device()
@@ -715,7 +739,7 @@ class PowerSupplyPU(_PSDev):
     @property
     def properties(self):
         """Return device properties."""
-        return self._properties + self._dev_timing.properties
+        return self.properties_in_use + self._dev_timing.properties_in_use
 
     @property
     def pvnames(self):
@@ -726,7 +750,7 @@ class PowerSupplyPU(_PSDev):
     @property
     def interlock_ok(self):
         """Return whether all interlocks are in Ok state."""
-        intlks = [p for p in self._properties if 'Intlk' in p]
+        intlks = [p for p in self.properties_in_use if 'Intlk' in p]
         is_ok = True
         for ilk in intlks:
             is_ok &= self[ilk] == 1
@@ -781,8 +805,7 @@ class PowerSupplyPU(_PSDev):
     def _create_timing_device(self):
         """."""
         devname = self._devname.substitute(dis='TI')
-        device = _Device(devname, PowerSupplyPU._properties_timing)
-        return device
+        return _Trigger(devname, props2init=PowerSupplyPU._properties_timing)
 
 
 class PowerSupplyFC(_PSDev):

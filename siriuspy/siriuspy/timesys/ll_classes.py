@@ -98,7 +98,7 @@ class _BaseLL(_Callback):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
         for evt in self._events.values():
-            pvs += [evt.pv_object(p) for p in evt.properties]
+            pvs += [evt.pv_object(p) for p in evt.properties_in_use]
         conn = True
         for pv in pvs:
             conn &= pv.connected
@@ -111,7 +111,7 @@ class _BaseLL(_Callback):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
         pvs += [self._base_freq_pv, ]
         for evt in self._events.values():
-            pvs += [evt.pv_object(p) for p in evt.properties]
+            pvs += [evt.pv_object(p) for p in evt.properties_in_use]
         for pv in pvs:
             if not pv.wait_for_connection(timeout=timeout):
                 _log.info(pv.pvname + ' not connected.')
@@ -376,8 +376,6 @@ class _BASETRIG(_BaseLL):
             # Stop using FineDelay and RF Delay to ease consistency:
             self._config_ok_values['FineDelay'] = 0
             self._config_ok_values['RFDelay'] = 0
-        elif self.channel.propty.startswith(('FMC', 'CRT')):
-            self._config_ok_values['Dir'] = 0
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -404,6 +402,7 @@ class _BASETRIG(_BaseLL):
             'Evt': self.prefix + intlb + 'Evt-RB',
             'Width': self.prefix + intlb + 'WidthRaw-RB',
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
+            'Log': self.prefix + intlb + 'Log-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'DelayRaw-RB',
             'Dir': self.prefix + intlb + 'Dir-Sts',
@@ -437,12 +436,14 @@ class _BASETRIG(_BaseLL):
             'Duration': _partial(self._set_duration, raw=False),
             'WidthRaw': _partial(self._set_duration, raw=True),
             'Polarity': _partial(self._set_simple, 'Polarity'),
+            'Log': _partial(self._set_simple, 'Log'),
             'NrPulses': self._set_nrpulses,
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
+            'Direction': _partial(self._set_simple, 'Dir'),
             }
         return map_
 
@@ -452,9 +453,10 @@ class _BASETRIG(_BaseLL):
             'Evt': _partial(self._process_source, 'Evt'),
             'Width': _partial(self._get_duration_pulses, 'Width'),
             'Polarity': _partial(self._get_simple, 'Polarity'),
+            'Log': _partial(self._get_simple, 'Log'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
-            'Dir': _partial(self._get_simple, 'Dir'),
+            'Dir': _partial(self._get_simple, 'Dir', hl_prop='Direction'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
@@ -480,6 +482,7 @@ class _BASETRIG(_BaseLL):
             'Duration': _partial(self._get_duration_pulses, ''),
             'WidthRaw': _partial(self._get_duration_pulses, ''),
             'Polarity': _partial(self._get_simple, 'Polarity'),
+            'Log': _partial(self._get_simple, 'Log'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
             'Delay': _partial(self._get_delay, 'Delay'),
             'DelayRaw': _partial(self._get_delay, 'Delay'),
@@ -490,6 +493,8 @@ class _BASETRIG(_BaseLL):
             'Status': _partial(self._get_status, ''),
             'InInjTable': _partial(self._get_status, ''),
             'LowLvlLock': lambda is_sp: {'LowLvlLock': self.locked},
+            'Direction': _partial(
+                self._get_simple, 'Dir', hl_prop='Direction'),
             }
         return map_
 
@@ -800,9 +805,20 @@ class _EVEOUT(_BASETRIG):
     _REMOVE_PROPS = {'Los', 'Dir'}
 
 
+class _EVRDIN(_EVROTP):
+    _REMOVE_PROPS = {
+        'Width', 'NrPulses', 'Delay', 'Dir', 'Src', 'SrcTrig', 'RFDelay',
+        'FineDelay', 'RFDelayType', 'Los'}
+
+
+class _EVEDIN(_EVRDIN):
+    pass
+
+
 class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los',
+        'Log'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)
@@ -838,8 +854,10 @@ def get_ll_trigger(channel, source_enums):
     LL_TRIGGER_CLASSES = {
         ('EVR', 'OUT'): _EVROUT,
         ('EVR', 'OTP'): _EVROTP,
+        ('EVR', 'DIN'): _EVRDIN,
         ('EVE', 'OTP'): _EVEOTP,
         ('EVE', 'OUT'): _EVEOUT,
+        ('EVE', 'DIN'): _EVEDIN,
         ('AMCFPGAEVR', 'CRT'): _AMCFPGAEVRAMC,
         ('AMCFPGAEVR', 'FMC'): _AMCFPGAEVRFMC,
         }

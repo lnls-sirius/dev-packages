@@ -1578,6 +1578,11 @@ def _get_ps_FOFB_propty_database():
         'AlarmsAmpLabels-Cte': {
             'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
             'value': _et.FOFB_ALARMS_AMP},
+        'AlarmsAmpLtc-Mon': {'type': 'int', 'value': 0},
+        'AlarmsAmpLtcLabels-Cte': {
+            'type': 'string', 'count': len(_et.FOFB_ALARMS_AMP),
+            'value': _et.FOFB_ALARMS_AMP},
+        'AlarmsAmpLtcRst-Cmd': {'type': 'int', 'value': 0},
         # PI control
         'CurrLoopKp-SP': {'type': 'int', 'value': 0},
         'CurrLoopKp-RB': {'type': 'int', 'value': 0},
@@ -3140,7 +3145,7 @@ def _insert_strengths(database, pstype):
             del database['KLRef-Mon']
         if 'SLRef-Mon' in database:
             del database['SLRef-Mon']
-    elif '-fc' in pstype:
+    elif '-fc' in pstype and 'ffc' not in pstype:
         database['KickAcc-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
 

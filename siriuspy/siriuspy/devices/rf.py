@@ -5,10 +5,10 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import DeviceNC as _DeviceNC, Devices as _Devices
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
-class RFGen(_DeviceNC):
+class RFGen(_Device):
     """Wrap the basic features of the RF Generator used in Sirius.
 
     The Generator is the R&S SMA100A Signal Generator.
@@ -66,7 +66,7 @@ class RFGen(_DeviceNC):
         SPARE = 'RF-SI-Gen'
         ALL = (AS, SPARE)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'GeneralFreq-SP', 'GeneralFreq-RB',
 
         'FreqFExeSweep-Cmd',  # execute single sweep
@@ -90,7 +90,7 @@ class RFGen(_DeviceNC):
         'FreqFDwellTime-RB', 'FreqFDwellTime-SP',
         )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """."""
         if devname is None:
             devname = RFGen.DEVICES.AS
@@ -98,9 +98,7 @@ class RFGen(_DeviceNC):
         # check if device exists
         if devname not in RFGen.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=RFGen._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def is_phase_continuous(self):
@@ -123,10 +121,11 @@ class RFGen(_DeviceNC):
             return
         npoints = int(delta/delta_max) + 2
         freq_span = _np.linspace(freq0, value, npoints)[1:]
-        self._pvs['GeneralFreq-SP'].put(freq_span[0], wait=False)
+        pvo = self.pv_object('GeneralFreq-SP')
+        pvo.put(freq_span[0], wait=False)
         for freq in freq_span[1:]:
             _time.sleep(1.0)
-            self._pvs['GeneralFreq-SP'].put(freq, wait=False)
+            pvo.put(freq, wait=False)
         self['GeneralFreq-SP'] = value
 
     def set_frequency(self, value, tol=1, timeout=10):
@@ -564,8 +563,9 @@ class RFGen(_DeviceNC):
         return ampl
 
 
-class ASLLRF(_DeviceNC):
+class ASLLRF(_Device):
     """AS LLRF."""
+
     VoltIncRates = _get_namedtuple('VoltIncRates', (
         'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
         'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
@@ -581,7 +581,8 @@ class ASLLRF(_DeviceNC):
         SI = 'SR-RF-DLLRF-01'
         ALL = (BO, SI)
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
+        'SL:S', 'SL',
         'PL:REF', 'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
         'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
@@ -592,16 +593,30 @@ class ASLLRF(_DeviceNC):
         'FF:DEADBAND', 'FF:DEADBAND:S', 'FF:CELL2', 'FF:CELL4', 'FF:ERR',
         'AMPREF:INCRATE', 'AMPREF:INCRATE:S',
         'PHSREF:INCRATE', 'PHSREF:INCRATE:S',
+        'mV:AMPREF:MIN', 'mV:AMPREF:MIN:S', 'PHSREF:MIN', 'PHSREF:MIN:S',
+        'PULSE', 'PULSE:S', 'COND:DC', 'COND:DC:S', 'DUTYCYCLE',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in ASLLRF.DEVICES.ALL:
             raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
 
-        # call base class constructor
-        super().__init__(devname, properties=ASLLRF._properties)
+    @property
+    def slow_loop_state(self):
+        """Slow loop state."""
+        return self['SL']
+
+    @slow_loop_state.setter
+    def slow_loop_state(self, value):
+        self['SL:S'] = int(value)
+
+    def set_slow_loop_state(self, value, timeout=None):
+        """Wait for slow loop state to reach `value`."""
+        self.slow_loop_state = value
+        return self._wait('SL', value, timeout=timeout)
 
     @property
     def is_cw(self):
@@ -621,6 +636,15 @@ class ASLLRF(_DeviceNC):
     def rmp_ready(self):
         """Ramp ready."""
         return self['RmpReady-Mon']
+
+    def set_rmp_enable(self, value, timeout=None, wait_ready=False):
+        """Set ramp enable."""
+        self.rmp_enable = value
+        if not self._wait('RmpEnbl-Sts', value, timeout=timeout):
+            return False
+        if wait_ready:
+            return self._wait('RmpReady-Mon', value, timeout=timeout)
+        return True
 
     @property
     def phase_top(self):
@@ -651,6 +675,11 @@ class ASLLRF(_DeviceNC):
         return self['SL:REF:PHS']
 
     @property
+    def phase_sp(self):
+        """."""
+        return self['PL:REF:S']
+
+    @property
     def phase(self):
         """."""
         return self['PL:REF']
@@ -671,8 +700,7 @@ class ASLLRF(_DeviceNC):
 
     @phase_incrate.setter
     def phase_incrate(self, value):
-        if int(value) in self.PhsIncRates:
-            self['PHSREF:INCRATE:S'] = int(value)
+        self._enum_setter('PHSREF:INCRATE:S', value, self.PhsIncRates)
 
     def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
@@ -691,6 +719,11 @@ class ASLLRF(_DeviceNC):
         return self['SL:REF:AMP']
 
     @property
+    def voltage_sp(self):
+        """."""
+        return self['mV:AL:REF-SP']
+
+    @property
     def voltage(self):
         """."""
         return self['mV:AL:REF-RB']
@@ -701,23 +734,94 @@ class ASLLRF(_DeviceNC):
 
     @property
     def voltage_incrate_str(self):
-        """."""
+        """Voltage increase rate enum string."""
         return self.VoltIncRates._fields[self['AMPREF:INCRATE']]
 
     @property
     def voltage_incrate(self):
-        """."""
+        """Voltage increase rate."""
         return self['AMPREF:INCRATE']
 
     @voltage_incrate.setter
     def voltage_incrate(self, value):
-        if int(value) in self.VoltIncRates:
-            self['AMPREF:INCRATE:S'] = int(value)
+        self._enum_setter('AMPREF:INCRATE:S', value, self.VoltIncRates)
+
+    def set_voltage_incrate(self, value, timeout=None):
+        """Set and wait voltage increase rate to reach `value`."""
+        self.voltage_incrate = value
+        return self._wait('AMPREF:INCRATE', value, timeout=timeout)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
-        """Set RF phase and wait until it gets there."""
+        """Set RF voltage and wait until it gets there."""
         self.voltage = value
         pv2wait = 'SL:INP:AMP' if wait_mon else 'SL:REF:AMP'
+        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+
+    @property
+    def voltage_refmin_sp(self):
+        """."""
+        return self['mV:AMPREF:MIN:S']
+
+    @property
+    def voltage_refmin(self):
+        """."""
+        return self['mV:AMPREF:MIN']
+
+    @voltage_refmin.setter
+    def voltage_refmin(self, value):
+        self['mV:AMPREF:MIN:S'] = value
+
+    @property
+    def phase_refmin_sp(self):
+        """."""
+        return self['PHSREF:MIN:S']
+
+    @property
+    def phase_refmin(self):
+        """."""
+        return self['PHSREF:MIN']
+
+    @phase_refmin.setter
+    def phase_refmin(self, value):
+        self['PHSREF:MIN:S'] = value
+
+    @property
+    def conditioning_state(self):
+        """."""
+        return self['PULSE']
+
+    @conditioning_state.setter
+    def conditioning_state(self, value):
+        self['PULSE:S'] = bool(value)
+
+    def cmd_turn_on_conditioning(self, timeout=10):
+        """Turn on conditioning mode."""
+        self.conditioning_state = 1
+        return self._wait('PULSE', 1, timeout=timeout)
+
+    def cmd_turn_off_conditioning(self, timeout=10):
+        """Turn off conditioning mode."""
+        self.conditioning_state = 0
+        return self._wait('PULSE', 0, timeout=timeout)
+
+    @property
+    def conditioning_duty_cycle_mon(self):
+        """Duty cycle in %."""
+        return self['DUTYCYCLE']
+
+    @property
+    def conditioning_duty_cycle(self):
+        """Duty cycle in %."""
+        return self['COND:DC']
+
+    @conditioning_duty_cycle.setter
+    def conditioning_duty_cycle(self, value):
+        self['COND:DC:S'] = value
+
+    def set_duty_cycle(self, value, tol=1, timeout=10, wait_mon=True):
+        """Set RF phase and wait until it gets there."""
+        self.conditioning_duty_cycle = value
+        pv2wait = 'COND:DC' if wait_mon else 'DUTYCYCLE'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
@@ -810,7 +914,7 @@ class ASLLRF(_DeviceNC):
         return (phase + 180) % 360 - 180
 
 
-class BORFCavMonitor(_DeviceNC):
+class BORFCavMonitor(_Device):
     """."""
 
     class DEVICES:
@@ -818,7 +922,8 @@ class BORFCavMonitor(_DeviceNC):
 
         BO = 'BO-05D:RF-P5Cav'
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
+        'PwrFwd-Mon', 'PwrRev-Mon',
         'Cell3PwrTop-Mon', 'Cell3PwrBot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
         'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
@@ -826,11 +931,9 @@ class BORFCavMonitor(_DeviceNC):
         'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
         )
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
-        # call base class constructor
-        super().__init__(
-            BORFCavMonitor.DEVICES.BO, properties=BORFCavMonitor._properties)
+        super().__init__(BORFCavMonitor.DEVICES.BO, props2init=props2init)
 
     @property
     def status(self):
@@ -928,7 +1031,7 @@ class BORFCavMonitor(_DeviceNC):
         return self['RmpAmpVCavTop-Mon']
 
 
-class SIRFCavMonitor(_DeviceNC):
+class SIRFCavMonitor(_Device):
     """."""
 
     class DEVICES:
@@ -936,7 +1039,7 @@ class SIRFCavMonitor(_DeviceNC):
 
         SI = 'SI-02SB:RF-P7Cav'
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PwrRev-Mon', 'PwrFwd-Mon',
         'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
         'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
@@ -944,11 +1047,10 @@ class SIRFCavMonitor(_DeviceNC):
         'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
         )
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
         # call base class constructor
-        super().__init__(
-            SIRFCavMonitor.DEVICES.SI, properties=SIRFCavMonitor._properties)
+        super().__init__(SIRFCavMonitor.DEVICES.SI, props2init=props2init)
 
     @property
     def status(self):
@@ -1041,7 +1143,7 @@ class SIRFCavMonitor(_DeviceNC):
         return self['AmpVCav-Mon']
 
 
-class RFCav(_Devices):
+class RFCav(_DeviceSet):
     """."""
 
     class DEVICES:
@@ -1051,23 +1153,36 @@ class RFCav(_Devices):
         SI = 'SI-02SB:RF-P7Cav'
         ALL = (BO, SI)
 
-    def __init__(self, devname):
-        """."""
+    def __init__(self, devname, props2init='all'):
+        """RFCav DeviceSet.
+
+        Args:
+            devname (str): choose the accelerator cavity in RFCav.DEVICES
+            props2init (str, optional): 'all' to connect with all PVs or
+                bool(props2init) == False to initialize without any
+                connection. Defaults to 'all'.
+
+        """
         # check if device exists
         if devname not in RFCav.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self.dev_rfgen = RFGen()
+        _isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not _isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False")
+
+        self.dev_rfgen = RFGen(props2init=props2init)
         if devname == RFCav.DEVICES.SI:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI)
-            self.dev_cavmon = SIRFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(props2init=props2init)
         elif devname == RFCav.DEVICES.BO:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO)
-            self.dev_cavmon = BORFCavMonitor()
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO, props2init=props2init)
+            self.dev_cavmon = BORFCavMonitor(props2init=props2init)
         devices = (self.dev_rfgen, self.dev_llrf, self.dev_cavmon)
 
         # call base class constructor
-        super().__init__(devname, devices)
+        super().__init__(devices, devname=devname)
 
     @property
     def is_cw(self):
@@ -1096,6 +1211,7 @@ class RFCav(_Devices):
 
 class RFKillBeam(ASLLRF):
     """RF Kill Beam Button."""
+
     TIMEOUT_WAIT = 20.0  # [s]
     INCRATE_VALUE = ASLLRF.VoltIncRates.vel_50p0  # [mV/s]
     REFMIN_VALUE = 60  # Minimum Amplitude Reference [mV]
@@ -1140,3 +1256,254 @@ class RFKillBeam(ASLLRF):
                 timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Amplitude Increase Rate back.']
         return [True, '']
+
+
+class SILLRFPreAmp(_Device):
+    """SILLRF Pre Amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SIA01 = 'RA-RaSIA01:RF-LLRFPreAmp-1'
+        ALL = (SIA01, )
+
+    PROPERTIES_DEFAULT = (
+        'PINSw1Enbl-Cmd', 'PINSw1Dsbl-Cmd', 'PINSw1-Mon',
+        'PINSw2Enbl-Cmd', 'PINSw2Dsbl-Cmd', 'PINSw2-Mon',
+    )
+
+    def __init__(self, devname='', props2init='all'):
+        if not devname:
+            devname = SILLRFPreAmp.DEVICES.SIA01
+        if devname not in SILLRFPreAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    def cmd_enable_pinsw_1(self, timeout=None, wait_mon=True):
+        """Enable PINSw 1."""
+        self['PINSw1Enbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw1Enbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw1-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_enable_pinsw_2(self, timeout=None, wait_mon=True):
+        """Enable PINSw 2."""
+        self['PINSw2Enbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw2Enbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw2-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_disable_pinsw_1(self, timeout=None, wait_mon=True):
+        """Disable PINSw 1."""
+        self['PINSw1Dsbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw1Dsbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw1-Mon', 0, timeout=timeout)
+        return True
+
+    def cmd_disable_pinsw_2(self, timeout=None, wait_mon=True):
+        """Disable PINSw 2."""
+        self['PINSw2Dsbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PINSw2Dsbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PINSw2-Mon', 0, timeout=timeout)
+        return True
+
+
+class BOLLRFPreAmp(_Device):
+    """BOLLRF Pre Amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        BO01 = 'RA-RaBO01:RF-LLRFPreAmp'
+        ALL = (BO01, )
+
+    PROPERTIES_DEFAULT = (
+        'PinSwEnbl-Cmd', 'PinSwDsbl-Cmd', 'PinSw-Mon',
+    )
+
+    def __init__(self, devname='', props2init='all'):
+        if not devname:
+            devname = BOLLRFPreAmp.DEVICES.BO01
+        if devname not in BOLLRFPreAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    def cmd_enable_pinsw(self, timeout=None, wait_mon=True):
+        """Enable PINSw."""
+        self['PinSwEnbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PinSwEnbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PinSw-Mon', 1, timeout=timeout)
+        return True
+
+    def cmd_disable_pinsw(self, timeout=None, wait_mon=True):
+        """Disable PINSw."""
+        self['PinSwDsbl-Cmd'] = 1
+        _time.sleep(1)
+        self['PinSwDsbl-Cmd'] = 0
+        if wait_mon:
+            return self._wait('PinSw-Mon', 0, timeout=timeout)
+        return True
+
+
+class SIRFDCAmp(_Device):
+    """SI RF DC/TDK amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA1 = 'RA-ToSIA01:RF-TDKSource'
+        SSA2 = 'RA-ToSIA02:RF-TDKSource'
+        ALL = (SSA1, SSA2)
+
+    PROPERTIES_DEFAULT = (
+        'PwrDCEnbl-Sel', 'PwrDCDsbl-Sel', 'PwrDC-Sts',
+    )
+
+    def __init__(self, devname, props2init='all'):
+        if devname not in SIRFDCAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['PwrDCEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrDCEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrDC-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['PwrDCDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrDCDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrDC-Sts', 0, timeout=timeout)
+        return True
+
+
+class BORFDCAmp(_Device):
+    """BO RF DC/DC amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA = 'RA-ToBO:RF-SSAmpTower'
+        ALL = (SSA, )
+
+    PROPERTIES_DEFAULT = (
+        'PwrCnvEnbl-Sel', 'PwrCnvDsbl-Sel', 'PwrCnv-Sts',
+    )
+
+    def __init__(self, devname='', props2init='all'):
+        if not devname:
+            devname = BORFDCAmp.DEVICES.SSA
+        if devname not in BORFDCAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['PwrCnvEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrCnvEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrCnv-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['PwrCnvDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrCnvDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrCnv-Sts', 0, timeout=timeout)
+        return True
+
+
+class SIRFACAmp(_Device):
+    """SI RF AC/TDK amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA1 = 'RA-ToSIA01:RF-ACPanel'
+        SSA2 = 'RA-ToSIA02:RF-ACPanel'
+        ALL = (SSA1, SSA2)
+
+    PROPERTIES_DEFAULT = (
+        'PwrACEnbl-Sel', 'PwrACDsbl-Sel', 'PwrAC-Sts',
+    )
+
+    def __init__(self, devname, props2init='all'):
+        if devname not in SIRFACAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['PwrACEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrACEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrAC-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['PwrACDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['PwrACDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('PwrAC-Sts', 0, timeout=timeout)
+        return True
+
+
+class BORF300VDCAmp(_Device):
+    """BO RF 300VDC amplifier."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SSA = 'RA-ToBO:RF-ACDCPanel'
+        ALL = (SSA, )
+
+    PROPERTIES_DEFAULT = (
+        '300VdcEnbl-Sel', '300VdcDsbl-Sel', '300Vdc-Sts',
+    )
+
+    def __init__(self, devname=None, props2init='all'):
+        if not devname:
+            devname = BORF300VDCAmp.DEVICES.SSA
+        if devname not in BORF300VDCAmp.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    def cmd_enable(self, timeout=None, wait_mon=True):
+        """Enable."""
+        self['300VdcEnbl-Sel'] = 1
+        _time.sleep(1)
+        self['300VdcEnbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('300Vdc-Sts', 1, timeout=timeout)
+        return True
+
+    def cmd_disable(self, timeout=None, wait_mon=True):
+        """Disable."""
+        self['300VdcDsbl-Sel'] = 1
+        _time.sleep(1)
+        self['300VdcDsbl-Sel'] = 0
+        if wait_mon:
+            return self._wait('300Vdc-Sts', 0, timeout=timeout)
+        return True

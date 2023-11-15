@@ -1,6 +1,6 @@
 """."""
 from .device import Device as _Device
-from .device import Devices as _Devices
+from .device import DeviceSet as _DeviceSet
 from .ict import ICT
 
 
@@ -15,16 +15,16 @@ class CurrInfoTranspEff(_Device):
         TS = 'TS-Glob:AP-CurrInfo'
         ALL = (LI, TB, TS, )
 
-    _properties = ('TranspEff-Mon', )
+    PROPERTIES_DEFAULT = ('TranspEff-Mon', )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in CurrInfoTranspEff.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=CurrInfoTranspEff._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def transpeff(self):
@@ -32,7 +32,7 @@ class CurrInfoTranspEff(_Device):
         return self['TranspEff-Mon']
 
 
-class CurrInfoLinear(_Devices):
+class CurrInfoLinear(_DeviceSet):
     """."""
 
     class DEVICES:
@@ -67,7 +67,7 @@ class CurrInfoLinear(_Devices):
         )
 
         # call base class constructor
-        super().__init__(devname, devices)
+        super().__init__(devices, devname=devname)
 
     @property
     def transpeff(self):
@@ -139,8 +139,7 @@ class CurrInfoBO(_Device):
     """."""
 
     DEVNAME = 'BO-Glob:AP-CurrInfo'
-
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Charge150MeV-Mon', 'Current150MeV-Mon',
         'Charge1GeV-Mon', 'Current1GeV-Mon',
         'Charge2GeV-Mon', 'Current2GeV-Mon',
@@ -148,10 +147,10 @@ class CurrInfoBO(_Device):
         'IntCurrent3GeV-Mon', 'RampEff-Mon',
     )
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
         # call base class constructor
-        super().__init__(CurrInfoBO.DEVNAME, properties=CurrInfoBO._properties)
+        super().__init__(CurrInfoBO.DEVNAME, props2init=props2init)
 
     @property
     def charge150mev(self):
@@ -208,8 +207,7 @@ class CurrInfoSI(_Device):
     """."""
 
     DEVNAME = 'SI-Glob:AP-CurrInfo'
-
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Charge-Mon', 'Current-Mon',
         'InjEff-Mon', 'InjCurr-Mon', 'InjCharge-Mon',
         'Lifetime-Mon', 'LifetimeBPM-Mon',
@@ -217,10 +215,10 @@ class CurrInfoSI(_Device):
         'BufferValue-Mon', 'BufferTimestamp-Mon',
     )
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """."""
         # call base class constructor
-        super().__init__(CurrInfoSI.DEVNAME, properties=CurrInfoSI._properties)
+        super().__init__(CurrInfoSI.DEVNAME, props2init=props2init)
 
     @property
     def charge(self):
@@ -263,7 +261,7 @@ class CurrInfoSI(_Device):
         return self['StoredEBeam-Mon']
 
 
-class CurrInfoAS(_Devices):
+class CurrInfoAS(_DeviceSet):
     """."""
 
     class DEVICES:
@@ -290,7 +288,7 @@ class CurrInfoAS(_Devices):
         )
 
         # call base class constructor
-        super().__init__('', devices)
+        super().__init__(devices)
 
     @property
     def li(self):

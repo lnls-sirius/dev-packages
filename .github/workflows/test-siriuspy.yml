@@ -25,7 +25,7 @@ jobs:
         run: |
           git clone https://github.com/lnls-sirius/eth-bridge-pru-serial485.git
           cd eth-bridge-pru-serial485/client
-          python setup.py install
+          pip install .
           cd ../../
 
       - name: Install mathphys

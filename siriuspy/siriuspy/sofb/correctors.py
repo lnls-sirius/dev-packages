@@ -5,13 +5,11 @@ import logging as _log
 import traceback as _traceback
 
 import numpy as _np
-from PRUserial485 import EthBridgeClient
 
 from .. import util as _util
 from ..epics import PV as _PV
 from ..thread import RepeaterThread as _Repeat
 from ..pwrsupply.csdev import Const as _PSConst
-from ..pwrsupply.bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
@@ -559,13 +557,8 @@ class EpicsCorrectors(BaseCorrectors):
             self._update_log('ERR: ' + str(err))
             _log.error(_traceback.format_exc())
 
-    def set_corrs_mode(self, value, is_thread=False):
+    def set_corrs_mode(self, value):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.set_corrs_mode, (value, ), {'is_thread': True}))
-            return True
-
         if value not in self._csorb.CorrSync:
             return False
         self.sync_kicks = value
@@ -605,13 +598,8 @@ class EpicsCorrectors(BaseCorrectors):
         self.timing.delayraw = raw
         return True
 
-    def configure_correctors(self, val, is_thread=False):
+    def configure_correctors(self, val):
         """Configure correctors method."""
-        if not is_thread:
-            self._LQTHREAD.put((
-                self.configure_correctors, (val, ), {'is_thread': True}))
-            return True
-
         corrs = self._get_used_corrs(include_rf=True)
         for corr in corrs:
             if not corr.connected:
@@ -626,12 +614,13 @@ class EpicsCorrectors(BaseCorrectors):
                 continue
             corr.configure()
         if not self.isring:
-            return
+            return True
         if self.acc == 'SI' and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = 'ERR: Failed to configure timing'
                 self._update_log(msg)
                 _log.error(msg[5:])
+        return True
 
     def _update_status(self):
         status = 0b0000111

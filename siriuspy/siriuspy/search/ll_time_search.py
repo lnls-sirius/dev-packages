@@ -33,6 +33,7 @@ class LLTimeSearch:
                 'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
+                'DIN0', 'DIN1', 'DIN2',
                 ),
             },
         'EVE': {
@@ -43,7 +44,7 @@ class LLTimeSearch:
                 'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                'RFOUT',
+                'RFOUT', 'DIN0', 'DIN1', 'DIN2',
                 ),
             },
         'AMCFPGAEVR': {
@@ -112,6 +113,7 @@ class LLTimeSearch:
 
     _conn_from_evg = dict()
     _conn_twds_evg = dict()
+    _crates_mapping = dict()
     _top_chain_devs = set()
     _final_receiver_devs = set()
     _all_devices = set()
@@ -278,6 +280,48 @@ class LLTimeSearch:
         return _dcopy(cls._devs_twds_evg)
 
     @classmethod
+    def is_digital_input(self, ll_trigger):
+        """Check whether a low level trigger if of type digital input.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('DIN')
+
+    @classmethod
+    def has_delay_type(cls, ll_trigger):
+        """Check whether a low level trigger has delay type.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
+
+    @classmethod
+    def has_direction(cls, ll_trigger):
+        """Check whether a low level trigger has direction property.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return 'AMCFPGAEVR' == name.dev
+
+    @classmethod
     def has_clock(cls, ll_trigger):
         """Check whether a low level trigger has access to EVG clocks.
 
@@ -300,8 +344,8 @@ class LLTimeSearch:
             raise Exception('Error: ' + name)
 
     @classmethod
-    def has_delay_type(cls, ll_trigger):
-        """Check whether a low level trigger has delay type.
+    def has_log(cls, ll_trigger):
+        """Check whether a low level trigger has Log PVs.
 
         Args:
             ll_trigger (SiriusPVName): Trigger name.
@@ -311,7 +355,7 @@ class LLTimeSearch:
 
         """
         name = _PVName(ll_trigger)
-        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
+        return 'AMCFPGAEVR' != name.dev
 
     @classmethod
     def get_trigger_name(cls, channel):
@@ -336,6 +380,12 @@ class LLTimeSearch:
         for up_chan in chan_tree:
             if up_chan.device_name in cls._evg_devs:
                 return up_chan
+
+    @classmethod
+    def get_crates_mapping(cls):
+        """Return crates to devices mapping."""
+        cls._get_timedata()
+        return cls._crates_mapping
 
     # --- private methods ---
 
@@ -434,6 +484,7 @@ class LLTimeSearch:
                 mapping[crates[crate]] = list()
             else:
                 mapping[crates[crate]].append(dev)
+        cls._crates_mapping = mapping
         return mapping
 
     @classmethod
