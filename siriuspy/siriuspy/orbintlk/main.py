@@ -471,9 +471,13 @@ class App(_Callback):
             glob_en = self._get_gen_bpm_intlk()
         else:
             glob_en = _np.zeros(self._const.nr_bpms, dtype=bool)
+
+        bkup = int(self._state)
+        self._state = value
         if not self._orbintlk_dev.set_gen_enable(list(glob_en)):
             self._update_log('ERR:Could not set BPM general')
             self._update_log('ERR:interlock enable.')
+            self._state = bkup
             return False
         self._update_log('Configured BPM general interlock enable.')
 
@@ -481,10 +485,10 @@ class App(_Callback):
         if not self._evg_dev._wait(
                 'IntlkCtrlEnbl-Sts', value, timeout=self._const.DEF_TIMEOUT):
             self._update_log('ERR:Could not set EVG interlock enable.')
+            self._state = bkup
             return False
         self._update_log('Configured EVG interlock enable.')
 
-        self._state = value
         self.run_callbacks('Enable-Sts', self._state)
 
         return True
