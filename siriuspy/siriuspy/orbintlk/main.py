@@ -1231,8 +1231,13 @@ class App(_Callback):
         device = self._orbintlk_dev.devices[devidx]
         if propty_rb.endswith('En-Sts'):
             entyp = 'pos' if 'Pos' in propty_rb else \
-                'ang' if 'Ang' in propty_rb else 'minsum'
-            desired_value = self._enable_lists[entyp][devidx]
+                'ang' if 'Ang' in propty_rb else \
+                'minsum' if 'MinSum' in propty_rb else \
+                'gen'
+            if entyp == 'gen':
+                desired_value = self._get_gen_bpm_intlk()[devidx]
+            else:
+                desired_value = self._enable_lists[entyp][devidx]
         elif 'Lmt' in propty_rb:
             limcls = 'pos' if 'Pos' in propty_rb else \
                 'ang' if 'Ang' in propty_rb else 'minsum'
