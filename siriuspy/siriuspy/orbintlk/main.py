@@ -919,6 +919,7 @@ class App(_Callback):
             for devname, rxenbl in self._fout2rxenbl.items():
                 dev = self._fout_devs[devname]
                 okg &= dev['RxEnbl-RB'] == rxenbl
+                okg &= dev['RxLockedLtc-Mon']
             value = _updt_bit(value, 4, not okg)
         else:
             value += 0b11 << 3
