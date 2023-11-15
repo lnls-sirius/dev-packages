@@ -1011,8 +1011,6 @@ class App(_Callback):
 
     def _callback_evg_intlk(self, value, **kws):
         _ = kws
-        if not self._state:
-            return
         if not self._init:
             return
         if self._thread_cbevgilk and self._thread_cbevgilk.is_alive():
@@ -1037,8 +1035,6 @@ class App(_Callback):
         self.cmd_acq_config()
 
     def _callback_fout_rxlock(self, pvname, value, **kws):
-        if not self._state:
-            return
         if not self._init:
             return
         nam = _PVName(pvname).device_name
@@ -1050,8 +1046,6 @@ class App(_Callback):
         self._thread_cbfout[nam].start()
 
     def _callback_evg_rxlock(self, pvname, value, **kws):
-        if not self._state:
-            return
         if not self._init:
             return
         pvname = _PVName(pvname)
@@ -1098,8 +1092,6 @@ class App(_Callback):
             return
         pvname = _PVName(pvname)
         self._update_log(f'FATAL:{pvname.device_name} disconnected')
-        if not self._state:
-            return
         # verify if this is an orbit interlock reliability failure
         is_failure = False
         for dev in self._ti_mon_devs:
@@ -1111,8 +1103,6 @@ class App(_Callback):
     def _callback_bpm_intlk(self, pvname, value, **kws):
         _ = kws
         if not value:
-            return
-        if not self._state:
             return
         if not self._init:
             return
@@ -1189,6 +1179,9 @@ class App(_Callback):
         if self._is_dry_run:
             self._update_log('WARN:Dry run running, will not handle')
             self._update_log('WARN:reliability failure.')
+            return
+        if not self._state:
+            self._update_log('WARN:Orbit interlock is not enabled.')
             return
         # if minimum sum condition is not satisfied, only monitor sum
         if not self._check_minsum_requirement():
