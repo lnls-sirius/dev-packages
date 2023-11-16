@@ -170,10 +170,10 @@ class EqualizeBPMs(_FamBPMs):
         """Return Current BPM gains as 3D numpy array.
 
         Returns:
-            numpy.ndarray (nrbpms, 4, 2): 3D numpy array with gains.
-                 - The first index vary the BPMs, in the default high level
+            numpy.ndarray (4, nrbpms, 2): 3D numpy array with gains.
+                 - The first index vary the antennas: 'A', 'B', 'C', 'D';
+                 - The second index vary the BPMs, in the default high level
                 convention order;
-                 - The second index vary the antennas: 'A', 'B', 'C', 'D';
                  - The last index refers to the type of the gain in the
                 following order: 'Direct', 'Inverse';
 
@@ -190,7 +190,7 @@ class EqualizeBPMs(_FamBPMs):
         """Set gains matrix to BPMs.
 
         Args:
-            gains (float or numpy.ndarray, (nrbpms, 4, 2)): gain matrix. In
+            gains (float or numpy.ndarray, (4, nrbpms, 2)): gain matrix. In
                 the same format as the one provided by get_current_gains
                 method. If a float is provided, then this same gain will be
                 applied to all BPMs.
@@ -393,7 +393,7 @@ class EqualizeBPMs(_FamBPMs):
         """Calculate average signal for each antenna in both switching states.
 
         Args:
-            antennas (numpy.ndarray, (nrbpms, 4, N)): Antennas data.
+            antennas (numpy.ndarray, (4, nrbpms, N)): Antennas data.
             fsamp (float, optional): Sampling frequency. Defaults to 4.
             fswtc (float, optional): Switching frequency. Defaults to 1.
             acq_strategy (int, optional): Whether we should assume states
@@ -405,7 +405,7 @@ class EqualizeBPMs(_FamBPMs):
                 antennas gain during acquisition. Defaults to 0.95.
 
         Returns:
-            mean (numpy.ndarray, nrbpms, 4, 2): The levels of each switching
+            mean (numpy.ndarray, (4, nrbpms, 2)): The levels of each switching
                 state for each antenna.
 
         """
