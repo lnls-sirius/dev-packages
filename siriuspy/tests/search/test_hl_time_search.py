@@ -35,9 +35,11 @@ class TestHLTimeSearch(TestCase):
         'get_hl_trigger_interface',
         'get_ll_trigger_names',
         'get_hl_from_ll_triggers',
+        'is_digital_input',
         'has_delay_type',
         'has_direction',
         'has_clock',
+        'has_log',
         'check_hl_triggers_consistency',
         'reset',
     )

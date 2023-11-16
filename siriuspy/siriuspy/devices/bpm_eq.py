@@ -5,7 +5,7 @@ import logging as _logging
 import numpy as _np
 import matplotlib.pyplot as _mplt
 
-from mathphys.functions import save_pickle as _savep, load_pickle as _loadp, \
+from mathphys.functions import save as _save, load as _load, \
     get_namedtuple as _namedtuple
 from .bpm_fam import FamBPMs as _FamBPMs
 from .timing import Trigger
@@ -17,6 +17,11 @@ class EqualizeBPMs(_FamBPMs):
 
     NR_POINTS = 2000
     MAX_MULTIPLIER = 0xffffff / (1 << 24)
+    PROCMETHODSMEANING = {
+        'AABS': 'All Antennas will be equalized in Both Semicycles',
+        'EABS': 'Each Antenna will be equalized in Both Semicycles',
+        'AAES': 'All Antennas will be equalized in Each Semicycle'
+        }
     ProcMethods = _namedtuple('ProcMethods', ('AABS', 'EABS', 'AAES'))
     AcqStrategies = _namedtuple(
         'AcqStrategies', ('AssumeOrder', 'AcqInvRedGain'))
@@ -56,7 +61,7 @@ class EqualizeBPMs(_FamBPMs):
     @property
     def acq_strategy_str(self):
         """."""
-        return self.AcqStrategies._fields._acq_strategy
+        return self.AcqStrategies._fields[self._acq_strategy]
 
     @property
     def acq_strategy(self):
@@ -113,6 +118,41 @@ class EqualizeBPMs(_FamBPMs):
         meth = self._enum_selector(meth, self.ProcMethods)
         if meth is not None:
             self._proc_method = meth
+
+    def load_data(self, filename):
+        """Load self.data from file.
+
+        Args:
+            fname (str): name of the file. If extension is not provided,
+                '.pickle' will be added and a pickle file will be assumed. If
+                provided, must be {'.pickle', '.pkl'} for pickle files or
+                {'.h5', '.hdf5', '.hdf', '.hd5'} for HDF5 files.
+
+        """
+        self.data = _load(filename, )
+
+    def save_data(self, fname, overwrite=False, makedirs=True, compress=False):
+        """Save self.data to pickle or HDF5 file.
+
+        Args:
+            fname (str): name of the file. If extension is not provided,
+                '.pickle' will be added and a pickle file will be assumed. If
+                provided, must be {'.pickle', .pkl} for pickle files or
+                {'.h5', '.hdf5', '.hdf', '.hd5'} for HDF5 files.
+            overwrite (bool, optional): Whether to overwrite existing file.
+                Defaults to False.
+            makedirs (bool, optional): create dir, if it does not exist.
+                Defaults to False.
+            compress (bool, optional): If True, the file will be saved in
+                compressed format, using gzip library. Defaults to False.
+
+        Raises:
+            FileExistsError: in case overwrite is False and file exists.
+
+        """
+        _save(
+            self.data, fname=fname, overwrite=overwrite, makedirs=makedirs,
+            compress=compress)
 
     def get_current_gains(self):
         """Return Current BPM gains as 3D numpy array.
@@ -223,23 +263,28 @@ class EqualizeBPMs(_FamBPMs):
         self._log('BPMs updated.')
 
         self._log('Acquiring data.')
-        fsamp = self.get_switching_frequency(1)
-        fswtc = self.get_sampling_frequency(1)
-        self.data['freq_switching'] = fsamp
-        self.data['freq_sampling'] = fswtc
+        fswtc = self.get_switching_frequency(1)
+        fsamp = self.get_sampling_frequency(1)
+        self.data['freq_switching'] = fswtc
+        self.data['freq_sampling'] = fsamp
         if None in {fsamp, fswtc}:
             self._log('ERR: Not all BPMs are configured equally.')
             return
-        elif fsamp % fswtc:
+        elif fsamp % (2*fswtc):
             self._log('ERR: Sampling freq is not multiple of switching freq.')
             return
 
         posx_gain, posy_gain = [], []
+        posx_offset, posy_offset = [], []
         for bpm in self.bpms:
             posx_gain.append(bpm.posx_gain)
             posy_gain.append(bpm.posy_gain)
+            posx_offset.append(bpm.posx_offset)
+            posy_offset.append(bpm.posy_offset)
         self.data['posx_gain'] = _np.array(posx_gain)
         self.data['posy_gain'] = _np.array(posy_gain)
+        self.data['posx_offset'] = _np.array(posx_offset)
+        self.data['posy_offset'] = _np.array(posy_offset)
         self.data['gains_acq'] = self.get_current_gains()
 
         _time.sleep(0.1)
@@ -258,14 +303,14 @@ class EqualizeBPMs(_FamBPMs):
         self.estimate_orbit_variation()
 
     def calc_switching_levels(
-            self, antennas, fsamp=4, fswtc=2, acq_strategy=0,
+            self, antennas, fsamp=4, fswtc=1, acq_strategy=0,
             acq_inverse_reduced_gain=0.95, **kwargs):
         """Calculate average signal for each antenna in both switching states.
 
         Args:
             antennas (numpy.ndarray, (nrbpms, 4, N)): Antennas data.
             fsamp (float, optional): Sampling frequency. Defaults to 4.
-            fswtc (float, optional): Switching frequency. Defaults to 2.
+            fswtc (float, optional): Switching frequency. Defaults to 1.
             acq_strategy (int, optional): Whether we should assume states
                 order in data, starting with the direct state, or if we should
                 look for the higher levels (direct) and lower levels
@@ -281,10 +326,10 @@ class EqualizeBPMs(_FamBPMs):
         """
         _ = kwargs
         ants = antennas
-        lcyc = int(fsamp // fswtc)
+        lsemicyc = int(fsamp // (2*fswtc))
         nbpm = len(self.bpms)
         nant = 4
-        trunc = (ants.shape[-1] // (lcyc*2)) * (lcyc*2)
+        trunc = (ants.shape[-1] // (lsemicyc*2)) * (lsemicyc*2)
         if trunc < 5:
             self._log(
                 f'ERR:Data not large enough. Acquire data with more points.')
@@ -292,16 +337,16 @@ class EqualizeBPMs(_FamBPMs):
         elif ants.shape[-1] != trunc:
             ants = ants[:, :, :trunc]
             self._log(f'WARN:Truncating data at {trunc} points')
-        ants = ants.reshape(nbpm, nant, -1, lcyc*2)
+        ants = ants.reshape(nbpm, nant, -1, lsemicyc*2)
         ants = ants.mean(axis=2)
         self._log('Calculating switching levels.')
         self._log(
             f'AcqStrategy is {self.AcqStrategies._fields[acq_strategy]}.')
         if acq_strategy == self.AcqStrategies.AssumeOrder:
-            ants = ants.reshape(nbpm, nant, 2, lcyc)
+            ants = ants.reshape(nbpm, nant, 2, lsemicyc)
             mean = ants.mean(axis=-1)
-            idp = _np.tile(_np.arange(lcyc), (nbpm, 1))
-            idn = idp + lcyc
+            idp = _np.tile(_np.arange(lsemicyc), (nbpm, 1))
+            idn = idp + lsemicyc
         else:
             # Try to find out the two states by looking at different levels in
             # the sum of the four antennas of each BPM.
@@ -309,15 +354,15 @@ class EqualizeBPMs(_FamBPMs):
             idcs = dts - dts.mean(axis=-1)[..., None] > 0
             idp = idcs.nonzero()  # direct
             idn = (~idcs).nonzero()  # inverse
-            cond = idp[0].size == nbpm*lcyc
+            cond = idp[0].size == nbpm*lsemicyc
             cond &= _np.unique(idp[0]).size == nbpm
             if not cond:
                 self._log(
                     'ERR: Could not identify switching states appropriately.')
                 return
             mean = _np.zeros((nbpm, nant, 2))
-            dtp = ants[idp[0], :, idp[1]].reshape(nbpm, lcyc, nant)
-            dtn = ants[idn[0], :, idn[1]].reshape(nbpm, lcyc, nant)
+            dtp = ants[idp[0], :, idp[1]].reshape(nbpm, lsemicyc, nant)
+            dtn = ants[idn[0], :, idn[1]].reshape(nbpm, lsemicyc, nant)
             mean[:, :, 0] = dtp.mean(axis=1)
             mean[:, :, 1] = dtn.mean(axis=1)
             # Re-scale the inverse state data to match the direct state:
@@ -368,14 +413,16 @@ class EqualizeBPMs(_FamBPMs):
         gains_new = self.data.get('gains_new')
         posx_gain = self.data.get('posx_gain')
         posy_gain = self.data.get('posy_gain')
+        posx_offset = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
+        posy_offset = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
 
         if gains_new is None:
             self._log('ERR:Missing info. Acquire and process data first.')
 
         orbx_init, orby_init = self._estimate_orbit(
-            mean, gains_init, posx_gain, posy_gain)
+            mean, gains_init, posx_gain, posy_gain, posx_offset, posy_offset)
         orbx_new, orby_new = self._estimate_orbit(
-            mean, gains_new, posx_gain, posy_gain)
+            mean, gains_new, posx_gain, posy_gain, posx_offset, posy_offset)
         # Get the average over both semicycles
         self.data['orbx_init'] = orbx_init.mean(axis=-1)
         self.data['orby_init'] = orby_init.mean(axis=-1)
@@ -472,7 +519,7 @@ class EqualizeBPMs(_FamBPMs):
             return None, None
 
         gains = (1, gacq, gini, gnew)
-        tits = ('Unit Gain', 'Acquisition Gain', 'Old Gain', 'New Gain')
+        titles = ('Unit Gain', 'Acquisition Gain', 'Old Gain', 'New Gain')
         labs = list('ABCDXYS')
         labs[-1] = 'Sum'
         labs = [lab + ' [a.u.]' for lab in labs]
@@ -505,7 +552,7 @@ class EqualizeBPMs(_FamBPMs):
                 if not j:
                     ax.set_ylabel(lab)
                 ax.grid(True, alpha=0.5, ls='--', lw=1)
-            axs[0, j].set_title(tits[j])
+            axs[0, j].set_title(titles[j])
             axs[-1, j].set_xlabel('BPM Index')
 
         axs[0, 0].legend(loc='best', fontsize='x-small', ncol=2)
@@ -514,7 +561,8 @@ class EqualizeBPMs(_FamBPMs):
 
     # ------- auxiliary methods ----------
 
-    def _estimate_orbit(self, mean, gains, posx_gain, posy_gain):
+    def _estimate_orbit(
+            self, mean, gains, posx_gain, posy_gain, posx_offset, posy_offset):
         ant = mean * gains
         # Get pairs of antennas
         ac = ant[:, ::2]
@@ -528,6 +576,9 @@ class EqualizeBPMs(_FamBPMs):
         # Apply Position gains and factor of two missing in previous step
         posx *= posx_gain[:, None] / 2 / 1e3
         posy *= posy_gain[:, None] / 2 / 1e3
+        # Subtract offsets:
+        posx -= posx_offset
+        posy -= posy_offset
         return posx, posy
 
     def _log(self, message, *args, level='INFO', **kwrgs):

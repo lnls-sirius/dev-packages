@@ -9,16 +9,8 @@ from siriuspy.timesys import csdev
 
 
 PUB_INTERFACE = (
-    'get_otp_database',
-    'get_out_database',
-    'get_afc_out_database',
-    'get_evr_database',
-    'get_eve_database',
-    'get_afc_database',
-    'get_fout_database',
     'get_event_database',
     'get_clock_database',
-    'get_evg_database',
     'get_hl_trigger_database',
     'Const',
     'ETypes',
@@ -33,56 +25,12 @@ class TestModule(TestCase):
         valid = util.check_public_interface_namespace(csdev, PUB_INTERFACE)
         self.assertTrue(valid)
 
-    def test_get_otp_database(self):
-        """Test get_otp_database."""
-        # TODO: implement test!
-
-    def test_get_out_database(self):
-        """Test get_out_database."""
-        # TODO: implement test!
-
-    def test_get_afc_out_database(self):
-        """Test get_afc_out_database."""
-        # TODO: implement test!
-
-    def test_get_evr_database(self):
-        """Test get_evr_database."""
-        # TODO: implement test!
-
-    def test_get_eve_database(self):
-        """Test get_eve_database."""
-        # TODO: implement test!
-
-    def test_get_afc_database(self):
-        """Test get_afc_database."""
-        # TODO: implement test!
-
-    def test_get_fout_database(self):
-        """Test get_fout_database."""
-        # TODO: implement test!
-
     def test_get_event_database(self):
         """Test get_event_database."""
         # TODO: implement test!
 
     def test_get_clock_database(self):
         """Test get_clock_database."""
-        # TODO: implement test!
-
-    def test_get_evg_database(self):
-        """Test get_evg_database."""
-        # TODO: implement test!
-
-    def test_get_hl_clock_database(self):
-        """Test get_hl_clock_database."""
-        # TODO: implement test!
-
-    def test_get_hl_event_database(self):
-        """Test get_hl_event_database."""
-        # TODO: implement test!
-
-    def test_get_hl_evg_database(self):
-        """Test get_hl_evg_database."""
         # TODO: implement test!
 
     def test_get_hl_trigger_database(self):
