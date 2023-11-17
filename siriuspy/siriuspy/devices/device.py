@@ -225,26 +225,32 @@ class Device:
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
 
-        if comp_(value):
-            return True
-
         timeout = _DEF_TIMEOUT if timeout is None else timeout
         timeout = 0 if timeout <= 0 else timeout
-        ntrials = int(timeout/_TINY_INTERVAL)
-        for _ in range(ntrials):
+        t0_ = _time.time()
+        while not comp_(value):
+            if _time.time() - t0_ > timeout:
+                return False
             _time.sleep(_TINY_INTERVAL)
-            if comp_(value):
-                return True
-        if comp_(value):
-            return True
-        else:
-            return False
+        return True
 
     def _wait_float(
             self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
         """Wait until float value gets close enough of desired value."""
-        func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
+        isc = _np.isclose if isinstance(value, _np.ndarray) else _math.isclose
+        func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
         return self._wait(propty, value, comp=func, timeout=timeout)
+
+    def _wait_set(self, props_values, timeout=None, comp='eq'):
+        timeout = _DEF_TIMEOUT if timeout is None else timeout
+        t0_ = _time.time()
+        for propty, value in props_values.items():
+            timeout_left = max(0, timeout - (_time.time() - t0_))
+            if timeout_left == 0:
+                return False
+            if not self._wait(propty, value, timeout=timeout_left, comp=comp):
+                return False
+        return True
 
     def _get_pvname(self, propty):
         dev = self._devname

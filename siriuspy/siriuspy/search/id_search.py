@@ -44,6 +44,30 @@ class IDSearch:
         )
 
     _idname2params = {
+        'SI-06SB:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
+        'SI-07SP:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
+        'SI-08SB:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
+        'SI-09SA:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
@@ -58,6 +82,24 @@ class IDSearch:
                 52.5,
                 -52.5/2, +52.5/2, 0, 0, 0.1,
                 -52.5/2, +52.5/2, 0, 0.1)),
+        'SI-11SP:ID-APU58': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                58,
+                0, 29, 29, 0, 0.1,
+                None, None, None, None)),
+        'SI-14SB:ID-WIG180': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                180,
+                49.73, 49.73, 150, 150, 0.1,
+                None, None, None, None)),
+        'SI-17SA:ID-PAPU50': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                50,
+                0, 25, 25, 0, 0.1,
+                None, None, None, None)),
     }
 
     POL_NONE_STR = 'none'
