@@ -241,8 +241,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
         # wait for PS change opmode
         retval = self._wait_devices_propty(
             self._psdevs, 'OpMode-Sts',
-            [_PSConst.States.SlowRef, _PSConst.States.Off],
-            comp='contains', timeout=3, return_prob=True)
+            len(self._psdevs)*[[_PSConst.States.SlowRef, _PSConst.States.Off]],
+            comp=lambda x, y: x in y, timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO PS to be in OpMode SlowRef '\
                    'timed out without success! Verify BO PS!'
