@@ -819,7 +819,7 @@ class App(_Callback):
             value.add(foutout)
             evgout = _LLTimeSearch.get_evg_channel(foutout)
             value.add(evgout)
-        return value
+        return sorted(value)
 
     def _check_devices_status(self, devices):
         for devname in devices:
