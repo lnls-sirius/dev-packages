@@ -797,7 +797,7 @@ class App(_Callback):
             dev._wait('RxEnbl-RB', rxenbl)
             dev['RxLockedLtcRst-Cmd'] = 1
             if rxenbl:
-                dev._wait('RxLockedLtc-Mon', 1)
+                dev._wait('RxLockedLtc-Mon', rxenbl)
 
         return True
 
