@@ -309,7 +309,7 @@ class IDSearch:
         if isinstance(pol, int):
             return pols[pol][1]
         elif isinstance(pol, str):
-            for _, (pol_name, pol_pparam) in pols:
+            for pol_name, pol_pparam in pols.values():
                 if pol == pol_name:
                     return pol_pparam
             raise ValueError(f'Invalid polarization string "{pol}"')

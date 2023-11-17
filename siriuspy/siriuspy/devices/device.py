@@ -78,19 +78,20 @@ class Device:
     @property
     def properties_in_use(self):
         """Return properties that were already added to the PV list."""
-        return sorted(self._pvs.keys())
+        return tuple(sorted(self._pvs.keys()))
 
     @property
     def properties_added(self):
         """Return properties that were added to the PV list that are not in
         PROPERTIES_DEFAULT."""
-        return sorted(
-            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
+        return tuple(sorted(
+            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT)))
 
     @property
     def properties_all(self):
         """Return all properties of the device, connected or not."""
-        return sorted(set(self.PROPERTIES_DEFAULT + self.properties_in_use))
+        return tuple(sorted(set(
+            self.PROPERTIES_DEFAULT + self.properties_in_use)))
 
     @property
     def simulators(self):
