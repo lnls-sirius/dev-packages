@@ -4,7 +4,6 @@ import time as _time
 import operator as _opr
 import math as _math
 from functools import partial as _partial
-from copy import deepcopy as _dcopy
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
@@ -90,8 +89,8 @@ class Device:
     @property
     def properties_all(self):
         """Return all properties of the device, connected or not."""
-        return tuple(sorted(set(
-            self.PROPERTIES_DEFAULT + self.properties_in_use)))
+        return tuple(sorted(
+            set(self.PROPERTIES_DEFAULT + self.properties_in_use)))
 
     @property
     def simulators(self):
