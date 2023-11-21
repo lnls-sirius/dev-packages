@@ -7,7 +7,7 @@ import matplotlib.pyplot as _mplt
 
 from mathphys.functions import save as _save, load as _load, \
     get_namedtuple as _namedtuple
-from .bpm import FamBPMs as _FamBPMs
+from .bpm_fam import FamBPMs as _FamBPMs
 from .timing import Trigger
 from .currinfo import CurrInfoSI as _CurrInfoSI
 
