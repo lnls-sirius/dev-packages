@@ -44,6 +44,30 @@ class IDSearch:
         )
 
     _idname2params = {
+        'SI-06SB:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
+        'SI-07SP:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
+        'SI-08SB:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
+        'SI-09SA:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.1,
+                None, None, None, None)),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
@@ -58,12 +82,42 @@ class IDSearch:
                 52.5,
                 -52.5/2, +52.5/2, 0, 0, 0.1,
                 -52.5/2, +52.5/2, 0, 0.1)),
+        'SI-11SP:ID-APU58': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                58,
+                0, 29, 29, 0, 0.1,
+                None, None, None, None)),
+        'SI-14SB:ID-WIG180': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                180,
+                49.73, 49.73, 150, 150, 0.1,
+                None, None, None, None)),
+        'SI-17SA:ID-PAPU50': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                50,
+                0, 25, 25, 0, 0.1,
+                None, None, None, None)),
     }
 
     POL_NONE_STR = 'none'
     POL_UNDEF_STR = 'undef'
 
     _idname2pol_sel = {
+        'SI-06SB:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-07SP:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-08SB:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-09SA:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
         'SI-10SB:ID-EPU50': {
             0: ('circularn', -16.36),  # [mm]
             1: ('horizontal', 0.00),  # [mm]
@@ -71,10 +125,16 @@ class IDSearch:
             3: ('vertical', 25.00),  # [mm]
         },
         'SI-10SB:ID-DELTA52': {
-            0: ('vertical', -52.5/2),  # [mm]
             0: ('circularn', -52.5/4),  # [mm]
             1: ('horizontal', 0.00),  # [mm]
             2: ('circularp', +52.5/4),  # [mm]
+            3: ('vertical', -52.5/2),  # [mm]
+        },
+        'SI-11SP:ID-APU58': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-17SA:ID-PAPU50': {
+            0: ('horizontal', None),  # [mm]
         },
     }
     _idname2pol_sts = _copy.deepcopy(_idname2pol_sel)
@@ -105,8 +165,8 @@ class IDSearch:
             'polarizations': tuple(
                 item[0] for item in
                 _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
-            'pparameter': 'SI-10SB:ID-DELTA52:PolShift-Mon',
-            'kparameter': 'SI-10SB:ID-DELTA52:GainShift-Mon',
+            'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
+            'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
             'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-10SB:PS-CV-1:Current-SP',
@@ -136,7 +196,7 @@ class IDSearch:
     @staticmethod
     def get_idnames(filters=None):
         """Return a sorted and filtered list of all ID names."""
-        idnames_list = list(IDSearch._idname2beamline.keys())
+        idnames_list = list(IDSearch._idname_2_idff.keys())
         idnames = _Filter.process_filters(idnames_list, filters=filters)
         return sorted(idnames)
 
@@ -229,13 +289,13 @@ class IDSearch:
     def conv_idname_2_polarizations(idname):
         """Return ID polarizations (sel)."""
         pols = IDSearch._idname2pol_sel[idname]
-        return tuple(pol[0] for pol in pols)
+        return tuple(pol[0] for pol in pols.values())
 
     @staticmethod
     def conv_idname_2_polarizations_sts(idname):
         """Return ID polarizations (sts)."""
         pols = IDSearch._idname2pol_sts[idname]
-        return tuple(pol[0] for pol in pols)
+        return tuple(pol[0] for pol in pols.values())
 
     @staticmethod
     def conv_idname_2_polarization_state(idname, pparameter, kparameter):
@@ -267,7 +327,7 @@ class IDSearch:
         if isinstance(pol, int):
             return pols[pol][1]
         elif isinstance(pol, str):
-            for _, (pol_name, pol_pparam) in pols:
+            for pol_name, pol_pparam in pols.values():
                 if pol == pol_name:
                     return pol_pparam
             raise ValueError(f'Invalid polarization string "{pol}"')

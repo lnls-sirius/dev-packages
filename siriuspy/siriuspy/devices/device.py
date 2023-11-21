@@ -4,7 +4,6 @@ import time as _time
 import operator as _opr
 import math as _math
 from functools import partial as _partial
-from copy import deepcopy as _dcopy
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
@@ -78,19 +77,20 @@ class Device:
     @property
     def properties_in_use(self):
         """Return properties that were already added to the PV list."""
-        return sorted(self._pvs.keys())
+        return tuple(sorted(self._pvs.keys()))
 
     @property
     def properties_added(self):
         """Return properties that were added to the PV list that are not in
         PROPERTIES_DEFAULT."""
-        return sorted(
-            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
+        return tuple(sorted(
+            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT)))
 
     @property
     def properties_all(self):
         """Return all properties of the device, connected or not."""
-        return sorted(set(self.PROPERTIES_DEFAULT + self.properties_in_use))
+        return tuple(sorted(
+            set(self.PROPERTIES_DEFAULT + self.properties_in_use)))
 
     @property
     def simulators(self):
@@ -225,22 +225,32 @@ class Device:
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
 
-        if comp_(value):
-            return True
-
         timeout = _DEF_TIMEOUT if timeout is None else timeout
-        ntrials = int(timeout/_TINY_INTERVAL)
-        for _ in range(ntrials):
+        timeout = 0 if timeout <= 0 else timeout
+        t0_ = _time.time()
+        while not comp_(value):
+            if _time.time() - t0_ > timeout:
+                return False
             _time.sleep(_TINY_INTERVAL)
-            if comp_(value):
-                return True
-        return False
+        return True
 
     def _wait_float(
             self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
         """Wait until float value gets close enough of desired value."""
-        func = _partial(_math.isclose, abs_tol=abs_tol, rel_tol=rel_tol)
+        isc = _np.isclose if isinstance(value, _np.ndarray) else _math.isclose
+        func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
         return self._wait(propty, value, comp=func, timeout=timeout)
+
+    def _wait_set(self, props_values, timeout=None, comp='eq'):
+        timeout = _DEF_TIMEOUT if timeout is None else timeout
+        t0_ = _time.time()
+        for propty, value in props_values.items():
+            timeout_left = max(0, timeout - (_time.time() - t0_))
+            if timeout_left == 0:
+                return False
+            if not self._wait(propty, value, timeout=timeout_left, comp=comp):
+                return False
+        return True
 
     def _get_pvname(self, propty):
         dev = self._devname
@@ -256,14 +266,20 @@ class Device:
         return pvname
 
     def _enum_setter(self, propty, value, enums):
+        value = self._enum_selector(value, enums)
+        if value is not None:
+            self[propty] = value
+
+    @staticmethod
+    def _enum_selector(value, enums):
+        if value is None:
+            return
         if hasattr(enums, '_fields'):
             enums = enums._fields
-        if value is None:
-            return None
-        elif isinstance(value, str) and value in enums:
-            self[propty] = enums.index(value)
+        if isinstance(value, str) and value in enums:
+            return enums.index(value)
         elif 0 <= int(value) < len(enums):
-            self[propty] = value
+            return value
 
 
 class DeviceSet:
@@ -273,6 +289,8 @@ class DeviceSet:
         """."""
         self._devices = devices
         self._devname = _SiriusPVName(devname)
+
+    _enum_selector = staticmethod(Device._enum_selector)
 
     @property
     def devname(self):

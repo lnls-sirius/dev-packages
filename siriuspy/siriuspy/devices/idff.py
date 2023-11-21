@@ -15,6 +15,7 @@ class IDFF(_DeviceSet):
 
     class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES, _DELTA.DEVICES):
         """."""
+
         ALL = \
             _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + \
             _EPU.DEVICES.ALL + _DELTA.DEVICES.ALL

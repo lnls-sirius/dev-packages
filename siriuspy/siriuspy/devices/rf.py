@@ -1264,55 +1264,35 @@ class SILLRFPreAmp(_Device):
     class DEVICES:
         """Devices names."""
 
-        SIA01 = 'RA-RaSIA01:RF-LLRFPreAmp-1'
-        ALL = (SIA01, )
+        SSA1 = 'RA-ToSIA03:RF-CtrlPanel'
+        SSA2 = 'RA-ToSIA04:RF-CtrlPanel'
+        ALL = (SSA1, SSA2)
 
     PROPERTIES_DEFAULT = (
-        'PINSw1Enbl-Cmd', 'PINSw1Dsbl-Cmd', 'PINSw1-Mon',
-        'PINSw2Enbl-Cmd', 'PINSw2Dsbl-Cmd', 'PINSw2-Mon',
+        'PINSwEnbl-Cmd', 'PINSwDsbl-Cmd', 'PINSwSts-Mon',
     )
 
-    def __init__(self, devname='', props2init='all'):
-        if not devname:
-            devname = SILLRFPreAmp.DEVICES.SIA01
+    def __init__(self, devname, props2init='all'):
         if devname not in SILLRFPreAmp.DEVICES.ALL:
             raise NotImplementedError(devname)
         super().__init__(devname, props2init=props2init)
 
-    def cmd_enable_pinsw_1(self, timeout=None, wait_mon=True):
+    def cmd_enable_pinsw(self, timeout=None, wait_mon=True):
         """Enable PINSw 1."""
-        self['PINSw1Enbl-Cmd'] = 1
+        self['PINSwEnbl-Cmd'] = 1
         _time.sleep(1)
-        self['PINSw1Enbl-Cmd'] = 0
+        self['PINSwEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PINSw1-Mon', 1, timeout=timeout)
+            return self._wait('PINSwSts-Mon', 1, timeout=timeout)
         return True
 
-    def cmd_enable_pinsw_2(self, timeout=None, wait_mon=True):
-        """Enable PINSw 2."""
-        self['PINSw2Enbl-Cmd'] = 1
-        _time.sleep(1)
-        self['PINSw2Enbl-Cmd'] = 0
-        if wait_mon:
-            return self._wait('PINSw2-Mon', 1, timeout=timeout)
-        return True
-
-    def cmd_disable_pinsw_1(self, timeout=None, wait_mon=True):
+    def cmd_disable_pinsw(self, timeout=None, wait_mon=True):
         """Disable PINSw 1."""
-        self['PINSw1Dsbl-Cmd'] = 1
+        self['PINSwDsbl-Cmd'] = 1
         _time.sleep(1)
-        self['PINSw1Dsbl-Cmd'] = 0
+        self['PINSwDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PINSw1-Mon', 0, timeout=timeout)
-        return True
-
-    def cmd_disable_pinsw_2(self, timeout=None, wait_mon=True):
-        """Disable PINSw 2."""
-        self['PINSw2Dsbl-Cmd'] = 1
-        _time.sleep(1)
-        self['PINSw2Dsbl-Cmd'] = 0
-        if wait_mon:
-            return self._wait('PINSw2-Mon', 0, timeout=timeout)
+            return self._wait('PINSwSts-Mon', 0, timeout=timeout)
         return True
 
 
@@ -1361,12 +1341,12 @@ class SIRFDCAmp(_Device):
     class DEVICES:
         """Devices names."""
 
-        SSA1 = 'RA-ToSIA01:RF-TDKSource'
-        SSA2 = 'RA-ToSIA02:RF-TDKSource'
+        SSA1 = 'RA-ToSIA03:RF-TDKSource'
+        SSA2 = 'RA-ToSIA04:RF-TDKSource'
         ALL = (SSA1, SSA2)
 
     PROPERTIES_DEFAULT = (
-        'PwrDCEnbl-Sel', 'PwrDCDsbl-Sel', 'PwrDC-Sts',
+        'PwrDCEnbl-Cmd', 'PwrDCDsbl-Cmd', 'PwrDC-Mon',
     )
 
     def __init__(self, devname, props2init='all'):
@@ -1376,20 +1356,20 @@ class SIRFDCAmp(_Device):
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
-        self['PwrDCEnbl-Sel'] = 1
+        self['PwrDCEnbl-Cmd'] = 1
         _time.sleep(1)
-        self['PwrDCEnbl-Sel'] = 0
+        self['PwrDCEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrDC-Sts', 1, timeout=timeout)
+            return self._wait('PwrDC-Mon', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
         """Disable."""
-        self['PwrDCDsbl-Sel'] = 1
+        self['PwrDCDsbl-Cmd'] = 1
         _time.sleep(1)
-        self['PwrDCDsbl-Sel'] = 0
+        self['PwrDCDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrDC-Sts', 0, timeout=timeout)
+            return self._wait('PwrDC-Mon', 0, timeout=timeout)
         return True
 
 
@@ -1438,12 +1418,12 @@ class SIRFACAmp(_Device):
     class DEVICES:
         """Devices names."""
 
-        SSA1 = 'RA-ToSIA01:RF-ACPanel'
-        SSA2 = 'RA-ToSIA02:RF-ACPanel'
+        SSA1 = 'RA-ToSIA03:RF-ACPanel'
+        SSA2 = 'RA-ToSIA04:RF-ACPanel'
         ALL = (SSA1, SSA2)
 
     PROPERTIES_DEFAULT = (
-        'PwrACEnbl-Sel', 'PwrACDsbl-Sel', 'PwrAC-Sts',
+        'PwrACEnbl-Cmd', 'PwrACDsbl-Cmd', 'PwrAC-Mon',
     )
 
     def __init__(self, devname, props2init='all'):
@@ -1453,20 +1433,20 @@ class SIRFACAmp(_Device):
 
     def cmd_enable(self, timeout=None, wait_mon=True):
         """Enable."""
-        self['PwrACEnbl-Sel'] = 1
+        self['PwrACEnbl-Cmd'] = 1
         _time.sleep(1)
-        self['PwrACEnbl-Sel'] = 0
+        self['PwrACEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrAC-Sts', 1, timeout=timeout)
+            return self._wait('PwrAC-Mon', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
         """Disable."""
-        self['PwrACDsbl-Sel'] = 1
+        self['PwrACDsbl-Cmd'] = 1
         _time.sleep(1)
-        self['PwrACDsbl-Sel'] = 0
+        self['PwrACDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrAC-Sts', 0, timeout=timeout)
+            return self._wait('PwrAC-Mon', 0, timeout=timeout)
         return True
 
 
