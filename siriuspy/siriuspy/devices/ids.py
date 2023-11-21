@@ -58,6 +58,10 @@ class _ID(_Device):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+        self._pols_sel_str = \
+            _IDSearch.conv_idname_2_polarizations(self.devname)
+        self._pols_sts_str = \
+            _IDSearch.conv_idname_2_polarizations_sts(self.devname)
 
     # --- general ---
 
@@ -82,12 +86,20 @@ class _ID(_Device):
         if self.PARAM_PVS.POL_STS in self.properties_all:
             return self[self.PARAM_PVS.POL_STS]
         else:
-            return _IDSearch.POL_UNDEF_STR
+            return self._pols_sts_str.index(_IDSearch.POL_UNDEF_STR)
+
+    @property
+    def polarization_str(self):
+        """Return ID polarization string."""
+        pol_idx = self.polarization
+        return self._pols_sts_str[pol_idx]
 
     @polarization.setter
     def polarization(self, value):
         """Set ID polarization."""
         if self.PARAM_PVS.POL_SEL in self.properties_all:
+            if isinstance(value, str):
+                value = self._pols_sel_str.index(value)
             self[self.PARAM_PVS.POL_SEL] = value
         else:
             raise TypeError('ID type does not define polarizations!')
@@ -96,7 +108,7 @@ class _ID(_Device):
     def polarization_mon(self):
         """Return ID polarization monitor."""
         if self.PARAM_PVS.POL_MON in self.properties_all:
-            self[self.PARAM_PVS.POL_MON]
+            return self[self.PARAM_PVS.POL_MON]
         else:
             return _IDSearch.POL_UNDEF_STR
 
@@ -114,11 +126,6 @@ class _ID(_Device):
     def pparameter_speed_max(self):
         """Return max pparameter speed readback [mm/s]."""
         return self[self.PARAM_PVS.PPARAM_MAXVELO_RB]
-
-    @pparameter_speed_max.setter
-    def pparameter_speed_max(self, value):
-        """Set max pparameter speed readback [mm/s]."""
-        self[self.PARAM_PVS.PPARAM_MAXVELO_SP] = value
 
     @property
     def pparameter_speed_max_lims(self):
@@ -143,11 +150,6 @@ class _ID(_Device):
         """Return ID pparameter readback [mm]."""
         return self[self.PARAM_PVS.PPARAM_RB]
 
-    @pparameter.setter
-    def pparameter(self, value):
-        """Set ID pparameter value [mm]."""
-        self[self.PARAM_PVS.PPARAM_SP] = value
-
     @property
     def pparameter_mon(self):
         """Return ID pparameter monitor [mm]."""
@@ -165,7 +167,7 @@ class _ID(_Device):
     def pparameter_speed_max_set(self, pparam_speed_max, timeout=None):
         """Command to set ID max cruise pparam speed for movement [mm/s]."""
         return self._write_sp(
-            self.PARAM_PVS.PPARAM_VELO_SP, pparam_speed_max, timeout)
+            self.PARAM_PVS.PPARAM_MAXVELO_SP, pparam_speed_max, timeout)
 
     # --- kparameter ---
 
@@ -181,11 +183,6 @@ class _ID(_Device):
     def kparameter_speed_max(self):
         """Return max kparameter speed readback [mm/s]."""
         return self[self.PARAM_PVS.KPARAM_MAXVELO_RB]
-
-    @kparameter_speed_max.setter
-    def kparameter_speed_max(self, value):
-        """Set max kparameter speed readback [mm/s]."""
-        self[self.PARAM_PVS.KPARAM_MAXVELO_SP] = value
 
     @property
     def kparameter_speed_max_lims(self):
@@ -217,11 +214,6 @@ class _ID(_Device):
     def kparameter(self):
         """Return ID kparameter readback [mm]."""
         return self[self.PARAM_PVS.KPARAM_RB]
-
-    @kparameter.setter
-    def kparameter(self, value):
-        """Set ID kparameter value [mm]."""
-        self[self.PARAM_PVS.KPARAM_SP] = value
 
     @property
     def kparameter_mon(self):
@@ -353,11 +345,12 @@ class _ID(_Device):
         tol_dtime = 300  # [%]
         tol_factor = (1 + tol_dtime/100)
         tol_total = tol_factor * dtime_max + 5
+        print('time: ', tol_total)
 
         # set target phase and gap
-        if not self.pparameter_set(phase=pparam, timeout=timeout):
+        if not self.pparameter_set(pparam, timeout=timeout):
             return False
-        if not self.kparameter_set(gap=kparam, timeout=timeout):
+        if not self.kparameter_set(kparam, timeout=timeout):
             return False
 
         # command move start
@@ -442,8 +435,12 @@ class _ID(_Device):
                 propty_rb = \
                     propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
             self[propty_sp] = value
-            success &= super()._wait(
-                propty_rb, value, timeout=timeout, comp='eq')
+            if isinstance(value, float):
+                success &= super()._wait_float(
+                    propty_rb, value, timeout=timeout)
+            else:
+                success &= super()._wait(
+                    propty_rb, value, timeout=timeout, comp='eq')
         return success
 
     def _wait_propty(self, propty, value, timeout=None):
@@ -1191,6 +1188,11 @@ class DELTA(_ID):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
+    @property
+    def is_operational(self):
+        """Return True if ID is operational."""
+        return self['IsOperational-Mon'] != 0
+
     # --- cassette positions ---
 
     @property
@@ -1247,6 +1249,85 @@ class DELTA(_ID):
         """Command wait within timeout while ID control is busy."""
         return self.cmd_wait_move_finish(timeout)
 
+    def cmd_move_pparam(self, pparam, timeout=None):
+        """Command to set and start pparam and kparam movements."""
+        # calc ETA
+        dtime_max = abs(pparam - self.pparameter_mon) / self.pparameter_speed
+
+        # additional percentual in ETA
+        tol_pparam = self.parameters.PPARAM_TOL  # [mm]
+        tol_dtime = 300  # [%]
+        tol_factor = (1 + tol_dtime/100)
+        tol_total = tol_factor * dtime_max + 5
+        print('time: ', tol_total)
+
+        # set target phase and gap
+        if not self.pparameter_set(pparam, timeout=timeout):
+            return False
+
+        # command move start
+        if not self.cmd_move_pparameter_start(timeout=timeout):
+            return False
+
+        # wait for movement within reasonable time
+        time_init = _time.time()
+        while True:
+            condp = abs(self.pparameter_mon - pparam) <= tol_pparam
+            if condp and not self.is_moving:
+                break
+            if _time.time() - time_init > tol_total:
+                print(f'tol_total: {tol_total:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
+                return False
+            _time.sleep(self._SHORT_SHUT_EYE)
+
+        # successfull movement at this point
+        return True
+
+    def cmd_move_kparam(self, kparam, timeout=None):
+        """Command to set and start pparam and kparam movements."""
+        # calc ETA
+        dtime_max = abs(kparam - self.kparameter_mon) / self.kparameter_speed
+
+        # additional percentual in ETA
+        tol_kparam = self.parameters.KPARAM_TOL  # [mm]
+        tol_dtime = 300  # [%]
+        tol_factor = (1 + tol_dtime/100)
+        tol_total = tol_factor * dtime_max + 5
+        print('time: ', tol_total)
+
+        # set target phase and gap
+        if not self.kparameter_set(kparam, timeout=timeout):
+            return False
+
+        # command move start
+        if not self.cmd_move_kparameter_start(timeout=timeout):
+            return False
+
+        # wait for movement within reasonable time
+        time_init = _time.time()
+        while True:
+            condk = abs(self.kparameter_mon - kparam) <= tol_kparam
+            if condk and not self.is_moving:
+                break
+            if _time.time() - time_init > tol_total:
+                print(f'tol_total: {tol_total:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
+                return False
+            _time.sleep(self._SHORT_SHUT_EYE)
+
+        # successfull movement at this point
+        return True
+
+    def cmd_move(self, pparam ,kparam, timeout=None):
+        """."""
+        if not self.cmd_move_pparam(pparam, timeout):
+            return False
+        if not self.cmd_move_kparam(kparam, timeout):
+            return False
+        return True
 
 class WIG(_ID):
     """Wiggler Insertion Device."""

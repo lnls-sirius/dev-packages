@@ -277,7 +277,7 @@ class IDSearch:
     def conv_idname_2_polarizations_sts(idname):
         """Return ID polarizations (sts)."""
         pols = IDSearch._idname2pol_sts[idname]
-        return tuple(pol[0] for pol in pols)
+        return tuple(pol[0] for pol in pols.values())
 
     @staticmethod
     def conv_idname_2_polarization_state(idname, pparameter, kparameter):
