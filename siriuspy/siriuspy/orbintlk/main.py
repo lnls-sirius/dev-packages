@@ -11,7 +11,8 @@ from ..util import update_bit as _updt_bit, get_bit as _get_bit
 from ..namesys import SiriusPVName as _PVName
 from ..search import LLTimeSearch as _LLTimeSearch, \
     HLTimeSearch as _HLTimeSearch
-from ..thread import RepeaterThread as _Repeat
+from ..thread import RepeaterThread as _Repeat, \
+    LoopQueueThread as _LoopQueueThread
 from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
@@ -67,6 +68,8 @@ class App(_Callback):
         self._lock_threads = dict()
         self._lock_failures = set()
         self._lock_suspend = False
+        self._set_queue = _LoopQueueThread()
+        self._set_queue.start()
 
         # devices and connections
         # # EVG
@@ -497,6 +500,14 @@ class App(_Callback):
 
     def set_enbllist(self, intlk, value):
         """Set enable list for interlock type."""
+        if self._state:
+            self._update_log('ERR:Disable interlock before changing')
+            self._update_log('ERR:enable lists.')
+            return False
+        self._set_queue.put((self._do_set_enbllist, (intlk, value)))
+        return True
+
+    def _do_set_enbllist(self, intlk, value):
         intlkname = intlk.capitalize().replace('sum', 'Sum')
         self._update_log(f'Setting {intlkname} EnblList...')
 
@@ -504,12 +515,16 @@ class App(_Callback):
         new = _np.array(value, dtype=bool)
         if self._const.nr_bpms != new.size:
             self._update_log(f'ERR:Wrong {intlkname} EnblList size.')
+            self.run_callbacks(
+                f'{intlkname}EnblList-SP', self._enable_lists[intlk])
             return False
 
         # check coerence, down/up pair should have same enable state
         if not self._check_valid_bpmconfig(new):
             self._update_log('ERR:BPM should be enabled in pairs')
             self._update_log('ERR:(M1/M2,C1-1/C1-2,C2/C3-1,C3-2/C4)')
+            self.run_callbacks(
+                f'{intlkname}EnblList-SP', self._enable_lists[intlk])
             return False
 
         # check if new enable list do not imply in orbit interlock failure
@@ -523,6 +538,7 @@ class App(_Callback):
             self._enable_lists[intlk] = bkup_enbllist
             self._ti_mon_devs = bkup_timondev
             self._config_fout_rxenbl()
+            self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
             return False
         self.run_callbacks(
             'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
@@ -537,24 +553,26 @@ class App(_Callback):
 
         # set BPM interlock specific enable state
         fun = getattr(self._orbintlk_dev, f'set_{intlk}_enable')
-        ret = fun(list(value), return_prob=True)
+        ret = fun(list(value), timeout=3, return_prob=True)
         if not ret[0]:
             self._update_log(f'ERR:Could not set BPM {intlkname}')
             self._update_log('ERR:interlock enable.')
             for item in ret[1]:
                 self._update_log(f'ERR:Verify:{item}')
+            self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
             return False
 
         # if interlock is already enabled, update BPM general enable state
         if self._state and intlk in ['pos', 'ang']:
             glob_en = self._get_gen_bpm_intlk()
             ret = self._orbintlk_dev.set_gen_enable(
-                list(glob_en), return_prob=True)
+                list(glob_en), timeout=3, return_prob=True)
             if not ret[0]:
                 self._update_log('ERR:Could not set BPM general')
                 self._update_log('ERR:interlock enable.')
                 for item in ret[1]:
                     self._update_log(f'ERR:Verify:{item}')
+                self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
                 return False
 
         # save to autosave files
@@ -570,6 +588,14 @@ class App(_Callback):
 
     def set_intlk_lims(self, intlk_lim, value):
         """Set limits for interlock type."""
+        if self._state:
+            self._update_log('ERR:Disable interlock before changing')
+            self._update_log('ERR:interlock thresholds.')
+            return False
+        self._set_queue.put((self._do_set_intlk_lims, (intlk_lim, value)))
+        return True
+
+    def _do_set_intlk_lims(self, intlk_lim, value):
         parts = intlk_lim.split('_')
         if len(parts) > 1:
             ilk, pln, lim = parts
@@ -582,12 +608,14 @@ class App(_Callback):
         new = _np.array(value, dtype=int)
         if self._const.nr_bpms != new.size:
             self._update_log(f'ERR: Wrong {limname} limits size.')
+            self.run_callbacks(f'{limname}Lim-SP', self._limits[intlk_lim])
             return False
 
         # check coerence, down/up pair should have same limits
         if not self._check_valid_bpmconfig(new):
             self._update_log('ERR:BPM pairs should have equal limits')
             self._update_log('ERR:(M1/M2,C1-1/C1-2,C2/C3-1,C3-2/C4)')
+            self.run_callbacks(f'{limname}Lim-SP', self._limits[intlk_lim])
             return False
 
         self._limits[intlk_lim] = new
@@ -602,12 +630,13 @@ class App(_Callback):
 
         # set BPM interlock limits
         fun = getattr(self._orbintlk_dev, f'set_{intlk_lim}_thres')
-        ret = fun(list(value), return_prob=True)
+        ret = fun(list(value), timeout=3, return_prob=True)
         if not ret[0]:
             self._update_log(f'ERR:Could not set BPM {limname}')
             self._update_log('ERR:interlock limits.')
             for item in ret[1]:
                 self._update_log(f'ERR:Verify:{item}')
+            self.run_callbacks(f'{limname}Lim-SP', self._limits[intlk_lim])
             return False
 
         # save to autosave files
@@ -794,10 +823,10 @@ class App(_Callback):
             rxenbl = fout2rx.get(fout, 0)
             self._fout2rxenbl[fout] = rxenbl
             dev['RxEnbl-SP'] = rxenbl
-            dev._wait('RxEnbl-RB', rxenbl)
+            dev._wait('RxEnbl-RB', rxenbl, timeout=1)
             dev['RxLockedLtcRst-Cmd'] = 1
             if rxenbl:
-                dev._wait('RxLockedLtc-Mon', rxenbl)
+                dev._wait('RxLockedLtc-Mon', rxenbl, timeout=1)
 
         return True
 
