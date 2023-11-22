@@ -360,7 +360,11 @@ class LLTimeSearch:
     @classmethod
     def get_trigger_name(cls, channel):
         """Get name of the trigger associated with channel."""
-        chan_tree = cls.get_device_tree(channel)
+        # Look for trigger source from EVG down to channel.
+        # This is important to handle cases where 2 trigger sources are on the
+        # same leaf of the tree, such as the redundancy trigger for the orbit
+        # interlock.
+        chan_tree = cls.get_device_tree(channel)[::-1]
         for up_chan in chan_tree:
             if up_chan.device_name in cls._trig_src_devs:
                 return up_chan
