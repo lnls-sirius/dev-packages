@@ -304,7 +304,7 @@ class IDSearch:
         pols_sts = IDSearch._idname2pol_sts[idname]
 
         # check if polarization is defined
-        for pol_idx, pol in pols_sts:
+        for pol_idx, pol in pols_sts.items():
             _, pol_phase = pol
             if abs(pparameter - pol_phase) <= params.PPARAM_TOL:
                 return pol_idx
