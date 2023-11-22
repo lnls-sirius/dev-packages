@@ -8,9 +8,6 @@ from importlib.util import find_spec as _find_spec
 import epics as _epics
 import numpy as _np
 
-if _find_spec('PRUserial485') is not None:
-    from PRUserial485 import EthBridgeClient as _EthBridgeClient
-
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
 from ..clientconfigdb import ConfigDBException as _ConfigDBException
@@ -19,6 +16,9 @@ from ..pwrsupply.pssofb import PSConnSOFB as _PSConnSOFB
 from ..pwrsupply.pssofb import PSNamesSOFB as _PSNamesSOFB
 
 from .csdev import IDFFConst as _Const, ETypes as _ETypes
+
+if _find_spec('PRUserial485') is not None:
+    from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
 
 class App(_Callback):
