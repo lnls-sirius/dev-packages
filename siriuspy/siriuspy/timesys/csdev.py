@@ -67,12 +67,7 @@ class Const(_csdev.Const):
 
     __EvtHL2LLMap = None
     __EvtLL2HLMap = None
-
-    evt_ll_codes = list(range(64)) + [117, 124, 125, 126, 132]
-    evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
-    EvtLL = _csdev.Const.register(
-        'EventsLL', evt_ll_names, values=evt_ll_codes)
-    del evt_ll_codes, evt_ll_names  # cleanup class namespace
+    __EvtLL = None
 
     ClkHL2LLMap = {
         'Clock0': 'Clk0', 'Clock1': 'Clk1',
@@ -90,10 +85,17 @@ class Const(_csdev.Const):
     @_classproperty
     def EvtHL2LLMap(cls):
         """."""
-        if cls.__EvtHL2LLMap is None:
-            cls.__EvtHL2LLMap = _HLTimeSearch.get_hl_events()
-            cls.__EvtLL2HLMap = {
-                val: key for key, val in cls.__EvtHL2LLMap.items()}
+        if cls.__EvtHL2LLMap is not None:
+            return cls.__EvtHL2LLMap
+
+        emap = _HLTimeSearch.get_hl_events()
+        cls.__EvtHL2LLMap = emap
+        cls.__EvtLL2HLMap = {val: key for key, val in emap.items()}
+
+        names = sorted({f'Evt{i:02d}' for i in range(64)} | set(emap.values()))
+        codes = [int(n[3:]) for n in names]
+        codes, names = list(zip(*sorted(zip(codes, names))))
+        cls.__EvtLL = _csdev.Const.register('EventsLL', names, values=codes)
         return cls.__EvtHL2LLMap
 
     @_classproperty
@@ -101,6 +103,12 @@ class Const(_csdev.Const):
         """."""
         cls.EvtHL2LLMap
         return cls.__EvtLL2HLMap
+
+    @_classproperty
+    def EvtLL(cls):
+        """."""
+        cls.EvtHL2LLMap
+        return cls.__EvtLL
 
 
 def get_event_database(evt_num=0, prefix=None):
