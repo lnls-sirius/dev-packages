@@ -145,49 +145,76 @@ class _ID(_Device):
     @property
     def pparameter_speed_max(self):
         """Return max pparameter speed readback [mm/s]."""
-        return self[self.PARAM_PVS.PPARAM_MAXVELO_RB]
+        if self.PARAM_PVS.PPARAM_MAXVELO_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_MAXVELO_RB]
 
     @property
     def pparameter_speed_max_lims(self):
         """Return max pparameter speed limits."""
-        ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_MAXVELO_SP)
-        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
-        return lims
+        if self.PARAM_PVS.PPARAM_MAXVELO_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_MAXVELO_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
 
     @property
     def pparameter_speed(self):
         """Return pparameter speed readback [mm/s]."""
-        return self[self.PARAM_PVS.PPARAM_VELO_SP]
+        if self.PARAM_PVS.PPARAM_VELO_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_VELO_SP]
 
     @property
     def pparameter_lims(self):
         """Return ID pparameter lower control limit [mm]."""
-        ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_SP)
-        return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        if self.PARAM_PVS.PPARAM_VELO_SP is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_SP)
+            return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
 
     @property
     def pparameter(self):
         """Return ID pparameter readback [mm]."""
-        return self[self.PARAM_PVS.PPARAM_RB]
+        if self.PARAM_PVS.PPARAM_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_RB]
 
     @property
     def pparameter_mon(self):
         """Return ID pparameter monitor [mm]."""
-        return self[self.PARAM_PVS.PPARAM_MON]
+        if self.PARAM_PVS.PPARAM_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_MON]
 
     def pparameter_set(self, pparam, timeout=None):
         """Set ID target pparameter for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.PPARAM_SP, pparam, timeout)
+        if self.PARAM_PVS.PPARAM_SP is None:
+            return True
+        else:
+            return self._write_sp(self.PARAM_PVS.PPARAM_SP, pparam, timeout)
 
     def pparameter_speed_set(self, pparam_speed, timeout=None):
-        """Command to set ID cruise pparam speed for movement [mm/s]."""
-        return self._write_sp(
-            self.PARAM_PVS.PPARAM_VELO_SP, pparam_speed, timeout)
+        """Command to set ID cruise pparameterspeed for movement [mm/s]."""
+        if self.PARAM_PVS.PPARAM_VELO_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_VELO_SP, pparam_speed, timeout)
 
     def pparameter_speed_max_set(self, pparam_speed_max, timeout=None):
         """Command to set ID max cruise pparam speed for movement [mm/s]."""
-        return self._write_sp(
-            self.PARAM_PVS.PPARAM_MAXVELO_SP, pparam_speed_max, timeout)
+        if self.PARAM_PVS.PPARAM_MAXVELO_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_MAXVELO_SP, pparam_speed_max, timeout)
 
     # --- kparameter ---
 
@@ -355,8 +382,8 @@ class _ID(_Device):
 
     def cmd_move_park(self, timeout=None):
         """Move ID to parked config."""
-        return self._move_start(
-            self.PARAM_PVS.START_PARKING_CMD, timeout=timeout)
+        pparam, kparam = self.pparameter, self.kparameter
+        return self.cmd_move(pparam, kparam, timeout)
 
     def cmd_move_pparameter(self, pparam, timeout=None):
         """Command to set and start pparam movement."""
@@ -366,10 +393,15 @@ class _ID(_Device):
         """Command to set and start kparam movement."""
         return self.cmd_move(None, kparam, timeout)
 
-    def cmd_move(self, pparam, kparam, timeout=None):
+    def cmd_move(self, pparam=None, kparam=None, timeout=None):
         """Command to set and start pparam and kparam movements."""
+        if self.PARAM_PVS.PPARAM_SP is None:
+            pparam = None
+        else:
+            pparam = self.pparameter if pparam is None else pparam
+        kparam = self.kparameter if kparam is None else kparam
+
         # calc ETA
-        pparam = None if self.PARAM_PVS.PPARAM_SP is None else pparam
         dtime_kparam = 0 if kparam is None else \
             abs(kparam - self.kparameter_mon) / self.kparameter_speed
         dtime_pparam = 0 if pparam is None else \
@@ -609,42 +641,6 @@ class APU(_ID):
     def cmd_move_start(self, timeout=None):
         """Send command to start ID movement."""
         self['DevCtrl-Cmd'] = self._CMD_MOVE_START
-        return True
-
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.move(self.phase_parked, timeout=timeout)
-
-    def move(self, phase, timeout=None):
-        """Command to set and start phase movements."""
-        # calc ETA
-        dtime_max = abs(phase - self.phase_mon) / self.phase_speed
-
-        # additional percentual in ETA
-        tol_dtime = 300  # [%]
-        tol_factor = (1 + tol_dtime/100)
-        tol_total = tol_factor * dtime_max + 5
-
-        # set target phase and gap
-        if not self.set_phase(phase=phase, timeout=timeout):
-            return False
-
-        # command move start
-        if not self.cmd_move_start(timeout=timeout):
-            return False
-
-        # wait for movement within reasonable time
-        time_init = _time.time()
-        while self.is_moving and \
-                abs(self.phase_mon - phase) > self.kparameter_tol:
-            if _time.time() - time_init > tol_total:
-                print(f'tol_total: {tol_total:.3f} s')
-                print(f'wait_time: {_time.time() - time_init:.3f} s')
-                print()
-                return False
-            _time.sleep(self._SHORT_SHUT_EYE)
-
-        # successfull movement at this point
         return True
 
     # --- private methods ---
@@ -1094,53 +1090,6 @@ class EPU(PAPU):
         """Command to start gap movement."""
         return self._move_start('ChangeGap-Cmd', timeout=timeout)
 
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return self.move(
-            self.phase_parked, self.gap_parked, timeout=timeout)
-
-    def move(self, phase, gap, timeout=None):
-        """Command to set and start phase and gap movements."""
-        # calc ETA
-        dtime_phase = abs(phase - self.phase_mon) / self.phase_speed
-        dtime_gap = abs(gap - self.gap_mon) / self.gap_speed
-        dtime_max = max(dtime_phase, dtime_gap)
-
-        # additional percentual in ETA
-        tol_gap = 0.01  # [mm]
-        tol_phase = 0.01  # [mm]
-        tol_dtime = 300  # [%]
-        tol_factor = (1 + tol_dtime/100)
-        tol_total = tol_factor * dtime_max + 5
-
-        # set target phase and gap
-        if not self.set_phase(phase=phase, timeout=timeout):
-            return False
-        if not self.set_gap(gap=gap, timeout=timeout):
-            return False
-
-        # command move start
-        if not self.cmd_move_phase_start(timeout=timeout):
-            return False
-        if not self.cmd_move_gap_start(timeout=timeout):
-            return False
-
-        # wait for movement within reasonable time
-        time_init = _time.time()
-        while \
-                abs(self.gap_mon - gap) > tol_gap or \
-                abs(self.phase_mon - phase) > tol_phase or \
-                self.is_moving:
-            if _time.time() - time_init > tol_total:
-                print(f'tol_total: {tol_total:.3f} s')
-                print(f'wait_time: {_time.time() - time_init:.3f} s')
-                print()
-                return False
-            _time.sleep(self._SHORT_SHUT_EYE)
-
-        # successfull movement at this point
-        return True
-
     # --- other cmds ---
 
     def cmd_clear_error(self):
@@ -1268,17 +1217,24 @@ class DELTA(_ID):
         """
         return self['CIDVirtPos-Mon']
 
-    # --- cmd_wait
+    # --- cmd_move
 
-    def wait_while_busy(self, timeout=None):
-        """Command wait within timeout while ID control is busy."""
-        return self.cmd_wait_move_finish(timeout)
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        pparam, kparam = self.pparameter, self.kparameter
+        return self.cmd_move(pparam, kparam, timeout)
 
-    def cmd_move(self, pparam, kparam, timeout=None):
+    def cmd_move_park(self, timeout=None):
+        """Move ID to parked config."""
+        return self._move_start(
+            self.PARAM_PVS.START_PARKING_CMD, timeout=timeout)
+
+    def cmd_move(self, pparam=None, kparam=None, timeout=None):
         """Command to set and start pparam and kparam movements."""
+        pparam = self.pparameter if pparam is None else pparam
+        kparam = self.kparameter if kparam is None else kparam
         # check if polarization change is needed
-        if pparam is not None and \
-                abs(pparam - self.pparameter_mon) > self.pparameter_tol:
+        if abs(pparam - self.pparameter_mon) > self.pparameter_tol:
             # first move to K=0
             t0_ = _time.time()
             if not self.cmd_move_kparameter(kparam=0, timeout=timeout):
