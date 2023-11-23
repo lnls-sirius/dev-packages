@@ -64,7 +64,7 @@ class _ID(_Device):
     PROPERTIES_DEFAULT = \
         tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
             if not key.startswith('_') and value is not None))
-    
+
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
         # call base class constructor
@@ -225,7 +225,7 @@ class _ID(_Device):
             return self.parameters.KPARAM_TOL
         else:
             return self[self.PARAM_PVS.KPARAM_TOL_RB]
-        
+
     @property
     def kparameter_parked(self):
         """Return ID parked kparameter value [mm]."""
@@ -261,7 +261,7 @@ class _ID(_Device):
 
     @property
     def kparameter_lims(self):
-        """Return ID kparameter lower control limit [mm]."""
+        """Return ID kparameter control limits [mm]."""
         ctrl = self.pv_ctrlvars(self.PARAM_PVS.KPARAM_SP)
         return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
 
@@ -689,7 +689,7 @@ class PAPU(_ID):
         tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
             if not key.startswith('_') and value is not None)) + \
         _properties + _properties_papu
-    
+
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
         # check if device exists
@@ -701,11 +701,6 @@ class PAPU(_ID):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
-
-    @property
-    def period_length(self):
-        """Return ID period length [mm]."""
-        return self['PeriodLength-Cte']
 
     @property
     def log_mon(self):
@@ -838,8 +833,7 @@ class PAPU(_ID):
 
     def cmd_move_park(self, timeout=None):
         """Command to set and start ID movement to parked config."""
-        return self.cmd_move(
-            pparam=None, kparam=self.phase_parked, timeout=timeout)
+        return super().cmd_move_park(timeout)
 
     # --- cmd_reset
 
@@ -925,55 +919,46 @@ class EPU(PAPU):
     # --- gap speeds ----
 
     @property
-    def gap_parked(self):
-        """Return ID parked gap value [mm]."""
-        return self['ParkedGap-Cte']
-
-    @property
     def gap_speed(self):
         """Return gap speed readback [mm/s]."""
-        return self['GapSpeed-RB']
+        return self.kparameter_speed
 
     @property
     def gap_speed_mon(self):
         """Return gap speed monitor [mm/s]."""
-        return self['GapSpeed-Mon']
+        return self.kparameter_speed_mon
 
     @property
     def gap_speed_max(self):
         """Return max gap speed readback [mm/s]."""
-        return self['MaxGapSpeed-RB']
+        return self.kparameter_speed_max
 
     @property
     def gap_speed_max_lims(self):
         """Return max gap speed limits."""
-        ctrl = self.pv_ctrlvars('MaxGapSpeed-SP')
-        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
-        return lims
+        return self.kparameter_speed_max_lims
 
     # --- gap ---
 
     @property
+    def gap_parked(self):
+        """Return ID parked gap value [mm]."""
+        return self.kparameter_parked
+
+    @property
     def gap(self):
         """Return ID gap readback [mm]."""
-        return self['Gap-RB']
+        return self.kparameter
 
     @property
-    def gap_min(self):
-        """Return ID gap lower control limit [mm]."""
-        ctrlvars = self.pv_ctrlvars('Gap-SP')
-        return ctrlvars['lower_ctrl_limit']
-
-    @property
-    def gap_max(self):
-        """Return ID gap upper control limit [mm]."""
-        ctrlvars = self.pv_ctrlvars('Gap-SP')
-        return ctrlvars['upper_ctrl_limit']
+    def gap_lims(self):
+        """Return ID gap control limits [mm]."""
+        return self.kparameter_lims
 
     @property
     def gap_mon(self):
         """Return ID gap monitor [mm]."""
-        return self['Gap-Mon']
+        return self.kparameter_mon
 
     # --- drive checks ---
 
@@ -1023,17 +1008,17 @@ class EPU(PAPU):
 
     # --- set methods ---
 
-    def set_gap(self, gap, timeout=None):
-        """Command to set ID target gap for movement [mm]."""
-        return self._write_sp('Gap-SP', gap, timeout)
+    def gap_set(self, gap, timeout=None):
+        """Set ID target gap for movement [mm]."""
+        return self.kparameter_set(gap, timeout)
 
-    def set_gap_speed(self, gap_speed, timeout=None):
-        """Command to set ID cruise gap speed for movement [mm/s]."""
-        return self._write_sp('GapSpeed-SP', gap_speed, timeout)
+    def gap_speed_set(self, gap_speed, timeout=None):
+        """Set ID cruise gap speed for movement [mm/s]."""
+        return self.kparameter_speed_set(gap_speed, timeout)
 
-    def set_gap_speed_max(self, gap_speed_max, timeout=None):
-        """Command to set ID max cruise gap speed for movement [mm/s]."""
-        return self._write_sp('MaxGapSpeed-SP', gap_speed_max, timeout)
+    def gap_speed_max_set(self, gap_speed_max, timeout=None):
+        """Set ID max cruise gap speed for movement [mm/s]."""
+        return self.kparameter_speed_max_set(gap_speed_max, timeout)
 
     # --- cmd_move disable/enable ---
 
@@ -1079,16 +1064,9 @@ class EPU(PAPU):
 
     # -- cmd_move
 
-    def cmd_move_start(self, timeout=None):
-        """Command to start movement."""
-        success = True
-        success &= self.cmd_move_gap_start(timeout=timeout)
-        success &= self.cmd_move_phase_start(timeout=timeout)
-        return success
-
     def cmd_move_gap_start(self, timeout=None):
         """Command to start gap movement."""
-        return self._move_start('ChangeGap-Cmd', timeout=timeout)
+        return self.cmd_move_kparameter_start(timeout)
 
     # --- other cmds ---
 
