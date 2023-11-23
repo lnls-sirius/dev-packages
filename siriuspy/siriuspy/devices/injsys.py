@@ -1130,12 +1130,8 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
 
     def _wait(
             self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
-        _t0 = _time.time()
-        while _time.time() - _t0 < timeout:
-            if abs(getattr(device, prop) - desired) < tolerance:
-                return True
-            _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
-        return False
+        return device._wait_float(
+            prop, desired, abs_tol=tolerance, timeout=timeout)
 
     # ---------- logging -----------
 
