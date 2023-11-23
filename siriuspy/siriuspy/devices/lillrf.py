@@ -168,9 +168,8 @@ class DevLILLRF(_Device):
                 if abs(self.amplitude - self['SET_AMP']) < 0.1:
                     return True
             else:
-                raise Exception(
-                    'Set LLRF property (phase or amplitude)')
-        print('timed out waiting LLRF.')
+                raise Exception('Set LLRF property (phase or amplitude)')
+        self._logger.error('timed out waiting LLRF.')
         return False
 
     @staticmethod
