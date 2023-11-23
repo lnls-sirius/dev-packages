@@ -9,11 +9,12 @@ import GPy as gpy
 from .csdev import Const as _Const, get_biasfb_database as _get_database
 
 
-class BiasFeedback():
+class BiasFeedback:
     """."""
 
     def __init__(self, injctrl):
         """."""
+        self._logger = _log.getLogger(self.__class__.__module__)
         db_ = _get_database()
         self.database = db_
         self._injctrl = injctrl
@@ -120,10 +121,6 @@ class BiasFeedback():
             return
         self.database[name]['value'] = args[0]
 
-    def update_log(self, msg):
-        """."""
-        self._injctrl.run_callbacks('Log-Mon', msg)
-
     # ###################### Setter methods for IOC ######################
     def set_loop_state(self, value):
         """."""
@@ -186,10 +183,8 @@ class BiasFeedback():
         self.bias_data = _np.array(value)
         max_ = _Const.BIASFB_MAX_DATA_SIZE
         if self.bias_data.size > max_:
-            msg = f'WARN: Bias data is too big (>{max_:d}). '
-            msg += 'Trimming first points.'
-            _log.warning(msg)
-            self.update_log(msg)
+            self._logger.warn(
+                f'Bias data is too big (>{max_:d}). Trimming first points.')
             self.bias_data = self.bias_data[-max_:]
         self._update_models()
         self.run_callbacks('ModelDataBias-RB', value)
@@ -200,10 +195,8 @@ class BiasFeedback():
         self.injc_data = _np.array(value)
         max_ = _Const.BIASFB_MAX_DATA_SIZE
         if self.injc_data.size > max_:
-            msg = f'WARN: InjCurr data is too big (>{max_:d}). '
-            msg += 'Trimming first points.'
-            _log.warning(msg)
-            self.update_log(msg)
+            self._logger.warn(
+                f'InjCurr data is too big (>{max_:d}). Trimming first points.')
             self.injc_data = self.injc_data[-max_:]
         self._update_models()
         self.run_callbacks('ModelDataInjCurr-RB', value)
@@ -331,10 +324,8 @@ class BiasFeedback():
         if bias in xun:
             idx = (xun == bias).nonzero()[0][0]
             if cnts[idx] >= max(2, self.bias_data.size // 5):
-                msg = 'WARN: Too many data with this abscissa. '
-                msg += 'Discarding point.'
-                _log.warning(msg)
-                self.update_log(msg)
+                self._logger.warn(
+                    'Too many data with this abscissa. Discarding point.')
                 return
         self._npts_after_fit += 1
 
@@ -351,20 +342,15 @@ class BiasFeedback():
         x = x[-self.model_max_num_points:]
         y = y[-self.model_max_num_points:]
         if x.size != y.size:
-            msg = 'WARN: Arrays with incompatible sizes. '
-            msg += 'Trimming first points of '
+            msg = 'Arrays with incompatible sizes. Trimming first points of '
             msg += 'bias.' if x.size > y.size else 'injcurr.'
-            _log.warning(msg)
-            self.update_log(msg)
+            self._logger.warn(msg)
             siz = min(x.size, y.size)
             x = x[-siz:]
             y = y[-siz:]
 
         if x.size < 2:
-            msg = 'ERR: Too few data points. '
-            msg += 'Skipping Model update.'
-            _log.error(msg)
-            self.update_log(msg)
+            self._logger.error('Too few data points. Skipping Model update.')
             return
 
         fit_rate = self.model_auto_fit_rate
