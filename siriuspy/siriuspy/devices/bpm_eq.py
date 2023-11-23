@@ -26,11 +26,8 @@ class EqualizeBPMs(_FamBPMs):
     AcqStrategies = _namedtuple(
         'AcqStrategies', ('AssumeOrder', 'AcqInvRedGain'))
 
-    def __init__(self, devname=None, bpmnames=None, logger=None):
+    def __init__(self, devname=None, bpmnames=None):
         """."""
-        self._logger = None
-        if logger is not None:
-            self.logger = logger
         self._proc_method = self.ProcMethods.EABS
         self._acq_strategy = self.AcqStrategies.AcqInvRedGain
         self._acq_inverse_reduced_gain = self.round_gains(0.95)
@@ -57,18 +54,6 @@ class EqualizeBPMs(_FamBPMs):
         self._devices.append(self.currinfo)
         self._devices.append(self.trigger)
         self.data = dict()
-
-    @property
-    def logger(self):
-        """Logger object. Must be an instance of `logging.Logger`."""
-        return self._logger
-
-    @logger.setter
-    def logger(self, logger):
-        if isinstance(logger, _logging.Logger):
-            self._logger = logger
-        else:
-            self._log('ERR:Could no set logger. Wrong type.')
 
     @property
     def acq_strategy_str(self):
@@ -221,7 +206,7 @@ class EqualizeBPMs(_FamBPMs):
 
     def acquire_bpm_data(self):
         """."""
-        self._log('Starting Acquisition.')
+        self._logger.info('Starting Acquisition.')
         self.data = dict()
         self.data['timestamp'] = _time.time()
         self.data['stored_current'] = self.currinfo.current
@@ -232,13 +217,13 @@ class EqualizeBPMs(_FamBPMs):
         try:
             self._do_acquire()
         except Exception as err:
-            self._log('ERR:Problem with acquisition:')
-            self._log(f'ERR:{str(err)}')
+            self._logger.error('Problem with acquisition:')
+            self._logger.error(f'{str(err)}')
 
         self.trigger.source = init_source
         self.trigger.delay_raw = ini_dly
         self.set_gains(self.data['gains_init'])
-        self._log('Acquisition Finished!')
+        self._logger.info('Acquisition Finished!')
 
     def _do_acquire(self):
         if self._acq_strategy == self.AcqStrategies.AssumeOrder:
@@ -251,12 +236,11 @@ class EqualizeBPMs(_FamBPMs):
         self.data['acq_inverse_reduced_gain'] = self._acq_inverse_reduced_gain
 
         # acquire antennas data in FOFB rate
-        self._log('Preparing BPMs')
+        self._logger.info('Preparing BPMs')
         ret = self.cmd_mturn_acq_abort()
         if ret > 0:
-            self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
-                'previous acquistion.')
+            bnm = self.bpm_names[ret-1]
+            self._logger.error(f'BPM {bnm} did not abort previous acquistion.')
             return
 
         self.mturn_reset_flags_and_update_initial_timestamps()
@@ -264,34 +248,35 @@ class EqualizeBPMs(_FamBPMs):
             nr_points_after=self._acq_nrpoints, nr_points_before=0,
             acq_rate='FOFB', repeat=False, external=True)
         if ret > 0:
-            self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not start acquistion.')
+            bnm = self.bpm_names[ret-1]
+            self._logger.error(f'BPM {bnm} did not start acquistion.')
             return
 
         self.trigger.delay_raw = 0
         self.trigger.source = self.trigger.source_options.index('Clock3')
 
-        self._log('Waiting BPMs to update')
+        self._logger.info('Waiting BPMs to update')
         ret = self.mturn_wait_update(timeout=self._acq_timeout)
         if ret > 0:
-            self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
+            bnm = self.bpm_names[ret-1]
+            self._logger.error(f'BPM {bnm} did not update in time.')
             return
         elif ret < 0:
-            self._log(f'ERR: Problem with acquisition. Error code {ret}')
+            self._logger.error(f'Problem with acquisition. Error code {ret}')
             return
-        self._log('BPMs updated.')
+        self._logger.info('BPMs updated.')
 
-        self._log('Acquiring data.')
+        self._logger.info('Acquiring data.')
         fswtc = self.get_switching_frequency(1)
         fsamp = self.get_sampling_frequency(1)
         self.data['freq_switching'] = fswtc
         self.data['freq_sampling'] = fsamp
         if None in {fsamp, fswtc}:
-            self._log('ERR: Not all BPMs are configured equally.')
+            self._logger.error('Not all BPMs are configured equally.')
             return
         elif fsamp % (2*fswtc):
-            self._log('ERR: Sampling freq is not multiple of switching freq.')
+            self._logger.error(
+                'Sampling freq is not multiple of switching freq.')
             return
 
         posx_gain, posy_gain = [], []
@@ -313,28 +298,27 @@ class EqualizeBPMs(_FamBPMs):
 
     def acquire_data_for_checking(self):
         """."""
-        self._log('Starting Acquisition.')
+        self._logger.info('Starting Acquisition.')
 
         init_source = self.trigger.source
         ini_dly = self.trigger.delay_raw
         try:
             self._do_acquire_for_check()
         except Exception as err:
-            self._log('ERR:Problem with acquisition:')
-            self._log(f'ERR:{str(err)}')
+            self._logger.error('Problem with acquisition:')
+            self._logger.error(f'{str(err)}')
 
         self.trigger.source = init_source
         self.trigger.delay_raw = ini_dly
-        self._log('Acquisition Finished!')
+        self._logger.info('Acquisition Finished!')
 
     def _do_acquire_for_check(self):
         # acquire antennas data in FOFB rate
-        self._log('Preparing BPMs')
+        self._logger.info('Preparing BPMs')
         ret = self.cmd_mturn_acq_abort()
         if ret > 0:
-            self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
-                'previous acquistion.')
+            bnm = self.bpm_names[ret-1]
+            self._logger.error(f'BPM {bnm} did not abort previous acquistion.')
             return
 
         fswtc = self.get_switching_frequency(1)
@@ -346,30 +330,31 @@ class EqualizeBPMs(_FamBPMs):
             nr_points_after=nrpts, nr_points_before=0,
             acq_rate='FOFB', repeat=False, external=True)
         if ret > 0:
-            self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not start acquistion.')
+            bnm = self.bpm_names[ret-1]
+            self._logger.error(f'BPM {bnm} did not start acquistion.')
             return
 
         self.trigger.delay_raw = 0
         self.trigger.source = self.trigger.source_options.index('Clock3')
 
-        self._log('Waiting BPMs to update')
+        self._logger.info('Waiting BPMs to update')
         ret = self.mturn_wait_update(timeout=self._acq_timeout)
         if ret > 0:
-            self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
+            bnm = self.bpm_names[ret-1]
+            self._logger.error(f'BPM {bnm} did not update in time.')
             return
         elif ret < 0:
-            self._log(f'ERR: Problem with acquisition. Error code {ret}')
+            self._logger.error(f'Problem with acquisition. Error code {ret}')
             return
-        self._log('BPMs updated.')
+        self._logger.info('BPMs updated.')
 
-        self._log('Acquiring data.')
+        self._logger.info('Acquiring data.')
         if None in {fsamp, fswtc}:
-            self._log('ERR: Not all BPMs are configured equally.')
+            self._logger.error('Not all BPMs are configured equally.')
             return
         elif fsamp % (2*fswtc):
-            self._log('ERR: Sampling freq is not multiple of switching freq.')
+            self._logger.error(
+                'Sampling freq is not multiple of switching freq.')
             return
 
         _time.sleep(0.1)
@@ -381,7 +366,7 @@ class EqualizeBPMs(_FamBPMs):
     def process_data(self):
         """Process data."""
         if 'antennas' not in self.data:
-            self._log('ERR:There is no data to process. Acquire first.')
+            self._logger('There is no data to process. Acquire first.')
             return
         mean_antennas = self.calc_switching_levels(**self.data)
         self.calc_gains(mean_antennas)
@@ -416,16 +401,16 @@ class EqualizeBPMs(_FamBPMs):
         nant = 4
         trunc = (ants.shape[-1] // (lsemicyc*2)) * (lsemicyc*2)
         if trunc < 5:
-            self._log(
-                f'ERR:Data not large enough. Acquire data with more points.')
+            self._logger.error(
+                f'Data not large enough. Acquire data with more points.')
             return
         elif ants.shape[-1] != trunc:
             ants = ants[:, :, :trunc]
-            self._log(f'WARN:Truncating data at {trunc} points')
+            self._logger.warning(f'Truncating data at {trunc} points')
         ants = ants.reshape(nant, nbpm, -1, lsemicyc*2)
         ants = ants.mean(axis=2)
-        self._log('Calculating switching levels.')
-        self._log(
+        self._logger.info('Calculating switching levels.')
+        self._logger.info(
             f'AcqStrategy is {self.AcqStrategies._fields[acq_strategy]}.')
         if acq_strategy == self.AcqStrategies.AssumeOrder:
             ants = ants.reshape(nant, nbpm, 2, lsemicyc)
@@ -444,8 +429,8 @@ class EqualizeBPMs(_FamBPMs):
             cond = idp[0].size == nbpm*lsemicyc
             cond &= _np.unique(idp[0]).size == nbpm
             if not cond:
-                self._log(
-                    'ERR: Could not identify switching states appropriately.')
+                self._logger.error(
+                    'Could not identify switching states appropriately.')
                 return
             mean = _np.zeros((nant, nbpm, 2))
             dtp = ants[:, idp[0], idp[1]].reshape(nant, nbpm, lsemicyc)
@@ -472,8 +457,8 @@ class EqualizeBPMs(_FamBPMs):
 
         """
         maxm = self.MAX_MULTIPLIER
-        self._log('Calculating Gains.')
-        self._log(
+        self._logger.info('Calculating Gains.')
+        self._logger.info(
             f'ProcMethod is {self.ProcMethods._fields[self._proc_method]}')
         if self._proc_method == self.ProcMethods.EABS:
             # equalize each antenna for both semicycles
@@ -495,7 +480,7 @@ class EqualizeBPMs(_FamBPMs):
 
     def estimate_orbit_variation(self):
         """Estimate orbit variation between old and new gains."""
-        self._log('Estimating Orbit Variation.')
+        self._logger.info('Estimating Orbit Variation.')
         mean = self.data.get('antennas_mean')
         gains_init = self.data.get('gains_init')
         gains_new = self.data.get('gains_new')
@@ -504,7 +489,7 @@ class EqualizeBPMs(_FamBPMs):
         offx = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
         offy = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
         if gains_new is None:
-            self._log('ERR:Missing info. Acquire and process data first.')
+            self._logger.error('Missing info. Acquire and process data first.')
 
         orbx_init, orby_init = self._estimate_orbit(
             mean, gains_init, gainx, gainy, offx, offy)
@@ -528,7 +513,7 @@ class EqualizeBPMs(_FamBPMs):
         dorbx = self.data.get('dorbx')
         dorby = self.data.get('dorby')
         if dorbx is None:
-            self._log('ERR:Must acquire data and process first.')
+            self._logger.error('Must acquire data and process first.')
             return None, None
 
         fig, ax = _mplt.subplots(1, 1, figsize=(5, 3))
@@ -547,7 +532,7 @@ class EqualizeBPMs(_FamBPMs):
         gini = self.data.get('gains_init')
         gnew = self.data.get('gains_new')
         if gnew is None:
-            self._log('ERR:Must acquire data and process first.')
+            self._logger.error('Must acquire data and process first.')
             return None, None
 
         fig, axs = _mplt.subplots(
@@ -579,7 +564,7 @@ class EqualizeBPMs(_FamBPMs):
         idn = self.data.get('idcs_inverse')
         acqs = self.data.get('acq_strategy')
         if idp is None:
-            self._log('ERR:Must acquire data and process first.')
+            self._logger.error('Must acquire data and process first.')
             return None, None
 
         fig, ax = _mplt.subplots(1, 1, figsize=(5, 3))
@@ -604,7 +589,7 @@ class EqualizeBPMs(_FamBPMs):
         gnew = self.data.get('gains_new')
         antm = self.data.get('antennas_mean')
         if gnew is None:
-            self._log('ERR:Must acquire data and process first.')
+            self._logger.error('Must acquire data and process first.')
             return None, None
 
         gains = (1, gacq, gini, gnew)
@@ -653,7 +638,7 @@ class EqualizeBPMs(_FamBPMs):
         """."""
         antd = self.data.get('antennas_for_check')
         if antd is None:
-            self._log('ERR:Must acquire data for check first.')
+            self._logger.error('Must acquire data for check first.')
             return None, None
 
         fig, axs = _mplt.subplots(
@@ -685,7 +670,7 @@ class EqualizeBPMs(_FamBPMs):
         b_d = (b-d) / (b+d)
         # Get the positions:
         posx = (a_c - b_d) / 2
-        posy = (a_c + b_d) / 2 
+        posy = (a_c + b_d) / 2
         # Apply position gains:
         posx *= gainx[:, None]
         posy *= gainy[:, None]
@@ -693,13 +678,3 @@ class EqualizeBPMs(_FamBPMs):
         posx -= offx[:, None]
         posy -= offy[:, None]
         return posx, posy
-
-    def _log(self, message, *args, level='INFO', **kwrgs):
-        if self._logger is None:
-            print(message, *args, **kwrgs)
-        elif message.startswith('WARN:'):
-            self._logger.warning(message[5:])
-        elif message.startswith('ERR:'):
-            self._logger.error(message[4:])
-        else:
-            self._logger.info(message)
