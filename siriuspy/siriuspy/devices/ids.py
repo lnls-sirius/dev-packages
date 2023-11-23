@@ -201,9 +201,9 @@ class APU(_Device):
                 abs(self.phase_mon - phase) > self.TOLERANCE_PHASE or \
                 self.is_moving:
             if _time.time() - time_init > tol_total:
-                print(f'tol_total: {tol_total:.3f} s')
-                print(f'wait_time: {_time.time() - time_init:.3f} s')
-                print()
+                self._logger.error(f'tol_total: {tol_total:.3f} s')
+                self._logger.error(
+                    f'wait_time: {_time.time() - time_init:.3f} s')
                 return False
             _time.sleep(self._SHORT_SHUT_EYE)
 
@@ -504,9 +504,9 @@ class PAPU(_Device):
                 abs(self.phase_mon - phase) > self.TOLERANCE_PHASE or \
                 self.is_moving:
             if _time.time() - time_init > tol_total:
-                print(f'tol_total: {tol_total:.3f} s')
-                print(f'wait_time: {_time.time() - time_init:.3f} s')
-                print()
+                self._logger.error(f'tol_total: {tol_total:.3f} s')
+                self._logger.error(
+                    f'wait_time: {_time.time() - time_init:.3f} s')
                 return False
             _time.sleep(self._SHORT_SHUT_EYE)
 
@@ -818,9 +818,8 @@ class EPU(PAPU):
                 abs(self.phase_mon - phase) > tol_phase or \
                 self.is_moving:
             if _time.time() - time_init > tol_total:
-                print(f'tol_total: {tol_total:.3f} s')
-                print(f'wait_time: {_time.time() - time_init:.3f} s')
-                print()
+                self._logger.error(f'tol_total: {tol_total:.3f} s')
+                self._logger.error(f'wait_time: {_time.time() - time_init:.3f} s')
                 return False
             _time.sleep(EPU._SHORT_SHUT_EYE)
 
