@@ -80,8 +80,8 @@ class IDSearch:
             'IDParameters',
             _idparam_fields, (
                 52.5,
-                -52.5/2, +52.5/2, 0, 0, 0.1,
-                -52.5/2, +52.5/2, 0, 0.1)),
+                -52.5/2, +52.5/2, 0, 0, 0.020,
+                -52.5/2, +52.5/2, 0, 0.010)),
         'SI-11SP:ID-APU58': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
@@ -304,7 +304,7 @@ class IDSearch:
         pols_sts = IDSearch._idname2pol_sts[idname]
 
         # check if polarization is defined
-        for pol_idx, pol in pols_sts:
+        for pol_idx, pol in pols_sts.items():
             _, pol_phase = pol
             if abs(pparameter - pol_phase) <= params.PPARAM_TOL:
                 return pol_idx
