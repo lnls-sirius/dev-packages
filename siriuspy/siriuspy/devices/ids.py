@@ -52,6 +52,15 @@ class _PARAM_PVS:
     POL_MON = None
     POL_CHANGE_CMD = None
 
+    def __str__(self):
+        """Print parameters."""
+        str_ = ''
+        strf = '{}: {}'
+        for key, value in _inspect.getmembers(self):
+            if not key.startswith('_') and value is not None:
+                lstr = strf.format(key, value)
+                str_ += lstr if str_ == '' else '\n' + lstr
+        return str_
 
 class _ID(_Device):
     """Generic Insertion Device."""
