@@ -28,7 +28,7 @@ class IDFF(_DeviceSet):
         if devname not in IDFF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self._devname = _SiriusPVName(devname)  # needed for _create_devices
+        self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
         self._pparametername = \
