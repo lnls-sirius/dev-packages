@@ -833,7 +833,7 @@ class PAPU(_ID):
 
     def cmd_move_park(self, timeout=None):
         """Command to set and start ID movement to parked config."""
-        return self.cmd_move_park(timeout)
+        return super().cmd_move_park(timeout)
 
     # --- cmd_reset
 
@@ -1008,15 +1008,15 @@ class EPU(PAPU):
 
     # --- set methods ---
 
-    def set_gap(self, gap, timeout=None):
+    def gap_set(self, gap, timeout=None):
         """Set ID target gap for movement [mm]."""
         return self.kparameter_set(gap, timeout)
 
-    def set_gap_speed(self, gap_speed, timeout=None):
+    def gap_speed_set(self, gap_speed, timeout=None):
         """Set ID cruise gap speed for movement [mm/s]."""
         return self.kparameter_speed_set(gap_speed, timeout)
 
-    def set_gap_speed_max(self, gap_speed_max, timeout=None):
+    def gap_speed_max_set(self, gap_speed_max, timeout=None):
         """Set ID max cruise gap speed for movement [mm/s]."""
         return self.kparameter_speed_max_set(gap_speed_max, timeout)
 
