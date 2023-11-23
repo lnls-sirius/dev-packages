@@ -1129,10 +1129,3 @@ class InjSysPUModeHandler(_DeviceSet):
             self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
         return device._wait_float(
             prop, desired, abs_tol=tolerance, timeout=timeout)
-
-    # ---------- logging -----------
-
-    def _update_status(self, status):
-        if self._print_log:
-            print(status)
-        self.run_callbacks(status)
