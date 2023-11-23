@@ -591,24 +591,21 @@ class HLTiming(_DeviceSet):
             map_table2evt[v] = map_table2evt.get(v, []) + [k]
         return map_table2evt
 
-    def change_triggers_source(
-            self, trigs, new_src='Linac', printlog=True) -> list:
+    def change_triggers_source(self, trigs, new_src='Linac') -> list:
         """."""
         notchanged = list()
         for tn in trigs:
             tr = self.triggers.get(tn)
             if tr is None:
                 notchanged.append(tn)
-                if not printlog:
-                    continue
-                print(f'{tn:25s} -> No Change: {tn:s} is not controlled.')
+                self._logger.warn(
+                    f'{tn:25s} -> No Change: {tn:s} is not controlled.')
                 continue
 
             if new_src not in tr.source_options:
                 notchanged.append(tn)
-                if not printlog:
-                    continue
-                print(f'{tn:25s} -> No Change: {new_src:s} is not an option.')
+                self._logger.warn(
+                    f'{tn:25s} -> No Change: {new_src:s} is not an option.')
                 continue
 
             dly_newsrc = 0
@@ -626,26 +623,23 @@ class HLTiming(_DeviceSet):
             dly += delta_dly
             if dly < 0:
                 notchanged.append(tn)
-                if printlog:
-                    print(f'{tn:25s} -> No Change: total delay not constant!')
+                self._logger.warn(
+                    f'{tn:25s} -> No Change: total delay not constant!')
                 continue
 
             tr.delay_raw = dly
             tr.source = new_src
-            if printlog:
-                print(f'{tn:25s} -> Change OK: .')
+            self._logger.info(f'{tn:25s} -> Change OK: .')
         return notchanged
 
-    def change_event_delay(self, new_dly, event='Linac', printlog=True):
+    def change_event_delay(self, new_dly, event='Linac'):
         """."""
         if not self.is_full:
-            if printlog:
-                print('Aborted: class does not control all triggers.')
+            self._logger.error('Aborted: class does not control all triggers.')
             return False
 
         if event not in self.events:
-            if printlog:
-                print(f'{event} is not a valid event!')
+            self._logger.error(f'{event} is not a valid event!')
             return False
         new_dly = int(new_dly)
         old_dly = self.events[event].delay_raw
@@ -655,15 +649,14 @@ class HLTiming(_DeviceSet):
         for trn in trigs:
             dly = self.triggers[trn].delay_raw + dlt_dly
             if dly < 0:
-                if printlog:
-                    print(f'cannot change delay: {trn:s} would change!')
+                self._logger.error(
+                    f'cannot change delay: {trn:s} would change!')
                 return False
 
         for trn in trigs:
             self.triggers[trn].delay_raw += dlt_dly
         self.events[event].delay_raw = new_dly
-        if printlog:
-            print('Delay changed!')
+        self._logger.info('Delay changed!')
         return True
 
     def print_injtable_mapping(self, only_enabled=False):
