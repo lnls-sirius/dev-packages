@@ -107,13 +107,19 @@ class _ID(_Device):
         if self.PARAM_PVS.POL_STS in self.properties_all:
             return self[self.PARAM_PVS.POL_STS]
         else:
-            return self._pols_sts_str.index(_IDSearch.POL_UNDEF_STR)
+            if _IDSearch.POL_UNDEF_STR in self._pols_sts_str:
+                return self._pols_sts_str.index(_IDSearch.POL_UNDEF_STR)
+            else:
+                return None
 
     @property
     def polarization_str(self):
         """Return ID polarization string."""
         pol_idx = self.polarization
-        return self._pols_sts_str[pol_idx]
+        if pol_idx is None:
+            return None
+        else:
+            return self._pols_sts_str[pol_idx]
 
     @polarization.setter
     def polarization(self, value):
@@ -122,8 +128,6 @@ class _ID(_Device):
             if isinstance(value, str):
                 value = self._pols_sel_str.index(value)
             self[self.PARAM_PVS.POL_SEL] = value
-        else:
-            raise TypeError('ID type does not define polarizations!')
 
     @property
     def polarization_mon(self):
@@ -131,7 +135,7 @@ class _ID(_Device):
         if self.PARAM_PVS.POL_MON in self.properties_all:
             return self[self.PARAM_PVS.POL_MON]
         else:
-            return _IDSearch.POL_UNDEF_STR
+            return None
 
     # --- pparameter ---
 
@@ -561,9 +565,7 @@ class APU(_ID):
 
     PROPERTIES_DEFAULT = \
         tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
-            if not key.startswith('_') and value is not None)) + (
-        'Kx-SP', 'Kx-Mon',
-        )
+            if not key.startswith('_') and value is not None))
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
@@ -578,16 +580,6 @@ class APU(_ID):
     # --- phase speeds ----
 
     @property
-    def phase_speed(self):
-        """Return phase speed [mm/s]."""
-        return self.kparameter_speed
-
-    @property
-    def phase_speed_mon(self):
-        """Return phase speed monitor [mm/s]."""
-        return self.kparameter_speed_mon
-
-    @property
     def phase_speed_max(self):
         """Return max phase speed readback [mm/s]."""
         return self.kparameter_speed_max
@@ -597,12 +589,22 @@ class APU(_ID):
         """Return max phase speed limits."""
         return self.kparameter_speed_max_lims
 
+    @property
+    def phase_speed(self):
+        """Return phase speed [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def phase_speed_mon(self):
+        """Return phase speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
     # --- phase ---
 
     @property
-    def phase(self):
-        """Return APU phase [mm]."""
-        return self.kparameter
+    def phase_parked(self):
+        """Return ID parked phase value [mm]."""
+        return self.kparameter_parked
 
     @property
     def phase_lims(self):
@@ -610,33 +612,26 @@ class APU(_ID):
         return self.kparameter_lims
 
     @property
+    def phase(self):
+        """Return APU phase [mm]."""
+        return self.kparameter
+
+    @property
     def phase_mon(self):
         """Return APU phase [mm]."""
         return self.kparameter_mon
 
-    # --- Kparam methods ---
-
-    @property
-    def idkx(self):
-        """Return APU Kx."""
-        return self['Kx-SP']
-
-    @idkx.setter
-    def idkx(self, value):
-        """Set APU Kx."""
-        self['Kx-SP'] = value
-
     # --- set methods ---
 
-    def set_phase(self, phase, timeout=None):
+    def phase_set(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
         return self.kparameter_set(phase, timeout)
 
-    def set_phase_speed(self, phase_speed, timeout=None):
+    def phase_speed_set(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
         return self.kparameter_speed_set(phase_speed, timeout)
 
-    def set_phase_speed_max(self, phase_speed_max, timeout=None):
+    def phase_speed_max_set(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
@@ -719,6 +714,16 @@ class PAPU(_ID):
     # --- phase speeds ----
 
     @property
+    def phase_speed_max(self):
+        """Return max phase speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def phase_speed_max_lims(self):
+        """Return max phase speed limits."""
+        return self.kparameter_speed_max_lims
+
+    @property
     def phase_speed(self):
         """Return phase speed readback [mm/s]."""
         return self.kparameter_speed
@@ -728,18 +733,6 @@ class PAPU(_ID):
         """Return phase speed monitor [mm/s]."""
         return self.kparameter_speed_mon
 
-    @property
-    def phase_speed_max(self):
-        """Return max phase speed readback [mm/s]."""
-        return self.kparameter_speed_max
-
-    @property
-    def phase_speed_max_lims(self):
-        """Return max phase speed limits."""
-        ctrl = self.pv_ctrlvars('MaxPhaseSpeed-SP')
-        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
-        return lims
-
     # --- phase ---
 
     @property
@@ -748,14 +741,14 @@ class PAPU(_ID):
         return self.kparameter_parked
 
     @property
-    def phase(self):
-        """Return ID phase readback [mm]."""
-        return self.kparameter
-
-    @property
     def phase_lims(self):
         """Return ID phase limits [mm]."""
         return self.kparameter_lims
+
+    @property
+    def phase(self):
+        """Return ID phase readback [mm]."""
+        return self.kparameter
 
     @property
     def phase_mon(self):
@@ -779,7 +772,7 @@ class PAPU(_ID):
     @property
     def is_moving(self):
         """Return is moving state (True|False)."""
-        return self['Moving-Mon'] != 0
+        return self[self.PARAM_PVS.IS_MOVING] != 0
 
     @property
     def is_homing(self):
@@ -798,15 +791,15 @@ class PAPU(_ID):
 
     # --- set methods ---
 
-    def set_phase(self, phase, timeout=None):
+    def phase_set(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
         return self.kparameter_set(phase, timeout)
 
-    def set_phase_speed(self, phase_speed, timeout=None):
+    def phase_speed_set(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
         return self.kparameter_speed_set(phase_speed, timeout)
 
-    def set_phase_speed_max(self, phase_speed_max, timeout=None):
+    def phase_speed_max_set(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self.kparameter_speed_max_set(phase_speed_max, timeout)
 
@@ -1152,7 +1145,7 @@ class DELTA(_ID):
     @property
     def is_operational(self):
         """Return True if ID is operational."""
-        return self['IsOperational-Mon'] != 0
+        return self['IsOperational-Mon'] == 0  # 0 : 'OK'
 
     # --- cassette positions ---
 
