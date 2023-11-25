@@ -1,5 +1,6 @@
 """BSMP protocol implementation."""
 import typing
+import logging as _log
 
 from . import constants as _const
 from .entities import Entities as _Entities
@@ -17,6 +18,7 @@ class BSMP:
 
     def __init__(self, iointerf: _IOInterface, slave_address: int, entities: _Entities):
         """Constructor."""
+        self._logger = _log.getLogger(self.__class__.__module__)
         self._entities: _Entities = entities
         self._channel: _Channel = _Channel(iointerf, slave_address)
 
@@ -137,7 +139,7 @@ class BSMP:
 
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for command 0x{:02X}: {}!'
-            print(fmts.format(cmd, res.cmd))
+            self._logger.error(fmts.format(cmd, res.cmd))
             return None, None
 
         # anomalous response
@@ -172,11 +174,8 @@ class BSMP:
                 return _const.ACK_OK, group.load_to_value(res.payload)
             # unexpected group variables size
             return BSMP.anomalous_response(
-                cmd, res.cmd,
-                group_id=group_id,
-                payload_len=len(res.payload),
-                var_size=group.variables_size()
-            )
+                cmd, res.cmd, group_id=group_id, payload_len=len(res.payload),
+                var_size=group.variables_size())
 
         # anomalous response
         return BSMP.anomalous_response(cmd, res.cmd)
@@ -238,7 +237,7 @@ class BSMP:
             # unexpected non-empty response payload
             fmts = ('Unexpected BSMP non-empty resp payload '
                     'for command 0x{:02X}: {}!')
-            print(fmts.format(cmd, res.cmd))
+            self._logger.error(fmts.format(cmd, res.cmd))
             return None, None
 
         # anomalous response
@@ -274,12 +273,8 @@ class BSMP:
 
     # 0x4_
     def request_curve_block(
-            self,
-            curve_id,
-            block,
-            timeout: float,
-            print_error: bool = True
-    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
+            self, curve_id, block, timeout: float ) -> typing.Tuple[
+                typing.Optional[int], typing.Optional[typing.List[str]]]:
         """Read curve block."""
         # command and expected response
         cmd, ack = _const.CMD_REQUEST_CURVE_BLOCK, _const.CMD_CURVE_BLOCK
@@ -303,7 +298,7 @@ class BSMP:
                 fmts = ('Curve size is not multiple of curve.type.size!\n'
                         ' received curce size: {}\n'
                         ' curve.type.size: {}')
-                print(fmts.format(len(data), curve.type.size))
+                self._logger.error(fmts.format(len(data), curve.type.size))
                 return None, None
             cid = ord(res.payload[0])
             cblock = (ord(res.payload[1]) << 8) + ord(res.payload[2])
@@ -312,7 +307,7 @@ class BSMP:
                 fmts = ('Invalid curve id or block offset in response!\n'
                         ' expected - curve_id:{}, block_offset:{}\n'
                         ' received - curve_id:{}, block_offset:{}')
-                print(fmts.format(curve_id, block, cid, cblock))
+                self._logger.error(fmts.format(curve_id, block, cid, cblock))
                 return None, None
 
             # expected result
@@ -320,7 +315,7 @@ class BSMP:
             return _const.ACK_OK, data_float
 
         # anomalous response
-        return BSMP.anomalous_response(cmd, res.cmd, print_error=print_error)
+        return BSMP.anomalous_response(cmd, res.cmd, log_error=False)
 
     def curve_block(
             self,
@@ -386,8 +381,7 @@ class BSMP:
         func_id: int,
         input_val=None,
         timeout: float = _timeout_execute_function,
-        read_flag: bool = True,
-        print_error: bool = True
+        read_flag: bool = True
     ) -> typing.Optional[typing.Tuple[int, typing.Optional[typing.Union[typing.List[str], str]]]]:
         """Execute a function.
 
@@ -424,26 +418,27 @@ class BSMP:
                 return res.cmd, res.payload[0]
 
         # anomalous response
-        return BSMP.anomalous_response(
-            cmd, res.cmd, func_id=func_id, print_error=print_error)
+        return BSMP.anomalous_response(cmd, res.cmd, func_id=func_id)
 
     @staticmethod
     def anomalous_response(cmd, ack: int, **kwargs) -> typing.Tuple[int, None]:
         """Print information about anomalous response."""
+        logger = _log.getLogger(BSMP.__module__)
         # response with error
         if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:
-            if 'print_error' not in kwargs or kwargs['print_error']:
-                fmts = 'BSMP response (error) for command 0x{:02X}: 0x{:02X}!'
-                print(fmts.format(cmd, ack))
+            if kwargs.get('log_error', True):
+                logger.error(
+                    'BSMP response (error) for command '
+                    f'0x{cmd:02X}: 0x{ack:02X}!')
                 for key, value in kwargs.items():
-                    print('{}: {}'.format(key, value))
+                    logger.error(f'{key}: {value}')
             return ack, None
 
         # unexpected response, raise Exception
-        fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
-        errmsg = fmts.format(cmd, ack)
-        if 'print_error' not in kwargs or kwargs['print_error']:
-            print(errmsg)
+        msg = 'BSMP response (unexpected) for command '
+        msg += f'0x{cmd:02X}: 0x{ack:02X}!'
+        if kwargs.get('log_error', True):
+            logger.error(msg)
             for key, value in kwargs.items():
-                print('{}: {}'.format(key, value))
-        raise _SerialAnomResp(errmsg)
+                logger.error(f'{key}: {value}')
+        raise _SerialAnomResp(msg)
