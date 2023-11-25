@@ -98,9 +98,8 @@ class PSBSMP(_BSMP):
     # --- bsmp overriden methods ---
 
     def execute_function(
-            self, func_id, input_val=None,
-            timeout=_timeout_execute_function,
-            read_flag=True, print_error=True):
+            self, func_id, input_val=None, timeout=_timeout_execute_function,
+            read_flag=True):
         """."""
         if func_id in (PSBSMP.CONST.F_SYNC_PULSE,
                        PSBSMP.CONST.F_RESET_UDC):
@@ -422,10 +421,8 @@ class PSBSMP(_BSMP):
         for block, idx in enumerate(indices):
             # print('psbsmp.curve_read-0 ', curve_id, block)
             ack, data = self.request_curve_block(
-                curve_id=curve_id,
-                block=block,
-                timeout=self._timeout_request_curve_block,
-                print_error=False)
+                curve_id=curve_id, block=block,
+                timeout=self._timeout_request_curve_block)
             # print(sum(data))
             # print((hex(ack), sum(data)))
             # print('psbsmp.curve_read-1')

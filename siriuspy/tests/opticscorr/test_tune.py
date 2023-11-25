@@ -55,7 +55,7 @@ class TestASAPTuneCorrMain(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            TuneCorrApp, PUB_INTERFACE, print_flag=True)
+            TuneCorrApp, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_write_ok_syncoff_Apply(self):

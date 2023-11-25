@@ -1,10 +1,10 @@
 """."""
-import logging as _log
-
 from epics.ca import CAThread as _Thread
 import numpy as _np
 from numpy.polynomial import polynomial as _np_poly
 import GPy as gpy
+
+from ..logging import get_logger as _get_logger
 
 from .csdev import Const as _Const, get_biasfb_database as _get_database
 
@@ -14,7 +14,7 @@ class BiasFeedback:
 
     def __init__(self, injctrl):
         """."""
-        self._logger = _log.getLogger(self.__class__.__module__)
+        self._logger = _get_logger(self)
         db_ = _get_database()
         self.database = db_
         self._injctrl = injctrl

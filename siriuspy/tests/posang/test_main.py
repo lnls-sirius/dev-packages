@@ -44,8 +44,7 @@ class TestASAPPosAngMain(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(
-            App, PUB_INTERFACE, print_flag=True)
+        valid = util.check_public_interface_namespace(App, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_write_statuserror_Delta(self):

@@ -1,6 +1,7 @@
 """BSMP protocol implementation."""
 import typing
-import logging as _log
+
+from ..logging import get_logger as _get_logger
 
 from . import constants as _const
 from .entities import Entities as _Entities
@@ -18,7 +19,7 @@ class BSMP:
 
     def __init__(self, iointerf: _IOInterface, slave_address: int, entities: _Entities):
         """Constructor."""
-        self._logger = _log.getLogger(self.__class__.__module__)
+        self._logger = _get_logger(self)
         self._entities: _Entities = entities
         self._channel: _Channel = _Channel(iointerf, slave_address)
 
@@ -423,7 +424,7 @@ class BSMP:
     @staticmethod
     def anomalous_response(cmd, ack: int, **kwargs) -> typing.Tuple[int, None]:
         """Print information about anomalous response."""
-        logger = _log.getLogger(BSMP.__module__)
+        logger = _get_logger(BSMP)
         # response with error
         if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:
             if kwargs.get('log_error', True):

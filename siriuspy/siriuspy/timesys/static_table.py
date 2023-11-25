@@ -1,8 +1,8 @@
 #!/usr/bin/python-sirius
 
 import sys as _sys
-import logging as _log
 
+from ..logging import get_logger as _get_logger, logging as _log
 from ..namesys import SiriusPVName as PVName
 from ..search import LLTimeSearch
 
@@ -37,14 +37,15 @@ def create_static_table(fname=None, local=False, logfile=None):
     else:
         hand = _log.StreamHandler(stream=_sys.stdout)
     hand.setFormatter(_log.Formatter('', datefmt=''))
-    _log.getLogger().setLevel(level=_log.INFO)
-    _log.getLogger().addHandler(hand)
+    logger = _get_logger(create_static_table)
+    logger.setLevel(level=_log.INFO)
+    logger.addHandler(hand)
 
     if local:
         data = read_data_from_local_excel_file(fname)
     else:
         data = read_data_from_google()
-    _log.info(_disclaimer)
+    logger.info(_disclaimer)
     chans = _get_channels_from_data(data)
     chans_used, chans_nused = _sort_connection_table(chans)
     _print_tables(chans_used, chans_nused)
@@ -57,10 +58,10 @@ def read_data_from_google():
     from googleapiclient.discovery import build
     from httplib2 import Http
     from oauth2client import file, client, tools
-    _log.getLogger('googleapiclient.discovery_cache').setLevel(_log.ERROR)
-    _log.getLogger('googleapiclient.discovery').setLevel(_log.ERROR)
-    _log.getLogger('oauth2client.transport').setLevel(_log.ERROR)
-    _log.getLogger('oauth2client.client').setLevel(_log.ERROR)
+    _get_logger('googleapiclient.discovery_cache').setLevel(_log.ERROR)
+    _get_logger('googleapiclient.discovery').setLevel(_log.ERROR)
+    _get_logger('oauth2client.transport').setLevel(_log.ERROR)
+    _get_logger('oauth2client.client').setLevel(_log.ERROR)
 
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -123,7 +124,8 @@ def _get_channels_from_data(data):
             name1 = PVName(name1)
             name2 = PVName(name2)
         except IndexError:
-            _log.info('# {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
+            logger = _get_logger(create_static_table)
+            logger.info('# {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
             continue
         chans.append((name1, name2))
     return chans
@@ -167,13 +169,14 @@ def _sort_connection_table(chans):
 
 
 def _print_tables(chans_used, chans_nused):
-    _log.info(3*'\n')
-    _log.info(f'# {len(chans_used):d}')
+    logger = _get_logger(create_static_table)
+    logger.info(3*'\n')
+    logger.info(f'# {len(chans_used):d}')
     for k1, k2 in chans_used:
-        _log.info('{0:35s} {1:35s}'.format(k1, k2))
+        logger.info('{0:35s} {1:35s}'.format(k1, k2))
 
-    _log.info(5*'\n')
-    _log.info('# CONNECTIONS NOT USED')
-    _log.info(f'# {len(chans_nused):d}')
+    logger.info(5*'\n')
+    logger.info('# CONNECTIONS NOT USED')
+    logger.info(f'# {len(chans_nused):d}')
     for k1, k2 in chans_nused:
-        _log.info('# {0:35s} {1:35s}'.format(k1, k2))
+        logger.info('# {0:35s} {1:35s}'.format(k1, k2))

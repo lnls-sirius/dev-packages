@@ -4,12 +4,12 @@ import time as _time
 import operator as _opr
 import math as _math
 from functools import partial as _partial
-import logging as _log
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
 import numpy as _np
 
+from ..logging import get_logger as _get_logger, logging as _log
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
     GET_TIMEOUT as _GET_TIMEOUT
@@ -59,7 +59,7 @@ class Device:
         self._devname = _SiriusPVName(devname) if devname else devname
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
-        self._logger = _log.getLogger(self.__class__.__module__)
+        self._logger = _get_logger(self)
 
         if isinstance(props2init, str) and props2init.lower() == 'all':
             propties = self.PROPERTIES_DEFAULT
@@ -294,7 +294,7 @@ class DeviceSet:
         """."""
         self._devices = devices
         self._devname = _SiriusPVName(devname)
-        self._logger = _log.getLogger(self.__class__.__module__)
+        self._logger = _get_logger(self)
 
     _enum_selector = staticmethod(Device._enum_selector)
 

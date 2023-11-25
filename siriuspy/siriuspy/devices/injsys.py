@@ -3,7 +3,13 @@
 import time as _time
 from copy import deepcopy as _dcopy
 from threading import Thread as _Thread, Event as _Flag
-import logging as _log
+
+from ..search import PSSearch, HLTimeSearch
+from ..csdev import Const as _Const
+from ..timesys.csdev import Const as _TIConst
+from ..pwrsupply.csdev import Const as _PSConst
+from ..injctrl.csdev import Const as _InjConst
+from ..callbacks import Callback as _Callback
 
 from .device import DeviceSet as _DeviceSet, Device as _Device
 from .lillrf import DevLILLRF
@@ -13,12 +19,6 @@ from .timing import HLTiming
 from .rf import ASLLRF
 from .posang import PosAng
 
-from ..search import PSSearch, HLTimeSearch
-from ..csdev import Const as _Const
-from ..timesys.csdev import Const as _TIConst
-from ..pwrsupply.csdev import Const as _PSConst
-from ..injctrl.csdev import Const as _InjConst
-from ..callbacks import Callback as _Callback
 
 
 class _BaseHandler(_DeviceSet):
@@ -822,7 +822,7 @@ class InjSysStandbyHandler(_DeviceSet):
 
     def _command_base(self, cmmtype, run_in_thread):
         if self.is_running:
-            _log.error('Commands already running!')
+            self._logger.error('Commands already running!')
             return
 
         if run_in_thread:

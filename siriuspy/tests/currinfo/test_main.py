@@ -50,10 +50,10 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            _CurrInfoApp, PUB_INTERFACE_BASE, print_flag=True)
+            _CurrInfoApp, PUB_INTERFACE_BASE)
         self.assertTrue(valid)
         valid = util.check_public_interface_namespace(
-            SICurrInfoApp, PUB_INTERFACE_SI, print_flag=True)
+            SICurrInfoApp, PUB_INTERFACE_SI)
         self.assertTrue(valid)
 
     def test_write_DCCTFltCheck(self):

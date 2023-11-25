@@ -1,6 +1,5 @@
 """Main module of Machine Shift Application."""
 import time as _time
-import logging as _log
 import epics as _epics
 import numpy as _np
 
@@ -9,7 +8,7 @@ from ..namesys import SiriusPVName as _PVName
 from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..clientarch import Time as _Time
-
+from ..logging import get_logger as _get_logger
 from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
@@ -23,26 +22,6 @@ from .csdev import Const as _Const, ETypes as _ETypes, \
 from .bias_feedback import BiasFeedback as _BiasFeedback
 
 
-class LogMonHandler(_log.Handler):
-
-    def __init__(self, callback):
-        """."""
-        self.callback = callback
-        super().__init__()
-
-    def emit(self, record):
-        """."""
-        msg = record.msg
-        if record.levelno >= _log.ERROR:
-            msgs = ['ERR:'+msg[i:i+35] for i in range(0, len(msg), 35)]
-        elif record.levelno >= _log.WARNING:
-            msgs = ['WARN:'+msg[i:i+34] for i in range(0, len(msg), 34)]
-        else:
-            msgs = [msg[i:i+39] for i in range(0, len(msg), 39)]
-        for msg in msgs:
-            self.callback(msg)
-
-
 class App(_Callback):
     """Main application for handling machine shift."""
 
@@ -53,10 +32,7 @@ class App(_Callback):
         super().__init__()
         self._pvs_database = _get_database()
 
-        # Add handler to root logger to update Log-Mon PV.
-        _log.getLogger().addHandler(LogMonHandler(self._update_log))
-
-        self._logger = _log.getLogger(self.__class__.__module__)
+        self._logger = _get_logger(self)
         self._mode = _Const.InjMode.Decay
         self._type = _Const.InjType.MultiBunch
         self._type_mon = _Const.InjTypeMon.Undefined
@@ -420,14 +396,18 @@ class App(_Callback):
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        _log.info('Write received for: %s --> %s', reason, str(value))
+        self._logger.info('Write received for: %s --> %s', reason, str(value))
         if reason in self.map_pv2write.keys():
             status = self.map_pv2write[reason](value)
-            _log.info('%s Write for: %s --> %s',
+            self._logger.info('%s Write for: %s --> %s',
                       str(status).upper(), reason, str(value))
             return status
-        _log.warn('PV %s does not have a set function.', reason)
+        self._logger.warn('PV %s does not have a set function.', reason)
         return False
+
+    def update_log(self, msg):
+        """Mehod used by the IOC to update logs."""
+        self.run_callbacks('Log-Mon', msg)
 
     # ----- handle writes -----
 
@@ -1455,7 +1435,7 @@ class App(_Callback):
             text = 'Remaining time: {}s'.format(remaining)
             self.run_callbacks('Log-Mon', text)
             if remaining % 60 == 0:
-                _log.info(text)
+                self._logger.info(text)
 
             # prepare subsystems
             if remaining <= self._topup_puwarmuptime:
@@ -1585,9 +1565,6 @@ class App(_Callback):
                 running |= watcher_running
             _time.sleep(0.1)
 
-    def _update_log(self, msg):
-        self.run_callbacks('Log-Mon', msg)
-
     def _update_topupsts(self, sts):
         self._topup_state_sts = sts
         self.run_callbacks('TopUpState-Sts', sts)
@@ -1661,7 +1638,7 @@ class App(_Callback):
             if tsleep > 0:
                 _time.sleep(tsleep)
             else:
-                _log.warn(
+                self._logger.warn(
                     'DiagStatus check took more than planned... '
                     f'{ttook:.3f}/{tplanned:.3f} s')
 
@@ -1732,6 +1709,6 @@ class App(_Callback):
             if tsleep > 0:
                 _time.sleep(tsleep)
             else:
-                _log.warn(
+                self._logger.warn(
                     'InjStatus check took more than planned... '
                     f'{ttook:.3f}/{tplanned:.3f} s')
