@@ -62,6 +62,7 @@ class _PARAM_PVS:
                 str_ += lstr if str_ == '' else '\n' + lstr
         return str_
 
+
 class _ID(_Device):
     """Generic Insertion Device."""
 
@@ -356,8 +357,8 @@ class _ID(_Device):
         if not self.wait_while_busy(timeout=timeout):
             return False
 
-        # send stop command
-        self.cmd_move_disable()
+        # # send stop command
+        # self.cmd_move_disable()
 
         # check for successful stop
         if not self.wait_while_busy(timeout=timeout):
@@ -365,9 +366,9 @@ class _ID(_Device):
         if not self.cmd_wait_move_finish(timeout=timeout):
             return False
 
-        # enable movement again
-        if not self.cmd_move_enable(timeout=timeout):
-            return False
+        # # enable movement again
+        # if not self.cmd_move_enable(timeout=timeout):
+        #     return False
 
         return True
 
@@ -395,7 +396,7 @@ class _ID(_Device):
 
     def cmd_move_park(self, timeout=None):
         """Move ID to parked config."""
-        pparam, kparam = self.pparameter, self.kparameter
+        pparam, kparam = self.pparameter_parked, self.kparameter_parked
         return self.cmd_move(pparam, kparam, timeout)
 
     def cmd_move_pparameter(self, pparam, timeout=None):
@@ -410,8 +411,8 @@ class _ID(_Device):
         """Command to set and start pparam and kparam movements."""
         if self.PARAM_PVS.PPARAM_SP is None:
             pparam = None
-        else:
-            pparam = self.pparameter if pparam is None else pparam
+        # else:
+        #     pparam = self.pparameter if pparam is None else pparam
         kparam = self.kparameter if kparam is None else kparam
 
         # calc ETA
@@ -445,7 +446,7 @@ class _ID(_Device):
         time_init = _time.time()
         while True:
             condk = True if kparam is None else \
-                abs(self.kparameter_mon - kparam) <= tol_kparam
+                abs(abs(self.kparameter_mon) - abs(kparam)) <= tol_kparam
             condp = True if pparam is None else \
                 abs(self.pparameter_mon - pparam) <= tol_pparam
             if condp and condk and not self.is_moving:
@@ -488,7 +489,7 @@ class _ID(_Device):
 
     # --- private methods ---
 
-    def _move_start(self, cmd_propty, timeout=None):
+    def _move_start(self, cmd_propty, timeout=None, cmd_value=1):
         timeout = timeout or self._DEF_TIMEOUT
 
         # wait for not busy state
@@ -497,7 +498,7 @@ class _ID(_Device):
 
         if cmd_propty in self.properties_all:
             # send move command
-            self[cmd_propty] = 1
+            self[cmd_propty] = cmd_value
 
         return True
 
@@ -642,10 +643,10 @@ class APU(_ID):
         self['DevCtrl-Cmd'] = self._CMD_MOVE_STOP
         return True
 
-    def cmd_move_start(self, timeout=None):
-        """Send command to start ID movement."""
-        self['DevCtrl-Cmd'] = self._CMD_MOVE_START
-        return True
+    # def cmd_move_start(self, timeout=None):
+    #     """Send command to start ID movement."""
+    #     self['DevCtrl-Cmd'] = self._CMD_MOVE_START
+    #     return True
 
     # --- private methods ---
 
@@ -653,6 +654,10 @@ class APU(_ID):
         pvs_sp_rb = ('Phase-SP', 'PhaseSpeed-SP')
         return super()._write_sp(
             propties_sp, values, timeout=timeout, pvs_sp_rb=pvs_sp_rb)
+
+    def _move_start(
+            self, cmd_propty, timeout=None, cmd_value=_CMD_MOVE_START):
+        return super()._move_start(cmd_propty, timeout, cmd_value)
 
 
 class PAPU(_ID):
@@ -833,9 +838,9 @@ class PAPU(_ID):
         """Command to start phase movement."""
         return self.cmd_move_kparameter_start(timeout=timeout)
 
-    def cmd_move_park(self, timeout=None):
-        """Command to set and start ID movement to parked config."""
-        return super().cmd_move_park(timeout)
+    # def cmd_move_park(self, timeout=None):
+    #     """Command to set and start ID movement to parked config."""
+    #     return super().cmd_move_park(timeout)
 
     # --- cmd_reset
 
@@ -1118,9 +1123,10 @@ class DELTA(_ID):
     PARAM_PVS.POL_MON = 'Pol-Mon'
     PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
-            if not key.startswith('_') and value is not None)) + (
+    PROPERTIES_DEFAULT = tuple(set(
+        value for key, value in _inspect.getmembers(PARAM_PVS)
+        if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = PROPERTIES_DEFAULT + (
         'CSDVirtPos-Mon', 'CSEVirtPos-Mon',
         'CIEVirtPos-Mon', 'CIDVirtPos-Mon',
         'IsOperational-Mon', 'MotorsEnbld-Mon',
@@ -1199,40 +1205,43 @@ class DELTA(_ID):
 
     # --- cmd_move
 
-    def cmd_move_start(self, timeout=None):
-        """Command to start movement."""
-        pparam, kparam = self.pparameter, self.kparameter
-        return self.cmd_move(pparam, kparam, timeout)
+    # def cmd_move_start(self, timeout=None):
+    #     """Command to start movement."""
+    #     pparam, kparam = self.pparameter, self.kparameter
+    #     return self.cmd_move(pparam, kparam, timeout)
 
-    def cmd_move_park(self, timeout=None):
-        """Move ID to parked config."""
-        return self._move_start(
-            self.PARAM_PVS.START_PARKING_CMD, timeout=timeout)
+    # def cmd_move_park(self, timeout=None):
+    #     """Move ID to parked config."""
+    #     return self._move_start(
+    #         self.PARAM_PVS.START_PARKING_CMD, timeout=timeout)
 
-    def cmd_move(self, pparam=None, kparam=None, timeout=None):
-        """Command to set and start pparam and kparam movements."""
-        pparam = self.pparameter if pparam is None else pparam
-        kparam = self.kparameter if kparam is None else kparam
-        # check if polarization change is needed
-        if abs(pparam - self.pparameter_mon) > self.pparameter_tol:
-            # first move to K=0
-            t0_ = _time.time()
-            if not self.cmd_move_kparameter(kparam=0, timeout=timeout):
-                return False
-            t1_ = _time.time()
-            timeout = timeout if timeout is None else \
-                max(0, timeout - (t1_ - t0_))
-            # then change pparam
-            t0_ = _time.time()
-            if not self.cmd_move_pparameter(pparam=pparam, timeout=timeout):
-                return False
-            t1_ = _time.time()
-            timeout = timeout if timeout is None else \
-                max(0, timeout - (t1_ - t0_))
-        # finally move to desired kparam
-        if not self.cmd_move_kparameter(kparam=kparam, timeout=timeout):
-            return False
-        return True
+    # def cmd_move(self, pparam=None, kparam=None, timeout=None):
+    #     """Command to set and start pparam and kparam movements."""
+    #     pparam = self.pparameter if pparam is None else pparam
+    #     kparam = self.kparameter if kparam is None else kparam
+    #     # check if polarization change is needed
+    #     if abs(pparam - self.pparameter_mon) > self.pparameter_tol:
+    #         # first move to K=0
+    #         t0_ = _time.time()
+    #         if not super().cmd_move(
+    #                 pparam=None, kparam=0, timeout=timeout):
+    #             return False
+    #         t1_ = _time.time()
+    #         timeout = timeout if timeout is None else \
+    #             max(0, timeout - (t1_ - t0_))
+    #         # then change pparam
+    #         t0_ = _time.time()
+    #         if not super().cmd_move(
+    #                 pparam=pparam, kparam=None, timeout=timeout):
+    #             return False
+    #         t1_ = _time.time()
+    #         timeout = timeout if timeout is None else \
+    #             max(0, timeout - (t1_ - t0_))
+    #     # finally move to desired kparam
+    #     if not super().cmd_move(
+    #             pparam=None, kparam=kparam, timeout=timeout):
+    #         return False
+    #     return True
 
 
 class WIG(_ID):

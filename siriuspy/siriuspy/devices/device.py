@@ -225,12 +225,16 @@ class Device:
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
 
-        timeout = _DEF_TIMEOUT if timeout is None else timeout
-        timeout = 0 if timeout <= 0 else timeout
+        if not isinstance(timeout, str) and timeout != 'never':
+            timeout = _DEF_TIMEOUT if timeout is None else timeout
+            timeout = 0 if timeout <= 0 else timeout
         t0_ = _time.time()
         while not comp_(value):
-            if _time.time() - t0_ > timeout:
-                return False
+            if isinstance(timeout, str) and timeout == 'never':
+                pass
+            else:
+                if _time.time() - t0_ > timeout:
+                    return False
             _time.sleep(_TINY_INTERVAL)
         return True
 
