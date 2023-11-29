@@ -1,5 +1,6 @@
 """DVF devices."""
 
+import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -21,14 +22,17 @@ class DVF(_Device):
         ALL = (CAX_DVF1, CAX_DVF2, BO_DVF)
 
     _default_timeout = 10  # [s]
+    _reset_wait = 10  # [s]
 
+    # should these parameters be moved to csconsts or a DVFSearch?
     _dvfparam_fields = (
-        'MAX_INTENSITY_NR_BITS',
+        'IMAGE_SIZE_Y',  # [pixel]
+        'IMAGE_SIZE_X',  # [pixel]
+        'IMAGE_NR_PIXEL_MULTP',  # roi params must be multip. of nr of pixels
+        'MAX_INTENSITY_NR_BITS',  # [nrbits]
         'ACQUISITION_TIME_MIN',  # [s]
         'ACQUISITION_TIME_DEFAULT',  # [s]
         'EXPOSURE_TIME_DEFAULT',  # [s]
-        'IMAGE_SIZE_Y',  # [pixel]
-        'IMAGE_SIZE_X',  # [pixel]
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
         )
@@ -36,13 +40,13 @@ class DVF(_Device):
     _dev2params = {
         DEVICES.CAX_DVF1: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (2064, 3088, 4, 16, 0.5, 0.5, 0.005, 2.4, 5.0)),
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (2064, 3088, 4, 16, 0.5, 0.5, 0.005, 2.4, 5.0)),
         DEVICES.BO_DVF: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
+            _dvfparam_fields, (1024, 1280, 4, 8, 0.5, 0.5, 0.005, 4.8, 5.0)),
         }
 
     PROPERTIES_DEFAULT = (
@@ -54,7 +58,6 @@ class DVF(_Device):
         'cam1:OffsetY', 'cam1:OffsetY_RBV',
         'cam1:CenterX', 'cam1:CenterX_RBV',
         'cam1:CenterY', 'cam1:CenterY_RBV',
-        'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
         'cam1:Acquire', 'cam1:Acquire_RBV',
@@ -66,6 +69,10 @@ class DVF(_Device):
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:Temperature',
         'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'cam1:NumImages', 'cam1:NumImages_RBV',
+        'cam1:ExposureMode', 'cam1:ExposureMode_RBV',
+        'cam1:TriggerMode', 'cam1:TriggerMode_RBV',
+        'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
@@ -176,11 +183,13 @@ class DVF(_Device):
         """Set camera image X width [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
-        value = int(value)
-        if 0 < self.cam_offsetx + value <= self.cam_max_sizex:
-            self['cam1:Width'] = value
-        else:
+
+        # check roi parameters consistency
+        status, *roi = self._check_roi(
+            self.cam_offsetx, self.cam_offsety, value, self.cam_height)
+        if not status:
             raise ValueError('Invalid offsetx and width combination!')
+        self['cam1:Width'] = roi[2]
 
     @property
     def cam_height(self):
@@ -193,11 +202,13 @@ class DVF(_Device):
         """Set camera image Y height [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
-        value = int(value)
-        if 0 < self.cam_offsety + value <= self.cam_max_sizey:
-            self['cam1:Height'] = value
-        else:
+
+        # check roi parameters consistency
+        status, *roi = self._check_roi(
+            self.cam_offsetx, self.cam_offsety, self.cam_width, value)
+        if not status:
             raise ValueError('Invalid offsety and height combination!')
+        self['cam1:Height'] = roi[3]
 
     @property
     def cam_offsetx(self):
@@ -207,11 +218,12 @@ class DVF(_Device):
     @cam_offsetx.setter
     def cam_offsetx(self, value):
         """Set camera image X offset [pixel]."""
-        value = int(value)
-        if 0 < value + self.cam_width <= self.cam_max_sizex:
-            self['cam1:OffsetX'] = value
-        else:
+        # check roi parameters consistency
+        status, *roi = self._check_roi(
+            value, self.cam_offsety, self.cam_width, self.cam_height)
+        if not status:
             raise ValueError('Invalid offsetx and width combination!')
+        self['cam1:OffsetX'] = roi[0]
 
     @property
     def cam_offsety(self):
@@ -221,11 +233,12 @@ class DVF(_Device):
     @cam_offsety.setter
     def cam_offsety(self, value):
         """Set camera image Y offset [pixel]."""
-        value = int(value)
-        if 0 <= value + self.cam_height <= self.cam_max_sizey:
-            self['cam1:OffsetY'] = value
-        else:
+        # check roi parameters consistency
+        status, *roi = self._check_roi(
+            self.cam_offsetx, value, self.cam_width, self.cam_height)
+        if not status:
             raise ValueError('Invalid offsety and height combination!')
+        self['cam1:OffsetY'] = roi[1]
 
     @property
     def cam_roi(self):
@@ -372,11 +385,19 @@ class DVF(_Device):
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
+        # reset BASLER roi
+        if not self.cmd_cam_roi_reset():
+            return False
+
+        # properties to be reset
         props_values = {
-            'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
             'cam1:PixelFormat': 1,  # Mono12
             'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
+            'cam1:NumImages': 1,  # number of sequential acquired images
+            'cam1:ExposureMode': 0,  # TIMED
+            'cam1:TriggerMode': 0,  # Off
+            'cam1:ArrayCallbacks': 1,  # Enable passing array
             'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
             'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
             'ROI1:MinX': 0,  # [pixel]
@@ -418,23 +439,23 @@ class DVF(_Device):
 
     def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
         """Set cam image ROI and reset aquisition."""
-        c_width, c_height = self.cam_width, self.cam_height
-        n_width, n_height = int(width), int(height)
-        
+        # check roi parameters consistency
+        status, *roi = \
+            self._check_roi(offsetx, offsety, width, height)
+        if not status:
+            return False
+        n_offsetx, n_offsety, n_width, n_height = roi
+
         if not self.cmd_acquire_off(timeout=timeout):
             return False
-        if n_width < c_width:
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-        else:
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-        if n_height < c_height:
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-        else:
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
+        if not self._set_and_wait('cam1:OffsetX', n_offsetx, timeout=timeout):
+            return False
+        if not self._set_and_wait('cam1:OffsetY', n_offsety, timeout=timeout):
+            return False
+        if not self._set_and_wait('cam1:Width', n_width, timeout=timeout):
+            return False
+        if not self._set_and_wait('cam1:Height', n_height, timeout=timeout):
+            return False
         if not self.cmd_acquire_on(timeout=timeout):
             return False
 
@@ -485,6 +506,25 @@ class DVF(_Device):
         self[propty] = value
         propty = self._get_propty(propty)
         return self._wait(propty + '_RBV', value, timeout=timeout)
+
+    def _check_roi(self, offsetx, offsety, width, height):
+        n_offsetx, n_offsety = int(offsetx), int(offsety)
+        n_width, n_height = int(width), int(height)
+        # check roi parameters consistency
+        if n_offsetx < 0 or n_offsety < 0:
+            return False, None
+        MULTP = self.parameters.IMAGE_NR_PIXEL_MULTP
+        if n_offsetx % MULTP or n_offsety % MULTP:
+            return False, None
+        if n_width <= 0 or n_height <= 0:
+            return False, None
+        if n_offsetx + n_width > self.cam_max_sizex:
+            return False, None
+        if n_offsety + n_height > self.cam_max_sizey:
+            return False, None
+        if n_width % MULTP or n_height % MULTP:
+            return False, None
+        return True, n_offsetx, n_offsety, n_width, n_height
 
 
 class DVFImgProc(DVF):
