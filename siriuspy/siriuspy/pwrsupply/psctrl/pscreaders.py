@@ -6,6 +6,8 @@ implement a common interface that exposes the `read` method.
 """
 import re as _re
 
+# from ...logging import get_logger as _get_logger
+
 from .pscstatus import PSCStatus as _PSCStatus
 
 
@@ -64,7 +66,7 @@ class WfmMonCurve:
     def read(self):
         """Read curve."""
         data = self.pru_controller.scope_read(self.device_id)
-        # print(self.device_id, data)
+        # _get_logger(self).debug(str(self.device_id) + str(data))
         return data
 
 
