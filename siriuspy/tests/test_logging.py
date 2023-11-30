@@ -13,13 +13,14 @@ import siriuspy.util as util
 
 PUB_INTERFACE = (
     'logging',
-    'print_ioc_banner',
+    'get_logger',
     'configure_logging',
+    'LogMonHandler',
     )
 
 
-class TestUtil(TestCase):
-    """Test util."""
+class TestLogging(TestCase):
+    """Test logging."""
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -27,7 +28,7 @@ class TestUtil(TestCase):
         self.assertTrue(valid)
 
     def test_configure_logging(self):
-        """Test configure_log_file."""
+        """Test configure_logging."""
         fil = StringIO()
         logging.root.handlers = []
         mylog.configure_logging(stream=fil)

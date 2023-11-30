@@ -233,11 +233,11 @@ def check_public_interface_namespace(
                 logger.error('"' + name + '" has an invalid docstring!')
                 return False
         if not name.startswith('_') and name not in valid_interface:
-            logger.error('Invalid symbol: ', name)
+            logger.error('Invalid symbol: ' + name)
             return False
     for name in valid_interface:
         if name not in namespace.__dict__:
-            logger.error('Missing symbol: ', name)
+            logger.error('Missing symbol: ' + name)
             return False
     return True
 

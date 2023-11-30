@@ -8,6 +8,7 @@ from unittest import mock, TestCase
 import numpy as np
 
 import siriuspy.util as util
+import siriuspy.logging as mylog
 
 
 PUB_INTERFACE = (
@@ -115,7 +116,7 @@ class TestUtil(TestCase):
             {'PV05': None, 'PV06': None, 'PV07': None, 'PV08': None, })
         fil = StringIO()
         logging.root.handlers = []
-        util.configure_log_file(stream=fil)
+        mylog.configure_logging(stream=fil)
         util.print_ioc_banner(
             'test-ioc', dbase, 'Test-ioc for util module unittest',
             '1.0.0', 'PREFIX')
