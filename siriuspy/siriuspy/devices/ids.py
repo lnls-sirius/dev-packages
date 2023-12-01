@@ -411,8 +411,6 @@ class _ID(_Device):
         """Command to set and start pparam and kparam movements."""
         if self.PARAM_PVS.PPARAM_SP is None:
             pparam = None
-        # else:
-        #     pparam = self.pparameter if pparam is None else pparam
         kparam = self.kparameter if kparam is None else kparam
 
         # calc ETA
@@ -445,21 +443,18 @@ class _ID(_Device):
         # wait for movement within reasonable time
         time_init = _time.time()
         while True:
-            condk = True if kparam is None else \
+            k_pos_ok = True if kparam is None else \
                 abs(abs(self.kparameter_mon) - abs(kparam)) <= tol_kparam
-            condp = True if pparam is None else \
+            p_pos_ok = True if pparam is None else \
                 abs(self.pparameter_mon - pparam) <= tol_pparam
-            if condp and condk and not self.is_moving:
-                break
+            if p_pos_ok and k_pos_ok and not self.is_moving:
+                return True
             if _time.time() - time_init > tol_total:
                 print(f'tol_total: {tol_total:.3f} s')
                 print(f'wait_time: {_time.time() - time_init:.3f} s')
                 print()
                 return False
             _time.sleep(self._SHORT_SHUT_EYE)
-
-        # successfull movement at this point
-        return True
 
     def cmd_change_polarization(self, polarization, timeout=None):
         """."""
@@ -642,11 +637,6 @@ class APU(_ID):
         """Send command to stop ID movement."""
         self['DevCtrl-Cmd'] = self._CMD_MOVE_STOP
         return True
-
-    # def cmd_move_start(self, timeout=None):
-    #     """Send command to start ID movement."""
-    #     self['DevCtrl-Cmd'] = self._CMD_MOVE_START
-    #     return True
 
     # --- private methods ---
 
@@ -1202,46 +1192,6 @@ class DELTA(_ID):
             pos_cie = 0
         """
         return self['CIDVirtPos-Mon']
-
-    # --- cmd_move
-
-    # def cmd_move_start(self, timeout=None):
-    #     """Command to start movement."""
-    #     pparam, kparam = self.pparameter, self.kparameter
-    #     return self.cmd_move(pparam, kparam, timeout)
-
-    # def cmd_move_park(self, timeout=None):
-    #     """Move ID to parked config."""
-    #     return self._move_start(
-    #         self.PARAM_PVS.START_PARKING_CMD, timeout=timeout)
-
-    # def cmd_move(self, pparam=None, kparam=None, timeout=None):
-    #     """Command to set and start pparam and kparam movements."""
-    #     pparam = self.pparameter if pparam is None else pparam
-    #     kparam = self.kparameter if kparam is None else kparam
-    #     # check if polarization change is needed
-    #     if abs(pparam - self.pparameter_mon) > self.pparameter_tol:
-    #         # first move to K=0
-    #         t0_ = _time.time()
-    #         if not super().cmd_move(
-    #                 pparam=None, kparam=0, timeout=timeout):
-    #             return False
-    #         t1_ = _time.time()
-    #         timeout = timeout if timeout is None else \
-    #             max(0, timeout - (t1_ - t0_))
-    #         # then change pparam
-    #         t0_ = _time.time()
-    #         if not super().cmd_move(
-    #                 pparam=pparam, kparam=None, timeout=timeout):
-    #             return False
-    #         t1_ = _time.time()
-    #         timeout = timeout if timeout is None else \
-    #             max(0, timeout - (t1_ - t0_))
-    #     # finally move to desired kparam
-    #     if not super().cmd_move(
-    #             pparam=None, kparam=kparam, timeout=timeout):
-    #         return False
-    #     return True
 
 
 class WIG(_ID):
