@@ -1,6 +1,7 @@
 """Define PVs, constants and properties of High Level Orbit Interlock app."""
 
 import os as _os
+import numpy as _np
 
 from .. import csdev as _csdev
 from ..util import ClassProperty as _classproperty
@@ -189,6 +190,14 @@ class Const(_csdev.Const):
 
         # bpm position along the ring
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
+
+        # bpm distance for each BPM pair
+        aux_pos = _np.roll(self.bpm_pos, 1)
+        bpm_dist = _np.diff(aux_pos)[::2]
+        # copy same distance from next high beta section to injection section
+        bpm_dist[0] = bpm_dist[4*4]
+        bpm_dist = _np.repeat(bpm_dist, 2)
+        self.bpm_dist = _np.roll(bpm_dist, -1)
 
         # bpm number
         self.nr_bpms = len(self.bpm_names)
