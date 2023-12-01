@@ -372,9 +372,14 @@ class App(_Callback):
         if not okl:
             self.run_callbacks('MinSumLim-RB', val)
 
+        # wait while enable list and limits setpoint queue to be empty
+        while self._set_queue.qsize() > 0:
+            _time.sleep(0.5)
+
         self._update_log('Started.')
         self._init = True
 
+        # start locking devices
         self._init_devices_lock()
 
     def _init_devices_lock(self):
