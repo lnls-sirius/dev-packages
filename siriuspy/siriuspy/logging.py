@@ -48,7 +48,7 @@ class LogMonHandler(logging.Handler):
 
     def emit(self, record):
         """."""
-        msg = record.msg
+        msg = self.format(record)
         if record.levelno >= logging.ERROR:
             msgs = ['ERR:'+msg[i:i+35] for i in range(0, len(msg), 35)]
         elif record.levelno >= logging.WARNING:
