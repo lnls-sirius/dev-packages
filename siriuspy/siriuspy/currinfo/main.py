@@ -10,6 +10,7 @@ import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from ..logging import get_logger as _get_logger
 from ..callbacks import Callback as _Callback
 from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie, PV as _PV
 from ..envars import VACA_PREFIX as _vaca_prefix
@@ -28,6 +29,7 @@ class _CurrInfoApp(_Callback):
     def __init__(self):
         """."""
         super().__init__()
+        self._logger = _get_logger(self)
         self._pvs_database = None
 
     def init_database(self):
@@ -95,7 +97,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
         if dtim <= interval:
             _time.sleep(interval - dtim)
         else:
-            _log.warning(f'IOC took {dtim*1000:.3f} ms in update loop.')
+            self._logger.warning(
+                f'IOC took {dtim*1000:.3f} ms in update loop.')
 
     def _get_measurement(self):
         try:
@@ -103,7 +106,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
             meas = self.osc_obj.send_command(b":MEASure:RESults?\n")
             self._meas = meas.split(',')
         except Exception as err:
-            _log.error(str(err))
+            self._logger.error(str(err))
         finally:
             self.osc_obj.close()
 
@@ -111,7 +114,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         """."""
         meas = self._meas
         if not meas:
-            _log.warning('Measurement list is empty.')
+            self._logger.warning('Measurement list is empty.')
             return
 
         # Check if measurement for each ICT has the length we expect:
@@ -120,21 +123,21 @@ class _ASCurrInfoApp(_CurrInfoApp):
         elif not len(meas) % len(self.INDICES2):
             indcs = self.INDICES2
         else:
-            _log.warning(
+            self._logger.warning(
                 'Measurement list size does not match required length.')
             return
 
         name = acc + '-ICT1'
         idxict1 = [i for i, val in enumerate(meas) if name in val]
         if not idxict1:
-            _log.warning(f'Could not find data for {name}.')
+            self._logger.warning(f'Could not find data for {name}.')
             return
         idxict1 = idxict1.pop()
 
         name = acc + '-ICT2'
         idxict2 = [i for i, val in enumerate(meas) if name in val]
         if not idxict2:
-            _log.warning(f'Could not find data for {name}.')
+            self._logger.warning(f'Could not find data for {name}.')
             return
         idxict2 = idxict2.pop()
 
@@ -152,7 +155,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
             std2 = float(meas[idxict2 + indcs.STD]) * 1e9
             cnt2 = int(float(meas[idxict2 + indcs.COUNT]))
         except IndexError:
-            _log.warning('Problem reading data.')
+            self._logger.warning('Problem reading data.')
             return
 
         eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
@@ -361,11 +364,11 @@ class BOCurrInfoApp(_CurrInfoApp):
                         self.run_callbacks(
                             'IntCurrent3GeV-Mon', self._intcurrent3gev)
                 else:
-                    _log.warning(
+                    self._logger.warning(
                         'Current {0} value is too high: '
                         '{1:.3g}A.'.format(energy, current))
-                self.run_callbacks('Charge'+str(energy)+'-Mon',
-                                   self._charges[energy])
+                self.run_callbacks(
+                    'Charge'+str(energy)+'-Mon', self._charges[energy])
 
         c150mev = self._currents['150MeV']
         c3gev = self._currents['3GeV']
@@ -494,7 +497,7 @@ class SICurrInfoApp(_CurrInfoApp):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
                 else:
-                    _log.warning(
+                    self._logger.warning(
                         'Current value is too high: {0:.3f}A.'.format(current))
                 value = self._charge
             self._time0 = timestamp
