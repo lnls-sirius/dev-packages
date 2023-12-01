@@ -615,23 +615,24 @@ class App(_Callback):
             return True
 
         # check if new enable list do not imply in orbit interlock failure
-        bkup_enbllist = self._enable_lists[intlk]
-        bkup_bpmmon, bkup_timon = self._bpm_mon_devs, self._ti_mon_devs
-        self._enable_lists[intlk] = new
-        self._bpm_mon_devs, self._ti_mon_devs = \
-            self._get_monitored_devices()
-        self._config_fout_rxenbl()
-        if not self._check_ti_devices_status(self._ti_mon_devs):
-            self._update_log('ERR:Could not set enable list.')
-            self._enable_lists[intlk] = bkup_enbllist
-            self._bpm_mon_devs, self._ti_mon_devs = bkup_bpmmon, bkup_timon
+        if intlk in ['pos', 'ang']:
+            bkup_enbllist = self._enable_lists[intlk]
+            bkup_bpmmon, bkup_timon = self._bpm_mon_devs, self._ti_mon_devs
+            self._enable_lists[intlk] = new
+            self._bpm_mon_devs, self._ti_mon_devs = \
+                self._get_monitored_devices()
             self._config_fout_rxenbl()
-            self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
-            return False
-        self.run_callbacks(
-            'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
-        self.run_callbacks(
-            'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
+            if not self._check_ti_devices_status(self._ti_mon_devs):
+                self._update_log('ERR:Could not set enable list.')
+                self._enable_lists[intlk] = bkup_enbllist
+                self._bpm_mon_devs, self._ti_mon_devs = bkup_bpmmon, bkup_timon
+                self._config_fout_rxenbl()
+                self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
+                return False
+            self.run_callbacks(
+                'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
+            self.run_callbacks(
+                'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
 
         # handle device enable configuration
 
