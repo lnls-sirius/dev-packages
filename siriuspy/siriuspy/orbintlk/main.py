@@ -1487,9 +1487,7 @@ class App(_Callback):
     # --- file handlers ---
 
     def _load_file(self, intlk, dtype='en'):
-        suff = '_enbl_fname' if dtype.startswith('en') else '_lim_fname'
-        msg = 'enable list' if dtype.startswith('en') else 'limits'
-        filename = getattr(self._const, intlk + suff)
+        filename, desc = self._get_file_info(intlk, dtype)
         if not _os.path.isfile(filename):
             return
         value = _np.loadtxt(filename)
@@ -1498,20 +1496,28 @@ class App(_Callback):
         else:
             okl = self.set_intlk_lims(intlk, value)
         if okl:
-            msg = f'Loaded {intlk} {msg}!'
+            msg = f'Loaded {intlk} {desc} from auto save!'
         else:
-            msg = f'ERR:Problem loading {intlk} {msg} from file.'
+            msg = f'ERR:Problem loading {intlk} {desc} from file.'
         self._update_log(msg)
         return okl
 
     def _save_file(self, intlk, value, dtype):
-        suff = '_enbl_fname' if dtype.startswith('en') else '_lim_fname'
-        msg = 'enable list' if dtype.startswith('en') else 'limits'
+        filename, desc = self._get_file_info(intlk, dtype)
         try:
-            filename = getattr(self._const, intlk+suff)
             path = _os.path.split(filename)[0]
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, value)
         except FileNotFoundError:
             self._update_log(
-                f'WARN:Could not save {intlk} {msg} to file.')
+                f'WARN:Could not save {intlk} {desc} to file.')
+
+    def _get_file_info(self, intlk, dtype):
+        if dtype.startswith(('en', 'lim')):
+            desc = 'enable list' if dtype.startswith('en') else 'limits'
+            suff = '_enbl' if dtype.startswith('en') else '_lim'
+            fname = intlk + suff
+        else:
+            raise ValueError(f'file info not defined for {intlk} and {dtype}')
+        filename = getattr(self._const, fname + '_fname')
+        return filename, desc
