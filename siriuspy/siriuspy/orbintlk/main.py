@@ -608,6 +608,12 @@ class App(_Callback):
                 f'{intlkname}EnblList-SP', self._enable_lists[intlk])
             return False
 
+        # do not write to devices and save to file in initialization
+        if not self._init:
+            # update readback pv
+            self.run_callbacks(f'{intlkname}EnblList-RB', new)
+            return True
+
         # check if new enable list do not imply in orbit interlock failure
         bkup_enbllist = self._enable_lists[intlk]
         bkup_bpmmon, bkup_timon = self._bpm_mon_devs, self._ti_mon_devs
@@ -626,12 +632,6 @@ class App(_Callback):
             'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
         self.run_callbacks(
             'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
-
-        # do not set enable lists and save to file in initialization
-        if not self._init:
-            # update readback pv
-            self.run_callbacks(f'{intlkname}EnblList-RB', new)
-            return True
 
         # handle device enable configuration
 
