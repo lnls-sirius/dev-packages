@@ -25,7 +25,8 @@ class ETypes(_csdev.ETypes):
         'AcqConfigured')
     STS_LBLS_TIMING = (
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
-        'FoutsConn', 'FoutsConfig',
+        'FoutsBPMConn', 'FoutsBPMConfig',
+        'FoutsDCCTConn', 'FoutsDCCTConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
         'LLRFPsMtmTrigConn', 'LLRFPsMtmTrigStatusOK', 'LLRFPsMtmTrigConfig',
         'BPMPsMtmTrigConn', 'BPMPsMtmTrigStatusOK', 'BPMPsMtmTrigConfig',

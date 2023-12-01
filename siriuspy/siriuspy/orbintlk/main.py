@@ -953,7 +953,7 @@ class App(_Callback):
             value = _updt_bit(value, 2, not okg)
         else:
             value = 0b111
-        # Fouts
+        # BPM Fouts
         devs = self._fout_devs
         if all(devs[devn].connected for devn in self._const.FOUTS_2_MON):
             okg = True
@@ -964,65 +964,77 @@ class App(_Callback):
             value = _updt_bit(value, 4, not okg)
         else:
             value += 0b11 << 3
+        # DCCT Fouts
+        dev = self._fout_dcct_dev
+        if dev.connected:
+            okg = True
+            for prp, val in self._const.FOUT2_CONFIGS:
+                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                okg &= dev[prp_rb] == val
+                if 'RxEnbl' in prp:
+                    okg &= dev['RxLockedLtc-Mon'] == val
+            value = _updt_bit(value, 6, not okg)
+        else:
+            value += 0b11 << 5
         # Orbit Interlock trigger
         dev = self._orbintlk_trig
         if dev.connected:
-            value = _updt_bit(value, 6, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 8, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.ORBINTLKTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 7, not oko)
+            value = _updt_bit(value, 9, not oko)
         else:
-            value += 0b111 << 5
+            value += 0b111 << 7
         # LLRF PsMtm trigger
         dev = self._llrf_trig
         oko = False
         if dev.connected:
-            value = _updt_bit(value, 9, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 11, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.LLRFTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 10, not oko)
+            value = _updt_bit(value, 12, not oko)
         else:
-            value += 0b111 << 8
+            value += 0b111 << 10
         # BPM PsMtm trigger
         dev = self._bpmpsmtn_trig
         oko = False
         if dev.connected:
-            value = _updt_bit(value, 12, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 14, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.BPMPSMTNTRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 13, not oko)
+            value = _updt_bit(value, 15, not oko)
         else:
-            value += 0b111 << 11
+            value += 0b111 << 13
         # DCCT 13C4 trigger
         dev = self._dcct13c4_trig
         oko = False
         if dev.connected:
-            value = _updt_bit(value, 15, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 17, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.DCCT13C4TRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 16, not oko)
+            value = _updt_bit(value, 18, not oko)
         else:
-            value += 0b111 << 14
+            value += 0b111 << 16
         # DCCT 14C4 trigger
         dev = self._dcct14c4_trig
         oko = False
         if dev.connected:
-            value = _updt_bit(value, 18, bool(dev['Status-Mon']))
+            value = _updt_bit(value, 20, bool(dev['Status-Mon']))
             oko = True
             for prp, val in self._const.DCCT14C4TRIG_CONFIG:
                 prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
                 oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 19, not oko)
+            value = _updt_bit(value, 21, not oko)
         else:
-            value += 0b111 << 17
+            value += 0b111 << 19
 
         self._timing_status = value
         self.run_callbacks('TimingStatus-Mon', self._timing_status)
