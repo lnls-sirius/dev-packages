@@ -1212,23 +1212,40 @@ class App(_Callback):
                 if _get_bit(value, bit):
                     continue
                 outnam = f'OUT{bit}'
-                self._update_log(f'FATAL:{outnam} of {devname} lost lock')
+                self._update_log(f'FATAL:{outnam} of {devname} not locked')
                 devout = devname.substitute(propty_name=outnam)
                 # verify if this is an orbit interlock reliability failure
                 is_failure |= devout in self._ti_mon_devs
         else:
-            out = None
+            is_failure = False
             for dev in self._ti_mon_devs:
+                # verify fouts
                 if 'Fout' not in dev:
                     continue
                 dev = _PVName(dev)
+                # if the fout from callback is a monitored one
                 if dev.device_name == devname:
-                    out = int(dev.propty_name[-1])
-                    break
-            is_failure = out is not None and not _get_bit(value, out)
-        if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
-            self._handle_reliability_failure()
+                    # verify if the monitored outs are locked
+                    outnam = dev.propty_name
+                    out = int(outnam[-1])
+                    if _get_bit(value, out):
+                        continue
+                    # if not, it is a reliability failure
+                    is_failure = True
+                    self._update_log(f'ERR:{outnam} of {devname} not locked')
+            if not is_failure:
+                return
+            # specifically for delta subsector (10), consider a failure only if
+            # redundancy timing path is also not locked
+            trigsrc = _LLTimeSearch.get_fout2trigsrc_mapping()[devname][out]
+            if int(trigsrc.sub[0:2]) == 10:
+                rxlock = self._fout_dcct_dev['RxLockedLtc-Mon']
+                is_failure &= not _get_bit(rxlock, 0)  # out 0
+
+        if not is_failure:
+            return
+        self._update_log('FATAL:Orbit interlock reliability failure')
+        self._handle_reliability_failure()
 
     def _conn_callback_timing(self, pvname, conn, **kws):
         if conn:
