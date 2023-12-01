@@ -7,7 +7,7 @@ import numpy as _np
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 
-from .. import util as _util
+from ..logging import get_logger as _get_logger
 
 from .meas import MeasDVF
 
@@ -71,18 +71,10 @@ class App:
         self._heartbeat = 0
         self._timestamp_last_update = _time.time()
         self._init_driver_flag = False
+        self._logger = _get_logger(self)
 
         # create measurement object
         self._meas = self._create_meas()
-
-        # print info about the IOC
-        dbase = self._database
-        _util.print_ioc_banner(
-            ioc_name='BL ImgProc IOC',
-            db=dbase,
-            description='Image Processing IOC (FAC)',
-            version=dbase['ImgVersion-Cte']['value'],
-            prefix=const.devname)
 
         # add epics app callback to measurement
         self._meas.callback = self.update_driver
@@ -134,7 +126,7 @@ class App:
             or reason.endswith('-Sel') \
             or reason.endswith('-Cmd')
         if not pv_is_writable:
-            self._log_warning(f'PV {reason} is not writable!')
+            self._logger.warning(f'PV {reason} is not writable!')
             return False
 
         res = self._write_roi(reason, value)
@@ -174,20 +166,19 @@ class App:
         self._write_pv('ImgDVFSizeY-Cte', self.meas.dvf_sizey)
 
         msgfmt_nok = 'PV {} could not be initialized!'
-        msgfmt_ok = 'PV {} initialized.'
         for pvname, attr in App._INIT_PVS_2_IMGFIT.items():
             if self.meas.status == self.meas.STATUS_SUCCESS:
                 # update epics db successfully
                 value = self._conv_imgattr2value(attr)
                 if value is None:
-                    self._log_warning(msgfmt_nok.format(pvname))
+                    self._logger.warning(msgfmt_nok.format(pvname))
                     self._write_pv_failed(pvname)
                     self._init_driver_flag = False
                 else:
-                    _log.info(msgfmt_ok.format(pvname))
+                    self._logger.info(f'PV {pvname} initialized.')
                     self._write_pv(pvname, value)
             else:
-                self._log_warning(msgfmt_nok.format(pvname))
+                self._logger.warning(msgfmt_nok.format(pvname))
                 self._write_pv_failed(pvname)
                 self._init_driver_flag = False
 
@@ -212,8 +203,8 @@ class App:
             # get image attribute value
             value = self._conv_imgattr2value(attr)
             if value is None:
-                msg = f'PV {pvname} could not be updated with None value!'
-                self._log_warning(msg)
+                self._logger.warning(
+                    f'PV {pvname} could not be updated with None value!')
                 continue
 
             # check if fit is valid and update value
@@ -228,29 +219,27 @@ class App:
                 self._write_pv_failed(pvname)
 
         if invalid_fitx:
-            msgerr = 'Invalid ROIXFit'
-            self._log_warning(msgerr)
-            self._write_pv_log(msgerr)
+            self._logger.warning('Invalid ROIXFit')
         if invalid_fity:
-            msgerr = 'Invalid ROIYFit'
-            self._log_warning(msgerr)
-            self._write_pv_log(msgerr)
+            self._logger.warning('Invalid ROIYFit')
 
         if self.meas.status != self.meas.STATUS_SUCCESS:
-            self._log_warning(self.meas.status)
-            self._write_pv_log(self.meas.status)
+            self._logger.warning(self.meas.status)
         else:
             if self.meas.proc_time is not None:
                 self._write_pv('ImgFitProcTime-Mon', self.meas.proc_time)
             self._write_pv('ImgDVFStatus-Mon', self.meas.status_dvf)
 
+    def update_log(self, message):
+        """."""
+        message = message + f'[{self.heartbeat}] '
+        self._write_pv('ImgLog-Mon', message)
+
     def _check_acquisition_timeout(self):
         """."""
         interval = _time.time() - self._timestamp_last_update
         if self.meas.acquisition_timeout(interval):
-            msgfmt_nok = 'DVF Image update timeout!'
-            self._log_warning(msgfmt_nok)
-            self._write_pv_log(msgfmt_nok)
+            self._logger.warning('DVF Image update timeout!')
             self._timestamp_last_update = _time.time()
 
     def _check_invalid_fit(self, pvname, value):
@@ -304,12 +293,12 @@ class App:
                 self._driver.setParam(pvname, value)
                 self._driver.updatePV(pvname)
             except TypeError:
-                _log.warning(
-                    '_write_pv: error in updatePV for ', pvname, value)
+                self._logger.warning(
+                    f'_write_pv: error in updatePV for {pvname} {value}')
             self._driver.setParamStatus(
                 pvname, _Alarm.NO_ALARM, _Severity.NO_ALARM)
         else:
-            _log.debug('{}: updated with alarm'.format(pvname))
+            self._logger.debug('{}: updated with alarm'.format(pvname))
             self._driver.setParamStatus(
                 pvname, _Alarm.TIMEOUT_ALARM, _Severity.INVALID_ALARM)
 
@@ -317,12 +306,7 @@ class App:
         # update epics db failure
         self._write_pv(pvname, success=False)
         # update Log
-        self._write_pv_log(self.meas.status)
-
-    def _write_pv_log(self, message, success=True):
-        """."""
-        message = f'[{self.heartbeat}] ' + message
-        self._write_pv('ImgLog-Mon', message, success)
+        self._logger.warning(self.meas.status)
 
     def _write_pv_sp_rb(self, reason, value):
         # update SP/Sel
@@ -344,10 +328,7 @@ class App:
             self._write_pv_sp_rb(reason, value)
             return True
         else:
-            msg = '{}: could not write value {}'.format(reason, value)
-            self._log_warning(msg)
-            self._driver.setParam('ImgLog-Mon', msg)
-            self._driver.updatePV('ImgLog-Mon')
+            self._logger.warning(f'{reason}: could not write value {value}')
             return False
 
     def _write_use_svd4theta(self, reason, value):
@@ -360,10 +341,7 @@ class App:
             self._write_pv_sp_rb(reason, value)
             return True
         else:
-            msg = '{}: could not write value {}'.format(reason, value)
-            self._log_warning(msg)
-            self._driver.setParam('ImgLog-Mon', msg)
-            self._driver.updatePV('ImgLog-Mon')
+            self._logger.warning(f'{reason}: could not write value {value}')
             return False
 
     def _write_iswithbeam_threshold(self, reason, value):
@@ -377,10 +355,7 @@ class App:
             self._write_pv_sp_rb(reason, value)
             return True
         else:
-            msg = '{}: could not write value {}'.format(reason, value)
-            self._log_warning(msg)
-            self._driver.setParam('ImgLog-Mon', msg)
-            self._driver.updatePV('ImgLog-Mon')
+            self._logger.warning(f'{reason}: could not write value {value}')
             return False
 
     def _write_dvf_reset(self, reason, value):
@@ -395,10 +370,7 @@ class App:
             self._driver.updatePV(reason)
             return True
         else:
-            msg = '{}: could not execute'.format(reason)
-            self._log_warning(msg)
-            self._driver.setParam('ImgLog-Mon', msg)
-            self._driver.updatePV('ImgLog-Mon')
+            self._logger.warning(f'{reason}: could not execute')
             return False
 
     def _write_dvf_acquire(self, reason, value):
@@ -413,28 +385,19 @@ class App:
             self._driver.updatePV(reason)
             return True
         else:
-            msg = '{}: could not execute'.format(reason)
-            self._log_warning(msg)
-            self._driver.setParam('ImgLog-Mon', msg)
-            self._driver.updatePV('ImgLog-Mon')
+            self._logger.warning(f'{reason}: could not execute')
             return False
-
-    def _log_warning(self, message):
-        message = f'[{self.heartbeat}] ' + message
-        _log.warning(message)
 
     def _write_fwhm_factor(self, reason, value):
         if reason not in (
                 'ImgROIXUpdateWithFWHMFactor-SP',
-                'ImgROIYUpdateWithFWHMFactor-SP'
-        ):
+                'ImgROIYUpdateWithFWHMFactor-SP'):
             return None
         if 'X' in reason:
             self.meas.fwhmx_factor = value
         else:
             self.meas.fwhmy_factor = value
         self._write_pv_sp_rb(reason, value)
-
         return True
 
     def _write_update_roi_with_fwhm(self, reason, value):
@@ -443,7 +406,6 @@ class App:
             return None
         self.meas.update_roi_with_fwhm = value
         self._write_pv_sp_rb(reason, value)
-
         return True
 
     def _conv_imgattr2value(self, attr):
