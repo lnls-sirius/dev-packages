@@ -2,6 +2,7 @@
 import re as _re
 import urllib.request as _urllib_request
 
+from ..logging import get_logger as _get_logger
 from .. import envars as _envars
 
 
@@ -33,7 +34,7 @@ def read_url(url, timeout=_TIMEOUT):
             break
         except Exception:
             # could not connect with current server
-            print('Error reading url "' + url_ + '"!')
+            _get_logger(read_url).error(f'Error reading url "{url}"!')
     if not connected:
         raise Exception('Error reading web servers!')
     return text
