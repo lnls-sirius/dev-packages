@@ -93,6 +93,29 @@ class Const(_csdev.Const):
     FOUT2_CONFIGS = (
         ('RxEnbl-SP', 0b01000001),
     )
+    AFCPHYTRIG_CONFIGS = (
+        ('Dir-Sel', 0),
+        ('DirPol-Sel', 1),
+        ('TrnLen-SP', 20),
+    )
+    SIBPMLOGTRIG_CONFIGS = (
+        ('TRIGGER4TrnSrc-Sel', 1),
+        ('TRIGGER4TrnOutSel-SP', 2),
+        ('TRIGGER_PM0RcvSrc-Sel', 0),
+        ('TRIGGER_PM0RcvInSel-SP', 2),
+        ('TRIGGER_PM1RcvSrc-Sel', 0),
+        ('TRIGGER_PM1RcvInSel-SP', 2),
+        ('TRIGGER_PM6RcvSrc-Sel', 0),
+        ('TRIGGER_PM6RcvInSel-SP', 2),
+        ('TRIGGER_PM7RcvSrc-Sel', 0),
+        ('TRIGGER_PM7RcvInSel-SP', 2),
+        ('TRIGGER_PM11RcvSrc-Sel', 0),
+        ('TRIGGER_PM11RcvInSel-SP', 2),
+        ('TRIGGER_PM12RcvSrc-Sel', 0),
+        ('TRIGGER_PM12RcvInSel-SP', 2),
+        ('TRIGGER_PM14RcvSrc-Sel', 0),
+        ('TRIGGER_PM14RcvInSel-SP', 2),
+    )
 
     __EVG_CONFIGS = None
     __FOUTS_2_MON = None

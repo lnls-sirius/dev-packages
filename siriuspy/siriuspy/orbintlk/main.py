@@ -17,7 +17,7 @@ from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
 from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
     EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device, \
-    SOFB as _SOFB, HLFOFB as _FOFB
+    SOFB as _SOFB, HLFOFB as _FOFB, AFCPhysicalTrigger as _AFCPhysicalTrigger
 
 from .csdev import Const as _Const, ETypes as _ETypes
 
@@ -222,13 +222,45 @@ class App(_Callback):
                 'ACQTrigger-Sel', 'ACQTrigger-Sts',
                 'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
                 'ACQStatus-Sts',
-                'INFOFAcqRate-RB', 'INFOMONITRate-RB'])
+                'INFOFAcqRate-RB', 'INFOMONITRate-RB',
+                'TRIGGER4TrnSrc-Sel', 'TRIGGER4TrnSrc-Sts',
+                'TRIGGER4TrnOutSel-SP', 'TRIGGER4TrnOutSel-RB',
+                'TRIGGER_PM0RcvSrc-Sel', 'TRIGGER_PM0RcvSrc-Sts',
+                'TRIGGER_PM0RcvInSel-SP', 'TRIGGER_PM0RcvInSel-RB',
+                'TRIGGER_PM1RcvSrc-Sel', 'TRIGGER_PM1RcvSrc-Sts',
+                'TRIGGER_PM1RcvInSel-SP', 'TRIGGER_PM1RcvInSel-RB',
+                'TRIGGER_PM6RcvSrc-Sel', 'TRIGGER_PM6RcvSrc-Sts',
+                'TRIGGER_PM6RcvInSel-SP', 'TRIGGER_PM6RcvInSel-RB',
+                'TRIGGER_PM7RcvSrc-Sel', 'TRIGGER_PM7RcvSrc-Sts',
+                'TRIGGER_PM7RcvInSel-SP', 'TRIGGER_PM7RcvInSel-RB',
+                'TRIGGER_PM11RcvSrc-Sel', 'TRIGGER_PM11RcvSrc-Sts',
+                'TRIGGER_PM11RcvInSel-SP', 'TRIGGER_PM11RcvInSel-RB',
+                'TRIGGER_PM12RcvSrc-Sel', 'TRIGGER_PM12RcvSrc-Sts',
+                'TRIGGER_PM12RcvInSel-SP', 'TRIGGER_PM12RcvInSel-RB',
+                'TRIGGER_PM14RcvSrc-Sel', 'TRIGGER_PM14RcvSrc-Sts',
+                'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB'])
         self._monit_rate, self._facq_rate = None, None
         self._monitsum2intlksum_factor = 0
-        pvo = self._fambpm_dev.devices[0].pv_object('INFOMONITRate-RB')
-        pvo.add_callback(self._callback_get_bpm_rates)
-        pvo = self._fambpm_dev.devices[0].pv_object('INFOFAcqRate-RB')
-        pvo.add_callback(self._callback_get_bpm_rates)
+        for idx, dev in enumerate(self._fambpm_dev.devices):
+            pvo = dev.pv_object('INFOMONITRate-RB')
+            if idx == 0:
+                pvo.add_callback(self._callback_get_bpm_rates)
+                pvo = dev.pv_object('INFOFAcqRate-RB')
+                pvo.add_callback(self._callback_get_bpm_rates)
+            pvo.connection_callbacks.append(self._conn_callback_bpm)
+
+        # # AFC physical trigger devices
+        phytrig_names = list()
+        for afcti, cratemap in _LLTimeSearch.get_crates_mapping().items():
+            if '20RaBPMTL' in afcti:
+                continue
+            phytrig_names.extend(cratemap)
+        self._phytrig_devs = [
+            _AFCPhysicalTrigger(dev, 4, props2init=[
+                'Dir-Sel', 'Dir-Sts',
+                'DirPol-Sel', 'DirPol-Sts',
+                'TrnLen-SP', 'TrnLen-RB'])
+            for dev in phytrig_names]
 
         # # RF devices
         self._llrf = _ASLLRF(
@@ -417,8 +449,8 @@ class App(_Callback):
         pvo.run_callbacks()
 
         # BPM devices
+        # lock BPM interlock enable and limits
         prop2lock = [
-            'IntlkEn-Sts',
             'IntlkMinSumEn-Sts',
             'IntlkLmtMinSum-RB',
             'IntlkPosEn-Sts',
@@ -431,12 +463,37 @@ class App(_Callback):
             'IntlkLmtAngMinX-RB',
             'IntlkLmtAngMaxY-RB',
             'IntlkLmtAngMinY-RB',
+            'IntlkEn-Sts',
         ]
         self._orbintlk_dev.wait_for_connection(timeout=conntimeout)
         for dev in self._orbintlk_dev.devices:
             for prop in prop2lock:
                 pvo = dev.pv_object(prop)
                 pvo.add_callback(self._callback_bpm_lock)
+                pvo.run_callbacks()
+
+        # lock BPM logical triggers
+        self._fambpm_dev.wait_for_connection(timeout=conntimeout)
+        for dev in self._fambpm_dev.devices:
+            for prop_sp, desired_val in self._const.SIBPMLOGTRIG_CONFIGS:
+                prop_rb = _PVName.from_sp2rb(prop_sp)
+                pvo = dev.pv_object(prop_rb)
+                pvo.add_callback(
+                    _part(self._callback_lock, dev, prop_sp, desired_val))
+                pvo.run_callbacks()
+
+        # lock AFC physical triggers
+        for dev in self._phytrig_devs:
+            dev.wait_for_connection(timeout=conntimeout)
+            for prop_sp, desired_val in self._const.AFCPHYTRIG_CONFIGS:
+                # only lock polarity of other AFC physical triggers
+                if dev.devname not in self._const.bpm_names and \
+                        prop_sp != 'DirPol-Sel':
+                    continue
+                prop_rb = _PVName.from_sp2rb(prop_sp)
+                pvo = dev.pv_object(prop_rb)
+                pvo.add_callback(
+                    _part(self._callback_lock, dev, prop_sp, desired_val))
                 pvo.run_callbacks()
 
         self._update_log('...lock running.')
@@ -1223,6 +1280,17 @@ class App(_Callback):
         frac = monit/facq
         factor = 2**_np.ceil(_np.log2(frac)) / frac
         self._monitsum2intlksum_factor = factor
+
+    def _conn_callback_bpm(self, pvname, conn, **kws):
+        _ = kws
+        if conn:
+            return
+        devname = _PVName(pvname).device_name
+        self._update_log(f'WARN:{devname} disconnected')
+        is_failure = devname in self._bpm_mon_devs
+        if is_failure:
+            self._update_log('FATAL:Orbit interlock reliability failure')
+            self._handle_reliability_failure()
 
     # --- reliability failure methods ---
 
