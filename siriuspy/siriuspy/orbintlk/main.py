@@ -396,6 +396,10 @@ class App(_Callback):
             pvo.add_callback(_part(
                 self._callback_lock, self._evg_dev, propty_sp, desired_val))
             pvo.run_callbacks()
+        # lock interlock enable state
+        pvo = self._evg_dev.pv_object('IntlkCtrlEnbl-Sts')
+        pvo.add_callback(self._callback_evg_lock_intlk)
+        pvo.run_callbacks()
 
         # BPM Fouts
         for dev in self._fout_devs.values():
@@ -1351,6 +1355,15 @@ class App(_Callback):
         thread = _CAThread(
             target=self._start_lock_thread,
             args=(device, propty_sp, desired_value, pvname, value),
+            daemon=True)
+        thread.start()
+
+    def _callback_evg_lock_intlk(self, pvname, value, **kwargs):
+        thread = _CAThread(
+            target=self._start_lock_thread,
+            args=(
+                self._evg_dev, 'IntlkCtrlEnbl-Sel', self._state,
+                pvname, value),
             daemon=True)
         thread.start()
 
