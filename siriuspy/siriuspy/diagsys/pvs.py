@@ -3,6 +3,7 @@
 
 import numpy as _np
 
+# from ..logging import get_logger as _get_logger
 from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT
 
 
@@ -17,7 +18,7 @@ class ComputedPV:
 
     def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
-        # print('compute_pv: ', pvname, pvs)
+        # _get_logger(self).debug('compute_pv: ' + pvname + str(pvs))
 
         # starts computer_pvs queue, if not started yet
         self._queue = queue
@@ -63,7 +64,7 @@ class ComputedPV:
         """Return wether all pvs are connected."""
         for pvobj in self.pvs:
             if not pvobj.connected:
-                # print(pvobj.pvname)
+                # _get_logger(self).debug(pvobj.pvname)
                 return False
         return True
 
@@ -189,7 +190,7 @@ class ComputedPV:
 
     def _value_update_callback(self, pvname, value, **kwargs):
         # if 'Current-Mon' not in pvname:
-        #     print(pvname, value)
+        #     _get_logger(self).debug(pvname + str(value))
         if self.connected:
             self._queue.put((self._update_value, (pvname, value)), block=False)
 
