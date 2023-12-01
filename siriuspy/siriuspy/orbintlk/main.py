@@ -152,6 +152,17 @@ class App(_Callback):
         pvo.connection_callbacks.append(self._conn_callback_timing)
         self._everf_evtcnt = pvo.get() or 0
 
+        # # delta redundancy EVR
+        self._evrdelta_dev = _Device(
+            'IA-10RaBPM:TI-EVR',
+            props2init=[
+                'DevEnbl-Sel', 'DevEnbl-Sts',
+                'DIN0State-Sel', 'DIN0State-Sts',
+                'DIN0Evt-SP', 'DIN0Evt-RB',
+                'DIN0Polarity-Sel', 'DIN0Polarity-Sts',
+                'DIN0Log-Sel', 'DIN0Log-RB',
+            ])
+
         # # HL triggers
         self._llrf_trig = _Trigger(
             trigname='SI-Glob:TI-LLRF-PsMtm', props2init=[
@@ -363,6 +374,16 @@ class App(_Callback):
             pvo = self._fout_dcct_dev.pv_object(propty_rb)
             pvo.add_callback(_part(
                 self._callback_lock, self._fout_dcct_dev,
+                propty_sp, desired_val))
+            pvo.run_callbacks()
+
+        # interlock redundancy EVR
+        self._evrdelta_dev.wait_for_connection(timeout=conntimeout)
+        for propty_sp, desired_val in self._const.INTLKREDEVR_CONFIGS:
+            propty_rb = _PVName.from_sp2rb(propty_sp)
+            pvo = self._evrdelta_dev.pv_object(propty_rb)
+            pvo.add_callback(_part(
+                self._callback_lock, self._evrdelta_dev,
                 propty_sp, desired_val))
             pvo.run_callbacks()
 

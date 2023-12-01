@@ -83,6 +83,13 @@ class Const(_csdev.Const):
         ('State-Sel', 1),
         ('Log-Sel', 0)
     )
+    INTLKREDEVR_CONFIGS = (
+        ('DevEnbl-Sel', 1),
+        ('DIN0State-Sel', 1),
+        ('DIN0Evt-SP', 118),
+        ('DIN0Polarity-Sel', 0),
+        ('DIN0Log-Sel', 0),
+    )
     FOUT2_CONFIGS = (
         ('RxEnbl-SP', 0b01000001),
     )
