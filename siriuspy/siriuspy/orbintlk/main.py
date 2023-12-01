@@ -1346,11 +1346,6 @@ class App(_Callback):
         cb_info[1].remove_callback(cb_info[0])
 
     def _handle_reliability_failure(self):
-        # if in dry run, do not kill RF
-        if self._is_dry_run:
-            self._update_log('WARN:Dry run running, will not handle')
-            self._update_log('WARN:reliability failure.')
-            return
         if not self._state:
             self._update_log('WARN:Orbit interlock is not enabled.')
             return
