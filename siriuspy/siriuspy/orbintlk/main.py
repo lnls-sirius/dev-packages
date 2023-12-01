@@ -64,7 +64,8 @@ class App(_Callback):
         self._thread_cbevgrx = None
         self._thread_cbfout = {fout: None for fout in self._const.FOUTS_2_MON}
         self._thread_cbbpm = None
-        self._ti_mon_devs = set()
+        self._bpm_mon_devs = list()
+        self._ti_mon_devs = list()
         self._lock_threads = dict()
         self._lock_failures = set()
         self._lock_suspend = False
@@ -304,7 +305,9 @@ class App(_Callback):
             self.run_callbacks(pvn+'-SP', enb)
             if not okl:
                 self.run_callbacks(pvn+'-RB', enb)
-        self._ti_mon_devs = self._get_ti_monitored_devices()
+        self._bpm_mon_devs, self._ti_mon_devs = self._get_monitored_devices()
+        self.run_callbacks(
+            'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
         self.run_callbacks(
             'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
 
@@ -463,20 +466,16 @@ class App(_Callback):
             return False
 
         if value:
-            mondevs = self._get_ti_monitored_devices()
-            if not self._check_devices_status(mondevs):
+            if not self._check_ti_devices_status(self._ti_mon_devs):
                 self._update_log('ERR:Could not enable orbit interlock.')
                 return False
-            self._ti_mon_devs = mondevs
-            self.run_callbacks(
-                'TimingMonitoredDevices-Mon', '\n'.join(mondevs))
-
             glob_en = self._get_gen_bpm_intlk()
         else:
             glob_en = _np.zeros(self._const.nr_bpms, dtype=bool)
 
         bkup = int(self._state)
         self._state = value
+
         if not self._orbintlk_dev.set_gen_enable(list(glob_en)):
             self._update_log('ERR:Could not set BPM general')
             self._update_log('ERR:interlock enable.')
@@ -529,17 +528,20 @@ class App(_Callback):
 
         # check if new enable list do not imply in orbit interlock failure
         bkup_enbllist = self._enable_lists[intlk]
-        bkup_timondev = self._ti_mon_devs
+        bkup_bpmmon, bkup_timon = self._bpm_mon_devs, self._ti_mon_devs
         self._enable_lists[intlk] = new
-        self._ti_mon_devs = self._get_ti_monitored_devices()
+        self._bpm_mon_devs, self._ti_mon_devs = \
+            self._get_monitored_devices()
         self._config_fout_rxenbl()
-        if not self._check_devices_status(self._ti_mon_devs):
+        if not self._check_ti_devices_status(self._ti_mon_devs):
             self._update_log('ERR:Could not set enable list.')
             self._enable_lists[intlk] = bkup_enbllist
-            self._ti_mon_devs = bkup_timondev
+            self._bpm_mon_devs, self._ti_mon_devs = bkup_bpmmon, bkup_timon
             self._config_fout_rxenbl()
             self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
             return False
+        self.run_callbacks(
+            'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
         self.run_callbacks(
             'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
 
@@ -830,27 +832,30 @@ class App(_Callback):
 
         return True
 
-    def _get_enabled_sections(self):
+    def _get_monitored_devices(self):
         enbllist = self._get_gen_bpm_intlk()
+
+        # bpms
+        idcs = _np.where(enbllist)[0]
+        bpmdevs = [self._const.bpm_names[i] for i in idcs]
+
+        # timing
+        tidevs = set()
+        tidevs.add(self._everf_dev.devname)
         aux = _np.roll(enbllist, 1)
-        subs = _np.where(_np.sum(aux.reshape(20, -1), axis=1) > 0)[0]
-        subs += 1
-        return subs
-
-    def _get_ti_monitored_devices(self):
-        value = set()
-        if self._state:
-            value.add(self._everf_dev.devname)
-        for sec in self._get_enabled_sections():
-            afcti = f'IA-{sec:02}RaBPM:TI-AMCFPGAEVR'
-            value.add(afcti)
+        subsecs = _np.where(_np.sum(aux.reshape(20, -1), axis=1) > 0)[0]
+        subsecs += 1
+        for sub in subsecs:
+            afcti = f'IA-{sub:02}RaBPM:TI-AMCFPGAEVR'
+            tidevs.add(afcti)
             foutout = _LLTimeSearch.get_trigsrc2fout_mapping()[afcti]
-            value.add(foutout)
+            tidevs.add(foutout)
             evgout = _LLTimeSearch.get_evg_channel(foutout)
-            value.add(evgout)
-        return sorted(value)
+            tidevs.add(evgout)
 
-    def _check_devices_status(self, devices):
+        return bpmdevs, sorted(tidevs)
+
+    def _check_ti_devices_status(self, devices):
         for devname in devices:
             devname = _PVName(devname)
             out = int(devname.propty[-1]) if devname.propty else None

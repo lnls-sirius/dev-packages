@@ -204,6 +204,8 @@ class Const(_csdev.Const):
             'LLRFStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_LLRF),
                 'value': _et.STS_LBLS_LLRF},
+            'BPMMonitoredDevices-Mon': {
+                'type': 'char', 'count': 1000, 'value': ''},
             'TimingMonitoredDevices-Mon': {
                 'type': 'char', 'count': 1000, 'value': ''},
 
