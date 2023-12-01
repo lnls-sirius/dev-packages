@@ -224,7 +224,7 @@ class App(_Callback):
             devname=_ASLLRF.DEVICES.SI,
             props2init=[
                 'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
-                'IntlkSet-Cmd',
+                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd',
             ])
 
         # # auxiliary devices
@@ -389,6 +389,10 @@ class App(_Callback):
         pvo.add_callback(_part(
             self._callback_lock, self._llrf,
             'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
+        pvo = self._llrf.pv_object('ILK:MAN')
+        pvo.add_callback(_part(
+            self._callback_lock, self._llrf,
+            'ILK:MAN:S', self._llrf_intlk_state))
         pvo.run_callbacks()
 
         # BPM devices
@@ -1044,8 +1048,9 @@ class App(_Callback):
         dev = self._llrf
         if dev.connected:
             value = _updt_bit(value, 0, 0)
-            value = _updt_bit(
-                value, 1, dev['ILK:BEAM:TRIP'] != self._llrf_intlk_state)
+            okc = dev['ILK:BEAM:TRIP'] == self._llrf_intlk_state
+            okc &= dev['ILK:MAN'] == self._llrf_intlk_state
+            value = _updt_bit(value, 1, not okc)
         self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
