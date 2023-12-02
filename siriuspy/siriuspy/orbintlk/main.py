@@ -1176,12 +1176,12 @@ class App(_Callback):
     def _conn_callback_timing(self, pvname, conn, **kws):
         if conn:
             return
-        pvname = _PVName(pvname)
-        self._update_log(f'FATAL:{pvname.device_name} disconnected')
+        devname = _PVName(pvname).device_name
+        self._update_log(f'FATAL:{devname} disconnected')
         # verify if this is an orbit interlock reliability failure
         is_failure = False
         for dev in self._ti_mon_devs:
-            is_failure |= _PVName(dev).device_name == pvname.device_name
+            is_failure |= _PVName(dev).device_name == devname
         if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
@@ -1232,7 +1232,7 @@ class App(_Callback):
         # verify if EVG propagated the event Intlk
         evgintlksts = self._evg_dev['IntlkEvtStatus-Mon']
         if not evgintlksts & 0b1:
-            self._update_log('WARN:EVG did not propagate event Intlk')
+            self._update_log('ERR:EVG did not propagate event Intlk')
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
 
@@ -1444,9 +1444,10 @@ class App(_Callback):
         if not _os.path.isfile(filename):
             return
         value = _np.loadtxt(filename)
+        okl = True
         if dtype.startswith('en'):
             okl = self.set_enbllist(intlk, value)
-        else:
+        elif dtype.startswith('lim'):
             okl = self.set_intlk_lims(intlk, value)
         if okl:
             msg = f'Loaded {intlk} {desc} from auto save!'
