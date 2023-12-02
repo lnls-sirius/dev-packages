@@ -1264,17 +1264,34 @@ class App(_Callback):
         _ = kws
         if not value:
             return
-        if not self._init:
-            return
+        # launch thread to log interlock details
+        _CAThread(
+            target=self._log_bpm_intlk, 
+            args=(_PVName(pvname).device_name, ), 
+            daemon=True).start()
+        # launch thread to send interlock to RF as a backup
         if self._thread_cbbpm and self._thread_cbbpm.is_alive():
             return
-        bpmname = _PVName(pvname).device_name
         self._thread_cbbpm = _CAThread(
-            target=self._do_callback_bpm_intlk, args=(bpmname, ), daemon=True)
+            target=self._do_callback_bpm_intlk, daemon=True)
         self._thread_cbbpm.start()
 
-    def _do_callback_bpm_intlk(self, bpmname):
-        self._update_log(f'FATAL:{bpmname} raised orbit interlock.')
+    def _log_bpm_intlk(self, bpmname):
+        # log which interlock flag was raised
+        self._update_log(f'FATAL:{bpmname} raised interlock.')
+        props = [
+            'IntlkPosLowerLtcX-Mon', 'IntlkPosUpperLtcX-Mon',
+            'IntlkPosLowerLtcY-Mon', 'IntlkPosUpperLtcY-Mon',
+            'IntlkAngLowerLtcX-Mon', 'IntlkAngUpperLtcX-Mon',
+            'IntlkAngLowerLtcY-Mon', 'IntlkAngUpperLtcY-Mon',
+        ]
+        for prop in props:
+            idx = self._const.bpm_names.index(bpmname)
+            intlk, pln = prop.split('-')[0].split('Intlk')[1].split('Ltc')
+            if self._orbintlk_dev.devices[idx][prop]:
+                self._update_log(f'FATAL:{bpmname} > {intlk} {pln}')
+
+    def _do_callback_bpm_intlk(self):
         # send kill beam as fast as possible
         self._handle_reliability_failure()
         # wait minimum period for RF EVE event count to be updated
