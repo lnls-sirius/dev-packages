@@ -55,35 +55,37 @@ class Const(_csdev.Const):
 
     DEF_TIME2WAIT_INTLKREARM = 2*60  # [s]
 
-    ORBINTLKTRIG_CONFIG = (
-        ('Src-Sel', 4),
-        ('DelayRaw-SP', 0),
-        ('State-Sel', 1),
-        ('WidthRaw-SP', 1),
-        ('Direction-Sel', 1),
-        )
-    LLRFTRIG_CONFIG = (
-        ('Src-Sel', 5),
-        ('DelayRaw-SP', 0),
-        ('State-Sel', 1),
-        ('WidthRaw-SP', 9369),
-        )
-    BPMPSMTNTRIG_CONFIG = (
-        ('Src-Sel', 5),
-        ('DelayRaw-SP', 0),
-        ('State-Sel', 1),
-        ('WidthRaw-SP', 6),
-        )
-    DCCT13C4TRIG_CONFIG = (
-        ('Src-Sel', 0),
-        ('State-Sel', 1),
-        ('Log-Sel', 0)
-    )
-    DCCT14C4TRIG_CONFIG = (
-        ('Src-Sel', 0),
-        ('State-Sel', 1),
-        ('Log-Sel', 0)
-    )
+    HLTRIG_2_CONFIG = [
+        ('SI-Fam:TI-BPM-OrbIntlk', (
+            ('Src-Sel', 4),
+            ('DelayRaw-SP', 0),
+            ('State-Sel', 1),
+            ('WidthRaw-SP', 1),
+            ('Direction-Sel', 1))
+        ),
+        ('SI-Glob:TI-LLRF-PsMtm', (
+            ('Src-Sel', 5),
+            ('DelayRaw-SP', 0),
+            ('State-Sel', 1),
+            ('WidthRaw-SP', 9369))
+        ),
+        ('SI-Fam:TI-BPM-PsMtm', (
+            ('Src-Sel', 5),
+            ('DelayRaw-SP', 0),
+            ('State-Sel', 1),
+            ('WidthRaw-SP', 6))
+        ),
+        ('SI-13C4:TI-DCCT-PsMtm', (
+            ('Src-Sel', 0),
+            ('State-Sel', 1),
+            ('Log-Sel', 0))
+        ),
+        ('SI-14C4:TI-DCCT-PsMtm', (
+            ('Src-Sel', 0),
+            ('State-Sel', 1),
+            ('Log-Sel', 0))
+        ),
+    ]
     INTLKREDEVR_CONFIGS = (
         ('DevEnbl-Sel', 1),
         ('DIN0State-Sel', 1),

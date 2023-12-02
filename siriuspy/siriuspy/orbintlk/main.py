@@ -164,46 +164,21 @@ class App(_Callback):
             ])
 
         # # HL triggers
-        self._llrf_trig = _Trigger(
-            trigname='SI-Glob:TI-LLRF-PsMtm', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'DelayRaw-SP', 'DelayRaw-RB',
-                'State-Sel', 'State-Sts',
-                'WidthRaw-SP', 'WidthRaw-RB',
-                'Status-Mon',
-            ], auto_monitor_mon=True)
-
-        self._bpmpsmtn_trig = _Trigger(
-            trigname='SI-Fam:TI-BPM-PsMtm', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'DelayRaw-SP', 'DelayRaw-RB',
-                'State-Sel', 'State-Sts',
-                'WidthRaw-SP', 'WidthRaw-RB',
-                'Status-Mon',
-            ], auto_monitor_mon=True)
-
-        self._orbintlk_trig = _Trigger(
-            trigname='SI-Fam:TI-BPM-OrbIntlk', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'DelayRaw-SP', 'DelayRaw-RB',
-                'State-Sel', 'State-Sts',
-                'WidthRaw-SP', 'WidthRaw-RB',
-                'Direction-Sel', 'Direction-Sts',
-                'Status-Mon',
-            ], auto_monitor_mon=True)
-
-        self._dcct13c4_trig = _Trigger(
-            trigname='SI-13C4:TI-DCCT-PsMtm', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'State-Sel', 'State-Sts',
-                'Status-Mon',
-            ], auto_monitor_mon=True)
-        self._dcct14c4_trig = _Trigger(
-            trigname='SI-14C4:TI-DCCT-PsMtm', props2init=[
-                'Src-Sel', 'Src-Sts',
-                'State-Sel', 'State-Sts',
-                'Status-Mon',
-            ], auto_monitor_mon=True)
+        self._hltrig_devs = dict()
+        for trigname, configs in self._const.HLTRIG_2_CONFIG:
+            props2init = list()
+            for prop, _ in configs:
+                props2init.append(prop)
+                props2init.append(_PVName.from_sp2rb(prop))
+            props2init.append('Status-Mon')
+            self._hltrig_devs[trigname] = _Trigger(
+                trigname=trigname,
+                props2init=props2init, 
+                auto_monitor_mon=True)
+            if 'DCCT' in trigname:
+                continue
+            pvo = self._hltrig_devs[trigname].pv_object('Status-Mon')
+            pvo.add_callback(self._callback_hltrig_status)
 
         # # BPM devices
         self._orbintlk_dev = _OrbitIntlk()
@@ -429,20 +404,14 @@ class App(_Callback):
             pvo.run_callbacks()
 
         # triggers
-        trig2config = {
-            self._orbintlk_trig: self._const.ORBINTLKTRIG_CONFIG,
-            self._llrf_trig: self._const.LLRFTRIG_CONFIG,
-            self._bpmpsmtn_trig: self._const.BPMPSMTNTRIG_CONFIG,
-            self._dcct13c4_trig: self._const.DCCT13C4TRIG_CONFIG,
-            self._dcct14c4_trig: self._const.DCCT14C4TRIG_CONFIG,
-        }
-        for trig, configs in trig2config.items():
-            trig.wait_for_connection(timeout=conntimeout)
+        for trigname, configs in self._const.HLTRIG_2_CONFIG:
+            trigdev = self._hltrig_devs[trigname]
+            trigdev.wait_for_connection(timeout=conntimeout)
             for prop_sp, desired_val in configs:
                 prop_rb = _PVName.from_sp2rb(prop_sp)
-                pvo = trig.pv_object(prop_rb)
+                pvo = trigdev.pv_object(prop_rb)
                 pvo.add_callback(
-                    _part(self._callback_lock, trig, prop_sp, desired_val))
+                    _part(self._callback_lock, trigdev, prop_sp, desired_val))
                 pvo.run_callbacks()
 
         # LLRF
@@ -1070,65 +1039,20 @@ class App(_Callback):
             value = _updt_bit(value, 6, not okg)
         else:
             value += 0b11 << 5
-        # Orbit Interlock trigger
-        dev = self._orbintlk_trig
-        if dev.connected:
-            value = _updt_bit(value, 8, bool(dev['Status-Mon']))
-            oko = True
-            for prp, val in self._const.ORBINTLKTRIG_CONFIG:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
-                oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 9, not oko)
-        else:
-            value += 0b111 << 7
-        # LLRF PsMtm trigger
-        dev = self._llrf_trig
-        oko = False
-        if dev.connected:
-            value = _updt_bit(value, 11, bool(dev['Status-Mon']))
-            oko = True
-            for prp, val in self._const.LLRFTRIG_CONFIG:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
-                oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 12, not oko)
-        else:
-            value += 0b111 << 10
-        # BPM PsMtm trigger
-        dev = self._bpmpsmtn_trig
-        oko = False
-        if dev.connected:
-            value = _updt_bit(value, 14, bool(dev['Status-Mon']))
-            oko = True
-            for prp, val in self._const.BPMPSMTNTRIG_CONFIG:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
-                oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 15, not oko)
-        else:
-            value += 0b111 << 13
-        # DCCT 13C4 trigger
-        dev = self._dcct13c4_trig
-        oko = False
-        if dev.connected:
-            value = _updt_bit(value, 17, bool(dev['Status-Mon']))
-            oko = True
-            for prp, val in self._const.DCCT13C4TRIG_CONFIG:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
-                oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 18, not oko)
-        else:
-            value += 0b111 << 16
-        # DCCT 14C4 trigger
-        dev = self._dcct14c4_trig
-        oko = False
-        if dev.connected:
-            value = _updt_bit(value, 20, bool(dev['Status-Mon']))
-            oko = True
-            for prp, val in self._const.DCCT14C4TRIG_CONFIG:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
-                oko &= dev[prp_rb] == val
-            value = _updt_bit(value, 21, not oko)
-        else:
-            value += 0b111 << 19
+        # HL triggers
+        bit = 7
+        for trigname, configs in self._const.HLTRIG_2_CONFIG:
+            dev = self._hltrig_devs[trigname]
+            if dev.connected:
+                value = _updt_bit(value, bit+1, bool(dev['Status-Mon']))
+                oko = True
+                for prp, val in configs:
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    oko &= dev[prp_rb] == val
+                value = _updt_bit(value, bit+2, not oko)
+            else:
+                value += 0b111 << bit
+            bit += 3
 
         self._timing_status = value
         self.run_callbacks('TimingStatus-Mon', self._timing_status)
@@ -1337,6 +1261,16 @@ class App(_Callback):
         if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
+
+    def _callback_hltrig_status(self, pvname, value, **kws):
+        _ = kws
+        if not value:
+            return
+        # if status is not ok, it is a reliability failure
+        trigname = _PVName(pvname).device_name
+        self._update_log(f'FATAL:{trigname} Status not ok')
+        self._update_log('FATAL:Orbit interlock reliability failure')
+        self._handle_reliability_failure()
 
     # --- reliability failure methods ---
 
