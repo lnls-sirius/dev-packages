@@ -477,7 +477,7 @@ class LLTimeSearch:
             line = line.strip()
             if not line or line[0] == '#':
                 continue  # empty line
-            crate, dev, *_ = line.split()
+            dev, *_, crate = line.split()
             dev = _PVName(dev)
             if crate not in mapping and dev.dev == 'AMCFPGAEVR':
                 crates[crate] = dev
