@@ -178,6 +178,7 @@ class Const(_csdev.Const):
     AcqChan = _csbpm.AcqChan
     AcqTrigTyp = _csbpm.AcqTrigTyp
     AcqRepeat = _csbpm.AcqRepeat
+    AcqStates = _csbpm.AcqStates
 
     def __init__(self):
         """Class constructor."""

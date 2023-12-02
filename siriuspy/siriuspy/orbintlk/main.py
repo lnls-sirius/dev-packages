@@ -1026,6 +1026,8 @@ class App(_Callback):
                 d.acq_repeat == self._const.AcqRepeat.Normal for d in bpms)
             okb &= all(
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
+            okb &= all(
+                d.acq_status == self._const.AcqStates.External_Trig for d in bpms)
             value = _updt_bit(value, 8, not okb)
 
         self._bpm_status = value
