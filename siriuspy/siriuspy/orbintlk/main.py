@@ -170,7 +170,7 @@ class App(_Callback):
                 'DIN0State-Sel', 'DIN0State-Sts',
                 'DIN0Evt-SP', 'DIN0Evt-RB',
                 'DIN0Polarity-Sel', 'DIN0Polarity-Sts',
-                'DIN0Log-Sel', 'DIN0Log-RB',
+                'DIN0Log-Sel', 'DIN0Log-Sts',
             ])
 
         # # HL triggers
