@@ -1314,7 +1314,7 @@ class App(_Callback):
         # if minimum sum condition is not satisfied, only monitor sum
         if not self._check_minsum_requirement():
             pvo = self._sofb.pv_object('SlowSumRaw-Mon')
-            if not pvo.callbacks():
+            if not pvo.callbacks:
                 pvo.add_callback(self._callback_monitor_sum)
             return
         # send soft interlock to RF
