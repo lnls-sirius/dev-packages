@@ -222,7 +222,7 @@ class App(_Callback):
                 'TRIGGER_PM14RcvSrc-Sel', 'TRIGGER_PM14RcvSrc-Sts',
                 'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB'])
         self._monitsum2intlksum_factor = 0
-        for idx, dev in enumerate(self._fambpm_dev.devices):
+        for dev in self._fambpm_dev.devices:
             pvo = dev.pv_object('INFOMONITRate-RB')
             pvo.connection_callbacks.append(self._conn_callback_bpm)
 
@@ -1042,10 +1042,9 @@ class App(_Callback):
         _t0 = _time.time()
 
         # bpm status
-        dev = self._orbintlk_dev
-        value = (1 << 9) - 1
-        if dev.connected:
-            value = _updt_bit(value, 0, 0)
+        value = 0
+        if self._orbintlk_dev.connected and self._fambpm_dev.connected:
+            dev = self._orbintlk_dev
             # PosEnblSynced
             val = _np.array_equal(
                 dev.pos_enable, self._enable_lists['pos'])
@@ -1090,6 +1089,13 @@ class App(_Callback):
             okb &= all(
                 d.acq_status == self._const.AcqStates.External_Trig for d in bpms)
             value = _updt_bit(value, 8, not okb)
+            # LogTrigConfigured
+            okl = True
+            for bpm in self._fambpm_dev.devices:
+                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    okl &= bpm[prp_rb] == val
+            value = _updt_bit(value, 9, not okl)
 
         self._bpm_status = value
         self.run_callbacks('BPMStatus-Mon', self._bpm_status)
@@ -1141,8 +1147,21 @@ class App(_Callback):
             value = _updt_bit(value, 8, not okg)
         else:
             value += 0b11 << 7
+        # AFC Physical triggers
+        if all(dev.connected for dev in self._phytrig_devs):
+            okg = True
+            for dev in self._phytrig_devs:
+                for prp, val in self._const.AFCPHYTRIG_CONFIGS:
+                    if dev.devname not in self._const.bpm_names and \
+                            prp != 'DirPol-Sel':
+                        continue
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    okg &= dev[prp_rb] == val
+            value = _updt_bit(value, 10, not okg)
+        else:
+            value += 0b11 << 9
         # HL triggers
-        bit = 9
+        bit = 11
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             dev = self._hltrig_devs[trigname]
             if dev.connected:

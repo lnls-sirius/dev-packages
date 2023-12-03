@@ -23,12 +23,13 @@ class ETypes(_csdev.ETypes):
         'Connected',
         'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
         'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced',
-        'AcqConfigured')
+        'AcqConfigured', 'LogTrigConfig')
     STS_LBLS_TIMING = (
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
         'FoutsBPMConn', 'FoutsBPMConfig',
         'FoutsDCCTConn', 'FoutsDCCTConfig',
         'AFCTimingConn', 'AFCTimingConfig',
+        'AFCPhysTrigsConn', 'AFCPhysTrigsConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
         'LLRFPsMtmTrigConn', 'LLRFPsMtmTrigStatusOK', 'LLRFPsMtmTrigConfig',
         'BPMPsMtmTrigConn', 'BPMPsMtmTrigStatusOK', 'BPMPsMtmTrigConfig',
