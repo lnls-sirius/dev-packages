@@ -243,9 +243,10 @@ class App(_Callback):
         self._llrf = _ASLLRF(
             devname=_ASLLRF.DEVICES.SI,
             props2init=[
-                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP',
+                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON', 
                 'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd',
             ])
+        self._llrf.pv_object('FASTINLK-MON').auto_monitor = True        
 
         # # auxiliary devices
         self._fofb = _FOFB(
@@ -1327,6 +1328,8 @@ class App(_Callback):
             self._update_log('ERR:EVG did not propagate event Intlk')
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
+        if not self._llrf['FASTINLK-MON'] & (1 << 12):
+            self._update_log('ERR:LLRF did not received RFKill event')
 
     def _get_bpm_rates_factor(self):
         if self._monitsum2intlksum_factor:
