@@ -1234,7 +1234,7 @@ class App(_Callback):
                 # verify if this is an orbit interlock reliability failure
                 is_failure |= devout in self._ti_mon_devs
         else:
-            is_failure = False
+            is_failure, outs_in_failure = False, set()
             for dev in self._ti_mon_devs:
                 # verify fouts
                 if 'Fout' not in dev:
@@ -1249,16 +1249,16 @@ class App(_Callback):
                         continue
                     # if not, it is a reliability failure
                     is_failure = True
+                    outs_in_failure.add(out)
                     self._update_log(f'ERR:{outnam} of {devname} not locked')
-            if not is_failure:
-                return
             # specifically for delta subsector (10), consider a failure only if
             # redundancy timing path is also not locked
             trigsrc = _LLTimeSearch.get_fout2trigsrc_mapping()[devname]
-            trigsrc_at_out = trigsrc[f'OUT{out}']
-            if trigsrc_at_out.sub[0:2] == '10':
-                rxlock = self._fout_dcct_dev['RxLockedLtc-Mon']
-                is_failure &= not _get_bit(rxlock, 0)  # out 0
+            for out in outs_in_failure:
+                trigsrcout = trigsrc[f'OUT{out}']
+                if trigsrcout.sub[0:2] == '10':
+                    rxlock = self._fout_dcct_dev['RxLockedLtc-Mon']
+                    is_failure &= not _get_bit(rxlock, 0)  # out 0
 
         if not is_failure:
             return
