@@ -106,6 +106,7 @@ class App(_Callback):
         pvo.connection_callbacks.append(self._conn_callback_timing)
         # rxlock callback
         pvo = self._evg_dev.pv_object('RxLockedLtc-Mon')
+        pvo.auto_monitor = True
         pvo.add_callback(self._callback_evg_rxlock)
 
         # # Fouts
