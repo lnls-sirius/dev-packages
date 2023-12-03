@@ -1594,7 +1594,7 @@ class App(_Callback):
             return
 
         # else, create lock thread with 10 attempts to lock PV
-        interval = 1 / 50  # little sleep to avoid CPU load
+        interval = 1 / 10  # little sleep to avoid CPU load
         thread = _Repeat(
             interval, self._do_lock,
             args=(device, propty_sp, desired_value, pvname, value),
