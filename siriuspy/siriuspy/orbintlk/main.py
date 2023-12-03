@@ -1254,8 +1254,9 @@ class App(_Callback):
                 return
             # specifically for delta subsector (10), consider a failure only if
             # redundancy timing path is also not locked
-            trigsrc = _LLTimeSearch.get_fout2trigsrc_mapping()[devname][out]
-            if int(trigsrc.sub[0:2]) == 10:
+            trigsrc = _LLTimeSearch.get_fout2trigsrc_mapping()[devname]
+            trigsrc_at_out = trigsrc[f'OUT{out}']
+            if trigsrc_at_out.sub[0:2] == '10':
                 rxlock = self._fout_dcct_dev['RxLockedLtc-Mon']
                 is_failure &= not _get_bit(rxlock, 0)  # out 0
 
