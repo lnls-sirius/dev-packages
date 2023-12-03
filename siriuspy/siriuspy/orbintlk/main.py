@@ -213,14 +213,9 @@ class App(_Callback):
                 'TRIGGER_PM12RcvInSel-SP', 'TRIGGER_PM12RcvInSel-RB',
                 'TRIGGER_PM14RcvSrc-Sel', 'TRIGGER_PM14RcvSrc-Sts',
                 'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB'])
-        self._monit_rate, self._facq_rate = None, None
         self._monitsum2intlksum_factor = 0
         for idx, dev in enumerate(self._fambpm_dev.devices):
             pvo = dev.pv_object('INFOMONITRate-RB')
-            if idx == 0:
-                pvo.add_callback(self._callback_get_bpm_rates)
-                pvo = dev.pv_object('INFOFAcqRate-RB')
-                pvo.add_callback(self._callback_get_bpm_rates)
             pvo.connection_callbacks.append(self._conn_callback_bpm)
 
         # # AFC physical trigger devices
@@ -1252,20 +1247,18 @@ class App(_Callback):
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
 
-    def _callback_get_bpm_rates(self, pvname, value, **kws):
-        if value is None:
-            return
-        if 'MONIT' in pvname:
-            self._monit_rate = value
-        elif 'FAcq' in pvname:
-            self._facq_rate = value
-        monit = self._monit_rate
-        facq = self._facq_rate
+    def _get_bpm_rates_factor(self):
+        if self._monitsum2intlksum_factor:
+            return self._monitsum2intlksum_factor
+        monit = self._fambpm_dev.devices[0]['INFOMONITRate-RB']
+        facq = self._fambpm_dev.devices[0]['INFOFAcqRate-RB']
+
         if None in [monit, facq]:
-            return
+            return 0
         frac = monit/facq
         factor = 2**_np.ceil(_np.log2(frac)) / frac
         self._monitsum2intlksum_factor = factor
+        return self._monitsum2intlksum_factor
 
     def _conn_callback_bpm(self, pvname, conn, **kws):
         _ = kws
@@ -1293,7 +1286,7 @@ class App(_Callback):
     def _check_minsum_requirement(self, monit_sum=None):
         if monit_sum is None:
             monit_sum = self._sofb['SlowSumRaw-Mon']
-        facq_sum = monit_sum * self._monitsum2intlksum_factor
+        facq_sum = monit_sum * self._get_bpm_rates_factor()
         return _np.all(facq_sum > self._limits['minsum'])
 
     def _callback_monitor_sum(self, value, cb_info, **kws):
