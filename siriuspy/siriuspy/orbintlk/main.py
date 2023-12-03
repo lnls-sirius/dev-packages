@@ -348,8 +348,7 @@ class App(_Callback):
             self.run_callbacks('MinSumLim-RB', val)
 
         # wait while enable list and limits setpoint queue to be empty
-        while self._set_queue.qsize() > 0:
-            _time.sleep(0.5)
+        self._set_queue.join()
 
         self._update_log('Started.')
         self._init = True
