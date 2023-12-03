@@ -1021,7 +1021,16 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._do_auxiliary_cmd(self._handle_lock_bpm_configs, 'BPM')
+
+        for name, enbl in self._enable_lists.items():
+            self.set_enbllist(name, enbl)
+
+        for name, lim in self._limits.items():
+            self.set_intlk_lims(name, lim)
+        
+        for dev in self._fambpm_dev.devices:
+            for prop, desired_val in self._const.SIBPMLOGTRIG_CONFIGS:
+                dev[prop] = desired_val
         return True
 
     def cmd_config_phytrigs(self, value):
@@ -1030,8 +1039,9 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._do_auxiliary_cmd(
-            self._handle_lock_afcphytrigs, 'AFCPhysTriggers')
+        for dev in self._phytrig_devs:
+            for prop, desired_val in self._const.AFCPHYTRIG_CONFIGS:
+                dev[prop] = desired_val
         return True
 
     def _do_auxiliary_cmd(self, func, pvgroup):
