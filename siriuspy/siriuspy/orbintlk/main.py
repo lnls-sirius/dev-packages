@@ -1493,12 +1493,14 @@ class App(_Callback):
             if pvname in self._lock_failures:
                 self._lock_failures.remove(pvname)
             thread.stop()
+            return
 
         # else, apply value as desired
         if device == self._llrf:
             propty_rb = propty_sp.replace(':S', '')
         else:
             propty_rb = _PVName(pvname).propty
+        self._update_log(f'WARN:Locking {pvname}')
         device[propty_sp] = desired_value
 
         # if readback reached desired value, stop thread
@@ -1506,6 +1508,7 @@ class App(_Callback):
             if pvname in self._lock_failures:
                 self._lock_failures.remove(pvname)
             thread.stop()
+            return
 
         # if this was the last iteration, raise a reliability failure
         if thread.cur_iter == thread.niters-1:
