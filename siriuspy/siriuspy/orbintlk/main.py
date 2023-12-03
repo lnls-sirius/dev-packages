@@ -127,7 +127,10 @@ class App(_Callback):
 
         self._fout_dcct_dev = _Device(
             'CA-RaTim:TI-Fout-2',
-            props2init=['RxEnbl-SP', 'RxEnbl-RB'])
+            props2init=[
+                'RxEnbl-SP', 'RxEnbl-RB',
+                'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
+            ], auto_monitor_mon=True)
 
         # # AFC timing
         self._afcti_devs = {
@@ -843,7 +846,7 @@ class App(_Callback):
             self._update_log(f'{msg} AFC Timing {idx} lock latchs.')
             if 'not' in msg:
                 return False
-        # try to reset Fout rx lock latches, act only in necessary
+        # try to reset BPM Fout rx lock latches, act only in necessary
         # devices, return false if fail
         for devname, fout in self._fout_devs.items():
             if fout['RxLockedLtc-Mon']:
@@ -855,6 +858,17 @@ class App(_Callback):
             self._update_log(f'{msg} {devname} lock latchs.')
             if 'not' in msg:
                 return False
+        # try to reset DCCT Fout rx lock latches if necessary, return false if fail
+        dev = self._fout_dcct_dev
+        if dev['RxLockedLtc-Mon']:
+            return True
+        dev['RxLockedLtcRst-Cmd'] = 1
+        rxv = dev['RxEnbl-RB']
+        msg = 'Reset' if dev._wait('RxLockedLtc-Mon', rxv, timeout=3) \
+            else 'ERR:Could not reset'
+        self._update_log(f'{msg} {dev.devname} lock latchs.')
+        if 'not' in msg:
+            return False
         return True
 
     def cmd_reset_afcti_rtmclk(self, value=None):
