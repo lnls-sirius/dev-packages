@@ -1632,7 +1632,7 @@ class App(_Callback):
         if device == self._llrf:
             propty_rb = propty_sp.replace(':S', '')
         else:
-            propty_rb = _PVName(pvname).propty
+            propty_rb = _PVName.from_sp2rb(propty_sp)
         self._update_log(f'WARN:Locking {pvname}')
         device[propty_sp] = desired_value
 
