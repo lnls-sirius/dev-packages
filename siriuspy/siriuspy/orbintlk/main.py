@@ -280,9 +280,16 @@ class App(_Callback):
             'PsMtmAcqSamplesPre-SP': self.set_acq_nrspls_pre,
             'PsMtmAcqSamplesPost-SP': self.set_acq_nrspls_post,
             'PsMtmAcqConfig-Cmd': self.cmd_acq_config,
-            'IntlkStateConfig-Cmd': self.cmd_state_config,
             'ResetTimingLockLatches-Cmd': self.cmd_reset_ti_lock_latch,
             'ResetAFCTimingRTMClk-Cmd': self.cmd_reset_afcti_rtmclk,
+            'ConfigEVG-Cmd': self.cmd_config_evg, 
+            'ConfigFouts-Cmd': self.cmd_config_fouts, 
+            'ConfigDeltaRedunEVR-Cmd': self.cmd_config_deltaevr, 
+            'ConfigAFCTiming-Cmd': self.cmd_config_afcti, 
+            'ConfigHLTriggers-Cmd': self.cmd_config_hltrigs, 
+            'ConfigLLRFIntlk-Cmd': self.cmd_config_llrf, 
+            'ConfigBPMs-Cmd': self.cmd_config_bpms, 
+            'ConfigAFCPhyTrigs-Cmd': self.cmd_config_phytrigs, 
             }
 
         # configuration scanning
@@ -876,7 +883,7 @@ class App(_Callback):
 
         return True
 
-    # --- configure acquisition ---
+    # --- BPM acquisition ---
 
     def set_acq_channel(self, value):
         """Set BPM PsMtm acquisition channel."""
@@ -930,32 +937,96 @@ class App(_Callback):
             return
         self._update_log('...done!')
 
-    # --- status methods ---
+    # --- devices configurations ---
 
-    def cmd_state_config(self, value=None):
-        """Configure Interlock State according to setpoints.
-
-        Args:
-            value (int, optional): Not used. Defaults to None.
-
-        Returns:
-            bool: True if configuration worked.
-        """
-        for name, enbl in self._enable_lists.items():
-            if not self.set_enbllist(name, enbl):
-                self._update_log(
-                    f'ERR:Could not configure {name:s} enable list')
-                return False
-
-        for name, lim in self._limits.items():
-            if not self.set_intlk_lims(name, lim):
-                self._update_log(
-                    f'ERR:Could not configure {name:s} limit')
-                return False
-
-        if not self.set_enable(self._state):
+    def cmd_config_evg(self, value):
+        """Configure EVG according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
             return False
-        return True
+        self._lock_temp_pvs.update(self._lock_pvs['EVG'])
+        self._handle_lock_evg_configs()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_fouts(self, value):
+        """Configure Fouts according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['Fouts'])
+        self._handle_lock_fouts()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_deltaevr(self, value):
+        """Configure Delta EVR according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['EVRRedun'])
+        self._handle_lock_redundancy_evr()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_afcti(self, value):
+        """Configure all AFC timing according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        # do not allow user configurate loop params in case of 
+        # correction loops closed
+        if not self._fofb.connected or self._fofb['LoopState-Sts'] or \
+                not self._sofb.connected or self._sofb['LoopState-Sts']:
+            self._update_log('ERR:Open correction loops before ')
+            self._update_log('ERR:configuring AFC Timing RTM loop.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['AFCTI'])
+        self._handle_lock_afcti()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_hltrigs(self, value):
+        """Configure HL triggers according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['HLTriggers'])
+        self._handle_lock_hltriggers()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_llrf(self, value):
+        """Configure LLRF interlock according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['LLRF'])
+        self._handle_lock_llrf()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_bpms(self, value):
+        """Configure BPMs according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['BPM'])
+        self._handle_lock_bpm_configs()
+        self._lock_temp_pvs.clear()
+
+    def cmd_config_phytrigs(self, value):
+        """Configure physical triggers according to lock configurations."""
+        _ = value
+        if self._state:
+            self._update_log('ERR:Disable interlock before continue.')
+            return False
+        self._lock_temp_pvs.update(self._lock_pvs['AFCPhysTriggers'])
+        self._handle_lock_afcphytrigs()
+        self._lock_temp_pvs.clear()
+
+    # --- status methods ---
 
     def _config_fout_rxenbl(self):
         fout2rx = dict()

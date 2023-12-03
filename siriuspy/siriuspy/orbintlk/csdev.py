@@ -391,7 +391,14 @@ class Const(_csdev.Const):
             'PsMtmAcqConfig-Cmd': {'type': 'int', 'value': 0},
 
             # Config devices
-            'IntlkStateConfig-Cmd': {'type': 'int', 'value': 0}
+            'ConfigEVG-Cmd': {'type': 'int', 'value': 0},
+            'ConfigFouts-Cmd': {'type': 'int', 'value': 0},
+            'ConfigDeltaRedunEVR-Cmd': {'type': 'int', 'value': 0},
+            'ConfigAFCTiming-Cmd': {'type': 'int', 'value': 0},
+            'ConfigHLTriggers-Cmd': {'type': 'int', 'value': 0},
+            'ConfigLLRFIntlk-Cmd': {'type': 'int', 'value': 0},
+            'ConfigBPMs-Cmd': {'type': 'int', 'value': 0},
+            'ConfigAFCPhyTrigs-Cmd': {'type': 'int', 'value': 0},
         }
         pvs_database = _csdev.add_pvslist_cte(pvs_database)
         return pvs_database
