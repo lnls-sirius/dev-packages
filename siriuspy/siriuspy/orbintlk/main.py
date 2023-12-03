@@ -585,17 +585,19 @@ class App(_Callback):
                 f'{intlkname}EnblList-SP', self._enable_lists[intlk])
             return False
 
+        bkup_enbllist = self._enable_lists[intlk]
+        self._enable_lists[intlk] = new
+
         # do not write to devices and save to file in initialization
         if not self._init:
+            self._update_log('...done.')
             # update readback pv
             self.run_callbacks(f'{intlkname}EnblList-RB', new)
             return True
 
         # check if new enable list do not imply in orbit interlock failure
         if intlk in ['pos', 'ang']:
-            bkup_enbllist = self._enable_lists[intlk]
             bkup_bpmmon, bkup_timon = self._bpm_mon_devs, self._ti_mon_devs
-            self._enable_lists[intlk] = new
             self._bpm_mon_devs, self._ti_mon_devs = \
                 self._get_monitored_devices()
             self._config_fout_rxenbl()
@@ -684,6 +686,7 @@ class App(_Callback):
 
         # do not set limits and save to file in initialization
         if not self._init:
+            self._update_log('...done.')
             # update readback pv
             self.run_callbacks(f'{limname}Lim-RB', new)
             return True
