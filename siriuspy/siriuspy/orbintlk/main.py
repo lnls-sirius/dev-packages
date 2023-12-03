@@ -1232,6 +1232,15 @@ class App(_Callback):
             value = _updt_bit(value, 8, not okg)
         else:
             value += 0b11 << 7
+        # Delta Interlock Redundancy EVR 
+        if self._evrdelta_dev.connected:
+            okg = True
+            for prp, val in self._const.INTLKREDEVR_CONFIGS:
+                prp_rb = _PVName.from_sp2rb(prp)
+                okg &= dev[prp_rb] == val
+            value = _updt_bit(value, 10, not okg)
+        else:
+            value += 0b11 << 9
         # AFC Physical triggers
         if all(dev.connected for dev in self._phytrig_devs):
             okg = True
@@ -1242,11 +1251,11 @@ class App(_Callback):
                         continue
                     prp_rb = _PVName.from_sp2rb(prp)
                     okg &= dev[prp_rb] == val
-            value = _updt_bit(value, 10, not okg)
+            value = _updt_bit(value, 12, not okg)
         else:
-            value += 0b11 << 9
+            value += 0b11 << 11
         # HL triggers
-        bit = 11
+        bit = 13
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             dev = self._hltrig_devs[trigname]
             if dev.connected:
