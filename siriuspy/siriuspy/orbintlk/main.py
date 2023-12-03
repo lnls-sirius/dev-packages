@@ -849,10 +849,10 @@ class App(_Callback):
         # try to reset BPM Fout rx lock latches, act only in necessary
         # devices, return false if fail
         for devname, fout in self._fout_devs.items():
-            if fout['RxLockedLtc-Mon']:
+            rxv = self._fout2rxenbl[devname]
+            if fout['RxLockedLtc-Mon'] == rxv:
                 continue
             fout['RxLockedLtcRst-Cmd'] = 1
-            rxv = self._fout2rxenbl[devname]
             msg = 'Reset' if fout._wait('RxLockedLtc-Mon', rxv, timeout=3) \
                 else 'ERR:Could not reset'
             self._update_log(f'{msg} {devname} lock latchs.')
@@ -860,10 +860,10 @@ class App(_Callback):
                 return False
         # try to reset DCCT Fout rx lock latches if necessary, return false if fail
         dev = self._fout_dcct_dev
-        if dev['RxLockedLtc-Mon']:
+        rxv = dev['RxEnbl-RB']
+        if dev['RxLockedLtc-Mon'] == rxv:
             return True
         dev['RxLockedLtcRst-Cmd'] = 1
-        rxv = dev['RxEnbl-RB']
         msg = 'Reset' if dev._wait('RxLockedLtc-Mon', rxv, timeout=3) \
             else 'ERR:Could not reset'
         self._update_log(f'{msg} {dev.devname} lock latchs.')
