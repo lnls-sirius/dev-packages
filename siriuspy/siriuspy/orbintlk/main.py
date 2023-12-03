@@ -1103,7 +1103,7 @@ class App(_Callback):
             value = _updt_bit(value, 1, val)
             okg = True
             for prp, val in self._const.EVG_CONFIGS:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                prp_rb = _PVName.from_sp2rb(prp)
                 okg &= dev[prp_rb] == val
             value = _updt_bit(value, 2, not okg)
         else:
@@ -1124,15 +1124,25 @@ class App(_Callback):
         if dev.connected:
             okg = True
             for prp, val in self._const.FOUT2_CONFIGS:
-                prp_rb = prp.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                prp_rb = _PVName.from_sp2rb(prp)
                 okg &= dev[prp_rb] == val
                 if 'RxEnbl' in prp:
                     okg &= dev['RxLockedLtc-Mon'] == val
             value = _updt_bit(value, 6, not okg)
         else:
             value += 0b11 << 5
+        # AFC timing
+        if all(dev.connected for dev in self._afcti_devs.values()):
+            okg = True
+            for dev in self._afcti_devs.values():
+                for prp, val in self._const.AFCTI_CONFIGS:
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    okg &= dev[prp_rb] == val
+            value = _updt_bit(value, 8, not okg)
+        else:
+            value += 0b11 << 7
         # HL triggers
-        bit = 7
+        bit = 9
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             dev = self._hltrig_devs[trigname]
             if dev.connected:

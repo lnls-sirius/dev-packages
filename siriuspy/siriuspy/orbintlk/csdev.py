@@ -28,6 +28,7 @@ class ETypes(_csdev.ETypes):
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
         'FoutsBPMConn', 'FoutsBPMConfig',
         'FoutsDCCTConn', 'FoutsDCCTConfig',
+        'AFCTimingConn', 'AFCTimingConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
         'LLRFPsMtmTrigConn', 'LLRFPsMtmTrigStatusOK', 'LLRFPsMtmTrigConfig',
         'BPMPsMtmTrigConn', 'BPMPsMtmTrigStatusOK', 'BPMPsMtmTrigConfig',
