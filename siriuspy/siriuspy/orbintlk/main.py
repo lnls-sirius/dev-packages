@@ -149,7 +149,6 @@ class App(_Callback):
             auto_monitor_mon=True)
         pvo = self._everf_dev.pv_object(self._llrf_evtcnt_pvname)
         pvo.wait_for_connection()
-        pvo.connection_callbacks.append(self._conn_callback_timing)
         self._everf_evtcnt = pvo.get() or 0
 
         # # delta redundancy EVR
@@ -902,7 +901,7 @@ class App(_Callback):
 
         # timing
         tidevs = set()
-        tidevs.add(self._everf_dev.devname)
+        tidevs.add(self._evg_dev.devname)
         aux = _np.roll(enbllist, 1)
         subsecs = _np.where(_np.sum(aux.reshape(20, -1), axis=1) > 0)[0]
         subsecs += 1
