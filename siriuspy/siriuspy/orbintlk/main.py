@@ -522,12 +522,18 @@ class App(_Callback):
     def set_enable(self, value):
         """Set orbit interlock state.
         Configure global BPM interlock enable and EVG interlock enable."""
+        self._set_queue.put((self._do_set_enable, (value, )))
+        return True
+    
+    def _do_set_enable(self, value):
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            self.run_callbacks('Enable-Sel', self._state)
             return False
 
         if value:
             if not self._check_ti_devices_status(self._ti_mon_devs):
                 self._update_log('ERR:Could not enable orbit interlock.')
+                self.run_callbacks('Enable-Sel', self._state)
                 return False
             glob_en = self._get_gen_bpm_intlk()
         else:
@@ -540,6 +546,7 @@ class App(_Callback):
             self._update_log('ERR:Could not set BPM general')
             self._update_log('ERR:interlock enable.')
             self._state = bkup
+            self.run_callbacks('Enable-Sel', self._state)
             return False
         self._update_log('Configured BPM general interlock enable.')
 
@@ -548,6 +555,7 @@ class App(_Callback):
                 'IntlkCtrlEnbl-Sts', value, timeout=self._const.DEF_TIMEOUT):
             self._update_log('ERR:Could not set EVG interlock enable.')
             self._state = bkup
+            self.run_callbacks('Enable-Sel', self._state)
             return False
         self._update_log('Configured EVG interlock enable.')
 
