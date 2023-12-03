@@ -68,7 +68,11 @@ class App(_Callback):
         self._ti_mon_devs = list()
         self._lock_threads = dict()
         self._lock_failures = set()
-        self._lock_suspend = False
+        self._lock_suspend = True
+        self._lock_pvs = {
+            k: list() for k in 
+            ['EVG', 'Fouts', 'EVRRedun', 'AFCTI', 'HLTriggers', 
+             'LLRF', 'BPM', 'AFCPhysTriggers']}
         self._set_queue = _LoopQueueThread()
         self._set_queue.start()
 
@@ -132,6 +136,10 @@ class App(_Callback):
                 props2init=[
                     'RTMClkLockedLtc-Mon', 'ClkLockedLtcRst-Cmd',
                     'RTMClkRst-Cmd',
+                    'RTMPhasePropGain-SP', 'RTMPhasePropGain-RB', 
+                    'RTMPhaseIntgGain-SP', 'RTMPhaseIntgGain-RB', 
+                    'RTMFreqPropGain-SP', 'RTMFreqPropGain-RB', 
+                    'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB', 
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
@@ -348,79 +356,131 @@ class App(_Callback):
         self._update_log('Started.')
         self._init = True
 
-        # start locking devices
-        self._init_devices_lock()
+        # start init lock devices
+        self._lock_temp_pvs = set()
+        self._enable_lock(init=True)
+    
+    def _enable_lock(self, init=False):
+        if not init:
+            self._lock_suspend = False
+        self._handle_lock_evg_configs(init)
+        self._handle_lock_fouts(init)
+        self._handle_lock_redundancy_evr(init)
+        self._handle_lock_afcti(init)
+        self._handle_lock_hltriggers(init)
+        self._handle_lock_llrf(init)
+        self._handle_lock_bpm_configs(init)
+        self._handle_lock_afcphytrigs(init)
+        if init:
+            self._handle_lock_evg_enable(init)
+            self._handle_lock_bpm_enable(init)
 
-    def _init_devices_lock(self):
-        self._update_log('Waiting 5s to start locking...')
-        _time.sleep(5)
-
-        conntimeout = self._const.DEF_TIMEOUT
-
-        # EVG
-        self._evg_dev.wait_for_connection(timeout=conntimeout)
+    def _disable_lock(self):
+        self._lock_temp_pvs = set()
+        self._lock_suspend = True
+    
+    def _handle_lock_evg_configs(self, init=False):
+        self._evg_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for propty_sp, desired_val in self._const.EVG_CONFIGS:
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._evg_dev.pv_object(propty_rb)
-            pvo.add_callback(_part(
-                self._callback_lock, self._evg_dev, propty_sp, desired_val))
-            pvo.run_callbacks()
+            if init:
+                self._lock_pvs['EVG'].append(pvo.pvname)
+                pvo.add_callback(_part(
+                    self._callback_lock, self._evg_dev, propty_sp, desired_val))
+            else:
+                pvo.run_callbacks()
+    
+    def _handle_lock_evg_enable(self, init=False):
         # lock interlock enable state
         pvo = self._evg_dev.pv_object('IntlkCtrlEnbl-Sts')
-        pvo.add_callback(self._callback_evg_lock_intlk)
-        pvo.run_callbacks()
-
-        # BPM Fouts
-        for dev in self._fout_devs.values():
-            dev.wait_for_connection(timeout=conntimeout)
-            pvo = dev.pv_object('RxEnbl-RB')
-            pvo.add_callback(self._callback_fout_lock)
+        if init:
+            pvo.add_callback(self._callback_evg_lock_intlk)
+        else:
             pvo.run_callbacks()
 
+    def _handle_lock_fouts(self, init=False):
+        # BPM Fouts
+        for dev in self._fout_devs.values():
+            dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
+            pvo = dev.pv_object('RxEnbl-RB')
+            if init:
+                self._lock_pvs['Fouts'].append(pvo.pvname)
+                pvo.add_callback(self._callback_fout_lock)
+            else:
+                pvo.run_callbacks()
+
         # DCCT Fout
-        self._fout_dcct_dev.wait_for_connection(timeout=conntimeout)
+        self._fout_dcct_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for propty_sp, desired_val in self._const.FOUT2_CONFIGS:
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._fout_dcct_dev.pv_object(propty_rb)
-            pvo.add_callback(_part(
-                self._callback_lock, self._fout_dcct_dev,
-                propty_sp, desired_val))
-            pvo.run_callbacks()
+            if init:
+                self._lock_pvs['Fouts'].append(pvo.pvname)
+                pvo.add_callback(_part(
+                    self._callback_lock, self._fout_dcct_dev,
+                    propty_sp, desired_val))
+            else:
+                pvo.run_callbacks()
 
-        # interlock redundancy EVR
-        self._evrdelta_dev.wait_for_connection(timeout=conntimeout)
+    def _handle_lock_redundancy_evr(self, init=False):
+        self._evrdelta_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for propty_sp, desired_val in self._const.INTLKREDEVR_CONFIGS:
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._evrdelta_dev.pv_object(propty_rb)
-            pvo.add_callback(_part(
-                self._callback_lock, self._evrdelta_dev,
-                propty_sp, desired_val))
-            pvo.run_callbacks()
+            if init:
+                self._lock_pvs['EVRRedun'].append(pvo.pvname)
+                pvo.add_callback(_part(
+                    self._callback_lock, self._evrdelta_dev,
+                    propty_sp, desired_val))
+            else:
+                pvo.run_callbacks()
 
-        # triggers
+    def _handle_lock_afcti(self, init=False):
+        for dev in self._afcti_devs.values():
+            dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
+            for propty_sp, desired_val in self._const.AFCTI_CONFIGS:
+                propty_rb = _PVName.from_sp2rb(propty_sp)
+                pvo = dev.pv_object(propty_rb)
+                if init:
+                    self._lock_pvs['AFCTI'].append(pvo.pvname)
+                    pvo.add_callback(_part(
+                        self._callback_lock, dev, propty_sp, desired_val))
+                else:
+                    pvo.run_callbacks()
+
+    def _handle_lock_hltriggers(self, init=False):
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             trigdev = self._hltrig_devs[trigname]
-            trigdev.wait_for_connection(timeout=conntimeout)
+            trigdev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             for prop_sp, desired_val in configs:
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = trigdev.pv_object(prop_rb)
-                pvo.add_callback(
-                    _part(self._callback_lock, trigdev, prop_sp, desired_val))
-                pvo.run_callbacks()
+                if init:
+                    self._lock_pvs['HLTriggers'].append(pvo.pvname)
+                    pvo.add_callback(
+                        _part(self._callback_lock, trigdev, prop_sp, desired_val))
+                else:
+                    pvo.run_callbacks()
+    
+    def _handle_lock_llrf(self, init=False):
+        self._llrf.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
+        pvo_beamtrip = self._llrf.pv_object('ILK:BEAM:TRIP')
+        pvo_manintlk = self._llrf.pv_object('ILK:MAN')
+        if init:
+            self._lock_pvs['LLRF'].append(pvo_beamtrip.pvname)
+            pvo_beamtrip.add_callback(_part(
+                self._callback_lock, self._llrf,
+                'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
+            self._lock_pvs['LLRF'].append(pvo_manintlk.pvname)
+            pvo_manintlk.add_callback(_part(
+                self._callback_lock, self._llrf,
+                'ILK:MAN:S', self._llrf_intlk_state))
+        else:
+            pvo_beamtrip.run_callbacks()
+            pvo_manintlk.run_callbacks()
 
-        # LLRF
-        self._llrf.wait_for_connection(timeout=conntimeout)
-        pvo = self._llrf.pv_object('ILK:BEAM:TRIP')
-        pvo.add_callback(_part(
-            self._callback_lock, self._llrf,
-            'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
-        pvo = self._llrf.pv_object('ILK:MAN')
-        pvo.add_callback(_part(
-            self._callback_lock, self._llrf,
-            'ILK:MAN:S', self._llrf_intlk_state))
-        pvo.run_callbacks()
-
-        # BPM devices
+    def _handle_lock_bpm_configs(self, init=False):
         # lock BPM interlock enable and limits
         prop2lock = [
             'IntlkMinSumEn-Sts',
@@ -435,40 +495,55 @@ class App(_Callback):
             'IntlkLmtAngMinX-RB',
             'IntlkLmtAngMaxY-RB',
             'IntlkLmtAngMinY-RB',
-            'IntlkEn-Sts',
         ]
-        self._orbintlk_dev.wait_for_connection(timeout=conntimeout)
+        self._orbintlk_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for dev in self._orbintlk_dev.devices:
             for prop in prop2lock:
                 pvo = dev.pv_object(prop)
-                pvo.add_callback(self._callback_bpm_lock)
-                pvo.run_callbacks()
+                if init:
+                    self._lock_pvs['BPM'].append(pvo.pvname)
+                    pvo.add_callback(self._callback_bpm_lock)
+                else:
+                    pvo.run_callbacks()
 
         # lock BPM logical triggers
-        self._fambpm_dev.wait_for_connection(timeout=conntimeout)
+        self._fambpm_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for dev in self._fambpm_dev.devices:
             for prop_sp, desired_val in self._const.SIBPMLOGTRIG_CONFIGS:
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
-                pvo.add_callback(
-                    _part(self._callback_lock, dev, prop_sp, desired_val))
+                if init:
+                    self._lock_pvs['BPM'].append(pvo.pvname)
+                    pvo.add_callback(
+                        _part(self._callback_lock, dev, prop_sp, desired_val))
+                else:
+                    pvo.run_callbacks()
+
+    def _handle_lock_bpm_enable(self, init=False):
+        self._orbintlk_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
+        for dev in self._orbintlk_dev.devices:
+            pvo = dev.pv_object('IntlkEn-Sts')
+            if init:
+                pvo.add_callback(self._callback_bpm_lock)
+            else:
                 pvo.run_callbacks()
 
-        # lock AFC physical triggers
+    def _handle_lock_afcphytrigs(self, init=False):
         for dev in self._phytrig_devs:
-            dev.wait_for_connection(timeout=conntimeout)
+            dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             for prop_sp, desired_val in self._const.AFCPHYTRIG_CONFIGS:
-                # only lock polarity of other AFC physical triggers
+                # only lock polarity of other AFC physical triggers than SI BPM
                 if dev.devname not in self._const.bpm_names and \
                         prop_sp != 'DirPol-Sel':
                     continue
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
-                pvo.add_callback(
-                    _part(self._callback_lock, dev, prop_sp, desired_val))
-                pvo.run_callbacks()
-
-        self._update_log('...lock running.')
+                if init:
+                    self._lock_pvs['AFCPhysTriggers'].append(pvo.pvname)
+                    pvo.add_callback(
+                        _part(self._callback_lock, dev, prop_sp, desired_val))
+                else:
+                    pvo.run_callbacks()
 
     @property
     def pvs_database(self):
@@ -535,6 +610,11 @@ class App(_Callback):
 
         bkup = int(self._state)
         self._state = value
+
+        if self._state:
+            self._enable_lock()
+        else:
+            self._disable_lock()
 
         if not self._orbintlk_dev.set_gen_enable(list(glob_en)):
             self._update_log('ERR:Could not set BPM general')
@@ -1387,7 +1467,7 @@ class App(_Callback):
 
     def _start_lock_thread(
             self, device, propty_sp, desired_value, pvname, value):
-        if self._lock_suspend:
+        if self._lock_suspend and pvname not in self._lock_temp_pvs:
             return
 
         # if there is already a lock thread, return

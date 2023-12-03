@@ -96,6 +96,12 @@ class Const(_csdev.Const):
     FOUT2_CONFIGS = (
         ('RxEnbl-SP', 0b01000001),
     )
+    AFCTI_CONFIGS = (
+        ('RTMPhasePropGain-SP', 100),
+        ('RTMPhaseIntgGain-SP', 1),
+        ('RTMFreqPropGain-SP', 1),
+        ('RTMFreqIntgGain-SP', 128),
+    )
     AFCPHYTRIG_CONFIGS = (
         ('Dir-Sel', 0),
         ('DirPol-Sel', 1),
