@@ -960,9 +960,8 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['EVG'])
-        self._handle_lock_evg_configs()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_evg_configs, 'EVG')
+        return True
 
     def cmd_config_fouts(self, value):
         """Configure Fouts according to lock configurations."""
@@ -970,9 +969,8 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['Fouts'])
-        self._handle_lock_fouts()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_fouts, 'Fouts')
+        return True
 
     def cmd_config_deltaevr(self, value):
         """Configure Delta EVR according to lock configurations."""
@@ -980,9 +978,8 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['EVRRedun'])
-        self._handle_lock_redundancy_evr()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_redundancy_evr, 'EVRRedun')
+        return True
 
     def cmd_config_afcti(self, value):
         """Configure all AFC timing according to lock configurations."""
@@ -997,9 +994,8 @@ class App(_Callback):
             self._update_log('ERR:Open correction loops before ')
             self._update_log('ERR:configuring AFC Timing RTM loop.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['AFCTI'])
-        self._handle_lock_afcti()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_afcti, 'AFCTI')
+        return True
 
     def cmd_config_hltrigs(self, value):
         """Configure HL triggers according to lock configurations."""
@@ -1007,9 +1003,8 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['HLTriggers'])
-        self._handle_lock_hltriggers()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_hltriggers, 'HLTriggers')
+        return True
 
     def cmd_config_llrf(self, value):
         """Configure LLRF interlock according to lock configurations."""
@@ -1017,9 +1012,8 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['LLRF'])
-        self._handle_lock_llrf()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_llrf, 'LLRF')
+        return True
 
     def cmd_config_bpms(self, value):
         """Configure BPMs according to lock configurations."""
@@ -1027,9 +1021,8 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['BPM'])
-        self._handle_lock_bpm_configs()
-        self._lock_temp_pvs.clear()
+        self._do_auxiliary_cmd(self._handle_lock_bpm_configs, 'BPM')
+        return True
 
     def cmd_config_phytrigs(self, value):
         """Configure physical triggers according to lock configurations."""
@@ -1037,8 +1030,20 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._lock_temp_pvs.update(self._lock_pvs['AFCPhysTriggers'])
-        self._handle_lock_afcphytrigs()
+        self._do_auxiliary_cmd(
+            self._handle_lock_afcphytrigs, 'AFCPhysTriggers')
+        return True
+
+    def _do_auxiliary_cmd(self, func, pvgroup):
+        self._lock_temp_pvs.update(self._lock_pvs[pvgroup])
+        func()
+        for pvn in self._lock_temp_pvs:
+            if pvn not in self._lock_threads:
+                continue
+            _time.sleep(0.02)
+            thread = self._lock_threads[pvn]
+            if thread.is_alive():
+                thread.join()
         self._lock_temp_pvs.clear()
 
     # --- status methods ---
