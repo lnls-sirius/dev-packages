@@ -1233,8 +1233,9 @@ class App(_Callback):
             value = _updt_bit(value, 8, not okg)
         else:
             value += 0b11 << 7
-        # Delta Interlock Redundancy EVR 
-        if self._evrdelta_dev.connected:
+        # Delta Interlock Redundancy EVR
+        dev = self._evrdelta_dev
+        if dev.connected:
             okg = True
             for prp, val in self._const.INTLKREDEVR_CONFIGS:
                 prp_rb = _PVName.from_sp2rb(prp)
