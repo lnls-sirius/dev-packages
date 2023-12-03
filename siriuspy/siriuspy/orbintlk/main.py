@@ -327,6 +327,7 @@ class App(_Callback):
             'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
         self.run_callbacks(
             'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
+        self._config_fout_rxenbl()
 
         # limits
         for ilk in ['Pos', 'Ang']:
@@ -887,6 +888,8 @@ class App(_Callback):
         for fout, dev in self._fout_devs.items():
             rxenbl = fout2rx.get(fout, 0)
             self._fout2rxenbl[fout] = rxenbl
+            if not self._init:
+                continue
             dev['RxEnbl-SP'] = rxenbl
             dev._wait('RxEnbl-RB', rxenbl, timeout=1)
             dev['RxLockedLtcRst-Cmd'] = 1
