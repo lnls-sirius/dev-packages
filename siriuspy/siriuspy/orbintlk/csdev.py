@@ -91,7 +91,7 @@ class Const(_csdev.Const):
         ('DIN0State-Sel', 1),
         ('DIN0Evt-SP', 118),
         ('DIN0Polarity-Sel', 0),
-        ('DIN0Log-Sel', 0),
+        ('DIN0Log-Sel', 1),
     )
     FOUT2_CONFIGS = (
         ('RxEnbl-SP', 0b01000001),
