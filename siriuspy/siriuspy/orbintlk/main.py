@@ -71,7 +71,7 @@ class App(_Callback):
         self._lock_suspend = True
         self._lock_pvs = {
             k: list() for k in
-            ['EVG', 'Fouts', 'EVRRedun', 'AFCTI', 'HLTriggers',
+            ['EVG', 'Fouts', 'AFCTI', 'HLTriggers',
              'LLRF', 'BPM', 'AFCPhysTriggers']}
         self._set_queue = _LoopQueueThread()
         self._set_queue.start()
@@ -164,17 +164,6 @@ class App(_Callback):
         pvo.wait_for_connection()
         self._everf_evtcnt = pvo.get() or 0
 
-        # # delta redundancy EVR
-        self._evrdelta_dev = _Device(  # TODO: change to use new hltrigger
-            'IA-10RaBPM:TI-EVR',
-            props2init=[
-                'DevEnbl-Sel', 'DevEnbl-Sts',
-                'DIN0State-Sel', 'DIN0State-Sts',
-                'DIN0Evt-SP', 'DIN0Evt-RB',
-                'DIN0Polarity-Sel', 'DIN0Polarity-Sts',
-                'DIN0Log-Sel', 'DIN0Log-Sts',
-            ])
-
         # # HL triggers
         self._hltrig_devs = dict()
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
@@ -187,10 +176,9 @@ class App(_Callback):
                 trigname=trigname,
                 props2init=props2init,
                 auto_monitor_mon=True)
-            if 'DCCT' in trigname:
-                continue
-            pvo = self._hltrig_devs[trigname].pv_object('Status-Mon')
-            pvo.add_callback(self._callback_hltrig_status)
+            if 'LLRF' in trigname or 'OrbIntlkRedundancy' in trigname:
+                pvo = self._hltrig_devs[trigname].pv_object('Status-Mon')
+                pvo.add_callback(self._callback_hltrig_status)
 
         # # BPM devices
         self._orbintlk_dev = _OrbitIntlk()
@@ -289,7 +277,6 @@ class App(_Callback):
             'ResetAFCTimingRTMClk-Cmd': self.cmd_reset_afcti_rtmclk,
             'ConfigEVG-Cmd': self.cmd_config_evg,
             'ConfigFouts-Cmd': self.cmd_config_fouts,
-            'ConfigDeltaRedunEVR-Cmd': self.cmd_config_deltaevr,
             'ConfigAFCTiming-Cmd': self.cmd_config_afcti,
             'ConfigHLTriggers-Cmd': self.cmd_config_hltrigs,
             'ConfigLLRFIntlk-Cmd': self.cmd_config_llrf,
@@ -378,7 +365,6 @@ class App(_Callback):
             self._lock_suspend = False
         self._handle_lock_evg_configs(init)
         self._handle_lock_fouts(init)
-        self._handle_lock_redundancy_evr(init)
         self._handle_lock_afcti(init)
         self._handle_lock_hltriggers(init)
         self._handle_lock_llrf(init)
@@ -432,19 +418,6 @@ class App(_Callback):
                 self._lock_pvs['Fouts'].append(pvo.pvname)
                 pvo.add_callback(_part(
                     self._callback_lock, self._fout_dcct_dev,
-                    propty_sp, desired_val))
-            else:
-                pvo.run_callbacks()
-
-    def _handle_lock_redundancy_evr(self, init=False):
-        self._evrdelta_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
-        for propty_sp, desired_val in self._const.INTLKREDEVR_CONFIGS:
-            propty_rb = _PVName.from_sp2rb(propty_sp)
-            pvo = self._evrdelta_dev.pv_object(propty_rb)
-            if init:
-                self._lock_pvs['EVRRedun'].append(pvo.pvname)
-                pvo.add_callback(_part(
-                    self._callback_lock, self._evrdelta_dev,
                     propty_sp, desired_val))
             else:
                 pvo.run_callbacks()
@@ -973,15 +946,6 @@ class App(_Callback):
         self._do_auxiliary_cmd(self._handle_lock_fouts, 'Fouts')
         return True
 
-    def cmd_config_deltaevr(self, value):
-        """Configure Delta EVR according to lock configurations."""
-        _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
-        self._do_auxiliary_cmd(self._handle_lock_redundancy_evr, 'EVRRedun')
-        return True
-
     def cmd_config_afcti(self, value):
         """Configure all AFC timing according to lock configurations."""
         _ = value
@@ -1249,16 +1213,6 @@ class App(_Callback):
             value = _updt_bit(value, 8, not okg)
         else:
             value += 0b11 << 7
-        # Delta Interlock Redundancy EVR
-        dev = self._evrdelta_dev
-        if dev.connected:
-            okg = True
-            for prp, val in self._const.INTLKREDEVR_CONFIGS:
-                prp_rb = _PVName.from_sp2rb(prp)
-                okg &= dev[prp_rb] == val
-            value = _updt_bit(value, 10, not okg)
-        else:
-            value += 0b11 << 9
         # AFC Physical triggers
         if all(dev.connected for dev in self._phytrig_devs):
             okg = True

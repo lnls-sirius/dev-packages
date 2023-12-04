@@ -29,9 +29,10 @@ class ETypes(_csdev.ETypes):
         'FoutsBPMConn', 'FoutsBPMConfig',
         'FoutsDCCTConn', 'FoutsDCCTConfig',
         'AFCTimingConn', 'AFCTimingConfig',
-        'EVRIntlkRedundancyConn', 'EVRIntlkRedundancyConfig', 
         'AFCPhysTrigsConn', 'AFCPhysTrigsConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
+        'OrbIntlkRedTrigConn', 'OrbIntlkRedTrigStatusOK',
+        'OrbIntlkRedTrigConfig',
         'LLRFPsMtmTrigConn', 'LLRFPsMtmTrigStatusOK', 'LLRFPsMtmTrigConfig',
         'BPMPsMtmTrigConn', 'BPMPsMtmTrigStatusOK', 'BPMPsMtmTrigConfig',
         'DCCT13C4PsMtmTrigConn', 'DCCT13C4PsMtmTrigStatusOK',
@@ -64,38 +65,33 @@ class Const(_csdev.Const):
             ('DelayRaw-SP', 0),
             ('State-Sel', 1),
             ('WidthRaw-SP', 1),
-            ('Direction-Sel', 1))
-        ),
+            ('Direction-Sel', 1))),
+        ('SI-Fam:TI-OrbIntlkRedundancy', (
+            ('Src-Sel', 0),
+            ('State-Sel', 1),
+            ('Polarity-Sts', 0),
+            ('Log-Sel', 1))),
         ('SI-Glob:TI-LLRF-PsMtm', (
             ('Src-Sel', 5),
             ('DelayRaw-SP', 0),
             ('State-Sel', 1),
-            ('WidthRaw-SP', 9369))
-        ),
+            ('WidthRaw-SP', 9369))),
         ('SI-Fam:TI-BPM-PsMtm', (
             ('Src-Sel', 5),
             ('DelayRaw-SP', 0),
             ('State-Sel', 1),
-            ('WidthRaw-SP', 6))
-        ),
+            ('WidthRaw-SP', 6))),
         ('SI-13C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
             ('State-Sel', 1),
-            ('Log-Sel', 0))
-        ),
+            ('Polarity-Sts', 0),
+            ('Log-Sel', 0))),
         ('SI-14C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
             ('State-Sel', 1),
-            ('Log-Sel', 0))
-        ),
+            ('Polarity-Sts', 0),
+            ('Log-Sel', 0))),
     ]
-    INTLKREDEVR_CONFIGS = (
-        ('DevEnbl-Sel', 1),
-        ('DIN0State-Sel', 1),
-        ('DIN0Evt-SP', 118),
-        ('DIN0Polarity-Sel', 0),
-        ('DIN0Log-Sel', 1),
-    )
     FOUT2_CONFIGS = (
         ('RxEnbl-SP', 0b01000001),
     )
@@ -395,7 +391,6 @@ class Const(_csdev.Const):
             # Config devices
             'ConfigEVG-Cmd': {'type': 'int', 'value': 0},
             'ConfigFouts-Cmd': {'type': 'int', 'value': 0},
-            'ConfigDeltaRedunEVR-Cmd': {'type': 'int', 'value': 0},
             'ConfigAFCTiming-Cmd': {'type': 'int', 'value': 0},
             'ConfigHLTriggers-Cmd': {'type': 'int', 'value': 0},
             'ConfigLLRFIntlk-Cmd': {'type': 'int', 'value': 0},
