@@ -1250,7 +1250,7 @@ class DELTA(_ID):
 
     def _calc_eta(self, pparam, kparam):
         """."""
-        if self.polarization_mon_str == 'circularp':
+        if kparam is not None and self.polarization_mon_str == 'circularp':
             kparam = -kparam
         return super()._calc_eta(pparam, kparam)
 
