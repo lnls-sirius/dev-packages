@@ -1312,7 +1312,7 @@ class App(_Callback):
 
     def _callback_evg_intlk(self, value, **kws):
         _ = kws
-        if not self._init:
+        if not self._state:
             return
         if self._thread_cbevgilk and self._thread_cbevgilk.is_alive():
             return
