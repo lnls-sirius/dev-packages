@@ -70,8 +70,8 @@ class App(_Callback):
         self._lock_failures = set()
         self._lock_suspend = True
         self._lock_pvs = {
-            k: list() for k in 
-            ['EVG', 'Fouts', 'EVRRedun', 'AFCTI', 'HLTriggers', 
+            k: list() for k in
+            ['EVG', 'Fouts', 'EVRRedun', 'AFCTI', 'HLTriggers',
              'LLRF', 'BPM', 'AFCPhysTriggers']}
         self._set_queue = _LoopQueueThread()
         self._set_queue.start()
@@ -140,10 +140,10 @@ class App(_Callback):
                 props2init=[
                     'RTMClkLockedLtc-Mon', 'ClkLockedLtcRst-Cmd',
                     'RTMClkRst-Cmd',
-                    'RTMPhasePropGain-SP', 'RTMPhasePropGain-RB', 
-                    'RTMPhaseIntgGain-SP', 'RTMPhaseIntgGain-RB', 
-                    'RTMFreqPropGain-SP', 'RTMFreqPropGain-RB', 
-                    'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB', 
+                    'RTMPhasePropGain-SP', 'RTMPhasePropGain-RB',
+                    'RTMPhaseIntgGain-SP', 'RTMPhaseIntgGain-RB',
+                    'RTMFreqPropGain-SP', 'RTMFreqPropGain-RB',
+                    'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
@@ -164,7 +164,7 @@ class App(_Callback):
         self._everf_evtcnt = pvo.get() or 0
 
         # # delta redundancy EVR
-        self._evrdelta_dev = _Device(
+        self._evrdelta_dev = _Device(  # TODO: change to use new hltrigger
             'IA-10RaBPM:TI-EVR',
             props2init=[
                 'DevEnbl-Sel', 'DevEnbl-Sts',
@@ -184,7 +184,7 @@ class App(_Callback):
             props2init.append('Status-Mon')
             self._hltrig_devs[trigname] = _Trigger(
                 trigname=trigname,
-                props2init=props2init, 
+                props2init=props2init,
                 auto_monitor_mon=True)
             if 'DCCT' in trigname:
                 continue
@@ -247,10 +247,10 @@ class App(_Callback):
         self._llrf = _ASLLRF(
             devname=_ASLLRF.DEVICES.SI,
             props2init=[
-                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON', 
+                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON',
                 'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd',
             ])
-        self._llrf.pv_object('FASTINLK-MON').auto_monitor = True        
+        self._llrf.pv_object('FASTINLK-MON').auto_monitor = True
 
         # # auxiliary devices
         self._fofb = _FOFB(
@@ -286,14 +286,14 @@ class App(_Callback):
             'PsMtmAcqConfig-Cmd': self.cmd_acq_config,
             'ResetTimingLockLatches-Cmd': self.cmd_reset_ti_lock_latch,
             'ResetAFCTimingRTMClk-Cmd': self.cmd_reset_afcti_rtmclk,
-            'ConfigEVG-Cmd': self.cmd_config_evg, 
-            'ConfigFouts-Cmd': self.cmd_config_fouts, 
-            'ConfigDeltaRedunEVR-Cmd': self.cmd_config_deltaevr, 
-            'ConfigAFCTiming-Cmd': self.cmd_config_afcti, 
-            'ConfigHLTriggers-Cmd': self.cmd_config_hltrigs, 
-            'ConfigLLRFIntlk-Cmd': self.cmd_config_llrf, 
-            'ConfigBPMs-Cmd': self.cmd_config_bpms, 
-            'ConfigAFCPhyTrigs-Cmd': self.cmd_config_phytrigs, 
+            'ConfigEVG-Cmd': self.cmd_config_evg,
+            'ConfigFouts-Cmd': self.cmd_config_fouts,
+            'ConfigDeltaRedunEVR-Cmd': self.cmd_config_deltaevr,
+            'ConfigAFCTiming-Cmd': self.cmd_config_afcti,
+            'ConfigHLTriggers-Cmd': self.cmd_config_hltrigs,
+            'ConfigLLRFIntlk-Cmd': self.cmd_config_llrf,
+            'ConfigBPMs-Cmd': self.cmd_config_bpms,
+            'ConfigAFCPhyTrigs-Cmd': self.cmd_config_phytrigs,
             }
 
         # configuration scanning
@@ -371,7 +371,7 @@ class App(_Callback):
         # start init lock devices
         self._lock_temp_pvs = set()
         self._enable_lock(init=True)
-    
+
     def _enable_lock(self, init=False):
         if not init:
             self._lock_suspend = False
@@ -390,7 +390,7 @@ class App(_Callback):
     def _disable_lock(self):
         self._lock_temp_pvs = set()
         self._lock_suspend = True
-    
+
     def _handle_lock_evg_configs(self, init=False):
         self._evg_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for propty_sp, desired_val in self._const.EVG_CONFIGS:
@@ -402,7 +402,7 @@ class App(_Callback):
                     self._callback_lock, self._evg_dev, propty_sp, desired_val))
             else:
                 pvo.run_callbacks()
-    
+
     def _handle_lock_evg_enable(self, init=False):
         # lock interlock enable state
         pvo = self._evg_dev.pv_object('IntlkCtrlEnbl-Sts')
@@ -474,7 +474,7 @@ class App(_Callback):
                         _part(self._callback_lock, trigdev, prop_sp, desired_val))
                 else:
                     pvo.run_callbacks()
-    
+
     def _handle_lock_llrf(self, init=False):
         self._llrf.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         pvo_beamtrip = self._llrf.pv_object('ILK:BEAM:TRIP')
@@ -605,7 +605,7 @@ class App(_Callback):
         Configure global BPM interlock enable and EVG interlock enable."""
         self._set_queue.put((self._do_set_enable, (value, )))
         return True
-    
+
     def _do_set_enable(self, value):
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             self.run_callbacks('Enable-Sel', self._state)
@@ -987,7 +987,7 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        # do not allow user configurate loop params in case of 
+        # do not allow user configurate loop params in case of
         # correction loops closed
         if not self._fofb.connected or self._fofb['LoopState-Sts'] or \
                 not self._sofb.connected or self._sofb['LoopState-Sts']:
@@ -1027,7 +1027,7 @@ class App(_Callback):
 
         for name, lim in self._limits.items():
             self.set_intlk_lims(name, lim)
-        
+
         for dev in self._fambpm_dev.devices:
             for prop, desired_val in self._const.SIBPMLOGTRIG_CONFIGS:
                 dev[prop] = desired_val
@@ -1116,7 +1116,7 @@ class App(_Callback):
                 if 'AMCFPGA' in devname else None
             if dev is None:
                 self._update_log(f'ERR:Could not verify {devname} state.')
-                return False 
+                return False
 
             if not dev.connected:
                 self._update_log(f'ERR:{dev.devname} not connected')
@@ -1425,8 +1425,8 @@ class App(_Callback):
             return
         # launch thread to log interlock details
         _CAThread(
-            target=self._log_bpm_intlk, 
-            args=(_PVName(pvname).device_name, ), 
+            target=self._log_bpm_intlk,
+            args=(_PVName(pvname).device_name, ),
             daemon=True).start()
         # launch thread to send interlock to RF as a backup
         if self._thread_cbbpm and self._thread_cbbpm.is_alive():
