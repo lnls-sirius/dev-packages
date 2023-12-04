@@ -17,6 +17,7 @@ class _PARAM_PVS:
     IS_MOVING = 'Moving-Mon'
     BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
     BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
+    MOVE_ABORT = None
 
     # --- PPARAM ---
     PPARAM_SP = None
@@ -368,6 +369,11 @@ class _ID(_Device):
         """Command to enable ID movements."""
         return True
 
+    def cmd_move_abort(self):
+        """."""
+        if self.PARAM_PVS.MOVE_ABORT is not None:
+            self[self.PARAM_PVS.MOVE_ABORT] = 1
+
     def cmd_move_stop(self, timeout=None):
         """Command to interrupt and then enable phase movements."""
         timeout = timeout or self._DEF_TIMEOUT
@@ -376,8 +382,11 @@ class _ID(_Device):
         if not self.wait_while_busy(timeout=timeout):
             return False
 
-        # # send stop command
-        # self.cmd_move_disable()
+        # send abort command
+        self.cmd_move_abort()
+
+        # send disable command
+        self.cmd_move_disable()
 
         # check for successful stop
         if not self.wait_while_busy(timeout=timeout):
@@ -385,9 +394,9 @@ class _ID(_Device):
         if not self.wait_move_finish(timeout=timeout):
             return False
 
-        # # enable movement again
-        # if not self.cmd_move_enable(timeout=timeout):
-        #     return False
+        # enable movement again
+        if not self.cmd_move_enable(timeout=timeout):
+            return False
 
         return True
 
@@ -415,8 +424,13 @@ class _ID(_Device):
 
     def cmd_move_park(self, timeout=None):
         """Move ID to parked config."""
-        pparam, kparam = self.pparameter_parked, self.kparameter_parked
-        return self.cmd_move(pparam, kparam, timeout)
+        if self.PARAM_PVS.START_PARKING_CMD is not None:
+            self[self.PARAM_PVS.START_PARKING_CMD] = 1
+            pparam, kparam = self.pparameter_parked, self.kparameter_parked
+            return self.wait_move_config(pparam, kparam)
+        else:
+            pparam, kparam = self.pparameter_parked, self.kparameter_parked
+            return self.cmd_move(pparam, kparam, timeout)
 
     def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
@@ -1100,6 +1114,7 @@ class DELTA(_ID):
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
     PARAM_PVS.PPARAM_SP = 'PParam-SP'
     PARAM_PVS.PPARAM_RB = 'PParam-RB'
     PARAM_PVS.PPARAM_MON = 'PParam-Mon'
