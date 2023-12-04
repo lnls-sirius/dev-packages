@@ -139,6 +139,15 @@ class _ID(_Device):
         else:
             return None
 
+    @property
+    def polarization_mon_str(self):
+        """Return ID polarization string."""
+        pol_idx = self.polarization_mon
+        if pol_idx is None:
+            return None
+        else:
+            return self._pols_sts_str[pol_idx]
+
     # --- pparameter ---
 
     @property
@@ -1238,6 +1247,12 @@ class DELTA(_ID):
             pos_cie = 0
         """
         return self['CIDVirtPos-Mon']
+
+    def _calc_eta(self, pparam, kparam):
+        """."""
+        if self.polarization_mon_str == 'circularp':
+            kparam = -kparam
+        return super()._calc_eta(pparam, kparam)
 
 
 class WIG(_ID):
