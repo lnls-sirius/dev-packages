@@ -395,7 +395,7 @@ class _ID(_Device):
             return False
 
         # enable movement again
-        if not self.cmd_move_enable(timeout=timeout):
+        if not self.cmd_move_enable():
             return False
 
         return True
@@ -424,12 +424,13 @@ class _ID(_Device):
 
     def cmd_move_park(self, timeout=None):
         """Move ID to parked config."""
+        pparam, kparam = self.pparameter_parked, self.kparameter_parked
+        timeout = self._calc_eta(pparam, kparam) if timeout is None \
+            else timeout
         if self.PARAM_PVS.START_PARKING_CMD is not None:
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
-            pparam, kparam = self.pparameter_parked, self.kparameter_parked
-            return self.wait_move_config(pparam, kparam)
+            return self.wait_move_config(pparam, kparam, timeout)
         else:
-            pparam, kparam = self.pparameter_parked, self.kparameter_parked
             return self.cmd_move(pparam, kparam, timeout)
 
     def cmd_move_pparameter(self, pparam=None, timeout=None):
@@ -472,14 +473,8 @@ class _ID(_Device):
             timeout = max(timeout - (t1_ - t0_), 0)
 
         # calc ETA
-        dtime_kparam = 0 if kparam is None else \
-            abs(kparam - self.kparameter_mon) / self.kparameter_speed
-        dtime_pparam = 0 if pparam is None else \
-            abs(pparam - self.pparameter_mon) / self.pparameter_speed
-        dtime_max = max(dtime_kparam, dtime_pparam)
-        # additional percentual in ETA
-        dtime = 4.0 * dtime_max + 5
-        timeout = dtime if timeout is None else max(dtime - timeout, 0)
+        eta = self._calc_eta(pparam, kparam)
+        timeout = eta if timeout is None else max(eta - timeout, 0)
 
         # wait for movement within reasonable time
         return self.wait_move_config(pparam, kparam, timeout)
@@ -556,6 +551,22 @@ class _ID(_Device):
             if _time.time() - t0_ > timeout:
                 return False
         return True
+
+    def _calc_eta(self, pparam, kparam):
+        """."""
+        # calc ETA
+        dtime_kparam = 0 if kparam is None else \
+            abs(kparam - self.kparameter_mon) / self.kparameter_speed
+        dtime_pparam = 0 if pparam is None else \
+            abs(pparam - self.pparameter_mon) / self.pparameter_speed
+        dtime_max = self._calc_eta_select_time(dtime_kparam, dtime_pparam)
+        # additional percentual in ETA
+        eta = 4.0 * dtime_max + 5
+        return eta
+
+    @staticmethod
+    def _calc_eta_select_time(dtime_kparam, dtime_pparam):
+        return dtime_kparam + dtime_pparam
 
 
 class APU(_ID):
@@ -1098,6 +1109,12 @@ class EPU(PAPU):
     def cmd_clear_error(self):
         """Command to clear errors."""
         pass
+
+    # --- private methods ---
+
+    @staticmethod
+    def _calc_eta_select_time(dtime_kparam, dtime_pparam):
+        return max(dtime_kparam, dtime_pparam)
 
 
 class DELTA(_ID):
