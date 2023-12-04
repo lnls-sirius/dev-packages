@@ -561,7 +561,7 @@ class _ID(_Device):
             abs(pparam - self.pparameter_mon) / self.pparameter_speed
         dtime_max = self._calc_eta_select_time(dtime_kparam, dtime_pparam)
         # additional percentual in ETA
-        eta = 4.0 * dtime_max + 5
+        eta = 1.5 * dtime_max + 5
         return eta
 
     @staticmethod
