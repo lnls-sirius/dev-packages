@@ -474,7 +474,7 @@ class _ID(_Device):
 
         # calc ETA
         eta = self._calc_eta(pparam, kparam)
-        timeout = eta if timeout is None else max(eta - timeout, 0)
+        timeout = eta if timeout is None else timeout
 
         # wait for movement within reasonable time
         return self.wait_move_config(pparam, kparam, timeout)
