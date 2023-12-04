@@ -100,6 +100,7 @@ class Const(_csdev.Const):
         ('RxEnbl-SP', 0b01000001),
     )
     AFCTI_CONFIGS = (
+        ('DevEnbl-Sel', 1),
         ('RTMPhasePropGain-SP', 100),
         ('RTMPhaseIntgGain-SP', 1),
         ('RTMFreqPropGain-SP', 1),

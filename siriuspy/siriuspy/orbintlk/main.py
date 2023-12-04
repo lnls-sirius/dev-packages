@@ -138,6 +138,7 @@ class App(_Callback):
             idx+1: _Device(
                 f'IA-{idx+1:02}RaBPM:TI-AMCFPGAEVR',
                 props2init=[
+                    'DevEnbl-Sel', 'DevEnbl-Sts',
                     'RTMClkLockedLtc-Mon', 'ClkLockedLtcRst-Cmd',
                     'RTMClkRst-Cmd',
                     'RTMPhasePropGain-SP', 'RTMPhasePropGain-RB',
