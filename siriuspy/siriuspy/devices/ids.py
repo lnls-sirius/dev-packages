@@ -325,19 +325,38 @@ class _ID(_Device):
         """Command disable bealine ID control."""
         return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
 
-    # --- cmd_wait
+    # --- wait
 
     def wait_while_busy(self, timeout=None):
         """Command wait within timeout while ID control is busy."""
         return True
 
-    def cmd_wait_move_start(self, timeout=None):
+    def wait_move_start(self, timeout=None):
         """Wait for movement to start."""
         return self._wait('Moving-Mon', 1, timeout)
 
-    def cmd_wait_move_finish(self, timeout=None):
+    def wait_move_finish(self, timeout=None):
         """Wait for movement to finish."""
         return self._wait('Moving-Mon', 0, timeout)
+
+    def wait_move_config(self, pparam, kparam, timeout):
+        """."""
+        tol_kparam, tol_pparam = self.kparameter_tol, self.pparameter_tol
+        # wait for movement within reasonable time
+        time_init = _time.time()
+        while True:
+            k_pos_ok = True if kparam is None else \
+                abs(abs(self.kparameter_mon) - abs(kparam)) <= tol_kparam
+            p_pos_ok = True if pparam is None else \
+                abs(self.pparameter_mon - pparam) <= tol_pparam
+            if p_pos_ok and k_pos_ok and not self.is_moving:
+                return True
+            if _time.time() - time_init > timeout:
+                print(f'tol_total: {timeout:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
+                return False
+            _time.sleep(self._SHORT_SHUT_EYE)
 
     # --- cmd_move ---
 
@@ -363,7 +382,7 @@ class _ID(_Device):
         # check for successful stop
         if not self.wait_while_busy(timeout=timeout):
             return False
-        if not self.cmd_wait_move_finish(timeout=timeout):
+        if not self.wait_move_finish(timeout=timeout):
             return False
 
         # # enable movement again
@@ -399,19 +418,44 @@ class _ID(_Device):
         pparam, kparam = self.pparameter_parked, self.kparameter_parked
         return self.cmd_move(pparam, kparam, timeout)
 
-    def cmd_move_pparameter(self, pparam, timeout=None):
+    def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
+        pparam = self.pparameter if pparam is None else pparam
         return self.cmd_move(pparam, None, timeout)
 
-    def cmd_move_kparameter(self, kparam, timeout=None):
+    def cmd_move_kparameter(self, kparam=None, timeout=None):
         """Command to set and start kparam movement."""
+        kparam = self.kparameter if kparam is None else kparam
         return self.cmd_move(None, kparam, timeout)
 
     def cmd_move(self, pparam=None, kparam=None, timeout=None):
         """Command to set and start pparam and kparam movements."""
         if self.PARAM_PVS.PPARAM_SP is None:
             pparam = None
-        kparam = self.kparameter if kparam is None else kparam
+
+        # set target pparam and kparam
+        t0_ = _time.time()
+        if pparam is not None and \
+                not self.pparameter_set(pparam, timeout=timeout):
+            return False
+        if kparam is not None and \
+                not self.kparameter_set(kparam, timeout=timeout):
+            return False
+        t1_ = _time.time()
+        if timeout is not None:
+            timeout = max(timeout - (t1_ - t0_), 0)
+
+        # command move start
+        t0_ = _time.time()
+        if pparam is not None and \
+                not self.cmd_move_pparameter_start(timeout=timeout):
+            return False
+        if kparam is not None and \
+                not self.cmd_move_kparameter_start(timeout=timeout):
+            return False
+        t1_ = _time.time()
+        if timeout is not None:
+            timeout = max(timeout - (t1_ - t0_), 0)
 
         # calc ETA
         dtime_kparam = 0 if kparam is None else \
@@ -419,42 +463,12 @@ class _ID(_Device):
         dtime_pparam = 0 if pparam is None else \
             abs(pparam - self.pparameter_mon) / self.pparameter_speed
         dtime_max = max(dtime_kparam, dtime_pparam)
-
         # additional percentual in ETA
-        tol_kparam, tol_pparam = self.kparameter_tol, self.pparameter_tol
-        tol_total = 4.0 * dtime_max + 5
-
-        # set target phase and gap
-        if pparam is not None and \
-                not self.pparameter_set(pparam, timeout=timeout):
-            return False
-        if kparam is not None and \
-                not self.kparameter_set(kparam, timeout=timeout):
-            return False
-
-        # command move start
-        if pparam is not None and \
-                not self.cmd_move_pparameter_start(timeout=timeout):
-            return False
-        if kparam is not None and \
-                not self.cmd_move_kparameter_start(timeout=timeout):
-            return False
+        dtime = 4.0 * dtime_max + 5
+        timeout = dtime if timeout is None else max(dtime - timeout, 0)
 
         # wait for movement within reasonable time
-        time_init = _time.time()
-        while True:
-            k_pos_ok = True if kparam is None else \
-                abs(abs(self.kparameter_mon) - abs(kparam)) <= tol_kparam
-            p_pos_ok = True if pparam is None else \
-                abs(self.pparameter_mon - pparam) <= tol_pparam
-            if p_pos_ok and k_pos_ok and not self.is_moving:
-                return True
-            if _time.time() - time_init > tol_total:
-                print(f'tol_total: {tol_total:.3f} s')
-                print(f'wait_time: {_time.time() - time_init:.3f} s')
-                print()
-                return False
-            _time.sleep(self._SHORT_SHUT_EYE)
+        return self.wait_move_config(pparam, kparam, timeout)
 
     def cmd_change_polarization(self, polarization, timeout=None):
         """."""
