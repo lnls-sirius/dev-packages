@@ -8,11 +8,9 @@ https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 import time as _time
 import numpy as _np
 
+from ...logging import get_logger as _get_logger
 from ...bsmp import constants as _const_bsmp
-from ...bsmp import (
-    BSMP as _BSMP,
-    IOInterface as _IOInterface,
-)
+from ...bsmp import BSMP as _BSMP, IOInterface as _IOInterface
 
 from . import constants as _const_psbsmp
 from . import entities as _etity_psbsmp
@@ -98,9 +96,8 @@ class PSBSMP(_BSMP):
     # --- bsmp overriden methods ---
 
     def execute_function(
-            self, func_id, input_val=None,
-            timeout=_timeout_execute_function,
-            read_flag=True, print_error=True):
+            self, func_id, input_val=None, timeout=_timeout_execute_function,
+            read_flag=True):
         """."""
         if func_id in (PSBSMP.CONST.F_SYNC_PULSE,
                        PSBSMP.CONST.F_RESET_UDC):
@@ -417,24 +414,24 @@ class PSBSMP(_BSMP):
         # read curve blocks
         curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(wfmref_size_min)
-        # print('reading - curve id: ', curve_id)
-        # print('reading - indices: ', indices)
+        # logger = self._logger
+        # logger.debug('reading - curve id: ' + str(curve_id))
+        # logger.debug('reading - indices: ' + str(indices))
         for block, idx in enumerate(indices):
-            # print('psbsmp.curve_read-0 ', curve_id, block)
+            # logger.debug('psbsmp.curve_read-0 ' + str(curve_id) + str(block))
             ack, data = self.request_curve_block(
-                curve_id=curve_id,
-                block=block,
-                timeout=self._timeout_request_curve_block,
-                print_error=False)
-            # print(sum(data))
-            # print((hex(ack), sum(data)))
-            # print('psbsmp.curve_read-1')
+                curve_id=curve_id, block=block,
+                timeout=self._timeout_request_curve_block)
+            # logger.debug(str(sum(data)))
+            # logger.debug(str((hex(ack), sum(data))))
+            # logger.debug('psbsmp.curve_read-1')
             if ack != self.CONST_BSMP.ACK_OK:
-                # print('psbsmp.curve_read-2')
+                # logger.debug('psbsmp.curve_read-2')
                 if curve_id == PSBSMP.CURVE_ID_SCOPE and \
                    ack == self.CONST_BSMP.ACK_RESOURCE_BUSY:
-                    # print('sit1, add:{}, curve_id:{}, block:{}'.format(
-                    #     add, curve_id, block))
+                    # logger.debug(
+                    #     'sit1, add:{}, curve_id:{}, block:{}'.format(
+                    #         add, curve_id, block))
                     # This is the expected behaviour when DSP is writting to
                     # buffer sample
                     return None
@@ -445,12 +442,14 @@ class PSBSMP(_BSMP):
                     curve_id=curve_id,
                     block=block,
                     index=idx)
-                # print('sit2, add:{}, curve_id:{}, block:{}'.format(
-                #     add, curve_id, block))
+                # logger.debug(
+                #     'sit2, add:{}, curve_id:{}, block:{}'.format(
+                #         add, curve_id, block))
                 return None
             else:
-                # print('sit3, add:{}, curve_id:{}, block:{}'.format(
-                #     add, curve_id, block))
+                # logger.debug(
+                #     'sit3, add:{}, curve_id:{}, block:{}'.format(
+                #         add, curve_id, block))
                 idx_w = slice(idx[0], idx[1])
                 idx_r = slice(0, idx[1] - idx[0])
                 curve[idx_w] = data[idx_r]
@@ -464,22 +463,24 @@ class PSBSMP(_BSMP):
         # send curve blocks
         curve_entity = self.entities.curves[curve_id]
         indices = curve_entity.get_indices(wfmref_size_min)
-        # print('writing - curve id: ', curve_id)
-        # print('writing - indices: ', indices)
+        logger  = self._logger
+        # logger.debug('writing - curve id: ' + str(curve_id))
+        # logger.debug('writing - indices: ' + str(indices))
 
         # time0 = _time.time()
         for block, idx in enumerate(indices):
             data = curve[idx[0]:idx[1]]
-            # print(sum(data))
+            # logger.debug(str(sum(data)))
             ack, data = self.curve_block(
                 curve_id=curve_id,
                 block=block,
                 value=data,
                 timeout=self._timeout_curve_block)
-            # print((hex(ack), data))
+            # logger.debug(str((hex(ack), data)))
             if ack != self.CONST_BSMP.ACK_OK:
-                print(('BSMP response not OK in '
-                       '_curve_bsmp_write: ack = 0x{:02X}!').format(ack))
+                logger.error(
+                    'BSMP response not OK in '
+                    f'_curve_bsmp_write: ack = 0x{ack:02X}!')
                 PSBSMP.anomalous_response(
                     self.CONST_BSMP.CMD_CURVE_BLOCK, ack,
                     curve_len=len(curve),
@@ -487,7 +488,7 @@ class PSBSMP(_BSMP):
                     block=block,
                     index=idx)
         # time1 = _time.time()
-        # print('blocks write: {:.4f} ms'.format(1000*(time1 - time0)))
+        # logger.debug('blocks write: {:.4f} ms'.format(1000*(time1 - time0)))
 
     def _bsmp_get_variable_values(self, *var_ids):
         values = [None] * len(var_ids)
@@ -627,7 +628,7 @@ class FBP(PSBSMP):
         if self.SOFB_PRINT_COMM_ERRORS:
             sfmt = 'FBP: Anomalous response ' + methodname + \
                 ': ack:0x{:02X}, func_resp:0x{:02X}'
-            print(sfmt.format(ack, func_resp))
+            _get_logger(self).error(sfmt.format(ack, func_resp))
 
 
 class FAC_DCDC(PSBSMP):

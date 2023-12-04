@@ -16,6 +16,7 @@
 import time as _time
 
 from ..devices import StrengthConv as _StrengthConv
+# from ..logging import get_logger as _get_logger
 
 
 class BeagleBone:
@@ -248,4 +249,5 @@ class BeagleBone:
             else:
                 strelims[0], strelims[1] = strengths[5], strengths[4]
         # t1_ = _time.time()
-        # print('update_strengths: {:.3f}'.format(1000*(t1_-t0_)))
+        # _get_logger(self).debug(
+        #     'update_strengths: {:.3f}'.format(1000*(t1_-t0_)))

@@ -15,6 +15,8 @@ from aiohttp import ClientSession as _ClientSession
 import numpy as _np
 
 from .. import envars as _envars
+from ..logging import get_logger as _get_logger
+
 from . import exceptions as _exceptions
 
 
@@ -32,7 +34,6 @@ class ClientArchiver:
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._ret = None
-        # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
     @property
@@ -88,8 +89,9 @@ class ClientArchiver:
         if ret is not None:
             self.session, authenticated = ret
             if authenticated:
-                print('Reminder: close connection after using this '
-                      'session by calling logout method!')
+                _get_logger(self).info(
+                    'Reminder: close connection after using this '
+                    'session by calling logout method!')
             else:
                 self.logout()
             return authenticated
@@ -346,7 +348,8 @@ class ClientArchiver:
                             data = await res.json()
                             jsons.append(data)
                         except ValueError:
-                            _log.error(f'Error with URL {res.url}')
+                            _get_logger(self).error(
+                                f'Error with URL {res.url}')
                             jsons.append(None)
                     response = jsons
             else:
@@ -358,7 +361,8 @@ class ClientArchiver:
                     try:
                         response = await response.json()
                     except ValueError:
-                        _log.error(f'Error with URL {response.url}')
+                        _get_logger(self).error(
+                            f'Error with URL {response.url}')
                         response = None
         except _asyncio.TimeoutError as err_msg:
             raise _exceptions.TimeoutError(err_msg)

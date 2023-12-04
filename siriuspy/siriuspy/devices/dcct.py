@@ -85,7 +85,7 @@ class DCCT(_Device):
             _time.sleep(0.1)
             if self._isok():
                 return True
-        print('timed out waiting DCCT.')
+        self._logger.error('Timed out waiting DCCT.')
         return False
 
     def cmd_turn_on(self, timeout=10):

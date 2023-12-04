@@ -4,6 +4,7 @@ import time as _time
 from siriuspy.bsmp import IOInterface as _IOInterface
 
 from ... import csdev as _csdev
+from ...logging import get_logger as _get_logger
 
 
 class PRUInterface(_IOInterface):
@@ -77,8 +78,9 @@ class PRU(PRUInterface):
         if ip_address is None:
             dev2ips = _csdev.get_device_2_ioc_ip()
             ip_address = dev2ips[bbbname]
-        print('BEAGLEBONE: ', bbbname)
-        print('IP_ADDRESS: ', ip_address)
+        logger = _get_logger(self)
+        logger.info('BEAGLEBONE: ' + bbbname)
+        logger.info('IP_ADDRESS: ' + ip_address)
 
         # stores bbbname and ip address
         self._bbbname = bbbname

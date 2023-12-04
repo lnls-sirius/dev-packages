@@ -225,7 +225,6 @@ class ConfigDBClient:
         except _URLError as err:
             response = {'code': -2, 'message': str(err)}
 
-        # print(response)
         if response['code'] != 200:
             raise ConfigDBException(response)
         return response['result']

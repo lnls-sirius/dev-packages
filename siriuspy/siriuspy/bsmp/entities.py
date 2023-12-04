@@ -20,10 +20,7 @@ class Entity:
         if not var_type.check(value):
             raise TypeError("{}, {}".format(var_type.type, value))
 
-    def _calc_types_size(
-        self,
-        var_types: typing.Tuple[BSMPType],
-    ) -> int:
+    def _calc_types_size(self, var_types: typing.Tuple[BSMPType]) -> int:
         size = 0
         try:
             for var_type in var_types:
@@ -37,11 +34,10 @@ class Entity:
         return size
 
     def _conv_value_to_load(
-        self,
-        var_types: typing.Union[typing.Tuple[BSMPType], typing.List[BSMPType]],
-        size: int,
-        values: typing.Union[str, typing.List[str]]
-    ) -> typing.List[str]:
+            self, var_types: typing.Union[
+                typing.Tuple[BSMPType], typing.List[BSMPType]],
+            size: int, values: typing.Union[str, typing.List[str]]
+            ) -> typing.List[str]:
         if len(var_types) > 1:
             load: typing.List[str] = []
             for idx, value in enumerate(values):

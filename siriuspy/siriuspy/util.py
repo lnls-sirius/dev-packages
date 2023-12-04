@@ -1,10 +1,8 @@
 """Module with general utilities."""
 
 import os as _os
-import sys as _sys
 import time as _time
 from collections import Counter as _Counter
-import logging as _log
 import inspect as _inspect
 import subprocess as _sp
 import datetime as _datetime
@@ -12,7 +10,9 @@ import datetime as _datetime
 import epics as _epics
 
 from mathphys import beam_optics as _beam
-from siriuspy import envars as _envars
+
+from .logging import get_logger as _get_logger
+from .envars import VACA_PREFIX as _VACA_PREFIX
 
 
 def conv_splims_labels(label):
@@ -98,38 +98,25 @@ def read_text_data(text):
     return data, parameters
 
 
-def print_ioc_banner(ioc_name, db, description, version, prefix):
+def print_ioc_banner(ioc_name, db, description, version, prefix, logger=None):
     """IOC banner."""
+    if logger is None:
+        logger = _get_logger(print_ioc_banner)
     strl = '==================================='
     nchars = (len(strl)-len(ioc_name))//2
     line = ' '*nchars + ioc_name + ' '*nchars
-    _log.info(strl)
-    _log.info(line)
-    _log.info(strl)
-    _log.info(description)
-    _log.info('LNLS, Sirius Project.')
-    _log.info('Version   : %s', version)
-    _log.info('Timestamp : %s', get_timestamp())
-    _log.info('Prefix    : %s', prefix)
-    _log.info('')
+    logger.info(strl)
+    logger.info(line)
+    logger.info(strl)
+    logger.info(description)
+    logger.info('LNLS, Sirius Project.')
+    logger.info('Version   : %s', version)
+    logger.info('Timestamp : %s', get_timestamp())
+    logger.info('Prefix    : %s', prefix)
+    logger.info('')
     pvs = sorted(tuple(db.keys()))
     for i, pvname in enumerate(pvs, 1):
-        _log.info('{0:04d} {1:<}'.format(i, pvname))
-
-
-def configure_log_file(stream=None, filename=None, debug=False):
-    """Configure logging messages for the IOCs."""
-    if stream is not None:
-        dic_ = {'stream': stream}
-    elif filename is not None:
-        dic_ = {'filename': filename, 'filemode': 'w'}
-    else:
-        dic_ = {'stream': _sys.stdout}
-
-    level = _log.DEBUG if debug else _log.INFO
-    fmt = ('%(levelname)7s | %(asctime)s | ' +
-           '%(module)15s.%(funcName)-20s[%(lineno)4d] ::: %(message)s')
-    _log.basicConfig(format=fmt, datefmt='%F %T', level=level, **dic_)
+        logger.info('{0:04d} {1:<}'.format(i, pvname))
 
 
 def beam_rigidity(energy):
@@ -141,7 +128,7 @@ def beam_rigidity(energy):
 def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
-        pref = _envars.VACA_PREFIX
+        pref = _VACA_PREFIX
         pvname = pref + ('-' if pref else '') + pvname
     pvobj = _epics.PV(pvname=pvname, connection_timeout=timeout)
     status = pvobj.wait_for_connection(timeout=timeout)
@@ -231,29 +218,26 @@ def mode(lst):
     return counter.most_common(1)[0]
 
 
-def check_public_interface_namespace(namespace, valid_interface,
-                                     checkdoc_flag=True,
-                                     print_flag=True):
+def check_public_interface_namespace(
+        namespace, valid_interface, checkdoc_flag=True):
     """Check function used in unittests to test module's public interface.
 
     This function checks only static public interface symbols. It does not
     check those symbols that are created within class methods.
     """
+    logger = _get_logger(check_public_interface_namespace)
     for name in namespace.__dict__:
         if checkdoc_flag:
             doc = getattr(name, '__doc__')
             if doc is None or len(doc) < 5:
-                if print_flag:
-                    print('"' + name + '" has an invalid docstring!')
+                logger.error('"' + name + '" has an invalid docstring!')
                 return False
         if not name.startswith('_') and name not in valid_interface:
-            if print_flag:
-                print('Invalid symbol: ', name)
+            logger.error('Invalid symbol: ' + name)
             return False
     for name in valid_interface:
         if name not in namespace.__dict__:
-            if print_flag:
-                print('Missing symbol: ', name)
+            logger.error('Missing symbol: ' + name)
             return False
     return True
 

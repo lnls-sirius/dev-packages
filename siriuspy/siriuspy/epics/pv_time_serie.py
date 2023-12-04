@@ -5,6 +5,8 @@ import time as _time
 import threading as _threading
 import numpy as _np
 
+# from ..logging import get_logger as _get_logger
+
 
 class SiriusPVTimeSerie:
     """Class to handle time series from pv monitoring."""
@@ -22,6 +24,7 @@ class SiriusPVTimeSerie:
             raise ValueError(
                 "Can not create an auto-fill serie without using "
                 "PV timestamp!")
+        # self._logger = _get_logger(self)
         self._pvobj = pv
         self._time_window = time_window
         self._time_min_interval = time_min_interval
@@ -164,7 +167,8 @@ class SiriusPVTimeSerie:
                         self._value_deque.append(pv_value)
                         return True
                     else:
-                        # print('not acquired: time interval not sufficient')
+                        # self._logger.debug(
+                        #     'not acquired: time interval not sufficient')
                         return False
                 else:
                     # Check if the datapoints in the deques are yet valid
@@ -178,16 +182,18 @@ class SiriusPVTimeSerie:
                             self._value_deque.append(pv_value)
                             return True
                         else:
-                            # print('not acquired: not enough time interval')
+                            # self._logger.debug(
+                            #     'not acquired: not enough time interval')
                             return False
                     else:
-                        # print('not acquired: not within time_window')
+                        # self._logger.debug(
+                        #     'not acquired: not within time_window')
                         return False
             else:
-                # print('not acquired: item already in deque')
+                # self._logger.debug('not acquired: item already in deque')
                 return False
         else:
-            # print('not acquired: pv not connected')
+            # self._logger.debug('not acquired: pv not connected')
             return False
 
     def _auto_acquire(self):

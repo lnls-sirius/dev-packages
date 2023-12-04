@@ -347,7 +347,7 @@ class BLInterlockCtrl(_Device):
         t0 = _time.time()
         while not self.is_frontend_gatevalves_opened:
             if _time.time() - t0 > timeout:
-                print('open frontend gatevalve timeout reached!')
+                self._logger.error('open frontend gatevalve timeout reached!')
                 return False
             _time.sleep(0.5)
 
@@ -365,7 +365,7 @@ class BLInterlockCtrl(_Device):
         t0 = _time.time()
         while not self.is_hutchB_gatevalves_opened:
             if _time.time() - t0 > timeout:
-                print('open hutchB gatevalve timeout reached!')
+                self._logger.error('open hutchB gatevalve timeout reached!')
                 return False
             _time.sleep(0.5)
 
@@ -386,7 +386,7 @@ class BLInterlockCtrl(_Device):
                 not self.is_frontend_gamma_shutter_opened or \
                 not self.is_frontend_photon_shutter_opened:
             if _time.time() - t0 > timeout:
-                print('open frontend shutter timeout reached!')
+                self._logger.error('open frontend shutter timeout reached!')
                 return False
             _time.sleep(0.5)
 
@@ -408,7 +408,7 @@ class BLInterlockCtrl(_Device):
                 self.is_frontend_gamma_shutter_opened or \
                 self.is_frontend_photon_shutter_opened:
             if _time.time() - t0 > timeout:
-                print('close frontend shutter timeout reached!')
+                self._logger.error('close frontend shutter timeout reached!')
                 return False
             _time.sleep(0.5)
 
@@ -426,7 +426,8 @@ class BLInterlockCtrl(_Device):
         t0 = _time.time()
         while not self.is_hutchA_gamma_shutter_opened:
             if _time.time() - t0 > timeout:
-                print('open hutchA photon shutter timeout reached!')
+                self._logger.error(
+                    'open hutchA photon shutter timeout reached!')
                 return False
             _time.sleep(0.5)
 
@@ -444,7 +445,8 @@ class BLInterlockCtrl(_Device):
         t0 = _time.time()
         while self.is_hutchA_gamma_shutter_opened:
             if _time.time() - t0 > timeout:
-                print('close hutchA photon shutter timeout reached!')
+                self._logger.error(
+                    'close hutchA photon shutter timeout reached!')
                 return False
             _time.sleep(0.5)
 
@@ -453,58 +455,58 @@ class BLInterlockCtrl(_Device):
     def cmd_beamline_open(self):
         """."""
         if not self.is_hutchA_intlk_search_done:
-            print('hutchA search is not done!')
+            self._logger.error('hutchA search is not done!')
             return False
 
         if not self.is_hutchB_intlk_search_done:
-            print('hutchB search is not done!')
+            self._logger.error('hutchB search is not done!')
             return False
 
         if not self.is_machine_gamma_enabled:
-            print('machine gamma signal not enabled.')
+            self._logger.error('machine gamma signal not enabled.')
             return False
 
         # check and reset EPS
         if not self.is_beamline_eps_ok:
-            print('beamline eps reset')
+            self._logger.warn('beamline eps reset')
             self.cmd_beamline_eps_reset()
             t0 = _time.time()
             while not self.is_beamline_eps_ok:
                 if _time.time() - t0 > self.TIMEOUT_EPS_RESET:
-                    print('eps reset timeout reached!')
+                    self._logger.error('eps reset timeout reached!')
                     return False
                 _time.sleep(0.5)
 
         # check frontend shutter permission and open gatevalves for hutchA
         if not self.is_frontend_shutter_eps_permission_ok:
-            print('open frontend and hutchA gatevalves')
+            self._logger.warn('open frontend and hutchA gatevalves')
             # open frontend and hutchA gatevalves
             self.cmd_frontend_gatevalves_open()
             t0 = _time.time()
             while not self.is_frontend_gatevalves_opened:
                 if _time.time() - t0 > self.TIMEOUT_GATEVALVE:
                     msg = 'open frontend and hutchA gatevalve timeout reached!'
-                    print(msg)
+                    self._logger.error(msg)
                     return False
                 _time.sleep(0.5)
 
         # check hutchA shutter permission and open gatevalves for hutchB
         if not self.is_hutchA_shutter_eps_permission_ok:
-            print('open hutchB gatevalves')
+            self._logger.warn('open hutchB gatevalves')
             is_ok = self.cmd_hutchB_gatevalves_open(
                 timeout=self.TIMEOUT_GATEVALVE)
             if not is_ok:
                 return False
 
         # open frontend gamma and photon shutter
-        print('open frontend gamma and photon shutters')
+        self._logger.info('open frontend gamma and photon shutters')
         is_ok = self.cmd_frontend_gamma_and_photon_open(
             timeout=self.TIMEOUT_SHUTTER)
         if not is_ok:
             return False
 
         # open hutchA photon shutter
-        print('open hutchA photon shutter')
+        self._logger.info('open hutchA photon shutter')
         is_ok = self.cmd_hutchA_photon_open(timeout=self.TIMEOUT_SHUTTER)
         if not is_ok:
             return False

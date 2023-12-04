@@ -6,6 +6,7 @@ import logging as _log
 import threading as _thread
 from concurrent.futures import ThreadPoolExecutor
 
+from ..logging import get_logger as _get_logger
 from ..namesys import Filter as _Filter, SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..epics import PV as _PV
@@ -52,8 +53,8 @@ class CycleController:
         self.timing = timing
 
         # logger
-        self._logger_message = ''
-        self.logger = logger
+        self._logger = _get_logger(self)
+
 
     # --- main parameter setters ---
 
@@ -158,10 +159,10 @@ class CycleController:
 
     def create_trims_cyclers(self):
         """Create trims cyclers."""
-        self._update_log('Creating trims connections...')
+        self._logger.info('Creating trims connections...')
         for idx, psn in enumerate(self.trimnames):
             if idx % 5 == 4 or idx == len(self.trimnames)-1:
-                self._update_log(
+                self._logger.info(
                     'Created connections of {0}/{1} trims'.format(
                         str(idx+1), str(len(self.trimnames))))
             if psn in self._aux_cyclers.keys():
@@ -172,7 +173,7 @@ class CycleController:
                 self._aux_cyclers[psn] = PSCycler(psn, self._ramp_config)
 
         # wait for connections
-        self._update_log('Waiting for connections...')
+        self._logger.info('Waiting for connections...')
         for cycler in self._aux_cyclers.values():
             cycler.wait_for_connection(0.1)
 
@@ -191,19 +192,6 @@ class CycleController:
     @timing.setter
     def timing(self, new_timing):
         self._timing = new_timing if new_timing is not None else Timing()
-
-    @property
-    def logger(self):
-        """Return current logger."""
-        return self._logger
-
-    @logger.setter
-    def logger(self, new_log):
-        self._logger = new_log
-        if not new_log:
-            _log.basicConfig(format='%(asctime)s | %(message)s',
-                             datefmt='%F %T', level=_log.INFO,
-                             stream=_sys.stdout)
 
     # --- properties ---
 
@@ -389,7 +377,7 @@ class CycleController:
         if not psnames:
             return True
 
-        self._update_log('Preparing power supplies '+ppty+'...')
+        self._logger.info('Preparing power supplies '+ppty+'...')
         with ThreadPoolExecutor(max_workers=100) as executor:
             for idx, psname in enumerate(psnames):
                 cycler = self._get_cycler(psname)
@@ -399,7 +387,7 @@ class CycleController:
                     target = cycler.set_opmode_cycle
                 executor.submit(target, self.mode)
                 if idx % 5 == 4 or idx == len(psnames)-1:
-                    self._update_log(
+                    self._logger.info(
                         'Sent '+ppty+' preparation to {0}/{1}'.format(
                             str(idx+1), str(len(psnames))))
 
@@ -408,9 +396,9 @@ class CycleController:
         if self._not_ctrl_ti:
             return
         self._timing.turnoff(self._triggers)
-        self._update_log('Preparing Timing...')
+        self._logger.info('Preparing Timing...')
         self._timing.prepare(self.mode, self._triggers)
-        self._update_log(done=True)
+        self._logger.info('done')
 
     def check_pwrsupplies(self, ppty, psnames, timeout=TIMEOUT_CHECK):
         """Check all power supplies according to mode."""
@@ -421,7 +409,7 @@ class CycleController:
         if not psnames:
             return True
 
-        self._update_log('Checking power supplies '+ppty+'...')
+        self._logger.info('Checking power supplies '+ppty+'...')
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked '+ppty+' preparation for {}/' + \
             str(len(psnames))
@@ -440,19 +428,19 @@ class CycleController:
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
                     if not checked % 5:
-                        self._update_log(msg.format(str(checked)))
+                        self._logger.info(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
-        self._update_log(msg.format(str(checked)))
+        self._logger.info(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            self._update_log(psname+' is not ready.', error=True)
+            self._logger.error(psname+' is not ready.')
             status &= False
         return status
 
@@ -461,17 +449,16 @@ class CycleController:
         if self._not_ctrl_ti:
             return True
 
-        self._update_log('Checking Timing...')
+        self._logger.info('Checking Timing...')
         time0 = _time.time()
         while _time.time() - time0 < 5:
             status = self._timing.check(self.mode, self._triggers)
             if status:
-                self._update_log(done=True)
+                self._logger.info('done')
                 return True
             _time.sleep(TIMEOUT_SLEEP)
-        self._update_log(
-            'Timing is not configured or has problems. Please verify.',
-            error=True)
+        self._logger.error(
+            'Timing is not configured or has problems. Please verify.')
         return False
 
     def check_egun_off(self):
@@ -479,9 +466,8 @@ class CycleController:
         if 'LI-01:PS-Spect' in self.psnames:
             status = (self._pv_egun.value == 0)
             if not status:
-                self._update_log(
-                    'Linac EGun pulse is enabled! '
-                    'Please disable it.', error=True)
+                self._logger.error(
+                    'Linac EGun pulse is enabled! Please disable it.')
             return status
         return True
 
@@ -491,20 +477,20 @@ class CycleController:
             return True
 
         label = 'enabl' if state == 'enbl' else 'disabl'
-        self._update_log(label.capitalize()+'ing triggers...')
+        self._logger.info(label.capitalize()+'ing triggers...')
         if self._timing.set_triggers_state(state, triggers):
-            self._update_log(done=True)
+            self._logger.info('done')
             return True
-        self._update_log('Could not '+label+'e triggers!', error=True)
+        self._logger.error('Could not '+label+'e triggers!')
         return False
 
     def trigger_timing(self):
         """Trigger timing according to mode."""
         if self._not_ctrl_ti:
             return
-        self._update_log('Triggering timing...')
+        self._logger.info('Triggering timing...')
         self._timing.trigger(self.mode)
-        self._update_log(done=True)
+        self._logger.info('done')
 
     def init_trims(self, trims):
         """Initialize trims cycling process."""
@@ -515,32 +501,30 @@ class CycleController:
 
     def wait_trims(self):
         """Wait Trims to cycle."""
-        self._update_log('Waiting for trims to cycle...')
+        self._logger.info('Waiting for trims to cycle...')
         time0 = _time.time()
         keep_waiting = True
         while keep_waiting:
             # update remaining time
             _time.sleep(1)
             time = round(self._cycle_trims_duration - (_time.time()-time0))
-            self._update_log('Remaining time: {}s...'.format(time))
+            self._logger.info('Remaining time: {}s...'.format(time))
 
             # verify if trims started to cycle
             if 14 < _time.time() - time0 < 15:
                 for psname in self._is_cycling_dict:
                     cycler = self._get_cycler(psname)
                     if not cycler.get_cycle_enable():
-                        self._update_log(
-                            psname + ' is not cycling!', warning=True)
+                        self._logger.warning(psname + ' is not cycling!')
                         self._is_cycling_dict[psname] = False
                 if sum(self._is_cycling_dict.values()) == 0:
-                    self._update_log(
-                        'All trims failed. Stopping.', error=True)
+                    self._logger.error('All trims failed. Stopping.')
                     return False
 
             # update keep_waiting
             keep_waiting = _time.time() - time0 < self._cycle_trims_duration
 
-        self._update_log(done=True)
+        self._logger.info('done')
         return True
 
     def cycle_trims_subset(self, trims, timeout=TIMEOUT_CHECK):
@@ -592,7 +576,7 @@ class CycleController:
 
     def wait(self):
         """Wait/Sleep while cycling according to mode."""
-        self._update_log('Waiting for cycling...')
+        self._logger.info('Waiting for cycling...')
         time0 = _time.time()
         keep_waiting = True
         while keep_waiting:
@@ -605,7 +589,7 @@ class CycleController:
                     self._cycle_duration -
                     self._timing.get_cycle_count() *
                     DEFAULT_RAMP_DURATION/1000000)
-            self._update_log('Remaining time: {}s...'.format(time))
+            self._logger.info('Remaining time: {}s...'.format(time))
 
             # verify if power supplies started to cycle
             if (self.mode == 'Cycle') and (5 < _time.time() - time0 < 6):
@@ -616,12 +600,10 @@ class CycleController:
                         continue
                     cycler = self._get_cycler(psname)
                     if not cycler.get_cycle_enable():
-                        self._update_log(
-                            psname + ' is not cycling!', warning=True)
+                        self._logger.warning(psname + ' is not cycling!')
                         self._is_cycling_dict[psname] = False
                 if sum(self._is_cycling_dict.values()) == 0:
-                    self._update_log(
-                        'All power supplies failed. Stopping.', error=True)
+                    self._logger.error('All power supplies failed. Stopping.')
                     return False
 
             # update keep_waiting
@@ -630,12 +612,12 @@ class CycleController:
             else:
                 keep_waiting = not self._timing.check_ramp_end()
 
-        self._update_log(done=True)
+        self._logger.info('done')
         return True
 
     def check_pwrsupplies_finalsts(self, psnames):
         """Check all power supplies final state according to mode."""
-        self._update_log('Checking power supplies final state...')
+        self._logger.info('Checking power supplies final state...')
         self._checks_final_result = dict()
         sucess_cnt = 0
         msg = 'Successfully checked final state for {}/'+str(len(psnames))
@@ -645,24 +627,21 @@ class CycleController:
             if status == _Const.CycleEndStatus.Ok:
                 sucess_cnt += 1
                 if sucess_cnt % 5 == 0:
-                    self._update_log(msg.format(str(sucess_cnt)))
+                    self._logger.info(msg.format(str(sucess_cnt)))
             self._checks_final_result[psname] = status
-        self._update_log(msg.format(str(sucess_cnt)))
+        self._logger.info(msg.format(str(sucess_cnt)))
 
         all_ok = True
         for psname, has_prob in self._checks_final_result.items():
             if has_prob == _Const.CycleEndStatus.LackTriggers:
-                self._update_log(
-                    'Verify the number of pulses '+psname+' received!',
-                    error=True)
+                self._logger.error(
+                    'Verify the number of pulses '+psname+' received!')
                 all_ok = False
             elif has_prob == _Const.CycleEndStatus.NotFinished \
                     and self._is_cycling_dict[psname]:
-                self._update_log(
-                    psname+' is finishing cycling...', warning=True)
+                self._logger.warning(psname+' is finishing cycling...')
             elif has_prob == _Const.CycleEndStatus.Interlock:
-                self._update_log(
-                    psname+' has interlock problems.', error=True)
+                self._logger.error(psname+' has interlock problems.')
                 all_ok = False
         return all_ok
 
@@ -673,12 +652,12 @@ class CycleController:
         if not psnames:
             return
 
-        self._update_log('Turning off power supplies SOFBMode...')
+        self._logger.info('Turning off power supplies SOFBMode...')
         for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
             cycler.set_sofbmode('off')
             if idx % 5 == 4 or idx == len(psnames)-1:
-                self._update_log(
+                self._logger.info(
                     'Sent SOFBMode preparation to {0}/{1}'.format(
                         str(idx+1), str(len(psnames))))
 
@@ -689,7 +668,7 @@ class CycleController:
         if not psnames:
             return True
 
-        self._update_log('Checking power supplies SOFBMode...')
+        self._logger.info('Checking power supplies SOFBMode...')
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked SOFBMode preparation for {}/' + \
             str(len(psnames))
@@ -704,19 +683,19 @@ class CycleController:
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
                     if not checked % 5:
-                        self._update_log(msg.format(str(checked)))
+                        self._logger.info(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
-        self._update_log(msg.format(str(checked)))
+        self._logger.info(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            self._update_log(psname+' is in SOFBMode.', error=True)
+            self._logger.error(psname+' is in SOFBMode.')
             status &= False
         return status
 
@@ -726,14 +705,14 @@ class CycleController:
         if not psnames:
             return
 
-        self._update_log('Setting power supplies to SlowRef...')
+        self._logger.info('Setting power supplies to SlowRef...')
         with ThreadPoolExecutor(max_workers=100) as executor:
             for idx, psname in enumerate(psnames):
                 cycler = self._get_cycler(psname)
                 target = cycler.set_opmode_slowref
                 executor.submit(target)
                 if idx % 5 == 4 or idx == len(psnames)-1:
-                    self._update_log(
+                    self._logger.info(
                         'Sent opmode preparation to {0}/{1}'.format(
                             str(idx+1), str(len(psnames))))
 
@@ -743,7 +722,7 @@ class CycleController:
         if not psnames:
             return True
 
-        self._update_log('Checking power supplies opmode...')
+        self._logger.info('Checking power supplies opmode...')
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked opmode preparation for {}/' + \
             str(len(psnames))
@@ -758,37 +737,37 @@ class CycleController:
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
                     if not checked % 5:
-                        self._update_log(msg.format(str(checked)))
+                        self._logger.info(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
-        self._update_log(msg.format(str(checked)))
+        self._logger.info(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
             opmdes = 'manual' if 'FC' in psname else 'SlowRef'
-            self._update_log(psname+' is not in '+opmdes+'.', error=True)
+            self._logger.error(psname+' is not in '+opmdes+'.')
             status &= False
         return status
 
     def set_pwrsupplies_current_zero(self, psnames):
         """Set power supplies current to zero."""
-        self._update_log('Setting power supplies current to zero...')
+        self._logger.info('Setting power supplies current to zero...')
         for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
             cycler.set_current_zero()
             if idx % 5 == 4 or idx == len(psnames)-1:
-                self._update_log(
+                self._logger.info(
                     'Sent current preparation to {0}/{1}'.format(
                         str(idx+1), str(len(psnames))))
 
     def check_pwrsupplies_current_zero(self, psnames, timeout=TIMEOUT_CHECK):
         """Check power supplies current."""
-        self._update_log('Checking power supplies current...')
+        self._logger.info('Checking power supplies current...')
         self._checks_result = {psn: False for psn in psnames}
         msg = 'Successfully checked current preparation for {}/' + \
             str(len(psnames))
@@ -803,19 +782,19 @@ class CycleController:
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
                     if not checked % 5:
-                        self._update_log(msg.format(str(checked)))
+                        self._logger.info(msg.format(str(checked)))
                 if _time.time() - time > timeout:
                     break
             if all(self._checks_result.values()):
                 break
             _time.sleep(TIMEOUT_SLEEP)
-        self._update_log(msg.format(str(checked)))
+        self._logger.info(msg.format(str(checked)))
 
         status = True
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            self._update_log(psname+' current is not zero.', error=True)
+            self._logger.error(psname+' current is not zero.')
             status &= False
         return status
 
@@ -832,7 +811,7 @@ class CycleController:
             cycler = self._get_cycler(psname)
             cycler.clear_fofbacc()
             if idx % 5 == 4 or idx == len(psnames)-1:
-                self._update_log(
+                self._logger.info(
                     'Sent clear FOFBAcc command to {0}/{1}'.format(
                         str(idx+1), str(len(psnames))))
 
@@ -840,16 +819,16 @@ class CycleController:
 
     def save_timing_initial_state(self):
         """Save timing initial state."""
-        self._update_log('Saving Timing initial state...')
+        self._logger.info('Saving Timing initial state...')
         self._timing.save_initial_state()
-        self._update_log('...finished!')
+        self._logger.info('...finished!')
 
     def prepare_timing(self):
         """Prepare Timing."""
         self.config_timing()
         if not self.check_timing():
             return
-        self._update_log('Timing preparation finished!')
+        self._logger.info('Timing preparation finished!')
 
     def prepare_pwrsupplies_sofbmode(self):
         """Prepare SOFBMode."""
@@ -862,10 +841,9 @@ class CycleController:
 
         self.set_pwrsupplies_sofbmode(psnames)
         if not self.check_pwrsupplies_sofbmode(psnames, timeout):
-            self._update_log(
-                'There are power supplies in SOFBMode.', error=True)
+            self._logger.error('There are power supplies in SOFBMode.')
             return
-        self._update_log('Power supplies SOFBMode preparation finished!')
+        self._logger.info('Power supplies SOFBMode preparation finished!')
 
     def prepare_pwrsupplies_opmode_slowref(self):
         """Prepare OpMode to slowref."""
@@ -878,11 +856,10 @@ class CycleController:
 
         self.set_pwrsupplies_slowref(psnames)
         if not self.check_pwrsupplies_slowref(psnames, timeout):
-            self._update_log(
-                'There are power supplies not in '
-                'the correct OpMode.', error=True)
+            self._logger.error(
+                'There are power supplies not in the correct OpMode.')
             return
-        self._update_log('Power supplies OpMode preparation finished!')
+        self._logger.info('Power supplies OpMode preparation finished!')
 
     def prepare_pwrsupplies_current_zero(self):
         """Prepare current to cycle."""
@@ -895,10 +872,10 @@ class CycleController:
 
         self.set_pwrsupplies_current_zero(psnames)
         if not self.check_pwrsupplies_current_zero(psnames, timeout):
-            self._update_log(
-                'There are power supplies with current not zero.', error=True)
+            self._logger.error(
+                'There are power supplies with current not zero.')
             return
-        self._update_log('Power supplies current preparation finished!')
+        self._logger.info('Power supplies current preparation finished!')
 
     def prepare_pwrsupplies_parameters(self):
         """Prepare parameters to cycle."""
@@ -911,21 +888,19 @@ class CycleController:
 
         self.config_pwrsupplies('parameters', psnames)
         if not self.check_pwrsupplies('parameters', psnames, timeout):
-            self._update_log(
-                'There are power supplies not configured to cycle.',
-                error=True)
+            self._logger.error(
+                'There are power supplies not configured to cycle.')
             return
-        self._update_log('Power supplies parameters preparation finished!')
+        self._logger.info('Power supplies parameters preparation finished!')
 
     def prepare_pwrsupplies_opmode_cycle(self):
         """Prepare OpMode to cycle."""
         psnames = self.psnames
         self.config_pwrsupplies('opmode', psnames)
         if not self.check_pwrsupplies('opmode', psnames):
-            self._update_log(
-                'There are power supplies with wrong opmode.', error=True)
+            self._logger.error('There are power supplies with wrong opmode.')
             return
-        self._update_log('Power supplies OpMode preparation finished!')
+        self._logger.info('Power supplies OpMode preparation finished!')
 
     def cycle_trims(self):
         """Cycle all trims."""
@@ -937,25 +912,23 @@ class CycleController:
 
         self.create_trims_cyclers()
 
-        self._update_log('Preparing to cycle CHs, QSs and QTrims...')
+        self._logger.info('Preparing to cycle CHs, QSs and QTrims...')
         trims = _Filter.process_filters(self.trimnames, {
             'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
             'dev': '(CH|QS|QD.*|QF.*|Q[1-4])'})
         if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
-            self._update_log(
-                'There was problems in trims cycling. Stoping.', error=True)
+            self._logger.error('There was problems in trims cycling. Stoping.')
             return
 
-        self._update_log('Preparing to cycle CVs...')
+        self._logger.info('Preparing to cycle CVs...')
         trims = _Filter.process_filters(self.trimnames, {
             'sec': 'SI', 'sub': '[0-2][0-9](M|C|S).*', 'dis': 'PS',
             'dev': 'CV'})
         if not self.cycle_trims_subset(trims, timeout=4*TIMEOUT_CHECK):
-            self._update_log(
-                'There was problems in trims cycling. Stoping.', error=True)
+            self._logger.error('There was problems in trims cycling. Stoping.')
             return
 
-        self._update_log('Trims cycle finished!')
+        self._logger.info('Trims cycle finished!')
 
     def cycle(self):
         """Cycle."""
@@ -966,14 +939,12 @@ class CycleController:
             return
 
         if not self.check_pwrsupplies('parameters', self.psnames):
-            self._update_log(
-                'There are power supplies not configured to cycle. Stopping.',
-                error=True)
+            self._logger.error(
+                'There are power supplies not configured to cycle. Stopping.')
             return
         if not self.check_pwrsupplies('opmode', self.psnames):
-            self._update_log(
-                'There are power supplies with wrong opmode. Stopping.',
-                error=True)
+            self._logger.error(
+                'There are power supplies with wrong opmode. Stopping.')
             return
 
         triggers = self._triggers.copy()
@@ -992,13 +963,13 @@ class CycleController:
         self.clear_pwrsupplies_fofbacc(self.psnames)
 
         # Indicate cycle end
-        self._update_log('Cycle finished!')
+        self._logger.info('Cycle finished!')
 
     def restore_timing_initial_state(self):
         """Restore timing initial state."""
-        self._update_log('Restoring Timing initial state...')
+        self._logger.info('Restoring Timing initial state...')
         self._timing.restore_initial_state()
-        self._update_log('...finished!')
+        self._logger.info('...finished!')
 
     # --- private methods ---
 
@@ -1013,12 +984,3 @@ class CycleController:
         if psname in self._aux_cyclers:
             return self._aux_cyclers[psname]
         raise ValueError('There is no cycler defined to '+psname+'!')
-
-    def _update_log(self, message='', done=False, warning=False, error=False):
-        self._logger_message = message
-        if self._logger:
-            self._logger.update(message, done, warning, error)
-        else:
-            if done and not message:
-                message = 'Done.'
-            _log.info(message)

@@ -3,7 +3,13 @@
 import time as _time
 from copy import deepcopy as _dcopy
 from threading import Thread as _Thread, Event as _Flag
-import logging as _log
+
+from ..search import PSSearch, HLTimeSearch
+from ..csdev import Const as _Const
+from ..timesys.csdev import Const as _TIConst
+from ..pwrsupply.csdev import Const as _PSConst
+from ..injctrl.csdev import Const as _InjConst
+from ..callbacks import Callback as _Callback
 
 from .device import DeviceSet as _DeviceSet, Device as _Device
 from .lillrf import DevLILLRF
@@ -13,12 +19,6 @@ from .timing import HLTiming
 from .rf import ASLLRF
 from .posang import PosAng
 
-from ..search import PSSearch, HLTimeSearch
-from ..csdev import Const as _Const
-from ..timesys.csdev import Const as _TIConst
-from ..pwrsupply.csdev import Const as _PSConst
-from ..injctrl.csdev import Const as _InjConst
-from ..callbacks import Callback as _Callback
 
 
 class _BaseHandler(_DeviceSet):
@@ -822,7 +822,7 @@ class InjSysStandbyHandler(_DeviceSet):
 
     def _command_base(self, cmmtype, run_in_thread):
         if self.is_running:
-            _log.error('Commands already running!')
+            self._logger.error('Commands already running!')
             return
 
         if run_in_thread:
@@ -863,7 +863,7 @@ class InjSysStandbyHandler(_DeviceSet):
         self._is_running = ''
 
 
-class InjSysPUModeHandler(_DeviceSet, _Callback):
+class InjSysPUModeHandler(_DeviceSet):
     """Device to control pulsed magnets configuration for injection."""
 
     _DEF_TIMEOUT = 10  # [s]
@@ -872,7 +872,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
     TS_POSANG_DEFDELTA = 2.5  # [mrad]
     SI_DPKCKR_DLYREF = 36800000  # [count]
 
-    def __init__(self, print_log=True, callback=None, hltiming=None):
+    def __init__(self, hltiming=None):
         """Init."""
         self._hltiming = hltiming or HLTiming()
         self.pudpk = PowerSupplyPU(PowerSupplyPU.DEVICES.SI_INJ_DPKCKR)
@@ -884,12 +884,10 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         self.dpkckr_dlyref = self.SI_DPKCKR_DLYREF
         self.dpkckr_kick = self.SI_DPKCKR_DEFKICK
         devices = (self.pudpk, self.punlk, self._hltiming, self.posang)
-        self._print_log = print_log
         self._abort = _Flag()
 
         # call super init
         _DeviceSet.__init__(self, devices)
-        _Callback.__init__(self, callback=callback)
 
     @property
     def hltiming(self):
@@ -921,7 +919,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
     def cmd_switch_to_accum(self):
         """Switch to Accumulation."""
         self._abort.clear()
-        self._update_status('Switching to PU Accumulation config...')
+        self._logger.info('Switching to PU Accumulation config...')
         if not self._check_pu_interlocks():
             return False
         if self._check_abort():
@@ -947,7 +945,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         if not self._do_procedures(proced):
             return False
 
-        self._update_status('PU mode switched to Accumulation!')
+        self._logger.info('PU mode switched to Accumulation!')
         return True
 
     @property
@@ -967,7 +965,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
     def cmd_switch_to_optim(self):
         """Switch to Optimization."""
         self._abort.clear()
-        self._update_status('Switching to PU Optimization config...')
+        self._logger.info('Switching to PU Optimization config...')
         if not self._check_pu_interlocks():
             return False
         if self._check_abort():
@@ -1001,7 +999,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         if not self._do_procedures(proced):
             return False
 
-        self._update_status('PU mode switched to Optimization!')
+        self._logger.info('PU mode switched to Optimization!')
         return True
 
     @property
@@ -1021,7 +1019,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
     def cmd_switch_to_onaxis(self):
         """Switch to OnAxis."""
         self._abort.clear()
-        self._update_status('Switching to PU OnAxis config...')
+        self._logger.info('Switching to PU OnAxis config...')
         if not self._check_pu_interlocks():
             return False
         if self._check_abort():
@@ -1054,15 +1052,15 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         if not self._do_procedures(proced):
             return False
 
-        self._update_status('PU mode switched to OnAxis!')
+        self._logger.info('PU mode switched to OnAxis!')
         return True
 
     def _check_pu_interlocks(self):
         if not self.pudpk.interlock_ok:
-            self._update_status('ERR: DpK interlocks not ok. Aborted.')
+            self._logger.error('DpK interlocks not ok. Aborted.')
             return False
         if not self.punlk.interlock_ok:
-            self._update_status('ERR: NLK interlocks not ok. Aborted.')
+            self._logger.error('NLK interlocks not ok. Aborted.')
             return False
         return True
 
@@ -1073,7 +1071,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         desval = self.posang.delta_angx + delta
         self.posang.delta_angx += delta
         if not self._wait(self.posang, 'delta_angx', desval):
-            self._update_status('ERR:Could not do delta AngX.')
+            self._logger.error('Could not do delta AngX.')
             return False
         return True
 
@@ -1082,21 +1080,20 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         dpk_event = self.trignlk.source
         self.trigdpk.source = dpk_event
         if not self._wait(self.trigdpk, 'source', dpk_event):
-            self._update_status('ERR:Could not set DpK trigger event.')
+            self._logger.error('Could not set DpK trigger event.')
             return False
         # set DpK trigger DelayRaw
         self.trigdpk.delay_raw = delayraw
         if not self._wait(self.trigdpk, 'delay_raw', delayraw):
-            self._update_status('ERR:Could not set DpK trigger delay.')
+            self._logger.error('Could not set DpK trigger delay.')
             return False
         return True
 
     def _config_dpk_kick(self):
         self.pudpk.strength = self.dpkckr_kick
         if not self._wait(self.pudpk, 'strength', self.dpkckr_kick):
-            self._update_status(
-                'ERR:Could not set DpK Kick to '
-                f'{self.dpkckr_kick:.1f}mrad.')
+            self._logger.error(
+                f'Could not set DpK Kick to {self.dpkckr_kick:.1f}mrad.')
             return False
         return True
 
@@ -1105,7 +1102,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
             if self._check_abort():
                 return False
             if not fun(timeout=2):
-                self._update_status('ERR:Could not ' + msg)
+                self._logger.error('Could not ' + msg)
                 return False
             _time.sleep(0.5)
         return True
@@ -1115,7 +1112,7 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
     def cmd_abort(self):
         """Abort PU mode change."""
         self._abort.set()
-        self._update_status('WARN:Abort received for PU Mode change.')
+        self._logger.warn('Abort received for PU Mode change.')
         return True
 
     def _check_abort(self):
@@ -1123,23 +1120,12 @@ class InjSysPUModeHandler(_DeviceSet, _Callback):
         if not self._abort.is_set():
             return False
         self._abort.clear()
-        self._update_status('ERR:Aborted PU Mode change.')
+        self._logger.error('Aborted PU Mode change.')
         return True
 
     # ---------- check sp -----------
 
     def _wait(
             self, device, prop, desired, tolerance=1e-3, timeout=_DEF_TIMEOUT):
-        _t0 = _time.time()
-        while _time.time() - _t0 < timeout:
-            if abs(getattr(device, prop) - desired) < tolerance:
-                return True
-            _time.sleep(InjSysPUModeHandler._DEF_SLEEP)
-        return False
-
-    # ---------- logging -----------
-
-    def _update_status(self, status):
-        if self._print_log:
-            print(status)
-        self.run_callbacks(status)
+        return device._wait_float(
+            prop, desired, abs_tol=tolerance, timeout=timeout)

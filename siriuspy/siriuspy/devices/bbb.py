@@ -90,7 +90,7 @@ class BunchbyBunch(_DeviceSet):
         """Sweep Servo Phase for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'FBE Out Phase', 'SRAM Mean'
-        print(f'Idx: {ctrl:15s} {mon:15s}')
+        self._logger.info(f'Idx: {ctrl:15s} {mon:15s}')
 
         if self.devname.endswith('L'):
             propty = 'FBELT_SERVO_SETPT'
@@ -109,7 +109,8 @@ class BunchbyBunch(_DeviceSet):
             else:
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+            self._logger.info(
+                f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.fbe[propty] = init_val
         return _np.array(mon_values)
 
@@ -117,7 +118,7 @@ class BunchbyBunch(_DeviceSet):
         """Sweep ADC Delay for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'ADC Delay', 'SRAM Mean'
-        print(f'Idx: {ctrl:15s} {mon:15s}')
+        self._logger.info(f'Idx: {ctrl:15s} {mon:15s}')
 
         init_val = self.timing.adc_delay
         for i, val in enumerate(values):
@@ -129,7 +130,8 @@ class BunchbyBunch(_DeviceSet):
             else:
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+            self._logger.info(
+                f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.timing.adc_delay = init_val
         return _np.array(mon_values)
 
@@ -137,7 +139,7 @@ class BunchbyBunch(_DeviceSet):
         """Sweep Backend Phase for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'Backend Phase', 'Peak magnitude'
-        print(f'Idx: {ctrl:15s} {mon:15s}')
+        self._logger.info(f'Idx: {ctrl:15s} {mon:15s}')
 
         init_val = self.fbe.be_phase
         for i, val in enumerate(values):
@@ -149,7 +151,8 @@ class BunchbyBunch(_DeviceSet):
             else:
                 mon_val = self.sram.data_rms
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+            self._logger.info(
+                f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.fbe.be_phase = init_val
         return _np.array(mon_values)
 
@@ -157,7 +160,7 @@ class BunchbyBunch(_DeviceSet):
         """Sweep DAC Delay for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'DAC Delay', 'Peak Magnitude'
-        print(f'Idx: {ctrl:15s} {mon:15s}')
+        self._logger.info(f'Idx: {ctrl:15s} {mon:15s}')
 
         init_val = self.timing.dac_delay
         for i, val in enumerate(values):
@@ -169,7 +172,8 @@ class BunchbyBunch(_DeviceSet):
             else:
                 mon_val = self.sram.data_rms
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+            self._logger.info(
+                f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.timing.dac_delay = init_val
         return _np.array(mon_values)
 
@@ -177,7 +181,7 @@ class BunchbyBunch(_DeviceSet):
         """Sweep Feedback Phase for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'Coeff. Phase', 'Peak Magnitude'
-        print(f'Idx: {ctrl:15s} {mon:15s}')
+        self._logger.info(f'Idx: {ctrl:15s} {mon:15s}')
 
         init_val = self.coeffs.edit_phase
         for i, val in enumerate(values):
@@ -189,7 +193,8 @@ class BunchbyBunch(_DeviceSet):
             else:
                 mon_val = self.sram.data_rms
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+            self._logger.info(
+                f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         self.coeffs.edit_phase = init_val
         self.coeffs.cmd_edit_apply()
         return _np.array(mon_values)
@@ -198,7 +203,7 @@ class BunchbyBunch(_DeviceSet):
         """Sweep RF Phase for each `value` in `values`."""
         mon_values = []
         ctrl, mon = 'RF Phase', 'SRAM Mean'
-        print(f'Idx: {ctrl:15s} {mon:15s}')
+        self._logger.info(f'Idx: {ctrl:15s} {mon:15s}')
 
         llrf = self.rfcav.dev_llrf
         init_val = llrf.phase
@@ -210,7 +215,8 @@ class BunchbyBunch(_DeviceSet):
             else:
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
+            self._logger.info(
+                f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
         llrf.value = init_val
         return _np.array(mon_values)
 
@@ -919,10 +925,10 @@ class Acquisition(_Device):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
         if not self._wait('DUMP', False, timeout=timeout):
-            print('WARN: Timed out waiting data dump.')
+            self._logger.warn('Timed out waiting data dump.')
             return False
         if pv_update and not self._update_data_evt.wait(timeout=timeout):
-            print('WARN: Timed out waiting PV data update.')
+            self._logger.warn('Timed out waiting PV data update.')
             return False
         self._update_data_evt.clear()
         return True

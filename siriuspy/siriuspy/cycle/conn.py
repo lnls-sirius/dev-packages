@@ -6,6 +6,7 @@ from math import isclose as _isclose
 import numpy as _np
 from epics import PV as _PV
 
+# from ..logging import get_logger as _get_logger
 from ..util import get_bit as _get_bit
 from ..namesys import SiriusPVName as _PVName
 from ..envars import VACA_PREFIX
@@ -108,14 +109,17 @@ class Timing:
             if prop_sts.propty_name.endswith(('Duration', 'Delay')):
                 tol = 0.008 * 15
                 if not _isclose(pvobj.value, defval, abs_tol=tol):
-                    # print(pvobj.pvname, pvobj.value, defval)
+                    # _get_logger(self).debug(
+                    #     pvobj.pvname + str(pvobj.value) + str(defval))
                     return False
             elif isinstance(defval, (_np.ndarray, list, tuple)):
                 if _np.any(pvobj.value[0:len(defval)] != defval):
-                    # print(pvobj.pvname, pvobj.value, defval)
+                    # _get_logger(self).debug(
+                    #     pvobj.pvname + str(pvobj.value) + str(defval))
                     return False
             elif pvobj.value != defval:
-                # print(pvobj.pvname, pvobj.value, defval)
+                # _get_logger(self).debug(
+                #     pvobj.pvname + str(pvobj.value) + str(defval))
                 return False
         return True
 

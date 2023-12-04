@@ -81,7 +81,7 @@ class TestOpticsCorr(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            OpticsCorr, PUB_INTERFACE, print_flag=True)
+            OpticsCorr, PUB_INTERFACE)
         self.assertTrue(valid)
 
     def test_type_errors(self):

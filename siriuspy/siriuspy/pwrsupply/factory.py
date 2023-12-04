@@ -4,6 +4,7 @@ import time as _time
 import re as _re
 from copy import deepcopy as _deepcopy
 
+from ..logging import get_logger as _get_logger
 from ..search import PSSearch as _PSSearch
 from ..thread import LoopQueueThread as _LoopQueueThread
 from ..bsmp.serial import Channel as _Channel
@@ -129,7 +130,7 @@ class BBBFactory:
 
     @staticmethod
     def _build_udcgrouped(bbbname):
-
+        logger = _get_logger(BBBFactory)
         # get names of all udcs under a beaglebone
         udcs = _PSSearch.conv_bbbname_2_udc(bbbname)
 
@@ -138,7 +139,7 @@ class BBBFactory:
 
             # add udc devices
             devs = _PSSearch.conv_udc_2_bsmps(udc)
-            print('UDC: ', udc, ', DEVICES: ', devs)
+            logger.info('UDC: ' + str(udc) + ', DEVICES: ' + str(devs))
             psmodel_name = BBBFactory._check_psmodels(devs)
             if psmodel_name in psmodels:
                 devices[psmodel_name].extend(devs)

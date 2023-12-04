@@ -7,6 +7,8 @@ import numpy as _np
 from mathphys.functions import save_pickle as _save_pickle, \
     load_pickle as _load_pickle
 
+from ..logging import get_logger as _get_logger
+
 from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
@@ -119,7 +121,6 @@ class PVDetails(_Base):
         if not data:
             return False
         for datum in data:
-            # print(datum)
             field, value = datum['name'], datum['value']
             if value is None:
                 continue
@@ -284,7 +285,8 @@ class PVData(_Base):
         """Update."""
         self.connect()
         if None in (self.timestamp_start, self.timestamp_stop):
-            print('Start and stop timestamps not defined! Aborting.')
+            _get_logger(self).error(
+                'Start and stop timestamps not defined! Aborting.')
             return
         process_type = 'mean' if mean_sec is not None else ''
 
@@ -497,7 +499,8 @@ class PVDataSet(_Base):
         """Update."""
         self.connect()
         if None in (self.timestamp_start, self.timestamp_stop):
-            print('Start and stop timestamps not defined! Aborting.')
+            _get_logger(self).error(
+                'Start and stop timestamps not defined! Aborting.')
             return
         process_type = 'mean' if mean_sec is not None else ''
 

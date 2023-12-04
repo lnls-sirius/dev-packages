@@ -8,6 +8,7 @@ from unittest import mock, TestCase
 import numpy as np
 
 import siriuspy.util as util
+import siriuspy.logging as mylog
 
 
 PUB_INTERFACE = (
@@ -16,7 +17,6 @@ PUB_INTERFACE = (
     'get_timestamp',
     'read_text_data',
     'print_ioc_banner',
-    'configure_log_file',
     'beam_rigidity',
     'check_pv_online',
     'get_strength_label',
@@ -116,7 +116,7 @@ class TestUtil(TestCase):
             {'PV05': None, 'PV06': None, 'PV07': None, 'PV08': None, })
         fil = StringIO()
         logging.root.handlers = []
-        util.configure_log_file(stream=fil)
+        mylog.configure_logging(stream=fil)
         util.print_ioc_banner(
             'test-ioc', dbase, 'Test-ioc for util module unittest',
             '1.0.0', 'PREFIX')
@@ -131,24 +131,6 @@ class TestUtil(TestCase):
             '1.0.0', 'PREFIX')
         text = fil.getvalue()
         self.assertEqual(len(text.splitlines()), 25+17)
-
-    def test_configure_log_file(self):
-        """Test configure_log_file."""
-        fil = StringIO()
-        logging.root.handlers = []
-        util.configure_log_file(stream=fil)
-        logging.info('test')
-        logging.debug('test')
-        text = fil.getvalue()
-        self.assertEqual(len(text.splitlines()), 1)
-
-        fil = StringIO()
-        logging.root.handlers = []
-        util.configure_log_file(stream=fil, debug=True)
-        logging.info('test')
-        logging.debug('test')
-        text = fil.getvalue()
-        self.assertEqual(len(text.splitlines()), 2)
 
     def test_beam_rigidity(self):
         """Test beam_rigidity."""
@@ -274,9 +256,9 @@ class TestUtil(TestCase):
         self.assertTrue(valid)
         NameSpace.C = None
         valid = util.check_public_interface_namespace(
-            NameSpace, public_interface, print_flag=False)
+            NameSpace, public_interface)
         self.assertFalse(valid)
         public_interface = ('A', 'B', 'missing_symbol')
         valid = util.check_public_interface_namespace(
-            NameSpace, public_interface, print_flag=False)
+            NameSpace, public_interface)
         self.assertFalse(valid)

@@ -7,6 +7,7 @@ from functools import partial as _part
 import epics as _epics
 import numpy as _np
 
+from ..logging import get_logger as _get_logger
 from ..util import update_bit as _updt_bit, get_bit as _get_bit
 from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
@@ -26,6 +27,7 @@ class App(_Callback):
     def __init__(self, tests=False):
         """Class constructor."""
         super().__init__()
+        self._logger = _get_logger(self)
         self._const = _Const()
         self._pvs_database = self._const.get_hlfofb_database()
         self._tests = tests
@@ -275,7 +277,7 @@ class App(_Callback):
             self.run_callbacks(pvn, pvv)
             if not okr:
                 self.run_callbacks(pvn.replace('SP', 'RB'), pvv)
-        self._update_log('Started.')
+        self._logger.info('Started.')
         self._init = True
 
     @property
@@ -294,13 +296,14 @@ class App(_Callback):
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        _log.info('Write received for: %s --> %s', reason, str(value))
+        self._logger.info('Write received for: %s --> %s', reason, str(value))
         if reason in self.map_pv2write.keys():
             status = self.map_pv2write[reason](value)
-            _log.info('%s Write for: %s --> %s',
-                      str(status).upper(), reason, str(value))
+            self._logger.info(
+                '%s Write for: %s --> %s', str(status).upper(), reason,
+                str(value))
             return status
-        _log.warning('PV %s does not have a set function.', reason)
+        self._logger.warning('PV %s does not have a set function.', reason)
         return False
 
     @property
@@ -325,6 +328,10 @@ class App(_Callback):
             return True
         return self._havebeam_pv.connected and self._havebeam_pv.value
 
+    def update_log(self, msg):
+        """This method will be called by the IOC to update Log-Mon PV."""
+        self.run_callbacks('Log-Mon', msg)
+
     # --- loop control ---
 
     def set_loop_state(self, value, abort=False):
@@ -335,16 +342,16 @@ class App(_Callback):
         self._loop_state_lastsp = value
         if value:
             if not self.havebeam:
-                self._update_log('ERR:Do not have stored beam. Aborted.')
+                self._logger.error('Do not have stored beam. Aborted.')
                 return False
             if _np.any([pvo.value for pvo in self._intlk_pvs]):
-                self._update_log('ERR:Reset interlocks before closing')
-                self._update_log('ERR:the loop.')
+                self._logger.error('Reset interlocks before closing')
+                self._logger.error('the loop.')
                 return False
 
         if self._thread_loopstate is not None and \
                 self._thread_loopstate.is_alive():
-            self._update_log('WARN:Interrupting Loop Enable thread...')
+            self._logger.warning('Interrupting Loop Enable thread...')
             self._abort_thread = True
             self._thread_loopstate.join()
 
@@ -357,13 +364,13 @@ class App(_Callback):
     def _thread_set_loop_state(self, value, abort):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
-            self._update_log('Setting Loop Gain to zero...')
+            self._logger.info('Setting Loop Gain to zero...')
             self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
             self._calc_corrs_coeffs(log=False)
             # set and wait corrector gains and coeffs to zero
             if not self._set_corrs_coeffs(log=False):
                 return
-            self._update_log('Waiting for coefficients and gains...')
+            self._logger.info('Waiting for coefficients and gains...')
             if not self._wait_coeffs_and_gains():
                 self.run_callbacks('LoopState-Sel', self._loop_state)
                 return
@@ -372,7 +379,7 @@ class App(_Callback):
                 return
 
             # close the loop
-            self._update_log('...done. Closing the loop...')
+            self._logger.info('...done. Closing the loop...')
             self._loop_state = value
             if not self._check_set_corrs_opmode():
                 self._loop_state = self._const.LoopState.Open
@@ -384,15 +391,15 @@ class App(_Callback):
                 return
 
             # do ramp up
-            self._update_log('...done. Starting Loop Gain ramp up...')
+            self._logger.info('...done. Starting Loop Gain ramp up...')
             if self._do_loop_gain_ramp(ramp='up'):
-                self._update_log('LoopGain ramp up finished!')
+                self._logger.info('LoopGain ramp up finished!')
 
         else:  # opening the loop
             # do ramp down
-            self._update_log('Starting Loop Gain ramp down...')
+            self._logger.info('Starting Loop Gain ramp down...')
             if self._do_loop_gain_ramp(ramp='down', abort=abort):
-                self._update_log('Loop Gain ramp down finished!')
+                self._logger.info('Loop Gain ramp down finished!')
 
             if self._check_abort_thread():
                 return
@@ -416,9 +423,9 @@ class App(_Callback):
         for i in range(self._const.LOOPGAIN_RMP_NPTS):
             if not self.havebeam or abort:
                 if not self.havebeam:
-                    self._update_log('ERR:There is no beam stored.')
-                self._update_log('WARN:Gain ramp aborted.')
-                self._update_log('WARN:Setting gain to zero.')
+                    self._logger.error('There is no beam stored.')
+                self._logger.warning('Gain ramp aborted.')
+                self._logger.warning('Setting gain to zero.')
                 self._loop_gain_mon_h, self._loop_gain_mon_v = 0, 0
                 self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
                 self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
@@ -433,7 +440,7 @@ class App(_Callback):
             self._loop_gain_mon_v = ydata_v[i]
             self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
             self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
-            self._update_log(
+            self._logger.info(
                 f'{i+1:02d}/{len(ydata):02d} -> Loop Gain: '
                 f'H={ydata_h[i]:.3f}, V={ydata_v[i]:.3f}')
             self._calc_corrs_coeffs(log=False)
@@ -455,13 +462,13 @@ class App(_Callback):
                 return True
             if self._check_abort_thread():
                 return False
-        self._update_log('ERR:Timed out waiting for correctors to')
-        self._update_log('ERR:implement gains and coefficients.')
+        self._logger.error('Timed out waiting for correctors to')
+        self._logger.error('implement gains and coefficients.')
         return False
 
     def _check_abort_thread(self):
         if self._abort_thread:
-            self._update_log('WARN:Loop state thread aborted.')
+            self._logger.warning('Loop state thread aborted.')
             self._abort_thread = False
             return True
         return False
@@ -473,8 +480,8 @@ class App(_Callback):
 
         if self._thread_loopstate is not None and \
                 self._thread_loopstate.is_alive():
-            self._update_log('ERR:Wait for Loop Gain ramp before ')
-            self._update_log('ERR:setting new value.')
+            self._logger.error('Wait for Loop Gain ramp before ')
+            self._logger.error('setting new value.')
             return False
 
         setattr(self, '_loop_gain_' + plane, value)
@@ -486,7 +493,7 @@ class App(_Callback):
             self._calc_corrs_coeffs()
             self._set_corrs_coeffs()
 
-        self._update_log(f'Changed Loop Gain {plane.upper()} to {value}.')
+        self._logger.info(f'Changed Loop Gain {plane.upper()} to {value}.')
         self.run_callbacks(f'LoopGain{plane.upper()}-RB', value)
         return True
 
@@ -498,13 +505,13 @@ class App(_Callback):
             return False
 
         self._loop_max_orb_dist = value
-        self._update_log('Setting orbit distortion threshold...')
+        self._logger.info('Setting orbit distortion threshold...')
         if self._llfofb_dev.set_max_orb_distortion(
                 value=value * self._const.CONV_UM_2_NM,
                 timeout=self._const.DEF_TIMEWAIT):
-            self._update_log('...done!')
+            self._logger.info('...done!')
         else:
-            self._update_log('ERR:Failed to set threshold.')
+            self._logger.error('Failed to set threshold.')
 
         self.run_callbacks('LoopMaxOrbDistortion-RB', value)
         return True
@@ -516,12 +523,12 @@ class App(_Callback):
 
         act = ('En' if value else 'Dis')
         self._loop_max_orb_dist_enbl = value
-        self._update_log(act+'abling orbit distortion detection...')
+        self._logger.info(act+'abling orbit distortion detection...')
         if self._llfofb_dev.set_max_orb_distortion_enbl(
                 value=value, timeout=self._const.DEF_TIMEWAIT):
-            self._update_log('...done!')
+            self._logger.info('...done!')
         else:
-            self._update_log('ERR:Failed to '+act+'able detection.')
+            self._logger.error('Failed to '+act+'able detection.')
 
         self.run_callbacks('LoopMaxOrbDistortionEnbl-Sts', value)
         return True
@@ -533,12 +540,12 @@ class App(_Callback):
 
         act = ('En' if value else 'Dis')
         self._loop_packloss_detec_enbl = value
-        self._update_log(act+'abling packet loss detection...')
+        self._logger.info(act+'abling packet loss detection...')
         if self._llfofb_dev.set_min_bpm_count_enbl(
                 value=value, timeout=self._const.DEF_TIMEWAIT):
-            self._update_log('...done!')
+            self._logger.info('...done!')
         else:
-            self._update_log('ERR:Failed to '+act+'able detection.')
+            self._logger.error('Failed to '+act+'able detection.')
 
         self.run_callbacks('LoopPacketLossDetecEnbl-Sts', value)
         return True
@@ -547,19 +554,19 @@ class App(_Callback):
 
     def cmd_corr_configure(self, _):
         """Configure corrector command."""
-        self._update_log('Received configure corrector command...')
+        self._logger.info('Received configure corrector command...')
         if not self._check_corr_connection():
             return False
 
         # saturation limits
-        self._update_log('Setting corrector saturation limits...')
+        self._logger.info('Setting corrector saturation limits...')
         chn, chl = self._const.ch_names, self._ch_maxacccurr
         cvn, cvl = self._const.cv_names, self._cv_maxacccurr
         self._corrs_dev.set_fofbacc_satmax(chl, psnames=chn)
         self._corrs_dev.set_fofbacc_satmin(-chl, psnames=chn)
         self._corrs_dev.set_fofbacc_satmax(cvl, psnames=cvn)
         self._corrs_dev.set_fofbacc_satmin(-cvl, psnames=cvn)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         # pwrstate
         self._check_set_corrs_pwrstate()
         # opmode
@@ -569,83 +576,83 @@ class App(_Callback):
         # matrix coefficients
         self._set_corrs_coeffs()
 
-        self._update_log('Correctors configuration done!')
+        self._logger.info('Correctors configuration done!')
         return True
 
     def cmd_corr_pwrstate_on(self, _):
         """Set all corrector pwrstate to on."""
-        self._update_log('Received set corrector pwrstate to on...')
+        self._logger.info('Received set corrector pwrstate to on...')
         if not self._check_corr_connection():
             return False
 
-        self._update_log('Setting all corrector pwrstate to on...')
+        self._logger.info('Setting all corrector pwrstate to on...')
         self._corrs_dev.set_pwrstate(self._const.OffOn.On)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def cmd_corr_pwrstate_off(self, _):
         """Set all corrector pwrstate to off."""
-        self._update_log('Received set corrector pwrstate to off...')
+        self._logger.info('Received set corrector pwrstate to off...')
         if not self._check_corr_connection():
             return False
 
-        self._update_log('Setting all corrector pwrstate to off...')
+        self._logger.info('Setting all corrector pwrstate to off...')
         self._corrs_dev.set_pwrstate(self._const.OffOn.Off)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def cmd_corr_opmode_manual(self, _):
         """Set all corrector opmode to manual."""
-        self._update_log('Received set corrector opmode to manual...')
+        self._logger.info('Received set corrector opmode to manual...')
         if not self._check_corr_connection():
             return False
 
-        self._update_log('Setting all corrector opmode to manual...')
+        self._logger.info('Setting all corrector opmode to manual...')
         self._corrs_dev.set_opmode(self._corrs_dev.OPMODE_STS.manual)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def cmd_corr_accfreeze_dsbl(self, _):
         """Set all corrector accumulator freeze state to Dsbl."""
-        self._update_log('Received set corrector AccFreeze to Dsbl...')
+        self._logger.info('Received set corrector AccFreeze to Dsbl...')
         if not self._check_corr_connection():
             return False
 
-        self._update_log('Setting AccFreeze to Dsbl...')
+        self._logger.info('Setting AccFreeze to Dsbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Dsbl)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def cmd_corr_accfreeze_enbl(self, _):
         """Set all corrector accumulator freeze state to Enbl."""
-        self._update_log('Received set corrector AccFreeze to Enbl...')
+        self._logger.info('Received set corrector AccFreeze to Enbl...')
         if not self._check_corr_connection():
             return False
 
-        self._update_log('Setting AccFreeze to Enbl...')
+        self._logger.info('Setting AccFreeze to Enbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Enbl)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def cmd_corr_accclear(self, _):
         """Clear all corrector accumulator."""
-        self._update_log('Received clear all corrector accumulator...')
+        self._logger.info('Received clear all corrector accumulator...')
         if not self._check_corr_connection():
             return False
 
-        self._update_log('Sending clear accumulator command...')
+        self._logger.info('Sending clear accumulator command...')
         self._corrs_dev.cmd_fofbacc_clear()
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def cmd_corr_currzero(self, _):
         """Set all corrector current to zero."""
-        self._update_log('Received set corrector current to zero...')
+        self._logger.info('Received set corrector current to zero...')
         if not self._check_corr_connection():
             return False
         if self._thread_currzero is not None and \
                 self._thread_currzero.is_alive():
-            self._update_log('ERR:Current ramp down already in progress.')
+            self._logger.error('Current ramp down already in progress.')
             return False
 
         self._thread_currzero = _epics.ca.CAThread(
@@ -659,7 +666,7 @@ class App(_Callback):
             return False
 
         self._corr_setcurrzero_dur = value
-        self._update_log('Changed corrector current ramp duration.')
+        self._logger.info('Changed corrector current ramp duration.')
         if self._thread_currzero is not None and \
                 self._thread_currzero.is_alive():
             self._abort_thread_currzero = True
@@ -685,8 +692,8 @@ class App(_Callback):
                     fofb = self._auxbpm['INFOFOFBRate-RB']
                     dec = monit // fofb
                 else:
-                    self._update_log('WARN:Could not read decimation from BPM')
-                    self._update_log('WARN:rates. Using value 4600.')
+                    self._logger.warning('Could not read decimation from BPM')
+                    self._logger.warning('rates. Using value 4600.')
                     dec = 4600
             else:
                 dec = self._corr_accdec_val
@@ -698,18 +705,18 @@ class App(_Callback):
         self._corr_accdec_val = dec
         self.run_callbacks('FOFBAccDecimation-RB', dec)
 
-        self._update_log('Setting FOFB Acc decimation...')
+        self._logger.info('Setting FOFB Acc decimation...')
         self._corrs_dev.set_fofbacc_decimation(dec)
-        self._update_log('...done!')
+        self._logger.info('...done!')
 
         return True
 
     def _thread_corr_currzero(self):
         if self._corrs_dev.check_current(0):
-            self._update_log('Current of all correctors already zeroed.')
+            self._logger.info('Current of all correctors already zeroed.')
             return
 
-        self._update_log('Sending all corrector current to zero...')
+        self._logger.info('Sending all corrector current to zero...')
 
         init_curr = self._corrs_dev.current
         npts = int(self._corr_setcurrzero_dur*self._const.CURRZERO_RMP_FREQ)
@@ -718,15 +725,15 @@ class App(_Callback):
             for idx, step in enumerate(xdata):
                 curr = init_curr * step
                 if self._check_thread_currzero_abort():
-                    self._update_log('...aborted.')
+                    self._logger.info('...aborted.')
                     return
-                self._update_log(
+                self._logger.info(
                     f'{idx+1:02d}/{len(xdata):02d} -> Current={100*step:.1f}%')
                 self._corrs_dev.set_current(curr)
                 _time.sleep(1/self._const.CURRZERO_RMP_FREQ)
 
         self._corrs_dev.set_current(0)
-        self._update_log('...done!')
+        self._logger.info('...done!')
 
     def _check_thread_currzero_abort(self):
         if self._abort_thread_currzero:
@@ -742,13 +749,13 @@ class App(_Callback):
             return False
 
         setattr(self, '_'+device+'_maxacccurr', value)
-        self._update_log('Setting '+device.upper()+' saturation limits...')
+        self._logger.info('Setting '+device.upper()+' saturation limits...')
         psnames = getattr(self._const, device+'_names')
         self._corrs_dev.set_fofbacc_satmax(value, psnames=psnames)
         self._corrs_dev.set_fofbacc_satmin(-value, psnames=psnames)
-        self._update_log('...done!')
+        self._logger.info('...done!')
 
-        self._update_log(
+        self._logger.info(
             'Changed '+device.upper()+' saturation limits to '+str(value)+'A.')
         self.run_callbacks(device.upper()+'AccSatMax-RB', value)
         return True
@@ -761,40 +768,40 @@ class App(_Callback):
             return False
 
         self._time_frame_len = value
-        self._update_log(f'Setting TimeFrameLen to {value}...')
+        self._logger.info(f'Setting TimeFrameLen to {value}...')
         self._llfofb_dev.set_time_frame_len(
             value=self._time_frame_len, timeout=self._const.DEF_TIMEWAIT)
-        self._update_log('...done!')
+        self._logger.info('...done!')
 
         self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
         return True
 
     def cmd_fofbctrl_confbpmid(self, _):
         """Configure FOFB DCC BPMId command."""
-        self._update_log('Received configure FOFB DCC BPMId command...')
+        self._logger.info('Received configure FOFB DCC BPMId command...')
         if not self._check_fofbctrl_connection():
             return False
-        self._update_log('Checking...')
+        self._logger.info('Checking...')
         if not self._llfofb_dev.bpm_id_configured:
-            self._update_log('Configuring DCC BPMIds...')
+            self._logger.info('Configuring DCC BPMIds...')
             if self._llfofb_dev.cmd_config_bpm_id():
-                self._update_log('Sent configuration to DCCs.')
+                self._logger.info('Sent configuration to DCCs.')
             else:
-                self._update_log('ERR:Failed to configure DCCs.')
+                self._logger.error('Failed to configure DCCs.')
         else:
-            self._update_log('FOFB DCC BPMIds already configured.')
+            self._logger.info('FOFB DCC BPMIds already configured.')
         return True
 
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
-        self._update_log('Received sync FOFB net command...')
+        self._logger.info('Received sync FOFB net command...')
         if not self._check_fofbctrl_connection():
             return False
-        self._update_log('Checking...')
+        self._logger.info('Checking...')
 
         if self._thread_syncnet is not None and \
                 self._thread_syncnet.is_alive():
-            self._update_log('ERR:Net sync already in progress.')
+            self._logger.error('Net sync already in progress.')
             return False
 
         self._thread_syncnet = _epics.ca.CAThread(
@@ -815,51 +822,51 @@ class App(_Callback):
 
     def cmd_fofbctrl_syncreforb(self, _):
         """Sync FOFB RefOrb command."""
-        self._update_log('Received sync FOFB RefOrb command...')
+        self._logger.info('Received sync FOFB RefOrb command...')
         if not self._check_fofbctrl_connection():
             return False
-        self._update_log('Checking...')
+        self._logger.info('Checking...')
         if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not \
                 self._llfofb_dev.check_reforby(self._reforbhw_y):
-            self._update_log('Syncing FOFB RefOrb...')
+            self._logger.info('Syncing FOFB RefOrb...')
             self._llfofb_dev.set_reforbx(self._reforbhw_x)
             self._llfofb_dev.set_reforby(self._reforbhw_y)
-            self._update_log('...done!')
+            self._logger.info('...done!')
         else:
-            self._update_log('FOFB RefOrb already synced.')
+            self._logger.info('FOFB RefOrb already synced.')
         return True
 
     def cmd_fofbctrl_synctframelen(self, _):
         """Sync FOFB controllers TimeFrameLen command."""
-        self._update_log('Received configure FOFB controllers')
-        self._update_log('TimeFrameLen command... Checking...')
+        self._logger.info('Received configure FOFB controllers')
+        self._logger.info('TimeFrameLen command... Checking...')
         if not self._check_fofbctrl_connection():
             return False
         timeframe = self._time_frame_len
         if not _np.all(self._llfofb_dev.time_frame_len == timeframe):
-            self._update_log('Configuring TimeFrameLen PVs...')
+            self._logger.info('Configuring TimeFrameLen PVs...')
             if self._llfofb_dev.set_time_frame_len(timeframe):
-                self._update_log('...done!')
+                self._logger.info('...done!')
             else:
-                self._update_log('ERR:Failed to configure TimeFrameLen.')
+                self._logger.error('Failed to configure TimeFrameLen.')
         else:
-            self._update_log('TimeFrameLen PVs already configured.')
+            self._logger.info('TimeFrameLen PVs already configured.')
         return True
 
     def cmd_fofbctrl_confbpmlogtrg(self, _):
         """Configure BPM logical triggers command."""
-        self._update_log('Received configure BPM Logical')
+        self._logger.info('Received configure BPM Logical')
         if not self._check_fofbctrl_connection():
             return False
-        self._update_log('triggers command... Checking...')
+        self._logger.info('triggers command... Checking...')
         if not self._llfofb_dev.bpm_trigs_configured:
-            self._update_log('Configuring BPM logical triggers...')
+            self._logger.info('Configuring BPM logical triggers...')
             if self._llfofb_dev.cmd_config_bpm_trigs():
-                self._update_log('...done!')
+                self._logger.info('...done!')
             else:
-                self._update_log('ERR:Failed to configure BPM log.trigs.')
+                self._logger.error('Failed to configure BPM log.trigs.')
         else:
-            self._update_log('BPM logical triggers already configured.')
+            self._logger.info('BPM logical triggers already configured.')
         return True
 
     def set_fofbctrl_syncuseenablelist(self, value):
@@ -873,15 +880,15 @@ class App(_Callback):
         self._update_fofbctrl_sync_enbllist()
         self._conf_fofbctrl_packetlossdetec()
 
-        self._update_log('Changed sync net command to ')
-        self._update_log(('' if value else 'not ')+'use BPM EnableList.')
+        self._logger.info('Changed sync net command to ')
+        self._logger.info(('' if value else 'not ')+'use BPM EnableList.')
         self.run_callbacks('CtrlrSyncUseEnblList-Sts', value)
         return True
 
     def cmd_fofbctrl_syncmaxorbdist(self, _):
         """Sync FOFB controllers orbit distortion detection command."""
-        self._update_log('Received sync FOFB controllers orbit')
-        self._update_log('distortion detection command...Checking...')
+        self._logger.info('Received sync FOFB controllers orbit')
+        self._logger.info('distortion detection command...Checking...')
         if not self._check_fofbctrl_connection():
             return False
 
@@ -890,30 +897,30 @@ class App(_Callback):
         # threshold
         thres = self._loop_max_orb_dist * self._const.CONV_UM_2_NM
         if not _np.all(self._llfofb_dev.max_orb_distortion == thres):
-            self._update_log('Setting MaxOrbDistortion PVs...')
+            self._logger.info('Setting MaxOrbDistortion PVs...')
             if self._llfofb_dev.set_max_orb_distortion(thres, timeout=tout):
-                self._update_log('...done!')
+                self._logger.info('...done!')
             else:
-                self._update_log('ERR:Failed to sync threshold.')
+                self._logger.error('Failed to sync threshold.')
         else:
-            self._update_log('MaxOrbDistortion PVs already configured.')
+            self._logger.info('MaxOrbDistortion PVs already configured.')
 
         # enable status
         sts = self._loop_max_orb_dist_enbl
         if not _np.all(self._llfofb_dev.max_orb_distortion_enbl == sts):
-            self._update_log('Setting MaxOrbDistortionEnbl PVs...')
+            self._logger.info('Setting MaxOrbDistortionEnbl PVs...')
             if self._llfofb_dev.set_max_orb_distortion_enbl(sts, timeout=tout):
-                self._update_log('...done!')
+                self._logger.info('...done!')
             else:
-                self._update_log('ERR:Failed to sync enable status.')
+                self._logger.error('Failed to sync enable status.')
         else:
-            self._update_log('MaxOrbDistortionEnbl PVs already configured.')
+            self._logger.info('MaxOrbDistortionEnbl PVs already configured.')
         return True
 
     def cmd_fofbctrl_syncpacklossdet(self, _):
         """Sync FOFB controllers packet loss detection command."""
-        self._update_log('Received sync FOFB controllers packet')
-        self._update_log('loss detection command...Checking...')
+        self._logger.info('Received sync FOFB controllers packet')
+        self._logger.info('loss detection command...Checking...')
         if not self._check_fofbctrl_connection():
             return False
         self._conf_fofbctrl_packetlossdetec()
@@ -921,7 +928,7 @@ class App(_Callback):
 
     def cmd_fofbctrl_reset(self, _):
         """Reset FOFB controllers interlock command."""
-        self._update_log('Received reset FOFB controllers command...')
+        self._logger.info('Received reset FOFB controllers command...')
         if not self._check_fofbctrl_connection():
             return False
         self._do_fofbctrl_reset()
@@ -929,24 +936,24 @@ class App(_Callback):
 
     def cmd_fofbctrl_dsblsysid(self, _):
         """Disable FOFB controllers system identification excitation."""
-        self._update_log('Received disable FOFB controllers SYSID...')
+        self._logger.info('Received disable FOFB controllers SYSID...')
         if not self._check_fofbctrl_connection():
             return False
-        self._update_log('Disabling SYSID excitation...')
+        self._logger.info('Disabling SYSID excitation...')
         self._llfofb_dev.cmd_dsbl_sysid_exc()
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     # --- reference orbit ---
 
     def set_reforbit(self, plane, value):
         """Set reference orbit."""
-        self._update_log(f'Setting New RefOrb{plane.upper()}...')
+        self._logger.info(f'Setting New RefOrb{plane.upper()}...')
 
         # check size
         ref = _np.array(value, dtype=float)
         if ref.size != self._const.reforb_size:
-            self._update_log('ERR: Wrong RefOrb Size.')
+            self._logger.error(' Wrong RefOrb Size.')
             return False
 
         # set internal states and LLFOFB reforb
@@ -970,23 +977,23 @@ class App(_Callback):
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
         self.run_callbacks(f'RefOrbHw{plane.upper()}-Mon', refhw)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def _load_reforbit(self):
         filename = self._const.reforb_fname
         if not _os.path.isfile(filename):
             return False
-        self._update_log('Loading RefOrbits from file...')
+        self._logger.info('Loading RefOrbits from file...')
         refx, refy = _np.loadtxt(filename, unpack=True)
         okx = self.set_reforbit('x', refx)
         oky = self.set_reforbit('y', refy)
-        if all([okx, oky]):
-            msg = 'Loaded RefOrbits!'
+        okk = all([okx, oky])
+        if okk:
+            self._logger.info('Loaded RefOrbits!')
         else:
-            msg = 'ERR:Problem loading RefOrbits from file.'
-        self._update_log(msg)
-        return 'ERR' not in msg
+            self._logger.error('Problem loading RefOrbits from file.')
+        return okk
 
     def _save_reforbit(self):
         filename = self._const.reforb_fname
@@ -997,20 +1004,20 @@ class App(_Callback):
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, orbs)
         except FileNotFoundError:
-            self._update_log('WARN:Could not save ref.orbit to file.')
+            self._logger.warning('Could not save ref.orbit to file.')
 
     # --- matrix manipulation ---
 
     def set_respmat(self, value):
         """Set response matrix."""
-        self._update_log('Setting New RespMat...')
+        self._logger.info('Setting New RespMat...')
 
         # check size
         mat = _np.array(value, dtype=float)
         matb = mat
         if mat.size != self._const.matrix_size:
-            self._update_log(
-                f'ERR: Wrong RespMat Size ({mat.size}, '
+            self._logger.error(
+                f'Wrong RespMat Size ({mat.size}, '
                 f'expected {self._const.matrix_size}).')
             return False
 
@@ -1038,13 +1045,13 @@ class App(_Callback):
         filename = self._const.respmat_fname
         if not _os.path.isfile(filename):
             return False
-        self._update_log('Loading RespMat from file...')
-        if self.set_respmat(_np.loadtxt(filename)):
-            msg = 'Loaded RespMat!'
+        self._logger.info('Loading RespMat from file...')
+        okk = self.set_respmat(_np.loadtxt(filename))
+        if okk:
+            self._logger.info('Loaded RespMat!')
         else:
-            msg = 'ERR:Problem loading RespMat from file.'
-        self._update_log(msg)
-        return 'ERR' not in msg
+            self._logger.error('Problem loading RespMat from file.')
+        return okk
 
     def _save_respmat(self, mat):
         try:
@@ -1053,25 +1060,25 @@ class App(_Callback):
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, mat)
         except FileNotFoundError:
-            self._update_log('WARN:Could not save matrix to file.')
+            self._logger.warning('Could not save matrix to file.')
 
     def set_enbllist(self, device, value):
         """Set enable list for device."""
         if self._loop_state:
-            self._update_log('ERR:Open loop before continuing.')
+            self._logger.error('Open loop before continuing.')
             return False
         if self._thread_enbllist is not None and \
                 self._thread_enbllist.is_alive():
             self._abort_thread_enbllist = True
             self._thread_enbllist.join()
-        self._update_log('Setting {0:s} EnblList'.format(device.upper()))
+        self._logger.info('Setting {0:s} EnblList'.format(device.upper()))
 
         # check size
         bkup = self._enable_lists[device]
         new = _np.array(value, dtype=bool)
         if bkup.size != new.size:
-            self._update_log(
-                'ERR: Wrong {0:s} EnblList size.'.format(device.upper()))
+            self._logger.error(
+                'Wrong {0:s} EnblList size.'.format(device.upper()))
             return False
 
         self._enable_lists[device] = new
@@ -1144,10 +1151,10 @@ class App(_Callback):
             return
         okl = self.set_enbllist(device, _np.loadtxt(filename))
         if okl:
-            msg = f'Loaded {device} enable list!'
+            self._logger.info(f'Loaded {device} enable list!')
         else:
-            msg = f'ERR:Problem loading {device} enable list from file.'
-        self._update_log(msg)
+            self._logger.error(
+                f'Problem loading {device} enable list from file.')
         return okl
 
     def _save_enbllist(self, device, value):
@@ -1157,8 +1164,8 @@ class App(_Callback):
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, value)
         except FileNotFoundError:
-            self._update_log(
-                f'WARN:Could not save {device} enable list to file.')
+            self._logger.warning(
+                f'Could not save {device} enable list to file.')
 
     def set_min_sing_value(self, value):
         """Set minimum singular values."""
@@ -1185,9 +1192,9 @@ class App(_Callback):
         if not 0 <= value < len(_ETypes.GLOB_INDIV):
             return False
 
-        self._update_log(
-            'Changed normalization mode to ' + str(
-                self._const.GlobIndiv._fields[value])+'.')
+        self._logger.info(
+            'Changed normalization mode to ' +
+            str(self._const.GlobIndiv._fields[value]) + '.')
         self._invrespmat_normmode = value
 
         self._calc_corrs_coeffs()
@@ -1198,18 +1205,18 @@ class App(_Callback):
         return True
 
     def _calc_matrices(self):
-        self._update_log('Calculating Inverse Matrix...')
+        self._logger.info('Calculating Inverse Matrix...')
 
         if not self._check_corr_connection():
             return False
 
         selbpm = self.bpm_enbllist
         if not any(selbpm):
-            self._update_log('ERR: No BPM selected in EnblList')
+            self._logger.error('No BPM selected in EnblList')
             return False
         selcorr = self.corr_enbllist
         if not any(selcorr):
-            self._update_log('ERR: No Corrector selected in EnblList')
+            self._logger.error('No Corrector selected in EnblList')
             return False
 
         # apply device selection
@@ -1224,7 +1231,7 @@ class App(_Callback):
         try:
             _uo, _so, _vo = _np.linalg.svd(mat, full_matrices=False)
         except _np.linalg.LinAlgError():
-            self._update_log('ERR: Could not calculate SVD')
+            self._logger.error('Could not calculate SVD')
             return False
 
         # handle singular values
@@ -1233,7 +1240,7 @@ class App(_Callback):
         _sr = _so[idcs]
         nrs = _np.sum(idcs)
         if not nrs:
-            self._update_log('ERR: All Singular Values below minimum.')
+            self._logger.error('All Singular Values below minimum.')
             return False
         # apply Tikhonov regularization
         regc = self._tikhonov_reg_const
@@ -1247,7 +1254,7 @@ class App(_Callback):
         # check if inverse matrix is valid
         invmat = _np.dot(_vo.T*inv_s, _uo.T)
         if _np.any(_np.isnan(invmat)) or _np.any(_np.isinf(invmat)):
-            self._update_log('ERR: Inverse contains nan or inf.')
+            self._logger.error('Inverse contains nan or inf.')
             return False
 
         # reconstruct filtered and regularized matrix in physical units
@@ -1257,9 +1264,9 @@ class App(_Callback):
         str2curr = _np.r_[self._corrs_dev.strength_2_current_factor, 1.0]
         currgain = _np.r_[self._corrs_dev.curr_gain, 1.0]
         if _np.any(str2curr == 0) or _np.any(currgain == 0):
-            self._update_log('ERR:Could not calculate hardware unit')
-            self._update_log('ERR:matrix, CurrGain or "urad to A" ')
-            self._update_log('ERR:factor have zero values.')
+            self._logger.error('Could not calculate hardware unit')
+            self._logger.error('matrix, CurrGain or "urad to A" ')
+            self._logger.error('factor have zero values.')
             return False
         # unit convertion: um/urad (1)-> nm/urad (2)-> nm/A (3)-> nm/counts
         matc = matr * self._const.CONV_UM_2_NM
@@ -1312,7 +1319,7 @@ class App(_Callback):
         if self._init:
             self._set_corrs_coeffs()
 
-        self._update_log('Ok!')
+        self._logger.info('Ok!')
         return True
 
     # --- matrix measurement ---
@@ -1341,18 +1348,18 @@ class App(_Callback):
 
     def _start_meas_respmat(self):
         if self._loop_state == self._const.LoopState.Closed:
-            self._update_log('ERR: Open FOFB loop before continue.')
+            self._logger.error('Open FOFB loop before continue.')
             return False
         if not self._sofb_check_config():
-            self._update_log('ERR: Aborted.')
+            self._logger.error('Aborted.')
             return False
         if self._measuring_respmat:
-            self._update_log('ERR: Measurement already in progress...')
+            self._logger.error('Measurement already in progress...')
             return False
         if not self.havebeam:
-            self._update_log('ERR: Do not have stored beam. Aborted.')
+            self._logger.error('Do not have stored beam. Aborted.')
             return False
-        self._update_log('Starting RespMat measurement.')
+        self._logger.info('Starting RespMat measurement.')
         self._measuring_respmat = True
         self._meas_respmat_thread = _epics.ca.CAThread(
             target=self._do_meas_respmat, daemon=True)
@@ -1361,17 +1368,17 @@ class App(_Callback):
 
     def _stop_meas_respmat(self):
         if not self._measuring_respmat:
-            self._update_log('ERR: No Measurement occurring.')
+            self._logger.error('No Measurement occurring.')
             return False
-        self._update_log('Aborting measurement. Wait...')
+        self._logger.info('Aborting measurement. Wait...')
         self._measuring_respmat = False
         return True
 
     def _reset_meas_respmat(self):
         if self._measuring_respmat:
-            self._update_log('WARN: measurement in progress...')
+            self._logger.warning('measurement in progress...')
             return False
-        self._update_log('Reseting measurement status.')
+        self._logger.info('Reseting measurement status.')
         self.run_callbacks('MeasRespMat-Mon', self._const.MeasRespMatMon.Idle)
         return True
 
@@ -1387,15 +1394,15 @@ class App(_Callback):
             if not self._measuring_respmat:
                 self.run_callbacks(
                     'MeasRespMat-Mon', self._const.MeasRespMatMon.Aborted)
-                self._update_log('Measurement stopped.')
+                self._logger.info('Measurement stopped.')
                 for _ in range(i, self._const.nr_corrs):
                     mat.append(orbzero)
                 break
             if not self.havebeam:
                 self.run_callbacks(
                     'MeasRespMat-Mon', self._const.MeasRespMatMon.Aborted)
-                self._update_log(
-                    'ERR: Cannot Measure, We do not have stored beam!')
+                self._logger.error(
+                    'Cannot Measure, We do not have stored beam!')
                 for _ in range(i, self._const.nr_corrs):
                     mat.append(orbzero)
                 break
@@ -1406,7 +1413,7 @@ class App(_Callback):
             if i < self._const.nr_ch + self._const.nr_cv:
                 dev = self._corrs_dev[i]
                 conv = self._corrs_dev.psconvs[i]
-                self._update_log('{0:d}/{1:d} -> {2:s}'.format(
+                self._logger.info('{0:d}/{1:d} -> {2:s}'.format(
                     i+1, sum_enbld, dev.devname))
 
                 corrtype = 'ch' if 'FCH' in dev.devname else 'cv'
@@ -1428,7 +1435,7 @@ class App(_Callback):
                 dev.current = orig_curr
             elif i < self._const.nr_corrs:
                 dev = self.rf_dev
-                self._update_log('{0:d}/{1:d} -> {2:s}'.format(
+                self._logger.info('{0:d}/{1:d} -> {2:s}'.format(
                     i+1, sum_enbld, dev.devname))
 
                 delta = self._meas_respmat_kick['rf']
@@ -1451,17 +1458,17 @@ class App(_Callback):
         self.run_callbacks(
             'MeasRespMat-Mon', self._const.MeasRespMatMon.Completed)
         self._measuring_respmat = False
-        self._update_log('RespMat Measurement Completed!')
+        self._logger.info('RespMat Measurement Completed!')
 
     def _sofb_check_config(self):
         if not self._sisofb_dev.autocorrsts == _Const.LoopState.Open:
-            self._update_log('ERR: Open SOFB loop before continue.')
+            self._logger.error('Open SOFB loop before continue.')
             return False
         if not self._sisofb_dev.opmode_str == 'SlowOrb':
-            self._update_log('ERR: SOFBMode is different from SlowOrb.')
+            self._logger.error('SOFBMode is different from SlowOrb.')
             return False
         if not self._sisofb_dev.wait_orb_status_ok(timeout=0.5):
-            self._update_log('ERR: SOFB orbit status is not ok.')
+            self._logger.error('SOFB orbit status is not ok.')
             return False
         return True
 
@@ -1476,8 +1483,8 @@ class App(_Callback):
 
     def _callback_havebeam(self, value, **kws):
         if not value and self._loop_state == self._const.LoopState.Closed:
-            self._update_log('FATAL:We do not have stored beam!')
-            self._update_log('FATAL:Opening FOFB loop...')
+            self._logger.fatal('We do not have stored beam!')
+            self._logger.fatal('Opening FOFB loop...')
             self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     def _callback_loopintlk(self, pvname, value, **kws):
@@ -1487,12 +1494,12 @@ class App(_Callback):
         paclos = _get_bit(value, 1) and not _get_bit(old, 1)
         self._intlk_values[pvname] = value
         if value != 0:
-            pref = ('FATAL' if self._loop_state else 'WARN') + \
-                ':Ctrlr.' + sub + ' detected '
-            if orbdis:
-                self._update_log(pref + 'large orb.dist.!')
-            if paclos:
-                self._update_log(pref + 'packet loss!')
+            if orbdis or paclos:
+                fun = getattr(
+                    self._logger, 'fatal' if self._loop_state else 'warning')
+                msg = ':Ctrlr.' + sub + ' detected '
+                msg += 'large orb.dist.!' if orbdis else 'packet loss!'
+                fun(msg)
 
             if self._loop_state != self._const.LoopState.Closed:
                 return
@@ -1503,7 +1510,7 @@ class App(_Callback):
                     (self._thread_loopstate is not None and
                      self._thread_loopstate.is_alive() and
                      self._loop_state_lastsp != self._const.LoopState.Open):
-                self._update_log('FATAL:Opening FOFB loop...')
+                self._logger.fatal('Opening FOFB loop...')
                 self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
                 self.set_loop_state(self._const.LoopState.Open, abort=True)
@@ -1513,7 +1520,7 @@ class App(_Callback):
     def _check_corr_connection(self):
         if self._corrs_dev.connected:
             return True
-        self._update_log('ERR:Correctors not connected... aborted.')
+        self._logger.error('Correctors not connected... aborted.')
         return False
 
     def _check_set_corrs_pwrstate(self):
@@ -1521,20 +1528,20 @@ class App(_Callback):
 
         Control only correctors that are in the enable list.
         """
-        self._update_log('Checking corrector pwrstate...')
+        self._logger.info('Checking corrector pwrstate...')
         pwrstate = _Const.OffOn.On
         is_ok = 1 * (self._corrs_dev.pwrstate == pwrstate)
         idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
         if idcs.size:
-            self._update_log('Configuring corrector pwrstate...')
+            self._logger.info('Configuring corrector pwrstate...')
             self._corrs_dev.set_pwrstate(pwrstate, psindices=idcs)
             if self._corrs_dev.check_pwrstate(
                     pwrstate, psindices=idcs, timeout=5):
-                self._update_log('...done!')
+                self._logger.info('...done!')
                 return True
-            self._update_log('ERR:Failed to set corrector pwrstate.')
+            self._logger.error('Failed to set corrector pwrstate.')
             return False
-        self._update_log('All ok.')
+        self._logger.info('All ok.')
         return True
 
     def _check_set_corrs_opmode(self):
@@ -1542,21 +1549,21 @@ class App(_Callback):
 
         Control only correctors that are in the enable list.
         """
-        self._update_log('Checking corrector opmode...')
+        self._logger.info('Checking corrector opmode...')
         opmode = self._corrs_dev.OPMODE_STS.manual \
             if self._loop_state == self._const.LoopState.Open \
             else self._corrs_dev.OPMODE_STS.fofb
         is_ok = 1 * (self._corrs_dev.opmode == opmode)
         idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
         if idcs.size:
-            self._update_log('Configuring corrector opmode...')
+            self._logger.info('Configuring corrector opmode...')
             self._corrs_dev.set_opmode(opmode, psindices=idcs)
             if self._corrs_dev.check_opmode(opmode, psindices=idcs, timeout=5):
-                self._update_log('...done!')
+                self._logger.info('...done!')
                 return True
-            self._update_log('ERR:Failed to set corrector opmode.')
+            self._logger.error('Failed to set corrector opmode.')
             return False
-        self._update_log('All ok.')
+        self._logger.info('All ok.')
         return True
 
     def _set_corrs_fofbacc_freeze(self):
@@ -1564,10 +1571,10 @@ class App(_Callback):
 
         Keep in accordance with enable list and loop_state.
         """
-        self._update_log('Setting corrector FOFCAccFreeze...')
+        self._logger.info('Setting corrector FOFCAccFreeze...')
         freeze = self._get_corrs_fofbacc_freeze_desired()
         self._corrs_dev.set_fofbacc_freeze(freeze)
-        self._update_log('...done!')
+        self._logger.info('...done!')
 
     def _get_corrs_fofbacc_freeze_desired(self):
         if self._loop_state == self._const.LoopState.Open:
@@ -1579,8 +1586,8 @@ class App(_Callback):
     def _calc_corrs_coeffs(self, log=True):
         """Calculate corrector coefficients and gains."""
         if log:
-            self._update_log('Calculating corrector coefficients ')
-            self._update_log('and FOFB pre-accumulator gains...')
+            self._logger.info('Calculating corrector coefficients ')
+            self._logger.info('and FOFB pre-accumulator gains...')
 
         # calculate coefficients and gains
         invmat = self._invrespmatconv[:-1]  # remove RF line
@@ -1639,26 +1646,26 @@ class App(_Callback):
         self.run_callbacks('CorrGains-Mon', list(self._psgains.ravel()))
 
         if log:
-            self._update_log('...done!')
+            self._logger.info('...done!')
 
     def _set_corrs_coeffs(self, log=True):
         """Set corrector coefficients and gains."""
         if log:
-            self._update_log('Setting corrector gains and coefficients...')
+            self._logger.info('Setting corrector gains and coefficients...')
         if not self._check_corr_connection():
             return False
         if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
             self._corrs_dev.set_invrespmat_row(self._pscoeffs)
         self._corrs_dev.set_fofbacc_gain(self._psgains)
         if log:
-            self._update_log('...done!')
+            self._logger.info('...done!')
         return True
 
     def _check_fofbctrl_connection(self):
         if self._llfofb_dev.connected:
             return True
-        self._update_log('ERR:FOFB Controllers not connected...')
-        self._update_log('ERR:aborted.')
+        self._logger.error('FOFB Controllers not connected...')
+        self._logger.error('aborted.')
         return False
 
     def _update_fofbctrl_sync_enbllist(self):
@@ -1681,11 +1688,11 @@ class App(_Callback):
 
     def _do_fofbctrl_syncnet(self):
         bpms = self._get_fofbctrl_bpmdcc_enbl()
-        self._update_log('Syncing FOFB net...')
+        self._logger.info('Syncing FOFB net...')
         if self._llfofb_dev.cmd_sync_net(bpms=bpms):
-            self._update_log('Sync sent to FOFB net.')
+            self._logger.info('Sync sent to FOFB net.')
             return True
-        self._update_log('ERR:Failed to sync FOFB net.')
+        self._logger.error('Failed to sync FOFB net.')
         return False
 
     def _wait_fofbctrl_netsync(self):
@@ -1693,9 +1700,9 @@ class App(_Callback):
         _t0 = _time.time()
         while _time.time() - _t0 < self._const.DEF_TIMEMINWAIT:
             if self._llfofb_dev.check_net_synced(bpms=bpms):
-                self._update_log('Net synced, continuing...')
+                self._logger.info('Net synced, continuing...')
                 return True
-        self._update_log('ERR:Net not synced.')
+        self._logger.error('Net not synced.')
         return False
 
     def _conf_fofbctrl_packetlossdetec(self):
@@ -1708,41 +1715,41 @@ class App(_Callback):
 
     def _dsbl_fofbctrl_minbpmcnt_enbl(self):
         timeout = self._const.DEF_TIMEWAIT
-        self._update_log('Disabling packet loss detection...')
+        self._logger.info('Disabling packet loss detection...')
         self._llfofb_dev.set_min_bpm_count_enbl(0, timeout=timeout)
-        self._update_log('...done!')
+        self._logger.info('...done!')
         return True
 
     def _conf_fofbctrl_minbpmcnt(self):
         timeout = self._const.DEF_TIMEWAIT
         count = int(_np.sum(self._fofbctrl_syncenbllist))
         if not _np.all(self._llfofb_dev.min_bpm_count == count):
-            self._update_log('Setting MinBPMCnt PVs...')
+            self._logger.info('Setting MinBPMCnt PVs...')
             if self._llfofb_dev.set_min_bpm_count(count, timeout=timeout):
-                self._update_log('...done!')
+                self._logger.info('...done!')
             else:
-                self._update_log('ERR:Failed to sync MinBPMCnt.')
+                self._logger.error('Failed to sync MinBPMCnt.')
         else:
-            self._update_log('MinBPMCnt PVs already configured.')
+            self._logger.info('MinBPMCnt PVs already configured.')
         return True
 
     def _conf_fofbctrl_minbpmcnt_enbl(self):
         timeout = self._const.DEF_TIMEWAIT
         sts = self._loop_packloss_detec_enbl
         if not _np.all(self._llfofb_dev.min_bpm_count_enbl == sts):
-            self._update_log('Setting MinBPMCntEnbl PVs...')
+            self._logger.info('Setting MinBPMCntEnbl PVs...')
             if self._llfofb_dev.set_min_bpm_count_enbl(sts, timeout=timeout):
-                self._update_log('...done!')
+                self._logger.info('...done!')
             else:
-                self._update_log('ERR:Failed to sync enable status.')
+                self._logger.error('Failed to sync enable status.')
         else:
-            self._update_log('MinBPMCntEnbl PVs already configured.')
+            self._logger.info('MinBPMCntEnbl PVs already configured.')
         return True
 
     def _do_fofbctrl_reset(self):
         if self._thread_reset is not None and \
                 self._thread_reset.is_alive():
-            self._update_log('ERR: reset already in progress.')
+            self._logger.error('reset already in progress.')
             return False
 
         self._thread_reset = _epics.ca.CAThread(
@@ -1751,17 +1758,17 @@ class App(_Callback):
         return True
 
     def _thread_fofbctrl_reset(self):
-        self._update_log('Reseting FOFB loop...')
+        self._logger.info('Reseting FOFB loop...')
 
         # disabling packet loss detection
         self._dsbl_fofbctrl_minbpmcnt_enbl()
 
         # reset interlock
-        self._update_log('Sending reset to FOFB controllers...')
+        self._logger.info('Sending reset to FOFB controllers...')
         if self._llfofb_dev.cmd_reset():
-            self._update_log('...done!')
+            self._logger.info('...done!')
         else:
-            self._update_log('ERR:Failed to reset controllers.')
+            self._logger.error('Failed to reset controllers.')
             return
 
         # wait for packet count to be correct
@@ -1769,21 +1776,10 @@ class App(_Callback):
             return
 
         # return packet loss detection to correct status
-        self._update_log('Reconfiguring packet loss detection...')
+        self._logger.info('Reconfiguring packet loss detection...')
         self._conf_fofbctrl_minbpmcnt_enbl()
 
     # --- auxiliary log methods ---
-
-    def _update_log(self, msg):
-        if 'ERR' in msg:
-            _log.error(msg[4:])
-        elif 'FATAL' in msg:
-            _log.error(msg[6:])
-        elif 'WARN' in msg:
-            _log.warning(msg[5:])
-        else:
-            _log.info(msg)
-        self.run_callbacks('Log-Mon', msg)
 
     def _check_corrs_configs(self):
         tplanned = 1.0/App.SCAN_FREQUENCY
@@ -1845,7 +1841,7 @@ class App(_Callback):
             if tsleep > 0:
                 _time.sleep(tsleep)
             else:
-                _log.warning(
+                self._logger.warning(
                     'Corrector configuration check took more than planned... '
                     '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
 
@@ -1913,6 +1909,6 @@ class App(_Callback):
             if tsleep > 0:
                 _time.sleep(tsleep)
             else:
-                _log.warning(
-                    'Controllers configuration check took more than planned... '
-                    '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+                self._logger.warning(
+                    'Controllers configuration check took more than planned...'
+                    ' {0:.3f}/{1:.3f} s'.format(ttook, tplanned))

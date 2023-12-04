@@ -4,12 +4,12 @@ import time as _time
 import operator as _opr
 import math as _math
 from functools import partial as _partial
-from copy import deepcopy as _dcopy
 
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
     CASeverityException as _CASeverityException
 import numpy as _np
 
+from ..logging import get_logger as _get_logger, logging as _log
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
     GET_TIMEOUT as _GET_TIMEOUT
@@ -59,6 +59,7 @@ class Device:
         self._devname = _SiriusPVName(devname) if devname else devname
         self._auto_monitor = auto_monitor
         self._auto_monitor_mon = auto_monitor_mon
+        self._logger = _get_logger(self)
 
         if isinstance(props2init, str) and props2init.lower() == 'all':
             propties = self.PROPERTIES_DEFAULT
@@ -74,6 +75,19 @@ class Device:
     def devname(self):
         """Return device name."""
         return self._devname
+
+    @property
+    def logger(self):
+        """Return object logger. Instance of logging.Logger class."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        """."""
+        if not isinstance(logger, _log.Logger):
+            self._logger.warn('Wrong object type. Logger not changed.')
+            return
+        self._logger = logger
 
     @property
     def properties_in_use(self):
@@ -140,7 +154,7 @@ class Device:
         except (_ChannelAccessGetFailure, _CASeverityException):
             # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
-            print('Could not set auto_monitor of {}'.format(pvobj.pvname))
+            self._logger.warn('fCould not set auto_monitor of {pvobj.pvname}')
             return False
         return True
 
@@ -194,7 +208,7 @@ class Device:
         except (_ChannelAccessGetFailure, _CASeverityException):
             # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
-            print('Could not get value of {}'.format(pvobj.pvname))
+            self._logger.warn(f'Could not get value of {pvobj.pvname}')
             value = None
         return value
 
@@ -280,6 +294,7 @@ class DeviceSet:
         """."""
         self._devices = devices
         self._devname = _SiriusPVName(devname)
+        self._logger = _get_logger(self)
 
     _enum_selector = staticmethod(Device._enum_selector)
 
@@ -287,6 +302,19 @@ class DeviceSet:
     def devname(self):
         """Name of the Device set. May be empty in some cases."""
         return self._devname
+
+    @property
+    def logger(self):
+        """Return object logger. Instance of logging.Logger class."""
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger):
+        """."""
+        if not isinstance(logger, _log.Logger):
+            self._logger.warn('Wrong object type. Logger not changed.')
+            return
+        self._logger = logger
 
     @property
     def simulators(self):

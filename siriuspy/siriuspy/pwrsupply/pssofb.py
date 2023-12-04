@@ -9,6 +9,7 @@ import numpy as _np
 from epics import get_pv as _get_pv
 from socket import timeout as _socket_timeout
 
+from ..logging import get_logger as _get_logger
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
 from ..search import IDSearch as _IDSearch
@@ -473,14 +474,16 @@ class PSConnSOFB:
                 ack, data = resp
                 # check anomalous response
                 if ack != _const_bsmp.ACK_OK:
-                    print(('PSSOFB: could not read '
-                           'group of variables id:{}').format(group_id))
+                    _get_logger(self).error(
+                        f'PSSOFB: could not read group of variables '
+                        f' id:{group_id}')
                 else:
                     self._dev_state[bbbname][dev_id] = data
                     dev_ack[dev_id] = True
         except _SerialError:
             # no communication
-            print('PSSOFB: SerialError in bsmp_state_update!')
+            _get_logger(self).error(
+                'PSSOFB: SerialError in bsmp_state_update!')
 
     def _bsmp_execute_function(self, bbbname, *args):
         """."""
@@ -505,7 +508,7 @@ class PSConnSOFB:
                 if ack != _const_bsmp.ACK_OK:
                     if isinstance(data, str):
                         data = ord(data)
-                    print('PSSOFB: anomalous response !')
+                    _get_logger(self).error('PSSOFB: anomalous response !')
                     udc[dev_id].anomalous_response(
                         _const_bsmp.CMD_EXECUTE_FUNCTION, ack,
                         device_id=dev_id,
@@ -520,12 +523,13 @@ class PSConnSOFB:
             return None
         except TypeError:
             # anomalous response triggered unexpected code error
-            print('--- debug ----')
-            print('devices     : ', devices)
-            print('dev_id      : ', dev_id)
-            print('function_id : ', function_id)
-            print('resp        : ', resp)
-            print('data        : ', data)
+            logger = _get_logger(self)
+            logger.error('--- debug ----')
+            logger.error('devices     : ', devices)
+            logger.error('dev_id      : ', dev_id)
+            logger.error('function_id : ', function_id)
+            logger.error('resp        : ', resp)
+            logger.error('data        : ', data)
             raise
 
     # --- private methods: class initializations. ---
@@ -752,7 +756,8 @@ class PSSOFB:
         """."""
         for i, doneevt in enumerate(self._doneevts):
             if not doneevt.wait(timeout=timeout):
-                _log.error('Wait Done timed out for process '+str(i))
+                _get_logger(self).error(
+                    'Wait Done timed out for process '+str(i))
                 return False
         return True
 
@@ -760,7 +765,7 @@ class PSSOFB:
         """."""
         for i, doneevt in enumerate(self._doneevts):
             if not doneevt.is_set():
-                _log.error('Ready: not done for process '+str(i))
+                _get_logger(self).error('Ready: not done for process '+str(i))
                 return False
         return True
 

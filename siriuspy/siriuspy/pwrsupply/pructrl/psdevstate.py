@@ -7,6 +7,7 @@ import numpy as _np
 
 
 from ...bsmp import SerialError as _SerialError
+from ...logging import get_logger as _get_logger
 
 
 def _psupply_update_connected(func):
@@ -258,7 +259,7 @@ class PSDevState:
                     if value is None:
                         conn_status_ok = False
                 self._parameters[eid] = value
-                # print(eid, value)
+                # _get_logger(self).debug(str(eid) + str(value))
             if conn_status_ok:
                 self._timestamp_update_parameters = now
                 return True

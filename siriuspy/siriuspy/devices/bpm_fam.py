@@ -112,8 +112,8 @@ class FamBPMs(_DeviceSet):
                     f'\n{bpm.devname:<20s}: ' +
                     f'rb {bpm.rffe_att:.0f} != sp {value:.0f}')
 
-        print('RFFE attenuation set confirmed in all BPMs', end='')
-        print(', except:' + mstr if mstr else '.')
+        self._logger.info('RFFE attenuation set confirmed in all BPMs')
+        self._logger.info('Except for:' + mstr if mstr else '.')
         return okall
 
     def get_slow_orbit(self):
@@ -192,7 +192,8 @@ class FamBPMs(_DeviceSet):
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
-            print('BPMs are not configured with the same ACQChannel.')
+            self._logger.error(
+                'BPMs are not configured with the same ACQChannel.')
             return None
 
     def get_switching_frequency(self, rf_freq: float) -> float:
@@ -210,7 +211,7 @@ class FamBPMs(_DeviceSet):
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
-            print('BPMs are not configured with the same SwMode.')
+            self._logger.error('BPMs are not configured with the same SwMode.')
             return None
 
     def mturn_config_acquisition(
