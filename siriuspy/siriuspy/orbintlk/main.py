@@ -210,9 +210,6 @@ class App(_Callback):
                 'TRIGGER_PM14RcvSrc-Sel', 'TRIGGER_PM14RcvSrc-Sts',
                 'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB'])
         self._monitsum2intlksum_factor = 0
-        for dev in self._fambpm_dev.devices:
-            pvo = dev.pv_object('INFOMONITRate-RB')
-            pvo.connection_callbacks.append(self._conn_callback_bpm)
 
         # # AFC physical trigger devices
         phytrig_names = list()
@@ -226,6 +223,9 @@ class App(_Callback):
                 'DirPol-Sel', 'DirPol-Sts',
                 'TrnLen-SP', 'TrnLen-RB'])
             for dev in phytrig_names]
+        for dev in self._phytrig_devs:
+            pvo = dev.pv_object('Dir-Sel')
+            pvo.connection_callbacks.append(self._conn_callback_afcphystrigs)
 
         # # RF devices
         self._llrf = _ASLLRF(
@@ -1024,18 +1024,15 @@ class App(_Callback):
 
     def _get_monitored_devices(self):
         enbllist = self._get_gen_bpm_intlk()
-
-        # bpms
-        idcs = _np.where(enbllist)[0]
-        bpmdevs = [self._const.bpm_names[i] for i in idcs]
-
-        # timing
-        tidevs = set()
-        tidevs.add(self._evg_dev.devname)
         aux = _np.roll(enbllist, 1)
         subsecs = _np.where(_np.sum(aux.reshape(20, -1), axis=1) > 0)[0]
         subsecs += 1
+
+        tidevs = set()
+        tidevs.add(self._evg_dev.devname)
+        bpmdevs = set()
         for sub in subsecs:
+            # timing
             afcti = f'IA-{sub:02}RaBPM:TI-AMCFPGAEVR'
             tidevs.add(afcti)
             foutout = self._const.trigsrc2fout_map[afcti]
@@ -1053,6 +1050,8 @@ class App(_Callback):
                 tidevs.add(foutr)
                 evgoutr = _LLTimeSearch.get_evg_channel(foutoutr)
                 tidevs.add(evgoutr)
+            # bpm
+            bpmdevs.update(self._const.crates_map[afcti])
 
         return bpmdevs, sorted(tidevs)
 
@@ -1415,13 +1414,14 @@ class App(_Callback):
         self._monitsum2intlksum_factor = factor
         return self._monitsum2intlksum_factor
 
-    def _conn_callback_bpm(self, pvname, conn, **kws):
+    def _conn_callback_afcphystrigs(self, pvname, conn, **kws):
         _ = kws
         if conn:
             return
         devname = _PVName(pvname).device_name
-        self._update_log(f'WARN:{devname} disconnected')
         is_failure = devname in self._bpm_mon_devs
+        flag = 'ERR' if is_failure else 'WARN'
+        self._update_log(f'{flag}:{devname} disconnected')
         if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
