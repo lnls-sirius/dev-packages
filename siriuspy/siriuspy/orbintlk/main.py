@@ -204,8 +204,13 @@ class App(_Callback):
                 'TRIGGER_PM12RcvSrc-Sel', 'TRIGGER_PM12RcvSrc-Sts',
                 'TRIGGER_PM12RcvInSel-SP', 'TRIGGER_PM12RcvInSel-RB',
                 'TRIGGER_PM14RcvSrc-Sel', 'TRIGGER_PM14RcvSrc-Sts',
-                'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB'])
+                'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB',
+                'ADCAD9510PllStatus-Mon'])
         self._monitsum2intlksum_factor = 0
+        for dev in self._fambpm_dev.devices:
+            pvo = dev.pv_object('ADCAD9510PllStatus-Mon')
+            pvo.auto_monitor = True
+            pvo.add_callback(self._callback_bpm_adclock)
 
         # # AFC physical trigger devices
         phytrig_names = list()
@@ -1409,6 +1414,19 @@ class App(_Callback):
         factor = 2**_np.ceil(_np.log2(frac)) / frac
         self._monitsum2intlksum_factor = factor
         return self._monitsum2intlksum_factor
+
+    def _callback_bpm_adclock(self, pvname, value, **kws):
+        _ = kws
+        if value == 1:
+            return
+        devname = _PVName(pvname).device_name
+        is_failure = devname in self._bpm_mon_devs and \
+            devname in self._const.bpm_names
+        flag = 'FATAL' if is_failure else 'WARN'
+        self._update_log(f'{flag}:{devname} lost PLL lock')
+        if is_failure:
+            self._update_log('FATAL:Orbit interlock reliability failure')
+            self._handle_reliability_failure()
 
     def _conn_callback_afcphystrigs(self, pvname, conn, **kws):
         _ = kws
