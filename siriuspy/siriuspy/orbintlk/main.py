@@ -886,9 +886,6 @@ class App(_Callback):
     def cmd_config_evg(self, value):
         """Configure EVG according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
         if not self._evg_dev.connected:
             self._update_log('ERR:EVG disconnected.')
             return False
@@ -904,9 +901,6 @@ class App(_Callback):
     def cmd_config_fouts(self, value):
         """Configure Fouts according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
         for devname, dev in self._fout_devs.items():
             if not dev.connected:
                 self._update_log(f'ERR:{devname} disconnected.')
@@ -920,9 +914,6 @@ class App(_Callback):
     def cmd_config_afcti(self, value):
         """Configure all AFC timing according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
         # do not allow user configurate loop params in case of
         # correction loops closed
         if not self._fofb.connected or self._fofb['LoopState-Sts'] or \
@@ -942,9 +933,6 @@ class App(_Callback):
     def cmd_config_hltrigs(self, value):
         """Configure HL triggers according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             trigdev = self._hltrig_devs[trigname]
             if not trigdev.connected:
@@ -957,9 +945,6 @@ class App(_Callback):
     def cmd_config_llrf(self, value):
         """Configure LLRF interlock according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
         if not self._llrf.connected:
             self._update_log(f'ERR:LLRF disconnected.')
             return False
@@ -970,10 +955,6 @@ class App(_Callback):
     def cmd_config_bpms(self, value):
         """Configure BPMs according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
-        
         if not self._orbintlk_dev.connected:
             for dev in self._orbintlk_dev.devices:
                 self._update_log(f'ERR:{dev.devname} disconnected.')
@@ -993,9 +974,6 @@ class App(_Callback):
     def cmd_config_phytrigs(self, value):
         """Configure physical triggers according to lock configurations."""
         _ = value
-        if self._state:
-            self._update_log('ERR:Disable interlock before continue.')
-            return False
         for dev in self._phytrig_devs:
             if not dev.connected:
                 self._update_log(f'ERR:{dev.devname} disconnected.')
