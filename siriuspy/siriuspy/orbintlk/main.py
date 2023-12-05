@@ -893,6 +893,9 @@ class App(_Callback):
             self._update_log('ERR:EVG disconnected.')
             return False
         for propty_sp, desired_val in self._const.EVG_CONFIGS:
+            propty_rb = _PVName.from_sp2rb(propty_sp)
+            if self._evg_dev[propty_rb] == desired_val:
+                continue
             self._evg_dev[propty_sp] = desired_val
         return True
 
