@@ -1039,7 +1039,7 @@ class App(_Callback):
             if afcti in self._const.REDUNDANCY_TABLE:
                 afctir = self._const.REDUNDANCY_TABLE[afcti]
                 tidevs.add(afctir)
-                foutoutr = self._const.trigsrc2fout_map[afcti]
+                foutoutr = self._const.trigsrc2fout_map[afctir]
                 tidevs.add(foutoutr)
                 foutr = _PVName(foutoutr).device_name
                 tidevs.add(foutr)
