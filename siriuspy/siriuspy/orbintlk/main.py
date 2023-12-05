@@ -896,7 +896,8 @@ class App(_Callback):
             propty_rb = _PVName.from_sp2rb(propty_sp)
             if self._evg_dev[propty_rb] == desired_val:
                 continue
-            self._evg_dev[propty_sp] = desired_val
+            pvo = self._evg_dev.pv_object(propty_sp)
+            pvo.put(desired_val, wait=True)
             _time.sleep(0.2)
         return True
 
