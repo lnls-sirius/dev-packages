@@ -953,8 +953,8 @@ class App(_Callback):
         if not self._llrf.connected:
             self._update_log(f'ERR:LLRF disconnected.')
             return False
-        self._llrf['ILK:BEAM:TRIP'] = self._llrf_intlk_state
-        self._llrf['ILK:MAN'] = self._llrf_intlk_state
+        self._llrf['ILK:BEAM:TRIP:S'] = self._llrf_intlk_state
+        self._llrf['ILK:MAN:S'] = self._llrf_intlk_state
         return True
 
     def cmd_config_bpms(self, value):
