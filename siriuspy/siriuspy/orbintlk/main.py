@@ -110,6 +110,8 @@ class App(_Callback):
         pvo.add_callback(self._callback_evg_rxlock)
 
         # # Fouts
+        foutnames = list(self._const.FOUTS_2_MON) + \
+            list(self._const.FOUTSFIXED_RXENBL.keys())
         self._fout_devs = {
             devname: _Device(
                 devname,
@@ -117,21 +119,14 @@ class App(_Callback):
                     'RxEnbl-SP', 'RxEnbl-RB',
                     'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
                 ], auto_monitor_mon=True)
-            for devname in self._const.FOUTS_2_MON
-        }
+            for devname in foutnames}
         self._fout2rxenbl = dict()
         for devname, dev in self._fout_devs.items():
             pvo = dev.pv_object('RxLockedLtc-Mon')
             pvo.add_callback(self._callback_fout_rxlock)
             pvo.connection_callbacks.append(self._conn_callback_timing)
-            self._fout2rxenbl[devname] = 0
-
-        self._fout_dcct_dev = _Device(
-            'CA-RaTim:TI-Fout-2',
-            props2init=[
-                'RxEnbl-SP', 'RxEnbl-RB',
-                'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
-            ], auto_monitor_mon=True)
+            rxenbl = self._const.FOUTSFIXED_RXENBL.get(devname, 0)
+            self._fout2rxenbl[devname] = rxenbl
 
         # # AFC timing
         self._afcti_devs = {
@@ -221,7 +216,7 @@ class App(_Callback):
 
         # # AFC physical trigger devices
         phytrig_names = list()
-        for afcti, cratemap in _LLTimeSearch.get_crates_mapping().items():
+        for afcti, cratemap in self._const.crates_map.items():
             if '20RaBPMTL' in afcti:
                 continue
             phytrig_names.extend(cratemap)
@@ -399,26 +394,12 @@ class App(_Callback):
             pvo.run_callbacks()
 
     def _handle_lock_fouts(self, init=False):
-        # BPM Fouts
         for dev in self._fout_devs.values():
             dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             pvo = dev.pv_object('RxEnbl-RB')
             if init:
                 self._lock_pvs['Fouts'].append(pvo.pvname)
                 pvo.add_callback(self._callback_fout_lock)
-            else:
-                pvo.run_callbacks()
-
-        # DCCT Fout
-        self._fout_dcct_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
-        for propty_sp, desired_val in self._const.FOUT2_CONFIGS:
-            propty_rb = _PVName.from_sp2rb(propty_sp)
-            pvo = self._fout_dcct_dev.pv_object(propty_rb)
-            if init:
-                self._lock_pvs['Fouts'].append(pvo.pvname)
-                pvo.add_callback(_part(
-                    self._callback_lock, self._fout_dcct_dev,
-                    propty_sp, desired_val))
             else:
                 pvo.run_callbacks()
 
@@ -833,17 +814,6 @@ class App(_Callback):
             self._update_log(f'{msg} {devname} lock latchs.')
             if 'not' in msg:
                 return False
-        # try to reset DCCT Fout rx lock latches if necessary, return false if fail
-        dev = self._fout_dcct_dev
-        rxv = dev['RxEnbl-RB']
-        if dev['RxLockedLtc-Mon'] == rxv:
-            return True
-        dev['RxLockedLtcRst-Cmd'] = 1
-        msg = 'Reset' if dev._wait('RxLockedLtc-Mon', rxv, timeout=3) \
-            else 'ERR:Could not reset'
-        self._update_log(f'{msg} {dev.devname} lock latchs.')
-        if 'not' in msg:
-            return False
         return True
 
     def cmd_reset_afcti_rtmclk(self, value=None):
@@ -1029,12 +999,17 @@ class App(_Callback):
             if 'Fout' not in chn:
                 continue
             fout = chn.device_name
-            out = int(chn.propty_name[-1])
+            outnam = chn.propty_name
+            if not outnam:
+                continue
+            out = int(outnam[-1])
             rx = fout2rx.get(fout, 0)
             rx += 1 << out
             fout2rx[fout] = rx
 
         for fout, dev in self._fout_devs.items():
+            if fout in self._const.FOUTSFIXED_RXENBL:
+                continue
             rxenbl = fout2rx.get(fout, 0)
             self._fout2rxenbl[fout] = rxenbl
             if not self._init:
@@ -1063,17 +1038,27 @@ class App(_Callback):
         for sub in subsecs:
             afcti = f'IA-{sub:02}RaBPM:TI-AMCFPGAEVR'
             tidevs.add(afcti)
-            foutout = _LLTimeSearch.get_trigsrc2fout_mapping()[afcti]
+            foutout = self._const.trigsrc2fout_map[afcti]
             tidevs.add(foutout)
+            fout = _PVName(foutout).device_name
+            tidevs.add(fout)
             evgout = _LLTimeSearch.get_evg_channel(foutout)
             tidevs.add(evgout)
+            if afcti in self._const.REDUNDANCY_TABLE:
+                afctir = self._const.REDUNDANCY_TABLE[afcti]
+                tidevs.add(afctir)
+                foutoutr = self._const.trigsrc2fout_map[afcti]
+                tidevs.add(foutoutr)
+                foutr = _PVName(foutoutr).device_name
+                tidevs.add(foutr)
+                evgoutr = _LLTimeSearch.get_evg_channel(foutoutr)
+                tidevs.add(evgoutr)
 
         return bpmdevs, sorted(tidevs)
 
     def _check_ti_devices_status(self, devices):
         for devname in devices:
             devname = _PVName(devname)
-            out = int(devname.propty[-1]) if devname.propty else None
 
             dev = self._evg_dev if 'EVG' in devname else \
                 self._fout_devs[devname.device_name] if 'Fout' in devname \
@@ -1086,11 +1071,12 @@ class App(_Callback):
             if not dev.connected:
                 self._update_log(f'ERR:{dev.devname} not connected')
                 return False
-            if out and not _get_bit(dev['RxLockedLtc-Mon'], out):
-                self._update_log(f'ERR:{dev.devname} OUT{out} not locked')
-                return False
-            if 'RTMClkLockedLtc-Mon' in dev.properties_in_use and \
-                    not dev['RTMClkLockedLtc-Mon']:
+            elif 'Fout' in devname:
+                out = int(devname.propty[-1]) if devname.propty else None
+                if out is not None and not _get_bit(dev['RxLockedLtc-Mon'], out):
+                    self._update_log(f'ERR:{dev.devname} OUT{out} not locked')
+                    return False
+            elif 'AMCFPGA' in devname and not dev['RTMClkLockedLtc-Mon']:
                 self._update_log(f'ERR:{dev.devname} RTM Clk not locked')
                 return False
         return True
@@ -1180,9 +1166,8 @@ class App(_Callback):
             value = _updt_bit(value, 2, not okg)
         else:
             value = 0b111
-        # BPM Fouts
-        devs = self._fout_devs
-        if all(devs[devn].connected for devn in self._const.FOUTS_2_MON):
+        # Fouts
+        if all(dev.connected for dev in self._fout_devs.values()):
             okg = True
             for devname, rxenbl in self._fout2rxenbl.items():
                 dev = self._fout_devs[devname]
@@ -1191,18 +1176,6 @@ class App(_Callback):
             value = _updt_bit(value, 4, not okg)
         else:
             value += 0b11 << 3
-        # DCCT Fouts
-        dev = self._fout_dcct_dev
-        if dev.connected:
-            okg = True
-            for prp, val in self._const.FOUT2_CONFIGS:
-                prp_rb = _PVName.from_sp2rb(prp)
-                okg &= dev[prp_rb] == val
-                if 'RxEnbl' in prp:
-                    okg &= dev['RxLockedLtc-Mon'] == val
-            value = _updt_bit(value, 6, not okg)
-        else:
-            value += 0b11 << 5
         # AFC timing
         if all(dev.connected for dev in self._afcti_devs.values()):
             okg = True
@@ -1210,9 +1183,9 @@ class App(_Callback):
                 for prp, val in self._const.AFCTI_CONFIGS:
                     prp_rb = _PVName.from_sp2rb(prp)
                     okg &= dev[prp_rb] == val
-            value = _updt_bit(value, 8, not okg)
+            value = _updt_bit(value, 6, not okg)
         else:
-            value += 0b11 << 7
+            value += 0b11 << 5
         # AFC Physical triggers
         if all(dev.connected for dev in self._phytrig_devs):
             okg = True
@@ -1223,11 +1196,11 @@ class App(_Callback):
                         continue
                     prp_rb = _PVName.from_sp2rb(prp)
                     okg &= dev[prp_rb] == val
-            value = _updt_bit(value, 12, not okg)
+            value = _updt_bit(value, 8, not okg)
         else:
-            value += 0b11 << 11
+            value += 0b11 << 7
         # HL triggers
-        bit = 13
+        bit = 9
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             dev = self._hltrig_devs[trigname]
             if dev.connected:
@@ -1325,12 +1298,12 @@ class App(_Callback):
                 if _get_bit(value, bit):
                     continue
                 outnam = f'OUT{bit}'
-                self._update_log(f'FATAL:{outnam} of {devname} not locked')
+                self._update_log(f'WARN:{outnam} of {devname} not locked')
                 devout = devname.substitute(propty_name=outnam)
                 # verify if this is an orbit interlock reliability failure
                 is_failure |= devout in self._ti_mon_devs
         else:
-            is_failure, outs_in_failure = False, set()
+            outs_in_failure = set()
             for dev in self._ti_mon_devs:
                 # verify fouts
                 if 'Fout' not in dev:
@@ -1340,21 +1313,26 @@ class App(_Callback):
                 if dev.device_name == devname:
                     # verify if the monitored outs are locked
                     outnam = dev.propty_name
+                    if not outnam:
+                        continue
                     out = int(outnam[-1])
                     if _get_bit(value, out):
                         continue
                     # if not, it is a reliability failure
-                    is_failure = True
                     outs_in_failure.add(out)
-                    self._update_log(f'ERR:{outnam} of {devname} not locked')
-            # specifically for delta subsector (10), consider a failure only if
-            # redundancy timing path is also not locked
-            trigsrc = _LLTimeSearch.get_fout2trigsrc_mapping()[devname]
-            if len(outs_in_failure) == 1:
-                out = outs_in_failure.pop()
-                if trigsrc[f'OUT{out}'].sub[0:2] == '10':
-                    rxlock = self._fout_dcct_dev['RxLockedLtc-Mon']
-                    is_failure &= not _get_bit(rxlock, 0)  # out 0
+                    self._update_log(f'WARN:{outnam} of {devname} not locked')
+            # verify redundancy pairs, failure only if both are in failure
+            aux_var_loop = outs_in_failure.copy()
+            for out in aux_var_loop:
+                outnam = f'OUT{out}'
+                devout = devname.substitute(propty_name=outnam)
+                if devout in self._const.intlkr_fouttable:
+                    pair = self._const.intlkr_fouttable[devout]
+                    if self._fout_devs[pair]['RxLockedLtc-Mon']:
+                        outs_in_failure.pop(out)
+                    else:
+                        self._update_log(f'WARN:{outnam} of {pair} not locked')
+            is_failure = bool(outs_in_failure)
 
         if not is_failure:
             return
@@ -1367,9 +1345,7 @@ class App(_Callback):
         devname = _PVName(pvname).device_name
         self._update_log(f'FATAL:{devname} disconnected')
         # verify if this is an orbit interlock reliability failure
-        is_failure = False
-        for dev in self._ti_mon_devs:
-            is_failure |= _PVName(dev).device_name == devname
+        is_failure = devname in self._ti_mon_devs
         if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()

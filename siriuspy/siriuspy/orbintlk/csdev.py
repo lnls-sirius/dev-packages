@@ -26,8 +26,7 @@ class ETypes(_csdev.ETypes):
         'AcqConfigured', 'LogTrigConfig')
     STS_LBLS_TIMING = (
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
-        'FoutsBPMConn', 'FoutsBPMConfig',
-        'FoutsDCCTConn', 'FoutsDCCTConfig',
+        'FoutsConn', 'FoutsConfig',
         'AFCTimingConn', 'AFCTimingConfig',
         'AFCPhysTrigsConn', 'AFCPhysTrigsConfig',
         'OrbIntlkTrigConn', 'OrbIntlkTrigStatusOK', 'OrbIntlkTrigConfig',
@@ -92,9 +91,9 @@ class Const(_csdev.Const):
             ('Polarity-Sts', 0),
             ('Log-Sel', 0))),
     ]
-    FOUT2_CONFIGS = (
-        ('RxEnbl-SP', 0b01000001),
-    )
+    FOUTSFIXED_RXENBL = {
+        'CA-RaTim:TI-Fout-2': 0b01000001,
+    }
     AFCTI_CONFIGS = (
         ('DevEnbl-Sel', 1),
         ('RTMPhasePropGain-SP', 100),
@@ -125,6 +124,9 @@ class Const(_csdev.Const):
         ('TRIGGER_PM14RcvSrc-Sel', 0),
         ('TRIGGER_PM14RcvInSel-SP', 2),
     )
+    REDUNDANCY_TABLE = {
+        'IA-10RaBPM:TI-AMCFPGAEVR': 'IA-10RaBPM:TI-EVR',
+    }
 
     __EVG_CONFIGS = None
     __FOUTS_2_MON = None
@@ -190,6 +192,18 @@ class Const(_csdev.Const):
 
     def __init__(self):
         """Class constructor."""
+        # crates mapping
+        self.crates_map = _LLTimeSearch.get_crates_mapping()
+
+        # trigger source to fout out mapping
+        self.trigsrc2fout_map = _LLTimeSearch.get_trigsrc2fout_mapping()
+
+        # interlock redundancy table for fout outs
+        self.intlkr_fouttable = {
+            self.trigsrc2fout_map[k]: self.trigsrc2fout_map[v]
+            for k, v in self.REDUNDANCY_TABLE.items()}
+        self.intlkr_fouttable.update(
+            {v: k for k, v in self.intlkr_fouttable.items()})
 
         # bpm names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
