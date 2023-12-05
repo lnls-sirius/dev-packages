@@ -146,7 +146,7 @@ class App(_Callback):
         # # RF EVE
         trgsrc = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtm')
         pvname = _LLTimeSearch.get_channel_output_port_pvname(trgsrc[0])
-        self._llrf_evtcnt_pvname = f'{pvname}EvtCnt-Mon'
+        self._llrf_evtcnt_pvname = f'{pvname.propty}EvtCnt-Mon'
         self._everf_dev = _Device(
             pvname.device_name,
             props2init=[self._llrf_evtcnt_pvname, ],
@@ -1389,10 +1389,10 @@ class App(_Callback):
         self._handle_reliability_failure()
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
-        # verify if RF EVE propagated the event PsMtm
+        # verify if RF EVE counted the event PsMtm
         new_evtcnt = self._everf_dev[self._llrf_evtcnt_pvname]
         if new_evtcnt == self._everf_evtcnt:
-            self._update_log('WARN:RF EVE did not propagate event PsMtm')
+            self._update_log('WARN:RF EVE did counted event PsMtm')
         self._everf_evtcnt = new_evtcnt
         # wait minimum period for BPM to update interlock PVs
         _time.sleep(2)
