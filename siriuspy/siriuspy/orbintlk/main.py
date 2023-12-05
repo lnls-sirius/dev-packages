@@ -1070,7 +1070,7 @@ class App(_Callback):
             # bpm
             bpmdevs.update(self._const.crates_map[afcti])
 
-        return bpmdevs, sorted(tidevs)
+        return sorted(bpmdevs), sorted(tidevs)
 
     def _check_ti_devices_status(self, devices):
         for devname in devices:
