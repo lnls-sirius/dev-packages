@@ -1544,6 +1544,12 @@ class App(_Callback):
             self, device, propty_sp, desired_value, pvname, value):
         if self._lock_suspend and pvname not in self._lock_temp_pvs:
             return
+        
+        # do not try to lock devices that are not in list of monitored devices
+        devname = _PVName(pvname).device_name
+        if devname not in self._ti_mon_devs and \
+                devname not in self._bpm_mon_devs:
+            return
 
         # if there is already a lock thread, return
         thread = self._lock_threads.get(pvname, None)
