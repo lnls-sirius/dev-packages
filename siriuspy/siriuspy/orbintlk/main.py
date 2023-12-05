@@ -976,6 +976,10 @@ class App(_Callback):
             return False
         for dev in self._phytrig_devs:
             for prop, desired_val in self._const.AFCPHYTRIG_CONFIGS:
+                # only lock polarity of other AFC physical triggers than SI BPM
+                if dev.devname not in self._const.bpm_names and \
+                        prop != 'DirPol-Sel':
+                    continue
                 dev[prop] = desired_val
         return True
 
