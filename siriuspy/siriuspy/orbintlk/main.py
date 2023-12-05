@@ -897,6 +897,7 @@ class App(_Callback):
             if self._evg_dev[propty_rb] == desired_val:
                 continue
             self._evg_dev[propty_sp] = desired_val
+            _time.sleep(0.2)
         return True
 
     def cmd_config_fouts(self, value):
