@@ -135,16 +135,6 @@ class BPM(_Device):
         stg += '\n'
         return stg
 
-    def __getitem__(self, propty):
-        """Return value of property."""
-        propty = self.get_propname(propty)
-        return super().__getitem__(propty)
-
-    def __setitem__(self, propty, value):
-        """Set value of property."""
-        propty = self.get_propname(propty)
-        super().__setitem__(propty, value)
-
     @property
     def is_ok(self):
         """."""

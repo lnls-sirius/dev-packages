@@ -140,7 +140,7 @@ def crates_mapping(timeout=_TIMEOUT):
     txt = ''
     for fi in files:
         for time in read_url(url + fi, timeout=timeout).splitlines():
-            txt += '{0:20s}'.format(fi[6:13]) + time + '\n'
+            txt += f'{time:<40s}' + f'{fi[6:13]:>10s}\n'
         txt += '\n\n'
     return txt
 

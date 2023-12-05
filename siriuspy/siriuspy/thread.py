@@ -102,6 +102,8 @@ class RepeaterThread(_Thread):
             _use_initial_context()
 
         self._unpaused.wait()
+        if self._stopped.is_set():
+            return
         self.function(*self.args, **self.kwargs)
         dtime = 0.0
         while ((not self._stopped.wait(self.interval - dtime)) and
@@ -140,8 +142,8 @@ class RepeaterThread(_Thread):
 
     def stop(self):
         """Stop execution."""
-        self._unpaused.set()
         self._stopped.set()
+        self._unpaused.set()
 
 
 class _BaseQueueThread(_Queue):

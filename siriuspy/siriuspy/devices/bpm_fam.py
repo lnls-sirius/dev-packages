@@ -222,8 +222,8 @@ class FamBPMs(_DeviceSet):
             nr_points_after (int): number of points after trigger.
             nr_points_before (int): number of points after trigger.
                 Defaults to 0.
-            acq_rate (str, optional): Acquisition rate ('TbT', 'TbTPha',
-                'FOFB', 'FOFBPha', 'FAcq', 'ADC', 'ADCSwp').
+            acq_rate (int|str, optional): Acquisition rate name ('TbT',
+                'TbTPha', 'FOFB', 'FOFBPha', 'FAcq', 'ADC', 'ADCSwp') or value.
                 Defaults to 'FAcq'.
             repeat (bool, optional): Whether or not acquisition should be
                 repetitive. Defaults to True.
@@ -237,7 +237,9 @@ class FamBPMs(_DeviceSet):
                 >0: Index of the first BPM which is not ready for acq. plus 1.
 
         """
-        if acq_rate.lower().startswith('facq'):
+        if acq_rate in self._csbpm.AcqChan:
+            pass
+        elif acq_rate.lower().startswith('facq'):
             acq_rate = self._csbpm.AcqChan.FAcq
         elif acq_rate.lower().startswith('fofbpha'):
             acq_rate = self._csbpm.AcqChan.FOFBPha
