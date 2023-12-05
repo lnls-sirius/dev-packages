@@ -68,7 +68,7 @@ class Const(_csdev.Const):
         ('SI-Fam:TI-OrbIntlkRedundancy', (
             ('Src-Sel', 0),
             ('State-Sel', 1),
-            ('Polarity-Sts', 0),
+            ('Polarity-Sel', 0),
             ('Log-Sel', 1))),
         ('SI-Glob:TI-LLRF-PsMtm', (
             ('Src-Sel', 5),
@@ -83,12 +83,12 @@ class Const(_csdev.Const):
         ('SI-13C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
             ('State-Sel', 1),
-            ('Polarity-Sts', 0),
+            ('Polarity-Sel', 0),
             ('Log-Sel', 0))),
         ('SI-14C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
             ('State-Sel', 1),
-            ('Polarity-Sts', 0),
+            ('Polarity-Sel', 0),
             ('Log-Sel', 0))),
     ]
     FOUTSFIXED_RXENBL = {
