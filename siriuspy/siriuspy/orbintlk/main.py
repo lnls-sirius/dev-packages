@@ -1345,7 +1345,7 @@ class App(_Callback):
                     pair = self._const.intlkr_fouttable[devout]
                     devpair = _PVName(pair).device_name
                     if self._fout_devs[devpair]['RxLockedLtc-Mon']:
-                        outs_in_failure.pop(out)
+                        outs_in_failure.remove(out)
                     else:
                         self._update_log(f'WARN:{outnam} of {pair} not locked')
             is_failure = bool(outs_in_failure)
