@@ -1462,33 +1462,9 @@ class App(_Callback):
         facq_sum = monit_sum * self._get_bpm_rates_factor()
         return _np.all(facq_sum > self._limits['minsum'])
 
-    def _callback_monitor_sum(self, value, cb_info, **kws):
-        # remove callback if is not anymore in a reliability failure
-        if not self._lock_failures:
-            cb_info[1].remove_callback(cb_info[0])
-
-        # check whether sum value is higher than minsum
-        if not self._check_minsum_requirement(value):
-            return
-
-        # if sum is higher than minsum and there is lock failures,
-        # handle orbit interlock reliability failure
-        self._update_log('FATAL:Orbit interlock reliability failure')
-        for pvn in self._lock_failures:
-            self._update_log(f'FATAL:Fail to lock {pvn}')
-        self._handle_reliability_failure()
-        # and remove callback
-        cb_info[1].remove_callback(cb_info[0])
-
     def _handle_reliability_failure(self):
         if not self._state:
             self._update_log('WARN:Orbit interlock is not enabled.')
-            return
-        # if minimum sum condition is not satisfied, only monitor sum
-        if not self._check_minsum_requirement():
-            pvo = self._sofb.pv_object('SlowSumRaw-Mon')
-            if not pvo.callbacks:
-                pvo.add_callback(self._callback_monitor_sum)
             return
         # send soft interlock to RF
         self._update_log('FATAL:sending soft interlock to LLRF.')
