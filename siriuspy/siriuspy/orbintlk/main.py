@@ -1564,7 +1564,8 @@ class App(_Callback):
         # do not try to lock devices that are not in list of monitored devices
         devname = _PVName(pvname).device_name
         if devname not in self._ti_mon_devs and \
-                devname not in self._bpm_mon_devs:
+                devname not in self._bpm_mon_devs and \
+                devname not in self._hltrig_devs:
             return
 
         # if there is already a lock thread, return
