@@ -491,8 +491,7 @@ class App(_Callback):
             dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             for prop_sp, desired_val in self._const.AFCPHYTRIG_CONFIGS:
                 # only lock polarity of other AFC physical triggers than SI BPM
-                if dev.devname not in self._const.bpm_names and \
-                        prop_sp != 'DirPol-Sel':
+                if not self._check_lock_phytrig_prop(dev, prop_sp):
                     continue
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
@@ -985,8 +984,7 @@ class App(_Callback):
                 continue
             for prop, desired_val in self._const.AFCPHYTRIG_CONFIGS:
                 # only lock polarity of other AFC physical triggers than SI BPM
-                if dev.devname not in self._const.bpm_names and \
-                        prop != 'DirPol-Sel':
+                if not self._check_lock_phytrig_prop(dev, prop):
                     continue
                 dev[prop] = desired_val
         return True
@@ -1087,6 +1085,12 @@ class App(_Callback):
         aux = _np.roll(config, 1)
         # check if pairs have the same config
         return not _np.any(_np.diff(aux.reshape(-1, 2), axis=1) != 0)
+
+    def _check_lock_phytrig_prop(self, dev, prop):
+        devname = _PVName(dev.devname).device_name
+        if devname in self._const.bpm_names:
+            return True
+        return prop == 'DirPol-Sel'
 
     def _check_configs(self):
         _t0 = _time.time()
@@ -1189,8 +1193,7 @@ class App(_Callback):
             okg = True
             for dev in self._phytrig_devs:
                 for prp, val in self._const.AFCPHYTRIG_CONFIGS:
-                    if dev.devname not in self._const.bpm_names and \
-                            prp != 'DirPol-Sel':
+                    if not self._check_lock_phytrig_prop(dev, prp):
                         continue
                     prp_rb = _PVName.from_sp2rb(prp)
                     okg &= dev[prp_rb] == val
