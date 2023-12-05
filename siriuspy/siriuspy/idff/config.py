@@ -11,18 +11,27 @@ from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 class IDFFConfig(_ConfigDBDocument):
     """Insertion Device Feedforward Configuration."""
 
-    # NOTE: for EPU50 there is a large discrepancy
-    # between RB/SP/Mon phase values
-    PPARAM_TOL = 0.5  # [mm]
-    KPARAM_TOL = 0.1  # [mm]
     CONFIGDB_TYPE = 'si_idff'
 
     def __init__(self, name=None, url=None):
         """."""
         name_ = name or 'idff_' + self.generate_config_name()
+        self._idname = None
         self._polarization_definitions = None
         super().__init__(
             config_type=IDFFConfig.CONFIGDB_TYPE, name=name_, url=url)
+
+    @property
+    def idname(self):
+        """Return idname corresponding to IDFFConfig."""
+        return self._idname
+
+    @idname.setter
+    def idname(self, value):
+        """Set idname."""
+        if value not in _IDSearch.get_idnames():
+            raise ValueError(f'{value} is not a valid idname!')
+        self._idname = value
 
     @property
     def pparameter_pvname(self):
@@ -126,7 +135,7 @@ class IDFFConfig(_ConfigDBDocument):
 
         polarizations = dict()
         for polarization in idff['polarizations']:
-            if polarization == 'none':
+            if polarization == _IDSearch.POL_NONE_STR:
                 polarizations[polarization] = dict(ptable)
             else:
                 polarizations[polarization] = dict(ktable)
@@ -164,36 +173,81 @@ class IDFFConfig(_ConfigDBDocument):
     def load(self, discarded=False):
         """."""
         super().load(discarded=discarded)
+        self._find_idname()
         self._calc_polariz_defs()
 
     def get_polarization_state(self, pparameter, kparameter):
         """Return polarization state based on ID parameteres."""
-        poldefs = self._polarization_definitions
-        if poldefs is None:
-            raise ValueError('No IDFF configuration defined.')
-        for pol, val in poldefs.items():
-            if pol == 'none':
-                continue
-            if val is None or abs(pparameter - val) < IDFFConfig.PPARAM_TOL:
-                return pol
-        if abs(kparameter - poldefs['none']) < IDFFConfig.KPARAM_TOL:
-            return 'none'
-        return 'not_defined'
+        idname = self._idname
+        pol_idx = _IDSearch.conv_idname_2_polarization_state(
+            idname, pparameter, kparameter)
+        pol_str = _IDSearch.conv_idname_2_polarizations_sts(idname)[pol_idx]
+        return pol_str
 
     def check_valid_value(self, value):
-        """."""
-        if not super().check_valid_value(value):
-            return False
-        for pol, table in value['polarizations'].items():
-            if pol == 'none':
-                nrpts = len(table['pparameter'])
-            else:
-                nrpts = len(table['kparameter'])
-            for key, value_ in table.items():
-                if key in ('kparameter', 'pparameter'):
-                    continue
-                if len(value_) != nrpts:
-                    return False
+        """Check consistency of SI_IDFF configuration."""
+        configs = value['polarizations']
+        pvnames = {
+            key: value for key, value in value['pvnames'].items()
+            if key not in ('pparameter', 'kparameter')}
+        corrlabels = set(pvnames.keys())
+
+        # check pvnames in configs
+        pvsconfig = set(pvnames.values())
+        getch = _IDSearch.conv_idname_2_idff_chnames
+        getcv = _IDSearch.conv_idname_2_idff_cvnames
+        getqs = _IDSearch.conv_idname_2_idff_qsnames
+        chnames = [corr + ':Current-SP' for corr in getch(self.idname)]
+        cvnames = [corr + ':Current-SP' for corr in getcv(self.idname)]
+        qsnames = [corr + ':Current-SP' for corr in getqs(self.idname)]
+        pvsidsearch = set(chnames + cvnames + qsnames)
+        symm_diff = pvsconfig ^ pvsidsearch
+
+        if symm_diff:
+            raise ValueError('List of pvnames in config is not consistent')
+
+        # check polarizations in configs
+        pconfig = set(configs.keys()) - set((_IDSearch.POL_NONE_STR, ))
+        pidsearch = set(_IDSearch.conv_idname_2_polarizations(self.idname))
+        symm_diff = pconfig ^ pidsearch
+
+        if symm_diff:
+            raise ValueError(
+                'List of polarizations in config is not consistent')
+
+        # check polarization tables consistency
+        for polarization, table in configs.items():
+            corrtable = {
+                key: value for key, value in table.items()
+                if key not in ('pparameter', 'kparameter')}
+
+            # check 'pparameter'
+            if 'pparameter' not in table:
+                raise ValueError(
+                    'Missing pparameter in polarization configuration.')
+
+            # check 'kparameter'
+            if 'kparameter' not in table:
+                raise ValueError(
+                    'Missing kparameter in polarization configuration.')
+
+            # check corr label list
+            corrlabels_config = set(corrtable.keys())
+            symm_diff = corrlabels ^ corrlabels_config
+            if symm_diff:
+                raise ValueError(
+                    'List of corrlabels in config is not consistent')
+
+            # check nrpts in tables
+            param = 'pparameter' if polarization == 'none' else 'kparameter'
+            nrpts_corrtables = {len(table) for table in corrtable.values()}
+            nrpts_kparameter = set([len(table[param]), ])
+            symm_diff = nrpts_corrtables ^ nrpts_kparameter
+
+            if symm_diff:
+                raise ValueError(
+                    'Corrector tables and kparameter list in config '
+                    'are not consistent')
         return True
 
     def _get_corr_pvnames(self, cname1, cname2):
@@ -207,15 +261,40 @@ class IDFFConfig(_ConfigDBDocument):
 
     def _set_value(self, value):
         super()._set_value(value)
+        self._find_idname()
         self._calc_polariz_defs()
 
     def _calc_polariz_defs(self):
         """."""
+        # fill polarization data struct
         data = self._value['polarizations']
         poldefs = dict()
         for pol, tab in data.items():
-            if pol != 'none':
+            if pol != _IDSearch.POL_NONE_STR:
                 poldefs[pol] = tab['pparameter']
             else:
                 poldefs[pol] = tab['kparameter']
         self._polarization_definitions = poldefs
+
+    def _find_idname(self):
+        """."""
+        # find associated idname
+        self._idname = None
+        pvnames = self._value['pvnames']
+        kparameter, pparameter = pvnames['kparameter'], pvnames['pparameter']
+        for idname in _IDSearch.get_idnames():
+            kparam_propty = _IDSearch.conv_idname_2_kparameter_propty(idname)
+            pparam_propty = _IDSearch.conv_idname_2_pparameter_propty(idname)
+            if None in (kparam_propty, pparam_propty):
+                continue
+            kparam = idname + ':' + kparam_propty
+            pparam = idname + ':' + pparam_propty
+
+            if kparam == kparameter and pparam == pparameter:
+                self._idname = idname
+                break
+        if self._idname is None:
+            # could not find idname
+            raise ValueError(
+                'kparameter and pparameter in config are not '
+                'associated with an idname!')

@@ -7,14 +7,18 @@ from ..idff.config import IDFFConfig as _IDFFConfig
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 from .ids import WIG as _WIG, APU as _APU, PAPU as _PAPU, EPU as _EPU
+from .ids import DELTA as _DELTA
 
 
 class IDFF(_DeviceSet):
     """Insertion Device Feedforward Device."""
 
-    class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES):
+    class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES, _DELTA.DEVICES):
         """."""
-        ALL = _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + _EPU.DEVICES.ALL
+
+        ALL = \
+            _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + \
+            _EPU.DEVICES.ALL + _DELTA.DEVICES.ALL
 
     def __init__(self, devname):
         """."""
@@ -24,7 +28,7 @@ class IDFF(_DeviceSet):
         if devname not in IDFF.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        self._devname = _SiriusPVName(devname)  # needed for _create_devices
+        self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
         self._pparametername = \
@@ -33,10 +37,10 @@ class IDFF(_DeviceSet):
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
-        self._devpp, self._devkp, self._devsch, self._devscv, self._devsqs = \
+        self._devid, self._devsch, self._devscv, self._devsqs = \
             self._create_devices(devname)
 
-        devices = [self._devpp, self._devkp]
+        devices = [self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
@@ -90,12 +94,12 @@ class IDFF(_DeviceSet):
     @property
     def pparameter_mon(self):
         """Return pparameter value."""
-        return self._devpp[self._pparametername]
+        return self._devid[self._pparametername]
 
     @property
     def kparameter_mon(self):
         """Return kparameter value."""
-        return self._devkp[self._kparametername]
+        return self._devid[self._kparametername]
 
     @property
     def idffconfig(self):
@@ -235,18 +239,14 @@ class IDFF(_DeviceSet):
 
     def _create_devices(self, devname):
         param_auto_mon = False
-        devpp = _Device(
+        devid = _Device(
             devname=devname,
-            props2init=(self._pparametername, ),
-            auto_monitor_mon=param_auto_mon)
-        devkp = _Device(
-            devname=devname,
-            props2init=(self._kparametername, ),
+            props2init=(self._pparametername, self._kparametername),
             auto_monitor_mon=param_auto_mon)
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-        return devpp, devkp, devsch, devscv, devsqs
+        return devid, devsch, devscv, devsqs
 
 
 class WIGIDFF(IDFF):
@@ -286,6 +286,23 @@ class EPUIDFF(IDFF):
 
     @property
     def gap_mon(self):
+        """."""
+        return self.kparameter_mon
+
+
+class DELTAIDFF(IDFF):
+    """DELTA Feedforward."""
+
+    class DEVICES(_DELTA.DEVICES):
+        """."""
+
+    @property
+    def polarization_phase_mon(self):
+        """."""
+        return self.pparameter_mon
+
+    @property
+    def dGV_phase_mon(self):
         """."""
         return self.kparameter_mon
 
