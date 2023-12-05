@@ -1343,7 +1343,8 @@ class App(_Callback):
                 devout = devname.substitute(propty_name=outnam)
                 if devout in self._const.intlkr_fouttable:
                     pair = self._const.intlkr_fouttable[devout]
-                    if self._fout_devs[pair]['RxLockedLtc-Mon']:
+                    devpair = _PVName(pair).device_name
+                    if self._fout_devs[devpair]['RxLockedLtc-Mon']:
                         outs_in_failure.pop(out)
                     else:
                         self._update_log(f'WARN:{outnam} of {pair} not locked')
@@ -1358,9 +1359,10 @@ class App(_Callback):
         if conn:
             return
         devname = _PVName(pvname).device_name
-        self._update_log(f'FATAL:{devname} disconnected')
         # verify if this is an orbit interlock reliability failure
         is_failure = devname in self._ti_mon_devs
+        flag = 'FATAL' if is_failure else 'WARN'
+        self._update_log(f'{flag}:{devname} disconnected')
         if is_failure:
             self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
