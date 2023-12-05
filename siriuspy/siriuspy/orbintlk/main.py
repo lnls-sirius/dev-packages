@@ -1081,8 +1081,7 @@ class App(_Callback):
                 else self._afcti_devs[int(devname.sub[:2])] \
                 if 'AMCFPGA' in devname else None
             if dev is None:
-                self._update_log(f'ERR:Could not verify {devname} state.')
-                return False
+                return True
 
             if not dev.connected:
                 self._update_log(f'ERR:{dev.devname} not connected')
