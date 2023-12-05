@@ -69,10 +69,6 @@ class App(_Callback):
         self._lock_threads = dict()
         self._lock_failures = set()
         self._lock_suspend = True
-        self._lock_pvs = {
-            k: list() for k in
-            ['EVG', 'Fouts', 'AFCTI', 'HLTriggers',
-             'LLRF', 'BPM', 'AFCPhysTriggers']}
         self._set_queue = _LoopQueueThread()
         self._set_queue.start()
 
@@ -352,7 +348,6 @@ class App(_Callback):
         self._init = True
 
         # start init lock devices
-        self._lock_temp_pvs = set()
         self._enable_lock(init=True)
 
     def _enable_lock(self, init=False):
@@ -370,7 +365,6 @@ class App(_Callback):
             self._handle_lock_bpm_enable(init)
 
     def _disable_lock(self):
-        self._lock_temp_pvs = set()
         self._lock_suspend = True
 
     def _handle_lock_evg_configs(self, init=False):
@@ -379,7 +373,6 @@ class App(_Callback):
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._evg_dev.pv_object(propty_rb)
             if init:
-                self._lock_pvs['EVG'].append(pvo.pvname)
                 pvo.add_callback(_part(
                     self._callback_lock, self._evg_dev, propty_sp, desired_val))
             else:
@@ -398,7 +391,6 @@ class App(_Callback):
             dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             pvo = dev.pv_object('RxEnbl-RB')
             if init:
-                self._lock_pvs['Fouts'].append(pvo.pvname)
                 pvo.add_callback(self._callback_fout_lock)
             else:
                 pvo.run_callbacks()
@@ -410,7 +402,6 @@ class App(_Callback):
                 propty_rb = _PVName.from_sp2rb(propty_sp)
                 pvo = dev.pv_object(propty_rb)
                 if init:
-                    self._lock_pvs['AFCTI'].append(pvo.pvname)
                     pvo.add_callback(_part(
                         self._callback_lock, dev, propty_sp, desired_val))
                 else:
@@ -424,7 +415,6 @@ class App(_Callback):
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = trigdev.pv_object(prop_rb)
                 if init:
-                    self._lock_pvs['HLTriggers'].append(pvo.pvname)
                     pvo.add_callback(
                         _part(self._callback_lock, trigdev, prop_sp, desired_val))
                 else:
@@ -435,11 +425,9 @@ class App(_Callback):
         pvo_beamtrip = self._llrf.pv_object('ILK:BEAM:TRIP')
         pvo_manintlk = self._llrf.pv_object('ILK:MAN')
         if init:
-            self._lock_pvs['LLRF'].append(pvo_beamtrip.pvname)
             pvo_beamtrip.add_callback(_part(
                 self._callback_lock, self._llrf,
                 'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
-            self._lock_pvs['LLRF'].append(pvo_manintlk.pvname)
             pvo_manintlk.add_callback(_part(
                 self._callback_lock, self._llrf,
                 'ILK:MAN:S', self._llrf_intlk_state))
@@ -468,7 +456,6 @@ class App(_Callback):
             for prop in prop2lock:
                 pvo = dev.pv_object(prop)
                 if init:
-                    self._lock_pvs['BPM'].append(pvo.pvname)
                     pvo.add_callback(self._callback_bpm_lock)
                 else:
                     pvo.run_callbacks()
@@ -480,7 +467,6 @@ class App(_Callback):
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
                 if init:
-                    self._lock_pvs['BPM'].append(pvo.pvname)
                     pvo.add_callback(
                         _part(self._callback_lock, dev, prop_sp, desired_val))
                 else:
@@ -506,7 +492,6 @@ class App(_Callback):
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
                 if init:
-                    self._lock_pvs['AFCPhysTriggers'].append(pvo.pvname)
                     pvo.add_callback(
                         _part(self._callback_lock, dev, prop_sp, desired_val))
                 else:
@@ -904,7 +889,11 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._do_auxiliary_cmd(self._handle_lock_evg_configs, 'EVG')
+        if not self._evg_dev.connected:
+            self._update_log('ERR:EVG disconnected.')
+            return False
+        for propty_sp, desired_val in self._const.EVG_CONFIGS:
+            self._evg_dev[propty_sp] = desired_val
         return True
 
     def cmd_config_fouts(self, value):
@@ -913,7 +902,14 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._do_auxiliary_cmd(self._handle_lock_fouts, 'Fouts')
+        for devname, dev in self._fout_devs.items():
+            if not dev.connected:
+                self._update_log(f'ERR:{devname} disconnected.')
+                continue
+            desired_value = self._fout2rxenbl[devname]
+            dev['RxEnbl-SP'] = desired_value
+            dev._wait('RxEnbl-RB', desired_value, timeout=1)
+            dev['RxLockedLtcRst-Cmd'] = 1
         return True
 
     def cmd_config_afcti(self, value):
@@ -929,7 +925,13 @@ class App(_Callback):
             self._update_log('ERR:Open correction loops before ')
             self._update_log('ERR:configuring AFC Timing RTM loop.')
             return False
-        self._do_auxiliary_cmd(self._handle_lock_afcti, 'AFCTI')
+        for dev in self._afcti_devs.values():
+            if not dev.connected:
+                self._update_log(f'ERR:{dev.devname} disconnected.')
+                continue
+            for propty_sp, desired_val in self._const.AFCTI_CONFIGS:
+                dev[propty_sp] = desired_val
+            dev['ClkLockedLtcRst-Cmd'] = 1
         return True
 
     def cmd_config_hltrigs(self, value):
@@ -938,7 +940,13 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._do_auxiliary_cmd(self._handle_lock_hltriggers, 'HLTriggers')
+        for trigname, configs in self._const.HLTRIG_2_CONFIG:
+            trigdev = self._hltrig_devs[trigname]
+            if not trigdev.connected:
+                self._update_log(f'ERR:{trigname} disconnected.')
+                continue
+            for prop_sp, desired_val in configs:
+                trigdev[prop_sp] = desired_val
         return True
 
     def cmd_config_llrf(self, value):
@@ -947,7 +955,11 @@ class App(_Callback):
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
             return False
-        self._do_auxiliary_cmd(self._handle_lock_llrf, 'LLRF')
+        if not self._llrf.connected:
+            self._update_log(f'ERR:LLRF disconnected.')
+            return False
+        self._llrf['ILK:BEAM:TRIP'] = self._llrf_intlk_state
+        self._llrf['ILK:MAN'] = self._llrf_intlk_state
         return True
 
     def cmd_config_bpms(self, value):
@@ -955,6 +967,11 @@ class App(_Callback):
         _ = value
         if self._state:
             self._update_log('ERR:Disable interlock before continue.')
+            return False
+        
+        if not self._orbintlk_dev.connected:
+            for dev in self._orbintlk_dev.devices:
+                self._update_log(f'ERR:{dev.devname} disconnected.')
             return False
 
         for name, enbl in self._enable_lists.items():
@@ -975,6 +992,9 @@ class App(_Callback):
             self._update_log('ERR:Disable interlock before continue.')
             return False
         for dev in self._phytrig_devs:
+            if not dev.connected:
+                self._update_log(f'ERR:{dev.devname} disconnected.')
+                continue
             for prop, desired_val in self._const.AFCPHYTRIG_CONFIGS:
                 # only lock polarity of other AFC physical triggers than SI BPM
                 if dev.devname not in self._const.bpm_names and \
@@ -982,18 +1002,6 @@ class App(_Callback):
                     continue
                 dev[prop] = desired_val
         return True
-
-    def _do_auxiliary_cmd(self, func, pvgroup):
-        self._lock_temp_pvs.update(self._lock_pvs[pvgroup])
-        func()
-        for pvn in self._lock_temp_pvs:
-            if pvn not in self._lock_threads:
-                continue
-            _time.sleep(0.02)
-            thread = self._lock_threads[pvn]
-            if thread.is_alive():
-                thread.join()
-        self._lock_temp_pvs.clear()
 
     # --- status methods ---
 
@@ -1546,7 +1554,7 @@ class App(_Callback):
 
     def _start_lock_thread(
             self, device, propty_sp, desired_value, pvname, value):
-        if self._lock_suspend and pvname not in self._lock_temp_pvs:
+        if self._lock_suspend:
             return
         
         # do not try to lock devices that are not in list of monitored devices
