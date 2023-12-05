@@ -62,7 +62,6 @@ class App(_Callback):
         self._thread_acq = None
         self._thread_cbevgilk = None
         self._thread_cbevgrx = None
-        self._thread_cbfout = {fout: None for fout in self._const.FOUTS_2_MON}
         self._thread_cbbpm = None
         self._bpm_mon_devs = list()
         self._ti_mon_devs = list()
@@ -108,6 +107,7 @@ class App(_Callback):
         # # Fouts
         foutnames = list(self._const.FOUTS_2_MON) + \
             list(self._const.FOUTSFIXED_RXENBL.keys())
+        self._thread_cbfout = {fout: None for fout in foutnames}
         self._fout_devs = {
             devname: _Device(
                 devname,
