@@ -2,10 +2,11 @@
 
 from .afc_acq_core import AFCPhysicalTrigger, AFCACQLogicalTrigger
 from .bbb import BunchbyBunch
-from .bpm import BPM, FamBPMs
+from .bpm import BPM
+from .bpm_fam import FamBPMs
 from .bpm_eq import EqualizeBPMs
-from .currinfo import CurrInfoTranspEff, CurrInfoLinear, \
-    CurrInfoBO, CurrInfoSI, CurrInfoAS
+from .currinfo import CurrInfoTranspEff, CurrInfoLinear, CurrInfoBO, \
+    CurrInfoSI, CurrInfoAS
 from .dcct import DCCT
 from .device import Device, DeviceSet
 from .egun import EGBias, EGFilament, EGHVPS, EGTriggerPS, EGPulsePS, EGun

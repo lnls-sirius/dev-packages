@@ -200,7 +200,10 @@ class Device:
     def __setitem__(self, propty, value):
         """Set value of property."""
         pvobj = self.pv_object(propty)
-        pvobj.value = value
+        try:
+            pvobj.value = value
+        except (_ChannelAccessGetFailure, _CASeverityException):
+            print('Could not set value of {}'.format(pvobj.pvname))
 
     # --- private methods ---
     def _create_pv(self, propty):

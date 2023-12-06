@@ -7,7 +7,7 @@ import matplotlib.pyplot as _mplt
 
 from mathphys.functions import save as _save, load as _load, \
     get_namedtuple as _namedtuple
-from .bpm import FamBPMs as _FamBPMs
+from .bpm_fam import FamBPMs as _FamBPMs
 from .timing import Trigger
 from .currinfo import CurrInfoSI as _CurrInfoSI
 
@@ -32,13 +32,25 @@ class EqualizeBPMs(_FamBPMs):
         if logger is not None:
             self.logger = logger
         self._proc_method = self.ProcMethods.EABS
-        self._acq_strategy = self.AcqStrategies.AssumeOrder
+        self._acq_strategy = self.AcqStrategies.AcqInvRedGain
         self._acq_inverse_reduced_gain = self.round_gains(0.95)
         self._acq_nrpoints = 2000
         self._acq_timeout = 30
         super().__init__(
             devname=devname, bpmnames=bpmnames, ispost_mortem=False,
-            props2init=[], mturn_signals2acq='ABCD')
+            mturn_signals2acq='ABCD', props2init=[
+                'SwDirGainA-RB', 'SwDirGainB-RB', 'SwDirGainC-RB',
+                'SwDirGainD-RB', 'SwInvGainA-RB', 'SwInvGainB-RB',
+                'SwInvGainC-RB', 'SwInvGainD-RB', 'SwDirGainA-SP',
+                'SwInvGainA-SP', 'SwDirGainB-SP', 'SwInvGainB-SP',
+                'SwDirGainC-SP', 'SwInvGainC-SP', 'SwDirGainD-SP',
+                'SwInvGainD-SP', 'ACQTriggerEvent-Sel', 'ACQStatus-Sts',
+                'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData',
+                'GEN_DArrayData', 'ACQTriggerRep-Sel', 'ACQChannel-Sel',
+                'ACQTrigger-Sel', 'ACQSamplesPre-SP', 'ACQSamplesPost-SP',
+                'INFOHarmonicNumber-RB', 'INFOTbTRate-RB', 'SwDivClk-RB',
+                'ACQChannel-Sts', 'INFOFOFBRate-RB', 'PosKx-RB', 'PosKy-RB',
+                'PosXOffset-RB', 'PosYOffset-RB'])
         self.currinfo = _CurrInfoSI(props2init=['Current-Mon', ])
         self.trigger = Trigger(
             'SI-Fam:TI-BPM', props2init=['Src-Sel', 'Src-Sts'])
@@ -158,10 +170,10 @@ class EqualizeBPMs(_FamBPMs):
         """Return Current BPM gains as 3D numpy array.
 
         Returns:
-            numpy.ndarray (nrbpms, 4, 2): 3D numpy array with gains.
-                 - The first index vary the BPMs, in the default high level
+            numpy.ndarray (4, nrbpms, 2): 3D numpy array with gains.
+                 - The first index vary the antennas: 'A', 'B', 'C', 'D';
+                 - The second index vary the BPMs, in the default high level
                 convention order;
-                 - The second index vary the antennas: 'A', 'B', 'C', 'D';
                  - The last index refers to the type of the gain in the
                 following order: 'Direct', 'Inverse';
 
@@ -171,14 +183,14 @@ class EqualizeBPMs(_FamBPMs):
             gaind = [getattr(bpm, f'gain_direct_{a}') for a in 'abcd']
             gaini = [getattr(bpm, f'gain_inverse_{a}') for a in 'abcd']
             gains.append([gaind, gaini])
-        gains = _np.array(gains).swapaxes(-1, -2)
+        gains = _np.array(gains).swapaxes(0, 1).swapaxes(0, -1)
         return gains
 
     def set_gains(self, gains):
         """Set gains matrix to BPMs.
 
         Args:
-            gains (float or numpy.ndarray, (nrbpms, 4, 2)): gain matrix. In
+            gains (float or numpy.ndarray, (4, nrbpms, 2)): gain matrix. In
                 the same format as the one provided by get_current_gains
                 method. If a float is provided, then this same gain will be
                 applied to all BPMs.
@@ -188,16 +200,16 @@ class EqualizeBPMs(_FamBPMs):
 
         """
         nbpm = len(self.bpms)
-        shape = (nbpm, 4, 2)
+        shape = (4, nbpm, 2)
         if not isinstance(gains, _np.ndarray):
             gains = _np.full(shape, gains)
         if gains.shape != shape:
             raise ValueError(f'Wrong shape for gains. Must be {shape}')
 
-        for i, bpm in enumerate(self.bpms):
-            gns = gains[i]
-            for j, ant in enumerate('abcd'):
-                g = gns[j]
+        for j, ant in enumerate('abcd'):
+            gns = gains[j]
+            for i, bpm in enumerate(self.bpms):
+                g = gns[i]
                 setattr(bpm, f'gain_direct_{ant}', g[0])
                 setattr(bpm, f'gain_inverse_{ant}', g[1])
 
@@ -216,7 +228,7 @@ class EqualizeBPMs(_FamBPMs):
         self.data['gains_init'] = self.get_current_gains()
 
         init_source = self.trigger.source
-        self.trigger.source = self.trigger.source_options.index('Clock3')
+        ini_dly = self.trigger.delay_raw
         try:
             self._do_acquire()
         except Exception as err:
@@ -224,6 +236,7 @@ class EqualizeBPMs(_FamBPMs):
             self._log(f'ERR:{str(err)}')
 
         self.trigger.source = init_source
+        self.trigger.delay_raw = ini_dly
         self.set_gains(self.data['gains_init'])
         self._log('Acquisition Finished!')
 
@@ -231,7 +244,7 @@ class EqualizeBPMs(_FamBPMs):
         if self._acq_strategy == self.AcqStrategies.AssumeOrder:
             self.set_gains(self.MAX_MULTIPLIER)
         else:
-            gains = _np.full((len(self.bpms), 4, 2), self.MAX_MULTIPLIER)
+            gains = _np.full((4, len(self.bpms), 2), self.MAX_MULTIPLIER)
             gains[:, :, 1] *= self._acq_inverse_reduced_gain
             self.set_gains(gains)
         self.data['acq_strategy'] = self._acq_strategy
@@ -241,7 +254,9 @@ class EqualizeBPMs(_FamBPMs):
         self._log('Preparing BPMs')
         ret = self.cmd_mturn_acq_abort()
         if ret > 0:
-            self._log(f'ERR: BPM {ret-1} did not abort previous acquistion.')
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
+                'previous acquistion.')
             return
 
         self.mturn_reset_flags_and_update_initial_timestamps()
@@ -249,13 +264,18 @@ class EqualizeBPMs(_FamBPMs):
             nr_points_after=self._acq_nrpoints, nr_points_before=0,
             acq_rate='FOFB', repeat=False, external=True)
         if ret > 0:
-            self._log(f'ERR: BPM {ret-1} did not start acquistion.')
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not start acquistion.')
             return
+
+        self.trigger.delay_raw = 0
+        self.trigger.source = self.trigger.source_options.index('Clock3')
 
         self._log('Waiting BPMs to update')
         ret = self.mturn_wait_update(timeout=self._acq_timeout)
         if ret > 0:
-            self._log(f'ERR: BPM {ret-1} did not update in time.')
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
             return
         elif ret < 0:
             self._log(f'ERR: Problem with acquisition. Error code {ret}')
@@ -289,7 +309,72 @@ class EqualizeBPMs(_FamBPMs):
 
         _time.sleep(0.1)
         self.data['antennas'] = _np.array(
-            self.get_mturn_signals()).swapaxes(1, 0)
+            self.get_mturn_signals()).swapaxes(-1, -2)
+
+    def acquire_data_for_checking(self):
+        """."""
+        self._log('Starting Acquisition.')
+
+        init_source = self.trigger.source
+        ini_dly = self.trigger.delay_raw
+        try:
+            self._do_acquire_for_check()
+        except Exception as err:
+            self._log('ERR:Problem with acquisition:')
+            self._log(f'ERR:{str(err)}')
+
+        self.trigger.source = init_source
+        self.trigger.delay_raw = ini_dly
+        self._log('Acquisition Finished!')
+
+    def _do_acquire_for_check(self):
+        # acquire antennas data in FOFB rate
+        self._log('Preparing BPMs')
+        ret = self.cmd_mturn_acq_abort()
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
+                'previous acquistion.')
+            return
+
+        fswtc = self.get_switching_frequency(1)
+        fsamp = self.get_sampling_frequency(1)
+        nrpts = int(fsamp / fswtc)
+
+        self.mturn_reset_flags_and_update_initial_timestamps()
+        ret = self.mturn_config_acquisition(
+            nr_points_after=nrpts, nr_points_before=0,
+            acq_rate='FOFB', repeat=False, external=True)
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not start acquistion.')
+            return
+
+        self.trigger.delay_raw = 0
+        self.trigger.source = self.trigger.source_options.index('Clock3')
+
+        self._log('Waiting BPMs to update')
+        ret = self.mturn_wait_update(timeout=self._acq_timeout)
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
+            return
+        elif ret < 0:
+            self._log(f'ERR: Problem with acquisition. Error code {ret}')
+            return
+        self._log('BPMs updated.')
+
+        self._log('Acquiring data.')
+        if None in {fsamp, fswtc}:
+            self._log('ERR: Not all BPMs are configured equally.')
+            return
+        elif fsamp % (2*fswtc):
+            self._log('ERR: Sampling freq is not multiple of switching freq.')
+            return
+
+        _time.sleep(0.1)
+        self.data['antennas_for_check'] = _np.array(
+            self.get_mturn_signals()).swapaxes(-1, -2)
 
     # --------- Methods for processing ------------
 
@@ -308,7 +393,7 @@ class EqualizeBPMs(_FamBPMs):
         """Calculate average signal for each antenna in both switching states.
 
         Args:
-            antennas (numpy.ndarray, (nrbpms, 4, N)): Antennas data.
+            antennas (numpy.ndarray, (4, nrbpms, N)): Antennas data.
             fsamp (float, optional): Sampling frequency. Defaults to 4.
             fswtc (float, optional): Switching frequency. Defaults to 1.
             acq_strategy (int, optional): Whether we should assume states
@@ -320,7 +405,7 @@ class EqualizeBPMs(_FamBPMs):
                 antennas gain during acquisition. Defaults to 0.95.
 
         Returns:
-            mean (numpy.ndarray, nrbpms, 4, 2): The levels of each switching
+            mean (numpy.ndarray, (4, nrbpms, 2)): The levels of each switching
                 state for each antenna.
 
         """
@@ -337,20 +422,22 @@ class EqualizeBPMs(_FamBPMs):
         elif ants.shape[-1] != trunc:
             ants = ants[:, :, :trunc]
             self._log(f'WARN:Truncating data at {trunc} points')
-        ants = ants.reshape(nbpm, nant, -1, lsemicyc*2)
+        ants = ants.reshape(nant, nbpm, -1, lsemicyc*2)
         ants = ants.mean(axis=2)
         self._log('Calculating switching levels.')
         self._log(
             f'AcqStrategy is {self.AcqStrategies._fields[acq_strategy]}.')
         if acq_strategy == self.AcqStrategies.AssumeOrder:
-            ants = ants.reshape(nbpm, nant, 2, lsemicyc)
+            ants = ants.reshape(nant, nbpm, 2, lsemicyc)
             mean = ants.mean(axis=-1)
-            idp = _np.tile(_np.arange(lsemicyc), (nbpm, 1))
-            idn = idp + lsemicyc
+            # Inverse comes first!:
+            mean = mean[:, :, ::-1]
+            idn = _np.tile(_np.arange(lsemicyc), (nbpm, 1))
+            idp = idn + lsemicyc
         else:
             # Try to find out the two states by looking at different levels in
             # the sum of the four antennas of each BPM.
-            dts = ants.sum(axis=1)
+            dts = ants.sum(axis=0)
             idcs = dts - dts.mean(axis=-1)[..., None] > 0
             idp = idcs.nonzero()  # direct
             idn = (~idcs).nonzero()  # inverse
@@ -360,11 +447,11 @@ class EqualizeBPMs(_FamBPMs):
                 self._log(
                     'ERR: Could not identify switching states appropriately.')
                 return
-            mean = _np.zeros((nbpm, nant, 2))
-            dtp = ants[idp[0], :, idp[1]].reshape(nbpm, lsemicyc, nant)
-            dtn = ants[idn[0], :, idn[1]].reshape(nbpm, lsemicyc, nant)
-            mean[:, :, 0] = dtp.mean(axis=1)
-            mean[:, :, 1] = dtn.mean(axis=1)
+            mean = _np.zeros((nant, nbpm, 2))
+            dtp = ants[:, idp[0], idp[1]].reshape(nant, nbpm, lsemicyc)
+            dtn = ants[:, idn[0], idn[1]].reshape(nant, nbpm, lsemicyc)
+            mean[:, :, 0] = dtp.mean(axis=-1)
+            mean[:, :, 1] = dtn.mean(axis=-1)
             # Re-scale the inverse state data to match the direct state:
             scl = self.MAX_MULTIPLIER / acq_inverse_reduced_gain
             mean[:, :, 1] *= scl
@@ -394,12 +481,12 @@ class EqualizeBPMs(_FamBPMs):
             min_ant = min_ant[:, :, None]
         elif self._proc_method == self.ProcMethods.AABS:
             # equalize the 4 antennas for both semicycles
-            min_ant = mean.min(axis=-1).min(axis=-1)
-            min_ant = min_ant[:, None, None]
+            min_ant = mean.min(axis=0).min(axis=-1)
+            min_ant = min_ant[None, :, None]
         elif self._proc_method == self.ProcMethods.AAES:
             # equalize the 4 antennas for each semicycle
-            min_ant = mean.min(axis=1)
-            min_ant = min_ant[:, None, :]
+            min_ant = mean.min(axis=0)
+            min_ant = min_ant[None, :, :]
         min_ant *= maxm
         gains = self.round_gains(min_ant / mean)
         self.data['proc_method'] = self._proc_method
@@ -408,21 +495,21 @@ class EqualizeBPMs(_FamBPMs):
 
     def estimate_orbit_variation(self):
         """Estimate orbit variation between old and new gains."""
+        self._log('Estimating Orbit Variation.')
         mean = self.data.get('antennas_mean')
         gains_init = self.data.get('gains_init')
         gains_new = self.data.get('gains_new')
-        posx_gain = self.data.get('posx_gain')
-        posy_gain = self.data.get('posy_gain')
-        posx_offset = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
-        posy_offset = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
-
+        gainx = self.data.get('posx_gain')
+        gainy = self.data.get('posy_gain')
+        offx = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
+        offy = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
         if gains_new is None:
             self._log('ERR:Missing info. Acquire and process data first.')
 
         orbx_init, orby_init = self._estimate_orbit(
-            mean, gains_init, posx_gain, posy_gain, posx_offset, posy_offset)
+            mean, gains_init, gainx, gainy, offx, offy)
         orbx_new, orby_new = self._estimate_orbit(
-            mean, gains_new, posx_gain, posy_gain, posx_offset, posy_offset)
+            mean, gains_new, gainx, gainy, offx, offy)
         # Get the average over both semicycles
         self.data['orbx_init'] = orbx_init.mean(axis=-1)
         self.data['orby_init'] = orby_init.mean(axis=-1)
@@ -467,10 +554,10 @@ class EqualizeBPMs(_FamBPMs):
             4, 2, figsize=(9, 8), sharex=True, sharey=True)
         ants = 'ABCD'
         for i in range(4):
-            ldo = axs[i, 0].plot(gini[:, i, 0])[0]
-            lio = axs[i, 1].plot(gini[:, i, 1], color=ldo.get_color())[0]
-            ldn = axs[i, 0].plot(gnew[:, i, 0])[0]
-            lin = axs[i, 1].plot(gnew[:, i, 1], color=ldn.get_color())[0]
+            ldo = axs[i, 0].plot(gini[i, :, 0])[0]
+            lio = axs[i, 1].plot(gini[i, :, 1], color=ldo.get_color())[0]
+            ldn = axs[i, 0].plot(gnew[i, :, 0])[0]
+            lin = axs[i, 1].plot(gnew[i, :, 1], color=ldn.get_color())[0]
             if not i:
                 ldo.set_label('Old')
                 ldn.set_label('New')
@@ -508,8 +595,10 @@ class EqualizeBPMs(_FamBPMs):
 
     def plot_antennas_mean(self):
         """."""
-        posx_gain = self.data.get('posx_gain')
-        posy_gain = self.data.get('posx_gain')
+        gainx = self.data.get('posx_gain')
+        gainy = self.data.get('posx_gain')
+        offx = self.data.get('posx_offset')
+        offy = self.data.get('posx_offset')
         gacq = self.data.get('gains_acq')
         gini = self.data.get('gains_init')
         gnew = self.data.get('gains_new')
@@ -534,13 +623,14 @@ class EqualizeBPMs(_FamBPMs):
             val = antm * gain
             for i in range(4):
                 ax = axs[i, j]
-                ld = ax.plot(val[:, i, 0], 'o-')[0]
-                li = ax.plot(val[:, i, 1], 'o-')[0]
+                ld = ax.plot(val[i, :, 0], 'o-')[0]
+                li = ax.plot(val[i, :, 1], 'o-')[0]
                 if not i and not j:
                     ld.set_label('Direct')
                     li.set_label('Inverse')
-            posx, posy = self._estimate_orbit(antm, gain, posx_gain, posy_gain)
-            sum_ = val.sum(axis=1)
+            posx, posy = self._estimate_orbit(
+                antm, gain, gainx, gainy, offx, offy)
+            sum_ = val.sum(axis=0)
             axs[4, j].plot(posx[:, 0], 'o-')
             axs[4, j].plot(posx[:, 1], 'o-')
             axs[5, j].plot(posy[:, 0], 'o-')
@@ -559,26 +649,49 @@ class EqualizeBPMs(_FamBPMs):
         fig.tight_layout()
         return fig, axs
 
+    def plot_antennas_for_check(self):
+        """."""
+        antd = self.data.get('antennas_for_check')
+        if antd is None:
+            self._log('ERR:Must acquire data for check first.')
+            return None, None
+
+        fig, axs = _mplt.subplots(
+            4, 1, figsize=(6, 8), sharex=True, sharey=True)
+        ants = 'ABCD'
+        mean = antd.mean(axis=-1)[:, :, None]
+        antd = antd / mean - 1
+        nbpm = antd.shape[1]
+        for j in range(nbpm):
+            cor = _mplt.cm.jet(j/(nbpm-1))
+            for i in range(4):
+                axs[i].plot(antd[i, j], 'o-', color=cor)
+                if not j:
+                    axs[i].set_ylabel(ants[i] + ' [%]')
+                    axs[i].grid(True, alpha=0.5, ls='--', lw=1)
+
+        axs[0].set_title('Relative Variation')
+        axs[-1].set_xlabel('Samples')
+        fig.tight_layout()
+        return fig, axs
+
     # ------- auxiliary methods ----------
 
-    def _estimate_orbit(
-            self, mean, gains, posx_gain, posy_gain, posx_offset, posy_offset):
-        ant = mean * gains
-        # Get pairs of antennas
-        ac = ant[:, ::2]
-        bd = ant[:, 1::2]
+    @staticmethod
+    def _estimate_orbit(mean, gains, gainx, gainy, offx, offy):
+        a, b, c, d = mean * gains
         # Calculate difference over sum for each pair
-        dovs_ac = _np.diff(ac, axis=1).squeeze() / ac.sum(axis=1)
-        dovs_bd = _np.diff(bd, axis=1).squeeze() / bd.sum(axis=1)
+        a_c = (a-c) / (a+c)
+        b_d = (b-d) / (b+d)
         # Get the positions:
-        posx = (dovs_ac - dovs_bd)
-        posy = (dovs_ac + dovs_bd)
-        # Apply Position gains and factor of two missing in previous step
-        posx *= posx_gain[:, None] / 2 / 1e3
-        posy *= posy_gain[:, None] / 2 / 1e3
+        posx = (a_c - b_d) / 2
+        posy = (a_c + b_d) / 2 
+        # Apply position gains:
+        posx *= gainx[:, None]
+        posy *= gainy[:, None]
         # Subtract offsets:
-        posx -= posx_offset
-        posy -= posy_offset
+        posx -= offx[:, None]
+        posy -= offy[:, None]
         return posx, posy
 
     def _log(self, message, *args, level='INFO', **kwrgs):

@@ -237,7 +237,7 @@ def _get_all_bpms():
         line = line.strip()
         if not line or line[0] == '#':
             continue  # empty line
-        _, dev, *_ = line.split()
+        dev, *_ = line.split()
         dev = _PVName(dev)
         if dev.dev in ('BPM', 'PBPM'):
             bpms.add(dev)
