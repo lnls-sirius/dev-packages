@@ -2,6 +2,7 @@
 
 import time as _time
 import inspect as _inspect
+import numpy as _np
 
 from ..search import IDSearch as _IDSearch
 
@@ -259,6 +260,13 @@ class _ID(_Device):
         else:
             return self[self.PARAM_PVS.PPARAM_MON]
 
+    @property
+    def pparameter_move_eta(self):
+        """Return estimated moving time to reach pparameter RB position."""
+        # NOTE: the IOC may provide this as PV in the future
+        pparam_eta, _ = self.calc_move_eta(self.pparameter, None)
+        return pparam_eta
+
     def pparameter_set(self, pparam, timeout=None):
         """Set ID target pparameter for movement [mm]."""
         if self.PARAM_PVS.PPARAM_SP is None:
@@ -382,6 +390,13 @@ class _ID(_Device):
     def kparameter_mon(self):
         """Return ID kparameter monitor [mm]."""
         return self[self.PARAM_PVS.KPARAM_MON]
+
+    @property
+    def kparameter_move_eta(self):
+        """Return estimated moving time to reach kparameter RB position."""
+        # NOTE: the IOC may provide this as PV in the future
+        _, kparam_eta = self.calc_move_eta(None, self.kparameter)
+        return kparam_eta
 
     def kparameter_set(self, kparam, timeout=None):
         """Set ID target kparameter for movement [mm]."""
@@ -534,13 +549,19 @@ class _ID(_Device):
     def cmd_move_park(self, timeout=None):
         """Move ID to parked config."""
         pparam, kparam = self.pparameter_parked, self.kparameter_parked
-        timeout = self._calc_eta(pparam, kparam) if timeout is None \
-            else timeout
-        if self.PARAM_PVS.START_PARKING_CMD is not None:
+        if self.PARAM_PVS.START_PARKING_CMD is None:
+            # composed pparam and kparam movement by this class
+            return self.cmd_move(pparam, kparam, timeout)
+        else:
+            # composed pparam and kparam movement by IOC
+            # first set param RBs for ETA computation and PVs consistency
+            if not self.pparameter_set(pparam):
+                return False
+            if not self.kparameter_set(kparam):
+                return False
+            timeout = self.calc_move_timeout(None, None, timeout)
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
             return self.wait_move_config(pparam, kparam, timeout)
-        else:
-            return self.cmd_move(pparam, kparam, timeout)
 
     def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
@@ -553,7 +574,13 @@ class _ID(_Device):
         return self.cmd_move(None, kparam, timeout)
 
     def cmd_move(self, pparam=None, kparam=None, timeout=None):
-        """Command to set and start pparam and kparam movements."""
+        """Command to set and start pparam and kparam movements.
+
+        Args
+            pparam : target pparameter value
+            kparam : target kparameter value
+            timeout : additional timeout beyond movement ETA. [s]
+        """
         if self.PARAM_PVS.PPARAM_SP is None:
             pparam = None
 
@@ -581,11 +608,10 @@ class _ID(_Device):
         if timeout is not None:
             timeout = max(timeout - (t1_ - t0_), 0)
 
-        # calc ETA
-        eta = self._calc_eta(pparam, kparam)
-        timeout = eta if timeout is None else timeout
+        # calc timeout
+        timeout = self._calc_move_timeout(None, None, timeout)
 
-        # wait for movement within reasonable time
+        # wait for movement within timeout based on movement ETA
         return self.wait_move_config(pparam, kparam, timeout)
 
     def cmd_change_polarization(self, polarization, timeout=None):
@@ -613,6 +639,46 @@ class _ID(_Device):
         # wait for polarization value within timeout
         return self._wait(
             self.PARAM_PVS.POL_MON, polarization, timeout=timeout, comp='eq')
+
+    def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
+        """Estimate moving time for each parameter separately."""
+        # pparameter
+        param_goal, param_val = pparam_goal, self.pparameter_mon
+        param_tol = self.pparameter_tol
+        param_vel, param_acc = self.pparameter_speed, self.pparameter_accel
+        if None not in (param_goal, param_val):
+            dparam = abs(param_goal - param_val)
+            dparam = 0 if dparam < param_tol else dparam
+            pparam_eta = _ID._calc_move_eta_model(dparam, param_vel, param_acc)
+        else:
+            pparam_eta = 0.0
+
+        # kparameter
+        param_goal, param_val = kparam_goal, self.kparameter_mon
+        param_tol = self.kparameter_tol
+        param_vel, param_acc = self.kparameter_speed, self.kparameter_accel
+        if None not in (param_goal, param_val):
+            dparam = abs(abs(param_goal) - abs(param_val))  # abs for DELTA
+            dparam = 0 if dparam < param_tol else dparam
+            kparam_eta = _ID._calc_move_eta_model(dparam, param_vel, param_acc)
+        else:
+            kparam_eta = 0.0
+
+        return pparam_eta, kparam_eta
+
+    def calc_move_eta_composed(self, pparam_eta, kparam_eta):
+        # model: here pparam and kparam as serial in time
+        eta = pparam_eta + kparam_eta
+        return eta
+
+    def calc_move_timeout(
+            self, pparam_goal=None, kparam_goal=None, timeout=None):
+        # calc timeout
+        pparam_eta, kparam_eta = self.calc_move_eta(pparam_goal, kparam_goal)
+        eta = self.calc_move_eta_composed(pparam_eta, kparam_eta)
+        eta = 1.1 * eta + 0.5  # add safety margins
+        timeout = eta if timeout is None else eta + timeout
+        return timeout
 
     # --- private methods ---
 
@@ -661,21 +727,21 @@ class _ID(_Device):
                 return False
         return True
 
-    def _calc_eta(self, pparam, kparam):
-        """."""
-        # calc ETA
-        dtime_kparam = 0 if kparam is None else \
-            abs(kparam - self.kparameter_mon) / self.kparameter_speed
-        dtime_pparam = 0 if pparam is None else \
-            abs(pparam - self.pparameter_mon) / self.pparameter_speed
-        dtime_max = self._calc_eta_select_time(dtime_kparam, dtime_pparam)
-        # additional percentual in ETA
-        eta = 1.5 * dtime_max + 5
-        return eta
-
     @staticmethod
-    def _calc_eta_select_time(dtime_kparam, dtime_pparam):
-        return dtime_kparam + dtime_pparam
+    def _calc_move_eta_model(dparam, param_vel, param_acc=None):
+        """Moving time model."""
+        # constant acceleration model:
+        #   linear ramp up + cruise velocity + linear ramp down
+        #   assume param_acc = 1 mm/s² if no acceleration is provided
+        param_acc = 1 if param_acc is None else param_acc
+        maxvel_ramp = _np.sqrt(param_acc * dparam)
+        maxvel_ramp = min(maxvel_ramp, param_vel)
+        dtime_ramp = 2 * maxvel_ramp / param_acc
+        dparam_ramp = maxvel_ramp**2 / param_acc
+        dparam_plateau = dparam - dparam_ramp
+        dtime_plateau = dparam_plateau / param_vel
+        dtime_total = dtime_ramp + dtime_plateau
+        return dtime_total
 
 
 class APU(_ID):
