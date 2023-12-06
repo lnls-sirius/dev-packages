@@ -157,6 +157,7 @@ class Const(_csdev.Const):
 
         hlevts = _HLTimeSearch.get_hl_events()
         evtin0 = int(hlevts['Intlk'].strip('Evt'))
+        evtin1 = int(hlevts['ItlkR'].strip('Evt'))
         evtin2 = int(hlevts['DCT13'].strip('Evt'))
         evtin3 = int(hlevts['DCT14'].strip('Evt'))
         evtout = int(hlevts['RFKll'].strip('Evt'))
@@ -166,7 +167,7 @@ class Const(_csdev.Const):
             ('IntlkCtrlRepeat-Sel', 0),
             ('IntlkCtrlRepeatTime-SP', 0),
             ('IntlkEvtIn0-SP', evtin0),
-            ('IntlkEvtIn1-SP', 118),
+            ('IntlkEvtIn1-SP', evtin1),
             ('IntlkEvtIn2-SP', evtin2),
             ('IntlkEvtIn3-SP', evtin3),
             ('IntlkEvtOut-SP', evtout),
