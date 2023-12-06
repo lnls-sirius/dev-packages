@@ -1338,7 +1338,6 @@ class App(_Callback):
 
         if not is_failure:
             return
-        self._update_log('FATAL:Orbit interlock reliability failure')
         self._handle_reliability_failure()
 
     def _conn_callback_timing(self, pvname, conn, **kws):
@@ -1350,7 +1349,6 @@ class App(_Callback):
         flag = 'FATAL' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} disconnected')
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     def _callback_bpm_intlk(self, pvname, value, **kws):
@@ -1386,7 +1384,7 @@ class App(_Callback):
 
     def _do_callback_bpm_intlk(self):
         # send kill beam as fast as possible
-        self._handle_reliability_failure()
+        self._handle_reliability_failure(is_failure=False)
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE counted the event PsMtm
@@ -1428,7 +1426,6 @@ class App(_Callback):
         flag = 'FATAL' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} lost PLL lock')
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     def _conn_callback_afcphystrigs(self, pvname, conn, **kws):
@@ -1440,7 +1437,6 @@ class App(_Callback):
         flag = 'ERR' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} disconnected')
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     def _callback_hltrig_status(self, pvname, value, **kws):
@@ -1450,7 +1446,6 @@ class App(_Callback):
         # if status is not ok, it is a reliability failure
         trigname = _PVName(pvname).device_name
         self._update_log(f'FATAL:{trigname} Status not ok')
-        self._update_log('FATAL:Orbit interlock reliability failure')
         self._handle_reliability_failure()
 
     # --- reliability failure methods ---
@@ -1461,7 +1456,9 @@ class App(_Callback):
         facq_sum = monit_sum * self._get_bpm_rates_factor()
         return _np.all(facq_sum > self._limits['minsum'])
 
-    def _handle_reliability_failure(self):
+    def _handle_reliability_failure(self, is_failure=True):
+        if is_failure:
+            self._update_log('FATAL:Orbit interlock reliability failure')
         if not self._state:
             self._update_log('WARN:Orbit interlock is not enabled.')
             return
@@ -1588,7 +1585,6 @@ class App(_Callback):
         if thread.cur_iter == thread.niters-1:
             self._lock_failures.add(pvname)
             self._update_log(f'FATAL:Fail to lock {pvname}')
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     # --- auxiliary log methods ---
