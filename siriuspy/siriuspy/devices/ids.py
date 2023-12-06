@@ -29,6 +29,8 @@ class _PARAM_PVS:
     PPARAM_VELO_SP = None
     PPARAM_VELO_RB = None
     PPARAM_VELO_MON = None
+    PPARAM_ACC_SP = None
+    PPARAM_ACC_RB = None
     PPARAM_TOL_SP = None
     PPARAM_TOL_RB = None
     PPARAM_CHANGE_CMD = None
@@ -43,6 +45,8 @@ class _PARAM_PVS:
     KPARAM_VELO_SP = None
     KPARAM_VELO_RB = None
     KPARAM_VELO_MON = None
+    KPARAM_ACC_SP = None
+    KPARAM_ACC_RB = None
     KPARAM_TOL_SP = None
     KPARAM_TOL_RB = None
     KPARAM_CHANGE_CMD = None
@@ -1149,6 +1153,8 @@ class DELTA(_ID):
     PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
     PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
     PARAM_PVS.PPARAM_VELO_RB = 'PParamVelo-RB'
+    PARAM_PVS.PPARAM_ACC_SP = 'PParamAcc-SP'
+    PARAM_PVS.PPARAM_ACC_RB = 'PParamAcc-RB'
     PARAM_PVS.PPARAM_TOL_SP = 'PolTol-SP'
     PARAM_PVS.PPARAM_TOL_RB = 'PolTol-RB'
     PARAM_PVS.PPARAM_CHANGE_CMD = 'PParamChange-Cmd'
