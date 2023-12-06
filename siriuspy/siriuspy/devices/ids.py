@@ -24,6 +24,8 @@ class _PARAM_PVS:
     PPARAM_RB = None
     PPARAM_MON = None
     PPARAM_PARKED_CTE = None
+    PPARAM_MAXACC_SP = None
+    PPARAM_MAXACC_RB = None
     PPARAM_MAXVELO_SP = None
     PPARAM_MAXVELO_RB = None
     PPARAM_VELO_SP = None
@@ -40,6 +42,8 @@ class _PARAM_PVS:
     KPARAM_RB = None
     KPARAM_MON = None
     KPARAM_PARKED_CTE = None
+    KPARAM_MAXACC_SP = None
+    KPARAM_MAXACC_RB = None
     KPARAM_MAXVELO_SP = None
     KPARAM_MAXVELO_RB = None
     KPARAM_VELO_SP = None
@@ -197,6 +201,40 @@ class _ID(_Device):
             return self[self.PARAM_PVS.PPARAM_VELO_SP]
 
     @property
+    def pparameter_speed_mon(self):
+        """Return pparameter speed monitor [mm/s]."""
+        if self.PARAM_PVS.PPARAM_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_VELO_MON]
+
+    @property
+    def pparameter_accel_max(self):
+        """Return maximum pparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_MAXACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_MAXACC_RB]
+
+    @property
+    def pparameter_accel_max_lims(self):
+        """Return max pparameter accel limits."""
+        if self.PARAM_PVS.PPARAM_MAXACC_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_MAXACC_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def pparameter_accel(self):
+        """Return pparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_ACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_ACC_RB]
+
+    @property
     def pparameter_lims(self):
         """Return ID pparameter lower control limit [mm]."""
         if self.PARAM_PVS.PPARAM_VELO_SP is None:
@@ -244,6 +282,22 @@ class _ID(_Device):
             return self._write_sp(
                 self.PARAM_PVS.PPARAM_MAXVELO_SP, pparam_speed_max, timeout)
 
+    def pparameter_accel_set(self, pparam_accel, timeout=None):
+        """Command to set ID pparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_ACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_ACC_SP, pparam_accel, timeout)
+
+    def pparameter_accel_max_set(self, pparam_accel_max, timeout=None):
+        """Command to set ID max cruise pparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_MAXACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_MAXACC_SP, pparam_accel_max, timeout)
+
     # --- kparameter ---
 
     @property
@@ -282,10 +336,36 @@ class _ID(_Device):
     @property
     def kparameter_speed_mon(self):
         """Return kparameter speed monitor [mm/s]."""
-        if self.PARAM_PVS.KPARAM_VELO_MON in self.properties_all:
-            return self[self.PARAM_PVS.KPARAM_VELO_MON]
+        if self.PARAM_PVS.KPARAM_VELO_MON is None:
+            return None
         else:
-            raise TypeError('ID does not have speed_mon PV!')
+            return self[self.PARAM_PVS.KPARAM_VELO_MON]
+
+    @property
+    def kparameter_accel_max(self):
+        """Return maximum kparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_MAXACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.KPARAM_MAXACC_RB]
+
+    @property
+    def kparameter_accel_max_lims(self):
+        """Return max kparameter accel limits."""
+        if self.PARAM_PVS.KPARAM_MAXACC_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.KPARAM_MAXACC_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def kparameter_accel(self):
+        """Return kparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_ACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.KPARAM_ACC_RB]
 
     @property
     def kparameter_lims(self):
@@ -316,6 +396,22 @@ class _ID(_Device):
         """Command to set ID max cruise kparam speed for movement [mm/s]."""
         return self._write_sp(
             self.PARAM_PVS.KPARAM_MAXVELO_SP, kparam_speed_max, timeout)
+
+    def kparameter_accel_set(self, kparam_accel, timeout=None):
+        """Command to set ID kparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_ACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.KPARAM_ACC_SP, kparam_accel, timeout)
+
+    def kparameter_accel_max_set(self, kparam_accel_max, timeout=None):
+        """Command to set ID max cruise kparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_MAXACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.KPARAM_MAXACC_SP, kparam_accel_max, timeout)
 
     # --- checks ---
 
@@ -1149,6 +1245,8 @@ class DELTA(_ID):
     PARAM_PVS.PPARAM_RB = 'PParam-RB'
     PARAM_PVS.PPARAM_MON = 'PParam-Mon'
     PARAM_PVS.PPARAM_PARKED_CTE = 'PParamParked-Cte'
+    PARAM_PVS.PPARAM_MAXACC_SP = 'MaxAcc-SP'
+    PARAM_PVS.PPARAM_MAXACC_RB = 'MaxAcc-RB'
     PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxVelo-SP'
     PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
     PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
@@ -1162,10 +1260,14 @@ class DELTA(_ID):
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
+    PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
     PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
     PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
     PARAM_PVS.KPARAM_TOL_SP = 'PosTol-SP'
     PARAM_PVS.KPARAM_TOL_RB = 'PosTol-RB'
     PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
