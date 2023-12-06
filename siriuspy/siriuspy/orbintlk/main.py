@@ -1392,7 +1392,7 @@ class App(_Callback):
         # verify if RF EVE counted the event PsMtm
         new_evtcnt = self._everf_dev[self._llrf_evtcnt_pvname]
         if new_evtcnt == self._everf_evtcnt:
-            self._update_log('WARN:RF EVE did counted event PsMtm')
+            self._update_log('WARN:RF EVE did not count event PsMtm')
         self._everf_evtcnt = new_evtcnt
         # wait minimum period for BPM to update interlock PVs
         _time.sleep(2)
