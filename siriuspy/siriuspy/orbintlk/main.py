@@ -136,6 +136,8 @@ class App(_Callback):
                     'RTMPhaseIntgGain-SP', 'RTMPhaseIntgGain-RB',
                     'RTMFreqPropGain-SP', 'RTMFreqPropGain-RB',
                     'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
+                    'RTMPhaseNavg-SP', 'RTMPhaseNavg-RB',
+                    'RTMPhaseDiv-SP', 'RTMPhaseDiv-RB',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
