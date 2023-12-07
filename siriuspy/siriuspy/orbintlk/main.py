@@ -233,7 +233,7 @@ class App(_Callback):
             devname=_ASLLRF.DEVICES.SI,
             props2init=[
                 'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON',
-                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd',
+                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd', 'Reset-Cmd',
             ])
         self._llrf.pv_object('FASTINLK-MON').auto_monitor = True
 
@@ -1470,6 +1470,11 @@ class App(_Callback):
         self._llrf['IntlkSet-Cmd'] = 1
         _time.sleep(1)
         self._llrf['IntlkSet-Cmd'] = 0
+        if self._is_dry_run:
+            _time.sleep(1)
+            self._llrf['Reset-Cmd'] = 1
+            _time.sleep(1)
+            self._llrf['Reset-Cmd'] = 0
 
     # --- device lock methods ---
 
@@ -1537,7 +1542,7 @@ class App(_Callback):
             self, device, propty_sp, desired_value, pvname, value):
         if self._lock_suspend:
             return
-        
+
         # do not try to lock devices that are not in list of monitored devices
         devname = _PVName(pvname).device_name
         if devname not in self._ti_mon_devs and \
