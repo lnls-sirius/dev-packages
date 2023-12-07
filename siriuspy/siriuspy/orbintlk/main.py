@@ -1471,7 +1471,8 @@ class App(_Callback):
         _time.sleep(1)
         self._llrf['IntlkSet-Cmd'] = 0
         if self._is_dry_run:
-            _time.sleep(1)
+            # wait a little and rearming FDL acquisition
+            _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
             self._llrf['Reset-Cmd'] = 1
             _time.sleep(1)
             self._llrf['Reset-Cmd'] = 0
