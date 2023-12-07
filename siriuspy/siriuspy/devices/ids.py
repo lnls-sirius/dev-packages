@@ -1042,10 +1042,6 @@ class PAPU(_ID):
         """Command to start phase movement."""
         return self.cmd_move_kparameter_start(timeout=timeout)
 
-    # def cmd_move_park(self, timeout=None):
-    #     """Command to set and start ID movement to parked config."""
-    #     return super().cmd_move_park(timeout)
-
     # --- cmd_reset
 
     def cmd_device_reset(self, timeout=None):
@@ -1279,17 +1275,16 @@ class EPU(PAPU):
         """Command to start gap movement."""
         return self.cmd_move_kparameter_start(timeout)
 
+    def calc_move_eta_composed(self, pparam_eta, kparam_eta):
+        # model: here pparam and kparam as parallel in time
+        eta = max(pparam_eta, kparam_eta)
+        return eta
+
     # --- other cmds ---
 
     def cmd_clear_error(self):
         """Command to clear errors."""
         pass
-
-    # --- private methods ---
-
-    @staticmethod
-    def _calc_eta_select_time(dtime_kparam, dtime_pparam):
-        return max(dtime_kparam, dtime_pparam)
 
 
 class DELTA(_ID):
@@ -1422,11 +1417,12 @@ class DELTA(_ID):
         """
         return self['CIDVirtPos-Mon']
 
-    def _calc_eta(self, pparam, kparam):
-        """."""
-        if kparam is not None and self.polarization_mon_str == 'circularp':
-            kparam = -kparam
-        return super()._calc_eta(pparam, kparam)
+    def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
+        """Estimate moving time for each parameter separately."""
+        pol_mon_str = self.polarization_mon_str
+        if kparam_goal is not None and pol_mon_str == 'circularp':
+            kparam_goal = -kparam_goal
+        return super().calc_move_eta(pparam_goal, kparam_goal)
 
 
 class WIG(_ID):
