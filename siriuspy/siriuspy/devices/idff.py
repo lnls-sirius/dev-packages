@@ -6,19 +6,14 @@ from ..idff.config import IDFFConfig as _IDFFConfig
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
-from .ids import WIG as _WIG, APU as _APU, PAPU as _PAPU, EPU as _EPU
-from .ids import DELTA as _DELTA
+from .ids import IDFactory as _IDFactory
 
 
 class IDFF(_DeviceSet):
     """Insertion Device Feedforward Device."""
 
-    class DEVICES(_WIG.DEVICES, _PAPU.DEVICES, _EPU.DEVICES, _DELTA.DEVICES):
+    class DEVICES(_IDFactory.DEVICES):
         """."""
-
-        ALL = \
-            _WIG.DEVICES.ALL + _PAPU.DEVICES.ALL + \
-            _EPU.DEVICES.ALL + _DELTA.DEVICES.ALL
 
     def __init__(self, devname):
         """."""
@@ -62,6 +57,11 @@ class IDFF(_DeviceSet):
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
+    def iddev(self):
+        """Return ID device."""
+        return self._devid
+
+    @property
     def chdevs(self):
         """Return CH corrector power supply devices."""
         return self._devsch
@@ -90,6 +90,11 @@ class IDFF(_DeviceSet):
     def polarizations(self):
         """Return list of possible light polarizations for the ID."""
         return _IDSearch.conv_idname_2_polarizations(self.devname)
+
+    @property
+    def polarization_mon(self):
+        """Return current ID polarization as a string (or None)."""
+        return self.iddev.polarization_str
 
     @property
     def pparameter_mon(self):
@@ -233,13 +238,15 @@ class IDFF(_DeviceSet):
             kparameter_value = self.kparameter_mon
         if None in (pparameter_value, kparameter_value):
             return None, pparameter_value, kparameter_value
-        polarization = self.idffconfig.get_polarization_state(
-            pparameter=pparameter_value, kparameter=kparameter_value)
+        polarization = self.polarization_mon
+        if polarization is None:
+            polarization = self.idffconfig.get_polarization_state(
+                pparameter=pparameter_value, kparameter=kparameter_value)
         return polarization, pparameter_value, kparameter_value
 
     def _create_devices(self, devname):
         param_auto_mon = False
-        devid = _Device(
+        devid = _IDFactory.create(
             devname=devname,
             props2init=(self._pparametername, self._kparametername),
             auto_monitor_mon=param_auto_mon)
@@ -247,73 +254,3 @@ class IDFF(_DeviceSet):
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
         return devid, devsch, devscv, devsqs
-
-
-class WIGIDFF(IDFF):
-    """Wiggler Feedforward."""
-
-    class DEVICES(_WIG.DEVICES):
-        """."""
-
-    @property
-    def gap_mon(self):
-        """."""
-        return self.kparameter_mon
-
-
-class PAPUIDFF(IDFF):
-    """PAPU Feedforward."""
-
-    class DEVICES(_PAPU.DEVICES):
-        """."""
-
-    @property
-    def phase_mon(self):
-        """."""
-        return self.pparameter_mon
-
-
-class EPUIDFF(IDFF):
-    """EPU Feedforward."""
-
-    class DEVICES(_EPU.DEVICES):
-        """."""
-
-    @property
-    def phase_mon(self):
-        """."""
-        return self.pparameter_mon
-
-    @property
-    def gap_mon(self):
-        """."""
-        return self.kparameter_mon
-
-
-class DELTAIDFF(IDFF):
-    """DELTA Feedforward."""
-
-    class DEVICES(_DELTA.DEVICES):
-        """."""
-
-    @property
-    def polarization_phase_mon(self):
-        """."""
-        return self.pparameter_mon
-
-    @property
-    def dGV_phase_mon(self):
-        """."""
-        return self.kparameter_mon
-
-
-class APUIDFF(_DeviceSet):
-    """APU Feedforward."""
-
-    class DEVICES(_APU.DEVICES):
-        """."""
-
-    @property
-    def phase_mon(self):
-        """."""
-        return self.kparameter_mon

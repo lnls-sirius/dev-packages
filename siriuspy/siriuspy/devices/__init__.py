@@ -16,8 +16,8 @@ from .fofb import FOFBCtrlDCC, BPMDCC, FOFBCtrlRef, FamFOFBControllers, \
 from .fofb_acq import FOFBCtrlSysId, FOFBPSSysId, FamFOFBSysId, \
     FOFBCtrlLamp, FOFBPSLamp, FamFOFBLamp
 from .ict import ICT, TranspEff
-from .ids import APU, WIG, PAPU, EPU, DELTA
-from .idff import IDFF, WIGIDFF, PAPUIDFF, EPUIDFF, APUIDFF, DELTAIDFF
+from .ids import APU, WIG, PAPU, EPU, DELTA, IDFactory
+from .idff import IDFF
 from .injctrl import InjCtrl
 from .injsys import PUMagsStandbyHandler, BOPSRampStandbyHandler, \
     BORFRampStandbyHandler, InjSysStandbyHandler, LinacStandbyHandler, \

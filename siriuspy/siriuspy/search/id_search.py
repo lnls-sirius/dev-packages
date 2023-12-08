@@ -306,6 +306,8 @@ class IDSearch:
         # check if polarization is defined
         for pol_idx, pol in pols_sts.items():
             _, pol_phase = pol
+            if pol_phase is None:  # ignore none and undef configs
+                continue
             if abs(pparameter - pol_phase) <= params.PPARAM_TOL:
                 return pol_idx
 
