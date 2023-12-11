@@ -94,7 +94,7 @@ class IDFF(_DeviceSet):
     @property
     def polarization_mon(self):
         """Return current ID polarization as a string (or None)."""
-        return self.iddev.polarization_str
+        return self.iddev.polarization_mon_str
 
     @property
     def pparameter_mon(self):
