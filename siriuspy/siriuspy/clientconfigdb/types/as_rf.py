@@ -2,7 +2,7 @@
 from copy import deepcopy as _dcopy
 import numpy as _np
 
-az = _np.zeros(1,5)
+az = _np.zeros((1,5))
 
 # NOTE: absolute imports are necessary here due to how
 # CONFIG_TYPES in __init__.py is built.
