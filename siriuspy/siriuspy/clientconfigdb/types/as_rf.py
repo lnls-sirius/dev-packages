@@ -1,5 +1,8 @@
 """AS RF configuration."""
 from copy import deepcopy as _dcopy
+import numpy as _np
+
+az = _np.zeros(1,5)
 
 # NOTE: absolute imports are necessary here due to how
 # CONFIG_TYPES in __init__.py is built.
@@ -453,7 +456,7 @@ _pvs_si_llrf = [
 
 _pvs_si_rfssa = [
     # NOTE: Alarms and offset of SSA towers 1 & 2 temporaly removed
-    # ['RA-ToSIA01:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr1
+    # ['RA-ToSIA01:OffsetConfig:UpperIncidentPower', 0, 0.0], # Offsets SSA Twr1
     # ['RA-ToSIA01:OffsetConfig:UpperReflectedPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:LowerIncidentPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:LowerReflectedPower', 0, 0.0],
@@ -461,7 +464,8 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA01:OffsetConfig:InputReflectedPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:OutputIncidentPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:OutputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0],  # Alarms lims pwr SSA tower 1
+    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0], # Alarms lims pwr
+                                                              # SSA tower 1
     # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimLow', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimLoLo', 0, 0.0],
@@ -469,11 +473,12 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimLow', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:CurrentLimHiHi', 0, 0.0],  # Alarms lims currents SSA tower 1
+    # ['RA-ToSIA01:AlarmConfig:CurrentLimHiHi', 0, 0.0], # Alarms lims currents
+                                                         # SSA tower 1
     # ['RA-ToSIA01:AlarmConfig:CurrentLimHigh', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:CurrentLimLow', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr2
+    # ['RA-ToSIA02:OffsetConfig:UpperIncidentPower', 0, 0.0], # Offsets SSA Twr2
     # ['RA-ToSIA02:OffsetConfig:UpperReflectedPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:LowerIncidentPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:LowerReflectedPower', 0, 0.0],
@@ -481,7 +486,8 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:OffsetConfig:InputReflectedPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:OutputIncidentPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:OutputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0],  # Alarms lims pwr SSA tower 2
+    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0], # Alarms lims pwr
+                                                              # SSA tower 2
     # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimLow', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimLoLo', 0, 0.0],
@@ -489,50 +495,21 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimLow', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:CurrentLimHiHi', 0, 0.0],  # Alarms lims currents SSA tower 2
+    # ['RA-ToSIA02:AlarmConfig:CurrentLimHiHi', 0, 0.0], # Alarms lims currents
+                                                         # SSA tower 2
     # ['RA-ToSIA02:AlarmConfig:CurrentLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLow', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr3
-    # ['RA-ToSIA03:OffsetConfig:UpperReflectedPower', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:LowerIncidentPower', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:LowerReflectedPower', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:InputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:InputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:OutputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA03:OffsetConfig:OutputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA03:AlarmConfig:InnerPowerLimHiHi', 0, 0.0], # Alarms lims pwr SSA tower 3
-    # ['RA-ToSIA03:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
-    # ['RA-ToSIA03:AlarmConfig:InnerPowerLimLow', 0, 0.0],
-    # ['RA-ToSIA03:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
-    # ['RA-ToSIA03:AlarmConfig:CurrentLimHiHi', 0, 0.0],  # Alarms lims currents SSA tower 3
-    # ['RA-ToSIA03:AlarmConfig:CurrentLimHigh', 0, 0.0],
-    # ['RA-ToSIA03:AlarmConfig:CurrentLimLow', 0, 0.0],
-    # ['RA-ToSIA03:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:UpperIncidentPower', 0, 0.0],  # Offsets SSA Twr4
-    # ['RA-ToSIA04:OffsetConfig:UpperReflectedPower', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:LowerIncidentPower', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:LowerReflectedPower', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:InputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:InputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:OutputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA04:OffsetConfig:OutputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA04:AlarmConfig:InnerPowerLimHiHi', 0, 0.0], # Alarms lims pwr SSA tower 4
-    # ['RA-ToSIA04:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
-    # ['RA-ToSIA04:AlarmConfig:InnerPowerLimLow', 0, 0.0],
-    # ['RA-ToSIA04:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
-    # ['RA-ToSIA04:AlarmConfig:CurrentLimHiHi', 0, 0.0],  # Alarms lims currents SSA tower 4
-    # ['RA-ToSIA04:AlarmConfig:CurrentLimHigh', 0, 0.0],
-    # ['RA-ToSIA04:AlarmConfig:CurrentLimLow', 0, 0.0],
-    # ['RA-ToSIA04:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA3 In Pwr Fwd Cal Coeff
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA3 In Pwr Rev Cal Coeff
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA3 Out Pwr Fwd Cal Coeff
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA3 Out Pwr Rev Cal Coeff
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA4 In Pwr Fwd Cal Coeff
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA4 In Pwr Rev Cal Coeff
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA4 Out Pwr Fwd Cal Coeff
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', _np.array([0, 0, 0, 0, 0]), 0.0], #SSA4 Out Pwr Rev Cal Coeff
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', _np.az, 0.0], # SSA3 Pwr
+                                                                    # Cal Coeff
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', _np.az, 0.0],
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', _np.az, 0.0],
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', _np.az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', _np.az, 0.0], #SSA4 Pwr
+                                                                    #Cal Coeff
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', _np.az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', _np.az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', _np.az, 0.0],
     ]
 
 
