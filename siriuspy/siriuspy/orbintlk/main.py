@@ -1458,7 +1458,8 @@ class App(_Callback):
 
     def _handle_reliability_failure(self, is_failure=True):
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
+            flag = 'FATAL' if self._state else 'WARN'
+            self._update_log(f'{flag}:Orbit interlock reliability failure')
         if not self._state:
             self._update_log('WARN:Orbit interlock is not enabled.')
             return
