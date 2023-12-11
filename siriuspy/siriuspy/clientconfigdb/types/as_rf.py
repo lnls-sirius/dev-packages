@@ -500,16 +500,16 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:AlarmConfig:CurrentLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLow', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLoLo', 0, 0.0],
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', _np.az, 0.0], # SSA3 Pwr
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0], # SSA3 Pwr
                                                                     # Cal Coeff
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', _np.az, 0.0],
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', _np.az, 0.0],
-    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', _np.az, 0.0],
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', _np.az, 0.0], #SSA4 Pwr
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', az, 0.0],
+    ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0], #SSA4 Pwr
                                                                     #Cal Coeff
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', _np.az, 0.0],
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', _np.az, 0.0],
-    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', _np.az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', az, 0.0],
+    ['RA-ToSIA04:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', az, 0.0],
     ]
 
 
