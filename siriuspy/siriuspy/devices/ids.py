@@ -1448,3 +1448,30 @@ class WIG(_ID):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+
+class IDFactory():
+    """."""
+
+    class DEVICES(
+        APU.DEVICES, PAPU.DEVICES, EPU.DEVICES, DELTA.DEVICES, WIG.DEVICES):
+        """Device names."""
+
+        ALL = APU.DEVICES.ALL + PAPU.DEVICES.ALL + \
+            EPU.DEVICES.ALL + DELTA.DEVICES.ALL + WIG.DEVICES.ALL
+
+    @staticmethod
+    def create(devname, **kwargs):
+        """."""
+        if devname in APU.DEVICES.ALL:
+            return APU(devname, **kwargs)
+        elif devname in PAPU.DEVICES.ALL:
+            return PAPU(devname, **kwargs)
+        elif devname in EPU.DEVICES.ALL:
+            return EPU(devname, **kwargs)
+        elif devname in DELTA.DEVICES.ALL:
+            return DELTA(devname, **kwargs)
+        elif devname in WIG.DEVICES.ALL:
+            return WIG(devname, **kwargs)
+        else:
+            raise NotImplementedError(devname)

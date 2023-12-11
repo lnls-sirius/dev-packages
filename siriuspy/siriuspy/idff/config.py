@@ -130,15 +130,18 @@ class IDFFConfig(_ConfigDBDocument):
         ptable['pparameter'] = [0, 0]
         ptable['kparameter'] = 0
         ktable = dict(ctable)
-        ktable['pparameter'] = 0
         ktable['kparameter'] = [0, 0]
 
+        pol2pparam = _IDSearch.conv_idname_2_polarization_pparameter
         polarizations = dict()
-        for polarization in idff['polarizations']:
-            if polarization == _IDSearch.POL_NONE_STR:
-                polarizations[polarization] = dict(ptable)
+        for pol in idff['polarizations']:
+            if pol == _IDSearch.POL_UNDEF_STR:
+                continue
+            if pol == _IDSearch.POL_NONE_STR:
+                polarizations[pol] = dict(ptable)
             else:
-                polarizations[polarization] = dict(ktable)
+                ktable['pparameter'] = pol2pparam(idname, pol)
+                polarizations[pol] = dict(ktable)
 
         template_config = dict(
             description=description, pvnames=pvnames,
@@ -152,6 +155,7 @@ class IDFFConfig(_ConfigDBDocument):
         value = self.value
         if value is None:
             return stg
+        stg += f'\ndescription: {value["description"]}'
 
         stg += '\n--- pvnames ---'
         pvnames = ''.join(
