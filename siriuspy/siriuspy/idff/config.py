@@ -86,22 +86,27 @@ class IDFFConfig(_ConfigDBDocument):
         """Set configuration."""
         self._set_value(value)
 
-    def calculate_setpoints(self, polarization, kparameter_value):
+    def calculate_setpoints(
+            self, polarization, pparameter_value, kparameter_value):
         """Return correctors setpoints for a particular ID config.
 
-        The parameter 'kparameter' can be a gap or phase value,
-        depending on the insertion device.
+        'pparameter' is the ID phase which defines polarization.
+        'kparameter' can be a gap or phase value, depending on the ID.
         """
         if self._value:
             setpoints = dict()
             idff = self._value['polarizations'][polarization]
-            kparameter_values = idff['kparameter']
+            if polarization == 'none':
+                params = idff['pparameter']
+                param_value = pparameter_value
+            else:
+                params = idff['kparameter']
+                param_value = kparameter_value
             setpoints = dict()
             for corrlabel, table in idff.items():
                 if corrlabel not in ('pparameter', 'kparameter'):
                     # linear interpolation
-                    setpoint = _np.interp(
-                        kparameter_value, kparameter_values, table)
+                    setpoint = _np.interp(param_value, params, table)
                     corr_pvname = self._value['pvnames'][corrlabel]
                     setpoints[corr_pvname] = setpoint
             return setpoints

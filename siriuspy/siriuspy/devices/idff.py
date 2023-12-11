@@ -140,10 +140,12 @@ class IDFF(_DeviceSet):
 
         if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
+        if pparameter_value is None:
+            pparameter_value = self.pparameter_mon
         if kparameter_value is None:
             kparameter_value = self.kparameter_mon
         setpoints = self.idffconfig.calculate_setpoints(
-            polarization, kparameter_value)
+            polarization, pparameter_value, kparameter_value)
         return setpoints, polarization, pparameter_value, kparameter_value
 
     def implement_setpoints(
