@@ -1293,15 +1293,24 @@ class IDFactory():
     @staticmethod
     def create(devname, **kwargs):
         """."""
-        if devname in APU.DEVICES.ALL:
-            return APU(devname, **kwargs)
-        elif devname in PAPU.DEVICES.ALL:
-            return PAPU(devname, **kwargs)
-        elif devname in EPU.DEVICES.ALL:
-            return EPU(devname, **kwargs)
-        elif devname in DELTA.DEVICES.ALL:
-            return DELTA(devname, **kwargs)
-        elif devname in WIG.DEVICES.ALL:
-            return WIG(devname, **kwargs)
+        IDClass = IDFactory.get_idclass(devname)
+        if IDClass:
+            return IDClass(devname, **kwargs)
         else:
             raise NotImplementedError(devname)
+
+    @staticmethod
+    def get_idclass(devname):
+        """."""
+        if devname in APU.DEVICES.ALL:
+            return APU
+        elif devname in PAPU.DEVICES.ALL:
+            return PAPU
+        elif devname in EPU.DEVICES.ALL:
+            return EPU
+        elif devname in DELTA.DEVICES.ALL:
+            return DELTA
+        elif devname in WIG.DEVICES.ALL:
+            return WIG
+        else:
+            return None
