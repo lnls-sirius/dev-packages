@@ -26,9 +26,9 @@ class IDFF(_DeviceSet):
         self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
+        self._pol_mon = _IDFactory.get_idclass(devname).PARAM_PVS.POL_MON
         self._pparametername = \
             _IDSearch.conv_idname_2_pparameter_propty(devname)
-
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
@@ -247,11 +247,14 @@ class IDFF(_DeviceSet):
         return polarization, pparameter_value, kparameter_value
 
     def _create_devices(self, devname):
-        param_auto_mon = False
+        if self._pol_mon:
+            props2init = (
+                self._pparametername, self._kparametername, self._pol_mon)
+        else:
+            props2init = (self._pparametername, self._kparametername)
         devid = _IDFactory.create(
-            devname=devname,
-            props2init=(self._pparametername, self._kparametername),
-            auto_monitor_mon=param_auto_mon)
+            devname=devname, props2init=props2init,
+            auto_monitor_mon=False)
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
