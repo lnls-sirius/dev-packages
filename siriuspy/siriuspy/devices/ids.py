@@ -1280,20 +1280,21 @@ class WIG(_ID):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
 
-class IDFactory():
-    """."""
+class ID(_ID):
+    """Insertion Device."""
 
-    class DEVICES(
-        APU.DEVICES, PAPU.DEVICES, EPU.DEVICES, DELTA.DEVICES, WIG.DEVICES):
-        """Device names."""
+    class DEVICES:
+        APU = APU.DEVICES
+        PAPU = PAPU.DEVICES
+        EPU = EPU.DEVICES
+        DELTA = DELTA.DEVICES
+        WIG = WIG.DEVICES
+        ALL = APU.ALL + PAPU.ALL + \
+            EPU.ALL + DELTA.ALL + WIG.ALL
 
-        ALL = APU.DEVICES.ALL + PAPU.DEVICES.ALL + \
-            EPU.DEVICES.ALL + DELTA.DEVICES.ALL + WIG.DEVICES.ALL
-
-    @staticmethod
-    def create(devname, **kwargs):
+    def __new__(cls, devname, **kwargs):
         """."""
-        IDClass = IDFactory.get_idclass(devname)
+        IDClass = ID.get_idclass(devname)
         if IDClass:
             return IDClass(devname, **kwargs)
         else:

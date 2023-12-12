@@ -6,13 +6,13 @@ from ..idff.config import IDFFConfig as _IDFFConfig
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
-from .ids import IDFactory as _IDFactory
+from .ids import ID as _ID
 
 
 class IDFF(_DeviceSet):
     """Insertion Device Feedforward Device."""
 
-    class DEVICES(_IDFactory.DEVICES):
+    class DEVICES(_ID.DEVICES):
         """."""
 
     def __init__(self, devname):
@@ -26,7 +26,7 @@ class IDFF(_DeviceSet):
         self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
-        self._pol_mon = _IDFactory.get_idclass(devname).PARAM_PVS.POL_MON
+        self._pol_mon = _ID.get_idclass(devname).PARAM_PVS.POL_MON
         self._pparametername = \
             _IDSearch.conv_idname_2_pparameter_propty(devname)
         self._kparametername = \
@@ -247,12 +247,10 @@ class IDFF(_DeviceSet):
         return polarization, pparameter_value, kparameter_value
 
     def _create_devices(self, devname):
-        if self._pol_mon:
-            props2init = (
-                self._pparametername, self._kparametername, self._pol_mon)
-        else:
-            props2init = (self._pparametername, self._kparametername)
-        devid = _IDFactory.create(
+        params = (
+            self._pparametername, self._kparametername, self._pol_mon)
+        props2init = tuple(param for param in params if param is not None)
+        devid = _ID(
             devname=devname, props2init=props2init,
             auto_monitor_mon=False)
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
