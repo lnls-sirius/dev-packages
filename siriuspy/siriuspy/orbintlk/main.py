@@ -27,7 +27,7 @@ class App(_Callback):
 
     SCAN_FREQUENCY = 1  # [Hz]
 
-    def __init__(self, tests=True):
+    def __init__(self, tests=False):
         """Class constructor."""
         super().__init__()
         self._is_dry_run = tests
