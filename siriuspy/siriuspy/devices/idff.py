@@ -26,7 +26,6 @@ class IDFF(_DeviceSet):
         self._devname = devname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
-        self._pol_mon = _ID.get_idclass(devname).PARAM_PVS.POL_MON
         self._pparametername = \
             _IDSearch.conv_idname_2_pparameter_propty(devname)
         self._kparametername = \
@@ -247,8 +246,9 @@ class IDFF(_DeviceSet):
         return polarization, pparameter_value, kparameter_value
 
     def _create_devices(self, devname):
+        pol_mon = _ID.get_idclass(devname).PARAM_PVS.POL_MON
         params = (
-            self._pparametername, self._kparametername, self._pol_mon)
+            self._pparametername, self._kparametername, pol_mon)
         props2init = tuple(param for param in params if param is not None)
         devid = _ID(
             devname=devname, props2init=props2init,
