@@ -108,7 +108,9 @@ class _PSDev(_Device):
         self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
 
         try:
-            maname = devname.substitute(dis='MA')
+            name = devname.substitute(dis='MA')
+            if name.dev == 'B1B2' or (name.sec == 'BO' and name.dev == 'B'):
+                maname = name.substitute(idx='')
             self._normalizer = _NormFactory.create(maname)
         except:
             self._normalizer = None
