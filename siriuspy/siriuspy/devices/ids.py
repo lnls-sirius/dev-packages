@@ -267,14 +267,14 @@ class _ID(_Device):
         pparam_eta, _ = self.calc_move_eta(self.pparameter, None)
         return pparam_eta
 
-    def pparameter_set(self, pparam, timeout=None):
+    def set_pparameter(self, pparam, timeout=None):
         """Set ID target pparameter for movement [mm]."""
         if self.PARAM_PVS.PPARAM_SP is None:
             return True
         else:
             return self._write_sp(self.PARAM_PVS.PPARAM_SP, pparam, timeout)
 
-    def pparameter_speed_set(self, pparam_speed, timeout=None):
+    def set_pparameter_speed(self, pparam_speed, timeout=None):
         """Command to set ID cruise pparameterspeed for movement [mm/s]."""
         if self.PARAM_PVS.PPARAM_VELO_SP is None:
             return True
@@ -282,7 +282,7 @@ class _ID(_Device):
             return self._write_sp(
                 self.PARAM_PVS.PPARAM_VELO_SP, pparam_speed, timeout)
 
-    def pparameter_speed_max_set(self, pparam_speed_max, timeout=None):
+    def set_pparameter_speed_max(self, pparam_speed_max, timeout=None):
         """Command to set ID max cruise pparam speed for movement [mm/s]."""
         if self.PARAM_PVS.PPARAM_MAXVELO_SP is None:
             return True
@@ -290,7 +290,7 @@ class _ID(_Device):
             return self._write_sp(
                 self.PARAM_PVS.PPARAM_MAXVELO_SP, pparam_speed_max, timeout)
 
-    def pparameter_accel_set(self, pparam_accel, timeout=None):
+    def set_pparameter_accel(self, pparam_accel, timeout=None):
         """Command to set ID pparam accel for movement [mm/s²]."""
         if self.PARAM_PVS.PPARAM_ACC_SP is None:
             return True
@@ -298,7 +298,7 @@ class _ID(_Device):
             return self._write_sp(
                 self.PARAM_PVS.PPARAM_ACC_SP, pparam_accel, timeout)
 
-    def pparameter_accel_max_set(self, pparam_accel_max, timeout=None):
+    def set_pparameter_accel_max(self, pparam_accel_max, timeout=None):
         """Command to set ID max cruise pparam accel for movement [mm/s²]."""
         if self.PARAM_PVS.PPARAM_MAXACC_SP is None:
             return True
@@ -398,21 +398,21 @@ class _ID(_Device):
         _, kparam_eta = self.calc_move_eta(None, self.kparameter)
         return kparam_eta
 
-    def kparameter_set(self, kparam, timeout=None):
+    def set_kparameter(self, kparam, timeout=None):
         """Set ID target kparameter for movement [mm]."""
         return self._write_sp(self.PARAM_PVS.KPARAM_SP, kparam, timeout)
 
-    def kparameter_speed_set(self, kparam_speed, timeout=None):
+    def set_kparameter_speed(self, kparam_speed, timeout=None):
         """Command to set ID cruise kparam speed for movement [mm/s]."""
         return self._write_sp(
             self.PARAM_PVS.KPARAM_VELO_SP, kparam_speed, timeout)
 
-    def kparameter_speed_max_set(self, kparam_speed_max, timeout=None):
+    def set_kparameter_speed_max(self, kparam_speed_max, timeout=None):
         """Command to set ID max cruise kparam speed for movement [mm/s]."""
         return self._write_sp(
             self.PARAM_PVS.KPARAM_MAXVELO_SP, kparam_speed_max, timeout)
 
-    def kparameter_accel_set(self, kparam_accel, timeout=None):
+    def set_kparameter_accel(self, kparam_accel, timeout=None):
         """Command to set ID kparam accel for movement [mm/s²]."""
         if self.PARAM_PVS.KPARAM_ACC_SP is None:
             return True
@@ -420,7 +420,7 @@ class _ID(_Device):
             return self._write_sp(
                 self.PARAM_PVS.KPARAM_ACC_SP, kparam_accel, timeout)
 
-    def kparameter_accel_max_set(self, kparam_accel_max, timeout=None):
+    def set_kparameter_accel_max(self, kparam_accel_max, timeout=None):
         """Command to set ID max cruise kparam accel for movement [mm/s²]."""
         if self.PARAM_PVS.KPARAM_MAXACC_SP is None:
             return True
@@ -555,9 +555,9 @@ class _ID(_Device):
         else:
             # composed pparam and kparam movement by IOC
             # first set param RBs for ETA computation and PVs consistency
-            if not self.pparameter_set(pparam):
+            if not self.set_pparameter(pparam):
                 return False
-            if not self.kparameter_set(kparam):
+            if not self.set_kparameter(kparam):
                 return False
             timeout = self.calc_move_timeout(None, None, timeout)
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
@@ -587,10 +587,10 @@ class _ID(_Device):
         # set target pparam and kparam
         t0_ = _time.time()
         if pparam is not None and \
-                not self.pparameter_set(pparam, timeout=timeout):
+                not self.set_pparameter(pparam, timeout=timeout):
             return False
         if kparam is not None and \
-                not self.kparameter_set(kparam, timeout=timeout):
+                not self.set_kparameter(kparam, timeout=timeout):
             return False
         t1_ = _time.time()
         if timeout is not None:
@@ -833,15 +833,15 @@ class APU(_ID):
 
     # --- set methods ---
 
-    def phase_set(self, phase, timeout=None):
+    def set_phase(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
-        return self.kparameter_set(phase, timeout)
+        return self.set_kparameter(phase, timeout)
 
-    def phase_speed_set(self, phase_speed, timeout=None):
+    def set_phase_speed(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
-        return self.kparameter_speed_set(phase_speed, timeout)
+        return self.set_kparameter_speed(phase_speed, timeout)
 
-    def phase_speed_max_set(self, phase_speed_max, timeout=None):
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
         return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
 
@@ -1000,17 +1000,17 @@ class PAPU(_ID):
 
     # --- set methods ---
 
-    def phase_set(self, phase, timeout=None):
+    def set_phase(self, phase, timeout=None):
         """Command to set ID target phase for movement [mm]."""
-        return self.kparameter_set(phase, timeout)
+        return self.set_kparameter(phase, timeout)
 
-    def phase_speed_set(self, phase_speed, timeout=None):
+    def set_phase_speed(self, phase_speed, timeout=None):
         """Command to set ID cruise phase speed for movement [mm/s]."""
-        return self.kparameter_speed_set(phase_speed, timeout)
+        return self.set_kparameter_speed(phase_speed, timeout)
 
-    def phase_speed_max_set(self, phase_speed_max, timeout=None):
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
         """Command to set ID max cruise phase speed for movement [mm/s]."""
-        return self.kparameter_speed_max_set(phase_speed_max, timeout)
+        return self.set_kparameter_speed_max(phase_speed_max, timeout)
 
     # --- cmd_move disable/enable ---
 
@@ -1215,17 +1215,17 @@ class EPU(PAPU):
 
     # --- set methods ---
 
-    def gap_set(self, gap, timeout=None):
+    def set_gap(self, gap, timeout=None):
         """Set ID target gap for movement [mm]."""
-        return self.kparameter_set(gap, timeout)
+        return self.set_kparameter(gap, timeout)
 
-    def gap_speed_set(self, gap_speed, timeout=None):
+    def set_gap_speed(self, gap_speed, timeout=None):
         """Set ID cruise gap speed for movement [mm/s]."""
-        return self.kparameter_speed_set(gap_speed, timeout)
+        return self.set_kparameter_speed(gap_speed, timeout)
 
-    def gap_speed_max_set(self, gap_speed_max, timeout=None):
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
         """Set ID max cruise gap speed for movement [mm/s]."""
-        return self.kparameter_speed_max_set(gap_speed_max, timeout)
+        return self.set_kparameter_speed_max(gap_speed_max, timeout)
 
     # --- cmd_move disable/enable ---
 
