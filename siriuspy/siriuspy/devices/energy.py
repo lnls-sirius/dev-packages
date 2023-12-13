@@ -35,22 +35,22 @@ class Energy(_DevicesSync):
     @property
     def energy(self):
         """Return Ref-Mon energy."""
-        return self.value_get('EnergyRef-Mon')
+        return self.get_value('EnergyRef-Mon')
 
     @energy.setter
     def energy(self, value):
         """Set energy."""
-        self.value_set('Energy-SP', value)
+        self.set_value('Energy-SP', value)
 
     @property
     def energy_sp(self):
         """Return -SP energy."""
-        return self.value_get('Energy-SP')
+        return self.get_value('Energy-SP')
 
     @property
     def energy_mon(self):
         """Return -Mon energy."""
-        return self.value_get('Energy-Mon')
+        return self.get_value('Energy-Mon')
 
     @staticmethod
     def _get_dipole_devnames(devname):
