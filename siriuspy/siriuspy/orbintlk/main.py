@@ -27,7 +27,7 @@ class App(_Callback):
 
     SCAN_FREQUENCY = 1  # [Hz]
 
-    def __init__(self, tests=True):
+    def __init__(self, tests=False):
         """Class constructor."""
         super().__init__()
         self._is_dry_run = tests
@@ -136,6 +136,8 @@ class App(_Callback):
                     'RTMPhaseIntgGain-SP', 'RTMPhaseIntgGain-RB',
                     'RTMFreqPropGain-SP', 'RTMFreqPropGain-RB',
                     'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
+                    'RTMPhaseNavg-SP', 'RTMPhaseNavg-RB',
+                    'RTMPhaseDiv-SP', 'RTMPhaseDiv-RB',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
@@ -233,7 +235,7 @@ class App(_Callback):
             devname=_ASLLRF.DEVICES.SI,
             props2init=[
                 'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON',
-                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd',
+                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd', 'Reset-Cmd',
             ])
         self._llrf.pv_object('FASTINLK-MON').auto_monitor = True
 
@@ -1338,7 +1340,6 @@ class App(_Callback):
 
         if not is_failure:
             return
-        self._update_log('FATAL:Orbit interlock reliability failure')
         self._handle_reliability_failure()
 
     def _conn_callback_timing(self, pvname, conn, **kws):
@@ -1350,7 +1351,6 @@ class App(_Callback):
         flag = 'FATAL' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} disconnected')
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     def _callback_bpm_intlk(self, pvname, value, **kws):
@@ -1386,7 +1386,7 @@ class App(_Callback):
 
     def _do_callback_bpm_intlk(self):
         # send kill beam as fast as possible
-        self._handle_reliability_failure()
+        self._handle_reliability_failure(is_failure=False)
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE counted the event PsMtm
@@ -1428,7 +1428,6 @@ class App(_Callback):
         flag = 'FATAL' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} lost PLL lock')
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     def _conn_callback_afcphystrigs(self, pvname, conn, **kws):
@@ -1440,7 +1439,6 @@ class App(_Callback):
         flag = 'ERR' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} disconnected')
         if is_failure:
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     def _callback_hltrig_status(self, pvname, value, **kws):
@@ -1450,7 +1448,6 @@ class App(_Callback):
         # if status is not ok, it is a reliability failure
         trigname = _PVName(pvname).device_name
         self._update_log(f'FATAL:{trigname} Status not ok')
-        self._update_log('FATAL:Orbit interlock reliability failure')
         self._handle_reliability_failure()
 
     # --- reliability failure methods ---
@@ -1461,7 +1458,10 @@ class App(_Callback):
         facq_sum = monit_sum * self._get_bpm_rates_factor()
         return _np.all(facq_sum > self._limits['minsum'])
 
-    def _handle_reliability_failure(self):
+    def _handle_reliability_failure(self, is_failure=True):
+        if is_failure:
+            flag = 'FATAL' if self._state else 'WARN'
+            self._update_log(f'{flag}:Orbit interlock reliability failure')
         if not self._state:
             self._update_log('WARN:Orbit interlock is not enabled.')
             return
@@ -1470,6 +1470,12 @@ class App(_Callback):
         self._llrf['IntlkSet-Cmd'] = 1
         _time.sleep(1)
         self._llrf['IntlkSet-Cmd'] = 0
+        if self._is_dry_run:
+            # wait a little and rearming FDL acquisition
+            _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
+            self._llrf['Reset-Cmd'] = 1
+            _time.sleep(1)
+            self._llrf['Reset-Cmd'] = 0
 
     # --- device lock methods ---
 
@@ -1537,7 +1543,7 @@ class App(_Callback):
             self, device, propty_sp, desired_value, pvname, value):
         if self._lock_suspend:
             return
-        
+
         # do not try to lock devices that are not in list of monitored devices
         devname = _PVName(pvname).device_name
         if devname not in self._ti_mon_devs and \
@@ -1588,7 +1594,6 @@ class App(_Callback):
         if thread.cur_iter == thread.niters-1:
             self._lock_failures.add(pvname)
             self._update_log(f'FATAL:Fail to lock {pvname}')
-            self._update_log('FATAL:Orbit interlock reliability failure')
             self._handle_reliability_failure()
 
     # --- auxiliary log methods ---
