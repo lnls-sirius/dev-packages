@@ -79,6 +79,8 @@ class BLInterlockCtrl(_Device):
     TIMEOUT_SHUTTER = 7  # [s]
     TIMEOUT_EPS_RESET = 3  # [s]
 
+    _DEF_MSG_SUCCESS = 'Ok'
+
     class DEVICES:
         """Devices names."""
 
@@ -149,7 +151,7 @@ class BLInterlockCtrl(_Device):
             devname = self.DEVICES.CAX
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
-        self._error_log = ''
+        self._error_log = self._DEF_MSG_SUCCESS
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
@@ -541,7 +543,8 @@ class BLInterlockCtrl(_Device):
         self._error_log = msg
 
     def _check_set_error_log(self, cond, msg_fail, msg_succeed=None):
-        msg_succeed = 'OK' if msg_succeed is None else msg_succeed
+        msg_succeed = BLInterlockCtrl._DEF_MSG_SUCCESS if msg_succeed is None \
+            else msg_succeed
         if not cond:
             self._set_error_log(msg_fail)
             return False
