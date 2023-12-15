@@ -157,14 +157,6 @@ class BLInterlockCtrl(_Device):
         """Return error log for last check method invoked."""
         return self._error_log
 
-    def _check_set_error_log(self, cond, msg):
-        if not cond:
-            self._set_error_log(msg)
-            return False
-        else:
-            self._set_error_log('Ok')
-            return True
-
     @property
     def is_hutchA_intlk_search_done(self):
         """."""
@@ -547,3 +539,12 @@ class BLInterlockCtrl(_Device):
     def _set_error_log(self, msg):
         # NOTE: should we prefix the msg with timestamp?
         self._error_log = msg
+
+    def _check_set_error_log(self, cond, msg_fail, msg_succeed=None):
+        msg_succeed = 'OK' if msg_succeed is None else msg_succeed
+        if not cond:
+            self._set_error_log(msg_fail)
+            return False
+        else:
+            self._set_error_log(msg_succeed)
+            return True
