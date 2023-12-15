@@ -14,8 +14,7 @@ class ETypes(_csdev.ETypes):
 
     OPEN_CLOSED = ('Open', 'Closed')
     STS_LBLS_CORR = (
-        'Connected', 'PwrStateOn', 'OpModeConfigured',
-        'SOFBModeConfigured')
+        'Connected', 'PwrStateOn', 'OpModeConfigured')
 
 
 _et = ETypes
@@ -30,7 +29,12 @@ class IDFFConst(_csdev.Const):
     StsLblsCorr = _csdev.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR)
 
-    DEFAULT_LOOP_FREQ = 5  # [Hz]
+    DEFAULT_CORR_STATUS = 0b11111111
+    DEFAULT_LOOP_FREQ_MIN = 0.001  # [Hz]
+    DEFAULT_LOOP_FREQ_MAX = 100  # [Hz]
+    DEFAULT_LOOP_FREQ = 10  # [Hz]
+    DEFAULT_LOOP_STATE = LoopState.Open
+    DEFAULT_CONTROL_QS = _csdev.Const.DsblEnbl.Enbl
 
     def __init__(self, idname):
         """Init."""
@@ -51,41 +55,58 @@ class IDFFConst(_csdev.Const):
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
             'LoopState-Sel': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
-                'value': self.LoopState.Open},
+                'value': self.DEFAULT_LOOP_STATE},
             'LoopState-Sts': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
-                'value': self.LoopState.Open},
+                'value': self.DEFAULT_LOOP_STATE},
             'LoopFreq-SP': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
-                'unit': 'Hz', 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
+                'unit': 'Hz', 'prec': 3,
+                'lolim': self.DEFAULT_LOOP_FREQ_MIN,
+                'hilim': self.DEFAULT_LOOP_FREQ_MAX},
             'LoopFreq-RB': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
-                'unit': 'Hz', 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
+                'unit': 'Hz', 'prec': 3,
+                'lolim': self.DEFAULT_LOOP_FREQ_MIN,
+                'hilim': self.DEFAULT_LOOP_FREQ_MAX},
             'Polarization-Mon': {'type': 'string', 'value': 'none'},
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
-            'SOFBMode-Sel': {
-                'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
-            'SOFBMode-Sts': {
-                'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111},
+            'CorrStatus-Mon': {
+                'type': 'int', 'value': self.DEFAULT_CORR_STATUS},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
-                'value': self.StsLblsCorr._fields}
+                'value': self.StsLblsCorr._fields},
+            'CorrCH1Current-Mon': {
+                'type': 'float', 'value': 0,
+                'unit': 'A', 'prec': 3},
+            'CorrCH2Current-Mon': {
+                'type': 'float', 'value': 0,
+                'unit': 'A', 'prec': 3},
+            'CorrCV1Current-Mon': {
+                'type': 'float', 'value': 0,
+                'unit': 'A', 'prec': 3},
+            'CorrCV2Current-Mon': {
+                'type': 'float', 'value': 0,
+                'unit': 'A', 'prec': 3},
         }
         if self.has_qscorrs:
             dbase.update({
                 'ControlQS-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DsblEnbl.Enbl,
+                    'value': self.DEFAULT_CONTROL_QS,
                     'unit': 'If QS are included in loop'},
                 'ControlQS-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DsblEnbl.Enbl,
+                    'value': self.DEFAULT_CONTROL_QS,
                     'unit': 'If QS are included in loop'},
+                'CorrQS1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': 3},
+                'CorrQS2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': 3},
             })
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase
