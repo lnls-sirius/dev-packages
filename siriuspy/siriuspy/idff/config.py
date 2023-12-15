@@ -86,22 +86,27 @@ class IDFFConfig(_ConfigDBDocument):
         """Set configuration."""
         self._set_value(value)
 
-    def calculate_setpoints(self, polarization, kparameter_value):
+    def calculate_setpoints(
+            self, polarization, pparameter_value, kparameter_value):
         """Return correctors setpoints for a particular ID config.
 
-        The parameter 'kparameter' can be a gap or phase value,
-        depending on the insertion device.
+        'pparameter' is the ID phase which defines polarization.
+        'kparameter' can be a gap or phase value, depending on the ID.
         """
         if self._value:
             setpoints = dict()
             idff = self._value['polarizations'][polarization]
-            kparameter_values = idff['kparameter']
+            if polarization == 'none':
+                params = idff['pparameter']
+                param_value = pparameter_value
+            else:
+                params = idff['kparameter']
+                param_value = kparameter_value
             setpoints = dict()
             for corrlabel, table in idff.items():
                 if corrlabel not in ('pparameter', 'kparameter'):
                     # linear interpolation
-                    setpoint = _np.interp(
-                        kparameter_value, kparameter_values, table)
+                    setpoint = _np.interp(param_value, params, table)
                     corr_pvname = self._value['pvnames'][corrlabel]
                     setpoints[corr_pvname] = setpoint
             return setpoints
@@ -130,15 +135,18 @@ class IDFFConfig(_ConfigDBDocument):
         ptable['pparameter'] = [0, 0]
         ptable['kparameter'] = 0
         ktable = dict(ctable)
-        ktable['pparameter'] = 0
         ktable['kparameter'] = [0, 0]
 
+        pol2pparam = _IDSearch.conv_idname_2_polarization_pparameter
         polarizations = dict()
-        for polarization in idff['polarizations']:
-            if polarization == _IDSearch.POL_NONE_STR:
-                polarizations[polarization] = dict(ptable)
+        for pol in idff['polarizations']:
+            if pol == _IDSearch.POL_UNDEF_STR:
+                continue
+            if pol == _IDSearch.POL_NONE_STR:
+                polarizations[pol] = dict(ptable)
             else:
-                polarizations[polarization] = dict(ktable)
+                ktable['pparameter'] = pol2pparam(idname, pol)
+                polarizations[pol] = dict(ktable)
 
         template_config = dict(
             description=description, pvnames=pvnames,
@@ -152,6 +160,7 @@ class IDFFConfig(_ConfigDBDocument):
         value = self.value
         if value is None:
             return stg
+        stg += f'\ndescription: {value["description"]}'
 
         stg += '\n--- pvnames ---'
         pvnames = ''.join(

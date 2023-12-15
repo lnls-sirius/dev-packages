@@ -1448,3 +1448,40 @@ class WIG(_ID):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+
+class ID(_ID):
+    """Insertion Device."""
+
+    class DEVICES:
+        APU = APU.DEVICES
+        PAPU = PAPU.DEVICES
+        EPU = EPU.DEVICES
+        DELTA = DELTA.DEVICES
+        WIG = WIG.DEVICES
+        ALL = APU.ALL + PAPU.ALL + \
+            EPU.ALL + DELTA.ALL + WIG.ALL
+
+    def __new__(cls, devname, **kwargs):
+        """."""
+        IDClass = ID.get_idclass(devname)
+        if IDClass:
+            return IDClass(devname, **kwargs)
+        else:
+            raise NotImplementedError(devname)
+
+    @staticmethod
+    def get_idclass(devname):
+        """."""
+        if devname in APU.DEVICES.ALL:
+            return APU
+        elif devname in PAPU.DEVICES.ALL:
+            return PAPU
+        elif devname in EPU.DEVICES.ALL:
+            return EPU
+        elif devname in DELTA.DEVICES.ALL:
+            return DELTA
+        elif devname in WIG.DEVICES.ALL:
+            return WIG
+        else:
+            return None
