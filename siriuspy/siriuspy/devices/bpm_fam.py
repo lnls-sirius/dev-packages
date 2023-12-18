@@ -441,13 +441,16 @@ class FamBPMs(_DeviceSet):
             timeout (int, optional): Waiting timeout. Defaults to 10.
 
         Returns:
-            float: code describing what happened:
+            int|float: code describing what happened:
                 -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
-                >0: index of the first BPM which did not update plus 1.
-                X.[1-N]: The fractional part indicates which signal, from 1 to
-                    N, that didn't update.
+                >0: timeout waiting BPMs. The returned value is a float of
+                    form X.Y, where:
+                        X: The integer part indicates the index of the first
+                            BPM which did not update plus 1.
+                        Y: The fractional part indicates which signal, from
+                            1 to N, that didn't update.
 
         """
         if self._initial_timestamps is None:
@@ -482,13 +485,16 @@ class FamBPMs(_DeviceSet):
             timeout (int, optional): Waiting timeout. Defaults to 10.
 
         Returns:
-            int: code describing what happened:
+            int|float: code describing what happened:
                 -2: size of signals changed in relation to initial signals
                 -1: initial signals were not defined;
                 =0: signals updated.
-                >0: index of the first BPM which did not update plus 1.
-                X.[1-N]: The fractional part indicates which signal, from 1 to
-                    N, that didn't update.
+                >0: timeout waiting BPMs. The returned value is a float of
+                    form X.Y, where:
+                        X: The integer part indicates the index of the first
+                            BPM which did not update plus 1.
+                        Y: The fractional part indicates which signal, from
+                            1 to N, that didn't update.
 
         """
         if self._initial_signals is None:
@@ -523,9 +529,12 @@ class FamBPMs(_DeviceSet):
                 -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
-                >0: index of the first BPM which did not update plus 1.
-                X.[1-N]: The fractional part indicates which signal, from 1 to
-                    N, that didn't update.
+                >0: timeout waiting BPMs. The returned value is a float of
+                    form X.Y, where:
+                        X: The integer part indicates the index of the first
+                            BPM which did not update plus 1.
+                        Y: The fractional part indicates which signal, from
+                            1 to N, that didn't update.
 
         """
         t00 = _time.time()
