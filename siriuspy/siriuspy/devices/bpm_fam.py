@@ -3,31 +3,20 @@
 import logging as _log
 import sys
 import time as _time
-# from threading import Event as _Flag
-
-import numpy as _np
 from copy import deepcopy as _dcopy
 
-from .device import DeviceSet as _DeviceSet
-from ..search import BPMSearch as _BPMSearch
+import numpy as _np
+
 from ..namesys import SiriusPVName as _PVName
+from ..search import BPMSearch as _BPMSearch
 from .bpm import BPM
+from .device import DeviceSet as _DeviceSet
+
+# from threading import Event as _Flag
 
 
 class FamBPMs(_DeviceSet):
-    """Family of BPMs.
-
-    Parameters
-    ----------
-        devname (str, optional)
-            Device name. If not provided, defaults to DEVICES.SI.
-            Determine the list of BPM names.
-        bpmnames ((list, tuple), optional)
-            BPM names list. If provided, it takes priority over 'devname'
-            parameter. Defaults to None.
-        ispost_mortem (bool, optional)
-            Whether to control PM acquisition core. Defaults to False.
-    """
+    """."""
 
     TIMEOUT = 10
     RFFEATT_MAX = 30
@@ -45,7 +34,31 @@ class FamBPMs(_DeviceSet):
     def __init__(
             self, devname=None, bpmnames=None, ispost_mortem=False,
             props2init='all', mturn_signals2acq=('X', 'Y')):
-        """."""
+        """Family of BPMs.
+
+        Args:
+            devname (str, optional): Device name. If not provided, defaults to
+                DEVICES.SI. Determine the list of BPM names.
+            bpmnames ((list, tuple), optional): BPM names list. If provided,
+                it takes priority over 'devname' parameter. Defaults to None.
+            ispost_mortem (bool, optional):  Whether to control PM acquisition
+                core. Defaults to False.
+            props2init (str|list|tuple, optional): list of properties to
+                initialize in object creation. If a string is passed, it can
+                be either "all" or "acq". Defaults to "all".
+            mturn_signals2acq (str|list|tuple, optional): Which signals to
+                acquire. Signals can be defined by:
+                    X: x position;
+                    Y: y position;
+                    S: antennas sum signal;
+                    Q: skew position;
+                    A: amplitude of antenna A;
+                    B: amplitude of antenna B;
+                    C: amplitude of antenna C;
+                    D: amplitude of antenna D.
+                Defaults to "XY".
+
+        """
         if devname is None:
             devname = self.DEVICES.SI
         if devname not in self.DEVICES.ALL:
