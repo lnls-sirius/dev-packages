@@ -38,12 +38,12 @@ class PSProperty(_DevicesSync):
     @property
     def value(self):
         """Return property value."""
-        return self.value_get(self.property_sync)
+        return self.get_value(self.property_sync)
 
     @value.setter
     def value(self, current):
         """Set property value."""
-        self.value_set(self.property_sync, current)
+        self.set_value(self.property_sync, current)
 
     @property
     def limits(self):

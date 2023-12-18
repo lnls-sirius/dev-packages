@@ -73,8 +73,8 @@ class _PARAM_PVS:
         return str_
 
 
-class _ID(_Device):
-    """Generic Insertion Device."""
+class IDBase(_Device):
+    """Base Insertion Device."""
 
     _SHORT_SHUT_EYE = 0.1  # [s]
     _DEF_TIMEOUT = 8  # [s]
@@ -649,7 +649,7 @@ class _ID(_Device):
         if None not in (param_goal, param_val):
             dparam = abs(param_goal - param_val)
             dparam = 0 if dparam < param_tol else dparam
-            pparam_eta = _ID._calc_move_eta_model(dparam, param_vel, param_acc)
+            pparam_eta = IDBase._calc_move_eta_model(dparam, param_vel, param_acc)
         else:
             pparam_eta = 0.0
 
@@ -660,7 +660,7 @@ class _ID(_Device):
         if None not in (param_goal, param_val):
             dparam = abs(abs(param_goal) - abs(param_val))  # abs for DELTA
             dparam = 0 if dparam < param_tol else dparam
-            kparam_eta = _ID._calc_move_eta_model(dparam, param_vel, param_acc)
+            kparam_eta = IDBase._calc_move_eta_model(dparam, param_vel, param_acc)
         else:
             kparam_eta = 0.0
 
@@ -744,7 +744,8 @@ class _ID(_Device):
         return dtime_total
 
 
-class APU(_ID):
+
+class APU(IDBase):
     """APU Insertion Device."""
 
     class DEVICES:
@@ -864,7 +865,7 @@ class APU(_ID):
         return super()._move_start(cmd_propty, timeout, cmd_value)
 
 
-class PAPU(_ID):
+class PAPU(IDBase):
     """PAPU Insertion Device."""
 
     class DEVICES:
@@ -1287,7 +1288,7 @@ class EPU(PAPU):
         pass
 
 
-class DELTA(_ID):
+class DELTA(IDBase):
     """DELTA Insertion Device."""
 
     class DEVICES:
@@ -1425,7 +1426,7 @@ class DELTA(_ID):
         return super().calc_move_eta(pparam_goal, kparam_goal)
 
 
-class WIG(_ID):
+class WIG(IDBase):
     """Wiggler Insertion Device."""
 
     class DEVICES:
@@ -1450,7 +1451,7 @@ class WIG(_ID):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
 
-class ID(_ID):
+class ID(IDBase):
     """Insertion Device."""
 
     class DEVICES:
