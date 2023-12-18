@@ -69,16 +69,13 @@ class FamBPMs(_DeviceSet):
             filters={'sec': devname.sec, 'dev': devname.dev})
         self._ispost_mortem = ispost_mortem
 
-        self._mturn_signals2acq = list(mturn_signals2acq)
+        self._mturn_signals2acq = ''
         self.bpms = [BPM(
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
 
-        for bpm in self.bpms:
-            for sig in self.mturn_signals2acq:
-                sig = 'SUM' if sig.upper() == 'S' else sig.upper()
-                pv = bpm.pv_object(f'GEN_{sig}ArrayData')
-                pv.auto_monitor = True
+        # use property here to ensure auto_monitor
+        self.mturn_signals2acq = list(mturn_signals2acq)
 
         super().__init__(self.bpms[:], devname=devname)
         self._bpm_names = bpm_names
@@ -115,7 +112,9 @@ class FamBPMs(_DeviceSet):
         diff = set(sigs) - set(self.ALL_MTURN_SIGNALS2ACQ)
         if diff:
             raise ValueError('The following signals do not exist: '+str(diff))
+        self._configure_automonitor_acquisition_pvs(state=False)
         self._mturn_signals2acq = sigs
+        self._configure_automonitor_acquisition_pvs(state=True)
 
     def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
         """."""
@@ -552,6 +551,13 @@ class FamBPMs(_DeviceSet):
         dtime = _time.time() - t02
         _log.debug("Data updated (ETA: %.3fs).", dtime)
         return ret
+
+    # ---------------------- Auxiliary methods ------------------------------
+    def _configure_automonitor_acquisition_pvs(self, state):
+        for bpm in self.bpms:
+            for sig in self._mturn_signals2acq:
+                sig = 'SUM' if sig.upper() == 'S' else sig.upper()
+                bpm.pv_object(f'GEN_{sig}ArrayData').auto_monitor = state
 
     def _set_mturn_flag(self, pvname, **kwargs):
         _ = kwargs
