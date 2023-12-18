@@ -35,6 +35,7 @@ class IDFFConst(_csdev.Const):
     DEFAULT_LOOP_FREQ = 10  # [Hz]
     DEFAULT_LOOP_STATE = LoopState.Open
     DEFAULT_CONTROL_QS = _csdev.Const.DsblEnbl.Enbl
+    DEFAULT_CONTROL_QN = _csdev.Const.DsblEnbl.Dsbl
     DEFAULT_CORR_PREC = 4
 
     def __init__(self, idname):
@@ -48,9 +49,20 @@ class IDFFConst(_csdev.Const):
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
         self.has_qscorrs = True if qsnames else False
+        qd_1names = _IDSearch.conv_idname_2_idff_qd_1names(idname)
+        self.has_qd_1corrs = True if qd_1names else False
+        qfnames = _IDSearch.conv_idname_2_idff_qfnames(idname)
+        self.has_qfcorrs = True if qfnames else False
+        qd_2names = _IDSearch.conv_idname_2_idff_qd_2names(idname)
+        self.has_qd_2corrs = True if qd_2names else False
+        self.has_qncorrs = \
+            self.has_qd_1corrs or self.has_qfcorrs or self.has_qd_2corrs
 
     def get_propty_database(self):
         """Return property database."""
+        corr_dict = {
+            'type': 'float', 'value': 0,
+            'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
         dbase = {
             'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
@@ -79,35 +91,52 @@ class IDFFConst(_csdev.Const):
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields},
-            'CorrCH1Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-            'CorrCH2Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-            'CorrCV1Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-            'CorrCV2Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            'CorrCH1Current-Mon': corr_dict,
+            'CorrCH2Current-Mon': corr_dict,
+            'CorrCV1Current-Mon': corr_dict,
+            'CorrCV2Current-Mon': corr_dict,
         }
+
         if self.has_qscorrs:
-            dbase.update({
-                'ControlQS-Sel': {
-                    'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QS,
-                    'unit': 'If QS are included in loop'},
+           dbase.update({
+               'ControlQS-Sel': {
+                   'type': 'enum', 'enums': _et.DSBL_ENBL,
+                   'value': self.DEFAULT_CONTROL_QS,
+                   'unit': 'If QS are included in loop'},
                 'ControlQS-Sts': {
-                    'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QS,
-                    'unit': 'If QS are included in loop'},
-                'CorrQS1Current-Mon': {
-                    'type': 'float', 'value': 0,
-                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQS2Current-Mon': {
-                    'type': 'float', 'value': 0,
-                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                   'type': 'enum', 'enums': _et.DSBL_ENBL,
+                   'value': self.DEFAULT_CONTROL_QS,
+                   'unit': 'If QS are included in loop'},
+                'CorrQS1Current-Mon': corr_dict,
+                'CorrQS2Current-Mon': corr_dict,
             })
+
+        if self.has_qncorrs:
+            dbase.update({
+                'ControlQN-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.DEFAULT_CONTROL_QN,
+                    'unit': 'If QN are included in loop'},
+                'ControlQN-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.DEFAULT_CONTROL_QN,
+                    'unit': 'If QN are included in loop'},
+            })
+        if self.has_qd_1corrs:
+            dbase.update({
+                'CorrQD1_1Current-Mon': corr_dict,
+                'CorrQD2_1Current-Mon': corr_dict,
+            })
+        if self.has_qfcorrs:
+            dbase.update({
+                'CorrQF1Current-Mon': corr_dict,
+                'CorrQF2Current-Mon': corr_dict,
+            })
+        if self.has_qd_2corrs:
+            dbase.update({
+                'CorrQD1_2Current-Mon': corr_dict,
+                'CorrQD2_2Current-Mon': corr_dict,
+            })
+
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase
