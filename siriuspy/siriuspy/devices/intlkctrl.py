@@ -347,18 +347,15 @@ class BLInterlockCtrl(_Device):
     @property
     def is_beamline_opened(self):
         """Return whether BL is opened."""
-        if self.is_hutchA_intlk_search_done and \
-                self.is_hutchB_intlk_search_done and \
-                self.is_machine_gamma_enabled and \
-                self.is_beamline_eps_ok and \
-                self.is_frontend_shutter_eps_permission_ok and \
-                self.is_hutchA_shutter_eps_permission_ok and \
-                self.is_frontend_gamma_shutter_opened and \
-                self.is_frontend_photon_shutter_opened and \
-                self.is_hutchA_gamma_shutter_opened:
-            return True
-        else:
-            return False
+        return self.is_hutchA_intlk_search_done and \
+            self.is_hutchB_intlk_search_done and \
+            self.is_machine_gamma_enabled and \
+            self.is_beamline_eps_ok and \
+            self.is_frontend_shutter_eps_permission_ok and \
+            self.is_hutchA_shutter_eps_permission_ok and \
+            self.is_frontend_gamma_shutter_opened and \
+            self.is_frontend_photon_shutter_opened and \
+            self.is_hutchA_gamma_shutter_opened
 
     def cmd_beamline_eps_reset(self):
         """."""
