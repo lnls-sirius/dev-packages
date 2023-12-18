@@ -69,6 +69,21 @@ class IDFFConfig(_ConfigDBDocument):
         return self._get_corr_pvnames('qs1', 'qs2')
 
     @property
+    def qd_1_pvnames(self):
+        """Return QD_1 corrector power supply pvnames."""
+        return self._get_corr_pvnames('qd1_1', 'qd2_1')
+
+    @property
+    def qf_pvnames(self):
+        """Return QF corrector power supply pvnames."""
+        return self._get_corr_pvnames('qf1', 'qf2')
+
+    @property
+    def qd_2_pvnames(self):
+        """Return QD_2 corrector power supply pvnames."""
+        return self._get_corr_pvnames('qd1_2', 'qd2_2')
+
+    @property
     def polarizations(self):
         """Return list of light polarizations in the IDFF config."""
         if self._value:
@@ -206,10 +221,17 @@ class IDFFConfig(_ConfigDBDocument):
         getch = _IDSearch.conv_idname_2_idff_chnames
         getcv = _IDSearch.conv_idname_2_idff_cvnames
         getqs = _IDSearch.conv_idname_2_idff_qsnames
+        getqd1 = _IDSearch.conv_idname_2_idff_qd_1names
+        getqf = _IDSearch.conv_idname_2_idff_qfnames
+        getqd2 = _IDSearch.conv_idname_2_idff_qd_2names
         chnames = [corr + ':Current-SP' for corr in getch(self.idname)]
         cvnames = [corr + ':Current-SP' for corr in getcv(self.idname)]
         qsnames = [corr + ':Current-SP' for corr in getqs(self.idname)]
-        pvsidsearch = set(chnames + cvnames + qsnames)
+        qd1names = [corr + ':Current-SP' for corr in getqd1(self.idname)]
+        qfnames = [corr + ':Current-SP' for corr in getqf(self.idname)]
+        qd2names = [corr + ':Current-SP' for corr in getqd2(self.idname)]
+        pvsidsearch = set(
+            chnames + cvnames + qsnames + qd1names + qfnames + qd2names)
         symm_diff = pvsconfig ^ pvsidsearch
 
         if symm_diff:
