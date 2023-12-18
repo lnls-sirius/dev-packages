@@ -492,7 +492,7 @@ class FamBPMs(_DeviceSet):
         sig0 = self._initial_signals
         while timeout > 0:
             t00 = _time.time()
-            sig = self.get_mturn_signals()
+            sig = _np.array(self.get_mturn_signals())
             if sig.shape != sig0.shape:
                 return -2
             errors = _np.all(_np.equal(sig, sig0), axis=1)
