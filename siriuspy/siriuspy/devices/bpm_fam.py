@@ -498,6 +498,7 @@ class FamBPMs(_DeviceSet):
             errors = _np.all(_np.equal(sig, sig0), axis=1)
             if not _np.any(errors):
                 return 0
+            _log.debug('Signals did not update yet. Trying again.')
             _time.sleep(0.1)
             timeout -= _time.time() - t00
 
