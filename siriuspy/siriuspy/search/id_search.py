@@ -160,6 +160,12 @@ class IDSearch:
             'cv2': 'SI-10SB:PS-CV-2:Current-SP',
             'qs1': 'SI-10SB:PS-QS-1:Current-SP',
             'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+            'qd1_1': 'SI-10M1:PS-QDB1:Current-SP',
+            'qd2_1': 'SI-10M2:PS-QDB1:Current-SP',
+            'qf1': 'SI-10M1:PS-QFB:Current-SP',
+            'qf2': 'SI-10M2:PS-QFB:Current-SP',
+            'qd1_2': 'SI-10M1:PS-QDB2:Current-SP',
+            'qd2_2': 'SI-10M2:PS-QDB2:Current-SP',
         },
         'SI-10SB:ID-DELTA52': {
             'polarizations': tuple(
@@ -173,6 +179,12 @@ class IDSearch:
             'cv2': 'SI-10SB:PS-CV-2:Current-SP',
             'qs1': 'SI-10SB:PS-QS-1:Current-SP',
             'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+            'qd1_1': 'SI-10M1:PS-QDB1:Current-SP',
+            'qd2_1': 'SI-10M2:PS-QDB1:Current-SP',
+            'qf1': 'SI-10M1:PS-QFB:Current-SP',
+            'qf2': 'SI-10M2:PS-QFB:Current-SP',
+            'qd1_2': 'SI-10M1:PS-QDB2:Current-SP',
+            'qd2_2': 'SI-10M2:PS-QDB2:Current-SP',
         },
         'SI-11SP:ID-APU58': None,
         'SI-14SB:ID-WIG180': {
@@ -284,6 +296,21 @@ class IDSearch:
     def conv_idname_2_idff_qsnames(idname):
         """."""
         return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
+
+    @staticmethod
+    def conv_idname_2_idff_qd_1names(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('qd1_1', 'qd2_1'))
+
+    @staticmethod
+    def conv_idname_2_idff_qd_2names(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('qd1_2', 'qd2_2'))
+
+    @staticmethod
+    def conv_idname_2_idff_qfnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('qf1', 'qf2'))
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
