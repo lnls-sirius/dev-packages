@@ -74,6 +74,12 @@ class FamBPMs(_DeviceSet):
             dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
             props2init=props2init) for dev in bpm_names]
 
+        for bpm in self.bpms:
+            for sig in self.mturn_signals2acq:
+                sig = 'SUM' if sig.upper() == 'S' else sig.upper()
+                pv = bpm.pv_object(f'GEN_{sig}ArrayData')
+                pv.auto_monitor = True
+
         super().__init__(self.bpms[:], devname=devname)
         self._bpm_names = bpm_names
         self._csbpm = self.bpms[0].csdata
