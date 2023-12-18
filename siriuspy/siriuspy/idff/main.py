@@ -339,6 +339,8 @@ class App(_Callback):
 
     def _update_corr_setpoints(self):
         """Update corrector setpoint PVs."""
+        if self._corr_setpoints is None:
+            return
         setpoints, *_ = self._corr_setpoints
         idff = self._idff
         corrnames = idff.chnames + idff.cvnames + idff.qsnames
