@@ -189,6 +189,7 @@ class App(_Callback):
             self._quit = value
 
     def main_idff_loop(self):
+        """Main IDFF loop."""
         while not self._quit:
             # updating interval
             tplanned = 1.0/self._loop_freq
@@ -204,13 +205,13 @@ class App(_Callback):
             # update polarization state
             self._do_update_polarization()
 
+            # correctors value calculation
+            self._do_update_correctors()
+
             # return if loop is not closed
             if not self._loop_state:
                 self._do_sleep(_t0, tplanned)
                 continue
-
-            # correctors value calculation
-            self._do_update_correctors()
 
             # setpoints implementation
             if self._corr_setpoints:
@@ -313,7 +314,7 @@ class App(_Callback):
             corrdevs = self._idff.chdevs + self._idff.cvdevs
         try:
             # use PS IOCs (IDFF) to implement setpoints
-            setpoints = self._corr_setpoints
+            setpoints, *_ = self._corr_setpoints
             self._idff.implement_setpoints(
                 setpoints=setpoints, corrdevs=corrdevs)
 

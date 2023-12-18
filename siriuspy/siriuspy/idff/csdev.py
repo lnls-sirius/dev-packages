@@ -35,6 +35,7 @@ class IDFFConst(_csdev.Const):
     DEFAULT_LOOP_FREQ = 10  # [Hz]
     DEFAULT_LOOP_STATE = LoopState.Open
     DEFAULT_CONTROL_QS = _csdev.Const.DsblEnbl.Enbl
+    DEFAULT_CORR_PREC = 4
 
     def __init__(self, idname):
         """Init."""
@@ -80,16 +81,16 @@ class IDFFConst(_csdev.Const):
                 'value': self.StsLblsCorr._fields},
             'CorrCH1Current-Mon': {
                 'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': 3},
+                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             'CorrCH2Current-Mon': {
                 'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': 3},
+                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             'CorrCV1Current-Mon': {
                 'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': 3},
+                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             'CorrCV2Current-Mon': {
                 'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': 3},
+                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
         }
         if self.has_qscorrs:
             dbase.update({
@@ -103,10 +104,10 @@ class IDFFConst(_csdev.Const):
                     'unit': 'If QS are included in loop'},
                 'CorrQS1Current-Mon': {
                     'type': 'float', 'value': 0,
-                    'unit': 'A', 'prec': 3},
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
                 'CorrQS2Current-Mon': {
                     'type': 'float', 'value': 0,
-                    'unit': 'A', 'prec': 3},
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase
