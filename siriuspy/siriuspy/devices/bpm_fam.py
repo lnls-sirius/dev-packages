@@ -78,6 +78,7 @@ class FamBPMs(_DeviceSet):
         self._bpm_names = bpm_names
         self._csbpm = self.bpms[0].csdata
         self._initial_timestamps = None
+        self._initial_signals = None
 
         self._mturn_flags = dict()
         # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
@@ -384,6 +385,10 @@ class FamBPMs(_DeviceSet):
         for bpm in self.bpms:
             bpm.switching_mode = mode
 
+    def update_mturn_initial_signals(self):
+        """Call this method before acquisition to get orbit for comparison."""
+        self._initial_signals = _np.array(self.get_mturn_signals())
+
     def update_mturn_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
         self._initial_timestamps = self.get_mturn_timestamps()
@@ -397,6 +402,7 @@ class FamBPMs(_DeviceSet):
         """Set initial state to wait for orbit acquisition to start."""
         self.reset_mturn_flags()
         self.update_mturn_initial_timestamps()
+        self.update_mturn_initial_signals()
 
     def wait_update_mturn_flags(self, timeout=10):
         """Wait for all acquisition flags to be updated.
@@ -458,14 +464,47 @@ class FamBPMs(_DeviceSet):
         code = bpm_idx + 1
         code += (int(_np.nonzero(errors[:, bpm_idx])[0][0]) + 1) / 10
         return code
+
+    def wait_update_mturn_signals(self, timeout=10) -> int:
+        """Call this method after acquisition to check for data update.
+
+        For this method to work it is necessary to call
+            update_mturn_initial_signals
+        before the acquisition starts, so that a reference for comparison is
+        created.
+
+        Args:
+            timeout (int, optional): Waiting timeout. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                -2: size of signals changed in relation to initial signals
+                -1: initial signals were not defined;
+                =0: signals updated.
+                >0: index of the first BPM which did not update plus 1.
+                X.[1-N]: The fractional part indicates which signal, from 1 to
+                    N, that didn't update.
+
+        """
+        if self._initial_signals is None:
+            return -1
+
+        sig0 = self._initial_signals
+        while timeout > 0:
+            t00 = _time.time()
+            sig = self.get_mturn_signals()
+            if sig.shape != sig0.shape:
                 return -2
-            errors = _np.any(_np.equal(tsmp, tsmp0), axis=1)
+            errors = _np.all(_np.equal(sig, sig0), axis=1)
             if not _np.any(errors):
                 return 0
             _time.sleep(0.1)
             timeout -= _time.time() - t00
 
-        return int(_np.nonzero(errors)[0][0])+1
+        bpm_idx = int(_np.nonzero(_np.any(errors, axis=0))[0][0])
+        code = bpm_idx + 1
+        code += (int(_np.nonzero(errors[:, bpm_idx])[0][0]) + 1) / 10
+        return code
 
     def wait_update_mturn(self, timeout=10) -> int:
         """Combine all methods to wait update data.
@@ -499,6 +538,12 @@ class FamBPMs(_DeviceSet):
         dtime = t02 - t01
         timeout -= dtime
         _log.debug("Timestamps updated (ETA: %.3fs).", dtime)
+
+        ret = self.wait_update_mturn_signals(timeout)
+        if ret != 0:
+            return ret
+        dtime = _time.time() - t02
+        _log.debug("Data updated (ETA: %.3fs).", dtime)
         return ret
 
     def _set_mturn_flag(self, pvname, **kwargs):
