@@ -85,7 +85,7 @@ class FamBPMs(_DeviceSet):
         #     pvo = bpm.pv_object('ACQCount-Mon')
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
-        #     pvo.add_callback(self._mturn_set_flag)
+        #     pvo.add_callback(self._set_mturn_flag)
 
     @property
     def bpm_names(self):
@@ -176,14 +176,14 @@ class FamBPMs(_DeviceSet):
         """Get Multiturn data timestamps.
 
         Returns:
-            tsmps (numpy.ndarray, (160, N)): The i-th row has the timestamp of
-                the i-th bpm for the N aquired signals.
+            tsmps (numpy.ndarray, (N, 160)): The i-th column has the timestamp
+                of the i-th bpm for the N aquired signals.
 
         """
         tsmps = _np.zeros(
-            (len(self.bpms), len(self._mturn_signals2acq)), dtype=float)
-        for i, bpm in enumerate(self.bpms):
-            for j, s in enumerate(self._mturn_signals2acq):
+            (len(self._mturn_signals2acq), len(self.bpms)), dtype=float)
+        for i, s in enumerate(self._mturn_signals2acq):
+            for j, bpm in enumerate(self.bpms):
                 s = 'SUM' if s == 'S' else s
                 pvo = bpm.pv_object(f'GEN_{s}ArrayData')
                 tv = pvo.get_timevars(timeout=self.TIMEOUT)
@@ -229,7 +229,7 @@ class FamBPMs(_DeviceSet):
             _log.warning('BPMs are not configured with the same SwMode.')
             return None
 
-    def mturn_config_acquisition(
+    def config_mturn_acquisition(
             self, nr_points_after: int, nr_points_before=0,
             acq_rate='FAcq', repeat=True, external=True) -> int:
         """Configure acquisition for BPMs.
@@ -253,49 +253,42 @@ class FamBPMs(_DeviceSet):
                 >0: Index of the first BPM which is not ready for acq. plus 1.
 
         """
-        if acq_rate in self._csbpm.AcqChan:
-            pass
-        elif acq_rate.lower().startswith('facq'):
-            acq_rate = self._csbpm.AcqChan.FAcq
-        elif acq_rate.lower().startswith('fofbpha'):
-            acq_rate = self._csbpm.AcqChan.FOFBPha
-        elif acq_rate.lower().startswith('fofb'):
-            acq_rate = self._csbpm.AcqChan.FOFB
-        elif acq_rate.lower().startswith('tbtpha'):
-            acq_rate = self._csbpm.AcqChan.TbTPha
-        elif acq_rate.lower().startswith('tbt'):
-            acq_rate = self._csbpm.AcqChan.TbT
-        elif acq_rate.lower().startswith('adcswp'):
-            acq_rate = self._csbpm.AcqChan.ADCSwp
-        elif acq_rate.lower().startswith('adc'):
-            acq_rate = self._csbpm.AcqChan.ADC
-        else:
-            raise ValueError(acq_rate + ' is not a valid acquisition rate.')
+        dic = {
+            'facq': self._csbpm.AcqChan.FAcq,
+            'fofbpha': self._csbpm.AcqChan.FOFBPha,
+            'fofb': self._csbpm.AcqChan.FOFB,
+            'tbtpha': self._csbpm.AcqChan.TbTPha,
+            'tbt': self._csbpm.AcqChan.TbT,
+            'adcswp': self._csbpm.AcqChan.ADCSwp,
+            'adc': self._csbpm.AcqChan.ADC,
+        }
+        acq_rate = dic.get(acq_rate.lower(), acq_rate)
+        if acq_rate not in self._csbpm.AcqChan:
+            raise ValueError(
+                str(acq_rate) + ' is not a valid acquisition rate.')
 
+        rep = self._csbpm.AcqRepeat.Normal
         if repeat:
-            repeat = self._csbpm.AcqRepeat.Repetitive
-        else:
-            repeat = self._csbpm.AcqRepeat.Normal
+            rep = self._csbpm.AcqRepeat.Repetitive
 
+        trig = self._csbpm.AcqTrigTyp.Now
         if external:
             trig = self._csbpm.AcqTrigTyp.External
-        else:
-            trig = self._csbpm.AcqTrigTyp.Now
 
-        ret = self.cmd_mturn_acq_abort()
+        ret = self.cmd_abort_mturn_acquisition()
         if ret > 0:
             return -ret
 
         for bpm in self.bpms:
-            bpm.acq_repeat = repeat
+            bpm.acq_repeat = rep
             bpm.acq_channel = acq_rate
             bpm.acq_trigger = trig
             bpm.acq_nrsamples_pre = nr_points_before
             bpm.acq_nrsamples_post = nr_points_after
 
-        return self.cmd_mturn_acq_start()
+        return self.cmd_start_mturn_acquisition()
 
-    def cmd_mturn_acq_abort(self, wait=True, timeout=10) -> int:
+    def cmd_abort_mturn_acquisition(self, wait=True, timeout=10) -> int:
         """Abort BPMs acquistion.
 
         Args:
@@ -335,7 +328,7 @@ class FamBPMs(_DeviceSet):
             timeout -= _time.time() - t0_
         return 0
 
-    def cmd_mturn_acq_start(self, wait=True, timeout=10) -> int:
+    def cmd_start_mturn_acquisition(self, wait=True, timeout=10) -> int:
         """Start BPMs acquisition.
 
         Args:
@@ -391,21 +384,21 @@ class FamBPMs(_DeviceSet):
         for bpm in self.bpms:
             bpm.switching_mode = mode
 
-    def mturn_update_initial_timestamps(self):
+    def update_mturn_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
         self._initial_timestamps = self.get_mturn_timestamps()
 
-    def mturn_reset_flags(self):
+    def reset_mturn_flags(self):
         """Reset Multiturn flags to wait for a new orbit update."""
         for flag in self._mturn_flags.values():
             flag.clear()
 
-    def mturn_reset_flags_and_update_initial_timestamps(self):
+    def reset_mturn_initial_state(self):
         """Set initial state to wait for orbit acquisition to start."""
-        self.mturn_reset_flags()
-        self.mturn_update_initial_timestamps()
+        self.reset_mturn_flags()
+        self.update_mturn_initial_timestamps()
 
-    def mturn_wait_update_flags(self, timeout=10):
+    def wait_update_mturn_flags(self, timeout=10):
         """Wait for all acquisition flags to be updated.
 
         Args:
@@ -425,11 +418,11 @@ class FamBPMs(_DeviceSet):
             timeout = max(timeout, 0)
         return 0
 
-    def mturn_wait_update_timestamps(self, timeout=10) -> int:
-        """Call this method after acquisition to check if data was updated.
+    def wait_update_mturn_timestamps(self, timeout=10) -> int:
+        """Call this method after acquisition to check for timestamps update.
 
         For this method to work it is necessary to call
-            mturn_update_initial_timestamps
+            update_mturn_initial_timestamps
         before the acquisition starts, so that a reference for comparison is
         created.
 
@@ -437,11 +430,13 @@ class FamBPMs(_DeviceSet):
             timeout (int, optional): Waiting timeout. Defaults to 10.
 
         Returns:
-            int: code describing what happened:
+            float: code describing what happened:
                 -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
                 >0: index of the first BPM which did not update plus 1.
+                X.[1-N]: The fractional part indicates which signal, from 1 to
+                    N, that didn't update.
 
         """
         if self._initial_timestamps is None:
@@ -451,7 +446,18 @@ class FamBPMs(_DeviceSet):
         while timeout > 0:
             t00 = _time.time()
             tsmp = self.get_mturn_timestamps()
-            if tsmp.size != tsmp0.size:
+            if tsmp.shape != tsmp0.shape:
+                return -2
+            errors = _np.equal(tsmp, tsmp0)
+            if not _np.any(errors):
+                return 0
+            _time.sleep(0.1)
+            timeout -= _time.time() - t00
+
+        bpm_idx = int(_np.nonzero(_np.any(errors, axis=0))[0][0])
+        code = bpm_idx + 1
+        code += (int(_np.nonzero(errors[:, bpm_idx])[0][0]) + 1) / 10
+        return code
                 return -2
             errors = _np.any(_np.equal(tsmp, tsmp0), axis=1)
             if not _np.any(errors):
@@ -461,28 +467,40 @@ class FamBPMs(_DeviceSet):
 
         return int(_np.nonzero(errors)[0][0])+1
 
-    def mturn_wait_update(self, timeout=10) -> int:
+    def wait_update_mturn(self, timeout=10) -> int:
         """Combine all methods to wait update data.
 
         Args:
             timeout (int, optional): Waiting timeout. Defaults to 10.
 
         Returns:
-            int: code describing what happened:
+            int|float: code describing what happened:
                 -2: size of timestamps changed in relation to initial timestamp
                 -1: initial timestamps were not defined;
                 =0: data updated.
                 >0: index of the first BPM which did not update plus 1.
+                X.[1-N]: The fractional part indicates which signal, from 1 to
+                    N, that didn't update.
 
         """
         t00 = _time.time()
-        ret = self.mturn_wait_update_flags(timeout)
+        ret = self.wait_update_mturn_flags(timeout)
         if ret > 0:
             return ret
-        timeout -= _time.time() - t00
+        t01 = _time.time()
+        dtime = t01 - t00
+        timeout -= dtime
+        _log.debug("Flags updated (ETA: %.3fs).", dtime)
 
-        return self.mturn_wait_update_timestamps(timeout)
+        ret = self.wait_update_mturn_timestamps(timeout)
+        if ret != 0:
+            return ret
+        t02 = _time.time()
+        dtime = t02 - t01
+        timeout -= dtime
+        _log.debug("Timestamps updated (ETA: %.3fs).", dtime)
+        return ret
 
-    def _mturn_set_flag(self, pvname, **kwargs):
+    def _set_mturn_flag(self, pvname, **kwargs):
         _ = kwargs
         self._mturn_flags[pvname].set()
