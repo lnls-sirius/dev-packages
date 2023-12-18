@@ -1,5 +1,6 @@
 """FamBPM deviceSet."""
 
+import logging as _log
 import sys
 import time as _time
 # from threading import Event as _Flag
@@ -112,8 +113,10 @@ class FamBPMs(_DeviceSet):
                     f'\n{bpm.devname:<20s}: ' +
                     f'rb {bpm.rffe_att:.0f} != sp {value:.0f}')
 
-        print('RFFE attenuation set confirmed in all BPMs', end='')
-        print(', except:' + mstr if mstr else '.')
+        stg = ', except:' if mstr else '.'
+        _log.info('RFFE attenuation set confirmed in all BPMs%s', stg)
+        if mstr:
+            _log.info(mstr)
         return okall
 
     def get_slow_orbit(self):
@@ -192,7 +195,7 @@ class FamBPMs(_DeviceSet):
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
-            print('BPMs are not configured with the same ACQChannel.')
+            _log.warning('BPMs are not configured with the same ACQChannel.')
             return None
 
     def get_switching_frequency(self, rf_freq: float) -> float:
@@ -210,7 +213,7 @@ class FamBPMs(_DeviceSet):
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
-            print('BPMs are not configured with the same SwMode.')
+            _log.warning('BPMs are not configured with the same SwMode.')
             return None
 
     def mturn_config_acquisition(
