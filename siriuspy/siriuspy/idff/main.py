@@ -5,7 +5,6 @@ import logging as _log
 import time as _time
 
 import epics as _epics
-import numpy as _np
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
@@ -190,6 +189,9 @@ class App(_Callback):
 
     def main_idff_loop(self):
         """Main IDFF loop."""
+
+        if not hasattr(self, '_tl0'):
+            self._tl0 = 0
         while not self._quit:
             # updating interval
             tplanned = 1.0/self._loop_freq
@@ -199,6 +201,9 @@ class App(_Callback):
 
             # check IDFF device connection
             if not self._idff.connected:
+                if _t0 - self._tl0 > 10:
+                    self._update_log('ERR: Disconnected PVs!')
+                    self._tl0 = _t0
                 self._do_sleep(_t0, tplanned)
                 continue
 
@@ -296,19 +301,26 @@ class App(_Callback):
             self.run_callbacks('Polarization-Mon', new_pol)
 
     def _do_update_correctors(self):
+        if not hasattr(self, '_tl1'):
+            self._tl1 = 0
         try:
             self._corr_setpoints = self._idff.calculate_setpoints()
-            # setpoints, polarization, *parameters = self._corr_setpoints
-            # pparameter_value, kparameter_value = parameters
-            # print('pparameter: ', pparameter_value)
-            # print('kparameter: ', kparameter_value)
-            # print('polarization: ', polarization)
-            # print('setpoints: ', setpoints)
-            # print()
+            setpoints, polarization, *parameters = self._corr_setpoints
+            pparameter_value, kparameter_value = parameters
+            # print info
+            t0_ = _time.time()
+            if t0_ - self._tl1 > 10:
+                _log.info('pparameter: ', pparameter_value)
+                _log.info('kparameter: ', kparameter_value)
+                _log.info('polarization: ', polarization)
+                _log.info('setpoints: ', setpoints)
+                self._tl1 = t0_
         except ValueError as err:
             self._update_log('ERR:'+str(err))
 
     def _do_implement_correctors(self):
+        if not hasattr(self, '_tl2'):
+            self._tl2 = 0
         corrdevs = None
         if self._control_qs == self._const.DsblEnbl.Dsbl:
             corrdevs = self._idff.chdevs + self._idff.cvdevs
@@ -317,6 +329,9 @@ class App(_Callback):
             setpoints, *_ = self._corr_setpoints
             self._idff.implement_setpoints(
                 setpoints=setpoints, corrdevs=corrdevs)
+            t0_ = _time.time()
+            if t0_ - self._tl2 > 10:
+                _log.info('corrdevs: ')
 
         except ValueError as err:
             self._update_log('ERR:'+str(err))
