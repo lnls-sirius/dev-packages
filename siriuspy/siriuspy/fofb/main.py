@@ -296,14 +296,27 @@ class App(_Callback):
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        self._logger.info('Write received for: %s --> %s', reason, str(value))
+        self._logger.info(
+            "Write received for: %s --> %s",
+            reason,
+            str(value),
+            extra={"ioc_only": True},
+        )
         if reason in self.map_pv2write.keys():
             status = self.map_pv2write[reason](value)
             self._logger.info(
-                '%s Write for: %s --> %s', str(status).upper(), reason,
-                str(value))
+                "%s Write for: %s --> %s",
+                str(status).upper(),
+                reason,
+                str(value),
+                extra={"ioc_only": True},
+            )
             return status
-        self._logger.warning('PV %s does not have a set function.', reason)
+        self._logger.warning(
+            "PV %s does not have a set function.",
+            reason,
+            extra={"ioc_only": True},
+        )
         return False
 
     @property
@@ -1840,10 +1853,13 @@ class App(_Callback):
             tsleep = tplanned - ttook
             if tsleep > 0:
                 _time.sleep(tsleep)
-            else:
-                self._logger.warning(
-                    'Corrector configuration check took more than planned... '
-                    '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+                continue
+            self._logger.warning(
+                "Corrector check took more than planned: %.3f/%.3f",
+                ttook,
+                tplanned,
+                extra={"ioc_only": True},
+            )
 
     def _check_ctrls_configs(self):
         tplanned = 1.0/App.SCAN_FREQUENCY
@@ -1908,7 +1924,10 @@ class App(_Callback):
             tsleep = tplanned - ttook
             if tsleep > 0:
                 _time.sleep(tsleep)
-            else:
-                self._logger.warning(
-                    'Controllers configuration check took more than planned...'
-                    ' {0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+                continue
+            self._logger.warning(
+                "Controllers check took more than planned... %.3f/%.3f",
+                ttook,
+                tplanned,
+                extra={"ioc_only": True},
+            )
