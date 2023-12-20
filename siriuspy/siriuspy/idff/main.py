@@ -310,10 +310,10 @@ class App(_Callback):
             # print info
             t0_ = _time.time()
             if t0_ - self._tl1 > 10:
-                _log.info('pparameter: ', pparameter_value)
-                _log.info('kparameter: ', kparameter_value)
-                _log.info('polarization: ', polarization)
-                _log.info('setpoints: ', setpoints)
+                _log.info(f'pparameter: {pparameter_value}')
+                _log.info(f'kparameter: {kparameter_value}')
+                _log.info(f'polarization: {polarization}')
+                _log.info(f'setpoints: {setpoints}')
                 self._tl1 = t0_
         except ValueError as err:
             self._update_log('ERR:'+str(err))
@@ -331,7 +331,7 @@ class App(_Callback):
                 setpoints=setpoints, corrdevs=corrdevs)
             t0_ = _time.time()
             if t0_ - self._tl2 > 10:
-                _log.info('corrdevs: ')
+                _log.info(f'corrdevs: {corrdevs}')
 
         except ValueError as err:
             self._update_log('ERR:'+str(err))
