@@ -1,12 +1,12 @@
 """Define PVs, contants and properties of High Level FOFB."""
 
 import os as _os
+
 import numpy as _np
 
 from .. import csdev as _csdev
-from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
-    BPMSearch as _BPMSearch
-
+from ..search import BPMSearch as _BPMSearch, MASearch as _MASearch, \
+    PSSearch as _PSSearch
 
 NR_BPM = 160
 
@@ -70,7 +70,6 @@ class HLFOFBConst(_csdev.Const):
 
     def __init__(self):
         """Class constructor."""
-
         # device names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})
         if NR_BPM != len(self.bpm_names):
