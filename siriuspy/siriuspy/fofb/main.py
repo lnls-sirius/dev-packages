@@ -1805,44 +1805,57 @@ class App(_Callback):
 
             # correctors status
             value = 0
+            cdev = self._corrs_dev
             if self._corrs_dev.connected:
                 idcs = _np.where(self.corr_enbllist[:-1] == 1)[0]
                 # PwrStateOn
                 state = self._const.OffOn.On
-                if not self._corrs_dev.check_pwrstate(
-                        state, psindices=idcs, timeout=0.2):
-                    value = _updt_bit(value, 1, 1)
+                value = _updt_bit(
+                    value,
+                    1,
+                    not cdev.check_pwrstate(
+                        state, psindices=idcs, timeout=0.2
+                    ),
+                )
                 # OpModeConfigured
-                opmode = self._corrs_dev.OPMODE_STS.manual \
-                    if self._loop_state == self._const.LoopState.Open \
-                    else self._corrs_dev.OPMODE_STS.fofb
-                if not self._corrs_dev.check_opmode(
-                        opmode, psindices=idcs, timeout=0.2):
-                    value = _updt_bit(value, 2, 1)
+                opmode = (
+                    cdev.OPMODE_STS.manual
+                    if self._loop_state == self._const.LoopState.Open
+                    else cdev.OPMODE_STS.fofb
+                )
+                value = _updt_bit(
+                    value,
+                    2,
+                    not cdev.check_opmode(opmode, psindices=idcs, timeout=0.2),
+                )
                 # AccFreezeConfigured
                 freeze = self._get_corrs_fofbacc_freeze_desired()
-                if not self._corrs_dev.check_fofbacc_freeze(
-                        freeze, timeout=0.2):
-                    value = _updt_bit(value, 3, 1)
+                value = _updt_bit(
+                    value,
+                    3,
+                    not cdev.check_fofbacc_freeze(freeze, timeout=0.2),
+                )
                 # InvRespMatRowSynced
-                if not self._corrs_dev.check_invrespmat_row(self._pscoeffs):
-                    value = _updt_bit(value, 4, 1)
+                value = _updt_bit(
+                    value, 4, not cdev.check_invrespmat_row(self._pscoeffs)
+                )
                 # AccGainSynced
-                if not self._corrs_dev.check_fofbacc_gain(self._psgains):
-                    value = _updt_bit(value, 5, 1)
+                value = _updt_bit(
+                    value, 5, not cdev.check_fofbacc_gain(self._psgains)
+                )
                 # AccSatLimsSynced
                 chn, chl = self._const.ch_names, self._ch_maxacccurr
                 cvn, cvl = self._const.cv_names, self._cv_maxacccurr
-                isok = self._corrs_dev.check_fofbacc_satmax(chl, psnames=chn)
-                isok &= self._corrs_dev.check_fofbacc_satmin(-chl, psnames=chn)
-                isok &= self._corrs_dev.check_fofbacc_satmax(cvl, psnames=cvn)
-                isok &= self._corrs_dev.check_fofbacc_satmin(-cvl, psnames=cvn)
-                if not isok:
-                    value = _updt_bit(value, 6, 1)
+                isok = cdev.check_fofbacc_satmax(chl, psnames=chn)
+                isok &= cdev.check_fofbacc_satmin(-chl, psnames=chn)
+                isok &= cdev.check_fofbacc_satmax(cvl, psnames=cvn)
+                isok &= cdev.check_fofbacc_satmin(-cvl, psnames=cvn)
+                value = _updt_bit(value, 6, not isok)
                 # AccDecimationSynced
                 dec = self._corr_accdec_val
-                if not self._corrs_dev.check_fofbacc_decimation(dec):
-                    value = _updt_bit(value, 7, 1)
+                value = _updt_bit(
+                    value, 7, not cdev.check_fofbacc_decimation(dec)
+                )
             else:
                 value = 0b11111111
 
@@ -1872,48 +1885,53 @@ class App(_Callback):
 
             # FOFB controllers status
             value = 0
-            if self._llfofb_dev.connected:
+            fdev = self._llfofb_dev
+            if fdev.connected:
                 # BPMIdsConfigured
-                if not self._llfofb_dev.bpm_id_configured:
-                    value = _updt_bit(value, 1, 1)
+                value = _updt_bit(value, 1, not fdev.bpm_id_configured)
                 # NetSynced
                 bpms = self._get_fofbctrl_bpmdcc_enbl()
-                if not self._llfofb_dev.check_net_synced(bpms=bpms):
-                    value = _updt_bit(value, 2, 1)
+                value = _updt_bit(
+                    value, 2, not fdev.check_net_synced(bpms=bpms)
+                )
                 # LinkPartnerConnected
-                if not self._llfofb_dev.linkpartners_connected:
-                    value = _updt_bit(value, 3, 1)
+                value = _updt_bit(value, 3, not fdev.linkpartners_connected)
                 # RefOrbSynced
-                if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not\
-                        self._llfofb_dev.check_reforby(self._reforbhw_y):
-                    value = _updt_bit(value, 4, 1)
+                value = _updt_bit(
+                    value,
+                    4,
+                    not fdev.check_reforbx(self._reforbhw_x)
+                    or not fdev.check_reforby(self._reforbhw_y),
+                )
                 # TimeFrameLenSynced
                 tframelen = self._time_frame_len
-                if not _np.all(self._llfofb_dev.time_frame_len == tframelen):
-                    value = _updt_bit(value, 5, 1)
+                value = _updt_bit(
+                    value, 5, not _np.all(fdev.time_frame_len == tframelen)
+                )
                 # BPMLogTrigsConfigured
-                if not self._llfofb_dev.bpm_trigs_configured:
-                    value = _updt_bit(value, 6, 1)
+                value = _updt_bit(value, 6, not fdev.bpm_trigs_configured)
                 # OrbDistortionDetectionSynced
                 sts = self._loop_max_orb_dist_enbl
-                sts_ok = self._llfofb_dev.max_orb_distortion_enbl == sts
-                thres = self._loop_max_orb_dist*self._const.CONV_UM_2_NM
-                thres_ok = self._llfofb_dev.max_orb_distortion == thres
-                if not _np.all(sts_ok) or not _np.all(thres_ok):
-                    value = _updt_bit(value, 7, 1)
+                sts_ok = fdev.max_orb_distortion_enbl == sts
+                thres = self._loop_max_orb_dist * self._const.CONV_UM_2_NM
+                thres_ok = fdev.max_orb_distortion == thres
+                value = _updt_bit(
+                    value, 7, not _np.all(sts_ok) or not _np.all(thres_ok)
+                )
                 # PacketLossDetectionSynced
                 sts = self._loop_packloss_detec_enbl
-                sts_ok = self._llfofb_dev.min_bpm_count_enbl == sts
+                sts_ok = fdev.min_bpm_count_enbl == sts
                 count = int(_np.sum(self._fofbctrl_syncenbllist))
-                count_ok = self._llfofb_dev.min_bpm_count == count
-                if not _np.all(sts_ok) or not _np.all(count_ok):
-                    value = _updt_bit(value, 8, 1)
+                count_ok = fdev.min_bpm_count == count
+                value = _updt_bit(
+                    value, 8, not _np.all(sts_ok) or not _np.all(count_ok)
+                )
                 # LoopInterlockOk
-                if not self._llfofb_dev.interlock_ok:
-                    value = _updt_bit(value, 9, 1)
+                value = _updt_bit(value, 9, not fdev.interlock_ok)
                 # SYSIDExcitationDisabled
-                if not self._llfofb_dev.check_sysid_exc_disabled():
-                    value = _updt_bit(value, 10, 1)
+                value = _updt_bit(
+                    value, 10, not fdev.check_sysid_exc_disabled()
+                )
             else:
                 value = 0b11111111111
 
