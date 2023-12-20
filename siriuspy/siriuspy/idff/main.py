@@ -332,6 +332,7 @@ class App(_Callback):
             t0_ = _time.time()
             if t0_ - self._tl2 > 10:
                 _log.info(f'corrdevs: {corrdevs}')
+                self._tl2 = t0_
 
         except ValueError as err:
             self._update_log('ERR:'+str(err))
