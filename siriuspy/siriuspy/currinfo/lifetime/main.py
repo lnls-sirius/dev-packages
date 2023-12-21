@@ -191,10 +191,12 @@ class SILifetimeApp(_Callback):
     # ---------- callbacks ----------
 
     def _callback_get_storedebeam(self, value, **kws):
+        _ = kws
         self._is_stored = value
 
     def _callback_calclifetime(self, pvname, timestamp, **kws):
         # check DCCT StoredEBeam PV
+        _ = timestamp, kws
         if not self._is_stored:
             self._buffautorst_check()
             return
@@ -213,7 +215,9 @@ class SILifetimeApp(_Callback):
 
     def _buffautorst_check(self):
         """Check situations to clear internal buffer.
+
         If BuffAutoRst == DCurrCheck, check abrupt variation of current.
+
         """
         if self._buffautorst_mode == _Const.BuffAutoRst.Off:
             return
