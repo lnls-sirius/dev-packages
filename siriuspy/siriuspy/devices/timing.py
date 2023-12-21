@@ -598,14 +598,16 @@ class HLTiming(_DeviceSet):
             tr = self.triggers.get(tn)
             if tr is None:
                 notchanged.append(tn)
-                self._logger.warn(
-                    f'{tn:25s} -> No Change: {tn:s} is not controlled.')
+                self._logger.warning(
+                    '%25s -> No Change: %s is not controlled.', tn, tn
+                )
                 continue
 
             if new_src not in tr.source_options:
                 notchanged.append(tn)
-                self._logger.warn(
-                    f'{tn:25s} -> No Change: {new_src:s} is not an option.')
+                self._logger.warning(
+                    '%25s -> No Change: %s is not an option.', tn, new_src
+                )
                 continue
 
             dly_newsrc = 0
@@ -623,13 +625,14 @@ class HLTiming(_DeviceSet):
             dly += delta_dly
             if dly < 0:
                 notchanged.append(tn)
-                self._logger.warn(
-                    f'{tn:25s} -> No Change: total delay not constant!')
+                self._logger.warning(
+                    '%25s -> No Change: total delay not constant!', tn
+                )
                 continue
 
             tr.delay_raw = dly
             tr.source = new_src
-            self._logger.info(f'{tn:25s} -> Change OK: .')
+            self._logger.info('%25s -> Change OK.', tn)
         return notchanged
 
     def change_event_delay(self, new_dly, event='Linac'):
@@ -639,7 +642,7 @@ class HLTiming(_DeviceSet):
             return False
 
         if event not in self.events:
-            self._logger.error(f'{event} is not a valid event!')
+            self._logger.error('%s is not a valid event!', event)
             return False
         new_dly = int(new_dly)
         old_dly = self.events[event].delay_raw
@@ -650,7 +653,8 @@ class HLTiming(_DeviceSet):
             dly = self.triggers[trn].delay_raw + dlt_dly
             if dly < 0:
                 self._logger.error(
-                    f'cannot change delay: {trn:s} would change!')
+                    'cannot change delay: %s would change!', trn
+                )
                 return False
 
         for trn in trigs:

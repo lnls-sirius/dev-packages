@@ -85,7 +85,7 @@ class Device:
     def logger(self, logger):
         """."""
         if not isinstance(logger, _log.Logger):
-            self._logger.warn('Wrong object type. Logger not changed.')
+            self._logger.warning('Wrong object type. Logger not changed.')
             return
         self._logger = logger
 
@@ -96,8 +96,7 @@ class Device:
 
     @property
     def properties_added(self):
-        """Return properties that were added to the PV list that are not in
-        PROPERTIES_DEFAULT."""
+        """Return added properties that are not in PROPERTIES_DEFAULT."""
         return tuple(sorted(
             set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT)))
 
@@ -154,7 +153,9 @@ class Device:
         except (_ChannelAccessGetFailure, _CASeverityException):
             # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
-            self._logger.warn('fCould not set auto_monitor of {pvobj.pvname}')
+            self._logger.warning(
+                'Could not set auto_monitor of %s', pvobj.pvname
+            )
             return False
         return True
 
@@ -208,7 +209,7 @@ class Device:
         except (_ChannelAccessGetFailure, _CASeverityException):
             # exceptions raised in a Virtual Circuit Disconnect (192)
             # event. If the PV IOC goes down, for example.
-            self._logger.warn(f'Could not get value of {pvobj.pvname}')
+            self._logger.warning('Could not get value of %s', pvobj.pvname)
             value = None
         return value
 
@@ -312,7 +313,7 @@ class DeviceSet:
     def logger(self, logger):
         """."""
         if not isinstance(logger, _log.Logger):
-            self._logger.warn('Wrong object type. Logger not changed.')
+            self._logger.warning('Wrong object type. Logger not changed.')
             return
         self._logger = logger
 

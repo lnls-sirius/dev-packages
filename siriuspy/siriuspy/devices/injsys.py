@@ -1093,7 +1093,7 @@ class InjSysPUModeHandler(_DeviceSet):
         self.pudpk.strength = self.dpkckr_kick
         if not self._wait(self.pudpk, 'strength', self.dpkckr_kick):
             self._logger.error(
-                f'Could not set DpK Kick to {self.dpkckr_kick:.1f}mrad.')
+                'Could not set DpK Kick to %.1fmrad.', self.dpkckr_kick)
             return False
         return True
 
@@ -1102,7 +1102,7 @@ class InjSysPUModeHandler(_DeviceSet):
             if self._check_abort():
                 return False
             if not fun(timeout=2):
-                self._logger.error('Could not ' + msg)
+                self._logger.error('Could not %s', msg)
                 return False
             _time.sleep(0.5)
         return True
@@ -1112,7 +1112,7 @@ class InjSysPUModeHandler(_DeviceSet):
     def cmd_abort(self):
         """Abort PU mode change."""
         self._abort.set()
-        self._logger.warn('Abort received for PU Mode change.')
+        self._logger.warning('Abort received for PU Mode change.')
         return True
 
     def _check_abort(self):

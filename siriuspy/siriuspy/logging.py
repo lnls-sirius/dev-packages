@@ -14,8 +14,9 @@ def get_logger(obj=None):
     if mod is not None:
         return logging.getLogger(mod.__name__)
 
-    get_logger(get_logger).warn(
-        'Could not resolve logger name. Returning root logger.')
+    get_logger(get_logger).warning(
+        'Could not resolve logger name. Returning root logger.'
+    )
     return logging.getLogger()
 
 

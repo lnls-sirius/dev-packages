@@ -925,10 +925,10 @@ class Acquisition(_Device):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
         if not self._wait('DUMP', False, timeout=timeout):
-            self._logger.warn('Timed out waiting data dump.')
+            self._logger.warning('Timed out waiting data dump.')
             return False
         if pv_update and not self._update_data_evt.wait(timeout=timeout):
-            self._logger.warn('Timed out waiting PV data update.')
+            self._logger.warning('Timed out waiting PV data update.')
             return False
         self._update_data_evt.clear()
         return True

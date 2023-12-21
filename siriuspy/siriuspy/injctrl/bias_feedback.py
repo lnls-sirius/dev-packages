@@ -183,8 +183,9 @@ class BiasFeedback:
         self.bias_data = _np.array(value)
         max_ = _Const.BIASFB_MAX_DATA_SIZE
         if self.bias_data.size > max_:
-            self._logger.warn(
-                f'Bias data is too big (>{max_:d}). Trimming first points.')
+            self._logger.warning(
+                'Bias data is too big (>%d). Trimming first points.', max_
+            )
             self.bias_data = self.bias_data[-max_:]
         self._update_models()
         self.run_callbacks('ModelDataBias-RB', value)
@@ -195,8 +196,9 @@ class BiasFeedback:
         self.injc_data = _np.array(value)
         max_ = _Const.BIASFB_MAX_DATA_SIZE
         if self.injc_data.size > max_:
-            self._logger.warn(
-                f'InjCurr data is too big (>{max_:d}). Trimming first points.')
+            self._logger.warning(
+                'InjCurr data is too big (>%d). Trimming first points.', max_
+            )
             self.injc_data = self.injc_data[-max_:]
         self._update_models()
         self.run_callbacks('ModelDataInjCurr-RB', value)
@@ -324,8 +326,9 @@ class BiasFeedback:
         if bias in xun:
             idx = (xun == bias).nonzero()[0][0]
             if cnts[idx] >= max(2, self.bias_data.size // 5):
-                self._logger.warn(
-                    'Too many data with this abscissa. Discarding point.')
+                self._logger.warning(
+                    'Too many data with this abscissa. Discarding point.'
+                )
                 return
         self._npts_after_fit += 1
 
@@ -344,7 +347,7 @@ class BiasFeedback:
         if x.size != y.size:
             msg = 'Arrays with incompatible sizes. Trimming first points of '
             msg += 'bias.' if x.size > y.size else 'injcurr.'
-            self._logger.warn(msg)
+            self._logger.warning(msg)
             siz = min(x.size, y.size)
             x = x[-siz:]
             y = y[-siz:]

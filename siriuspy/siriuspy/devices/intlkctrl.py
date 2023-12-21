@@ -468,7 +468,7 @@ class BLInterlockCtrl(_Device):
 
         # check and reset EPS
         if not self.is_beamline_eps_ok:
-            self._logger.warn('beamline eps reset')
+            self._logger.warning('beamline eps reset')
             self.cmd_beamline_eps_reset()
             t0 = _time.time()
             while not self.is_beamline_eps_ok:
@@ -479,7 +479,7 @@ class BLInterlockCtrl(_Device):
 
         # check frontend shutter permission and open gatevalves for hutchA
         if not self.is_frontend_shutter_eps_permission_ok:
-            self._logger.warn('open frontend and hutchA gatevalves')
+            self._logger.warning('open frontend and hutchA gatevalves')
             # open frontend and hutchA gatevalves
             self.cmd_frontend_gatevalves_open()
             t0 = _time.time()
@@ -492,7 +492,7 @@ class BLInterlockCtrl(_Device):
 
         # check hutchA shutter permission and open gatevalves for hutchB
         if not self.is_hutchA_shutter_eps_permission_ok:
-            self._logger.warn('open hutchB gatevalves')
+            self._logger.warning('open hutchB gatevalves')
             is_ok = self.cmd_hutchB_gatevalves_open(
                 timeout=self.TIMEOUT_GATEVALVE)
             if not is_ok:
