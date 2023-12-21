@@ -391,22 +391,32 @@ class App(_Callback):
 
     def read(self, reason):
         """Read from IOC database."""
-        value = None
-        return value
+        _ = reason
+        return None
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        self._logger.info('Write received for: %s --> %s', reason, str(value))
+        self._logger.info(
+            'Write received for: %s --> %s',
+            reason,
+            str(value),
+            extra={'ioc_only': True}
+        )
         if reason in self.map_pv2write.keys():
             status = self.map_pv2write[reason](value)
             self._logger.info(
                 '%s Write for: %s --> %s',
                 str(status).upper(),
                 reason,
-                str(value)
+                str(value),
+                extra={'ioc_only': True}
             )
             return status
-        self._logger.warning('PV %s does not have a set function.', reason)
+        self._logger.warning(
+            'PV %s does not have a set function.',
+            reason,
+            extra={'ioc_only': True}
+        )
         return False
 
     def update_log(self, msg):
@@ -990,6 +1000,7 @@ class App(_Callback):
     # --- callbacks ---
 
     def _callback_watch_eguntrig(self, value, **kws):
+        _ = kws
         if not self._init_egun:
             self._init_egun = True
             return
@@ -999,6 +1010,7 @@ class App(_Callback):
             target=self._watch_eguntrig, args=[value, ], daemon=True).start()
 
     def _watch_eguntrig(self, value, **kws):
+        _ = kws
         cmd = 'on' if value else 'off'
         _t0 = _time.time()
         while _time.time() - _t0 < 10:
@@ -1109,6 +1121,7 @@ class App(_Callback):
             self.run_callbacks('PUMode-Sts', self._pumode)
 
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
+        _ = kws
         if value is None:
             return
         if self._aspu_standby_state == _Const.StandbyInject.Standby:
@@ -1449,7 +1462,7 @@ class App(_Callback):
             text = 'Remaining time: {}s'.format(remaining)
             self.run_callbacks('Log-Mon', text)
             if remaining % 60 == 0:
-                self._logger.info(text)
+                self._logger.info(text, extra={'ioc_only': True})
 
             # prepare subsystems
             if remaining <= self._topup_puwarmuptime:
@@ -1655,7 +1668,8 @@ class App(_Callback):
                 self._logger.warning(
                     'DiagStatus check took more than planned... %.3f/%.3f s',
                     ttook,
-                    tplanned
+                    tplanned,
+                    extra={'ioc_only': True}
                 )
 
     def _update_injstatus(self):
@@ -1728,5 +1742,6 @@ class App(_Callback):
                 self._logger.warning(
                     'InjStatus check took more than planned... %.3f/%.3f s',
                     ttook,
-                    tplanned
+                    tplanned,
+                    extra={'ioc_only': True}
                 )
