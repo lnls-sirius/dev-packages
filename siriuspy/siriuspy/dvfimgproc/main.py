@@ -126,7 +126,9 @@ class App:
             or reason.endswith('-Sel') \
             or reason.endswith('-Cmd')
         if not pv_is_writable:
-            self._logger.warning(f'PV {reason} is not writable!')
+            self._logger.warning(
+                'PV %s is not writable!', reason, extra={'ioc_only': True}
+            )
             return False
 
         res = self._write_roi(reason, value)
@@ -171,14 +173,20 @@ class App:
                 # update epics db successfully
                 value = self._conv_imgattr2value(attr)
                 if value is None:
-                    self._logger.warning(msgfmt_nok.format(pvname))
+                    self._logger.warning(
+                        msgfmt_nok.format(pvname), extra={'ioc_only': True}
+                    )
                     self._write_pv_failed(pvname)
                     self._init_driver_flag = False
                 else:
-                    self._logger.info(f'PV {pvname} initialized.')
+                    self._logger.info(
+                        'PV %s initialized.', pvname, extra={'ioc_only': True}
+                    )
                     self._write_pv(pvname, value)
             else:
-                self._logger.warning(msgfmt_nok.format(pvname))
+                self._logger.warning(
+                    msgfmt_nok.format(pvname), extra={'ioc_only': True}
+                )
                 self._write_pv_failed(pvname)
                 self._init_driver_flag = False
 
@@ -204,7 +212,10 @@ class App:
             value = self._conv_imgattr2value(attr)
             if value is None:
                 self._logger.warning(
-                    f'PV {pvname} could not be updated with None value!')
+                    'PV %s could not be updated with None value!',
+                    pvname,
+                    extra={'ioc_only': True}
+                )
                 continue
 
             # check if fit is valid and update value
@@ -287,18 +298,24 @@ class App:
     def _write_pv(self, pvname, value=None, success=True):
         """."""
         if success:
-            if isinstance(value, (bool, _np.bool, _np.bool_)):
+            if isinstance(value, (bool, _np.bool_)):
                 value = 1 if value else 0
             try:
                 self._driver.setParam(pvname, value)
                 self._driver.updatePV(pvname)
             except TypeError:
                 self._logger.warning(
-                    f'_write_pv: error in updatePV for {pvname} {value}')
+                    '_write_pv: error in updatePV for %s %d',
+                    pvname,
+                    value,
+                    extra={'ioc_only': True}
+                )
             self._driver.setParamStatus(
                 pvname, _Alarm.NO_ALARM, _Severity.NO_ALARM)
         else:
-            self._logger.debug('{}: updated with alarm'.format(pvname))
+            self._logger.debug(
+                '%s: updated with alarm', pvname, extra={'ioc_only': True}
+            )
             self._driver.setParamStatus(
                 pvname, _Alarm.TIMEOUT_ALARM, _Severity.INVALID_ALARM)
 
