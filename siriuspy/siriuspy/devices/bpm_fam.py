@@ -392,7 +392,9 @@ class FamBPMs(_DeviceSet):
 
     def update_mturn_initial_signals(self):
         """Call this method before acquisition to get orbit for comparison."""
-        self._initial_signals = _np.array(self.get_mturn_signals())
+        sig = _np.array(self.get_mturn_signals())
+        sig = sig if sig.shape[1] != 0 else None
+        self._initial_signals = sig
 
     def update_mturn_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
@@ -486,7 +488,7 @@ class FamBPMs(_DeviceSet):
 
         Returns:
             int|float: code describing what happened:
-                -2: size of signals changed in relation to initial signals
+                -2: size of signals is 0;
                 -1: initial signals were not defined;
                 =0: signals updated.
                 >0: timeout waiting BPMs. The returned value is a float of
@@ -504,9 +506,10 @@ class FamBPMs(_DeviceSet):
         while timeout > 0:
             t00 = _time.time()
             sig = _np.array(self.get_mturn_signals())
-            if sig.shape != sig0.shape:
+            siz = min(sig.shape[1], sig0.shape[1])
+            if siz == 0:
                 return -2
-            errors = _np.all(_np.equal(sig, sig0), axis=1)
+            errors = _np.all(_np.equal(sig[:, :siz], sig0[:, :siz]), axis=1)
             if not _np.any(errors):
                 return 0
             _log.debug('Signals did not update yet. Trying again.')
