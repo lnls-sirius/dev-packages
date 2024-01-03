@@ -26,6 +26,8 @@ class Constants(_csdev.Const):
     NoYes = _get_namedtuple('NoYes', _et.NO_YES)
     StsLblsDVF = _get_namedtuple('StsLblsDVF', _et.STS_LBLS_DVF)
 
+    DEF_DVFSTATUS = 0b11111111
+
     def __init__(self, devname):
         """."""
         self._devname = devname
@@ -141,6 +143,10 @@ class Constants(_csdev.Const):
                 'ImgROI' + axis + 'FWHM' + mon_: {
                     'type': 'int', 'unit': 'px'
                 },
+                'ImgROI' + axis + 'Proj' + mon_: {
+                    'type': 'float', 'count': 1,
+                    'unit': 'intensity',
+                },
                 'ImgROI' + axis + 'UpdateWithFWHMFactor-SP': {
                     'type': 'float', 'value': 2.0, 'unit': 'fwhm_factor',
                     'prec': 3, 'lolim': 0, 'hilim': 2000,
@@ -227,7 +233,7 @@ class Constants(_csdev.Const):
                 'type': 'int', 'value': 0,
             },
             'ImgDVFStatus-Mon': {
-                'type': 'int', 'value': 0b11111111,
+                'type': 'int', 'value': self.DEF_DVFSTATUS,
             },
             'ImgDVFStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsDVF._fields),

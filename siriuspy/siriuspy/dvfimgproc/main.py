@@ -34,6 +34,7 @@ class App:
         'ImgROIX-RB': ('fitx', 'roi'),
         'ImgROIXCenter-Mon': ('fitx', 'roi_center'),
         'ImgROIXFWHM-Mon': ('fitx', 'roi_fwhm'),
+        'ImgROIXProj-Mon': ('fitx', 'roi_proj'),
         # --- roix_fit ---
         'ImgROIXFitAmplitude-Mon': ('fitx', 'roi_amplitude'),
         'ImgROIXFitMean-Mon': ('fitx', 'roi_mean'),
@@ -43,6 +44,7 @@ class App:
         'ImgROIY-RB': ('fity', 'roi'),
         'ImgROIYCenter-Mon': ('fity', 'roi_center'),
         'ImgROIYFWHM-Mon': ('fity', 'roi_fwhm'),
+        'ImgROIYProj-Mon': ('fity', 'roi_proj'),
         # --- roiy_fit ---
         'ImgROIYFitAmplitude-Mon': ('fity', 'roi_amplitude'),
         'ImgROIYFitMean-Mon': ('fity', 'roi_mean'),
