@@ -289,7 +289,7 @@ class App:
 
         # create object
         meas = MeasDVF(
-            self.const.devname,
+            self.const,
             fwhmx_factor=fwhmx_factor, fwhmy_factor=fwhmy_factor,
             roi_with_fwhm=roi_with_fwhm,
             intensity_threshold=intensity_threshold,
