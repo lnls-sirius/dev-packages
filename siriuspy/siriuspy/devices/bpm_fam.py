@@ -393,8 +393,7 @@ class FamBPMs(_DeviceSet):
     def update_mturn_initial_signals(self):
         """Call this method before acquisition to get orbit for comparison."""
         sig = _np.array(self.get_mturn_signals())
-        sig = sig if sig.shape[1] != 0 else None
-        self._initial_signals = sig
+        self._initial_signals = sig if sig.shape[1] != 0 else None
 
     def update_mturn_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
