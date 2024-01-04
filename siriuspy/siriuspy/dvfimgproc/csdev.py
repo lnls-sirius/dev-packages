@@ -144,8 +144,7 @@ class Constants(_csdev.Const):
                     'type': 'int', 'unit': 'px'
                 },
                 'ImgROI' + axis + 'Proj' + mon_: {
-                    'type': 'float', 'count': 1,
-                    'unit': 'intensity',
+                    'type': 'int', 'count': 2, 'unit': 'intensity',
                 },
                 'ImgROI' + axis + 'UpdateWithFWHMFactor-SP': {
                     'type': 'float', 'value': 2.0, 'unit': 'fwhm_factor',
