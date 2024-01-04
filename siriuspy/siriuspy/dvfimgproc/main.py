@@ -204,13 +204,16 @@ class App:
             self._write_pv('ImgIsWithBeam-Mon', 0)
 
         invalid_fitx, invalid_fity = [False]*2
+        with_beam = self.meas.image2dfit.is_with_image
+
         for pvname, attr in App._MON_PVS_2_IMGFIT.items():
             # check if is roi_rb and if it needs updating
             if pvname in ('ImgROIX-RB', 'ImgROIY-RB'):
                 if not self.meas.update_roi_with_fwhm:
                     continue
 
-            if not self.meas.image2dfit.is_with_image and 'Fit' in pvname:
+            # if no beam, return if PV is of fit type
+            if not with_beam and 'Fit' in pvname and 'ProcTime' not in pvname:
                 return
 
             # get image attribute value
