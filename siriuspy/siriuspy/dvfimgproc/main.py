@@ -202,7 +202,6 @@ class App:
 
         if not self.meas.image2dfit.is_with_image:
             self._write_pv('ImgIsWithBeam-Mon', 0)
-            return
 
         invalid_fitx, invalid_fity = [False]*2
         for pvname, attr in App._MON_PVS_2_IMGFIT.items():
@@ -210,6 +209,9 @@ class App:
             if pvname in ('ImgROIX-RB', 'ImgROIY-RB'):
                 if not self.meas.update_roi_with_fwhm:
                     continue
+
+            if 'Fit' in pvname:
+                return
 
             # get image attribute value
             value = self._conv_imgattr2value(attr)
