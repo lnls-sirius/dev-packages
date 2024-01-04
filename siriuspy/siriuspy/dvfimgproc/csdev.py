@@ -27,6 +27,7 @@ class Constants(_csdev.Const):
     StsLblsDVF = _get_namedtuple('StsLblsDVF', _et.STS_LBLS_DVF)
 
     DEF_DVFSTATUS = 0b11111111
+    DEF_BEAM_THRESHOLD = 100
 
     def __init__(self, devname):
         """."""
@@ -116,19 +117,23 @@ class Constants(_csdev.Const):
                 'value': self.NoYes.No,
             },
             'ImgIsWithBeamThreshold-SP': {
-                'type': 'int', 'unit': 'intensity', 'value': 10,
+                'type': 'int', 'unit': 'intensity',
+                'value': self.DEF_BEAM_THRESHOLD,
             },
             'ImgIsWithBeamThreshold-RB': {
-                'type': 'int', 'unit': 'intensity', 'value': 10,
+                'type': 'int', 'unit': 'intensity',
+                'value': self.DEF_BEAM_THRESHOLD,
             },
         }
         return dbase
 
     def _get_roi_db(self):
+        dvf_params = _DVF.conv_devname2parameters(self.devname)
         db = {}
         rb_ = '-RB'
         sp_ = '-SP'
         mon_ = '-Mon'
+        sizes = {'X': dvf_params.IMAGE_SIZE_X, 'Y': dvf_params.IMAGE_SIZE_Y}
         for axis in ['X', 'Y']:
             db.update({
                 'ImgROI' + axis + sp_: {
@@ -144,7 +149,7 @@ class Constants(_csdev.Const):
                     'type': 'int', 'unit': 'px'
                 },
                 'ImgROI' + axis + 'Proj' + mon_: {
-                    'type': 'int', 'count': 2, 'unit': 'intensity',
+                    'type': 'int', 'count': sizes[axis], 'unit': 'intensity',
                 },
                 'ImgROI' + axis + 'UpdateWithFWHMFactor-SP': {
                     'type': 'float', 'value': 2.0, 'unit': 'fwhm_factor',
