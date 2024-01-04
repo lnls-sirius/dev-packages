@@ -210,7 +210,7 @@ class App:
                 if not self.meas.update_roi_with_fwhm:
                     continue
 
-            if 'Fit' in pvname:
+            if not self.meas.image2dfit.is_with_image and 'Fit' in pvname:
                 return
 
             # get image attribute value
