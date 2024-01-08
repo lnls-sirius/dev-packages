@@ -62,7 +62,7 @@ class IDFFConst(_csdev.Const):
         """Return property database."""
         corr_dict = {
             'type': 'float', 'value': 0,
-            'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            'unit': 'A', 'prec': self.DEFAULT_CORR_PREC}
         dbase = {
             'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
@@ -91,24 +91,24 @@ class IDFFConst(_csdev.Const):
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields},
-            'CorrCH1Current-Mon': dict(corr_dict),
-            'CorrCH2Current-Mon': dict(corr_dict),
-            'CorrCV1Current-Mon': dict(corr_dict),
-            'CorrCV2Current-Mon': dict(corr_dict),
+            'CorrCH1Current-Mon': corr_dict.copy(),
+            'CorrCH2Current-Mon': corr_dict.copy(),
+            'CorrCV1Current-Mon': corr_dict.copy(),
+            'CorrCV2Current-Mon': corr_dict.copy(),
         }
 
         if self.has_qscorrs:
-           dbase.update({
+            dbase.update({
                'ControlQS-Sel': {
                    'type': 'enum', 'enums': _et.DSBL_ENBL,
                    'value': self.DEFAULT_CONTROL_QS,
                    'unit': 'If QS are included in loop'},
-                'ControlQS-Sts': {
+               'ControlQS-Sts': {
                    'type': 'enum', 'enums': _et.DSBL_ENBL,
                    'value': self.DEFAULT_CONTROL_QS,
                    'unit': 'If QS are included in loop'},
-                'CorrQS1Current-Mon': dict(corr_dict),
-                'CorrQS2Current-Mon': dict(corr_dict),
+               'CorrQS1Current-Mon': corr_dict.copy(),
+               'CorrQS2Current-Mon': corr_dict.copy(),
             })
 
         if self.has_qncorrs:
@@ -124,18 +124,18 @@ class IDFFConst(_csdev.Const):
             })
         if self.has_qd_1corrs:
             dbase.update({
-                'CorrQD1_1Current-Mon': dict(corr_dict),
-                'CorrQD2_1Current-Mon': dict(corr_dict),
+                'CorrQD1_1Current-Mon': corr_dict.copy(),
+                'CorrQD2_1Current-Mon': corr_dict.copy(),
             })
         if self.has_qfcorrs:
             dbase.update({
-                'CorrQF1Current-Mon': dict(corr_dict),
-                'CorrQF2Current-Mon': dict(corr_dict),
+                'CorrQF1Current-Mon': corr_dict.copy(),
+                'CorrQF2Current-Mon': corr_dict.copy(),
             })
         if self.has_qd_2corrs:
             dbase.update({
-                'CorrQD1_2Current-Mon': dict(corr_dict),
-                'CorrQD2_2Current-Mon': dict(corr_dict),
+                'CorrQD1_2Current-Mon': corr_dict.copy(),
+                'CorrQD2_2Current-Mon': corr_dict.copy(),
             })
 
         dbase = _csdev.add_pvslist_cte(dbase)
