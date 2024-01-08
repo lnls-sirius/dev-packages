@@ -864,12 +864,12 @@ class App(_Callback):
 
     def _acq_config(self):
         self._update_log('Aborting BPM acquisition...')
-        ret = self._fambpm_dev.cmd_mturn_acq_abort()
+        ret = self._fambpm_dev.cmd_abort_mturn_acquisition()
         if ret > 0:
             self._update_log('ERR:Failed to abort BPM acquisition.')
             return
         self._update_log('...done. Configuring BPM acquisition...')
-        ret = self._fambpm_dev.mturn_config_acquisition(
+        ret = self._fambpm_dev.config_mturn_acquisition(
             nr_points_before=self._acq_spre,
             nr_points_after=self._acq_spost,
             acq_rate=self._acq_chan,

@@ -252,15 +252,15 @@ class EqualizeBPMs(_FamBPMs):
 
         # acquire antennas data in FOFB rate
         self._log('Preparing BPMs')
-        ret = self.cmd_mturn_acq_abort()
+        ret = self.cmd_abort_mturn_acquisition()
         if ret > 0:
             self._log(
                 f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
                 'previous acquistion.')
             return
 
-        self.mturn_reset_flags_and_update_initial_timestamps()
-        ret = self.mturn_config_acquisition(
+        self.reset_mturn_initial_state()
+        ret = self.config_mturn_acquisition(
             nr_points_after=self._acq_nrpoints, nr_points_before=0,
             acq_rate='FOFB', repeat=False, external=True)
         if ret > 0:
@@ -272,7 +272,7 @@ class EqualizeBPMs(_FamBPMs):
         self.trigger.source = self.trigger.source_options.index('Clock3')
 
         self._log('Waiting BPMs to update')
-        ret = self.mturn_wait_update(timeout=self._acq_timeout)
+        ret = self.wait_update_mturn(timeout=self._acq_timeout)
         if ret > 0:
             self._log(
                 f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
@@ -330,7 +330,7 @@ class EqualizeBPMs(_FamBPMs):
     def _do_acquire_for_check(self):
         # acquire antennas data in FOFB rate
         self._log('Preparing BPMs')
-        ret = self.cmd_mturn_acq_abort()
+        ret = self.cmd_abort_mturn_acquisition()
         if ret > 0:
             self._log(
                 f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
@@ -341,8 +341,8 @@ class EqualizeBPMs(_FamBPMs):
         fsamp = self.get_sampling_frequency(1)
         nrpts = int(fsamp / fswtc)
 
-        self.mturn_reset_flags_and_update_initial_timestamps()
-        ret = self.mturn_config_acquisition(
+        self.reset_mturn_initial_state()
+        ret = self.config_mturn_acquisition(
             nr_points_after=nrpts, nr_points_before=0,
             acq_rate='FOFB', repeat=False, external=True)
         if ret > 0:
@@ -354,7 +354,7 @@ class EqualizeBPMs(_FamBPMs):
         self.trigger.source = self.trigger.source_options.index('Clock3')
 
         self._log('Waiting BPMs to update')
-        ret = self.mturn_wait_update(timeout=self._acq_timeout)
+        ret = self.wait_update_mturn(timeout=self._acq_timeout)
         if ret > 0:
             self._log(
                 f'ERR: BPM {self.bpm_names[ret-1]} did not update in time.')
@@ -685,7 +685,7 @@ class EqualizeBPMs(_FamBPMs):
         b_d = (b-d) / (b+d)
         # Get the positions:
         posx = (a_c - b_d) / 2
-        posy = (a_c + b_d) / 2 
+        posy = (a_c + b_d) / 2
         # Apply position gains:
         posx *= gainx[:, None]
         posy *= gainy[:, None]
