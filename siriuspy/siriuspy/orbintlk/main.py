@@ -279,7 +279,7 @@ class App(_Callback):
             'ConfigHLTriggers-Cmd': self.cmd_config_hltrigs,
             'ConfigLLRFIntlk-Cmd': self.cmd_config_llrf,
             'ConfigBPMs-Cmd': self.cmd_config_bpms,
-            'ConfigAFCPhyTrigs-Cmd': self.cmd_config_phytrigs,
+            'ConfigAFCPhyTrigs-Cmd': self.cmd_config_afcphytrigs,
             }
 
         # configuration scanning
@@ -360,89 +360,116 @@ class App(_Callback):
     def _enable_lock(self, init=False):
         if not init:
             self._lock_suspend = False
-        self._handle_lock_evg_configs(init)
-        self._handle_lock_fouts(init)
-        self._handle_lock_afcti(init)
-        self._handle_lock_hltriggers(init)
-        self._handle_lock_llrf(init)
-        self._handle_lock_bpm_configs(init)
-        self._handle_lock_afcphytrigs(init)
+        run = "init_callbacks" if init else "run_callbacks"
+        self._handle_lock_evg_configs(run=run)
+        self._handle_lock_fouts(run=run)
+        self._handle_lock_afcti(run=run)
+        self._handle_lock_hltriggers(run=run)
+        self._handle_lock_llrf(run=run)
+        self._handle_lock_bpm_configs(run=run)
+        self._handle_lock_afcphytrigs(run=run)
         if init:
-            self._handle_lock_evg_enable(init)
-            self._handle_lock_bpm_enable(init)
+            self._handle_lock_evg_enable()
+            self._handle_lock_bpm_enable()
 
     def _disable_lock(self):
         self._lock_suspend = True
 
-    def _handle_lock_evg_configs(self, init=False):
+    def _handle_lock_evg_configs(self, run="run_callbacks"):
         self._evg_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for propty_sp, desired_val in self._const.EVG_CONFIGS:
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._evg_dev.pv_object(propty_rb)
-            if init:
+            if run == "now":
+                if self._evg_dev[propty_rb] == desired_val:
+                    continue
+                pvo = self._evg_dev.pv_object(propty_sp)
+                pvo.put(desired_val, wait=True)
+                _time.sleep(0.2)
+            elif run == "init_callbacks":
                 pvo.add_callback(_part(
                     self._callback_lock, self._evg_dev, propty_sp, desired_val))
-            else:
+            elif run == "run_callbacks":
                 pvo.run_callbacks()
 
-    def _handle_lock_evg_enable(self, init=False):
+    def _handle_lock_evg_enable(self):
         # lock interlock enable state
         pvo = self._evg_dev.pv_object('IntlkCtrlEnbl-Sts')
-        if init:
-            pvo.add_callback(self._callback_evg_lock_intlk)
-        else:
-            pvo.run_callbacks()
+        pvo.add_callback(self._callback_evg_lock_intlk)
 
-    def _handle_lock_fouts(self, init=False):
-        for dev in self._fout_devs.values():
+    def _handle_lock_fouts(self, run="run_callbacks"):
+        for devname, dev in self._fout_devs.items():
+            if run == "now" and not dev.connected:
+                self._update_log(f'ERR:{devname} disconnected.')
+                continue
             dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             pvo = dev.pv_object('RxEnbl-RB')
-            if init:
+            if run == "now":
+                desired_value = self._fout2rxenbl[devname]
+                dev['RxEnbl-SP'] = desired_value
+                dev._wait('RxEnbl-RB', desired_value, timeout=1)
+                dev['RxLockedLtcRst-Cmd'] = 1
+            elif run == "init_callbacks":
                 pvo.add_callback(self._callback_fout_lock)
-            else:
+            elif run == "run_callbacks":
                 pvo.run_callbacks()
 
-    def _handle_lock_afcti(self, init=False):
+    def _handle_lock_afcti(self, run="run_callbacks"):
         for dev in self._afcti_devs.values():
+            if run == "now" and not dev.connected:
+                self._update_log(f'ERR:{dev.devname} disconnected.')
+                continue
             dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             for propty_sp, desired_val in self._const.AFCTI_CONFIGS:
                 propty_rb = _PVName.from_sp2rb(propty_sp)
                 pvo = dev.pv_object(propty_rb)
-                if init:
+                if run == "now":
+                    dev[propty_sp] = desired_val
+                elif run == "init_callbacks":
                     pvo.add_callback(_part(
                         self._callback_lock, dev, propty_sp, desired_val))
-                else:
+                elif run == "run_callbacks":
                     pvo.run_callbacks()
+            if run == "now":
+                dev['ClkLockedLtcRst-Cmd'] = 1
 
-    def _handle_lock_hltriggers(self, init=False):
+    def _handle_lock_hltriggers(self, run="run_callbacks"):
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             trigdev = self._hltrig_devs[trigname]
+            if run == "now" and not trigdev.connected:
+                self._update_log(f'ERR:{trigname} disconnected.')
+                continue
             trigdev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             for prop_sp, desired_val in configs:
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = trigdev.pv_object(prop_rb)
-                if init:
+                if run == "now":
+                    trigdev[prop_sp] = desired_val
+                elif run == "init_callbacks":
                     pvo.add_callback(
-                        _part(self._callback_lock, trigdev, prop_sp, desired_val))
-                else:
+                        _part(
+                            self._callback_lock, trigdev, prop_sp, desired_val
+                        )
+                    )
+                elif run == "run_callbacks":
                     pvo.run_callbacks()
 
-    def _handle_lock_llrf(self, init=False):
+    def _handle_lock_llrf(self, run="run_callbacks"):
         self._llrf.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         pvo_beamtrip = self._llrf.pv_object('ILK:BEAM:TRIP')
         pvo_manintlk = self._llrf.pv_object('ILK:MAN')
-        if init:
+        if run == "init_callbacks":
             pvo_beamtrip.add_callback(_part(
                 self._callback_lock, self._llrf,
                 'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
             pvo_manintlk.add_callback(_part(
                 self._callback_lock, self._llrf,
                 'ILK:MAN:S', self._llrf_intlk_state))
-        else:
+        elif run == "run_callbacks":
             pvo_beamtrip.run_callbacks()
             pvo_manintlk.run_callbacks()
 
-    def _handle_lock_bpm_configs(self, init=False):
+    def _handle_lock_bpm_configs(self, run="run_callbacks"):
         # lock BPM interlock enable and limits
         prop2lock = [
             'IntlkMinSumEn-Sts',
@@ -458,13 +485,22 @@ class App(_Callback):
             'IntlkLmtAngMaxY-RB',
             'IntlkLmtAngMinY-RB',
         ]
+        if run == "now" and not self._orbintlk_dev.connected:
+            for dev in self._orbintlk_dev.devices:
+                if dev.connected:
+                    self._update_log(f'ERR:{dev.devname} disconnected.')
+            return
         self._orbintlk_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for dev in self._orbintlk_dev.devices:
             for prop in prop2lock:
                 pvo = dev.pv_object(prop)
-                if init:
+                pvname = pvo.pvname
+                _, prop_sp, desd_val = self._get_bpm_prop_from_pvname(pvname)
+                if run == "now":
+                    dev[prop_sp] = desd_val
+                elif run == "init_callbacks":
                     pvo.add_callback(self._callback_bpm_lock)
-                else:
+                elif run == "run_callbacks":
                     pvo.run_callbacks()
 
         # lock BPM logical triggers
@@ -473,23 +509,25 @@ class App(_Callback):
             for prop_sp, desired_val in self._const.SIBPMLOGTRIG_CONFIGS:
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
-                if init:
+                if run == "now":
+                    dev[prop_sp] = desired_val
+                elif run == "init_callbacks":
                     pvo.add_callback(
                         _part(self._callback_lock, dev, prop_sp, desired_val))
-                else:
+                elif run == "run_callbacks":
                     pvo.run_callbacks()
 
-    def _handle_lock_bpm_enable(self, init=False):
+    def _handle_lock_bpm_enable(self):
         self._orbintlk_dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
         for dev in self._orbintlk_dev.devices:
             pvo = dev.pv_object('IntlkEn-Sts')
-            if init:
-                pvo.add_callback(self._callback_bpm_lock)
-            else:
-                pvo.run_callbacks()
+            pvo.add_callback(self._callback_bpm_lock)
 
-    def _handle_lock_afcphytrigs(self, init=False):
+    def _handle_lock_afcphytrigs(self, run="run_callbacks"):
         for dev in self._phytrig_devs:
+            if run == "now" and not dev.connected:
+                self._update_log(f'ERR:{dev.devname} disconnected.')
+                continue
             dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
             for prop_sp, desired_val in self._const.AFCPHYTRIG_CONFIGS:
                 # only lock polarity of other AFC physical triggers than SI BPM
@@ -497,10 +535,12 @@ class App(_Callback):
                     continue
                 prop_rb = _PVName.from_sp2rb(prop_sp)
                 pvo = dev.pv_object(prop_rb)
-                if init:
+                if run == "now":
+                    dev[prop_sp] = desired_val
+                elif run == "init_callbacks":
                     pvo.add_callback(
                         _part(self._callback_lock, dev, prop_sp, desired_val))
-                else:
+                elif run == "run_callbacks":
                     pvo.run_callbacks()
 
     @property
@@ -895,26 +935,13 @@ class App(_Callback):
         if not self._evg_dev.connected:
             self._update_log('ERR:EVG disconnected.')
             return False
-        for propty_sp, desired_val in self._const.EVG_CONFIGS:
-            propty_rb = _PVName.from_sp2rb(propty_sp)
-            if self._evg_dev[propty_rb] == desired_val:
-                continue
-            pvo = self._evg_dev.pv_object(propty_sp)
-            pvo.put(desired_val, wait=True)
-            _time.sleep(0.2)
+        self._handle_lock_evg_configs(run="now")
         return True
 
     def cmd_config_fouts(self, value):
         """Configure Fouts according to lock configurations."""
         _ = value
-        for devname, dev in self._fout_devs.items():
-            if not dev.connected:
-                self._update_log(f'ERR:{devname} disconnected.')
-                continue
-            desired_value = self._fout2rxenbl[devname]
-            dev['RxEnbl-SP'] = desired_value
-            dev._wait('RxEnbl-RB', desired_value, timeout=1)
-            dev['RxLockedLtcRst-Cmd'] = 1
+        self._handle_lock_fouts(run="now")
         return True
 
     def cmd_config_afcti(self, value):
@@ -927,25 +954,13 @@ class App(_Callback):
             self._update_log('ERR:Open correction loops before ')
             self._update_log('ERR:configuring AFC Timing RTM loop.')
             return False
-        for dev in self._afcti_devs.values():
-            if not dev.connected:
-                self._update_log(f'ERR:{dev.devname} disconnected.')
-                continue
-            for propty_sp, desired_val in self._const.AFCTI_CONFIGS:
-                dev[propty_sp] = desired_val
-            dev['ClkLockedLtcRst-Cmd'] = 1
+        self._handle_lock_afcti(run="now")
         return True
 
     def cmd_config_hltrigs(self, value):
         """Configure HL triggers according to lock configurations."""
         _ = value
-        for trigname, configs in self._const.HLTRIG_2_CONFIG:
-            trigdev = self._hltrig_devs[trigname]
-            if not trigdev.connected:
-                self._update_log(f'ERR:{trigname} disconnected.')
-                continue
-            for prop_sp, desired_val in configs:
-                trigdev[prop_sp] = desired_val
+        self._handle_lock_hltriggers(run="now")
         return True
 
     def cmd_config_llrf(self, value):
@@ -961,34 +976,13 @@ class App(_Callback):
     def cmd_config_bpms(self, value):
         """Configure BPMs according to lock configurations."""
         _ = value
-        if not self._orbintlk_dev.connected:
-            for dev in self._orbintlk_dev.devices:
-                self._update_log(f'ERR:{dev.devname} disconnected.')
-            return False
-
-        for name, enbl in self._enable_lists.items():
-            self.set_enbllist(name, enbl)
-
-        for name, lim in self._limits.items():
-            self.set_intlk_lims(name, lim)
-
-        for dev in self._fambpm_dev.devices:
-            for prop, desired_val in self._const.SIBPMLOGTRIG_CONFIGS:
-                dev[prop] = desired_val
+        self._handle_lock_bpm_configs(run="run")
         return True
 
-    def cmd_config_phytrigs(self, value):
+    def cmd_config_afcphytrigs(self, value):
         """Configure physical triggers according to lock configurations."""
         _ = value
-        for dev in self._phytrig_devs:
-            if not dev.connected:
-                self._update_log(f'ERR:{dev.devname} disconnected.')
-                continue
-            for prop, desired_val in self._const.AFCPHYTRIG_CONFIGS:
-                # only lock polarity of other AFC physical triggers than SI BPM
-                if not self._check_lock_phytrig_prop(dev, prop):
-                    continue
-                dev[prop] = desired_val
+        self._handle_lock_afcphytrigs(run="now")
         return True
 
     # --- status methods ---
@@ -1506,13 +1500,14 @@ class App(_Callback):
             daemon=True)
         thread.start()
 
-    def _callback_bpm_lock(self, pvname, value, **kws):
+    def _get_bpm_prop_from_pvname(self, pvname):
         pvname = _PVName(pvname)
         devname = pvname.device_name
         propty_rb = pvname.propty
         propty_sp = _PVName.from_rb2sp(propty_rb)
         devidx = self._orbintlk_dev.BPM_NAMES.index(devname)
         device = self._orbintlk_dev.devices[devidx]
+
         if propty_rb.endswith('En-Sts'):
             entyp = 'pos' if 'Pos' in propty_rb else \
                 'ang' if 'Ang' in propty_rb else \
@@ -1533,9 +1528,13 @@ class App(_Callback):
             limname = f'{limcls}{limpln}{limtyp}'
             desired_value = self._limits[limname][devidx]
 
+        return device, propty_sp, desired_value
+
+    def _callback_bpm_lock(self, pvname, value, **kws):
+        device, prop_sp, desired_val = self._get_bpm_prop_from_pvname(pvname)
         thread = _CAThread(
             target=self._start_lock_thread,
-            args=(device, propty_sp, desired_value, pvname, value),
+            args=(device, prop_sp, desired_val, pvname, value),
             daemon=True)
         thread.start()
 
