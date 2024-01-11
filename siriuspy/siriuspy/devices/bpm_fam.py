@@ -125,8 +125,7 @@ class FamBPMs(_DeviceSet):
         Args:
             amps (list|numpy.ndarray, (4, ...)): A list or N-D array
                 containing the amplitudes of the four antennas in the order
-                A, B, C, D. If each antenna is a 2D array, the last index is
-                assumed to be related to BPMs.
+                A, B, C, D.
             gainx (float|numpy.ndarray, optional): Horizontal gain in [um]. If
                 None, then the nominal value of 12/sqrt(2) of the storage ring
                 will be used. Defaults to None. An array can be used to
