@@ -130,17 +130,25 @@ class FamBPMs(_DeviceSet):
             gainx (float|numpy.ndarray, optional): Horizontal gain in [um]. If
                 None, then the nominal value of 12/sqrt(2) of the storage ring
                 will be used. Defaults to None. An array can be used to
-                specify different values for each BPM.
+                specify different values for each BPM. In this case the gain
+                array must match the shape of the antennas arrays or satisfy
+                the broadcast rules in relation to them.
             gainy (float|numpy.ndarray, optional): Vertical gain in [um]. If
                 None, then the nominal value of 12/sqrt(2) of the storage ring
                 will be used. Defaults to None. An array can be used to
-                specify different values for each BPM.
+                specify different values for each BPM. In this case the gain
+                array must match the shape of the antennas arrays or satisfy
+                the broadcast rules in relation to them.
             offx (float|numpy.ndarray, optional): Horizontal offset in [um].
                 Defaults to 0.0. An array can be used to specify different
-                values for each BPM.
+                values for each BPM. In this case the gain array must match
+                the shape of the antennas arrays or satisfy the broadcast
+                rules in relation to them.
             offy (float|numpy.ndarray, optional): Vertical offset in [um].
                 Defaults to 0.0. An array can be used to specify different
-                values for each BPM.
+                values for each BPM. In this case the gain array must match
+                the shape of the antennas arrays or satisfy the broadcast
+                rules in relation to them.
 
         Returns:
             posx (numpy.ndarray, (...)): Horizontal position in [um]. Same
@@ -151,8 +159,9 @@ class FamBPMs(_DeviceSet):
         """
         a, b, c, d = amps
 
-        gainx = 12e3 / _np.sqrt(2) if gainx is None else gainx  # [um]
-        gainy = 12e3 / _np.sqrt(2) if gainy is None else gainy  # [um]
+        radius = 12e3  # [um]
+        gainx = radius / _np.sqrt(2) if gainx is None else gainx
+        gainy = radius / _np.sqrt(2) if gainy is None else gainy
         gainx = _np.atleast_1d(gainx)
         gainy = _np.atleast_1d(gainy)
         offx = _np.atleast_1d(offx)
