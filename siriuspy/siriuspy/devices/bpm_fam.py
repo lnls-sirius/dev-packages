@@ -116,6 +116,62 @@ class FamBPMs(_DeviceSet):
         self._mturn_signals2acq = sigs
         self._configure_automonitor_acquisition_pvs(state=True)
 
+    @staticmethod
+    def calc_positions_from_amplitudes(
+        amps, gainx=None, gainy=None, offx=0.0, offy=0.0
+    ):
+        """Calculate transverse positions from antennas amplitudes.
+
+        Args:
+            amps (list|numpy.ndarray, (4, ...)): A list or N-D array
+                containing the amplitudes of the four antennas in the order
+                A, B, C, D. If each antenna is a 2D array, the last index is
+                assumed to be related to BPMs.
+            gainx (float|numpy.ndarray, optional): Horizontal gain in [um]. If
+                None, then the nominal value of 12/sqrt(2) of the storage ring
+                will be used. Defaults to None. An array can be used to
+                specify different values for each BPM.
+            gainy (float|numpy.ndarray, optional): Vertical gain in [um]. If
+                None, then the nominal value of 12/sqrt(2) of the storage ring
+                will be used. Defaults to None. An array can be used to
+                specify different values for each BPM.
+            offx (float|numpy.ndarray, optional): Horizontal offset in [um].
+                Defaults to 0.0. An array can be used to specify different
+                values for each BPM.
+            offy (float|numpy.ndarray, optional): Vertical offset in [um].
+                Defaults to 0.0. An array can be used to specify different
+                values for each BPM.
+
+        Returns:
+            posx (numpy.ndarray, (...)): Horizontal position in [um]. Same
+                shape of antennas array.
+            posy (numpy.ndarray, (...)): Vertical position in [um]. Same
+                shape of antennas array.
+
+        """
+        a, b, c, d = amps
+
+        gainx = 12e3 / _np.sqrt(2) if gainx is None else gainx  # [um]
+        gainy = 12e3 / _np.sqrt(2) if gainy is None else gainy  # [um]
+        gainx = _np.atleast_1d(gainx)
+        gainy = _np.atleast_1d(gainy)
+        offx = _np.atleast_1d(offx)
+        offy = _np.atleast_1d(offy)
+
+        # Calculate difference over sum for each pair
+        a_c = (a - c) / (a + c)
+        b_d = (b - d) / (b + d)
+        # Get the positions:
+        posx = (a_c - b_d) / 2
+        posy = (a_c + b_d) / 2
+        # Apply position gains:
+        posx *= gainx
+        posy *= gainy
+        # Subtract offsets:
+        posx -= offx
+        posy -= offy
+        return posx, posy
+
     def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
         """."""
         for bpm in self:

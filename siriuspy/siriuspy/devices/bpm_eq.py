@@ -506,10 +506,10 @@ class EqualizeBPMs(_FamBPMs):
         if gains_new is None:
             self._log('ERR:Missing info. Acquire and process data first.')
 
-        orbx_init, orby_init = self._estimate_orbit(
-            mean, gains_init, gainx, gainy, offx, offy)
-        orbx_new, orby_new = self._estimate_orbit(
-            mean, gains_new, gainx, gainy, offx, offy)
+        orbx_init, orby_init = self.calc_positions_from_amplitudes(
+            mean * gains_init, gainx, gainy, offx, offy)
+        orbx_new, orby_new = self.calc_positions_from_amplitudes(
+            mean * gains_new, gainx, gainy, offx, offy)
         # Get the average over both semicycles
         self.data['orbx_init'] = orbx_init.mean(axis=-1)
         self.data['orby_init'] = orby_init.mean(axis=-1)
@@ -628,8 +628,8 @@ class EqualizeBPMs(_FamBPMs):
                 if not i and not j:
                     ld.set_label('Direct')
                     li.set_label('Inverse')
-            posx, posy = self._estimate_orbit(
-                antm, gain, gainx, gainy, offx, offy)
+            posx, posy = self.calc_positions_from_amplitudes(
+                antm * gain, gainx, gainy, offx, offy)
             sum_ = val.sum(axis=0)
             axs[4, j].plot(posx[:, 0], 'o-')
             axs[4, j].plot(posx[:, 1], 'o-')
@@ -676,23 +676,6 @@ class EqualizeBPMs(_FamBPMs):
         return fig, axs
 
     # ------- auxiliary methods ----------
-
-    @staticmethod
-    def _estimate_orbit(mean, gains, gainx, gainy, offx, offy):
-        a, b, c, d = mean * gains
-        # Calculate difference over sum for each pair
-        a_c = (a-c) / (a+c)
-        b_d = (b-d) / (b+d)
-        # Get the positions:
-        posx = (a_c - b_d) / 2
-        posy = (a_c + b_d) / 2
-        # Apply position gains:
-        posx *= gainx[:, None]
-        posy *= gainy[:, None]
-        # Subtract offsets:
-        posx -= offx[:, None]
-        posy -= offy[:, None]
-        return posx, posy
 
     def _log(self, message, *args, level='INFO', **kwrgs):
         if self._logger is None:
