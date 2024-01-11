@@ -499,17 +499,17 @@ class EqualizeBPMs(_FamBPMs):
         mean = self.data.get('antennas_mean')
         gains_init = self.data.get('gains_init')
         gains_new = self.data.get('gains_new')
-        gainx = self.data.get('posx_gain')
-        gainy = self.data.get('posy_gain')
-        offx = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
-        offy = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
+        gnx = self.data.get('posx_gain')[:, None]
+        gny = self.data.get('posy_gain')[:, None]
+        ofx = self.data.get('posx_offset', _np.zeros(len(self.bpms)))[:, None]
+        ofy = self.data.get('posy_offset', _np.zeros(len(self.bpms)))[:, None]
         if gains_new is None:
             self._log('ERR:Missing info. Acquire and process data first.')
 
         orbx_init, orby_init = self.calc_positions_from_amplitudes(
-            mean * gains_init, gainx, gainy, offx, offy)
+            mean * gains_init, gnx, gny, ofx, ofy)
         orbx_new, orby_new = self.calc_positions_from_amplitudes(
-            mean * gains_new, gainx, gainy, offx, offy)
+            mean * gains_new, gnx, gny, ofx, ofy)
         # Get the average over both semicycles
         self.data['orbx_init'] = orbx_init.mean(axis=-1)
         self.data['orby_init'] = orby_init.mean(axis=-1)
@@ -595,10 +595,10 @@ class EqualizeBPMs(_FamBPMs):
 
     def plot_antennas_mean(self):
         """."""
-        gainx = self.data.get('posx_gain')
-        gainy = self.data.get('posx_gain')
-        offx = self.data.get('posx_offset')
-        offy = self.data.get('posx_offset')
+        gnx = self.data.get('posx_gain')[:, None]
+        gny = self.data.get('posx_gain')[:, None]
+        ofx = self.data.get('posx_offset')[:, None]
+        ofy = self.data.get('posx_offset')[:, None]
         gacq = self.data.get('gains_acq')
         gini = self.data.get('gains_init')
         gnew = self.data.get('gains_new')
@@ -629,7 +629,7 @@ class EqualizeBPMs(_FamBPMs):
                     ld.set_label('Direct')
                     li.set_label('Inverse')
             posx, posy = self.calc_positions_from_amplitudes(
-                antm * gain, gainx, gainy, offx, offy)
+                antm * gain, gnx, gny, ofx, ofy)
             sum_ = val.sum(axis=0)
             axs[4, j].plot(posx[:, 0], 'o-')
             axs[4, j].plot(posx[:, 1], 'o-')
