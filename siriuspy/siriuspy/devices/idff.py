@@ -33,16 +33,16 @@ class IDFF(_DeviceSet):
 
         # self._devid, self._devsch, self._devscv, self._devsqs = \
         (self._devid, self._devsch, self._devscv, self._devsqs,
-         self._devsqd_1, self._devsqf, self._devsqd_2) = \
+         self._devsqd1, self._devsqf, self._devsqd2) = \
             self._create_devices(devname)
 
         devices = [self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
-        devices += self._devsqd_1
+        devices += self._devsqd1
         devices += self._devsqf
-        devices += self._devsqd_2
+        devices += self._devsqd2
         super().__init__(devices, devname=devname)
 
     @property
@@ -61,9 +61,9 @@ class IDFF(_DeviceSet):
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
-    def qd_1names(self):
+    def qd1names(self):
         """Return QD_1 corrector power supply names."""
-        return _IDSearch.conv_idname_2_idff_qd_1names(self.devname)
+        return _IDSearch.conv_idname_2_idff_qd1names(self.devname)
 
     @property
     def qfnames(self):
@@ -71,9 +71,9 @@ class IDFF(_DeviceSet):
         return _IDSearch.conv_idname_2_idff_qfnames(self.devname)
 
     @property
-    def qd_2names(self):
+    def qd2names(self):
         """Return QD_2 corrector power supply names."""
-        return _IDSearch.conv_idname_2_idff_qd_2names(self.devname)
+        return _IDSearch.conv_idname_2_idff_qd2names(self.devname)
 
     @property
     def iddev(self):
@@ -96,9 +96,9 @@ class IDFF(_DeviceSet):
         return self._devsqs
 
     @property
-    def qd_1devs(self):
-        """Return QD_1 corrector power supply names."""
-        return self._devsqd_1
+    def qd1devs(self):
+        """Return QD1 corrector power supply names."""
+        return self._devsqd1
 
     @property
     def qfdevs(self):
@@ -106,9 +106,9 @@ class IDFF(_DeviceSet):
         return self._devsqf
 
     @property
-    def qd_2devs(self):
-        """Return QD_2 corrector power supply names."""
-        return self._devsqd_2
+    def qd2devs(self):
+        """Return QD2 corrector power supply names."""
+        return self._devsqd2
 
     @property
     def pparametername(self):
@@ -293,7 +293,7 @@ class IDFF(_DeviceSet):
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-        devsqd_1 = [_PowerSupplyFBP(devname=dev) for dev in self.qd_1names]
+        devsqd1 = [_PowerSupplyFBP(devname=dev) for dev in self.qd1names]
         devsqf = [_PowerSupplyFBP(devname=dev) for dev in self.qfnames]
-        devsqd_2 = [_PowerSupplyFBP(devname=dev) for dev in self.qd_2names]
-        return devid, devsch, devscv, devsqs, devsqd_1, devsqf, devsqd_2
+        devsqd2 = [_PowerSupplyFBP(devname=dev) for dev in self.qd2names]
+        return devid, devsch, devscv, devsqs, devsqd1, devsqf, devsqd2

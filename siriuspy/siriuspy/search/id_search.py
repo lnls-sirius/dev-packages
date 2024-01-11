@@ -154,17 +154,17 @@ class IDSearch:
                 _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
             'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
-            'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-10SB:PS-CV-1:Current-SP',
-            'cv2': 'SI-10SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
-            'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+            'ch_1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
+            'ch_2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
+            'cv_1': 'SI-10SB:PS-CV-1:Current-SP',
+            'cv_2': 'SI-10SB:PS-CV-2:Current-SP',
+            'qs_1': 'SI-10SB:PS-QS-1:Current-SP',
+            'qs_2': 'SI-10SB:PS-QS-2:Current-SP',
             'qd1_1': 'SI-10M1:PS-QDB1:Current-SP',
-            'qd2_1': 'SI-10M2:PS-QDB1:Current-SP',
-            'qf1': 'SI-10M1:PS-QFB:Current-SP',
-            'qf2': 'SI-10M2:PS-QFB:Current-SP',
-            'qd1_2': 'SI-10M1:PS-QDB2:Current-SP',
+            'qd1_2': 'SI-10M2:PS-QDB1:Current-SP',
+            'qf_1': 'SI-10M1:PS-QFB:Current-SP',
+            'qf_2': 'SI-10M2:PS-QFB:Current-SP',
+            'qd2_1': 'SI-10M1:PS-QDB2:Current-SP',
             'qd2_2': 'SI-10M2:PS-QDB2:Current-SP',
         },
         'SI-10SB:ID-DELTA52': {
@@ -173,17 +173,17 @@ class IDSearch:
                 _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
-            'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-10SB:PS-CV-1:Current-SP',
-            'cv2': 'SI-10SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
-            'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+            'ch_1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
+            'ch_2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
+            'cv_1': 'SI-10SB:PS-CV-1:Current-SP',
+            'cv_2': 'SI-10SB:PS-CV-2:Current-SP',
+            'qs_1': 'SI-10SB:PS-QS-1:Current-SP',
+            'qs_2': 'SI-10SB:PS-QS-2:Current-SP',
             'qd1_1': 'SI-10M1:PS-QDB1:Current-SP',
-            'qd2_1': 'SI-10M2:PS-QDB1:Current-SP',
-            'qf1': 'SI-10M1:PS-QFB:Current-SP',
-            'qf2': 'SI-10M2:PS-QFB:Current-SP',
-            'qd1_2': 'SI-10M1:PS-QDB2:Current-SP',
+            'qd1_2': 'SI-10M2:PS-QDB1:Current-SP',
+            'qf_1': 'SI-10M1:PS-QFB:Current-SP',
+            'qf_2': 'SI-10M2:PS-QFB:Current-SP',
+            'qd2_1': 'SI-10M1:PS-QDB2:Current-SP',
             'qd2_2': 'SI-10M2:PS-QDB2:Current-SP',
         },
         'SI-11SP:ID-APU58': None,
@@ -191,17 +191,17 @@ class IDSearch:
             'polarizations': ('horizontal', ),
             'pparameter': None,
             'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
-            'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
+            'ch_1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
+            'ch_2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
         },
         'SI-17SA:ID-PAPU50': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
             'kparameter': 'SI-17SA:ID-PAPU50:Phase-Mon',
-            'ch1': 'SI-17SA:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-17SA:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-17SA:PS-CV-1:Current-SP',
-            'cv2': 'SI-17SA:PS-CV-2:Current-SP',
+            'ch_1': 'SI-17SA:PS-CH-1:Current-SP',  # upstream
+            'ch_2': 'SI-17SA:PS-CH-2:Current-SP',  # downstream
+            'cv_1': 'SI-17SA:PS-CV-1:Current-SP',
+            'cv_2': 'SI-17SA:PS-CV-2:Current-SP',
         },
     }
 
@@ -285,32 +285,32 @@ class IDSearch:
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('ch1', 'ch2'))
+        return IDSearch._get_devname_from_idff(idname, ('ch_1', 'ch_2'))
 
     @staticmethod
     def conv_idname_2_idff_cvnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
+        return IDSearch._get_devname_from_idff(idname, ('cv_1', 'cv_2'))
 
     @staticmethod
     def conv_idname_2_idff_qsnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
+        return IDSearch._get_devname_from_idff(idname, ('qs_1', 'qs_2'))
 
     @staticmethod
-    def conv_idname_2_idff_qd_1names(idname):
+    def conv_idname_2_idff_qd1names(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('qd1_1', 'qd2_1'))
+        return IDSearch._get_devname_from_idff(idname, ('qd1_1', 'qd1_2'))
 
     @staticmethod
-    def conv_idname_2_idff_qd_2names(idname):
+    def conv_idname_2_idff_qd2names(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('qd1_2', 'qd2_2'))
+        return IDSearch._get_devname_from_idff(idname, ('qd2_1', 'qd2_2'))
 
     @staticmethod
     def conv_idname_2_idff_qfnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('qf1', 'qf2'))
+        return IDSearch._get_devname_from_idff(idname, ('qf_1', 'qf_2'))
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
@@ -370,7 +370,7 @@ class IDSearch:
         idff = IDSearch.conv_idname_2_idff(idname)
         corrs = list()
         for corr in correctors:
-            if corr in idff:
+            if idff is not None and corr in idff:
                 pvname = _SiriusPVName(idff[corr])
                 corrs.append(pvname.device_name)
         return corrs

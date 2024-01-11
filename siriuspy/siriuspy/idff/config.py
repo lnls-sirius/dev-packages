@@ -56,32 +56,32 @@ class IDFFConfig(_ConfigDBDocument):
     @property
     def ch_pvnames(self):
         """Return CH corrector power supply pvnames."""
-        return self._get_corr_pvnames('ch1', 'ch2')
+        return self._get_corr_pvnames('ch_1', 'ch_2')
 
     @property
     def cv_pvnames(self):
         """Return CV corrector power supply pvnames."""
-        return self._get_corr_pvnames('cv1', 'cv2')
+        return self._get_corr_pvnames('cv_1', 'cv_2')
 
     @property
     def qs_pvnames(self):
         """Return QS corrector power supply pvnames."""
-        return self._get_corr_pvnames('qs1', 'qs2')
+        return self._get_corr_pvnames('qs_1', 'qs_2')
 
     @property
-    def qd_1_pvnames(self):
-        """Return QD_1 corrector power supply pvnames."""
-        return self._get_corr_pvnames('qd1_1', 'qd2_1')
+    def qd1_pvnames(self):
+        """Return QD1 corrector power supply pvnames."""
+        return self._get_corr_pvnames('qd1_1', 'qd1_2')
 
     @property
     def qf_pvnames(self):
         """Return QF corrector power supply pvnames."""
-        return self._get_corr_pvnames('qf1', 'qf2')
+        return self._get_corr_pvnames('qf_1', 'qf_2')
 
     @property
-    def qd_2_pvnames(self):
-        """Return QD_2 corrector power supply pvnames."""
-        return self._get_corr_pvnames('qd1_2', 'qd2_2')
+    def qd2_pvnames(self):
+        """Return QD2 corrector power supply pvnames."""
+        return self._get_corr_pvnames('qd2_1', 'qd2_2')
 
     @property
     def polarizations(self):
@@ -221,9 +221,9 @@ class IDFFConfig(_ConfigDBDocument):
         getch = _IDSearch.conv_idname_2_idff_chnames
         getcv = _IDSearch.conv_idname_2_idff_cvnames
         getqs = _IDSearch.conv_idname_2_idff_qsnames
-        getqd1 = _IDSearch.conv_idname_2_idff_qd_1names
+        getqd1 = _IDSearch.conv_idname_2_idff_qd1names
         getqf = _IDSearch.conv_idname_2_idff_qfnames
-        getqd2 = _IDSearch.conv_idname_2_idff_qd_2names
+        getqd2 = _IDSearch.conv_idname_2_idff_qd2names
         chnames = [corr + ':Current-SP' for corr in getch(self.idname)]
         cvnames = [corr + ':Current-SP' for corr in getcv(self.idname)]
         qsnames = [corr + ':Current-SP' for corr in getqs(self.idname)]

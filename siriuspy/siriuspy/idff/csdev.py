@@ -49,14 +49,14 @@ class IDFFConst(_csdev.Const):
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
         self.has_qscorrs = True if qsnames else False
-        qd_1names = _IDSearch.conv_idname_2_idff_qd_1names(idname)
-        self.has_qd_1corrs = True if qd_1names else False
+        qd1names = _IDSearch.conv_idname_2_idff_qd1names(idname)
+        self.has_qd1corrs = True if qd1names else False
         qfnames = _IDSearch.conv_idname_2_idff_qfnames(idname)
         self.has_qfcorrs = True if qfnames else False
-        qd_2names = _IDSearch.conv_idname_2_idff_qd_2names(idname)
-        self.has_qd_2corrs = True if qd_2names else False
+        qd2names = _IDSearch.conv_idname_2_idff_qd2names(idname)
+        self.has_qd2corrs = True if qd2names else False
         self.has_qncorrs = \
-            self.has_qd_1corrs or self.has_qfcorrs or self.has_qd_2corrs
+            self.has_qd1corrs or self.has_qfcorrs or self.has_qd2corrs
 
     def get_propty_database(self):
         """Return property database."""
@@ -122,7 +122,7 @@ class IDFFConst(_csdev.Const):
                     'value': self.DEFAULT_CONTROL_QN,
                     'unit': 'If QN are included in loop'},
             })
-        if self.has_qd_1corrs:
+        if self.has_qd1corrs:
             dbase.update({
                 'CorrQD1_1Current-Mon': corr_dict.copy(),
                 'CorrQD2_1Current-Mon': corr_dict.copy(),
@@ -132,7 +132,7 @@ class IDFFConst(_csdev.Const):
                 'CorrQF1Current-Mon': corr_dict.copy(),
                 'CorrQF2Current-Mon': corr_dict.copy(),
             })
-        if self.has_qd_2corrs:
+        if self.has_qd2corrs:
             dbase.update({
                 'CorrQD1_2Current-Mon': corr_dict.copy(),
                 'CorrQD2_2Current-Mon': corr_dict.copy(),

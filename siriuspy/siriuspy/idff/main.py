@@ -185,7 +185,7 @@ class App(_Callback):
             return False
         corrdevs = \
             self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs + \
-            self._idff.qd_1devs + self._idff.qfdevs + self._idff.qd_2devs
+            self._idff.qd1devs + self._idff.qfdevs + self._idff.qd2devs
         for dev in corrdevs:
             # disable SOFB
             if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
@@ -335,7 +335,7 @@ class App(_Callback):
             corrdevs.extend(self._idff.qsdevs)
         if self._control_qn == self._const.DsblEnbl.Enbl:
             corrdevs.extend(
-                self._idff.qd_1devs + self._idff.qfdevs + self._idff.qd_2devs)
+                self._idff.qd1devs + self._idff.qfdevs + self._idff.qd2devs)
         try:
             # use PS IOCs (IDFF) to implement setpoints
             setpoints, *_ = self._corr_setpoints
@@ -352,7 +352,7 @@ class App(_Callback):
             devs.extend(self._idff.qsdevs)
         if self._control_qn == self._const.DsblEnbl.Enbl:
             devs.extend(
-                self._idff.qd_1devs + self._idff.qfdevs + self._idff.qd_2devs)
+                self._idff.qd1devs + self._idff.qfdevs + self._idff.qd2devs)
         status = 0
         if all(d.connected for d in devs):
             if any(d.pwrstate != d.PWRSTATE.On for d in devs):
@@ -374,9 +374,9 @@ class App(_Callback):
         corrnames += idff.chnames if idff.chnames else [None, ] * 2
         corrnames += idff.cvnames if idff.cvnames else [None, ] * 2
         corrnames += idff.qsnames if idff.qsnames else [None, ] * 2
-        corrnames += idff.qd_1names if idff.qd_1names else [None, ] * 2
+        corrnames += idff.qd1names if idff.qd1names else [None, ] * 2
         corrnames += idff.qfnames if idff.qfnames else [None, ] * 2
-        corrnames += idff.qd_2names if idff.qd_2names else [None, ] * 2
+        corrnames += idff.qd2names if idff.qd2names else [None, ] * 2
         corrlabels = (
             'CH1', 'CH2', 'CV1', 'CV2', 'QS1', 'QS2',
             'QD1_1', 'QD2_1', 'QF1', 'QF2', 'QD1_2', 'QD2_2')
