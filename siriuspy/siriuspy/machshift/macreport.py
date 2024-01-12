@@ -254,6 +254,8 @@ class MacReport:
     ]
 
     FAILURES_MANUAL = [
+        # hydraulic failure, wrong machine shift for recovery
+        [_Time(2023, 3, 3, 22, 56, 0, 0), _Time(2023, 3, 3, 23, 0, 0, 0)],
         # power grid failure, archiver was down
         [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
     ]
