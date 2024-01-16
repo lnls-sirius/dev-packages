@@ -116,6 +116,70 @@ class FamBPMs(_DeviceSet):
         self._mturn_signals2acq = sigs
         self._configure_automonitor_acquisition_pvs(state=True)
 
+    @staticmethod
+    def calc_positions_from_amplitudes(
+        amps, gainx=None, gainy=None, offx=0.0, offy=0.0
+    ):
+        """Calculate transverse positions from antennas amplitudes.
+
+        Args:
+            amps (list|numpy.ndarray, (4, ...)): A list or N-D array
+                containing the amplitudes of the four antennas in the order
+                A, B, C, D.
+            gainx (float|numpy.ndarray, optional): Horizontal gain in [um]. If
+                None, then the nominal value of 12/sqrt(2) of the storage ring
+                will be used. Defaults to None. An array can be used to
+                specify different values for each BPM. In this case the gain
+                array must match the shape of the antennas arrays or satisfy
+                the broadcast rules in relation to them.
+            gainy (float|numpy.ndarray, optional): Vertical gain in [um]. If
+                None, then the nominal value of 12/sqrt(2) of the storage ring
+                will be used. Defaults to None. An array can be used to
+                specify different values for each BPM. In this case the gain
+                array must match the shape of the antennas arrays or satisfy
+                the broadcast rules in relation to them.
+            offx (float|numpy.ndarray, optional): Horizontal offset in [um].
+                Defaults to 0.0. An array can be used to specify different
+                values for each BPM. In this case the gain array must match
+                the shape of the antennas arrays or satisfy the broadcast
+                rules in relation to them.
+            offy (float|numpy.ndarray, optional): Vertical offset in [um].
+                Defaults to 0.0. An array can be used to specify different
+                values for each BPM. In this case the gain array must match
+                the shape of the antennas arrays or satisfy the broadcast
+                rules in relation to them.
+
+        Returns:
+            posx (numpy.ndarray, (...)): Horizontal position in [um]. Same
+                shape of antennas array.
+            posy (numpy.ndarray, (...)): Vertical position in [um]. Same
+                shape of antennas array.
+
+        """
+        a, b, c, d = amps
+
+        radius = 12e3  # [um]
+        gainx = radius / _np.sqrt(2) if gainx is None else gainx
+        gainy = radius / _np.sqrt(2) if gainy is None else gainy
+        gainx = _np.atleast_1d(gainx)
+        gainy = _np.atleast_1d(gainy)
+        offx = _np.atleast_1d(offx)
+        offy = _np.atleast_1d(offy)
+
+        # Calculate difference over sum for each pair
+        a_c = (a - c) / (a + c)
+        b_d = (b - d) / (b + d)
+        # Get the positions:
+        posx = (a_c - b_d) / 2
+        posy = (a_c + b_d) / 2
+        # Apply position gains:
+        posx *= gainx
+        posy *= gainy
+        # Subtract offsets:
+        posx -= offx
+        posy -= offy
+        return posx, posy
+
     def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
         """."""
         for bpm in self:
