@@ -236,24 +236,29 @@ class BOCurrInfoApp(_CurrInfoApp):
         self._rampeff = None
         self._currents = dict()
         self._charges = dict()
+        self._charges['150MeV'] = 49628.44569701265
+        self._charges['1GeV'] = 290233.9885598213
+        self._charges['2GeV'] = 285485.5503424501
+        self._charges['3GeV'] = 284842.51293011004
         for k in self.ENERGY2TIME:
             # currents
             self._currents[k] = 0.0
             # charges
-            ppty = 'Charge'+k+'-Mon'
-            data = self._get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
-            if data is None:
-                charge = 0.0
-            else:
-                charge = data['value'][0]
-            self._charges[k] = charge
+            # ppty = 'Charge'+k+'-Mon'
+            # data = self._get_value_from_arch('BO-Glob:AP-CurrInfo:'+ppty)
+            # if data is None:
+            #     charge = 0.0
+            # else:
+            #     charge = data['value'][0]
+            # self._charges[k] = charge
 
-        data = self._get_value_from_arch(
-            'BO-Glob:AP-CurrInfo:IntCurrent3GeV-Mon')
-        if data is None:
-            self._intcurrent3gev = 0.0
-        else:
-            self._intcurrent3gev = data['value'][0]
+        self._intcurrent3gev = 2.554488098252203
+        # data = self._get_value_from_arch(
+        #     'BO-Glob:AP-CurrInfo:IntCurrent3GeV-Mon')
+        # if data is None:
+        #     self._intcurrent3gev = 0.0
+        # else:
+        #     self._intcurrent3gev = data['value'][0]
 
         # PVs
         self._rawreadings_pv = _PV(
@@ -408,11 +413,12 @@ class SICurrInfoApp(_CurrInfoApp):
         self._injcurr = 0.0
         self._injcharge = 0.0
         self._injcount = 0
-        data = self._get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
-        if data is None:
-            self._charge = 0.0
-        else:
-            self._charge = data['value'][0]
+        self._charge = 1249.8740868352772
+        # data = self._get_value_from_arch('SI-Glob:AP-CurrInfo:Charge-Mon')
+        # if data is None:
+        #     self._charge = 0.0
+        # else:
+        #     self._charge = data['value'][0]
 
         # pvs
         self._current_13c4_pv = _PV(
