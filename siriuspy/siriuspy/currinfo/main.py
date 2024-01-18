@@ -236,7 +236,7 @@ class BOCurrInfoApp(_CurrInfoApp):
         self._rampeff = None
         self._currents = dict()
         self._charges = dict()
-        self._charges['150MeV'] = 49628.44569701265
+        self._charges['150MeV'] = 393567.7692406915 + 49628.44569701265
         self._charges['1GeV'] = 290233.9885598213
         self._charges['2GeV'] = 285485.5503424501
         self._charges['3GeV'] = 284842.51293011004
