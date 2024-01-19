@@ -322,9 +322,9 @@ class BOCurrInfoApp(_CurrInfoApp):
         if self._samplecnt is None or self._measperiod is None:
             # ignore None values in initializations
             return
-        if self._reliablemeas != 0:
-            # do not calculate if dcct measure is not reliable
-            return
+        # if self._reliablemeas != 0:
+        #     # do not calculate if dcct measure is not reliable
+        #     return
         if len(self._last_raw_reading) != self._samplecnt:
             # ignore dcct measurements with wrong sample count
             return
@@ -528,6 +528,7 @@ class SICurrInfoApp(_CurrInfoApp):
         return False
 
     def _update_dcct_mode_by_relblmeas(self):
+        return
         if self._reliablemeas_13c4_value == 0:
             mode = _Const.DCCT.DCCT13C4
         elif self._reliablemeas_14c4_value == 0:
