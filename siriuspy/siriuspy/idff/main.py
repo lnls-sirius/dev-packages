@@ -5,7 +5,6 @@ import logging as _log
 import time as _time
 
 import epics as _epics
-import numpy as _np
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback

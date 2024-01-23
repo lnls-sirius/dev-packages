@@ -4,7 +4,7 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
 from ..idff.config import IDFFConfig as _IDFFConfig
 
-from .device import Device as _Device, DeviceSet as _DeviceSet
+from .device import DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 from .ids import ID as _ID
 
