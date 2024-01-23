@@ -4,7 +4,7 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
 from ..idff.config import IDFFConfig as _IDFFConfig
 
-from .device import Device as _Device, DeviceSet as _DeviceSet
+from .device import DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 from .ids import ID as _ID
 
@@ -31,13 +31,18 @@ class IDFF(_DeviceSet):
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
-        self._devid, self._devsch, self._devscv, self._devsqs = \
+        # self._devid, self._devsch, self._devscv, self._devsqs = \
+        (self._devid, self._devsch, self._devscv, self._devsqs,
+         self._devsqd1, self._devsqf, self._devsqd2) = \
             self._create_devices(devname)
 
         devices = [self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
+        devices += self._devsqd1
+        devices += self._devsqf
+        devices += self._devsqd2
         super().__init__(devices, devname=devname)
 
     @property
@@ -54,6 +59,21 @@ class IDFF(_DeviceSet):
     def qsnames(self):
         """Return QS corrector power supply names."""
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
+
+    @property
+    def qd1names(self):
+        """Return QD_1 corrector power supply names."""
+        return _IDSearch.conv_idname_2_idff_qd1names(self.devname)
+
+    @property
+    def qfnames(self):
+        """Return QF corrector power supply names."""
+        return _IDSearch.conv_idname_2_idff_qfnames(self.devname)
+
+    @property
+    def qd2names(self):
+        """Return QD_2 corrector power supply names."""
+        return _IDSearch.conv_idname_2_idff_qd2names(self.devname)
 
     @property
     def iddev(self):
@@ -74,6 +94,21 @@ class IDFF(_DeviceSet):
     def qsdevs(self):
         """Return QS corrector power supply names."""
         return self._devsqs
+
+    @property
+    def qd1devs(self):
+        """Return QD1 corrector power supply names."""
+        return self._devsqd1
+
+    @property
+    def qfdevs(self):
+        """Return QF corrector power supply names."""
+        return self._devsqf
+
+    @property
+    def qd2devs(self):
+        """Return QD2 corrector power supply names."""
+        return self._devsqd2
 
     @property
     def pparametername(self):
@@ -155,6 +190,8 @@ class IDFF(_DeviceSet):
                 self.calculate_setpoints(
                     pparameter_value=None,
                     kparameter_value=None)
+        else:
+            polarization, pparameter_value, kparameter_value = (None, ) * 3
         if corrdevs is None:
             corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
@@ -256,4 +293,7 @@ class IDFF(_DeviceSet):
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-        return devid, devsch, devscv, devsqs
+        devsqd1 = [_PowerSupplyFBP(devname=dev) for dev in self.qd1names]
+        devsqf = [_PowerSupplyFBP(devname=dev) for dev in self.qfnames]
+        devsqd2 = [_PowerSupplyFBP(devname=dev) for dev in self.qd2names]
+        return devid, devsch, devscv, devsqs, devsqd1, devsqf, devsqd2

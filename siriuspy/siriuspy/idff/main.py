@@ -5,7 +5,6 @@ import logging as _log
 import time as _time
 
 import epics as _epics
-import numpy as _np
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
@@ -30,6 +29,7 @@ class App(_Callback):
         self._loop_state = _Const.DEFAULT_LOOP_STATE
         self._loop_freq = _Const.DEFAULT_LOOP_FREQ
         self._control_qs = _Const.DEFAULT_CONTROL_QS
+        self._control_qn = _Const.DEFAULT_CONTROL_QN
         self._polarization = 'none'
         self._config_name = ''
         self.read_autosave_file()
@@ -45,6 +45,7 @@ class App(_Callback):
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
             'ControlQS-Sel': self.set_control_qs,
+            'ControlQN-Sel': self.set_control_qn,
             'ConfigName-SP': self.set_config_name,
             'CorrConfig-Cmd': self.cmd_corrconfig,
         }
@@ -72,6 +73,11 @@ class App(_Callback):
             pvn2vals.update({
                 'ControlQS-Sel': self._control_qs,
                 'ControlQS-Sts': self._control_qs,
+                })
+        if self._const.has_qncorrs:
+            pvn2vals.update({
+                'ControlQN-Sel': self._control_qn,
+                'ControlQN-Sts': self._control_qn,
                 })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
@@ -147,6 +153,16 @@ class App(_Callback):
         self.run_callbacks('ControlQS-Sts', value)
         return True
 
+    def set_control_qn(self, value):
+        """Set whether to include QN or not in feedforward."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+        self._control_qn = value
+        act = ('En' if value else 'Dis')
+        self._update_log(f'{act}abled QN control.')
+        self.run_callbacks('ControlQN-Sts', value)
+        return True
+
     def set_config_name(self, value):
         """Set configuration name."""
         if self._loop_state == self._const.LoopState.Closed:
@@ -164,16 +180,20 @@ class App(_Callback):
     def cmd_corrconfig(self, _):
         """Command to reconfigure power supplies to desired state."""
         if self._loop_state == self._const.LoopState.Closed:
-            self._update_log('ERR:Open loop before configure correctors.')
+            self._update_log('ERR:Open loop before configuring correctors.')
             return False
-
-        corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
+        corrdevs = \
+            self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs + \
+            self._idff.qd1devs + self._idff.qfdevs + self._idff.qd2devs
         for dev in corrdevs:
+            # disable SOFB
+            if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
+                return False
             # turn on
-            if not dev.cmd_turn_on():
+            if not dev.cmd_turn_on(timeout=App.DEF_PS_TIMEOUT):
                 return False
             # opmode slowref
-            if not dev.cmd_slowref():
+            if not dev.cmd_slowref(timeout=App.DEF_PS_TIMEOUT):
                 return False
 
         return True
@@ -309,9 +329,12 @@ class App(_Callback):
             self._update_log('ERR:'+str(err))
 
     def _do_implement_correctors(self):
-        corrdevs = None
-        if self._control_qs == self._const.DsblEnbl.Dsbl:
-            corrdevs = self._idff.chdevs + self._idff.cvdevs
+        corrdevs = self._idff.chdevs + self._idff.cvdevs
+        if self._control_qs == self._const.DsblEnbl.Enbl:
+            corrdevs.extend(self._idff.qsdevs)
+        if self._control_qn == self._const.DsblEnbl.Enbl:
+            corrdevs.extend(
+                self._idff.qd1devs + self._idff.qfdevs + self._idff.qd2devs)
         try:
             # use PS IOCs (IDFF) to implement setpoints
             setpoints, *_ = self._corr_setpoints
@@ -326,7 +349,9 @@ class App(_Callback):
         devs = self._idff.chdevs + self._idff.cvdevs
         if self._control_qs == self._const.DsblEnbl.Enbl:
             devs.extend(self._idff.qsdevs)
-
+        if self._control_qn == self._const.DsblEnbl.Enbl:
+            devs.extend(
+                self._idff.qd1devs + self._idff.qfdevs + self._idff.qd2devs)
         status = 0
         if all(d.connected for d in devs):
             if any(d.pwrstate != d.PWRSTATE.On for d in devs):
@@ -344,23 +369,19 @@ class App(_Callback):
             return
         setpoints, *_ = self._corr_setpoints
         idff = self._idff
-        corrnames = idff.chnames + idff.cvnames + idff.qsnames
-        corrlabels = ('CH1', 'CH2', 'CV1', 'CV2', 'QS1', 'QS2')
+        corrnames = list()
+        corrnames += idff.chnames if idff.chnames else [None, ] * 2
+        corrnames += idff.cvnames if idff.cvnames else [None, ] * 2
+        corrnames += idff.qsnames if idff.qsnames else [None, ] * 2
+        corrnames += idff.qd1names if idff.qd1names else [None, ] * 2
+        corrnames += idff.qfnames if idff.qfnames else [None, ] * 2
+        corrnames += idff.qd2names if idff.qd2names else [None, ] * 2
+        corrlabels = (
+            'CH1', 'CH2', 'CV1', 'CV2', 'QS1', 'QS2',
+            'QD1_1', 'QD2_1', 'QF1', 'QF2', 'QD1_2', 'QD2_2')
         for corrlabel, corrname in zip(corrlabels, corrnames):
             for corr_pvname in setpoints:
                 if corrname in corr_pvname:
                     pvname = 'Corr' + corrlabel + 'Current-Mon'
                     value = setpoints[corr_pvname]
                     self.run_callbacks(pvname, value)
-
-    # ----- idff preparation -----
-
-    def _idff_prepare_corrs_state(self):
-        """Configure PSSOFB mode state ."""
-        if not self._idff.wait_for_connection():
-            return False
-        corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
-        for dev in corrdevs:
-            if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
-                return False
-        return True
