@@ -155,6 +155,8 @@ class IDFF(_DeviceSet):
                 self.calculate_setpoints(
                     pparameter_value=None,
                     kparameter_value=None)
+        else:
+            polarization, pparameter_value, kparameter_value = [None, ] * 3
         if corrdevs is None:
             corrdevs = self._devsch + self._devscv + self._devsqs
         for pvname, value in setpoints.items():
