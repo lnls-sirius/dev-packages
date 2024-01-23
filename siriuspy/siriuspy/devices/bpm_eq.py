@@ -499,17 +499,17 @@ class EqualizeBPMs(_FamBPMs):
         mean = self.data.get('antennas_mean')
         gains_init = self.data.get('gains_init')
         gains_new = self.data.get('gains_new')
-        gainx = self.data.get('posx_gain')
-        gainy = self.data.get('posy_gain')
-        offx = self.data.get('posx_offset', _np.zeros(len(self.bpms)))
-        offy = self.data.get('posy_offset', _np.zeros(len(self.bpms)))
+        gnx = self.data.get('posx_gain')[:, None]
+        gny = self.data.get('posy_gain')[:, None]
+        ofx = self.data.get('posx_offset', _np.zeros(len(self.bpms)))[:, None]
+        ofy = self.data.get('posy_offset', _np.zeros(len(self.bpms)))[:, None]
         if gains_new is None:
             self._log('ERR:Missing info. Acquire and process data first.')
 
-        orbx_init, orby_init = self._estimate_orbit(
-            mean, gains_init, gainx, gainy, offx, offy)
-        orbx_new, orby_new = self._estimate_orbit(
-            mean, gains_new, gainx, gainy, offx, offy)
+        orbx_init, orby_init = self.calc_positions_from_amplitudes(
+            mean * gains_init, gnx, gny, ofx, ofy)
+        orbx_new, orby_new = self.calc_positions_from_amplitudes(
+            mean * gains_new, gnx, gny, ofx, ofy)
         # Get the average over both semicycles
         self.data['orbx_init'] = orbx_init.mean(axis=-1)
         self.data['orby_init'] = orby_init.mean(axis=-1)
@@ -595,10 +595,10 @@ class EqualizeBPMs(_FamBPMs):
 
     def plot_antennas_mean(self):
         """."""
-        gainx = self.data.get('posx_gain')
-        gainy = self.data.get('posx_gain')
-        offx = self.data.get('posx_offset')
-        offy = self.data.get('posx_offset')
+        gnx = self.data.get('posx_gain')[:, None]
+        gny = self.data.get('posx_gain')[:, None]
+        ofx = self.data.get('posx_offset')[:, None]
+        ofy = self.data.get('posx_offset')[:, None]
         gacq = self.data.get('gains_acq')
         gini = self.data.get('gains_init')
         gnew = self.data.get('gains_new')
@@ -628,8 +628,8 @@ class EqualizeBPMs(_FamBPMs):
                 if not i and not j:
                     ld.set_label('Direct')
                     li.set_label('Inverse')
-            posx, posy = self._estimate_orbit(
-                antm, gain, gainx, gainy, offx, offy)
+            posx, posy = self.calc_positions_from_amplitudes(
+                antm * gain, gnx, gny, ofx, ofy)
             sum_ = val.sum(axis=0)
             axs[4, j].plot(posx[:, 0], 'o-')
             axs[4, j].plot(posx[:, 1], 'o-')
@@ -676,23 +676,6 @@ class EqualizeBPMs(_FamBPMs):
         return fig, axs
 
     # ------- auxiliary methods ----------
-
-    @staticmethod
-    def _estimate_orbit(mean, gains, gainx, gainy, offx, offy):
-        a, b, c, d = mean * gains
-        # Calculate difference over sum for each pair
-        a_c = (a-c) / (a+c)
-        b_d = (b-d) / (b+d)
-        # Get the positions:
-        posx = (a_c - b_d) / 2
-        posy = (a_c + b_d) / 2
-        # Apply position gains:
-        posx *= gainx[:, None]
-        posy *= gainy[:, None]
-        # Subtract offsets:
-        posx -= offx[:, None]
-        posy -= offy[:, None]
-        return posx, posy
 
     def _log(self, message, *args, level='INFO', **kwrgs):
         if self._logger is None:
