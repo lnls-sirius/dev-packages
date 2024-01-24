@@ -352,6 +352,16 @@ _pvs_bo_rfcal = [
     ]
 
 
+_pvs_bo_pow_sensor = [
+    #Keysight U2021xa Power Sensor config
+    ['RA-RF:PowerSensor1:GainOffsetStat-Sel', 0, 0.0],
+    ['RA-RF:PowerSensor1:GainOffset-SP', 0, 0.0],
+    ['RA-RF:PowerSensor1:Egu-SP', 0, 0.0],
+    ['RA-RF:PowerSensor1:TracTime-SP', 0, 0.0],
+    ['RA-RF:PowerSensor1:Freq-SP', 0, 0.0],
+    ]
+
+
 _pvs_si_llrf = [
     # Interlock disable
     ['SR-RF-DLLRF-01:ILK:REVSSA1:S', 0, 0.0],
@@ -510,15 +520,7 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA01:OffsetConfig:UpperReflectedPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:LowerIncidentPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:LowerReflectedPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:InputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:InputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:OutputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:OutputReflectedPower', 0, 0.0],
     # SSA tower 1 pwr alarm limits
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHigh', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimLow', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimLoLo', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimLow', 0, 0.0],
@@ -533,15 +535,7 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:OffsetConfig:UpperReflectedPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:LowerIncidentPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:LowerReflectedPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:InputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:InputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:OutputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:OutputReflectedPower', 0, 0.0],
-     # SSA tower 2 pwr alarm limits
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHigh', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimLow', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimLoLo', 0, 0.0],
+    # SSA tower 2 pwr alarm limits
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimLow', 0, 0.0],
@@ -551,6 +545,46 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:AlarmConfig:CurrentLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLow', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLoLo', 0, 0.0],
+    # SSA tower 3 offsets
+    ['RA-ToSIA03:OffsetConfig:UpperIncidentPower', 0, 0.0],
+    ['RA-ToSIA03:OffsetConfig:UpperReflectedPower', 0, 0.0],
+    ['RA-ToSIA03:OffsetConfig:LowerIncidentPower', 0, 0.0],
+    ['RA-ToSIA03:OffsetConfig:LowerReflectedPower', 0, 0.0],
+    # SSA tower 3 pwr alarm limits
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimLow', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
+    # SSA tower 3 current alarm limits
+    ['RA-ToSIA03:AlarmConfig:CurrentLimHiHi', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:CurrentLimHigh', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:CurrentLimLow', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:CurrentLimLoLo', 0, 0.0],
+    # SSA tower 4 offsets
+    ['RA-ToSIA04:OffsetConfig:UpperIncidentPower', 0, 0.0],
+    ['RA-ToSIA04:OffsetConfig:UpperReflectedPower', 0, 0.0],
+    ['RA-ToSIA04:OffsetConfig:LowerIncidentPower', 0, 0.0],
+    ['RA-ToSIA04:OffsetConfig:LowerReflectedPower', 0, 0.0],
+    # SSA tower 4 pwr alarm limits
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimLow', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
+    # SSA tower 4 current alarm limits
+    ['RA-ToSIA04:AlarmConfig:CurrentLimHiHi', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:CurrentLimHigh', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:CurrentLimLow', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:CurrentLimLoLo', 0, 0.0],
+    # SSA1 Pwr Cal Coeff
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', az, 0.0],
+    # SSA2 Pwr Cal Coeff
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', az, 0.0],
     # SSA3 Pwr Cal Coeff
     ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0],
     ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
@@ -719,7 +753,7 @@ _pvs_si_rfcal = [
 
 _template_dict = {
     'pvs':
-    _pvs_as_rf +
-    _pvs_li_llrf + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
+    _pvs_as_rf + _pvs_li_llrf + 
+    _pvs_bo_pow_sensor + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
     _pvs_si_llrf + _pvs_si_rfssa + _pvs_si_rfcav + _pvs_si_rfcal
     }
