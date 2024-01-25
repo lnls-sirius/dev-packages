@@ -1,4 +1,4 @@
-"""Insertion Devices Feedforward Devices."""
+"""Insertion Device Feedforward Devices."""
 
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch

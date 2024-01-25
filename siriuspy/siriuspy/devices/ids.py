@@ -1,4 +1,4 @@
-"""Define Insertion Devices."""
+"""Insertion Devices."""
 
 import time as _time
 import inspect as _inspect
