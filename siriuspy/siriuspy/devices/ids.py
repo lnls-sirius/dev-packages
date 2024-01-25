@@ -748,7 +748,6 @@ class IDBase(_Device):
         return dtime_total
 
 
-
 class APU(IDBase):
     """APU Insertion Device."""
 
