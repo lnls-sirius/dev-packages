@@ -216,7 +216,7 @@ _pvs_bo_rfssa = [
 
 _pvs_bo_rfcal = [
     # Offsets and conv coeffs
-    ['BR-RF-DLLRF-01:CAV:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CAV:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CAV:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:Raw-U:C2:S', 0, 0.0],
@@ -227,7 +227,7 @@ _pvs_bo_rfcal = [
     ['BR-RF-DLLRF-01:CAV:Const:U-Raw:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:U-Raw:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:U-Raw:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDCAV:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDCAV:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDCAV:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:Raw-U:C2:S', 0, 0.0],
@@ -238,19 +238,19 @@ _pvs_bo_rfcal = [
     ['BR-RF-DLLRF-01:FWDCAV:Const:U-Raw:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:U-Raw:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:U-Raw:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVCAV:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVCAV:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:MO:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:MO:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDSSA1:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDSSA1:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDSSA1:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:Raw-U:C2:S', 0, 0.0],
@@ -261,61 +261,61 @@ _pvs_bo_rfcal = [
     ['BR-RF-DLLRF-01:FWDSSA1:Const:U-Raw:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:U-Raw:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:U-Raw:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVSSA1:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVSSA1:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL2:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL2:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL4:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL4:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL1:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL1:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL5:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL5:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:INPRE:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:INPRE:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDPRE:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDPRE:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVPRE:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVPRE:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDCIRC:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDCIRC:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVCIRC:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVCIRC:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C2:S', 0, 0.0],
@@ -349,6 +349,23 @@ _pvs_bo_rfcal = [
     ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff2-SP', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff3-SP', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff4-SP', 0, 0.0],
+    # CalSys Offsets
+    ['RA-RaBO01:RF-RFCalSys:OFSdB1-Mon', 0, 0.0], # [dB]
+    ['RA-RaBO01:RF-RFCalSys:OFSdB2-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB3-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB4-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB5-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB6-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB7-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB8-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB9-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB10-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB11-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB12-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB13-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB14-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB15-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB16-Mon', 0, 0.0],
     ]
 
 
@@ -748,6 +765,23 @@ _pvs_si_rfcal = [
     ['RA-RaSIA01:RF-LLRF:AmpVCav2HwCoeff4-SP', 0, 0.0],
     # Cavity Shunt impedance
     ['SI-02SB:RF-P7Cav:Rsh-SP', 0, 0.0],  # [Ohm]
+    # CalSys Offsets
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB1-Mon', 0, 0.0], # [dB]
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB2-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB3-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB4-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB5-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB6-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB7-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB8-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB9-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB10-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB11-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB12-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB13-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB14-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB15-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB16-Mon', 0, 0.0],
     ]
 
 
