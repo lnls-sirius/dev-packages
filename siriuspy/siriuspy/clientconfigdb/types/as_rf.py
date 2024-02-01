@@ -216,7 +216,7 @@ _pvs_bo_rfssa = [
 
 _pvs_bo_rfcal = [
     # Offsets and conv coeffs
-    ['BR-RF-DLLRF-01:CAV:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CAV:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CAV:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:Raw-U:C2:S', 0, 0.0],
@@ -227,7 +227,7 @@ _pvs_bo_rfcal = [
     ['BR-RF-DLLRF-01:CAV:Const:U-Raw:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:U-Raw:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CAV:Const:U-Raw:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDCAV:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDCAV:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDCAV:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:Raw-U:C2:S', 0, 0.0],
@@ -238,19 +238,19 @@ _pvs_bo_rfcal = [
     ['BR-RF-DLLRF-01:FWDCAV:Const:U-Raw:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:U-Raw:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCAV:Const:U-Raw:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVCAV:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVCAV:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCAV:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:MO:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:MO:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:MO:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDSSA1:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDSSA1:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDSSA1:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:Raw-U:C2:S', 0, 0.0],
@@ -261,61 +261,61 @@ _pvs_bo_rfcal = [
     ['BR-RF-DLLRF-01:FWDSSA1:Const:U-Raw:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:U-Raw:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDSSA1:Const:U-Raw:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVSSA1:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVSSA1:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVSSA1:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL2:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL2:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL2:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL4:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL4:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL4:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL1:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL1:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL1:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:CELL5:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:CELL5:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:CELL5:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:INPRE:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:INPRE:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:INPRE:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDPRE:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDPRE:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDPRE:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVPRE:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVPRE:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVPRE:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FWDCIRC:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:FWDCIRC:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C2:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C3:S', 0, 0.0],
     ['BR-RF-DLLRF-01:FWDCIRC:Const:Raw-U:C4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:REVCIRC:Const:OFS:S', 0, 0.0],
+    ['BR-RF-DLLRF-01:REVCIRC:Const:OFS:S', 0, 0.0], # [dB]
     ['BR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C0:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C1:S', 0, 0.0],
     ['BR-RF-DLLRF-01:REVCIRC:Const:Raw-U:C2:S', 0, 0.0],
@@ -349,6 +349,33 @@ _pvs_bo_rfcal = [
     ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff2-SP', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff3-SP', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff4-SP', 0, 0.0],
+    # CalSys Offsets
+    ['RA-RaBO01:RF-RFCalSys:OFSdB1-Mon', 0, 0.0], # [dB]
+    ['RA-RaBO01:RF-RFCalSys:OFSdB2-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB3-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB4-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB5-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB6-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB7-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB8-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB9-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB10-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB11-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB12-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB13-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB14-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB15-Mon', 0, 0.0],
+    ['RA-RaBO01:RF-RFCalSys:OFSdB16-Mon', 0, 0.0],
+    ]
+
+
+_pvs_bo_pow_sensor = [
+    #Keysight U2021xa Power Sensor config
+    ['RA-RF:PowerSensor1:GainOffsetStat-Sel', 0, 0.0],
+    ['RA-RF:PowerSensor1:GainOffset-SP', 0, 0.0],
+    ['RA-RF:PowerSensor1:Egu-SP', 0, 0.0],
+    ['RA-RF:PowerSensor1:TracTime-SP', 0, 0.0],
+    ['RA-RF:PowerSensor1:Freq-SP', 0, 0.0],
     ]
 
 
@@ -510,15 +537,7 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA01:OffsetConfig:UpperReflectedPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:LowerIncidentPower', 0, 0.0],
     # ['RA-ToSIA01:OffsetConfig:LowerReflectedPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:InputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:InputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:OutputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA01:OffsetConfig:OutputReflectedPower', 0, 0.0],
     # SSA tower 1 pwr alarm limits
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimHigh', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimLow', 0, 0.0],
-    # ['RA-ToSIA01:AlarmConfig:GeneralPowerLimLoLo', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA01:AlarmConfig:InnerPowerLimLow', 0, 0.0],
@@ -533,15 +552,7 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:OffsetConfig:UpperReflectedPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:LowerIncidentPower', 0, 0.0],
     # ['RA-ToSIA02:OffsetConfig:LowerReflectedPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:InputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:InputReflectedPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:OutputIncidentPower', 0, 0.0],
-    # ['RA-ToSIA02:OffsetConfig:OutputReflectedPower', 0, 0.0],
-     # SSA tower 2 pwr alarm limits
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHiHi', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimHigh', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimLow', 0, 0.0],
-    # ['RA-ToSIA02:AlarmConfig:GeneralPowerLimLoLo', 0, 0.0],
+    # SSA tower 2 pwr alarm limits
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:InnerPowerLimLow', 0, 0.0],
@@ -551,6 +562,46 @@ _pvs_si_rfssa = [
     # ['RA-ToSIA02:AlarmConfig:CurrentLimHigh', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLow', 0, 0.0],
     # ['RA-ToSIA02:AlarmConfig:CurrentLimLoLo', 0, 0.0],
+    # SSA tower 3 offsets
+    ['RA-ToSIA03:OffsetConfig:UpperIncidentPower', 0, 0.0],
+    ['RA-ToSIA03:OffsetConfig:UpperReflectedPower', 0, 0.0],
+    ['RA-ToSIA03:OffsetConfig:LowerIncidentPower', 0, 0.0],
+    ['RA-ToSIA03:OffsetConfig:LowerReflectedPower', 0, 0.0],
+    # SSA tower 3 pwr alarm limits
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimLow', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
+    # SSA tower 3 current alarm limits
+    ['RA-ToSIA03:AlarmConfig:CurrentLimHiHi', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:CurrentLimHigh', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:CurrentLimLow', 0, 0.0],
+    ['RA-ToSIA03:AlarmConfig:CurrentLimLoLo', 0, 0.0],
+    # SSA tower 4 offsets
+    ['RA-ToSIA04:OffsetConfig:UpperIncidentPower', 0, 0.0],
+    ['RA-ToSIA04:OffsetConfig:UpperReflectedPower', 0, 0.0],
+    ['RA-ToSIA04:OffsetConfig:LowerIncidentPower', 0, 0.0],
+    ['RA-ToSIA04:OffsetConfig:LowerReflectedPower', 0, 0.0],
+    # SSA tower 4 pwr alarm limits
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimHiHi', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimHigh', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimLow', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:InnerPowerLimLoLo', 0, 0.0],
+    # SSA tower 4 current alarm limits
+    ['RA-ToSIA04:AlarmConfig:CurrentLimHiHi', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:CurrentLimHigh', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:CurrentLimLow', 0, 0.0],
+    ['RA-ToSIA04:AlarmConfig:CurrentLimLoLo', 0, 0.0],
+    # SSA1 Pwr Cal Coeff
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA01:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', az, 0.0],
+    # SSA2 Pwr Cal Coeff
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrFwdOutCoeff-Cte', az, 0.0],
+    # ['RA-ToSIA02:RF-SSAmpTower:Hw2PwrRevOutCoeff-Cte', az, 0.0],
     # SSA3 Pwr Cal Coeff
     ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrFwdInCoeff-Cte', az, 0.0],
     ['RA-ToSIA03:RF-SSAmpTower:Hw2PwrRevInCoeff-Cte', az, 0.0],
@@ -714,12 +765,30 @@ _pvs_si_rfcal = [
     ['RA-RaSIA01:RF-LLRF:AmpVCav2HwCoeff4-SP', 0, 0.0],
     # Cavity Shunt impedance
     ['SI-02SB:RF-P7Cav:Rsh-SP', 0, 0.0],  # [Ohm]
+    # CalSys Offsets
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB1-Mon', 0, 0.0], # [dB]
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB2-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB3-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB4-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB5-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB6-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB7-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB8-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB9-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB10-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB11-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB12-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB13-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB14-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB15-Mon', 0, 0.0],
+    ['RA-RaSIA01:RF-RFCalSys:OFSdB16-Mon', 0, 0.0],
     ]
 
 
 _template_dict = {
     'pvs':
-    _pvs_as_rf +
-    _pvs_li_llrf + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
+    _pvs_as_rf + _pvs_li_llrf + 
+    _pvs_bo_pow_sensor + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
     _pvs_si_llrf + _pvs_si_rfssa + _pvs_si_rfcav + _pvs_si_rfcal
     }
+    
