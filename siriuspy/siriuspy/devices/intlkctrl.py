@@ -11,9 +11,7 @@ class ASPPSCtrl(_Device):
     DEVICE = 'AS-Glob:PP-Summary'
 
     PROPERTIES_DEFAULT = (
-        'TunAccessWaitTime-Cte',
         'TunAccessWaitTimeLeft-Mon',
-        'TunAccessWaitTimeElapsed-Mon',
     )
 
     def __init__(self, props2init='all', **kwargs):
@@ -27,13 +25,8 @@ class ASPPSCtrl(_Device):
 
     @property
     def tunnel_access_wait_time_left(self):
-        """Return wait time left for tunnel access [s]."""
+        """Return remaining time for tunnel access [min]."""
         return self['TunAccessWaitTimeLeft-Mon']
-
-    @property
-    def tunnel_access_wait_time_elapsed(self):
-        """Return wait time elapsed for tunnel access [s]."""
-        return self['TunAccessWaitTimeElapsed-Mon']
 
 
 class ASMPSCtrl(_Device):
