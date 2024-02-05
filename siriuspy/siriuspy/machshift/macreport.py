@@ -254,6 +254,8 @@ class MacReport:
     ]
 
     FAILURES_MANUAL = [
+        # hydraulic failure, wrong machine shift for recovery
+        [_Time(2023, 3, 3, 22, 56, 0, 0), _Time(2023, 3, 3, 23, 0, 0, 0)],
         # power grid failure, archiver was down
         [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
     ]
@@ -1607,10 +1609,13 @@ class MacReport:
             self._usershift_current_end_stddev = 0
 
         # # # ----- failures -----
-        beam_dump_values = _np.logical_not(
-            self._raw_data['Failures']['WrongShift']) * \
-            self._raw_data['Failures']['ManualAnnotated'] * \
-            self._raw_data['Failures']['NoEBeam']
+        beam_dump_values = 1 * _np.logical_and(
+            _np.logical_not(
+                self._raw_data['Failures']['WrongShift']
+            ), _np.logical_or(
+                self._raw_data['Failures']['ManualAnnotated'],
+                self._raw_data['Failures']['NoEBeam']
+            ))
         self._usershift_beam_dump_count = _np.sum(
             _np.diff(beam_dump_values) > 0)
 
