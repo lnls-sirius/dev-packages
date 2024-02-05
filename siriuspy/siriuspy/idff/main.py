@@ -209,7 +209,7 @@ class App(_Callback):
             self._quit = value
 
     def main_idff_loop(self):
-        """Main IDFF loop."""
+        """Run main IDFF loop."""
         while not self._quit:
             # updating interval
             tplanned = 1.0/self._loop_freq
