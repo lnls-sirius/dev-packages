@@ -197,7 +197,7 @@ class ConfigDBClient:
 
         allpvs = set(cf1pvs.keys() | cf2pvs.keys())
         for pv in allpvs:
-            if pos_re.match(pv) and not neg_re.match(pv):
+            if not pos_re.match(pv) and neg_re.match(pv):
                 continue
             val1 = str(cf1pvs.get(pv, 'Not present'))
             val2 = str(cf2pvs.get(pv, 'Not present'))
