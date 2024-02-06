@@ -3,6 +3,7 @@
 
 import json as _json
 import datetime as _datetime
+import re as _re
 from urllib import parse as _parse
 from urllib.request import Request as _Request, urlopen as _urlopen
 from urllib.error import URLError as _URLError
@@ -169,6 +170,39 @@ class ConfigDBClient:
         """Check whether values data corresponds to a configuration type."""
         config_type = self._process_config_type(config_type)
         return _templates.check_value(config_type, value)
+
+    @staticmethod
+    def compare_configs(config1, config2, pos_pattern=None, neg_pattern=None):
+        """Compare "pvs" attribute of configs 1 and 2.
+
+        Print the differences.
+
+        Args:
+            config1 (dict): Valid configuration with "pvs" attribute.
+            config2 (dict): Valid configuration with "pvs" attribute.
+            pos_pattern (str, optional): Only PVs with this pattern will be
+                checked. Defaults to None. None means all PVs will be compared.
+            neg_pattern (_type_, optional): PVs which match this pattern will
+                not be checked. Defaults to None. None means no PV will be
+                excluded from comparison. In case of conflict with
+                `pos_pattern`, it will take precedence.
+        """
+        pos_re = _re.compile('' if pos_pattern is None else pos_pattern)
+        # In case of None in neg_pattern, create a regexp that never matches:
+        # https://stackoverflow.com/questions/1723182/a-regex-that-will-never-be-matched-by-anything
+        neg_re = _re.compile(r'(?!x)x' if neg_pattern is None else pos_pattern)
+
+        cf1pvs = {n: v for n, v, t in config1['pvs']}
+        cf2pvs = {n: v for n, v, t in config2['pvs']}
+
+        allpvs = set(cf1pvs.keys() | cf2pvs.keys())
+        for pv in allpvs:
+            if pos_re.match(pv) and not neg_re.match(pv):
+                continue
+            val1 = str(cf1pvs.get(pv, 'Not present'))
+            val2 = str(cf2pvs.get(pv, 'Not present'))
+            if val1 != val2:
+                print(f'{pv:50s} {val1[:30]:30s} {val2[:30]:30s}')
 
     @classmethod
     def check_valid_configname(cls, name):
