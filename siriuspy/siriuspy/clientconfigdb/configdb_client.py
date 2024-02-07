@@ -195,8 +195,7 @@ class ConfigDBClient:
         cf1pvs = {n: v for n, v, t in config1['pvs']}
         cf2pvs = {n: v for n, v, t in config2['pvs']}
 
-        allpvs = set(cf1pvs.keys() | cf2pvs.keys())
-        for pv in allpvs:
+        for pv in cf1pvs.keys() | cf2pvs.keys():
             if not pos_re.match(pv) or neg_re.match(pv):
                 continue
             val1 = str(cf1pvs.get(pv, 'Not present'))
