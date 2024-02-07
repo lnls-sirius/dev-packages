@@ -192,8 +192,8 @@ class ConfigDBClient:
         # https://stackoverflow.com/questions/1723182/a-regex-that-will-never-be-matched-by-anything
         neg_re = _re.compile(r'(?!x)x' if neg_pattern is None else neg_pattern)
 
-        cf1pvs = {n: v for n, v, t in config1['pvs']}
-        cf2pvs = {n: v for n, v, t in config2['pvs']}
+        cf1pvs = {n: v for n, v, _ in config1['pvs']}
+        cf2pvs = {n: v for n, v, _ in config2['pvs']}
 
         for pv in cf1pvs.keys() | cf2pvs.keys():
             if not pos_re.match(pv) or neg_re.match(pv):
