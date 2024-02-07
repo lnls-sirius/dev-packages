@@ -190,14 +190,14 @@ class ConfigDBClient:
         pos_re = _re.compile('' if pos_pattern is None else pos_pattern)
         # In case of None in neg_pattern, create a regexp that never matches:
         # https://stackoverflow.com/questions/1723182/a-regex-that-will-never-be-matched-by-anything
-        neg_re = _re.compile(r'(?!x)x' if neg_pattern is None else pos_pattern)
+        neg_re = _re.compile(r'(?!x)x' if neg_pattern is None else neg_pattern)
 
         cf1pvs = {n: v for n, v, t in config1['pvs']}
         cf2pvs = {n: v for n, v, t in config2['pvs']}
 
         allpvs = set(cf1pvs.keys() | cf2pvs.keys())
         for pv in allpvs:
-            if not pos_re.match(pv) and neg_re.match(pv):
+            if not pos_re.match(pv) or neg_re.match(pv):
                 continue
             val1 = str(cf1pvs.get(pv, 'Not present'))
             val2 = str(cf2pvs.get(pv, 'Not present'))
