@@ -192,10 +192,18 @@ class App(_Callback):
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._pu_names = self._injsys_dev.handlers['as_pu'].punames
-        self._pu_devs = self._injsys_dev.handlers['as_pu'].pudevices
+        self._pu_names, self._pu_devs = list(), list()
         self._pu_refvolt = list()
-        for dev in self._pu_devs:
+        for idx, pun in enumerate(self._injsys_dev.handlers['as_pu'].punames):
+            # NOTE: The voltage of the TB pulsed magnets are used to define
+            # enable conditions of the egun trigger. To avoid changing the
+            # trigger enable status during top-up, we will not include these
+            # magnets in standby/warm up.
+            if pun.startswith('TB'):
+                continue
+            self._pu_names.append(pun)
+            dev = self._injsys_dev.handlers['as_pu'].pudevices[idx]
+            self._pu_devs.append(dev)
             pvo = dev.pv_object('Voltage-SP')
             self._pu_refvolt.append(pvo.value)
             pvo.add_callback(self._callback_update_pu_refvolt)
