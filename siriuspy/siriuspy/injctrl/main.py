@@ -1127,8 +1127,6 @@ class App(_Callback):
             return
         # do not update PU reference voltage if standby is enabled
         if self._topup_pustandbyenbl == _Const.DsblEnbl.Enbl:
-            self._update_log(f'WARN:PU Standby is enabled, ignoring')
-            self._update_log(f'WARN:setpoint to {pvname}')
             return
         if self._aspu_standby_state == _Const.StandbyInject.Standby:
             return
