@@ -332,7 +332,8 @@ class FamBPMs(_DeviceSet):
             'adcswp': self._csbpm.AcqChan.ADCSwp,
             'adc': self._csbpm.AcqChan.ADC,
         }
-        acq_rate = dic.get(acq_rate.lower(), acq_rate)
+        if isinstance(acq_rate, str):
+            acq_rate = dic.get(acq_rate.lower())
         if acq_rate not in self._csbpm.AcqChan:
             raise ValueError(
                 str(acq_rate) + ' is not a valid acquisition rate.')
