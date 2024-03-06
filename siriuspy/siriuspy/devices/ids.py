@@ -1,4 +1,4 @@
-"""Define Insertion Devices."""
+"""Insertion Devices."""
 
 import time as _time
 import inspect as _inspect
@@ -609,7 +609,7 @@ class IDBase(_Device):
             timeout = max(timeout - (t1_ - t0_), 0)
 
         # calc timeout
-        timeout = self._calc_move_timeout(None, None, timeout)
+        timeout = self.calc_move_timeout(pparam, kparam, timeout)
 
         # wait for movement within timeout based on movement ETA
         return self.wait_move_config(pparam, kparam, timeout)
@@ -649,7 +649,8 @@ class IDBase(_Device):
         if None not in (param_goal, param_val):
             dparam = abs(param_goal - param_val)
             dparam = 0 if dparam < param_tol else dparam
-            pparam_eta = IDBase._calc_move_eta_model(dparam, param_vel, param_acc)
+            pparam_eta = IDBase._calc_move_eta_model(
+                dparam, param_vel, param_acc)
         else:
             pparam_eta = 0.0
 
@@ -660,19 +661,22 @@ class IDBase(_Device):
         if None not in (param_goal, param_val):
             dparam = abs(abs(param_goal) - abs(param_val))  # abs for DELTA
             dparam = 0 if dparam < param_tol else dparam
-            kparam_eta = IDBase._calc_move_eta_model(dparam, param_vel, param_acc)
+            kparam_eta = IDBase._calc_move_eta_model(
+                dparam, param_vel, param_acc)
         else:
             kparam_eta = 0.0
 
         return pparam_eta, kparam_eta
 
     def calc_move_eta_composed(self, pparam_eta, kparam_eta):
+        """."""
         # model: here pparam and kparam as serial in time
         eta = pparam_eta + kparam_eta
         return eta
 
     def calc_move_timeout(
             self, pparam_goal=None, kparam_goal=None, timeout=None):
+        """."""
         # calc timeout
         pparam_eta, kparam_eta = self.calc_move_eta(pparam_goal, kparam_goal)
         eta = self.calc_move_eta_composed(pparam_eta, kparam_eta)
@@ -742,7 +746,6 @@ class IDBase(_Device):
         dtime_plateau = dparam_plateau / param_vel
         dtime_total = dtime_ramp + dtime_plateau
         return dtime_total
-
 
 
 class APU(IDBase):
