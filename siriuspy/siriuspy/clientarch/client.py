@@ -13,11 +13,14 @@ import ssl as _ssl
 import logging as _log
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
+# from datetime import datetime as _datetime
+# from calendar import timegm as _timegm
 
 import numpy as _np
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
+from .time import Time as _Time
 
 
 class ClientArchiver:
@@ -136,16 +139,25 @@ class ClientArchiver:
         resp = self._make_request(url, return_json=True)
         return None if not resp else resp
 
-    def getRecentlyModifiedPVs(self, limit=None):
-        """Get recently modified PVs.
+    def getRecentlyModifiedPVs(self, limit=None, epoch_time=True):
+        """Get list of PVs with recently modified PVTypeInfo.
 
         Currently version of the epics archiver appliance returns pvname
         list from oldest to newest modified timestamps."""
         method = 'getRecentlyModifiedPVs'
+        # get data
         if limit is not None:
             method += f'?limit={str(limit)}'
         url = self._create_url(method=method)
         resp = self._make_request(url, return_json=True)
+
+        # convert to epoch, if the case
+        if resp and epoch_time:
+            for item in resp:
+                modtime = item['modificationTime'][:-7]  # remove ISO8601 offset
+                epoch_time = _Time.conv_to_epoch(modtime, '%b/%d/%Y %H:%M:%S')
+                item['modificationTime'] = epoch_time
+
         return None if not resp else resp
 
     def pausePVs(self, pvnames):
