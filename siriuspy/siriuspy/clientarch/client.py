@@ -1,4 +1,3 @@
-#!/usr/bin/env python-sirius
 """Fetcher module.
 
 See
