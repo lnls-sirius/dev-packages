@@ -1,7 +1,10 @@
 #!/usr/bin/env python-sirius
 """Fetcher module.
 
-See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
+See
+    https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
+    http://slacmshankar.github.io/epicsarchiver_docs/details.html
+    http://slacmshankar.github.io/epicsarchiver_docs/api/mgmt_scriptables.html
 """
 
 from threading import Thread as _Thread
@@ -131,6 +134,18 @@ class ClientArchiver:
     def getPausedPVsReport(self):
         """Get Paused PVs Report."""
         url = self._create_url(method='getPausedPVsReport')
+        resp = self._make_request(url, return_json=True)
+        return None if not resp else resp
+
+    def getRecentlyModifiedPVs(self, limit=None):
+        """Get recently modified PVs.
+
+        Currently version of the epics archiver appliance returns pvname
+        list from oldest to newest modified timestamps."""
+        method = 'getRecentlyModifiedPVs'
+        if limit is not None:
+            method += f'?limit={str(limit)}'
+        url = self._create_url(method=method)
         resp = self._make_request(url, return_json=True)
         return None if not resp else resp
 
