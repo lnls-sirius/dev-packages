@@ -195,13 +195,19 @@ class ConfigDBClient:
         cf1pvs = {n: v for n, v, _ in config1['pvs']}
         cf2pvs = {n: v for n, v, _ in config2['pvs']}
 
+        lines = []
         for pv in cf1pvs.keys() | cf2pvs.keys():
             if not pos_re.match(pv) or neg_re.match(pv):
                 continue
             val1 = str(cf1pvs.get(pv, 'Not present'))
             val2 = str(cf2pvs.get(pv, 'Not present'))
             if val1 != val2:
-                print(f'{pv:50s} {val1[:30]:30s} {val2[:30]:30s}')
+                lines.append(f'{pv:50s} {val1[:30]:30s} {val2[:30]:30s}')
+
+        # sort and print lines
+        lines = sorted(lines)
+        for line in lines:
+            print(line)
 
     @classmethod
     def check_valid_configname(cls, name):
