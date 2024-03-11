@@ -13,8 +13,6 @@ import ssl as _ssl
 import logging as _log
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
-# from datetime import datetime as _datetime
-# from calendar import timegm as _timegm
 
 import numpy as _np
 
