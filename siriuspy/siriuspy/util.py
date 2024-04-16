@@ -14,6 +14,9 @@ import epics as _epics
 from mathphys import beam_optics as _beam
 from siriuspy import envars as _envars
 
+DEFAULT_TIMEOUT = 10  # [s]
+DEFAULT_TINYSLEEP = 0.1  # [s]
+
 
 def conv_splims_labels(label):
     """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
@@ -256,6 +259,47 @@ def check_public_interface_namespace(namespace, valid_interface,
                 print('Missing symbol: ', name)
             return False
     return True
+
+
+def wait_timeout(func, args=None, kwargs=None, timeout=None, tiny_sleep=None):
+    """Wait timeout utility.
+
+    Check func(*args, **kwargs) return value periodically (with period
+    `tiny_sleep`) until timeout interval ends. If func returns True, return
+    True, else, return False.
+
+    Parameters
+    ----------
+        func: callable
+            Function to be periocally called.
+        args: tuple, list (optional)
+            func arguments. Defaults to empty list.
+        kwargs: dict (optional)
+            func key arguments. Defaults to empty dict.
+        timeout: int (optional)
+            Maximum time interval [s] that we will wait until
+            `func` returns True. Defaults to DEFAULT_TIMEOUT.
+        tiny_sleep: int (optional)
+            Tiny time interval [s] to sleep between func checks.
+            Defaults to DEFAULT_TINYSLEEP.
+
+    Returns
+    -------
+        success: bool
+            Whether func returned True within timeout time interval.
+
+    """
+    args = list() if args is None else args
+    kwargs = dict() if kwargs is None else kwargs
+    timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+    tiny_sleep = tiny_sleep if tiny_sleep is not None else DEFAULT_TINYSLEEP
+
+    _t0 = _time.time()
+    while _time.time() - _t0 < timeout:
+        if func(*args, **kwargs):
+            return True
+        _time.sleep(tiny_sleep)
+    return False
 
 
 # This solution was copied from:

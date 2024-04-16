@@ -7,6 +7,9 @@ import logging as _log
 import numpy as _np
 from matplotlib import pyplot as _plt
 
+from mathphys.functions import save_pickle as _save_pickle, \
+    load_pickle as _load_pickle
+
 from ..search import PSSearch as _PSSearch
 from ..clientarch import ClientArchiver as _CltArch, Time as _Time, \
     PVData as _PVData, PVDataSet as _PVDataSet
@@ -258,6 +261,7 @@ class MacReport:
         [_Time(2023, 3, 3, 22, 56, 0, 0), _Time(2023, 3, 3, 23, 0, 0, 0)],
         # power grid failure, archiver was down
         [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
+        [_Time(2024, 1, 18, 14, 0, 0, 0), _Time(2024, 1, 18, 19, 45, 0, 0)],
     ]
 
     def __init__(self, connector=None, logger=None):
@@ -1962,3 +1966,60 @@ class MacReport:
             rst += '{0:>46s}: {1:>8.3f}\n'.format(
                 ppty_text, getattr(self, ppty))
         return rst
+
+    # ----- auxiliary methods to save/restore data -----
+
+    def to_dict(self):
+        """Return dictionary with PV properties.
+
+        Returns:
+            dict: dictionary with fields:
+                server_url (str): url of the Archiver server.
+                pvnames (list): the names of the PVs.
+                timestamp_start (time.time): start of acquisition time.
+                timestamp_stop (time.time): end of acquisition time.
+                pvdata_info (list): with dictionaries containing the data for
+                    all PVs. Compatible input for PVData.from_dict.
+
+        """
+        return {'raw_data': self._raw_data}
+
+    @staticmethod
+    def from_dict(info):
+        """Return PVDataSet object with information in data.
+
+        Args:
+            info (dict): must have the same fields as the dictionary returned
+                by PVDataSet.to_dict method.
+
+        Returns:
+            PVDataSet: with values compatible with data.
+
+        """
+        return info['raw_data']
+
+    def to_pickle(self, fname, overwrite=False):
+        """Create pickle file with complete PVDataSet.
+
+        The data saved is the dictionary returned by PVDataSet.to_dict method.
+
+        Args:
+            fname (str): name of the file to save.
+            overwrite (bool, optional): Whether to overwrite existing file
+                with same name or not. Defaults to False.
+
+        """
+        _save_pickle(self.to_dict(), fname, overwrite=overwrite)
+
+    @staticmethod
+    def from_pickle(fname):
+        """Load data from pickle file and return PVDataSet object.
+
+        Args:
+            fname (str): name of the file to load.
+
+        Returns:
+            PVDataSet: with values from the pickle file.
+
+        """
+        return MacReport.from_dict(_load_pickle(fname))

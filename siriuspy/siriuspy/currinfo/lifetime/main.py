@@ -4,6 +4,7 @@ import warnings
 import time as _time
 import numpy as _np
 from epics import PV as _PV
+from epics.ca import CAThread as _Thread
 
 from ...callbacks import Callback as _Callback
 from ...epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
@@ -15,7 +16,7 @@ _MAX_BUFFER_SIZE = 36000
 
 
 class SILifetimeApp(_Callback):
-    """Main Class of the IOC Logic."""
+    """SI Lifetime App."""
 
     def __init__(self):
         """Class constructor."""
@@ -65,6 +66,9 @@ class SILifetimeApp(_Callback):
         self._bpmsum_pv.add_callback(self._callback_calclifetime)
         self._storedebeam_pv.add_callback(self._callback_get_storedebeam)
 
+        self._thread = _Thread(target=self._update_lifetime, daemon=True)
+        self._thread.start()
+
     @property
     def pvs_database(self):
         """Return pvs database."""
@@ -86,52 +90,6 @@ class SILifetimeApp(_Callback):
     def read(self, reason):
         """Read from IOC database."""
         value = None
-        if reason in ['Lifetime-Mon', 'LifetimeBPM-Mon']:
-            is_bpm = 'BPM' in reason
-            lt_type = 'BPM' if is_bpm else ''
-            lt_name = '_lifetime'+('_bpm' if is_bpm else '')
-            buffer_dt = self._bpmsum_buffer if is_bpm else self._current_buffer
-
-            # get first and last sample
-            now = _time.time()
-            self._update_times(now)
-            first_name = '_frst_smpl_ts'+('_bpm' if is_bpm else '_dcct')
-            first_smpl = getattr(self, first_name)
-            last_name = '_last_smpl_ts'+('_bpm' if is_bpm else '_dcct')
-            last_smpl = getattr(self, last_name)
-            last_smpl = now if last_smpl == -1 else min(last_smpl, now)
-            intvl_name = '_smpl_intvl_mon'+('_bpm' if is_bpm else '_dcct')
-            intvl_smpl = getattr(self, intvl_name)
-
-            # calculate lifetime
-            ts_abs_dqorg, val_dqorg = buffer_dt.get_serie(time_absolute=True)
-            ts_dqorg = ts_abs_dqorg - now
-            ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
-                ts_dqorg, val_dqorg, ts_abs_dqorg, first_smpl, last_smpl)
-
-            if ts_dq.size != 0:
-                if first_smpl != ts_abs_dq[0]:
-                    setattr(self, first_name, ts_abs_dq[0])
-                    self.run_callbacks(
-                        'FrstSplTime'+lt_type+'-RB', getattr(self, first_name))
-                intvl_smpl = last_smpl - first_smpl
-                setattr(self, intvl_name, intvl_smpl)
-                self.run_callbacks(
-                    'SplIntvl'+lt_type+'-Mon', getattr(self, intvl_name))
-
-                val_dq -= self._current_offset
-
-                # check min number of points in buffer
-                if len(val_dq) > 100:
-                    fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
-                    value = self._least_squares_fit(ts_dq, val_dq, fit=fit)
-                    setattr(self, lt_name, value)
-
-            # update pvs
-            self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
-            self.run_callbacks('BufferTimestamp'+lt_type+'-Mon', ts_dq)
-            self.run_callbacks('BuffSize'+lt_type+'-Mon', len(val_dq))
-            self.run_callbacks('BuffSizeTot'+lt_type+'-Mon', len(val_dqorg))
         return value
 
     def write(self, reason, value):
@@ -193,10 +151,14 @@ class SILifetimeApp(_Callback):
     def _callback_get_storedebeam(self, value, **kws):
         self._is_stored = value
 
-    def _callback_calclifetime(self, pvname, timestamp, **kws):
-        # check DCCT StoredEBeam PV
+    def _callback_calclifetime(self, pvname, **kws):
+        # if there is no beam stored, set lifetime to zero
         if not self._is_stored:
-            self._buffautorst_check()
+            if self._lifetime != 0:
+                self._lifetime, self._lifetime_bpm = 0, 0
+                self.run_callbacks('Lifetime-Mon', self._lifetime)
+                self.run_callbacks('LifetimeBPM-Mon', self._lifetime_bpm)
+                self._reset_buff()
             return
 
         is_bpm = 'BPM' in pvname
@@ -287,23 +249,18 @@ class SILifetimeApp(_Callback):
                     value = _np.log(value)
                 except Warning:
                     return 0.0
-        _ns = len(timestamp)
-        _x1 = _np.sum(timestamp)
-        _y1 = _np.sum(value)
-        if timestamp.size > 10000:
-            _x2 = _np.sum(timestamp*timestamp)
-            _xy = _np.sum(timestamp*value)
-        else:
-            _x2 = _np.dot(timestamp, timestamp)
-            _xy = _np.dot(timestamp, value)
-        fit_a = (_x2*_y1 - _xy*_x1)/(_ns*_x2 - _x1*_x1)
-        fit_b = (_ns*_xy - _x1*_y1)/(_ns*_x2 - _x1*_x1)
+        # y = a + bx
+        (fit_b, fit_a), cov = _np.polyfit(timestamp, value, deg=1, cov=True)
+        da_sqr, db_sqr = _np.diag(cov)
 
         if fit == 'exp':
             lifetime = - 1/fit_b
         else:
             lifetime = - fit_a/fit_b
-        return lifetime
+
+        dlt_sqr_rel = db_sqr/fit_b/fit_b + da_sqr/fit_a/fit_a
+        dlifetime = _np.sqrt(dlt_sqr_rel)*_np.abs(lifetime)
+        return lifetime, dlifetime/lifetime
 
     def _update_times(self, now, force_min_first=False):
         if self._last_ts_set == 'first':
@@ -325,3 +282,55 @@ class SILifetimeApp(_Callback):
         self.run_callbacks('FrstSplTimeBPM-RB', self._frst_smpl_ts_bpm)
         self.run_callbacks('LastSplTime-RB', self._last_smpl_ts_dcct)
         self.run_callbacks('LastSplTimeBPM-RB', self._last_smpl_ts_bpm)
+
+    def _update_lifetime(self):
+        for reason in ['Lifetime-Mon', 'LifetimeBPM-Mon']:
+            is_bpm = 'BPM' in reason
+            lt_type = 'BPM' if is_bpm else ''
+            lt_name = '_lifetime'+('_bpm' if is_bpm else '')
+            buffer_dt = self._bpmsum_buffer if is_bpm else self._current_buffer
+
+            # get first and last sample
+            now = _time.time()
+            self._update_times(now)
+            first_name = '_frst_smpl_ts'+('_bpm' if is_bpm else '_dcct')
+            first_smpl = getattr(self, first_name)
+            last_name = '_last_smpl_ts'+('_bpm' if is_bpm else '_dcct')
+            last_smpl = getattr(self, last_name)
+            last_smpl = now if last_smpl == -1 else min(last_smpl, now)
+            intvl_name = '_smpl_intvl_mon'+('_bpm' if is_bpm else '_dcct')
+            intvl_smpl = getattr(self, intvl_name)
+
+            # calculate lifetime
+            ts_abs_dqorg, val_dqorg = buffer_dt.get_serie(time_absolute=True)
+            ts_dqorg = ts_abs_dqorg - now
+            ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
+                ts_dqorg, val_dqorg, ts_abs_dqorg, first_smpl, last_smpl)
+
+            if ts_dq.size != 0:
+                if first_smpl != ts_abs_dq[0]:
+                    setattr(self, first_name, ts_abs_dq[0])
+                    self.run_callbacks(
+                        'FrstSplTime'+lt_type+'-RB', getattr(self, first_name))
+                intvl_smpl = last_smpl - first_smpl
+                setattr(self, intvl_name, intvl_smpl)
+                self.run_callbacks(
+                    'SplIntvl'+lt_type+'-Mon', getattr(self, intvl_name))
+
+                val_dq -= self._current_offset
+
+                # check min number of points in buffer
+                if len(val_dq) > 100:
+                    fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
+                    value, fit_err = self._least_squares_fit(
+                        ts_dq, val_dq, fit=fit)
+                    if fit_err < _Const.ERR_THRES_LIFETIME:
+                        setattr(self, lt_name, value)
+                    else:
+                        value = getattr(self, lt_name)
+
+            # update pvs
+            self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
+            self.run_callbacks('BufferTimestamp'+lt_type+'-Mon', ts_dq)
+            self.run_callbacks('BuffSize'+lt_type+'-Mon', len(val_dq))
+            self.run_callbacks('BuffSizeTot'+lt_type+'-Mon', len(val_dqorg))

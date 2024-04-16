@@ -18,6 +18,7 @@ from ..namesys import SiriusPVName as _SiriusPVName
 
 _DEF_TIMEOUT = 10  # s
 _TINY_INTERVAL = 0.050  # s
+_VACA_PREFIX = ''
 
 
 class Device:
@@ -201,7 +202,8 @@ class Device:
         """Set value of property."""
         pvobj = self.pv_object(propty)
         try:
-            pvobj.value = value
+            # pvobj.value = value
+            print(pvobj.pvname, value)
         except (_ChannelAccessGetFailure, _CASeverityException):
             print('Could not set value of {}'.format(pvobj.pvname))
 

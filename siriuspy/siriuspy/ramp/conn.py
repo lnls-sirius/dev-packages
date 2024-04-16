@@ -84,7 +84,9 @@ class ConnTI(_EpicsPropsList):
         'TrgEGunSglBun': 'LI-01:TI-EGun-SglBun',
         'TrgEGunMultBun': 'LI-01:TI-EGun-MultBun',
         'TrgEjeKckr': 'BO-48D:TI-EjeKckr',
-        'TrgInjKckr': 'SI-01SA:TI-InjDpKckr'}
+        'TrgInjDpKckr': 'SI-01SA:TI-InjDpKckr',
+        'TrgInjNLKckr': 'SI-01SA:TI-InjNLKckr',
+    }
 
     trg_propties = ('State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
                     'Duration-SP', 'Delay-SP', 'Status-Mon')
@@ -137,7 +139,8 @@ class ConnTI(_EpicsPropsList):
         sp_dic[c.EvtLinac_Delay] = delays['Linac']
         sp_dic[c.EvtInjBO_Delay] = delays['InjBO']
         sp_dic[c.EvtInjSI_Delay] = delays['InjSI']
-        sp_dic[c.TrgInjKckr_Delay] = delays[c.TrgInjKckr_Delay]
+        sp_dic[c.TrgInjDpKckr_Delay] = delays[c.TrgInjDpKckr_Delay]
+        sp_dic[c.TrgInjNLKckr_Delay] = delays[c.TrgInjNLKckr_Delay]
         for event in events_inj:
             attr = getattr(c, 'Evt'+event+'_Delay')
             sp_dic[attr] = delays[event]
@@ -258,8 +261,11 @@ class ConnTI(_EpicsPropsList):
             curr = self.get_readback(attr)
             delays[event] = curr + dlt_eje_dly
 
-        injkckr_dly = self.get_readback(c.TrgInjKckr_Delay)
-        delays[c.TrgInjKckr_Delay] = injkckr_dly + dlt_eje_dly
+        injdpkckr_dly = self.get_readback(c.TrgInjDpKckr_Delay)
+        delays[c.TrgInjDpKckr_Delay] = injdpkckr_dly + dlt_eje_dly
+
+        injnlkckr_dly = self.get_readback(c.TrgInjNLKckr_Delay)
+        delays[c.TrgInjNLKckr_Delay] = injnlkckr_dly + dlt_eje_dly
         return delays
 
     def update_ramp_configsetup(self, events_inj, events_eje, delays):
@@ -330,12 +336,13 @@ class ConnTI(_EpicsPropsList):
 
         self.ramp_configsetup = {
             # Event delays
-            c.EvtLinac_Delay: None,          # [us]
-            c.EvtInjBO_Delay: None,          # [us]
-            c.EvtRmpBO_Delay: None,          # [us]
-            c.EvtInjSI_Delay: None,          # [us]
-            c.EvtStudy_Delay: None,          # [us]
-            c.TrgInjKckr_Delay: None,        # [us]
+            c.EvtLinac_Delay: None,         # [us]
+            c.EvtInjBO_Delay: None,         # [us]
+            c.EvtRmpBO_Delay: None,         # [us]
+            c.EvtInjSI_Delay: None,         # [us]
+            c.EvtStudy_Delay: None,         # [us]
+            c.TrgInjDpKckr_Delay: None,     # [us]
+            c.TrgInjNLKckr_Delay: None,     # [us]
             # Mags trigger
             c.TrgMags_Delay: 0.0,           # [us]
             # Corrs trigger

@@ -14,6 +14,7 @@ class ETypes(_csdev.ETypes):
     DCCTSELECTIONTYP = ('DCCT13C4', 'DCCT14C4')
     BUFFAUTORSTTYP = ('Off', 'DCurrCheck')
     FITTYP = ('Exponential', 'Linear')
+    LTCALCSTS = ('CalcOk', 'ErrAboveThres')
 
 
 _et = ETypes  # syntactic sugar
@@ -28,6 +29,7 @@ class Const(_csdev.Const):
     DCCTFltCheck = _csdev.Const.register('DCCTFltCheck', _et.OFF_ON)
     BuffAutoRst = _csdev.Const.register('BuffAutoRst', _et.BUFFAUTORSTTYP)
     Fit = _csdev.Const.register('Fit', _et.FITTYP)
+    LtCalcSts = _csdev.Const.register('LtCalcSts', _et.LTCALCSTS)
 
 
 _c = Const  # syntactic sugar
@@ -189,6 +191,15 @@ def get_lifetime_database():
             'type': 'float', 'value': 0.0, 'prec': 3, 'unit': 'mA',
             'lolim': -10.0, 'low': -10.0, 'lolo': -10.0,
             'hilim': 10.0, 'high': 10.0, 'hihi': 10.0},
+        'LtRelErrThres-SP': {
+            'type': 'float', 'value': 30.0, 'prec': 1, 'unit': '%',
+            'lolim': 0.0, 'hilim': 100.0},
+        'LtRelErrThres-RB': {
+            'type': 'float', 'value': 30.0, 'prec': 1, 'unit': '%',
+            'lolim': 0.0, 'hilim': 100.0},
+        'LtCalcStatus-Mon': {
+            'type': 'enum', 'enums': _et.LTCALCSTS,
+            'value': _c.LtCalcSts.CalcOk},
 
         'BuffRst-Cmd': {'type': 'int', 'value': 0},
         'BuffAutoRst-Sel': {
@@ -198,11 +209,11 @@ def get_lifetime_database():
             'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
             'value': _c.BuffAutoRst.DCurrCheck},
         'BuffAutoRstDCurr-SP': {
-            'type': 'float', 'value': 0.01, 'prec': 2, 'unit': 'mA',
+            'type': 'float', 'value': 0.005, 'prec': 3, 'unit': 'mA',
             'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
         'BuffAutoRstDCurr-RB': {
-            'type': 'float', 'value': 0.01, 'prec': 2, 'unit': 'mA',
+            'type': 'float', 'value': 0.005, 'prec': 3, 'unit': 'mA',
             'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
 
@@ -226,8 +237,11 @@ def get_lifetime_database():
             'lolim': -1.0, 'hilim': 2e10},
 
         'Lifetime-Mon': {
-            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
-            'scan': 0.5},
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
+        'LifetimeRaw-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
+        'LifetimeErr-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
         'BuffSize-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTot-Mon': {'type': 'int', 'value': 0},
         'BufferValue-Mon': {
@@ -238,8 +252,11 @@ def get_lifetime_database():
             'value': [0.0, ] * 100000},
 
         'LifetimeBPM-Mon': {
-            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
-            'scan': 0.5},
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
+        'LifetimeRawBPM-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
+        'LifetimeErrBPM-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's'},
         'BuffSizeBPM-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTotBPM-Mon': {'type': 'int', 'value': 0},
         'BufferValueBPM-Mon': {
