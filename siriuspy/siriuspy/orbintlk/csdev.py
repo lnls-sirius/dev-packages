@@ -213,6 +213,7 @@ class Const(_csdev.Const):
         if NR_BPM != len(self.bpm_names):
             raise ValueError('Inconsistent NR_BPM parameter!')
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
+        self.bpm_idcs = {b: idx for idx, b in enumerate(self.bpm_names)}
 
         # bpm position along the ring
         self.bpm_pos = _BPMSearch.get_positions(self.bpm_names)
