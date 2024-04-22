@@ -84,12 +84,12 @@ class Const(_csdev.Const):
             ('Src-Sel', 0),
             ('State-Sel', 1),
             ('Polarity-Sel', 0),
-            ('Log-Sel', 0))),
+            ('Log-Sel', 1))),
         ('SI-14C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
             ('State-Sel', 1),
             ('Polarity-Sel', 0),
-            ('Log-Sel', 0))),
+            ('Log-Sel', 1))),
     ]
     FOUTSFIXED_RXENBL = {
         'CA-RaTim:TI-Fout-2': 0b01000001,
