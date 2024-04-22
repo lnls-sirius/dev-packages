@@ -105,8 +105,10 @@ class App(_Callback):
         pvo.add_callback(self._callback_evg_rxlock)
 
         # # Fouts
-        foutnames = list(self._const.FOUTS_2_MON) + \
-            list(self._const.FOUTSFIXED_RXENBL.keys())
+        foutnames = list(
+            self._const.FOUTS_2_MON |
+            self._const.FOUTSFIXED_RXENBL.keys()
+        )
         self._thread_cbfout = {fout: None for fout in foutnames}
         self._fout_devs = {
             devname: _Device(
