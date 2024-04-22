@@ -139,23 +139,25 @@ class Const(_csdev.Const):
         if cls.__EVG_CONFIGS is not None:
             return cls.__EVG_CONFIGS
 
+        hltg_enbl = [
+            'SI-Fam:TI-BPM-OrbIntlk',
+            'SI-Fam:TI-OrbIntlkRedundancy',
+        ]
+        lltg_enbl = []
+        for hltg in hltg_enbl:
+            lltg_enbl.extend(_HLTimeSearch.get_ll_trigger_names(hltg))
+        lltg_enbl = set(lltg_enbl)
+
         fouts = set()
         evgchans = set()
-        evgrxenbl = list()
-        for ch in _LLTimeSearch.get_connections_twds_evg():
-            if ch.dev != 'BPM':
-                continue
-            if ch.sec != 'SI':
-                continue
-            if ch.dev == 'BPM' and ch.sub.endswith(('SA', 'SB', 'SP')):
-                continue
-            fch = _LLTimeSearch.get_fout_channel(ch)
+        evgrxenbl = set()
+        for lltg in lltg_enbl:
+            fch = _LLTimeSearch.get_fout_channel(lltg)
             fouts.add(fch.device_name)
             evgch = _LLTimeSearch.get_evg_channel(fch)
-            if evgch in evgchans:
-                continue
             evgchans.add(evgch)
-            evgrxenbl.append(int(evgch.propty[3:]))
+            evgrxenbl.add(int(evgch.propty[3:]))
+        evgrxenbl = sorted(evgrxenbl)
 
         hlevts = _HLTimeSearch.get_hl_events()
         evtin0 = int(hlevts['Intlk'].strip('Evt'))
