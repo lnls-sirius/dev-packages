@@ -21,6 +21,10 @@ DEFAULT_WFM_FBP = _np.zeros(DEF_WFMSIZE_FBP, dtype=float)
 MAX_WFMSIZE_OTHERS = 4096
 DEF_WFMSIZE_OTHERS = 3920
 DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
+DEFAULT_WFM_SELECTED = 0
+DEFAULT_WFM_FREQUENCY = 2000.0  # [Hz]
+DEFAULT_WFM_GAIN = 1.0
+DEFAULT_WFM_OFFSET = 0.0  # [A/V]
 
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
@@ -1268,6 +1272,22 @@ def _get_ps_basic_propty_database():
             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Wfm - UDC
+        'WfmSelected-SP': {'type': 'int', 'value': DEFAULT_WFM_SELECTED},
+        'WfmSelected-RB': {'type': 'int', 'value': DEFAULT_WFM_SELECTED},
+        'WfmSyncMode-Sel': {
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE, 'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmSyncMode-Sts': {
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE, 'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmFreq-SP': {'type': 'float', 'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz'},
+        'WfmFreq-RB': {'type': 'float', 'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz'},
+        'WfmGain-SP': {'type': 'float', 'value': DEFAULT_WFM_GAIN},
+        'WfmGain-RB': {'type': 'float', 'value': DEFAULT_WFM_GAIN},
+        'WfmOffset-SP': {
+            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
+            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
+        'WfmOffset-RB': {
+            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
+            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
         'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
                    'value': list(DEFAULT_WFM), 'unit': 'A',
                    'prec': PS_CURRENT_PRECISION},

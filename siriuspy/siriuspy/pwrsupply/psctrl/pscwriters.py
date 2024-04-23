@@ -366,6 +366,24 @@ class CfgSiggen(Function):
                 self._cfg.execute(value)
 
 
+class CfgWfm(Function):
+    """Command to configure Wfm."""
+
+    def __init__(self, device_ids, pru_controller, idx, setpoints=None):
+        """Init."""
+        self._idx = idx
+        self._setpoints = setpoints
+        self._cfg = BSMPFunction(
+            device_ids, pru_controller, _const_psbsmp.F_CFG_WFMREF)
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self._setpoints or \
+                (self._setpoints and
+                    self._setpoints.apply(value[self._idx])):
+            self._cfg.execute(value)
+
+
 class SOFBCurrent(Function):
     """."""
 
@@ -438,15 +456,9 @@ class Setpoint:
         self.field = epics_field
         self.value = epics_database['value']
         self.database = epics_database
-        if '-Cmd' in epics_field:
-            self.is_cmd = True
-        else:
-            self.is_cmd = False
+        self.is_cmd = '-Cmd' in epics_field
         self.type = epics_database['type']
-        if 'count' in epics_database:
-            self.count = epics_database['count']
-        else:
-            self.count = None
+        self.count = epics_database.get('count', None)
         if self.type == 'enum' and 'enums' in epics_database:
             self.enums = epics_database['enums']
         else:

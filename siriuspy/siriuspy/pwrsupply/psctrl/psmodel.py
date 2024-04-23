@@ -31,6 +31,12 @@ class _PSModel:
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
+        # Wfm
+        'WfmSelected-RB': _c.V_WFMREF_SELECTED,
+        'WfmSyncMode-Sts': _c.V_WFMREF_SYNC_MODE,
+        'WfmFreq-RB': _c.V_WFMREF_FREQUENCY,
+        'WfmGain-RB': _c.V_WFMREF_GAIN,
+        'WfmOffset-RB': _c.V_WFMREF_OFFSET,
         # Scope
         'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
         'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
@@ -296,6 +302,17 @@ class _PSModel:
         if epics_field == 'WfmMonAcq-Sel':
             return _writers.WfmMonAcq(
                 device_ids, pru_controller, setpoints)
+        p2i = {
+            'WfmSelected-SP': 0,
+            'WfmSyncMode-Sel': 1,
+            'WfmFreq-SP': 2,
+            'WfmGain-SP': 3,
+            'WfmOffset-SP': 4,
+            }
+        if epics_field in p2i:
+            idx = p2i[epics_field]
+            return _writers.CfgWfm(
+                device_ids, pru_controller, idx, setpoints)
         return None
 
 

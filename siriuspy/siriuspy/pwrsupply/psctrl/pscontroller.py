@@ -176,6 +176,14 @@ class StandardPSController(PSController):
         'CycleAuxParam-SP',  # start index of auxparams
     ]
 
+    _WFM_PARMS = [
+        'WfmSelected-SP',
+        'WfmSyncMode-SP',
+        'WfmFreq-SP',
+        'WfmGain-SP',
+        'WfmOffset-SP',
+    ]
+
     def write(self, devname, field, value):
         """Write value to pv."""
         priority_pvs = dict()
@@ -188,6 +196,8 @@ class StandardPSController(PSController):
             self._set_sofb_current(pvname, value, devname, field, priority_pvs)
         elif field in StandardPSController._SIGGEN_PARMS:
             self._set_siggen(pvname, value, devname, field, priority_pvs)
+        elif field in StandardPSController._WFM_PARMS:
+            self._set_wfm(pvname, value, devname, field, priority_pvs)
         else:
             self._writers[pvname].execute(value)
 
@@ -208,6 +218,13 @@ class StandardPSController(PSController):
             values[idx:] = value
         else:
             values[idx] = value
+        self._writers[pvname].execute(values)
+
+    def _set_wfm(self, pvname, value, devname, field, priority_pvs):
+        _ = priority_pvs
+        idx = StandardPSController._WFM_PARMS.index(field)
+        values = self._get_wfm_arg_values(devname)
+        values[idx] = value
         self._writers[pvname].execute(values)
 
     def _set_sofb_current(self, pvname, value, devname, field, priority_pvs):
@@ -238,4 +255,10 @@ class StandardPSController(PSController):
                 for arg in StandardPSController._SIGGEN_PARMS[:-1]]
         aux = StandardPSController._SIGGEN_PARMS[-1]
         args.extend(self._readers[devname + ':' + aux].read())
+        return args
+
+    def _get_wfm_arg_values(self, devname):
+        """Get Wfm args."""
+        args = [self._readers[devname + ':' + arg].read()
+                for arg in StandardPSController._WFM_PARMS]
         return args
