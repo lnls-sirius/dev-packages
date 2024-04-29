@@ -111,6 +111,8 @@ class _PSDev(_Device):
             name = devname.substitute(dis='MA')
             if name.dev == 'B1B2' or (name.sec == 'BO' and name.dev == 'B'):
                 maname = name.substitute(idx='')
+            else:
+                maname = name
             self._normalizer = _NormFactory.create(maname)
         except:
             self._normalizer = None
