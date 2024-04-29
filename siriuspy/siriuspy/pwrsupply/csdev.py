@@ -1054,6 +1054,45 @@ def _get_ps_common_propty_database():
         'IntlkSoft-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkHard-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        # Wfm
+        'WfmSelected-SP': {
+            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 1, 'high': 1, 'hihi': 1},
+        'WfmSelected-RB': {
+            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 1, 'high': 1, 'hihi': 1},
+        'WfmSyncMode-Sel': {
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
+            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmSyncMode-Sts': {
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
+            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmFreq-SP': {
+            'type': 'float',
+            'value': DEFAULT_WFM_FREQUENCY, 'prec': 4, 'unit': 'Hz',
+            'lolo': 1, 'low': 1, 'lolim': 1,
+            'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
+        'WfmFreq-RB': {
+            'type': 'float',
+            'value': DEFAULT_WFM_FREQUENCY, 'prec': 4, 'unit': 'Hz',
+            'lolo': 1, 'low': 1, 'lolim': 1,
+            'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
+        'WfmGain-SP': {
+            'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'WfmGain-RB': {
+            'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'WfmOffset-SP': {
+            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
+            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
+        'WfmOffset-RB': {
+            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
+            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
         # Scope
         'ScopeSrcAddr-SP': {
             'type': 'int', 'value': 0x0000C000, 'unit': 'scope_srcaddr',
@@ -1272,44 +1311,6 @@ def _get_ps_basic_propty_database():
             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Wfm - UDC
-        'WfmSelected-SP': {
-            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 1, 'high': 1, 'hihi': 1},
-        'WfmSelected-RB': {
-            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 1, 'high': 1, 'hihi': 1},
-        'WfmSyncMode-Sel': {
-            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
-            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
-        'WfmSyncMode-Sts': {
-            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
-            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
-        'WfmFreq-SP': {
-            'type': 'float',
-            'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz',
-            'lolo': 0.01, 'low': 0.01, 'lolim': 0.01,
-            'hilim': 50000, 'high': 50000, 'hihi': 50000},
-        'WfmFreq-RB': {
-            'type': 'float',
-            'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz',
-            'lolo': 0.01, 'low': 0.01, 'lolim': 0.01,
-            'hilim': 50000, 'high': 50000, 'hihi': 50000},
-        'WfmGain-SP': {
-            'type': 'float', 'value': DEFAULT_WFM_GAIN,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
-        'WfmGain-RB': {
-            'type': 'float', 'value': DEFAULT_WFM_GAIN,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 1000, 'high': 1000, 'hihi': 1000},
-        'WfmOffset-SP': {
-            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
-            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
-        'WfmOffset-RB': {
-            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
-            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
         'Wfm-SP': {'type': 'float', 'count': len(DEFAULT_WFM),
                    'value': list(DEFAULT_WFM), 'unit': 'A',
                    'prec': PS_CURRENT_PRECISION},
