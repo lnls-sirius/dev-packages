@@ -1272,16 +1272,38 @@ def _get_ps_basic_propty_database():
             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Wfm - UDC
-        'WfmSelected-SP': {'type': 'int', 'value': DEFAULT_WFM_SELECTED},
-        'WfmSelected-RB': {'type': 'int', 'value': DEFAULT_WFM_SELECTED},
+        'WfmSelected-SP': {
+            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 1, 'high': 1, 'hihi': 1},
+        'WfmSelected-RB': {
+            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 1, 'high': 1, 'hihi': 1},
         'WfmSyncMode-Sel': {
-            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE, 'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
+            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
         'WfmSyncMode-Sts': {
-            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE, 'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
-        'WfmFreq-SP': {'type': 'float', 'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz'},
-        'WfmFreq-RB': {'type': 'float', 'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz'},
-        'WfmGain-SP': {'type': 'float', 'value': DEFAULT_WFM_GAIN},
-        'WfmGain-RB': {'type': 'float', 'value': DEFAULT_WFM_GAIN},
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
+            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmFreq-SP': {
+            'type': 'float',
+            'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz',
+            'lolo': 0.01, 'low': 0.01, 'lolim': 0.01,
+            'hilim': 50000, 'high': 50000, 'hihi': 50000},
+        'WfmFreq-RB': {
+            'type': 'float',
+            'value': DEFAULT_WFM_FREQUENCY, 'unit': 'Hz',
+            'lolo': 0.01, 'low': 0.01, 'lolim': 0.01,
+            'hilim': 50000, 'high': 50000, 'hihi': 50000},
+        'WfmGain-SP': {
+            'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'WfmGain-RB': {
+            'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
         'WfmOffset-SP': {
             'type': 'float', 'value': DEFAULT_WFM_OFFSET,
             'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
@@ -3021,6 +3043,7 @@ def _set_limits(pstype, database):
         'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
+        'WfmOffset-SP', 'WfmOffset-RB',
     )
     signals_lims = signals_unit + (
         'Voltage-SP', 'Voltage-RB',
