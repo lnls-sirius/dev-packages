@@ -105,8 +105,10 @@ class App(_Callback):
         pvo.add_callback(self._callback_evg_rxlock)
 
         # # Fouts
-        foutnames = list(self._const.FOUTS_2_MON) + \
-            list(self._const.FOUTSFIXED_RXENBL.keys())
+        foutnames = list(
+            self._const.FOUTS_2_MON |
+            self._const.FOUTSFIXED_RXENBL.keys()
+        )
         self._thread_cbfout = {fout: None for fout in foutnames}
         self._fout_devs = {
             devname: _Device(
@@ -1358,13 +1360,23 @@ class App(_Callback):
         if not value:
             return
         # launch thread to log interlock details
+        bpmname = _PVName(pvname).device_name
         _CAThread(
             target=self._log_bpm_intlk,
-            args=(_PVName(pvname).device_name, ),
+            args=(bpmname, ),
             daemon=True).start()
         # launch thread to send interlock to RF as a backup
         if self._thread_cbbpm and self._thread_cbbpm.is_alive():
             return
+
+        # NOTE: the next lines help to avoid killing beam in case one BPM that
+        # is not enabled raises a false positive interlock signal.
+        idx = self._const.bpm_idcs[bpmname]
+        enbl = self._enable_lists['pos'][idx] or self._enable_lists['ang'][idx]
+        if not enbl:
+            self._update_log(f'WARN:{bpmname} false positive')
+            return
+
         self._thread_cbbpm = _CAThread(
             target=self._do_callback_bpm_intlk, daemon=True)
         self._thread_cbbpm.start()
