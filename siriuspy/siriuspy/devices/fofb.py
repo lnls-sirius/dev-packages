@@ -702,6 +702,7 @@ class FamFastCorrs(_DeviceSet):
     DEF_ATOL_FOFBACCSAT = 2e-2
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
+    DEF_ATOL_ACCFILTER = 2**-17
 
     def __init__(self, psnames=None):
         """Init."""
@@ -1069,6 +1070,35 @@ class FamFastCorrs(_DeviceSet):
         """Send clear power supplies pre-accumulator."""
         for dev in self._get_devices(psnames, psindices):
             dev.cmd_fofbacc_clear()
+        return True
+
+    def set_fofbacc_filter(self, values, psnames=None, psindices=None):
+        """Command to set power supply filter coefficients values."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values and indices must have the same size.')
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter = values[i]
+        return True
+
+    def check_fofbacc_filter(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTER):
+        """Check power supplies filter coefficients."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values and indices must have the same size.')
+        for i, dev in enumerate(devs):    
+            if len(values[i]) != len(dev.fofbacc_filter):
+                return False
+            if not _np.allclose(values[i], dev.fofbacc_filter, atol=atol):
+                return False
         return True
 
     # ----- private methods -----

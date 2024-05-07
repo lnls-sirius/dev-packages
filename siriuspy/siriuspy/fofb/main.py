@@ -72,6 +72,8 @@ class App(_Callback):
         }
         self._corr_accdec_val = 1
         self._corr_accdec_enm = self._const.DecOpt.FOFB
+        self._corr_accfilter_val = 20*[0.0]
+        self._corr_accfilter_enm = self._const.FilterOpt.Unit
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
@@ -152,6 +154,8 @@ class App(_Callback):
             'CtrlrDsblSYSIDExc-Cmd': self.cmd_fofbctrl_dsblsysid,
             'FOFBAccDecimation-Sel': _part(self.set_corr_accdec, 'enum'),
             'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
+            'FOFBAccFilter-Sel':  _part(self.set_corr_accfilter, 'enum'),
+            'FOFBAccFilter-SP': _part(self.set_corr_accfilter, 'value'),
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -700,6 +704,47 @@ class App(_Callback):
 
         self._update_log('Setting FOFB Acc decimation...')
         self._corrs_dev.set_fofbacc_decimation(dec)
+        self._update_log('...done!')
+
+        return True
+    
+
+    def set_corr_accfilter(self, option, value):
+        """Set corrector accumulator filter."""
+        if self._corr_accfilter_enm != self._const.FilterOpt.Custom and \
+                option == 'value':
+            return False
+
+        if option == 'enum':
+            if value == self._const.FilterOpt.Unit:
+                filter = 20*[0.0]
+                filter[0] = 1
+                filter[5] = 1
+                filter[10] = 1
+                filter[15] = 1
+
+            elif value == self._const.FilterOpt.Switching:
+                b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01] # freq FOFB/4
+                a4 = [-1.11484423e-16, 8.20678791e-01] # freq FOFB/4
+                b2 = [0.83408931895964943947774372645654, 0.83408931895964943947774372645654, 0.0] # freq FOFB/2
+                a2 = [0.66817863791929887895548745291308, 0.0] # freq FOFB/2
+                filter = 20*[0.0] 
+                filter[0:3] = b4
+                filter[3:5] = a4
+                filter[5:8] = b2
+                filter[8:10] = a2
+            else:
+                filter = self._corr_accfilter_val
+            self._corr_accdfilter_enm = value
+            self.run_callbacks('FOFBAccFilter-Sts', value)
+            self.run_callbacks('FOFBAccFilter-SP', filter)
+        else:
+            filter = value
+        self._corr_accfilter_val = filter
+        self.run_callbacks('FOFBAccFilter-RB', filter)
+
+        self._update_log('Setting FOFB Acc filter...')
+        self._corrs_dev.set_fofbacc_filter(filter)
         self._update_log('...done!')
 
         return True

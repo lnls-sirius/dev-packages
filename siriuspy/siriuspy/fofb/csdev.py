@@ -34,6 +34,7 @@ class ETypes(_csdev.ETypes):
         'LoopInterlockOk', 'SYSIDExcitationDisabled')
 
     DEC_OPT = ('FOFB', 'Monit', 'Custom')
+    FILTER_OPT = ('Unit', 'Switching', 'Custom')
 
 
 _et = ETypes  # syntactic sugar
@@ -67,6 +68,7 @@ class HLFOFBConst(_csdev.Const):
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
+    FilterOpt = _csdev.Const.register('FilterOpt', _et.FILTER_OPT)
 
     def __init__(self):
         """Class constructor."""
@@ -117,6 +119,10 @@ class HLFOFBConst(_csdev.Const):
         # dcc minimum enable configuration
         self.dccenbl_min = _np.array([
             bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
+
+        # acc filters
+        # self.acc_filter_unit = 50*[1]
+        # self
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -257,6 +263,20 @@ class HLFOFBConst(_csdev.Const):
             'FOFBAccDecimation-RB': {
                 'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
                 'hilim': 8600, 'unit': 'count'},
+            
+            # filter configuration
+            'FOFBAccFilter-Sel': {
+                'type': 'enum', 'enums': _et.FILTER_OPT,
+                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
+            'FOFBAccFilter-Sts': {
+                'type': 'enum', 'enums': _et.FILTER_OPT,
+                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
+            'FOFBAccFilter-SP': {
+                'type': 'float', 'value': 50*[0], 'prec': 5, 'count': 50, 
+                'unit': 'coef'},
+            'FOFBAccFilter-RB': {
+                'type': 'float', 'value': 50*[0], 'prec': 5, 'count': 50,
+                'unit': 'coef'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
