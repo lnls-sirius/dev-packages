@@ -708,31 +708,25 @@ class App(_Callback):
 
         return True
     
-
     def set_corr_accfilter(self, option, value):
         """Set corrector accumulator filter."""
+
+        num_biquads = self._llfofb_dev.fofbacc_filter_num_biquads
+        unit = self._const.FILTER_UNIT
+        sw2 = self._const.FILTER_SW_2
+        sw4 = self._const.FILTER_SW_4
+
         if self._corr_accfilter_enm != self._const.FilterOpt.Custom and \
                 option == 'value':
             return False
 
         if option == 'enum':
             if value == self._const.FilterOpt.Unit:
-                filter = 20*[0.0]
-                filter[0] = 1
-                filter[5] = 1
-                filter[10] = 1
-                filter[15] = 1
+                filter = num_biquads * unit
 
             elif value == self._const.FilterOpt.Switching:
-                b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01] # freq FOFB/4
-                a4 = [-1.11484423e-16, 8.20678791e-01] # freq FOFB/4
-                b2 = [0.83408931895964943947774372645654, 0.83408931895964943947774372645654, 0.0] # freq FOFB/2
-                a2 = [0.66817863791929887895548745291308, 0.0] # freq FOFB/2
-                filter = 20*[0.0] 
-                filter[0:3] = b4
-                filter[3:5] = a4
-                filter[5:8] = b2
-                filter[8:10] = a2
+                filter = sw2 + sw4 + (num_biquads - 2) * unit
+                
             else:
                 filter = self._corr_accfilter_val
             self._corr_accdfilter_enm = value

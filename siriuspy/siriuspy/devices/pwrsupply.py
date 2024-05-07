@@ -1040,6 +1040,7 @@ class PowerSupplyFC(_PSDev):
     @fofbacc_filter.setter
     def fofbacc_filter(self, value):
         self['FOFBAccFilter-SP'] = value
+  
 
 class PowerSupplyFBP(PowerSupply):
     """FBP Power Supply Device."""

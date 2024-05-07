@@ -39,6 +39,7 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
         'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
         'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
+        'FOFBAccFilterNumBiquads-Cte',
         )
 
     def __init__(self, devname, props2init='all'):
@@ -141,6 +142,10 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         self['LoopIntlkReset-Cmd'] = 1
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        return self['FOFBAccFilterNumBiquads-Cte']
 
 # ---------------- DCC devices ----------------
 
@@ -690,6 +695,13 @@ class FamFOFBControllers(_DeviceSet):
         self._evt_fofb.cmd_external_trigger()
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
+        return ctl.fofbacc_filter_num_biquads
+
+    
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
