@@ -74,6 +74,7 @@ class App(_Callback):
         self._corr_accdec_enm = self._const.DecOpt.FOFB
         self._corr_accfilter_val = 20*[0.0]
         self._corr_accfilter_enm = self._const.FilterOpt.Unit
+        self._corr_accfilter_gain = 1.0
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
@@ -156,6 +157,7 @@ class App(_Callback):
             'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
             'FOFBAccFilter-Sel':  _part(self.set_corr_accfilter, 'enum'),
             'FOFBAccFilter-SP': _part(self.set_corr_accfilter, 'value'),
+            'FOFBAccFilterGain-SP': self.set_corr_accfilter_gain,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -729,7 +731,7 @@ class App(_Callback):
                 
             else:
                 filter = self._corr_accfilter_val
-            self._corr_accdfilter_enm = value
+            self._corr_accfilter_enm = value
             self.run_callbacks('FOFBAccFilter-Sts', value)
             self.run_callbacks('FOFBAccFilter-SP', filter)
         else:
@@ -739,6 +741,18 @@ class App(_Callback):
 
         self._update_log('Setting FOFB Acc filter...')
         self._corrs_dev.set_fofbacc_filter(filter)
+        self._update_log('...done!')
+
+        return True
+
+    def set_corr_accfilter_gain(self, value):
+        """Set corrector accumulator filter gain."""
+
+        self._corr_accfilter_gain = value
+        self.run_callbacks('FOFBAccFilterGain-RB', value)
+
+        self._update_log('Setting FOFB Acc filter gain...')
+        self._corrs_dev.set_fofbacc_filter_gain(value)
         self._update_log('...done!')
 
         return True

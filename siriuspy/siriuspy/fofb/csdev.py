@@ -130,10 +130,6 @@ class HLFOFBConst(_csdev.Const):
         self.dccenbl_min = _np.array([
             bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
 
-        # acc filters
-        # self.acc_filter_unit = 50*[1]
-        # self
-
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
         pvs_database = {
@@ -287,6 +283,12 @@ class HLFOFBConst(_csdev.Const):
             'FOFBAccFilter-RB': {
                 'type': 'float', 'value': 50*[0], 'prec': 5, 'count': 50,
                 'unit': 'coef'},
+            'FOFBAccFilterGain-SP': {
+                'type': 'float', 'value': 1.0, 'prec': 5,  
+                'lolim': 0, 'hilim': 1000,'unit': 'gain'},
+            'FOFBAccFilterGain-RB': {
+                'type': 'float', 'value': 1.0, 'prec': 5, 
+                'unit': 'gain'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {

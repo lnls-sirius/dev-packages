@@ -65,7 +65,8 @@ class _PSDev(_Device):
         'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
         'FOFBAcc-Mon',
         'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
-        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
+        'FOFBAccFilter-SP', 'FOFBAccFilter-RB', 
+        'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
     )
     _properties_pulsed = (
         'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
@@ -1041,6 +1042,14 @@ class PowerSupplyFC(_PSDev):
     def fofbacc_filter(self, value):
         self['FOFBAccFilter-SP'] = value
   
+    @property
+    def fofbacc_filter_gain(self):
+        """FOFB accumulator filter gain."""
+        return self['FOFBAccFilterGain-RB']
+
+    @fofbacc_filter_gain.setter
+    def fofbacc_filter_gain(self, value):
+        self['FOFBAccFilterGain-SP'] = value
 
 class PowerSupplyFBP(PowerSupply):
     """FBP Power Supply Device."""

@@ -715,6 +715,7 @@ class FamFastCorrs(_DeviceSet):
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
     DEF_ATOL_ACCFILTER = 2**-17
+    DEF_ATOL_ACCFILTERGAIN = 2**-12
 
     def __init__(self, psnames=None):
         """Init."""
@@ -1112,6 +1113,29 @@ class FamFastCorrs(_DeviceSet):
             if not _np.allclose(values[i], dev.fofbacc_filter, atol=atol):
                 return False
         return True
+    
+    def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
+        """Command to set accumulator filter gain."""
+        if not isinstance(value, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter_gain = value
+        return True
+
+    def check_fofbacc_filter_gain(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTERGAIN):
+        """Check accumulator filter gain."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
+        if isinstance(values, (int, float)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
 
     # ----- private methods -----
 
