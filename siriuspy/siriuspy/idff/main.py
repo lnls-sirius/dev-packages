@@ -3,20 +3,14 @@
 import os as _os
 import logging as _log
 import time as _time
-from importlib.util import find_spec as _find_spec
 
 import epics as _epics
 import numpy as _np
-
-if _find_spec('PRUserial485') is not None:
-    from PRUserial485 import EthBridgeClient as _EthBridgeClient
 
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
 from ..clientconfigdb import ConfigDBException as _ConfigDBException
 from ..devices import IDFF as _IDFF
-from ..pwrsupply.pssofb import PSConnSOFB as _PSConnSOFB
-from ..pwrsupply.pssofb import PSNamesSOFB as _PSNamesSOFB
 
 from .csdev import IDFFConst as _Const, ETypes as _ETypes
 
@@ -33,17 +27,15 @@ class App(_Callback):
         self._pvs_prefix = self._const.idffname
         self._pvs_database = self._const.get_propty_database()
 
-        self._loop_state = _Const.DsblEnbl.Dsbl
+        self._loop_state = _Const.DEFAULT_LOOP_STATE
         self._loop_freq = _Const.DEFAULT_LOOP_FREQ
-        self._control_qs = _Const.DsblEnbl.Dsbl
+        self._control_qs = _Const.DEFAULT_CONTROL_QS
         self._polarization = 'none'
         self._config_name = ''
         self.read_autosave_file()
 
+        # IDFF object with IDFF config
         self._idff = _IDFF(idname)
-
-        self._pssofb_isused = self._pvs_database['SOFBMode-Sts']['value']
-        self._pssofb, self._bsmp_devs = self._pssofb_init(idname)
 
         # load idff in configdb
         self._load_config(self._config_name)
@@ -54,13 +46,13 @@ class App(_Callback):
             'LoopFreq-SP': self.set_loop_freq,
             'ControlQS-Sel': self.set_control_qs,
             'ConfigName-SP': self.set_config_name,
-            'SOFBMode-Sel': self.set_sofb_mode,
             'CorrConfig-Cmd': self.cmd_corrconfig,
         }
 
         self._quit = False
+        self._corr_setpoints = None
         self._thread_ff = _epics.ca.CAThread(
-            target=self._do_ff, daemon=True)
+            target=self.main_idff_loop, daemon=True)
         self._thread_ff.start()
 
     def init_database(self):
@@ -73,10 +65,8 @@ class App(_Callback):
             'ConfigName-SP': self._config_name,
             'ConfigName-RB': self._config_name,
             'Polarization-Mon': self._polarization,
-            'SOFBMode-Sel': self._pssofb_isused,
-            'SOFBMode-Sts': self._pssofb_isused,
             'CorrConfig-Cmd': 0,
-            'CorrStatus-Mon': 0b1111,
+            'CorrStatus-Mon': _Const.DEFAULT_CORR_STATUS,
         }
         if self._const.has_qscorrs:
             pvn2vals.update({
@@ -102,6 +92,7 @@ class App(_Callback):
         # check correctors state periodically
         _t0 = _time.time()
         self._update_corr_status()
+        self._update_corr_setpoints()
         dtime = _time.time() - _t0
         sleep_time = interval - dtime
         # sleep
@@ -138,10 +129,11 @@ class App(_Callback):
 
     def set_loop_freq(self, value):
         """Set loop frequency."""
-        if not 1e-3 <= value < 60:
+        fmin, fmax = _Const.DEFAULT_LOOP_FREQ_MIN, _Const.DEFAULT_LOOP_FREQ_MAX
+        if not fmin <= value < fmax:
             return False
         self._loop_freq = value
-        self._update_log(f'Loop frequency updated to {value:.2f}Hz.')
+        self._update_log(f'Loop frequency updated to {value:.3f}Hz.')
         self.run_callbacks('LoopFreq-RB', value)
         return True
 
@@ -169,35 +161,10 @@ class App(_Callback):
         self.run_callbacks('ConfigName-RB', value)
         return True
 
-    def set_sofb_mode(self, value):
-        """Set whether to use SOFBMode."""
-        if not 0 <= value < len(_ETypes.DSBL_ENBL):
-            return False
-
-        if self._loop_state == self._const.LoopState.Closed:
-            self._update_log('ERR:Open loop before changing configuration.')
-            return False
-
-        if not self._idff_prepare_corrs_state(value):
-            self._update_log(
-                ('ERR:Could not configure IDFF correctors '
-                 'when changing SOFBMode.'))
-            return False
-
-        self._pssofb_isused = bool(value)
-        status = 'enabled' if self._pssofb_isused else 'disabled'
-        self._update_log(f'SOFBMode {status}.')
-        self.run_callbacks('SOFBMode-Sts', value)
-
-        return True
-
     def cmd_corrconfig(self, _):
         """Command to reconfigure power supplies to desired state."""
         if self._loop_state == self._const.LoopState.Closed:
             self._update_log('ERR:Open loop before configure correctors.')
-            return False
-        if self._pssofb_isused:
-            self._update_log('ERR:Turn off PSSOFB mode before configure.')
             return False
 
         corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
@@ -211,15 +178,6 @@ class App(_Callback):
 
         return True
 
-    def _load_config(self, config_name):
-        try:
-            self._idff.load_config(config_name)
-            self._update_log(f'Updated configuration: {config_name}.')
-        except (ValueError, _ConfigDBException) as err:
-            self._update_log('ERR:'+str(err))
-            return False
-        return True
-
     @property
     def quit(self):
         """Quit and shutdown threads."""
@@ -229,7 +187,38 @@ class App(_Callback):
     def quit(self, value):
         if value:
             self._quit = value
-            self._pssofb.threads_shutdown()
+
+    def main_idff_loop(self):
+        """Main IDFF loop."""
+        while not self._quit:
+            # updating interval
+            tplanned = 1.0/self._loop_freq
+
+            # initial time
+            _t0 = _time.time()
+
+            # check IDFF device connection
+            if not self._idff.connected:
+                self._do_sleep(_t0, tplanned)
+                continue
+
+            # update polarization state
+            self._do_update_polarization()
+
+            # correctors value calculation
+            self._do_update_correctors()
+
+            # return if loop is not closed
+            if not self._loop_state:
+                self._do_sleep(_t0, tplanned)
+                continue
+
+            # setpoints implementation
+            if self._corr_setpoints:
+                self._do_implement_correctors()
+
+            # sleep unused time or signal overtime to stdout
+            self._do_sleep(_t0, tplanned)
 
     #  ----- log auxiliary methods -----
 
@@ -275,7 +264,18 @@ class App(_Callback):
             return 'epu50_ref'
         elif self._const.idname.dev == 'PAPU50':
             return 'papu50_ref'
+        elif self._const.idname.dev == 'DELTA52':
+            return 'delta52_ref'
         return ''
+
+    def _load_config(self, config_name):
+        try:
+            self._idff.load_config(config_name)
+            self._update_log(f'Updated configuration: {config_name}.')
+        except (ValueError, _ConfigDBException) as err:
+            self._update_log('ERR:'+str(err))
+            return False
+        return True
 
     # ----- update pvs methods -----
 
@@ -296,63 +296,30 @@ class App(_Callback):
             self.run_callbacks('Polarization-Mon', new_pol)
 
     def _do_update_correctors(self):
-        corrdevs = None
-        if self._control_qs == self._const.DsblEnbl.Dsbl:
-            corrdevs = self._idff.chdevs + self._idff.cvdevs
         try:
-            # ret = self._idff.calculate_setpoints()
-            # setpoints, polarization, *parameters = ret
+            self._corr_setpoints = self._idff.calculate_setpoints()
+            # setpoints, polarization, *parameters = self._corr_setpoints
             # pparameter_value, kparameter_value = parameters
             # print('pparameter: ', pparameter_value)
             # print('kparameter: ', kparameter_value)
             # print('polarization: ', polarization)
             # print('setpoints: ', setpoints)
             # print()
-            if self._pssofb_isused:
-                # calc setpoints
-                ret = self._idff.calculate_setpoints()
-                setpoints, *_ = ret
-
-                # built curr_sp vector
-                curr_sp = self._pssfob_get_current_setpoint(
-                    setpoints, corrdevs)
-
-                # apply curr_sp to pssofb
-                self._pssofb.bsmp_sofb_current_set_update((curr_sp, ))
-            else:
-                # use PS IOCs (IDFF) to implement setpoints
-                self._idff.implement_setpoints(corrdevs=corrdevs)
-
         except ValueError as err:
             self._update_log('ERR:'+str(err))
 
-    def _do_ff(self):
-        # updating loop
-        while not self._quit:
-            # updating interval
-            tplanned = 1.0/self._loop_freq
+    def _do_implement_correctors(self):
+        corrdevs = None
+        if self._control_qs == self._const.DsblEnbl.Dsbl:
+            corrdevs = self._idff.chdevs + self._idff.cvdevs
+        try:
+            # use PS IOCs (IDFF) to implement setpoints
+            setpoints, *_ = self._corr_setpoints
+            self._idff.implement_setpoints(
+                setpoints=setpoints, corrdevs=corrdevs)
 
-            # initial time
-            _t0 = _time.time()
-
-            # check IDFF device connection
-            if not self._idff.connected:
-                self._do_sleep(_t0, tplanned)
-                continue
-
-            # update polarization state
-            self._do_update_polarization()
-
-            # return if loop is not closed
-            if not self._loop_state:
-                self._do_sleep(_t0, tplanned)
-                continue
-
-            # correctors setpoint implementation
-            self._do_update_correctors()
-
-            # sleep unused time or signal overtime to stdout
-            self._do_sleep(_t0, tplanned)
+        except ValueError as err:
+            self._update_log('ERR:'+str(err))
 
     def _update_corr_status(self):
         """Update CorrStatus-Mon PV."""
@@ -366,56 +333,34 @@ class App(_Callback):
                 status = _updt_bit(status, 1, 1)
             if any(d.opmode != d.OPMODE_STS.SlowRef for d in devs):
                 status = _updt_bit(status, 2, 1)
-            if any(d.sofbmode != self._pssofb_isused for d in devs):
-                status = _updt_bit(status, 3, 1)
         else:
-            status = 0b111
+            status = _Const.DEFAULT_CORR_STATUS
 
         self.run_callbacks('CorrStatus-Mon', status)
 
-    # ----- idff -----
+    def _update_corr_setpoints(self):
+        """Update corrector setpoint PVs."""
+        if self._corr_setpoints is None:
+            return
+        setpoints, *_ = self._corr_setpoints
+        idff = self._idff
+        corrnames = idff.chnames + idff.cvnames + idff.qsnames
+        corrlabels = ('CH1', 'CH2', 'CV1', 'CV2', 'QS1', 'QS2')
+        for corrlabel, corrname in zip(corrlabels, corrnames):
+            for corr_pvname in setpoints:
+                if corrname in corr_pvname:
+                    pvname = 'Corr' + corrlabel + 'Current-Mon'
+                    value = setpoints[corr_pvname]
+                    self.run_callbacks(pvname, value)
 
-    def _idff_prepare_corrs_state(self, pssofb_isused):
+    # ----- idff preparation -----
+
+    def _idff_prepare_corrs_state(self):
         """Configure PSSOFB mode state ."""
         if not self._idff.wait_for_connection():
             return False
         corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
         for dev in corrdevs:
-            if pssofb_isused:
-                if not dev.cmd_sofbmode_enable(timeout=App.DEF_PS_TIMEOUT):
-                    return False
-            else:
-                if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
-                    return False
+            if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
+                return False
         return True
-
-    # ----- pssofb -----
-
-    def _pssofb_init(self, idname):
-        """Create PSSOFB connections to control correctors."""
-        # bbbnames
-        bbbnames = _PSNamesSOFB.get_bbbnames(idname)
-
-        # create pssofb object
-        pssofb = _PSConnSOFB(
-            ethbridgeclnt_class=_EthBridgeClient,
-            bbbnames=bbbnames,
-            sofb_update_iocs=True,
-            acc=idname)
-
-        # build bsmpid -> psname dict
-        bsmp_devs = dict()
-        for devices in pssofb.bbb2devs.values():
-            for devname, bsmpid in devices:
-                bsmp_devs[bsmpid] = devname
-
-        return pssofb, bsmp_devs
-
-    def _pssfob_get_current_setpoint(self, setpoints, corrdevs):
-        """Convert IDFF dict setpoints to PSSOFB list setpoints."""
-        current_sp = _np.ones(len(setpoints)) * _np.nan
-        devnames = [dev.devname for dev in corrdevs]
-        for bsmpid, devname in self._bsmp_devs.items():
-            if devname in devnames:
-                current_sp[bsmpid - 1] = setpoints[devname]
-        return current_sp

@@ -271,7 +271,7 @@ class Trigger(_Device):
         'StatusLabels-Cte', 'TotalDelay-Mon', 'TotalDelayRaw-Mon',
         'WidthRaw-RB', 'WidthRaw-SP')
 
-    def __init__(self, trigname, props2init='all'):
+    def __init__(self, trigname, props2init='all', auto_monitor_mon=False):
         """Init."""
         _database = _get_hl_trigger_database(trigname)
         all_props = tuple(_database)
@@ -282,7 +282,9 @@ class Trigger(_Device):
         else:
             props2init = list(set(all_props) & set(props2init))
         self._source_options = _database['Src-Sel']['enums']
-        super().__init__(trigname, props2init=props2init)
+        super().__init__(
+            trigname, props2init=props2init,
+            auto_monitor_mon=auto_monitor_mon)
 
     @property
     def status(self):

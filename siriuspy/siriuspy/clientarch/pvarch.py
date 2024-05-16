@@ -112,9 +112,11 @@ class PVDetails(_Base):
             return False
         return True
 
-    def update(self):
+    def update(self, timeout=None):
         """."""
         self.connect()
+        if timeout is not None:
+            self.timeout = timeout
         data = self.connector.getPVDetails(self.pvname)
         if not data:
             return False
@@ -280,9 +282,11 @@ class PVData(_Base):
         """Severity data."""
         return self._severity
 
-    def update(self, mean_sec=None, parallel=True):
+    def update(self, mean_sec=None, parallel=True, timeout=None):
         """Update."""
         self.connect()
+        if timeout is not None:
+            self.timeout = timeout
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
             return
@@ -493,9 +497,11 @@ class PVDataSet(_Base):
             self._pvdata[pvname].parallel_query_bin_interval = \
                 self._parallel_query_bin_interval
 
-    def update(self, mean_sec=None, parallel=True):
+    def update(self, mean_sec=None, parallel=True, timeout=None):
         """Update."""
         self.connect()
+        if timeout is not None:
+            self.timeout = None
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
             return

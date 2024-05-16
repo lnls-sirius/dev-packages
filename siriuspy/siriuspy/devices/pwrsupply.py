@@ -10,6 +10,7 @@ from ..pwrsupply.csdev import Const as _Const, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
     MAX_WFMSIZE_OTHERS as _MAX_WFMSIZE_OTHERS
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
+from ..magnet.factory import NormalizerFactory as _NormFactory
 
 from .device import Device as _Device
 from .timing import Trigger as _Trigger
@@ -106,6 +107,16 @@ class _PSDev(_Device):
         # private attribute with strength setpoint pv object
         self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
 
+        try:
+            name = devname.substitute(dis='MA')
+            if name.dev == 'B1B2' or (name.sec == 'BO' and name.dev == 'B'):
+                maname = name.substitute(idx='')
+            else:
+                maname = name
+            self._normalizer = _NormFactory.create(maname)
+        except:
+            self._normalizer = None
+
     @property
     def pstype(self):
         """Return type of magnet(s) excited by power supply device."""
@@ -140,6 +151,11 @@ class _PSDev(_Device):
     def is_magps(self):
         """Return True if device is a Sirius magnet power supply."""
         return self._is_pulsed
+
+    @property
+    def normalizer(self):
+        """Return Normalizer object for current and strength conversions."""
+        return self._normalizer
 
     @property
     def strength_property(self):

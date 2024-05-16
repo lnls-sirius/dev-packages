@@ -192,10 +192,18 @@ class App(_Callback):
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
 
-        self._pu_names = self._injsys_dev.handlers['as_pu'].punames
-        self._pu_devs = self._injsys_dev.handlers['as_pu'].pudevices
+        self._pu_names, self._pu_devs = list(), list()
         self._pu_refvolt = list()
-        for dev in self._pu_devs:
+        for idx, pun in enumerate(self._injsys_dev.handlers['as_pu'].punames):
+            # NOTE: The voltage of the TB pulsed magnets are used to define
+            # enable conditions of the egun trigger. To avoid changing the
+            # trigger enable status during top-up, we will not include these
+            # magnets in standby/warm up.
+            if pun.startswith('TB'):
+                continue
+            self._pu_names.append(pun)
+            dev = self._injsys_dev.handlers['as_pu'].pudevices[idx]
+            self._pu_devs.append(dev)
             pvo = dev.pv_object('Voltage-SP')
             self._pu_refvolt.append(pvo.value)
             pvo.add_callback(self._callback_update_pu_refvolt)
@@ -513,7 +521,7 @@ class App(_Callback):
         self.run_callbacks('BiasVoltCmdSts-Mon', _Const.IdleRunning.Running)
 
         self._update_log(f'Setting EGun Bias voltage to {value:.2f}V...')
-        if not self.egun_dev.bias.set_voltage(value, tol=0.005*value):
+        if not self.egun_dev.bias.set_voltage(value, tol=abs(0.005*value)):
             self._update_log('ERR:Could not set EGun Bias voltage.')
         else:
             self._update_log(f'Set EGun Bias voltage: {value:.2f}V.')
@@ -1116,6 +1124,9 @@ class App(_Callback):
 
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
+            return
+        # do not update PU reference voltage if standby is enabled
+        if self._topup_pustandbyenbl == _Const.DsblEnbl.Enbl:
             return
         if self._aspu_standby_state == _Const.StandbyInject.Standby:
             return

@@ -75,7 +75,7 @@ class SimPSTypeModel(_Simulator):
         if pvn not in self:
             # If PwrState-Sts not simulated, assume it to be On.
             return _Const.PwrStateSts.On
-        return self.pv_value_get(pvn)
+        return self.get_pv_value(pvn)
 
     @staticmethod
     def conv_psname2typemodel(psname):
@@ -136,7 +136,7 @@ class SimPSTypeModel(_Simulator):
         else:
             setpoints = dict()
             for sp_pvname in self._setpoint_pvs:
-                setpoints[sp_pvname] = self.pv_value_get(sp_pvname)
+                setpoints[sp_pvname] = self.get_pv_value(sp_pvname)
 
         # synchronize Current PVs
         for sp_pvname, sp_value in setpoints.items():

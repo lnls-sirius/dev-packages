@@ -420,7 +420,7 @@ class DVF(_Device):
         """Set cam image ROI and reset aquisition."""
         c_width, c_height = self.cam_width, self.cam_height
         n_width, n_height = int(width), int(height)
-        
+
         if not self.cmd_acquire_off(timeout=timeout):
             return False
         if n_width < c_width:

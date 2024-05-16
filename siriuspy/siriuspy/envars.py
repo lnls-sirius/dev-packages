@@ -43,7 +43,7 @@ SRVURL_CABLES = _os.environ.get(
     'SIRIUS_URL_CABLES', default='http://cables:8086')
 SRVURL_CSCONSTS = _os.environ.get(
     'SIRIUS_URL_CONSTS',
-    default='http://10.128.255.4/control-system-constants')
+    default='http://10.0.38.59/control-system-constants')
 SRVURL_CSCONSTS_2 = _os.environ.get(
     'SIRIUS_URL_CONSTS_2',
     default='http://10.128.255.3/control-system-constants')
@@ -52,7 +52,7 @@ SRVURL_LOGBOOK = _os.environ.get(
     default='http://10.0.38.42/Olog')
 SRVURL_CONFIGDB = _os.environ.get(
     'SIRIUS_URL_CONFIGDB',
-    default='http://10.128.255.4/config-db')
+    default='http://10.0.38.59/config-db')
 SRVURL_CONFIGDB_2 = _os.environ.get(
     'SIRIUS_URL_CONFIGDB_2',
     default='http://10.128.255.3/config-db')
