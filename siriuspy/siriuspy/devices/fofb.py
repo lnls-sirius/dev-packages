@@ -1119,7 +1119,7 @@ class FamFastCorrs(_DeviceSet):
         if not isinstance(value, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        for i, dev in enumerate(devs):
+        for dev in devs:
             dev.fofbacc_filter_gain = value
         return True
 
