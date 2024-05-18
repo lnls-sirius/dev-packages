@@ -278,10 +278,10 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.FILTER_OPT,
                 'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
             'FOFBAccFilter-SP': {
-                'type': 'float', 'value': 50*[0], 'prec': 5, 'count': 50, 
+                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20, 
                 'unit': 'coef'},
             'FOFBAccFilter-RB': {
-                'type': 'float', 'value': 50*[0], 'prec': 5, 'count': 50,
+                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20,
                 'unit': 'coef'},
             'FOFBAccFilterGain-SP': {
                 'type': 'float', 'value': 1.0, 'prec': 5,  
