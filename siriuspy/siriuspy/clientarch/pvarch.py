@@ -7,6 +7,8 @@ import numpy as _np
 from mathphys.functions import save_pickle as _save_pickle, \
     load_pickle as _load_pickle
 
+from .. import envars as _envars
+
 from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
@@ -14,8 +16,11 @@ from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
 class _Base:
 
-    def __init__(self, connector=None):
+    DEF_PARALLEL_QUERY_BIN_INTERVAL = 12*60*60  # 12h
+
+    def __init__(self, connector=None, offline_server=False):
         self._connector = None
+        self._offline_server = offline_server
         self.connector = connector
         self.connect()
 
@@ -28,7 +33,10 @@ class _Base:
     def connect(self):
         """Connect."""
         if self.connector is None:
-            self._connector = _ClientArchiver()
+            url_off = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+            url_on = _envars.SRVURL_ARCHIVER
+            url = url_off if self._offline_server else url_on
+            self._connector = _ClientArchiver(server_url=url)
 
     @property
     def connector(self):
@@ -46,6 +54,11 @@ class _Base:
         else:
             raise TypeError(
                 'Variable conn must be a str or ClientArchiver object.')
+
+    @property
+    def is_offline_server(self):
+        """."""
+        return self._offline_server
 
     @property
     def timeout(self):
@@ -167,9 +180,9 @@ class PVDetails(_Base):
 class PVData(_Base):
     """Archive PV Data."""
 
-    def __init__(self, pvname, connector=None):
+    def __init__(self, pvname, connector=None, offline_server=False):
         """Initialize."""
-        super().__init__(connector)
+        super().__init__(connector, offline_server=offline_server)
         self._pvname = pvname
         self._time_start = None
         self._time_stop = None
@@ -177,7 +190,7 @@ class PVData(_Base):
         self._value = None
         self._status = None
         self._severity = None
-        self._parallel_query_bin_interval = 12*60*60  # 12h
+        self._parallel_query_bin_interval = _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
 
     @property
     def pvname(self):
@@ -391,13 +404,13 @@ class PVData(_Base):
 class PVDataSet(_Base):
     """A set of PVData objects."""
 
-    def __init__(self, pvnames, connector=None):
+    def __init__(self, pvnames, connector=None, offline_server=False):
         """Initialize."""
-        super().__init__(connector)
+        super().__init__(connector, offline_server=offline_server)
         self._pvnames = pvnames
         self._time_start = None
         self._time_stop = None
-        self._parallel_query_bin_interval = 12*60*60  # 12h
+        self._parallel_query_bin_interval = _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
         self._pvdata = self._init_pvdatas(pvnames, self.connector)
 
     @property
