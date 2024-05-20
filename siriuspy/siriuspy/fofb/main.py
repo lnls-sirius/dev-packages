@@ -1887,8 +1887,14 @@ class App(_Callback):
                 dec = self._corr_accdec_val
                 if not self._corrs_dev.check_fofbacc_decimation(dec):
                     value = _updt_bit(value, 7, 1)
+                # AccFilter
+                if not self._corrs_dev.check_fofbacc_filter(self._corr_accfilter_val):
+                    value = _updt_bit(value, 8, 1)
+                # AccFilterGain
+                if not self._corrs_dev.check_fofbacc_filter_gain(self._corr_accfilter_gain):
+                    value = _updt_bit(value, 9, 1)
             else:
-                value = 0b11111111
+                value = 0b1111111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
