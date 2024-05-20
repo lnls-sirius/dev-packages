@@ -26,7 +26,7 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
         'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
-        'AccDecimationSynced')
+        'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
