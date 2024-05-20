@@ -1113,7 +1113,7 @@ class FamFastCorrs(_DeviceSet):
     def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
         """Command to set accumulator filter gain."""
         if not isinstance(value, (int, float)):
-            raise ValueError('Value must be iterable.')
+            raise ValueError('Value must be integer or float.')
         devs = self._get_devices(psnames, psindices)
         for dev in devs:
             dev.fofbacc_filter_gain = value
@@ -1125,10 +1125,11 @@ class FamFastCorrs(_DeviceSet):
         """Check accumulator filter gain."""
         if not self.connected:
             return False
+        if not isinstance(value, (int, float)):
+            raise ValueError('Value must be integer or float.')
         devs = self._get_devices(psnames, psindices)
         impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
-        if isinstance(value, (int, float)):
-            value = len(devs) * [value]
+        value = len(devs) * [value]
         if _np.allclose(value, impltd, atol=atol):
             return True
         return False
