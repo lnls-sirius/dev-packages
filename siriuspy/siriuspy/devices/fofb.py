@@ -1085,32 +1085,28 @@ class FamFastCorrs(_DeviceSet):
             dev.cmd_fofbacc_clear()
         return True
 
-    def set_fofbacc_filter(self, values, psnames=None, psindices=None):
+    def set_fofbacc_filter(self, value, psnames=None, psindices=None):
         """Command to set power supply filter coefficients values."""
-        if not isinstance(values, (list, tuple, _np.ndarray)):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        if not len(values) == len(devs):
-            raise ValueError('Values and indices must have the same size.')
-        for i, dev in enumerate(devs):
-            dev.fofbacc_filter = values[i]
+        for dev in devs:
+            dev.fofbacc_filter = value
         return True
 
     def check_fofbacc_filter(
-            self, values, psnames=None, psindices=None,
+            self, value, psnames=None, psindices=None,
             atol=DEF_ATOL_ACCFILTER):
         """Check power supplies filter coefficients."""
         if not self.connected:
             return False
-        if not isinstance(values, (list, tuple, _np.ndarray)):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        if not len(values) == len(devs):
-            raise ValueError('Values and indices must have the same size.')
-        for i, dev in enumerate(devs):    
-            if len(values[i]) != len(dev.fofbacc_filter):
+        for dev in devs:    
+            if len(value) != len(dev.fofbacc_filter):
                 return False
-            if not _np.allclose(values[i], dev.fofbacc_filter, atol=atol):
+            if not _np.allclose(value, dev.fofbacc_filter, atol=atol):
                 return False
         return True
     
@@ -1124,16 +1120,16 @@ class FamFastCorrs(_DeviceSet):
         return True
 
     def check_fofbacc_filter_gain(
-            self, values, psnames=None, psindices=None,
+            self, value, psnames=None, psindices=None,
             atol=DEF_ATOL_ACCFILTERGAIN):
         """Check accumulator filter gain."""
         if not self.connected:
             return False
         devs = self._get_devices(psnames, psindices)
         impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
-        if isinstance(values, (int, float)):
-            values = len(devs) * [values]
-        if _np.allclose(values, impltd, atol=atol):
+        if isinstance(value, (int, float)):
+            value = len(devs) * [value]
+        if _np.allclose(value, impltd, atol=atol):
             return True
         return False
 
