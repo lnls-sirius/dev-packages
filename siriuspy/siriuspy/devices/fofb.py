@@ -39,6 +39,7 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
         'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
         'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
+        'FOFBAccFilterNumBiquads-Cte',
         )
 
     def __init__(self, devname, props2init='all'):
@@ -141,6 +142,10 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         self['LoopIntlkReset-Cmd'] = 1
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        return self['FOFBAccFilterNumBiquads-Cte']
 
 # ---------------- DCC devices ----------------
 
@@ -690,6 +695,13 @@ class FamFOFBControllers(_DeviceSet):
         self._evt_fofb.cmd_external_trigger()
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
+        return ctl.fofbacc_filter_num_biquads
+
+    
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
@@ -702,6 +714,8 @@ class FamFastCorrs(_DeviceSet):
     DEF_ATOL_FOFBACCSAT = 2e-2
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
+    DEF_ATOL_ACCFILTER = 2**-17
+    DEF_ATOL_ACCFILTERGAIN = 2**-12
 
     def __init__(self, psnames=None):
         """Init."""
@@ -1070,6 +1084,55 @@ class FamFastCorrs(_DeviceSet):
         for dev in self._get_devices(psnames, psindices):
             dev.cmd_fofbacc_clear()
         return True
+
+    def set_fofbacc_filter(self, value, psnames=None, psindices=None):
+        """Command to set power supply filter coefficients values."""
+        if not isinstance(value, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        for dev in devs:
+            dev.fofbacc_filter = value
+        return True
+
+    def check_fofbacc_filter(
+            self, value, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTER):
+        """Check power supplies filter coefficients."""
+        if not self.connected:
+            return False
+        if not isinstance(value, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        for dev in devs:    
+            if len(value) != len(dev.fofbacc_filter):
+                return False
+            if not _np.allclose(value, dev.fofbacc_filter, atol=atol):
+                return False
+        return True
+    
+    def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
+        """Command to set accumulator filter gain."""
+        if not isinstance(value, (int, float)):
+            raise ValueError('Value must be integer or float.')
+        devs = self._get_devices(psnames, psindices)
+        for dev in devs:
+            dev.fofbacc_filter_gain = value
+        return True
+
+    def check_fofbacc_filter_gain(
+            self, value, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTERGAIN):
+        """Check accumulator filter gain."""
+        if not self.connected:
+            return False
+        if not isinstance(value, (int, float)):
+            raise ValueError('Value must be integer or float.')
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
+        value = len(devs) * [value]
+        if _np.allclose(value, impltd, atol=atol):
+            return True
+        return False
 
     # ----- private methods -----
 

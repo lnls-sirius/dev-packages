@@ -72,6 +72,9 @@ class App(_Callback):
         }
         self._corr_accdec_val = 1
         self._corr_accdec_enm = self._const.DecOpt.FOFB
+        self._corr_accfilter_val = 20*[0.0]
+        self._corr_accfilter_enm = self._const.FilterOpt.Unit
+        self._corr_accfilter_gain = 1.0
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
@@ -152,6 +155,9 @@ class App(_Callback):
             'CtrlrDsblSYSIDExc-Cmd': self.cmd_fofbctrl_dsblsysid,
             'FOFBAccDecimation-Sel': _part(self.set_corr_accdec, 'enum'),
             'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
+            'FOFBAccFilter-Sel':  _part(self.set_corr_accfilter, 'enum'),
+            'FOFBAccFilter-SP': _part(self.set_corr_accfilter, 'value'),
+            'FOFBAccFilterGain-SP': self.set_corr_accfilter_gain,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -701,6 +707,53 @@ class App(_Callback):
         self._update_log('Setting FOFB Acc decimation...')
         self._corrs_dev.set_fofbacc_decimation(dec)
         self._update_log('...done!')
+
+        return True
+    
+    def set_corr_accfilter(self, option, value):
+        """Set corrector accumulator filter."""
+
+        num_biquads = self._llfofb_dev.fofbacc_filter_num_biquads
+        unit = self._const.FILTER_UNIT
+        sw2 = self._const.FILTER_SW_2
+        sw4 = self._const.FILTER_SW_4
+
+        if self._corr_accfilter_enm != self._const.FilterOpt.Custom and \
+                option == 'value':
+            return False
+
+        if option == 'enum':
+            if value == self._const.FilterOpt.Unit:
+                filter = num_biquads * unit
+
+            elif value == self._const.FilterOpt.Switching:
+                filter = sw2 + sw4 + (num_biquads - 2) * unit
+                
+            else:
+                filter = self._corr_accfilter_val
+            self._corr_accfilter_enm = value
+            self.run_callbacks('FOFBAccFilter-Sts', value)
+            self.run_callbacks('FOFBAccFilter-SP', filter)
+        else:
+            filter = value
+        self._corr_accfilter_val = filter
+
+        self._update_log('Setting FOFB Acc filter...')
+        self._corrs_dev.set_fofbacc_filter(filter)
+        self._update_log('...done!')
+        self.run_callbacks('FOFBAccFilter-RB', filter)
+
+        return True
+
+    def set_corr_accfilter_gain(self, value):
+        """Set corrector accumulator filter gain."""
+
+        self._corr_accfilter_gain = value
+
+        self._update_log('Setting FOFB Acc filter gain...')
+        self._corrs_dev.set_fofbacc_filter_gain(value)
+        self._update_log('...done!')
+        self.run_callbacks('FOFBAccFilterGain-RB', value)
 
         return True
 
@@ -1834,8 +1887,14 @@ class App(_Callback):
                 dec = self._corr_accdec_val
                 if not self._corrs_dev.check_fofbacc_decimation(dec):
                     value = _updt_bit(value, 7, 1)
+                # AccFilter
+                if not self._corrs_dev.check_fofbacc_filter(self._corr_accfilter_val):
+                    value = _updt_bit(value, 8, 1)
+                # AccFilterGain
+                if not self._corrs_dev.check_fofbacc_filter_gain(self._corr_accfilter_gain):
+                    value = _updt_bit(value, 9, 1)
             else:
-                value = 0b11111111
+                value = 0b1111111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
