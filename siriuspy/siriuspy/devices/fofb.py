@@ -1116,7 +1116,7 @@ class FamFastCorrs(_DeviceSet):
     
     def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
         """Command to set accumulator filter gain."""
-        if not isinstance(value, (list, tuple, _np.ndarray)):
+        if not isinstance(value, (int, float)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         for dev in devs:
