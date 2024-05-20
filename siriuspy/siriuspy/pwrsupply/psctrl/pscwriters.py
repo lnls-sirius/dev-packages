@@ -23,7 +23,7 @@ class BSMPFunction(Function):
 
     def __init__(self, device_ids, pru_controller, func_id, setpoints=()):
         """Get controller and bsmp function id."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.func_id = func_id
         self.setpoints = setpoints
@@ -34,10 +34,10 @@ class BSMPFunction(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value is None:
                 self.pru_controller.exec_functions(
-                    self._device_ids, self.func_id)
+                    self.device_ids, self.func_id)
             else:
                 self.pru_controller.exec_functions(
-                    self._device_ids, self.func_id, value)
+                    self.device_ids, self.func_id, value)
 
 
 class Command(BSMPFunction):
@@ -47,7 +47,7 @@ class Command(BSMPFunction):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.exec_functions(self._device_ids, self.func_id)
+            self.pru_controller.exec_functions(self.device_ids, self.func_id)
 
 
 class BSMPFunctionNull(BSMPFunction):
@@ -66,7 +66,7 @@ class WfmMonAcq(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Define CurveAcq."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.enable = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_ENABLE_SCOPE)
         self.disable = BSMPFunction(
@@ -88,7 +88,7 @@ class WfmSP(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=()):
         """Get pru controller."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -96,7 +96,7 @@ class WfmSP(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            for dev_id in self._device_ids:
+            for dev_id in self.device_ids:
                 self.pru_controller.wfmref_write(dev_id, value)
 
 
@@ -105,7 +105,7 @@ class WfmUpdate(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=()):
         """Get controller and bsmp function id."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -113,7 +113,7 @@ class WfmUpdate(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.wfm_update(self._device_ids, interval=0)
+            self.pru_controller.wfm_update(self.device_ids, interval=0)
 
 
 class WfmUpdateAutoSel(Function):
@@ -121,7 +121,7 @@ class WfmUpdateAutoSel(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Define CurveAcq."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -156,7 +156,7 @@ class PSPwrState(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Define function."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.turn_on = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_TURN_ON)
         self.close_loop = BSMPFunction(
@@ -231,7 +231,7 @@ class PSOpMode(Function):
 
     def __init__(self, device_ids, function, setpoints=None):
         """Command."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.function = function
         self.setpoints = setpoints
 
@@ -261,7 +261,7 @@ class Current(Function):
     # It may be discarded...
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set current."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.set_current = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_SET_SLOWREF)
@@ -279,7 +279,7 @@ class Voltage(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set voltage."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         func_id = _const_psbsmp.F_SET_SLOWREF
         self.set_voltage = BSMPFunction(device_ids, pru_controller, func_id)
         self.setpoints = setpoints
@@ -295,7 +295,7 @@ class ScopeSrcAddr(Function):
     """Writer to set scope source address."""
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.set_address = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_CFG_SOURCE_SCOPE)
@@ -312,7 +312,7 @@ class ScopeFreq(Function):
     """Writer to set scpope frequency."""
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.set_frequency = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_CFG_FREQ_SCOPE)
@@ -329,7 +329,7 @@ class ScopeDuration(Function):
     """Writer to set scpope frequency."""
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.set_duration = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_CFG_DURATION_SCOPE)
@@ -372,12 +372,15 @@ class CfgWfm(Function):
     def __init__(self, device_ids, pru_controller, idx, setpoints=None):
         """Init."""
         self._idx = idx
+        self._variable_id = _const_psbsmp.V_WFMREF_SELECTED
         self._setpoints = setpoints
         self._cfg = BSMPFunction(
             device_ids, pru_controller, _const_psbsmp.F_CFG_WFMREF)
 
     def execute(self, value=None):
         """Execute command."""
+        wfm_selected = self._cfg.pru_controller.read_variables(
+            self._cfg.device_ids, self._variable_id)
         if not self._setpoints or \
                 (self._setpoints and
                     self._setpoints.apply(value[self._idx])):
@@ -389,7 +392,7 @@ class SOFBCurrent(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set SOFBCurrent."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -435,7 +438,7 @@ class ParamUpdate(Function):
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to update parameters."""
-        self._device_ids = device_ids
+        self.device_ids = device_ids
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -443,7 +446,7 @@ class ParamUpdate(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.update_parameters(self._device_ids)
+            self.pru_controller.update_parameters(self.device_ids)
 
 
 class Setpoint:
