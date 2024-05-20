@@ -810,11 +810,11 @@ class SOFB(_BaseClass):
             refy0 = fofb.refy
 
         if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
-            msg = 'Setting Trigger to listen to EVG Clock...'
+            msg = 'Setting Trigger to listen to RmpBO event...'
             self._update_log(msg)
             _log.info(msg)
-            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
-            self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.RmpBO)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.RmpBO)
             msg = 'Trigger ready!'
             self._update_log(msg)
             _log.info(msg)

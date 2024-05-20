@@ -27,7 +27,7 @@ class ETypes(_csdev.ETypes):
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_DELTA_MON = ('Idle', 'Applying', 'Done', 'Error')
-    SI_CORR_SYNC = ('Off', 'Event', 'Clock')
+    SI_CORR_SYNC = ('Off', 'Event', 'Clock', 'RmpBO')
     ORB_ACQ_CHAN = ('FAcq', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
@@ -176,6 +176,7 @@ class SOFBTLines(ConstTLines):
             self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
             self.evt_cor_name = 'Orb' + self.acc
             self.clk_cor_name = 'Clock3'
+            self.evt_rmpbo = 'RmpBO'
 
         self.evt_acq_name = 'Linac'
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
@@ -961,10 +962,10 @@ class SOFBSI(SOFBRings, ConstSI):
         db_ring = {
             'CorrSync-Sel': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
-                'unit': 'Off_Event_Clock', 'value': self.CorrSync.Off},
+                'unit': 'Off_Event_Clock_RmpBO', 'value': self.CorrSync.Off},
             'CorrSync-Sts': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
-                'unit': 'Off_Event_Clock', 'value': self.CorrSync.Off},
+                'unit': 'Off_Event_Clock_RmpBO', 'value': self.CorrSync.Off},
             }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
