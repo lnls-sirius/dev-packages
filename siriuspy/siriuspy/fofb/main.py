@@ -737,11 +737,11 @@ class App(_Callback):
         else:
             filter = value
         self._corr_accfilter_val = filter
-        self.run_callbacks('FOFBAccFilter-RB', filter)
 
         self._update_log('Setting FOFB Acc filter...')
         self._corrs_dev.set_fofbacc_filter(filter)
         self._update_log('...done!')
+        self.run_callbacks('FOFBAccFilter-RB', filter)
 
         return True
 
@@ -749,11 +749,11 @@ class App(_Callback):
         """Set corrector accumulator filter gain."""
 
         self._corr_accfilter_gain = value
-        self.run_callbacks('FOFBAccFilterGain-RB', value)
 
         self._update_log('Setting FOFB Acc filter gain...')
         self._corrs_dev.set_fofbacc_filter_gain(value)
         self._update_log('...done!')
+        self.run_callbacks('FOFBAccFilterGain-RB', value)
 
         return True
 
