@@ -269,20 +269,23 @@ class _PSModel:
     @staticmethod
     def _writer_cfgsiggen(
             device_ids, epics_field, pru_controller, setpoints):
-        p2i = {
-            'CycleType-Sel': 0,
-            'CycleNrCycles-SP': 1,
-            'CycleFreq-SP': 2,
-            'CycleAmpl-SP': 3,
-            'CycleOffset-SP': 4,
-            'CycleAuxParam-SP': 5,
-            }
-        _c = _const_psbsmp.ConstPSBSMP
-        if epics_field in p2i:
-            idx = p2i[epics_field]
+        # p2i = {
+        #     'CycleType-Sel': 0,
+        #     'CycleNrCycles-SP': 1,
+        #     'CycleFreq-SP': 2,
+        #     'CycleAmpl-SP': 3,
+        #     'CycleOffset-SP': 4,
+        #     'CycleAuxParam-SP': 5,
+        #     }
+        # if epics_field in p2i:
+        params_siggen = _controller.StandardPSController.PARMS_SIGGEN
+        if epics_field in params_siggen:
+            # idx = p2i[epics_field]
+            idx = params_siggen.index(epics_field)
             return _writers.CfgSiggen(
                 device_ids, pru_controller, idx, setpoints)
         if epics_field == 'CycleDsbl-Cmd':
+            _c = _const_psbsmp.ConstPSBSMP
             return _writers.Command(
                 device_ids, pru_controller, _c.F_DISABLE_SIGGEN, setpoints)
         return None
@@ -302,15 +305,18 @@ class _PSModel:
         if epics_field == 'WfmMonAcq-Sel':
             return _writers.WfmMonAcq(
                 device_ids, pru_controller, setpoints)
-        p2i = {
-            'WfmSelected-SP': 0,
-            'WfmSyncMode-Sel': 1,
-            'WfmFreq-SP': 2,
-            'WfmGain-SP': 3,
-            'WfmOffset-SP': 4,
-            }
-        if epics_field in p2i:
-            idx = p2i[epics_field]
+        # p2i = {
+        #     'WfmSelected-SP': 0,
+        #     'WfmSyncMode-Sel': 1,
+        #     'WfmFreq-SP': 2,
+        #     'WfmGain-SP': 3,
+        #     'WfmOffset-SP': 4,
+        #     }
+        # if epics_field in p2i:
+        params_wfm = _controller.StandardPSController.PARMS_WFM
+        if epics_field in params_wfm:
+            # idx = p2i[epics_field]
+            idx = params_wfm.index(epics_field)
             return _writers.CfgWfm(
                 device_ids, pru_controller, idx, setpoints)
         return None
