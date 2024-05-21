@@ -701,7 +701,6 @@ class FamFOFBControllers(_DeviceSet):
         ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
         return ctl.fofbacc_filter_num_biquads
 
-    
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
@@ -1103,13 +1102,13 @@ class FamFastCorrs(_DeviceSet):
         if not isinstance(value, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        for dev in devs:    
+        for dev in devs:
             if len(value) != len(dev.fofbacc_filter):
                 return False
             if not _np.allclose(value, dev.fofbacc_filter, atol=atol):
                 return False
         return True
-    
+
     def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
         """Command to set accumulator filter gain."""
         if not isinstance(value, (int, float)):
