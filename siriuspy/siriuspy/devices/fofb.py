@@ -1178,6 +1178,11 @@ class HLFOFB(_Device):
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
+        'FOFBAccDecimation-Sel', 'FOFBAccDecimation-Sts',
+        'FOFBAccDecimation-SP',  'FOFBAccDecimation-RB',
+        'FOFBAccFilter-Sel', 'FOFBAccFilter-Sts',
+        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
+        'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
         'KickCHAcc-Mon', 'KickCVAcc-Mon',
         'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -1421,6 +1426,51 @@ class HLFOFB(_Device):
         """Command to reset interlocks of all FOFB controllers."""
         self['CtrlrReset-Cmd'] = 1
         return True
+
+    @property
+    def fofbacc_decimation_enumvalue(self):
+        """Accumulator decimation enum value."""
+        return self['FOFBAccDecimation-Sts']
+
+    @fofbacc_decimation_enumvalue.setter
+    def fofbacc_decimation_enumvalue(self, value):
+        self['FOFBAccDecimation-Sel'] = value
+
+    @property
+    def fofbacc_decimation_value(self):
+        """Accumulator decimation value."""
+        return self['FOFBAccDecimation-RB']
+
+    @fofbacc_decimation_value.setter
+    def fofbacc_decimation_value(self, value):
+        self['FOFBAccDecimation-SP'] = value
+
+    @property
+    def fofbacc_filter_enumvalue(self):
+        """Accumulator filter enum value."""
+        return self['FOFBAccFilter-Sts']
+
+    @fofbacc_filter_enumvalue.setter
+    def fofbacc_filter_enumvalue(self, value):
+        self['FOFBAccFilter-Sel'] = value
+
+    @property
+    def fofbacc_filter_value(self):
+        """Accumulator filter value."""
+        return self['FOFBAccFilter-RB']
+
+    @fofbacc_filter_value.setter
+    def fofbacc_filter_value(self, value):
+        self['FOFBAccFilter-SP'] = value
+
+    @property
+    def fofbacc_filter_gain(self):
+        """Accumulator filter gain value."""
+        return self['FOFBAccFilterGain-RB']
+
+    @fofbacc_filter_gain.setter
+    def fofbacc_filter_gain(self, value):
+        self['FOFBAccFilterGain-SP'] = value
 
     @property
     def kickch_acc(self):
