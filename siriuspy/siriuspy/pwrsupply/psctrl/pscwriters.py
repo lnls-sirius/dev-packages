@@ -379,11 +379,15 @@ class CfgWfm(Function):
 
     def execute(self, value=None):
         """Execute command."""
+        # get current wfm buffer
+        dev_id = self._cfg.device_ids[0]
         wfm_selected = self._cfg.pru_controller.read_variables(
-            self._cfg.device_ids, self._variable_id)
+            dev_id, self._variable_id)
         if not self._setpoints or \
                 (self._setpoints and
                     self._setpoints.apply(value[self._idx])):
+            # add wfm_selected index to bsmp function arg
+            value = [wfm_selected, ] + value
             self._cfg.execute(value)
 
 

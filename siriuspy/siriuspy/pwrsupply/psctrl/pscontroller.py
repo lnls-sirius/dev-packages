@@ -167,7 +167,7 @@ class StandardPSController(PSController):
     This is used in DCDC-type power supply models.
     """
 
-    _SIGGEN_PARMS = [
+    PARMS_SIGGEN = [
         'CycleType-Sel',
         'CycleNrCycles-SP',
         'CycleFreq-SP',
@@ -176,8 +176,7 @@ class StandardPSController(PSController):
         'CycleAuxParam-SP',  # start index of auxparams
     ]
 
-    _WFM_PARMS = [
-        'WfmSelected-SP',
+    PARMS_WFM = [
         'WfmSyncMode-Sel',
         'WfmFreq-SP',
         'WfmGain-SP',
@@ -194,9 +193,9 @@ class StandardPSController(PSController):
 
         if field == 'SOFBCurrent-SP':
             self._set_sofb_current(pvname, value, devname, field, priority_pvs)
-        elif field in StandardPSController._SIGGEN_PARMS:
+        elif field in StandardPSController.PARMS_SIGGEN:
             self._set_siggen(pvname, value, devname, field, priority_pvs)
-        elif field in StandardPSController._WFM_PARMS:
+        elif field in StandardPSController.PARMS_WFM:
             self._set_wfm(pvname, value, devname, field, priority_pvs)
         else:
             self._writers[pvname].execute(value)
@@ -212,7 +211,7 @@ class StandardPSController(PSController):
 
     def _set_siggen(self, pvname, value, devname, field, priority_pvs):
         _ = priority_pvs
-        idx = StandardPSController._SIGGEN_PARMS.index(field)
+        idx = StandardPSController.PARMS_SIGGEN.index(field)
         values = self._get_siggen_arg_values(devname)
         if field == 'CycleAuxParam-SP':
             values[idx:] = value
@@ -222,7 +221,7 @@ class StandardPSController(PSController):
 
     def _set_wfm(self, pvname, value, devname, field, priority_pvs):
         _ = priority_pvs
-        idx = StandardPSController._WFM_PARMS.index(field)
+        idx = StandardPSController.PARMS_WFM.index(field)
         values = self._get_wfm_arg_values(devname)
         values[idx] = value
         self._writers[pvname].execute(values)
@@ -252,13 +251,13 @@ class StandardPSController(PSController):
     def _get_siggen_arg_values(self, devname):
         """Get cfg_siggen args."""
         args = [self._readers[devname + ':' + arg].read()
-                for arg in StandardPSController._SIGGEN_PARMS[:-1]]
-        aux = StandardPSController._SIGGEN_PARMS[-1]
+                for arg in StandardPSController.PARMS_SIGGEN[:-1]]
+        aux = StandardPSController.PARMS_SIGGEN[-1]
         args.extend(self._readers[devname + ':' + aux].read())
         return args
 
     def _get_wfm_arg_values(self, devname):
         """Get Wfm args."""
         args = [self._readers[devname + ':' + arg].read()
-                for arg in StandardPSController._WFM_PARMS]
+                for arg in StandardPSController.PARMS_WFM]
         return args

@@ -1055,14 +1055,6 @@ def _get_ps_common_propty_database():
         'IntlkHard-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Wfm
-        'WfmSelected-SP': {
-            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 1, 'high': 1, 'hihi': 1},
-        'WfmSelected-RB': {
-            'type': 'int', 'value': DEFAULT_WFM_SELECTED,
-            'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 1, 'high': 1, 'hihi': 1},
         'WfmSyncMode-Sel': {
             'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
             'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
