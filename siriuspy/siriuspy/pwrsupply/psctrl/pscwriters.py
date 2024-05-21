@@ -380,6 +380,7 @@ class CfgWfm(Function):
     def execute(self, value=None):
         """Execute command."""
         dev_id = self._cfg.device_ids[0]
+        print(dev_id)
         wfm_selected = self._cfg.pru_controller.read_variables(
             dev_id, self._variable_id)[dev_id]
         print(dev_id, wfm_selected)
