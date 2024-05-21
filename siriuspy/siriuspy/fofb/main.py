@@ -580,6 +580,11 @@ class App(_Callback):
         self._set_corrs_fofbacc_freeze()
         # matrix coefficients
         self._set_corrs_coeffs()
+        # filter
+        self._update_log('Setting corrector filter...')
+        self._corrs_dev.set_fofbacc_filter(self._corr_accfilter_val)
+        self._corrs_dev.set_fofbacc_filter_gain(self._corr_accfilter_gain)
+        self._update_log('...done!')
 
         self._update_log('Correctors configuration done!')
         return True
