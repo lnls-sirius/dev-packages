@@ -389,6 +389,8 @@ class CfgWfm(Function):
                     self._setpoints.apply(value[self._idx])):
             print(value)
             print(self._setpoints)
+            # add wfm_sel index
+            value = [wfm_selected, ] + value
             self._cfg.execute(value)
 
 

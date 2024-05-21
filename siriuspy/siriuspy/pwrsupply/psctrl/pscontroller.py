@@ -177,7 +177,7 @@ class StandardPSController(PSController):
     ]
 
     PARMS_WFM = [
-        'WfmSelected-SP',
+        # 'WfmSelected-SP',
         'WfmSyncMode-Sel',
         'WfmFreq-SP',
         'WfmGain-SP',
