@@ -379,9 +379,10 @@ class CfgWfm(Function):
 
     def execute(self, value=None):
         """Execute command."""
+        dev_ids = self._cfg.device_ids
         wfm_selected = self._cfg.pru_controller.read_variables(
             self._cfg.device_ids, self._variable_id)
-        print(wfm_selected)
+        print(dev_ids, wfm_selected)
         if not self._setpoints or \
                 (self._setpoints and
                     self._setpoints.apply(value[self._idx])):
