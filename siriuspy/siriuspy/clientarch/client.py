@@ -292,6 +292,14 @@ class ClientArchiver:
         resp = self._make_request(url, return_json=True)
         return None if not resp else resp
 
+    def switch_to_online_data(self):
+        """."""
+        self.server_url = _envars.SRVURL_ARCHIVER
+
+    def switch_to_offline_data(self):
+        """."""
+        self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+
     # ---------- auxiliary methods ----------
 
     def _make_request(self, url, need_login=False, return_json=False):

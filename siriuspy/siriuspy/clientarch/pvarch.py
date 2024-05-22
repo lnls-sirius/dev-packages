@@ -18,9 +18,9 @@ class _Base:
 
     DEF_PARALLEL_QUERY_BIN_INTERVAL = 12*60*60  # 12h
 
-    def __init__(self, connector=None, offline_server=False):
+    def __init__(self, connector=None, offline_data=False):
         self._connector = None
-        self._offline_server = offline_server
+        self._offline_data = offline_data
         self.connector = connector
         self.connect()
 
@@ -35,7 +35,7 @@ class _Base:
         if self.connector is None:
             url_off = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
             url_on = _envars.SRVURL_ARCHIVER
-            url = url_off if self._offline_server else url_on
+            url = url_off if self._offline_data else url_on
             self._connector = _ClientArchiver(server_url=url)
 
     @property
@@ -56,9 +56,9 @@ class _Base:
                 'Variable conn must be a str or ClientArchiver object.')
 
     @property
-    def is_offline_server(self):
+    def is_offline_data(self):
         """."""
-        return self._offline_server
+        return self._offline_data
 
     @property
     def timeout(self):
@@ -76,6 +76,16 @@ class _Base:
         if not self.connector:
             return False
         return self.connector.connected
+
+    def switch_to_online_data(self):
+        """."""
+        if self.connector:
+            self.connector.switch_to_online_data()
+
+    def switch_to_offline_data(self):
+        """."""
+        if self.connector:
+            self.connector.switch_to_offline_data()
 
 
 class PVDetails(_Base):
@@ -180,9 +190,9 @@ class PVDetails(_Base):
 class PVData(_Base):
     """Archive PV Data."""
 
-    def __init__(self, pvname, connector=None, offline_server=False):
+    def __init__(self, pvname, connector=None, offline_data=False):
         """Initialize."""
-        super().__init__(connector, offline_server=offline_server)
+        super().__init__(connector, offline_data=offline_data)
         self._pvname = pvname
         self._time_start = None
         self._time_stop = None
@@ -404,9 +414,9 @@ class PVData(_Base):
 class PVDataSet(_Base):
     """A set of PVData objects."""
 
-    def __init__(self, pvnames, connector=None, offline_server=False):
+    def __init__(self, pvnames, connector=None, offline_data=False):
         """Initialize."""
-        super().__init__(connector, offline_server=offline_server)
+        super().__init__(connector, offline_data=offline_data)
         self._pvnames = pvnames
         self._time_start = None
         self._time_stop = None
