@@ -462,7 +462,7 @@ class EpicsCorrectors(BaseCorrectors):
             return 0
 
         strn = '    TIMEIT: {0:20s} - {1:7.3f}'
-        _log.info('    TIMEIT: BEGIN')
+        _log.debug('    TIMEIT: BEGIN')
         time1 = _time.time()
 
         not_nan_idcs = ~_np.isnan(values)
@@ -471,25 +471,25 @@ class EpicsCorrectors(BaseCorrectors):
             if not_nan_idcs[i]:
                 self.put_value_in_corr(corr, values[i])
         time2 = _time.time()
-        _log.info(strn.format('send sp:', 1000*(time2-time1)))
+        _log.debug(strn.format('send sp:', 1000*(time2-time1)))
 
         # Wait for readbacks to be updated
         if WAIT_CORRS and self._timed_out(values, mode='ready'):
             return -1
         time3 = _time.time()
-        _log.info(strn.format('check ready:', 1000*(time3-time2)))
+        _log.debug(strn.format('check ready:', 1000*(time3-time2)))
 
         # Send trigger signal for implementation
         self.send_evt()
         time4 = _time.time()
-        _log.info(strn.format('send evt:', 1000*(time4-time3)))
+        _log.debug(strn.format('send evt:', 1000*(time4-time3)))
 
         # Wait for references to be updated
         if WAIT_CORRS:
             self._timed_out(values, mode='applied')
         time5 = _time.time()
-        _log.info(strn.format('check applied:', 1000*(time5-time4)))
-        _log.info('    TIMEIT: END')
+        _log.debug(strn.format('check applied:', 1000*(time5-time4)))
+        _log.debug('    TIMEIT: END')
         return 0
 
     def put_value_in_corr(self, corr, value):
