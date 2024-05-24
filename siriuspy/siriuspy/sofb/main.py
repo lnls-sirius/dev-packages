@@ -885,7 +885,8 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             ret = self.correctors.apply_kicks(kicks)
-            self._ref_corr_kicks = kicks
+            notnan = ~_np.isnan(kicks)
+            self._ref_corr_kicks[notnan] = kicks[notnan]
             rets.append(ret)
             tims.append(_time())
             tims.append(tims[1])  # to compute total time - get_orbit
