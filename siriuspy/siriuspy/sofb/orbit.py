@@ -199,7 +199,7 @@ class EpicsOrbit(BaseOrbit):
             msg = 'ERR: timeout waiting orbit.'
             self._update_log(msg)
             _log.error(msg[5:])
-            orbx, orby = refx, refy
+            orbx, orby = refx.copy(), refy.copy()
         # # for tests:
         # orbx -= _time.time()
         # orby -= _time.time()
