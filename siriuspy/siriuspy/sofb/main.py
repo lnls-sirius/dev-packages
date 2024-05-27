@@ -1066,7 +1066,7 @@ class SOFB(_BaseClass):
             # NOTE: calc_kicks return the kicks to correct dorb, which means
             # that a minus sign is already applied by this method. To negate
             # this correction, we need an extra minus sign here:
-            dkicks2 = self.matrix.calc_kicks(dorb)
+            dkicks2 = self.matrix.calc_kicks(dorb, update_dkicks=False)
             dkicks2 *= -self._download_fofb_kicks_perc
 
             kicks, dkicks2 = self._process_kicks(
