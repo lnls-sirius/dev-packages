@@ -34,6 +34,7 @@ class ETypes(_csdev.ETypes):
         'LoopInterlockOk', 'SYSIDExcitationDisabled')
 
     DEC_OPT = ('FOFB', 'Monit', 'Custom')
+    FILTER_OPT = ('Unit', 'Switching', 'Custom')
 
 
 _et = ETypes  # syntactic sugar
@@ -67,7 +68,18 @@ class HLFOFBConst(_csdev.Const):
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
+    FilterOpt = _csdev.Const.register('FilterOpt', _et.FILTER_OPT)
+    
+    # FOFB Switching filter coefficientes
+    _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01] # freq FOFB/4
+    _a4 = [-1.11484423e-16, 8.20678791e-01] # freq FOFB/4
+    _b2 = [0.83408931895964943947774372645654, 0.83408931895964943947774372645654, 0.0] # freq FOFB/2
+    _a2 = [0.66817863791929887895548745291308, 0.0] # freq FOFB/2
 
+    FILTER_UNIT = [1.0, 0.0, 0.0, 0.0, 0.0]
+    FILTER_SW_4 = _b4 + _a4 
+    FILTER_SW_2 = _b2 + _a2
+        
     def __init__(self):
         """Class constructor."""
 
@@ -257,6 +269,26 @@ class HLFOFBConst(_csdev.Const):
             'FOFBAccDecimation-RB': {
                 'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
                 'hilim': 8600, 'unit': 'count'},
+            
+            # filter configuration
+            'FOFBAccFilter-Sel': {
+                'type': 'enum', 'enums': _et.FILTER_OPT,
+                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
+            'FOFBAccFilter-Sts': {
+                'type': 'enum', 'enums': _et.FILTER_OPT,
+                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
+            'FOFBAccFilter-SP': {
+                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20, 
+                'unit': 'coef'},
+            'FOFBAccFilter-RB': {
+                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20,
+                'unit': 'coef'},
+            'FOFBAccFilterGain-SP': {
+                'type': 'float', 'value': 1.0, 'prec': 5,  
+                'lolim': 0, 'hilim': 1000,'unit': 'gain'},
+            'FOFBAccFilterGain-RB': {
+                'type': 'float', 'value': 1.0, 'prec': 5, 
+                'unit': 'gain'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
