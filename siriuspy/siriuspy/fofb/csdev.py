@@ -26,7 +26,8 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
         'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
-        'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced')
+        'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced',
+        'CurrLoopKpSynced', 'CurrLoopTiSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
@@ -114,6 +115,7 @@ class HLFOFBConst(_csdev.Const):
         self.chenbl_fname = _os.path.join(ioc_fol, 'chenbllist.correnbl')
         self.cvenbl_fname = _os.path.join(ioc_fol, 'cvenbllist.correnbl')
         self.rfenbl_fname = _os.path.join(ioc_fol, 'rfenbllist.rfenbl')
+        self.psconfig_fname = _os.path.join(ioc_fol, 'psconfig.psconfig')
 
         # reforb and matrix parameters
         self.reforb_size = self.nr_bpms
@@ -125,6 +127,10 @@ class HLFOFBConst(_csdev.Const):
         # dcc minimum enable configuration
         self.dccenbl_min = _np.array([
             bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
+
+        # psconfig
+        self.psconfig_nr_coeffs_columns = 20
+        self.psconfig_size = self.nr_chcv * (self.psconfig_nr_coeffs_columns + 3)
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -193,7 +199,7 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b11111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b111111111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
@@ -268,11 +274,13 @@ class HLFOFBConst(_csdev.Const):
 
             # filter configuration
             'PSConfigMat-SP': {
-                'type': 'float', 'value': _np.zeros((self.nr_chcv, 23)),
+                'type': 'float', 'value': _np.zeros(
+                    (self.nr_chcv, self.psconfig_nr_coeffs_columns + 3)),
                 'prec': 5, 'count': 20,
                 'unit': 'coef'},
             'PSConfigMat-RB': {
-                'type': 'float', 'value': _np.zeros((self.nr_chcv, 23)),
+                'type': 'float', 'value': _np.zeros(
+                    (self.nr_chcv, self.psconfig_nr_coeffs_columns + 3)),
                 'prec': 5, 'count': 20,
                 'unit': 'coef'},
 

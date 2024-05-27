@@ -149,6 +149,7 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
 
 # ---------------- DCC devices ----------------
 
+
 class _DCCDevice(_Device):
     """FOFB Diamond communication controller device."""
 
@@ -701,10 +702,6 @@ class FamFOFBControllers(_DeviceSet):
         ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
         return ctl.fofbacc_filter_num_biquads
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 87b1a9ce7f74fe1a160ca86b48521f06e4de5fab
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
@@ -850,6 +847,36 @@ class FamFastCorrs(_DeviceSet):
                 current gain for each power supply.
         """
         return _np.array([p.curr_gain for p in self._psdevs])
+
+    @property
+    def currloop_kp(self):
+        """Current loop Kp.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                CurrLoopKp for each power supply.
+        """
+        return _np.array([p.currloop_kp for p in self._psdevs])
+
+    @property
+    def currloop_ti(self):
+        """Current loop Ti.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                CurrLoopTi for each power supply.
+        """
+        return _np.array([p.currloop_ti for p in self._psdevs])
+
+    @property
+    def fofbacc_filter_gain(self):
+        """Acc filter gain.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                Filter gain for each power supply.
+        """
+        return _np.array([p.fofbacc_filter_gain for p in self._psdevs])
 
     @property
     def strength_2_current_factor(self):
