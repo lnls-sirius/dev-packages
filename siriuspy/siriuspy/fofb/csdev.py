@@ -34,8 +34,6 @@ class ETypes(_csdev.ETypes):
         'LoopInterlockOk', 'SYSIDExcitationDisabled')
 
     DEC_OPT = ('FOFB', 'Monit', 'Custom')
-    FILTER_OPT = ('Unit', 'Switching', 'Custom')
-
 
 _et = ETypes  # syntactic sugar
 
@@ -68,7 +66,6 @@ class HLFOFBConst(_csdev.Const):
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
-    FilterOpt = _csdev.Const.register('FilterOpt', _et.FILTER_OPT)
     
     # FOFB Switching filter coefficientes
     _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01] # freq FOFB/4
@@ -271,24 +268,14 @@ class HLFOFBConst(_csdev.Const):
                 'hilim': 8600, 'unit': 'count'},
             
             # filter configuration
-            'FOFBAccFilter-Sel': {
-                'type': 'enum', 'enums': _et.FILTER_OPT,
-                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
-            'FOFBAccFilter-Sts': {
-                'type': 'enum', 'enums': _et.FILTER_OPT,
-                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
-            'FOFBAccFilter-SP': {
-                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20, 
+            'PSConfigMat-SP': {
+                'type': 'float', 'value': _np.zeros((self.nr_chcv, 23)),
+                'prec': 5, 'count': 20,
                 'unit': 'coef'},
-            'FOFBAccFilter-RB': {
-                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20,
+            'PSConfigMat-RB': {
+                'type': 'float', 'value': _np.zeros((self.nr_chcv, 23)),
+                'prec': 5, 'count': 20,
                 'unit': 'coef'},
-            'FOFBAccFilterGain-SP': {
-                'type': 'float', 'value': 1.0, 'prec': 5,  
-                'lolim': 0, 'hilim': 1000,'unit': 'gain'},
-            'FOFBAccFilterGain-RB': {
-                'type': 'float', 'value': 1.0, 'prec': 5, 
-                'unit': 'gain'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {

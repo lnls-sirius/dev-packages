@@ -701,7 +701,7 @@ class FamFOFBControllers(_DeviceSet):
         ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
         return ctl.fofbacc_filter_num_biquads
 
-    
+
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
@@ -1085,52 +1085,119 @@ class FamFastCorrs(_DeviceSet):
             dev.cmd_fofbacc_clear()
         return True
 
-    def set_fofbacc_filter(self, value, psnames=None, psindices=None):
+    def set_fofbacc_filter(self, values, psnames=None, psindices=None):
         """Command to set power supply filter coefficients values."""
-        if not isinstance(value, (list, tuple, _np.ndarray)):
+        if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        for dev in devs:
-            dev.fofbacc_filter = value
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter = values[i]
         return True
 
     def check_fofbacc_filter(
-            self, value, psnames=None, psindices=None,
+            self, values, psnames=None, psindices=None,
             atol=DEF_ATOL_ACCFILTER):
         """Check power supplies filter coefficients."""
         if not self.connected:
             return False
-        if not isinstance(value, (list, tuple, _np.ndarray)):
+        if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        for dev in devs:    
-            if len(value) != len(dev.fofbacc_filter):
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        for i, dev in enumerate(devs):
+            if len(values[i]) != len(dev.fofbacc_filter):
                 return False
-            if not _np.allclose(value, dev.fofbacc_filter, atol=atol):
+            if not _np.allclose(values[i], dev.fofbacc_filter, atol=atol):
                 return False
         return True
-    
-    def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
+
+    def set_fofbacc_filter_gain(self, values, psnames=None, psindices=None):
         """Command to set accumulator filter gain."""
-        if not isinstance(value, (int, float)):
-            raise ValueError('Value must be integer or float.')
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        for dev in devs:
-            dev.fofbacc_filter_gain = value
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter_gain = values[i]
         return True
 
     def check_fofbacc_filter_gain(
-            self, value, psnames=None, psindices=None,
+            self, values, psnames=None, psindices=None,
             atol=DEF_ATOL_ACCFILTERGAIN):
         """Check accumulator filter gain."""
         if not self.connected:
             return False
-        if not isinstance(value, (int, float)):
-            raise ValueError('Value must be integer or float.')
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
         impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
-        value = len(devs) * [value]
-        if _np.allclose(value, impltd, atol=atol):
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
+    def set_currloop_kp(self, values, psnames=None, psindices=None):
+        """Command to set power supply Kp."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        for i, dev in enumerate(devs):
+            dev.currloop_kp = values[i]
+        return True
+
+    def set_currloop_ti(self, values, psnames=None, psindices=None):
+        """Command to set power supply Ti."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        for i, dev in enumerate(devs):
+            dev.currloop_ti = values[i]
+        return True
+
+    def check_currloop_kp(
+            self, values, psnames=None, psindices=None):
+        """Check current loop Kp."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        impltd = _np.asarray([d.currloop_kp for d in devs])
+        if _np.allclose(values, impltd, atol=0):
+            return True
+        return False
+
+    def check_currloop_ti(
+            self, values, psnames=None, psindices=None):
+        """Check current loop Ti."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values must be the same\
+                            size as psnames or psindices.')
+        impltd = _np.asarray([d.currloop_ti for d in devs])
+        if _np.allclose(values, impltd, atol=0):
             return True
         return False
 

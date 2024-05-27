@@ -72,9 +72,11 @@ class App(_Callback):
         }
         self._corr_accdec_val = 1
         self._corr_accdec_enm = self._const.DecOpt.FOFB
-        self._corr_accfilter_val = 20*[0.0]
-        self._corr_accfilter_enm = self._const.FilterOpt.Unit
-        self._corr_accfilter_gain = 1.0
+        self._corr_accfilter_val = _np.zeros((self._const.nr_chcv, 20), dtype=float)
+        self._corr_accfilter_gain = _np.ones((self._const.nr_chcv), dtype=float)
+        self._corr_currloop_kp = _np.ones((self._const.nr_chcv), dtype=float)
+        self._corr_currloop_ti = _np.ones((self._const.nr_chcv), dtype=float)
+        self._psconfig_mat = _np.zeros((self._const.nr_chcv, 23), dtype=float)
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
@@ -155,9 +157,7 @@ class App(_Callback):
             'CtrlrDsblSYSIDExc-Cmd': self.cmd_fofbctrl_dsblsysid,
             'FOFBAccDecimation-Sel': _part(self.set_corr_accdec, 'enum'),
             'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
-            'FOFBAccFilter-Sel':  _part(self.set_corr_accfilter, 'enum'),
-            'FOFBAccFilter-SP': _part(self.set_corr_accfilter, 'value'),
-            'FOFBAccFilterGain-SP': self.set_corr_accfilter_gain,
+            'PSConfigMat-SP': self.set_psconfig_mat,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -709,7 +709,7 @@ class App(_Callback):
         self._update_log('...done!')
 
         return True
-    
+
     def set_corr_accfilter(self, option, value):
         """Set corrector accumulator filter."""
 
@@ -728,7 +728,7 @@ class App(_Callback):
 
             elif value == self._const.FilterOpt.Switching:
                 filter = sw2 + sw4 + (num_biquads - 2) * unit
-                
+
             else:
                 filter = self._corr_accfilter_val
             self._corr_accfilter_enm = value
