@@ -32,6 +32,7 @@ class _PSModel:
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
         # Wfm
+        'WfmSelected-Mon': _c.V_WFMREF_SELECTED,
         'WfmSyncMode-Sts': _c.V_WFMREF_SYNC_MODE,
         'WfmFreq-RB': _c.V_WFMREF_FREQUENCY,
         'WfmGain-RB': _c.V_WFMREF_GAIN,

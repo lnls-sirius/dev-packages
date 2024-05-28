@@ -1055,6 +1055,8 @@ def _get_ps_common_propty_database():
         'IntlkHard-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Wfm
+        'WfmSelected-Mon': {
+            'type': 'int', 'value': 0, 'unit': 'wfmselected'},
         'WfmSyncMode-Sel': {
             'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
             'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
