@@ -293,7 +293,7 @@ class PRUController:
         """Queue update wfm and scope curves."""
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
-        operation = (self._bsmp_update_wfm, (device_ids, interval, ))
+        operation = (self.bsmp_update_wfm, (device_ids, interval, ))
         self._queue.put(operation, block=False)
         return True
 
@@ -359,7 +359,7 @@ class PRUController:
             pass
 
         # execute SOFB setpoint
-        self._bsmp_update_sofb_setpoint(value)
+        self.bsmp_update_sofb_setpoint(value)
 
         return True
 
@@ -393,7 +393,7 @@ class PRUController:
         dev_id = self._device_ids[self._sofb_update_dev_idx]
 
         # update variables state mirror for selected power supply
-        self._bsmp_update_variables(dev_id)
+        self.bsmp_update_variables(dev_id)
 
     # --- scan and process loop methods ---
 
@@ -401,7 +401,7 @@ class PRUController:
         """Run scan one."""
         # select devices and variable group, defining the read group
         # operation to be performed
-        operation = (self._bsmp_update, ())
+        operation = (self.bsmp_update, ())
         if self._queue.empty() or operation != self._queue.last_operation:
             self._queue.put(operation, block=False)
         else:
@@ -587,23 +587,24 @@ class PRUController:
         dt_ = _time() - t0_
         print(fmt.format('bsmp_init_devices', 'bufsample_disable', 1e3*dt_))
 
-    def _bsmp_update(self):
-
+    def bsmp_update(self):
+        """."""
         try:
             # update variables
-            self._bsmp_update_variables()
+            self.bsmp_update_variables()
 
             # update device wfm curves cyclically
             if self._scope_update:
                 self._scope_update_dev_idx = \
                     (self._scope_update_dev_idx + 1) % len(self._device_ids)
                 dev_id = self._device_ids[self._scope_update_dev_idx]
-                self._bsmp_update_wfm(dev_id)
+                self.bsmp_update_wfm(dev_id)
 
         except _socket_timeout:
             print('!!! {} : socket timeout !!!'.format(_get_timestamp()))
 
-    def _bsmp_update_variables(self, dev_id=None):
+    def bsmp_update_variables(self, dev_id=None):
+        """."""
         if dev_id is None:
             psupplies = self._psupplies.values()
         else:
@@ -621,7 +622,7 @@ class PRUController:
                     f'it took {dt_*1000:.3f} ms in bsmp_update_variables.'
                 )
 
-    def _bsmp_update_wfm(self, device_id):
+    def bsmp_update_wfm(self, device_id):
         """Read curve from devices."""
         psupplies = self._psupplies
 
@@ -640,7 +641,7 @@ class PRUController:
         # stores updated psupplies dict
         self._psupplies = psupplies  # atomic operation
 
-    def _bsmp_update_sofb_setpoint(self, value):
+    def bsmp_update_sofb_setpoint(self, value):
 
         # execute sofb current setpoint
         self._udc.sofb_current_set(value)
@@ -649,10 +650,10 @@ class PRUController:
         self._udc.sofb_update()
 
         # # update all other device parameters
-        # self._bsmp_update()
+        # self.bsmp_update()
 
         # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PRUC._bsmp_update_sofb_setpoint (end)', 1e3*(_time() % 1)))
+        #     'PRUC.bsmp_update_sofb_setpoint (end)', 1e3*(_time() % 1)))
 
     def _bsmp_wfmref_write(self, device_ids, curve):
         """Write wfmref curve to devices."""

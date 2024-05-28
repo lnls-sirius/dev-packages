@@ -15,7 +15,11 @@ class PSController:
         'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
         'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
         'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
-        'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon'}
+        'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
+        'WfmOffsetKick-SP', 'WfmOffsetKick-RB',
+        'WfmOffsetKL-SP', 'WfmOffsetKL-RB',
+        'WfmOffsetSL-SP', 'WfmOffsetSL-RB',
+        }
 
     def __init__(self, readers, writers,
                  pru_controller, devname2devid):
@@ -50,6 +54,16 @@ class PSController:
     def fields(self):
         """Field of ps controller."""
         return self._fields
+
+    @property
+    def readers(self):
+        """Return controller readers."""
+        return self._readers
+
+    @property
+    def writers(self):
+        """Return controller writers."""
+        return self._writers
 
     def read(self, devname, field):
         """Read pv value."""
@@ -154,7 +168,7 @@ class PSController:
         """."""
         self.read_all_fields(devname)
         self.init_setpoints(devname)
-        
+
     @staticmethod
     def _get_readback_field(field):
         # NOTE: to be updated
