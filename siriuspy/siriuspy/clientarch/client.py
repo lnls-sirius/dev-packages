@@ -295,10 +295,12 @@ class ClientArchiver:
     def switch_to_online_data(self):
         """."""
         self.server_url = _envars.SRVURL_ARCHIVER
+        self.session = None
 
     def switch_to_offline_data(self):
         """."""
         self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+        self.session = None
 
     # ---------- auxiliary methods ----------
 
