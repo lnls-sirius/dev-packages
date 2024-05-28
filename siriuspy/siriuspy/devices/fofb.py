@@ -701,7 +701,6 @@ class FamFOFBControllers(_DeviceSet):
         ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
         return ctl.fofbacc_filter_num_biquads
 
-    
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
@@ -1103,13 +1102,13 @@ class FamFastCorrs(_DeviceSet):
         if not isinstance(value, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
-        for dev in devs:    
+        for dev in devs:
             if len(value) != len(dev.fofbacc_filter):
                 return False
             if not _np.allclose(value, dev.fofbacc_filter, atol=atol):
                 return False
         return True
-    
+
     def set_fofbacc_filter_gain(self, value, psnames=None, psindices=None):
         """Command to set accumulator filter gain."""
         if not isinstance(value, (int, float)):
@@ -1178,6 +1177,11 @@ class HLFOFB(_Device):
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
+        'FOFBAccDecimation-Sel', 'FOFBAccDecimation-Sts',
+        'FOFBAccDecimation-SP',  'FOFBAccDecimation-RB',
+        'FOFBAccFilter-Sel', 'FOFBAccFilter-Sts',
+        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
+        'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
         'KickCHAcc-Mon', 'KickCVAcc-Mon',
         'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -1421,6 +1425,51 @@ class HLFOFB(_Device):
         """Command to reset interlocks of all FOFB controllers."""
         self['CtrlrReset-Cmd'] = 1
         return True
+
+    @property
+    def fofbacc_decimation_enumvalue(self):
+        """Accumulator decimation enum value."""
+        return self['FOFBAccDecimation-Sts']
+
+    @fofbacc_decimation_enumvalue.setter
+    def fofbacc_decimation_enumvalue(self, value):
+        self['FOFBAccDecimation-Sel'] = value
+
+    @property
+    def fofbacc_decimation_value(self):
+        """Accumulator decimation value."""
+        return self['FOFBAccDecimation-RB']
+
+    @fofbacc_decimation_value.setter
+    def fofbacc_decimation_value(self, value):
+        self['FOFBAccDecimation-SP'] = value
+
+    @property
+    def fofbacc_filter_enumvalue(self):
+        """Accumulator filter enum value."""
+        return self['FOFBAccFilter-Sts']
+
+    @fofbacc_filter_enumvalue.setter
+    def fofbacc_filter_enumvalue(self, value):
+        self['FOFBAccFilter-Sel'] = value
+
+    @property
+    def fofbacc_filter_value(self):
+        """Accumulator filter value."""
+        return self['FOFBAccFilter-RB']
+
+    @fofbacc_filter_value.setter
+    def fofbacc_filter_value(self, value):
+        self['FOFBAccFilter-SP'] = value
+
+    @property
+    def fofbacc_filter_gain(self):
+        """Accumulator filter gain value."""
+        return self['FOFBAccFilterGain-RB']
+
+    @fofbacc_filter_gain.setter
+    def fofbacc_filter_gain(self, value):
+        self['FOFBAccFilterGain-SP'] = value
 
     @property
     def kickch_acc(self):

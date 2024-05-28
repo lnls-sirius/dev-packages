@@ -236,6 +236,12 @@ class App(_Callback):
             'FOFBAccDecimation-Sts': self._corr_accdec_enm,
             'FOFBAccDecimation-SP': self._corr_accdec_val,
             'FOFBAccDecimation-RB': self._corr_accdec_val,
+            'FOFBAccFilter-Sel': self._corr_accfilter_enm,
+            'FOFBAccFilter-Sts': self._corr_accfilter_enm,
+            'FOFBAccFilter-SP': self._corr_accfilter_val,
+            'FOFBAccFilter-RB': self._corr_accfilter_val,
+            'FOFBAccFilterGain-SP': self._corr_accfilter_gain,
+            'FOFBAccFilterGain-RB': self._corr_accfilter_gain,
             'MinSingValue-SP': self._min_sing_val,
             'MinSingValue-RB': self._min_sing_val,
             'TikhonovRegConst-SP': self._tikhonov_reg_const,
@@ -574,6 +580,11 @@ class App(_Callback):
         self._set_corrs_fofbacc_freeze()
         # matrix coefficients
         self._set_corrs_coeffs()
+        # filter
+        self._update_log('Setting corrector filter...')
+        self._corrs_dev.set_fofbacc_filter(self._corr_accfilter_val)
+        self._corrs_dev.set_fofbacc_filter_gain(self._corr_accfilter_gain)
+        self._update_log('...done!')
 
         self._update_log('Correctors configuration done!')
         return True
@@ -709,7 +720,7 @@ class App(_Callback):
         self._update_log('...done!')
 
         return True
-    
+
     def set_corr_accfilter(self, option, value):
         """Set corrector accumulator filter."""
 
@@ -728,7 +739,7 @@ class App(_Callback):
 
             elif value == self._const.FilterOpt.Switching:
                 filter = sw2 + sw4 + (num_biquads - 2) * unit
-                
+
             else:
                 filter = self._corr_accfilter_val
             self._corr_accfilter_enm = value
@@ -1887,11 +1898,13 @@ class App(_Callback):
                 dec = self._corr_accdec_val
                 if not self._corrs_dev.check_fofbacc_decimation(dec):
                     value = _updt_bit(value, 7, 1)
-                # AccFilter
-                if not self._corrs_dev.check_fofbacc_filter(self._corr_accfilter_val):
+                # AccFilterSynced
+                filter = self._corr_accfilter_val
+                if not self._corrs_dev.check_fofbacc_filter(filter):
                     value = _updt_bit(value, 8, 1)
-                # AccFilterGain
-                if not self._corrs_dev.check_fofbacc_filter_gain(self._corr_accfilter_gain):
+                # AccFilterGainSynced
+                gain = self._corr_accfilter_gain
+                if not self._corrs_dev.check_fofbacc_filter_gain(gain):
                     value = _updt_bit(value, 9, 1)
             else:
                 value = 0b1111111111
