@@ -1,42 +1,39 @@
+import numpy as _np
 from .csdev import HLFOFBConst as _Const
-from ..devices import FamFOFBControllers as _FamFOFBCtrls, Device as _Device,\
-    FamFastCorrs as _FamFastCorrs, SOFB as _SOFB, RFGen as _RFGen
+from ..devices import FamFOFBControllers as _FamFOFBCtrls, \
+        FamFastCorrs as _FamFastCorrs, PowerSupplyFC as _PS
 
-def set_default_psconfig_mat(self, option):
-        """Set corrector accumulator filter."""
 
-        _const = _Const()
-        _llfofb_dev = _FamFOFBCtrls()
+def set_default_psconfig_mat(option):
+    """Set corrector accumulator filter."""
 
-        corrnames = _const.ch_names + _const.cv_names
-        _corrs_dev = _FamFastCorrs(corrnames)
+    _const = _Const()
+    _llfofb_dev = _FamFOFBCtrls()
+    _ps = _PS()
 
-        num_biquads = _llfofb_dev.fofbacc_filter_num_biquads
-        unit = _const.FILTER_UNIT
-        sw2 = _const.FILTER_SW_2
-        sw4 = _const.FILTER_SW_4
+    corrnames = _const.ch_names + _const.cv_names
+    _corrs_dev = _FamFastCorrs(corrnames)
 
-        if option == 'Unit':
-                filter_coeffs = num_biquads * unit
+    num_biquads = _llfofb_dev.fofbacc_filter_num_biquads
+    unit = _const.FILTER_UNIT
+    sw2 = _const.FILTER_SW_2
+    sw4 = _const.FILTER_SW_4
 
-        if option == 'Switching':
-               filter_coeffs = sw2 + sw4 + (num_biquads - 2) * unit
+    if option == 'Unit':
+        filter_coeffs = num_biquads * unit
 
-#             elif value == self._const.FilterOpt.Switching:
-#                 filter = sw2 + sw4 + (num_biquads - 2) * unit
+    if option == 'Switching':
+        filter_coeffs = sw2 + sw4 + (num_biquads - 2) * unit
 
-#             else:
-#                 filter = self._corr_accfilter_val
+    _corr_currloop_kp = _ps.currloop_kp
+    _corr_currloop_ti = _ps.currloop_ti
+    _corr_accfilter_gain = _corrs_dev.fofbacc_filter_gain
+    std_psconfig_mat = _np.zeros(
+            (_const.nr_chcv, _const.psconfig_nr_coeffs_columns + 3),
+            dtype=float)
+    std_psconfig_mat[:, 0] = _corr_currloop_kp
+    std_psconfig_mat[:, 1] = _corr_currloop_ti
+    std_psconfig_mat[:, 2] = _corr_accfilter_gain
+    std_psconfig_mat[:, 3:] = filter_coeffs
 
-#             self.run_callbacks('FOFBAccFilter-Sts', value)
-#             self.run_callbacks('FOFBAccFilter-SP', filter)
-#         else:
-#             filter = value
-#         self._corr_accfilter_val = filter
-
-#         self._update_log('Setting FOFB Acc filter...')
-#         self._corrs_dev.set_fofbacc_filter(filter)
-#         self._update_log('...done!')
-#         self.run_callbacks('FOFBAccFilter-RB', filter)
-
-#         return True
+    return std_psconfig_mat
