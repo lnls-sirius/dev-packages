@@ -36,6 +36,7 @@ class ETypes(_csdev.ETypes):
 
     DEC_OPT = ('FOFB', 'Monit', 'Custom')
 
+
 _et = ETypes  # syntactic sugar
 
 
@@ -68,10 +69,11 @@ class HLFOFBConst(_csdev.Const):
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
     # FOFB Switching filter coefficientes
-    _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01] # freq FOFB/4
-    _a4 = [-1.11484423e-16, 8.20678791e-01] # freq FOFB/4
-    _b2 = [0.83408931895964943947774372645654, 0.83408931895964943947774372645654, 0.0] # freq FOFB/2
-    _a2 = [0.66817863791929887895548745291308, 0.0] # freq FOFB/2
+    _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01]  # freq FOFB/4
+    _a4 = [-1.11484423e-16, 8.20678791e-01]  # freq FOFB/4
+    _b2 = [0.83408931895964943947774372645654,
+           0.83408931895964943947774372645654, 0.0]  # freq FOFB/2
+    _a2 = [0.66817863791929887895548745291308, 0.0]  # freq FOFB/2
 
     FILTER_UNIT = [1.0, 0.0, 0.0, 0.0, 0.0]
     FILTER_SW_4 = _b4 + _a4
@@ -130,7 +132,8 @@ class HLFOFBConst(_csdev.Const):
 
         # psconfig
         self.psconfig_nr_coeffs_columns = 20
-        self.psconfig_size = self.nr_chcv * (self.psconfig_nr_coeffs_columns + 3)
+        self.psconfig_size = self.nr_chcv * (
+            self.psconfig_nr_coeffs_columns + 3)
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
