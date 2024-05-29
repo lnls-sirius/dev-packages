@@ -980,7 +980,6 @@ class SOFB(_BaseClass):
         tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
         diff = _np.sum(bo_diff) / rets.size * 100
-        _log.info('PERFORMANCE:')
         self.run_callbacks('LoopPerfItersOk-Mon', ok_)
         self.run_callbacks('LoopPerfItersTOut-Mon', tout)
         self.run_callbacks('LoopPerfItersDiff-Mon', diff)
