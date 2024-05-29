@@ -375,19 +375,23 @@ class CfgWfm(Function):
         self._variable_id = _const_psbsmp.V_WFMREF_SELECTED
         self._setpoints = setpoints
         self._cfg = BSMPFunction(
-            device_ids, pru_controller, _const_psbsmp.F_CFG_WFMREF)
+            device_ids, pru_controller, _const_psbsmp.F_CFG_WFMREF
+        )
 
     def execute(self, value=None):
         """Execute command."""
         # get current wfm buffer
         dev_id = self._cfg.device_ids[0]
         wfm_selected = self._cfg.pru_controller.read_variables(
-            dev_id, self._variable_id)
-        if not self._setpoints or \
-                (self._setpoints and
-                    self._setpoints.apply(value[self._idx])):
+            dev_id, self._variable_id
+        )
+        if not self._setpoints or (
+            self._setpoints and self._setpoints.apply(value[self._idx])
+        ):
             # add wfm_selected index to bsmp function arg
-            value = [wfm_selected, ] + value
+            value = [
+                wfm_selected,
+            ] + value
             self._cfg.execute(value)
 
 
