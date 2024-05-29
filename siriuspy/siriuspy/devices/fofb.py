@@ -1138,8 +1138,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         for i, dev in enumerate(devs):
             if len(values[i]) != len(dev.fofbacc_filter):
                 return False
@@ -1153,8 +1154,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         for i, dev in enumerate(devs):
             dev.fofbacc_filter_gain = values[i]
         return True
@@ -1169,8 +1171,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
         return _np.allclose(values, impltd, atol=atol)
 
@@ -1180,8 +1183,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         for i, dev in enumerate(devs):
             dev.currloop_kp = values[i]
         return True
@@ -1192,8 +1196,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         for i, dev in enumerate(devs):
             dev.currloop_ti = values[i]
         return True
@@ -1207,8 +1212,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         impltd = _np.asarray([d.currloop_kp for d in devs])
         if _np.allclose(values, impltd, atol=0):
             return True
@@ -1223,8 +1229,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         impltd = _np.asarray([d.currloop_ti for d in devs])
         if _np.allclose(values, impltd, atol=0):
             return True
