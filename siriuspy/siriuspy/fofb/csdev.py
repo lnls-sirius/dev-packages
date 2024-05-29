@@ -62,6 +62,14 @@ class HLFOFBConst(_csdev.Const):
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
     CURRZERO_RMP_FREQ = 2  # [steps/s]
 
+    # PS Config Matrix
+    PSCONFIG_KP_COL = 0
+    PSCONFIG_TI_COL = 1
+    PSCONFIG_FILTER_GAIN_COL = 2
+    PSCONFIG_COEFF_FIRST_COL = 3
+    PSCONFIG_BIQUAD_NR_COEFFS = 5
+    PSCONFIG_DEF_NR_BIQUADS = 4
+
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
     UseRF = _csdev.Const.register('UseRF', _et.DSBL_ENBL)
@@ -134,9 +142,10 @@ class HLFOFBConst(_csdev.Const):
             bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
 
         # psconfig
-        self.psconfig_nr_coeffs_columns = 20
+        self.psconfig_nr_coeffs_columns = \
+            self.PSCONFIG_BIQUAD_NR_COEFFS * self.PSCONFIG_DEF_NR_BIQUADS
         self.psconfig_size = self.nr_chcv * (
-            self.psconfig_nr_coeffs_columns + 3)
+            self.psconfig_nr_coeffs_columns + self.PSCONFIG_COEFF_FIRST_COL)
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -280,15 +289,11 @@ class HLFOFBConst(_csdev.Const):
 
             # filter configuration
             'PSConfigMat-SP': {
-                'type': 'float', 'value': _np.zeros(
-                    (self.nr_chcv, self.psconfig_nr_coeffs_columns + 3)),
-                'prec': 5, 'count': 20,
-                'unit': 'coef'},
+                'type': 'float', 'value': _np.zeros(self.psconfig_size),
+                'prec': 5, 'count': self.psconfig_size, 'unit': 'coef'},
             'PSConfigMat-RB': {
-                'type': 'float', 'value': _np.zeros(
-                    (self.nr_chcv, self.psconfig_nr_coeffs_columns + 3)),
-                'prec': 5, 'count': 20,
-                'unit': 'coef'},
+                'type': 'float', 'value': _np.zeros(self.psconfig_size),
+                'prec': 5, 'count': self.psconfig_size, 'unit': 'coef'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
