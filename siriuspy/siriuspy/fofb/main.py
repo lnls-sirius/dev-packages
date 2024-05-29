@@ -990,11 +990,16 @@ class App(_Callback):
         mat = _np.reshape(mat, [nr_rows, -1])
 
         # select attributes
+        kpcol = self._const.PSCONFIG_KP_COL
+        ticol = self._const.PSCONFIG_TI_COL
+        gaincol = self._const.PSCONFIG_FILTER_GAIN_COL
+        coeffcol = self._const.PSCONFIG_COEFF_FIRST_COL
+
         self._psconfig_mat = mat
-        self._corr_currloop_kp = self._psconfig_mat[:, 0]
-        self._corr_currloop_ti = self._psconfig_mat[:, 1]
-        self._corr_accfilter_gain = self._psconfig_mat[:, 2]
-        self._corr_accfilter_val = self._psconfig_mat[:, 3:]
+        self._corr_currloop_kp = self._psconfig_mat[:, kpcol]
+        self._corr_currloop_ti = self._psconfig_mat[:, ticol]
+        self._corr_accfilter_gain = self._psconfig_mat[:, gaincol]
+        self._corr_accfilter_val = self._psconfig_mat[:, coeffcol:]
 
         if self._init:
             self._set_corr_control_config()

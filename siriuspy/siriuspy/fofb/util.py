@@ -12,7 +12,7 @@ def set_default_psconfig_mat(option=None):
             If None, we consider option = 'Unit'.
 
     Returns:
-        std_psconfig_mat (numpy.ndarray):
+        mat (numpy.ndarray):
             PS Configuration matrix.
 
     """
@@ -41,13 +41,13 @@ def set_default_psconfig_mat(option=None):
     _corr_currloop_ti = _corrs_dev.currloop_ti
     _corr_accfilter_gain = _corrs_dev.fofbacc_filter_gain
 
-    std_psconfig_mat = _np.zeros(
+    mat = _np.zeros(
         (_const.nr_chcv, _const.psconfig_nr_coeffs_columns + 3),
         dtype=float
     )
-    std_psconfig_mat[:, 0] = _corr_currloop_kp
-    std_psconfig_mat[:, 1] = _corr_currloop_ti
-    std_psconfig_mat[:, 2] = _corr_accfilter_gain
-    std_psconfig_mat[:, 3:] = _acc_filter_coeffs
+    mat[:, _const.PSCONFIG_KP_COL] = _corr_currloop_kp
+    mat[:, _const.PSCONFIG_TI_COL] = _corr_currloop_ti
+    mat[:, _const.PSCONFIG_FILTER_GAIN_COL] = _corr_accfilter_gain
+    mat[:, _const.PSCONFIG_COEFF_FIRST_COL:] = _acc_filter_coeffs
 
-    return std_psconfig_mat
+    return mat
