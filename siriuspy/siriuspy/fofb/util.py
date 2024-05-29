@@ -43,8 +43,10 @@ def set_default_psconfig_mat(option=None):
     _corr_accfilter_gain = _corrs_dev.fofbacc_filter_gain
 
     if not _const.psconfig_nr_coeffs_columns == num_biquads*5:
-        raise ValueError('Number of biquads does not match number of filter\
-                         coefficients - each biquad must have 5 coefficients.')
+        raise ValueError(
+            'Number of biquads does not match number of filter '
+            'coefficients - each biquad must have 5 coefficients.'
+        )
 
     std_psconfig_mat = _np.zeros(
         (_const.nr_chcv, _const.psconfig_nr_coeffs_columns + 3),
