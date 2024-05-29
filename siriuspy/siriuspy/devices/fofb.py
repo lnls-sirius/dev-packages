@@ -1121,8 +1121,9 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
         if not len(values) == len(devs):
-            raise ValueError('Values must be the same\
-                            size as psnames or psindices.')
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
         for i, dev in enumerate(devs):
             dev.fofbacc_filter = values[i]
         return True
