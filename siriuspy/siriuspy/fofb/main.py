@@ -976,7 +976,8 @@ class App(_Callback):
         if mat.size != self._const.psconfig_size:
             self._update_log(
                 f'ERR: Wrong PSConfig Size ({mat.size}, '
-                f'expected {self._const.psconfig_size}).')
+                f'expected {self._const.psconfig_size}).'
+            )
             return False
 
         # reshape
