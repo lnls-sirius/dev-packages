@@ -1172,9 +1172,7 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError('Values must be the same\
                             size as psnames or psindices.')
         impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
-        if _np.allclose(values, impltd, atol=atol):
-            return True
-        return False
+        return _np.allclose(values, impltd, atol=atol)
 
     def set_currloop_kp(self, values, psnames=None, psindices=None):
         """Command to set power supply Kp."""
