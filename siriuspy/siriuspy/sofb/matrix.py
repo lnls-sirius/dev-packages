@@ -158,7 +158,7 @@ class EpicsMatrix(BaseMatrix):
         kicks = _np.dot(self.inv_respmat, orbit)
         kicks *= -1
         if update_dkicks:
-            self._LQTHREAD.put((self._update_dkicks, (kicks, )))
+            self._LQTHREAD.put((self._update_dkicks, (kicks.copy(), )))
         return kicks
 
     def estimate_orbit_variation(self, kicks):
@@ -180,7 +180,6 @@ class EpicsMatrix(BaseMatrix):
         return _np.dot(self.respmat, kicks)
 
     def _update_dkicks(self, kicks):
-        kicks = kicks.copy()
         nr_ch = self._csorb.nr_ch
         nr_chcv = self._csorb.nr_chcv
         self.run_callbacks('DeltaKickCH-Mon', kicks[:nr_ch])
