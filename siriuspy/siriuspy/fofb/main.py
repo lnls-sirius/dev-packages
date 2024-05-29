@@ -291,7 +291,8 @@ class App(_Callback):
         self.run_callbacks('PSConfigMat-SP', list(self._psconfig_mat.ravel()))
         if not psc:
             self.run_callbacks(
-                'PSConfigMat-RB', list(self._psconfig_mat.ravel()))
+                'PSConfigMat-RB', list(self._psconfig_mat.ravel())
+            )
         self._update_log('Started.')
         self._init = True
 
