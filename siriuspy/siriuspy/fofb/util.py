@@ -4,7 +4,7 @@ from ..devices import FamFOFBControllers as _FamFOFBCtrls, \
         FamFastCorrs as _FamFastCorrs
 
 
-def set_default_psconfig_mat(option=None):
+def get_default_psconfig_mat(option=None):
     """Set corrector accumulator filter.
 
     Args:
@@ -27,6 +27,7 @@ def set_default_psconfig_mat(option=None):
     unit = _const.FILTER_UNIT
     sw2 = _const.FILTER_SW_2
     sw4 = _const.FILTER_SW_4
+    unit_gain = _np.ones(_const.nr_chcv, dtype=float)
 
     if option == 'Unit' or option is None:
         _acc_filter_coeffs = num_biquads * unit
@@ -39,15 +40,15 @@ def set_default_psconfig_mat(option=None):
 
     _corr_currloop_kp = _corrs_dev.currloop_kp
     _corr_currloop_ti = _corrs_dev.currloop_ti
-    _corr_accfilter_gain = _corrs_dev.fofbacc_filter_gain
 
     mat = _np.zeros(
-        (_const.nr_chcv, _const.psconfig_nr_coeffs_columns + 3),
+        (_const.nr_chcv, _const.psconfig_nr_coeffs_columns +
+         _const.PSCONFIG_COEFF_FIRST_COL),
         dtype=float
     )
     mat[:, _const.PSCONFIG_KP_COL] = _corr_currloop_kp
     mat[:, _const.PSCONFIG_TI_COL] = _corr_currloop_ti
-    mat[:, _const.PSCONFIG_FILTER_GAIN_COL] = _corr_accfilter_gain
+    mat[:, _const.PSCONFIG_FILTER_GAIN_COL] = unit_gain
     mat[:, _const.PSCONFIG_COEFF_FIRST_COL:] = _acc_filter_coeffs
 
     return mat
