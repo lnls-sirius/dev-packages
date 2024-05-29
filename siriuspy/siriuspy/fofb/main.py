@@ -74,14 +74,18 @@ class App(_Callback):
         self._corr_accdec_enm = self._const.DecOpt.FOFB
         self._corr_accfilter_val = _np.zeros(
             (self._const.nr_chcv, self._const.psconfig_nr_coeffs_columns),
-            dtype=float)
-        self._corr_accfilter_gain = _np.ones((self._const.nr_chcv),
-                                             dtype=float)
-        self._corr_currloop_kp = _np.ones((self._const.nr_chcv), dtype=float)
-        self._corr_currloop_ti = _np.ones((self._const.nr_chcv), dtype=float)
+            dtype=float
+        )
+        self._corr_accfilter_gain = _np.ones(
+            self._const.nr_chcv,
+            dtype=float
+        )
+        self._corr_currloop_kp = _np.ones(self._const.nr_chcv, dtype=float)
+        self._corr_currloop_ti = _np.ones(self._const.nr_chcv, dtype=float)
         self._psconfig_mat = _np.zeros(
             (self._const.nr_chcv, self._const.psconfig_nr_coeffs_columns + 3),
-            dtype=float)
+            dtype=float
+        )
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
