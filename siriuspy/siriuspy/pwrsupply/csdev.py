@@ -1075,10 +1075,12 @@ def _get_ps_common_propty_database():
             'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
         'WfmGain-SP': {
             'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'prec': 4, 'unit': 'wfmgain',
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
             'hilim': 1000, 'high': 1000, 'hihi': 1000},
         'WfmGain-RB': {
             'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'prec': 4, 'unit': 'wfmgain',
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
             'hilim': 1000, 'high': 1000, 'hihi': 1000},
         'WfmOffset-SP': {
