@@ -290,10 +290,10 @@ class HLFOFBConst(_csdev.Const):
             # filter configuration
             'PSConfigMat-SP': {
                 'type': 'float', 'value': _np.zeros(self.psconfig_size),
-                'prec': 5, 'count': self.psconfig_size, 'unit': 'coef'},
+                'prec': 5, 'count': self.psconfig_size, 'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
             'PSConfigMat-RB': {
                 'type': 'float', 'value': _np.zeros(self.psconfig_size),
-                'prec': 5, 'count': self.psconfig_size, 'unit': 'coef'},
+                'prec': 5, 'count': self.psconfig_size, 'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
