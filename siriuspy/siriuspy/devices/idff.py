@@ -122,6 +122,24 @@ class IDFF(_DeviceSet):
         else:
             raise ValueError('Could not load configuration.')
 
+    def read_setpoints(self, corrdevs=None):
+        """Return corrector SP values."""
+        if corrdevs is None:
+            corrdevs = self._devsch + self._devscv + self._devsqs
+        chs = _IDSearch.conv_idname_2_idff_chnames(self.devname, True)
+        cvs = _IDSearch.conv_idname_2_idff_cvnames(self.devname, True)
+        qss = _IDSearch.conv_idname_2_idff_qsnames(self.devname, True)
+        corrs = chs + cvs + qss
+        setpoints = dict()
+        for pvname in corrs:
+            # find corrdev corresponding to pvname
+            for dev in corrdevs:
+                if dev.devname in pvname:
+                    spvname = _SiriusPVName(pvname)
+                    # propty = spvname.propty.replace('-SP', '-RB')
+                    setpoints[pvname] = dev[spvname.propty]
+        return setpoints
+
     def calculate_setpoints(
             self, pparameter_value=None, kparameter_value=None):
         """Return correctors setpoints for a particular ID config.

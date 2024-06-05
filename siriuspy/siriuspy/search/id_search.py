@@ -271,19 +271,22 @@ class IDSearch:
             return None
 
     @staticmethod
-    def conv_idname_2_idff_chnames(idname):
+    def conv_idname_2_idff_chnames(idname, propty=False):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('ch1', 'ch2'))
+        return IDSearch._get_devname_from_idff(
+            idname, ('ch1', 'ch2'), propty=propty)
 
     @staticmethod
-    def conv_idname_2_idff_cvnames(idname):
+    def conv_idname_2_idff_cvnames(idname, propty=False):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
+        return IDSearch._get_devname_from_idff(
+            idname, ('cv1', 'cv2'), propty=propty)
 
     @staticmethod
-    def conv_idname_2_idff_qsnames(idname):
+    def conv_idname_2_idff_qsnames(idname, propty=False):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
+        return IDSearch._get_devname_from_idff(
+            idname, ('qs1', 'qs2'), propty=propty)
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
@@ -339,11 +342,15 @@ class IDSearch:
     # --- private ----
 
     @staticmethod
-    def _get_devname_from_idff(idname, correctors):
+    def _get_devname_from_idff(idname, correctors, propty):
         idff = IDSearch.conv_idname_2_idff(idname)
         corrs = list()
         for corr in correctors:
             if corr in idff:
-                pvname = _SiriusPVName(idff[corr])
-                corrs.append(pvname.device_name)
+                pvname = idff[corr]
+                if propty:
+                    corrs.append(pvname)
+                else:
+                    pvname = _SiriusPVName(pvname)
+                    corrs.append(pvname.device_name)
         return corrs
