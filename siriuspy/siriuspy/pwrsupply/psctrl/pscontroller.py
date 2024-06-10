@@ -19,6 +19,7 @@ class PSController:
         'WfmOffsetKick-SP', 'WfmOffsetKick-RB',
         'WfmOffsetKL-SP', 'WfmOffsetKL-RB',
         'WfmOffsetSL-SP', 'WfmOffsetSL-RB',
+        'WfmOffsetEnergy-SP', 'WfmOffsetEnergy-RB',
         }
 
     def __init__(self, readers, writers,
