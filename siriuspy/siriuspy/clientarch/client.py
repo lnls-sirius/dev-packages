@@ -35,6 +35,7 @@ class ClientArchiver:
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._ret = None
+        self._request_url = None
         # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
@@ -79,6 +80,11 @@ class ClientArchiver:
         """
         self.logout()
         self._url = url
+
+    @property
+    def last_requested_url(self):
+        """."""
+        return self._request_url
 
     def login(self, username, password):
         """Open login session."""
@@ -286,10 +292,21 @@ class ClientArchiver:
         resp = self._make_request(url, return_json=True)
         return None if not resp else resp
 
+    def switch_to_online_data(self):
+        """."""
+        self.server_url = _envars.SRVURL_ARCHIVER
+        self.session = None
+
+    def switch_to_offline_data(self):
+        """."""
+        self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+        self.session = None
+
     # ---------- auxiliary methods ----------
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
+        self._request_url = url
         response = self._run_async_event_loop(
             self._handle_request,
             url, return_json=return_json, need_login=need_login)
@@ -309,6 +326,7 @@ class ClientArchiver:
         return url
 
     # ---------- async methods ----------
+
     def _run_async_event_loop(self, *args, **kwargs):
         # NOTE: Run the asyncio commands in a separated Thread to isolate
         # their EventLoop from the external environment (important for class
