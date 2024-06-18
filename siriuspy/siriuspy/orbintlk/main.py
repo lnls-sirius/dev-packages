@@ -75,7 +75,7 @@ class App(_Callback):
         # # EVG
         self._evg_dev = _EVG(props2init=[
             'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
-            'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts',
+            'IntlkCtrlRst-Cmd',
             'IntlkCtrlRepeat-Sel', 'IntlkCtrlRepeat-Sts',
             'IntlkCtrlRepeatTime-SP', 'IntlkCtrlRepeatTime-RB',
             'IntlkTbl0to15-Sel', 'IntlkTbl0to15-Sts',
@@ -776,7 +776,7 @@ class App(_Callback):
 
         # if it is a global reset, reset EVG
         if state == 'all':
-            self._evg_dev['IntlkCtrlRst-Sel'] = 1
+            self._evg_dev['IntlkCtrlRst-Cmd'] = 1
             self._update_log('Sent reset EVG interlock flag.')
 
         return True

@@ -82,12 +82,12 @@ class Const(_csdev.Const):
             ('WidthRaw-SP', 6))),
         ('SI-13C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
-            ('State-Sel', 1),
+            ('State-Sel', 0),
             ('Polarity-Sel', 0),
             ('Log-Sel', 1))),
         ('SI-14C4:TI-DCCT-PsMtm', (
             ('Src-Sel', 0),
-            ('State-Sel', 1),
+            ('State-Sel', 0),
             ('Polarity-Sel', 0),
             ('Log-Sel', 1))),
     ]
