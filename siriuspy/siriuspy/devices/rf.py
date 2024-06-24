@@ -587,6 +587,8 @@ class ASLLRF(_Device):
         'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
         'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
+        'mV:RAMP:AMP:BOT-SP', 'mV:RAMP:AMP:BOT-RB',
+        'mV:RAMP:AMP:TOP-SP', 'mV:RAMP:AMP:TOP-RB',
         'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
         'FF:ON', 'FF', 'FF:S', 'FF:POS', 'FF:POS:S',
         'FF:GAIN:CELL2', 'FF:GAIN:CELL2:S', 'FF:GAIN:CELL4', 'FF:GAIN:CELL4:S',
@@ -663,6 +665,24 @@ class ASLLRF(_Device):
     @phase_bottom.setter
     def phase_bottom(self, value):
         self['RmpPhsBot-SP'] = self._wrap_phase(value)
+
+    @property
+    def voltage_top(self):
+        """."""
+        return self['mV:RAMP:AMP:TOP-RB']
+
+    @voltage_top.setter
+    def voltage_top(self, value):
+        self['mV:RAMP:AMP:TOP-SP'] = value
+
+    @property
+    def voltage_bottom(self):
+        """."""
+        return self['mV:RAMP:AMP:BOT-RB']
+
+    @voltage_bottom.setter
+    def voltage_bottom(self, value):
+        self['mV:RAMP:AMP:BOT-SP'] = value
 
     @property
     def phase_mon(self):
