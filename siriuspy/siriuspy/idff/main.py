@@ -5,8 +5,7 @@ import logging as _log
 import time as _time
 
 import epics as _epics
-import numpy as _np
-
+from ..search import IDSearch as _IDSearch
 from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
 from ..clientconfigdb import ConfigDBException as _ConfigDBException
@@ -30,7 +29,7 @@ class App(_Callback):
         self._loop_state = _Const.DEFAULT_LOOP_STATE
         self._loop_freq = _Const.DEFAULT_LOOP_FREQ
         self._control_qs = _Const.DEFAULT_CONTROL_QS
-        self._polarization = 'none'
+        self._polarization = self._const.pol_sts.index(_IDSearch.POL_UNDEF_STR)
         self._config_name = ''
         self.read_autosave_file()
 
@@ -291,9 +290,16 @@ class App(_Callback):
 
     def _do_update_polarization(self):
         new_pol, *_ = self._idff.get_polarization_state()
-        if new_pol is not None and new_pol != self._polarization:
-            self._polarization = new_pol
-            self.run_callbacks('Polarization-Mon', new_pol)
+        if new_pol is None:
+            self._update_log('ERR: new polarization is None')
+            return
+        try:
+            new_pol_idx = self._const.pol_sts.index(new_pol)
+        except ValueError:
+            self._update_log('ERR: could not find index of polarization')
+        if new_pol_idx != self._polarization:
+            self._polarization = new_pol_idx
+            self.run_callbacks('Polarization-Mon', new_pol_idx)
 
     def _do_update_correctors(self):
         try:
@@ -306,7 +312,7 @@ class App(_Callback):
             # print('setpoints: ', setpoints)
             # print()
         except ValueError as err:
-            self._update_log('ERR:'+str(err))
+            self._update_log('ERR: ' + str(err))
 
     def _do_implement_correctors(self):
         corrdevs = None

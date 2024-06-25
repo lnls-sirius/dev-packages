@@ -96,7 +96,7 @@ class IDFFConfig(_ConfigDBDocument):
         if self._value:
             setpoints = dict()
             idff = self._value['polarizations'][polarization]
-            if polarization == 'none':
+            if polarization == _IDSearch.POL_NONE_STR:
                 params = idff['pparameter']
                 param_value = pparameter_value
             else:
@@ -248,7 +248,8 @@ class IDFFConfig(_ConfigDBDocument):
                     'List of corrlabels in config is not consistent')
 
             # check nrpts in tables
-            param = 'pparameter' if polarization == 'none' else 'kparameter'
+            pol_none = _IDSearch.POL_NONE_STR
+            param = 'pparameter' if polarization == pol_none else 'kparameter'
             nrpts_corrtables = {len(table) for table in corrtable.values()}
             nrpts_kparameter = set([len(table[param]), ])
             symm_diff = nrpts_corrtables ^ nrpts_kparameter

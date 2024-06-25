@@ -47,6 +47,7 @@ class IDFFConst(_csdev.Const):
         fname = fname.lower()
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
+        self.pol_sts = _IDSearch.conv_idname_2_polarizations_sts(self.idname)
         self.has_qscorrs = True if qsnames else False
 
     def get_propty_database(self):
@@ -70,7 +71,9 @@ class IDFFConst(_csdev.Const):
                 'unit': 'Hz', 'prec': 3,
                 'lolim': self.DEFAULT_LOOP_FREQ_MIN,
                 'hilim': self.DEFAULT_LOOP_FREQ_MAX},
-            'Polarization-Mon': {'type': 'string', 'value': 'none'},
+            'Polarization-Mon': {
+                'type': 'enum', 'enums': self.pols_sts,
+                'value': self.pols_sts.index(_IDSearch.POL_UNDEF_STR)},
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
