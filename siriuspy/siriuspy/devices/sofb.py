@@ -539,6 +539,11 @@ class BOSOFB(TLSOFB):
         'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
         'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
         'MTurnTime-Mon',
+        'MTurnDownSample-SP', 'MTurnDownSample-RB',
+        'MTurnIdx-SP', 'MTurnIdx-RB', 'MTurnIdxTime-Mon',
+        'MTurnUseMask-Sel', 'MTurnUseMask-Sts',
+        'MTurnMaskSplBeg-SP', 'MTurnMaskSplBeg-RB',
+        'MTurnMaskSplEnd-SP', 'MTurnMaskSplEnd-RB',
         )
 
     @property
@@ -575,6 +580,61 @@ class BOSOFB(TLSOFB):
     def mt_sum_idx(self):
         """."""
         return self['MTurnIdxSum-Mon']
+
+    @property
+    def mt_downsampling(self):
+        """."""
+        return self['MTurnDownSample-RB']
+
+    @mt_downsampling.setter
+    def mt_downsampling(self, value):
+        """."""
+        self['MTurnDownSample-SP'] = int(value)
+
+    @property
+    def mt_idx(self):
+        """."""
+        return self['MTurnIdx-RB']
+
+    @mt_idx.setter
+    def mt_idx(self, value):
+        """."""
+        self['MTurnIdx-SP'] = int(value)
+
+    @property
+    def mt_idx_time(self):
+        """."""
+        return self['MTurnIdxTime-Mon']
+
+    @property
+    def mt_use_tbt_mask(self):
+        """."""
+        return bool(self['MTurnUseMask-Sts'])
+
+    @mt_use_tbt_mask.setter
+    def mt_use_tbt_mask(self, value):
+        """."""
+        self['MTurnUseMask-Sel'] = value
+
+    @property
+    def mt_tbt_mask_begin(self):
+        """."""
+        return self['MTurnMaskSplBeg-RB']
+
+    @mt_tbt_mask_begin.setter
+    def mt_tbt_mask_begin(self, value):
+        """."""
+        self['MTurnMaskSplBeg-SP'] = int(value)
+
+    @property
+    def mt_tbt_mask_end(self):
+        """."""
+        return self['MTurnMaskSplEnd-RB']
+
+    @mt_tbt_mask_end.setter
+    def mt_tbt_mask_end(self, value):
+        """."""
+        self['MTurnMaskSplEnd-SP'] = int(value)
 
     @property
     def trajx(self):
