@@ -6,10 +6,7 @@
 Welcome to siriuspy's documentation!
 ====================================
 
-.. automodule:: siriuspy
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Siriuspy is a package with the Sirius control system classes and utility functions used in HLA and IOC applications.
 
 .. toctree::
    :maxdepth: 2
