@@ -1286,6 +1286,7 @@ class HLFOFB(_Device):
         'FOFBAccFilter-Sel', 'FOFBAccFilter-Sts',
         'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
         'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
+        'PSConfigMat-SP', 'PSConfigMat-RB',
         'KickCHAcc-Mon', 'KickCVAcc-Mon',
         'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -1574,6 +1575,15 @@ class HLFOFB(_Device):
     @fofbacc_filter_gain.setter
     def fofbacc_filter_gain(self, value):
         self['FOFBAccFilterGain-SP'] = value
+
+    @property
+    def psconfig_matrix(self):
+        """Power Supply Configuration matrix."""
+        return self['PSConfigMat-RB']
+
+    @psconfig_matrix.setter
+    def psconfig_matrix(self, value):
+        self['PSConfigMat-SP'] = value
 
     @property
     def kickch_acc(self):
