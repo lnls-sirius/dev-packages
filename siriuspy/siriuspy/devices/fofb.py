@@ -1283,9 +1283,6 @@ class HLFOFB(_Device):
         'CtrlrReset-Cmd',
         'FOFBAccDecimation-Sel', 'FOFBAccDecimation-Sts',
         'FOFBAccDecimation-SP',  'FOFBAccDecimation-RB',
-        'FOFBAccFilter-Sel', 'FOFBAccFilter-Sts',
-        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
-        'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
         'PSConfigMat-SP', 'PSConfigMat-RB',
         'KickCHAcc-Mon', 'KickCVAcc-Mon',
         'KickCHRef-Mon', 'KickCVRef-Mon',
@@ -1548,33 +1545,6 @@ class HLFOFB(_Device):
     @fofbacc_decimation_value.setter
     def fofbacc_decimation_value(self, value):
         self['FOFBAccDecimation-SP'] = value
-
-    @property
-    def fofbacc_filter_enumvalue(self):
-        """Accumulator filter enum value."""
-        return self['FOFBAccFilter-Sts']
-
-    @fofbacc_filter_enumvalue.setter
-    def fofbacc_filter_enumvalue(self, value):
-        self['FOFBAccFilter-Sel'] = value
-
-    @property
-    def fofbacc_filter_value(self):
-        """Accumulator filter value."""
-        return self['FOFBAccFilter-RB']
-
-    @fofbacc_filter_value.setter
-    def fofbacc_filter_value(self, value):
-        self['FOFBAccFilter-SP'] = value
-
-    @property
-    def fofbacc_filter_gain(self):
-        """Accumulator filter gain value."""
-        return self['FOFBAccFilterGain-RB']
-
-    @fofbacc_filter_gain.setter
-    def fofbacc_filter_gain(self, value):
-        self['FOFBAccFilterGain-SP'] = value
 
     @property
     def psconfig_mat(self):
