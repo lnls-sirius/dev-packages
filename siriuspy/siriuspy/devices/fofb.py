@@ -1577,12 +1577,12 @@ class HLFOFB(_Device):
         self['FOFBAccFilterGain-SP'] = value
 
     @property
-    def psconfig_matrix(self):
+    def psconfig_mat(self):
         """Power Supply Configuration matrix."""
         return self['PSConfigMat-RB']
 
-    @psconfig_matrix.setter
-    def psconfig_matrix(self, value):
+    @psconfig_mat.setter
+    def psconfig_mat(self, value):
         self['PSConfigMat-SP'] = value
 
     @property
