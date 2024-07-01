@@ -77,7 +77,7 @@ class EpicsOrbit(BaseOrbit):
         self._sofb = sofb
 
     def shutdown(self):
-        """."""
+        """Shutdown threads."""
         self._orbit_thread.resume()
         self._orbit_thread.stop()
         self._orbit_thread.join()
@@ -199,7 +199,7 @@ class EpicsOrbit(BaseOrbit):
             msg = 'ERR: timeout waiting orbit.'
             self._update_log(msg)
             _log.error(msg[5:])
-            orbx, orby = refx, refy
+            orbx, orby = refx.copy(), refy.copy()
         # # for tests:
         # orbx -= _time.time()
         # orby -= _time.time()

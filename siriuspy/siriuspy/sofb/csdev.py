@@ -107,7 +107,6 @@ class ConstSI(ConstRings):
 
     SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
     CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
-    CorrPSSOFBEnbl = _csdev.Const.register('CorrPSSOFBEnbl', _et.DSBL_ENBL)
     DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
     DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
@@ -282,8 +281,20 @@ class SOFBTLines(ConstTLines):
                 'value': 0, 'unit': 'Status of Kicks implementation.'},
             'Status-Mon': {
                 'type': 'enum', 'value': 1,
-                'enums': self.StsLblsGlob._fields}
-            }
+                'enums': self.StsLblsGlob._fields},
+            'RefKickCH-Mon': {
+                'type': 'float',
+                'count': self.nr_ch,
+                'value': self.nr_ch*[0],
+                'unit': 'urad'
+            },
+            'RefKickCV-Mon': {
+                'type': 'float',
+                'count': self.nr_cv,
+                'value': self.nr_cv*[0],
+                'unit': 'urad'
+            },
+        }
         return self._add_prefix(dbase, prefix)
 
     def get_corrs_database(self, prefix=''):
@@ -572,7 +583,10 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
             'DeltaKickRF-RB': {
                 'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
-            }
+            'RefKickRF-Mon': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz',
+            },
+        }
         dbase = super().get_sofb_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
@@ -791,18 +805,6 @@ class SOFBSI(SOFBRings, ConstSI):
             'LoopPerfTimGetOStd-Mon': {
                 'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
                 'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKMax-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKMin-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKAvg-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
-            'LoopPerfTimGetKStd-Mon': {
-                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
-                'lolim': -1, 'hilim': 100},
             'LoopPerfTimCalcMax-Mon': {
                 'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
                 'lolim': -1, 'hilim': 100},
@@ -859,15 +861,6 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um',
                 'lolim': 0, 'hilim': 10000},
-            'CorrPSSOFBEnbl-Sel': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbl},
-            'CorrPSSOFBEnbl-Sts': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbl},
-            'CorrPSSOFBEnbl-Mon': {
-                'type': 'enum', 'enums': self.CorrPSSOFBEnbl._fields,
-                'value': self.CorrPSSOFBEnbl.Dsbl},
             'FOFBDownloadKicksPerc-SP': {
                 'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
                 'lolim': 0.0, 'hilim': 100.1},
@@ -883,6 +876,21 @@ class SOFBSI(SOFBRings, ConstSI):
             'FOFBDownloadKicks-Mon': {
                 'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
+            'FOFBDownloadKicksCH-Mon': {
+                'type': 'float',
+                'count': self.nr_ch,
+                'value': self.nr_ch*[0],
+                'unit': 'urad'
+            },
+            'FOFBDownloadKicksCV-Mon': {
+                'type': 'float',
+                'count': self.nr_cv,
+                'value': self.nr_cv*[0],
+                'unit': 'urad'
+            },
+            'FOFBDownloadKicksRF-Mon': {
+                'type': 'float', 'value': 0, 'prec': 3, 'unit': 'Hz',
+            },
             'FOFBUpdateRefOrbPerc-SP': {
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
                 'lolim': -100.1, 'hilim': 100.1},
@@ -898,6 +906,18 @@ class SOFBSI(SOFBRings, ConstSI):
             'FOFBUpdateRefOrb-Mon': {
                 'type': 'enum', 'value': self.DsblEnbl.Dsbl,
                 'enums': self.DsblEnbl._fields},
+            'FOFBDeltaRefOrbX-Mon': {
+                'type': 'float',
+                'unit': 'um',
+                'count': self.nr_bpms,
+                'value': self.nr_bpms*[0],
+            },
+            'FOFBDeltaRefOrbY-Mon': {
+                'type': 'float',
+                'unit': 'um',
+                'count': self.nr_bpms,
+                'value': self.nr_bpms*[0],
+            },
             'FOFBNullSpaceProj-Sel': {
                 'type': 'enum', 'value': self.DsblEnbl.Dsbl,
                 'enums': self.DsblEnbl._fields},

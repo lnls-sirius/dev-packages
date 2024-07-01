@@ -33,7 +33,6 @@ class SOFB(_BaseClass):
         self._loop_state = self._csorb.LoopState.Open
         self._loop_freq = self._csorb.BPMsFreq
         self._loop_print_every_num_iter = 200
-        self._loop_use_pssofb = False
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
@@ -120,7 +119,6 @@ class SOFB(_BaseClass):
                 self.set_delta_kick, self._csorb.ApplyDelta.RF)
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
         if self.acc == 'SI':
-            dbase['CorrPSSOFBEnbl-Sel'] = self.set_use_pssofb
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
@@ -213,25 +211,6 @@ class SOFB(_BaseClass):
             _sleep(dtime)
         else:
             _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
-
-    def set_use_pssofb(self, val):
-        """Set whether or not closed loop will use PSSOFB.
-
-        Args:
-            val (bool): desired state.
-
-        Returns:
-            bool: Whether setting was successful.
-
-        """
-        if self._thread and self._thread.is_alive():
-            msg = 'ERR: Performing some task. Cannot change PSSOFB state!'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
-        self._loop_use_pssofb = bool(val)
-        self.run_callbacks('CorrPSSOFBEnbl-Sts', val)
-        return True
 
     def set_print_every_num_iters(self, value: float) -> bool:
         """Define number of iterations between loop statistics calculation.
@@ -560,7 +539,7 @@ class SOFB(_BaseClass):
     def _set_delta_kick(self, code, dkicks):
         nr_ch = self._csorb.nr_ch
         nr_chcv = self._csorb.nr_chcv
-        self._ref_corr_kicks = self.correctors.get_strength()
+        self._update_ref_corr_kicks(self.correctors.get_strength())
         if self._dtheta is None:
             self._dtheta = _np.zeros(self._ref_corr_kicks.size, dtype=float)
         if code == self._csorb.ApplyDelta.CH:
@@ -823,30 +802,22 @@ class SOFB(_BaseClass):
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+        self._update_ref_corr_kicks(self.correctors.get_strength())
         fofb = self.fofb
         refx0 = refy0 = None
         if fofb.connected:
             refx0 = fofb.refx
             refy0 = fofb.refy
 
-        if self._loop_use_pssofb:
-            msg = 'Turning on PSSOFB...'
+        if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+            msg = 'Setting Trigger to listen to EVG Clock...'
             self._update_log(msg)
             _log.info(msg)
-            self.correctors.use_pssofb = True
-            msg = 'PSSOFB ready!'
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
+            msg = 'Trigger ready!'
             self._update_log(msg)
             _log.info(msg)
-
-            if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
-                msg = 'Setting Trigger to listen to EVG Clock...'
-                self._update_log(msg)
-                _log.info(msg)
-                self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
-                self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
-                msg = 'Trigger ready!'
-                self._update_log(msg)
-                _log.info(msg)
 
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
@@ -874,15 +845,7 @@ class SOFB(_BaseClass):
                 tim0 = _time()
 
             interval = 1/self._loop_freq
-            use_pssofb = self.correctors.use_pssofb
-            norbs = 1
-            if use_pssofb:
-                norbs = max(int(bpmsfreq*interval), 1)
-            elif tims:
-                # if not pssofb wait for interval to be satisfied
-                dtime = tims[0] - tims[-1]
-                dtime += interval
-                _sleep(max(dtime, 0))
+            norbs = max(int(bpmsfreq*interval), 1)
 
             tims = []
             tims.append(_time())
@@ -901,12 +864,7 @@ class SOFB(_BaseClass):
                 orb *= 2 * 3  # Maximum orbit distortion of 3 um
 
             tims.append(_time())
-
-            self._ref_corr_kicks = self.correctors.get_strength()
-            tims.append(_time())
-
             orb = self._interact_with_fofb_in_calc_kicks(orb)
-
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
@@ -927,6 +885,7 @@ class SOFB(_BaseClass):
             tims.append(_time())
 
             ret = self.correctors.apply_kicks(kicks)
+            self._update_ref_corr_kicks(kicks)
             rets.append(ret)
             tims.append(_time())
             tims.append(tims[1])  # to compute total time - get_orbit
@@ -939,24 +898,15 @@ class SOFB(_BaseClass):
                 # skip this iteration
                 continue
 
-        if self._loop_use_pssofb:
-            msg = 'Turning off PSSOFB...'
+        if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+            msg = 'Setting Trigger to listen to Event...'
             self._update_log(msg)
             _log.info(msg)
-            self.correctors.use_pssofb = False
-            msg = 'PSSOFB is off!'
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Event)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.Event)
+            msg = 'Trigger ready!'
             self._update_log(msg)
             _log.info(msg)
-
-            if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
-                msg = 'Setting Trigger to listen to Event...'
-                self._update_log(msg)
-                _log.info(msg)
-                self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Event)
-                self.correctors.set_corrs_mode(self._csorb.CorrSync.Event)
-                msg = 'Trigger ready!'
-                self._update_log(msg)
-                _log.info(msg)
 
         if self._loop_state == self._csorb.LoopState.Closed:
             self._loop_state = self._csorb.LoopState.Open
@@ -966,6 +916,21 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         self.run_callbacks('LoopState-Sts', self._csorb.LoopState.Open)
+
+    def _update_ref_corr_kicks(self, kicks):
+        notnan = ~_np.isnan(kicks)
+        self._ref_corr_kicks[notnan] = kicks[notnan]
+        self._LQTHREAD.put(
+            self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), )
+        )
+
+    def _update_ref_corr_kicks_pvs(self, kicks):
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
+        self.run_callbacks('RefKickCH-Mon', kicks[:nr_ch])
+        self.run_callbacks('RefKickCV-Mon', kicks[nr_ch:nr_chcv])
+        if self.isring:
+            self.run_callbacks('RefKickRF-Mon', kicks[-1])
 
     def _process_pid(self, dkicks, interval):
         """Velocity algorithm of PID."""
@@ -1015,7 +980,6 @@ class SOFB(_BaseClass):
         tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
         diff = _np.sum(bo_diff) / rets.size * 100
-        _log.info('PERFORMANCE:')
         self.run_callbacks('LoopPerfItersOk-Mon', ok_)
         self.run_callbacks('LoopPerfItersTOut-Mon', tout)
         self.run_callbacks('LoopPerfItersDiff-Mon', diff)
@@ -1035,7 +999,7 @@ class SOFB(_BaseClass):
         min_ = dtimes.min(axis=1)
         avg_ = dtimes.mean(axis=1)
         std_ = dtimes.std(axis=1)
-        labs = ['GetO', 'GetK', 'Calc', 'Proc', 'App', 'Tot']
+        labs = ['GetO', 'Calc', 'Proc', 'App', 'Tot']
         for i, lab in enumerate(labs):
             self.run_callbacks(f'LoopPerfTim{lab:s}Max-Mon', max_[i])
             self.run_callbacks(f'LoopPerfTim{lab:s}Min-Mon', min_[i])
@@ -1080,10 +1044,11 @@ class SOFB(_BaseClass):
             orb -= _np.dot(fofb.respmat, _np.dot(imat_fofb, orb))
         return orb
 
-    def _interact_with_fofb_in_apply_kicks(
-            self, kicks, dkicks, refx=None, refy=None):
+    # def _interact_with_fofb_in_apply_kicks(
+    #     self, kicks, dkicks, refx=None, refy=None
+    # ):
+    def _interact_with_fofb_in_apply_kicks(self, kicks, dkicks):
         fofb = self.fofb
-
         # if refx is None or refy is None:
         #     refx = fofb.refx
         #     refy = fofb.refy
@@ -1102,6 +1067,7 @@ class SOFB(_BaseClass):
             # fofb.refx = refx - dorb[:dorb.size//2]
             # fofb.refy = refy - dorb[dorb.size//2:]
             fofb.cmd_fofbctrl_syncreforb()
+            self._LQTHREAD.put(self. _update_fofb_dorb, (dorb, ))
 
         if self._download_fofb_kicks and fofb.loop_state:
             # NOTE: Do not download kicks from correctors not in the loop:
@@ -1115,12 +1081,28 @@ class SOFB(_BaseClass):
             # NOTE: calc_kicks return the kicks to correct dorb, which means
             # that a minus sign is already applied by this method. To negate
             # this correction, we need an extra minus sign here:
-            dkicks2 = self.matrix.calc_kicks(dorb)
+            dkicks2 = self.matrix.calc_kicks(dorb, update_dkicks=False)
             dkicks2 *= -self._download_fofb_kicks_perc
 
+            self._LQTHREAD.put(
+                self._update_fofb_download_kicks, (dkicks2.copy())
+            )
             kicks, dkicks2 = self._process_kicks(
-                self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False)
+                self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False
+            )
         return kicks
+
+    def _update_fofb_download_kicks(self, kicks):
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
+        self.run_callbacks('FOFBDownloadKicksCH-Mon', kicks[:nr_ch])
+        self.run_callbacks('FOFBDownloadKicksCV-Mon', kicks[nr_ch:nr_chcv])
+        self.run_callbacks('FOFBDownloadKicksRF-Mon', kicks[-1])
+
+    def _update_fofb_dorb(self, dorb):
+        nr_bpms = self._csorb.nr_bpms
+        self.run_callbacks('FOFBDeltaRefOrbX-Mon', dorb[:nr_bpms])
+        self.run_callbacks('FOFBDeltaRefOrbY-Mon', dorb[nr_bpms:])
 
     def _calc_correction(self):
         msg = 'Getting the orbit.'
@@ -1134,7 +1116,7 @@ class SOFB(_BaseClass):
         msg = 'Calculating kicks.'
         self._update_log(msg)
         _log.info(msg)
-        self._ref_corr_kicks = self.correctors.get_strength()
+        self._update_ref_corr_kicks(self.correctors.get_strength())
         dkicks = self.matrix.calc_kicks(orb)
         if dkicks is not None:
             self._dtheta = dkicks
