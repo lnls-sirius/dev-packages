@@ -14,7 +14,6 @@ from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
 from ..namesys import SiriusPVName as _PVName
-from ..magnet.factory import NormalizerFactory as _NormFac
 
 from .base_class import BaseClass as _BaseClass, \
     BaseTimingConfig as _BaseTimingConfig, compare_kicks as _compare_kicks
@@ -163,12 +162,11 @@ class CHCV(Corrector):
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
         self._ref = _PV(pvref, **opt)
-        self._norm = _NormFac.create(self._name.substitute(dis='MA'))
 
         pvoffwfmsp = self._name.substitute(
-            prefix=LL_PREF, propty_name='WfmOffset', propty_suffix='SP')
+            prefix=LL_PREF, propty_name='WfmOffsetKick', propty_suffix='SP')
         pvoffwfmrb = self._name.substitute(
-            prefix=LL_PREF, propty_name='WfmOffset', propty_suffix='RB')
+            prefix=LL_PREF, propty_name='WfmOffsetKick', propty_suffix='RB')
         self._wfm_offset_sp = _PV(pvoffwfmsp)
         self._wfm_offset_rb = _PV(pvoffwfmrb)
         self._config_ok_vals = {
@@ -234,27 +232,21 @@ class CHCV(Corrector):
     @value.setter
     def value(self, val):
         """."""
-        self._sp.put(val, wait=False)
         if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
             self.wfm_offset_kick = val
+        else:
+            self._sp.put(val, wait=False)
 
     @property
     def wfm_offset_kick(self):
         """."""
-        if not self._ref.connected:
+        if not self._wfm_offset_rb.connected:
             return None
-        return self._norm.conv_current_2_strength(
-            self._wfm_offset_rb.value,
-            strengths_dipole=self.DIP_STRENGTH
-        )
+        return self._wfm_offset_rb.value
 
     @wfm_offset_kick.setter
     def wfm_offset_kick(self, val):
         """."""
-        val = self._norm.conv_strength_2_current(
-            val,
-            strengths_dipole=self.DIP_STRENGTH
-        )
         self._wfm_offset_sp.put(val, wait=False)
 
     @property
