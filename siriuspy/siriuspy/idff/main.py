@@ -3,8 +3,10 @@
 import os as _os
 import logging as _log
 import time as _time
+from copy import deepcopy as _dcopy
 
 import epics as _epics
+
 import numpy as _np
 
 from ..util import update_bit as _updt_bit
@@ -18,7 +20,9 @@ from .csdev import IDFFConst as _Const, ETypes as _ETypes
 class App(_Callback):
     """Main application for handling IDFF."""
 
+    DEF_CORR_RAMP_NRPTS = 20
     DEF_PS_TIMEOUT = 5  # [s]
+    DEF_MAX_DCURR = 0.1  # [A]
 
     def __init__(self, idname):
         """Class constructor."""
@@ -32,6 +36,7 @@ class App(_Callback):
         self._control_qs = _Const.DEFAULT_CONTROL_QS
         self._polarization = 'none'
         self._config_name = ''
+        self._corr_ramp_status = _Const.DEFAULT_CORR_RAMP_STATUS
         self.read_autosave_file()
 
         # IDFF object with IDFF config
@@ -46,7 +51,8 @@ class App(_Callback):
             'LoopFreq-SP': self.set_loop_freq,
             'ControlQS-Sel': self.set_control_qs,
             'ConfigName-SP': self.set_config_name,
-            'CorrConfig-Cmd': self.cmd_corrconfig,
+            'CorrConfig-Cmd': self.cmd_corr_config,
+            'CorrRamp-Cmd': self.cmd_corr_ramp,
         }
 
         self._quit = False
@@ -161,7 +167,7 @@ class App(_Callback):
         self.run_callbacks('ConfigName-RB', value)
         return True
 
-    def cmd_corrconfig(self, _):
+    def cmd_corr_config(self, _):
         """Command to reconfigure power supplies to desired state."""
         if self._loop_state == self._const.LoopState.Closed:
             self._update_log('ERR:Open loop before configure correctors.')
@@ -177,6 +183,60 @@ class App(_Callback):
                 return False
 
         return True
+
+    def cmd_corr_ramp(self, _):
+        """Command to implement power supplies current ramp."""
+        # initial checks
+        ramp_on_status = _ETypes.CORR_RAMP_STATUS.index('On')
+        ramp_off_status = _ETypes.CORR_RAMP_STATUS.index('Off')
+        if self._loop_state or self._corr_ramp_status == ramp_on_status:
+            # return if FF loop is closed ot corr ramp is being executed
+            return True
+        else:
+            self._corr_ramp_status = ramp_on_status
+            self.run_callbacks(
+                self.pvs_prefix + ':CorrRampStatus-Mon', ramp_on_status)
+
+        # update polarization state
+        self._do_update_polarization()
+
+        # correctors value calculation
+        self._do_update_correctors()
+        corr_setpoints_init = _dcopy(self._corr_setpoints)
+        if not corr_setpoints_init:
+            self._corr_ramp_status = ramp_off_status
+            return False
+
+        # current and calculated setpoints
+        sp_now = self._idff.read_setpoints()
+        sp_cal, *_ = corr_setpoints_init
+
+        # calc nrpts in ramp
+        max_dcurr = 0
+        for pvname, value in sp_now.items():
+            max_dcurr = max(max_dcurr, abs(value - sp_cal[pvname]))
+        nrpts = int(max_dcurr / self.DEF_MAX_DCURR) + 1
+
+        # build ramp
+        ramp = dict()
+        for pvname, value in sp_now.items():
+            rmp = _np.linspace(value, sp_cal[pvname], nrpts)
+            ramp[pvname] = rmp[1:]
+
+        # implement ramp
+        for idx in range(nrpts):
+            # prepare corr setpoints
+            for pvname, value in ramp.items():
+                self._corr_setpoints[0][pvname] = value[idx]
+            # implement setpoints
+            self._do_implement_correctors()
+            # sleep
+            _time.sleep(0.05)
+
+        # finalize
+        self._corr_ramp_status = ramp_off_status
+        self.run_callbacks(
+                self.pvs_prefix + ':CorrRampStatus-Mon', ramp_off_status)
 
     @property
     def quit(self):
