@@ -149,8 +149,6 @@ class RFCtrl(Corrector):
 class CHCV(Corrector):
     """CHCV class."""
 
-    DIP_STRENGTH = 2.98971  # [GeV] (from archiver)
-
     def __init__(self, corr_name):
         """Init method."""
         super().__init__(corr_name)
