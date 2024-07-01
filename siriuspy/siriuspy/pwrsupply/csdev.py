@@ -21,6 +21,10 @@ DEFAULT_WFM_FBP = _np.zeros(DEF_WFMSIZE_FBP, dtype=float)
 MAX_WFMSIZE_OTHERS = 4096
 DEF_WFMSIZE_OTHERS = 3920
 DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
+DEFAULT_WFM_SELECTED = 0
+DEFAULT_WFM_FREQUENCY = 2000.0  # [Hz]
+DEFAULT_WFM_GAIN = 1.0
+DEFAULT_WFM_OFFSET = 0.0  # [A/V]
 
 DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
 
@@ -1050,6 +1054,42 @@ def _get_ps_common_propty_database():
         'IntlkSoft-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'IntlkHard-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
         'Reset-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        # Wfm
+        'WfmSelected-Mon': {
+            'type': 'int', 'value': DEFAULT_WFM_SELECTED ,
+             'unit': 'wfmselected'},
+        'WfmSyncMode-Sel': {
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
+            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmSyncMode-Sts': {
+            'type': 'enum', 'enums': _et.WFMREF_SYNCMODE,
+            'value': _ConstPSBSMP.E_WFMREFSYNC_ONESHOT},
+        'WfmFreq-SP': {
+            'type': 'float',
+            'value': DEFAULT_WFM_FREQUENCY, 'prec': 4, 'unit': 'Hz',
+            'lolo': 1, 'low': 1, 'lolim': 1,
+            'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
+        'WfmFreq-RB': {
+            'type': 'float',
+            'value': DEFAULT_WFM_FREQUENCY, 'prec': 4, 'unit': 'Hz',
+            'lolo': 1, 'low': 1, 'lolim': 1,
+            'hilim': 1e5, 'high': 1e5, 'hihi': 1e5},
+        'WfmGain-SP': {
+            'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'prec': 4, 'unit': 'wfmgain',
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'WfmGain-RB': {
+            'type': 'float', 'value': DEFAULT_WFM_GAIN,
+            'prec': 4, 'unit': 'wfmgain',
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 1000, 'high': 1000, 'hihi': 1000},
+        'WfmOffset-SP': {
+            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
+            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
+        'WfmOffset-RB': {
+            'type': 'float', 'value': DEFAULT_WFM_OFFSET,
+            'prec': PS_CURRENT_PRECISION, 'unit': 'A'},
         # Scope
         'ScopeSrcAddr-SP': {
             'type': 'int', 'value': 0x0000C000, 'unit': 'scope_srcaddr',
@@ -3001,6 +3041,7 @@ def _set_limits(pstype, database):
         'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
         'CycleAmpl-SP', 'CycleAmpl-RB',
         'CycleOffset-SP', 'CycleOffset-RB',
+        'WfmOffset-SP', 'WfmOffset-RB',
     )
     signals_lims = signals_unit + (
         'Voltage-SP', 'Voltage-RB',
@@ -3110,6 +3151,10 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
         database['KL-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
+        database['WfmOffsetKL-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
+        database['WfmOffsetKL-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
     elif magfunc == 'sextupole':
         database['SL-SP'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
@@ -3118,6 +3163,10 @@ def _insert_strengths(database, pstype):
         database['SLRef-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
         database['SL-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
+        database['WfmOffsetSL-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
+        database['WfmOffsetSL-RB'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
     elif magfunc == 'dipole':
         database['Energy-SP'] = {
@@ -3128,6 +3177,10 @@ def _insert_strengths(database, pstype):
             'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
         database['Energy-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
+        database['WfmOffsetEnergy-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
+        database['WfmOffsetEnergy-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
     elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
         database['Kick-SP'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
@@ -3136,6 +3189,10 @@ def _insert_strengths(database, pstype):
         database['KickRef-Mon'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
         database['Kick-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
+        database['WfmOffsetKick-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
+        database['WfmOffsetKick-RB'] = {
             'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
 
     if pstype.startswith('li-'):
