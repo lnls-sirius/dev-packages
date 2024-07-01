@@ -3,12 +3,11 @@ import logging as _log
 
 import numpy as _np
 
-from ..epics import PV as _PV
-from ..diagbeam.bpm.csdev import Const as _csbpm
-from ..timesys.csdev import Const as _TIConst
-from ..search import HLTimeSearch as _HLTimesearch
+from ..diagbeam.bpm.csdev import Const as _CSBPM
 from ..envars import VACA_PREFIX as LL_PREF
-
+from ..epics import PV as _PV
+from ..search import HLTimeSearch as _HLTimesearch
+from ..timesys.csdev import Const as _TIConst
 from .base_class import BaseTimingConfig as _BaseTimingConfig
 
 TIMEOUT = 0.05
@@ -16,6 +15,7 @@ TIMEOUT = 0.05
 
 class BPM(_BaseTimingConfig):
     """."""
+
     MAX_UPT_CNT = 20  # equivalent of 10s of orbit update after Acq. PV update
 
     def __init__(self, name, callback=None):
@@ -25,135 +25,138 @@ class BPM(_BaseTimingConfig):
 
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
-        pvpref = LL_PREF + ('-' if LL_PREF else '') + self._name + ':'
-        opt = {'connection_timeout': TIMEOUT, 'auto_monitor': False}
-        self._poskx = _PV(pvpref + 'PosKx-RB', **opt)
-        self._posky = _PV(pvpref + 'PosKy-RB', **opt)
-        self._ksum = _PV(pvpref + 'PosKsum-RB', **opt)
-        self._polyx = _PV(pvpref + 'GEN_PolyXArrayCoeff-RB', **opt)
-        self._polyy = _PV(pvpref + 'GEN_PolyYArrayCoeff-RB', **opt)
-        self._arraya = _PV(pvpref + 'GEN_AArrayData', **opt)
-        self._arrayb = _PV(pvpref + 'GEN_BArrayData', **opt)
-        self._arrayc = _PV(pvpref + 'GEN_CArrayData', **opt)
-        self._arrayd = _PV(pvpref + 'GEN_DArrayData', **opt)
-        self._arrayx = _PV(pvpref + 'GEN_XArrayData', **opt)
-        self._arrayy = _PV(pvpref + 'GEN_YArrayData', **opt)
-        self._arrays = _PV(pvpref + 'GEN_SUMArrayData', **opt)
-        opt.pop('auto_monitor')
-        self._offsetx = _PV(pvpref + 'PosXOffset-RB', **opt)
-        self._offsety = _PV(pvpref + 'PosYOffset-RB', **opt)
+        pvpref = LL_PREF + ("-" if LL_PREF else "") + self._name + ":"
+        opt = {"connection_timeout": TIMEOUT, "auto_monitor": False}
+        self._poskx = _PV(pvpref + "PosKx-RB", **opt)
+        self._posky = _PV(pvpref + "PosKy-RB", **opt)
+        self._ksum = _PV(pvpref + "PosKsum-RB", **opt)
+        self._polyx = _PV(pvpref + "GEN_PolyXArrayCoeff-RB", **opt)
+        self._polyy = _PV(pvpref + "GEN_PolyYArrayCoeff-RB", **opt)
+        self._arraya = _PV(pvpref + "GEN_AArrayData", **opt)
+        self._arrayb = _PV(pvpref + "GEN_BArrayData", **opt)
+        self._arrayc = _PV(pvpref + "GEN_CArrayData", **opt)
+        self._arrayd = _PV(pvpref + "GEN_DArrayData", **opt)
+        self._arrayx = _PV(pvpref + "GEN_XArrayData", **opt)
+        self._arrayy = _PV(pvpref + "GEN_YArrayData", **opt)
+        self._arrays = _PV(pvpref + "GEN_SUMArrayData", **opt)
+        opt.pop("auto_monitor")
+        self._offsetx = _PV(pvpref + "PosXOffset-RB", **opt)
+        self._offsety = _PV(pvpref + "PosYOffset-RB", **opt)
         self._config_ok_vals = {
-            'asyn.ENBL': _csbpm.EnblTyp.Enable,
-            'SwMode': _csbpm.SwModes.switching,
-            'ACQBPMMode': _csbpm.OpModes.MultiBunch,
-            'ACQChannel': _csbpm.AcqChan.ADC,
+            "asyn.ENBL": _CSBPM.EnblTyp.Enable,
+            "SwMode": _CSBPM.SwModes.switching,
+            "ACQBPMMode": _CSBPM.OpModes.MultiBunch,
+            "ACQChannel": _CSBPM.AcqChan.ADC,
             # 'ACQNrShots': 1,
-            'ACQShots': 1,
+            "ACQShots": 1,
             # 'ACQTriggerHwDly': 0.0,  # NOTE: leave this property commented
-            'ACQUpdateTime': 0.001,
+            "ACQUpdateTime": 0.001,
             # 'ACQNrSamplesPre': 0,
-            'ACQSamplesPre': 0,
+            "ACQSamplesPre": 0,
             # 'ACQNrSamplesPost': 200,
-            'ACQSamplesPost': 382,
-            # 'ACQCtrl': _csbpm.AcqEvents.Stop,
-            'ACQTriggerEvent': _csbpm.AcqEvents.Stop,
-            # 'ACQTriggerType': _csbpm.AcqTrigTyp.External,
-            'ACQTrigger': _csbpm.AcqTrigTyp.External,
-            'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
-            # 'ACQTriggerDataChan': _csbpm.AcqChan.FAcq,
-            'ACQDataTrigChan': _csbpm.AcqChan.ADC,
-            'TbTPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable TbT sync
-            'FOFBPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable FOFB sync
-            'FAcqPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable FAcq sync
-            'MonitPhaseSyncEn': _csbpm.DsblEnbl.disabled,  # Enable Monit sync
-            'TbTDataMaskEn': _csbpm.DsblEnbl.disabled,  # Enable use of mask
-            'TbTDataMaskSamplesBeg': 0,
-            'TbTDataMaskSamplesEnd': 0,
-            'XYPosCal': _csbpm.DsblEnbl.enabled,
-            'SUMPosCal': _csbpm.DsblEnbl.enabled,
-            'SwPhaseSyncEn': _csbpm.DsblEnbl.enabled,  # Enable Switching sync
-            'TestDataEn': _csbpm.DsblEnbl.disabled,
-            }
+            "ACQSamplesPost": 382,
+            # 'ACQCtrl': _CSBPM.AcqEvents.Stop,
+            "ACQTriggerEvent": _CSBPM.AcqEvents.Stop,
+            # 'ACQTriggerType': _CSBPM.AcqTrigTyp.External,
+            "ACQTrigger": _CSBPM.AcqTrigTyp.External,
+            "ACQTriggerRep": _CSBPM.AcqRepeat.Repetitive,
+            # 'ACQTriggerDataChan': _CSBPM.AcqChan.FAcq,
+            "ACQDataTrigChan": _CSBPM.AcqChan.ADC,
+            "TbTPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable TbT sync
+            "FOFBPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable FOFB sync
+            "FAcqPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable FAcq sync
+            "MonitPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable Monit sync
+            "TbTDataMaskEn": _CSBPM.DsblEnbl.disabled,  # Enable use of mask
+            "TbTDataMaskSamplesBeg": 0,
+            "TbTDataMaskSamplesEnd": 0,
+            "XYPosCal": _CSBPM.DsblEnbl.enabled,
+            "SUMPosCal": _CSBPM.DsblEnbl.enabled,
+            "SwPhaseSyncEn": _CSBPM.DsblEnbl.enabled,  # Enable Switching sync
+            "TestDataEn": _CSBPM.DsblEnbl.disabled,
+        }
         pvs = {
-            'asyn.ENBL': 'asyn.ENBL',
-            'SwMode': 'SwMode-Sel',
-            'ACQBPMMode': 'ACQBPMMode-Sel',
-            'ACQChannel': 'ACQChannel-Sel',
+            "asyn.ENBL": "asyn.ENBL",
+            "SwMode": "SwMode-Sel",
+            "ACQBPMMode": "ACQBPMMode-Sel",
+            "ACQChannel": "ACQChannel-Sel",
             # 'ACQNrShots': 'ACQNrShots-SP',
-            'ACQShots': 'ACQShots-SP',
+            "ACQShots": "ACQShots-SP",
             # 'ACQTriggerHwDly': 'ACQTriggerHwDly-SP',
-            'ACQUpdateTime': 'ACQUpdateTime-SP',
+            "ACQUpdateTime": "ACQUpdateTime-SP",
             # 'ACQNrSamplesPre': 'ACQNrSamplesPre-SP',
-            'ACQSamplesPre': 'ACQSamplesPre-SP',
+            "ACQSamplesPre": "ACQSamplesPre-SP",
             # 'ACQNrSamplesPost': 'ACQNrSamplesPost-SP',
-            'ACQSamplesPost': 'ACQSamplesPost-SP',
+            "ACQSamplesPost": "ACQSamplesPost-SP",
             # 'ACQCtrl': 'ACQCtrl-Sel',
-            'ACQTriggerEvent': 'ACQTriggerEvent-Sel',
+            "ACQTriggerEvent": "ACQTriggerEvent-Sel",
             # 'ACQTriggerType': 'ACQTriggerType-Sel',
-            'ACQTrigger': 'ACQTrigger-Sel',
-            'ACQTriggerRep': 'ACQTriggerRep-Sel',
+            "ACQTrigger": "ACQTrigger-Sel",
+            "ACQTriggerRep": "ACQTriggerRep-Sel",
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
-            'ACQDataTrigChan': 'ACQDataTrigChan-Sel',
-            'TbTPhaseSyncEn': 'TbTPhaseSyncEn-Sel',  # Enable TbT sync
-            'FOFBPhaseSyncEn': 'FOFBPhaseSyncEn-Sel',  # Enable FOFB sync
-            'FAcqPhaseSyncEn': 'FAcqPhaseSyncEn-Sel',  # Enable FAcq sync
-            'MonitPhaseSyncEn': 'MonitPhaseSyncEn-Sel',  # Enable Monit sync
-            'TbTDataMaskEn': 'TbTDataMaskEn-Sel',  # Enable use of mask
-            'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-SP',
-            'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-SP',
-            'XYPosCal': 'XYPosCal-Sel',
-            'SUMPosCal': 'SUMPosCal-Sel',
-            'SwPhaseSyncEn': 'SwPhaseSyncEn-Sel',  # Enable Switching sync
-            'TestDataEn': 'TestDataEn-Sel',
-            }
+            "ACQDataTrigChan": "ACQDataTrigChan-Sel",
+            "TbTPhaseSyncEn": "TbTPhaseSyncEn-Sel",  # Enable TbT sync
+            "FOFBPhaseSyncEn": "FOFBPhaseSyncEn-Sel",  # Enable FOFB sync
+            "FAcqPhaseSyncEn": "FAcqPhaseSyncEn-Sel",  # Enable FAcq sync
+            "MonitPhaseSyncEn": "MonitPhaseSyncEn-Sel",  # Enable Monit sync
+            "TbTDataMaskEn": "TbTDataMaskEn-Sel",  # Enable use of mask
+            "TbTDataMaskSamplesBeg": "TbTDataMaskSamplesBeg-SP",
+            "TbTDataMaskSamplesEnd": "TbTDataMaskSamplesEnd-SP",
+            "XYPosCal": "XYPosCal-Sel",
+            "SUMPosCal": "SUMPosCal-Sel",
+            "SwPhaseSyncEn": "SwPhaseSyncEn-Sel",  # Enable Switching sync
+            "TestDataEn": "TestDataEn-Sel",
+        }
         self._config_pvs_sp = {
-            k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
+            k: _PV(pvpref + v, **opt) for k, v in pvs.items()
+        }
         pvs = {
-            'asyn.ENBL': 'asyn.ENBL',
-            'asyn.CNCT': 'asyn.CNCT',
-            'INFOClkFreq': 'INFOClkFreq-RB',
-            'INFOHarmonicNumber': 'INFOHarmonicNumber-RB',
-            'INFOTbTRate': 'INFOTbTRate-RB',
-            'INFOFOFBRate': 'INFOFOFBRate-RB',
-            'INFOMONITRate': 'INFOMONITRate-RB',
-            'INFOFAcqRate': 'INFOFAcqRate-RB',
-            'SwMode': 'SwMode-Sts',
-            'ACQBPMMode': 'ACQBPMMode-Sts',
-            'ACQChannel': 'ACQChannel-Sts',
+            "asyn.ENBL": "asyn.ENBL",
+            "asyn.CNCT": "asyn.CNCT",
+            "INFOClkFreq": "INFOClkFreq-RB",
+            "INFOHarmonicNumber": "INFOHarmonicNumber-RB",
+            "INFOTbTRate": "INFOTbTRate-RB",
+            "INFOFOFBRate": "INFOFOFBRate-RB",
+            "INFOMONITRate": "INFOMONITRate-RB",
+            "INFOFAcqRate": "INFOFAcqRate-RB",
+            "SwMode": "SwMode-Sts",
+            "ACQBPMMode": "ACQBPMMode-Sts",
+            "ACQChannel": "ACQChannel-Sts",
             # 'ACQNrShots': 'ACQNrShots-RB',
-            'ACQShots': 'ACQShots-RB',
+            "ACQShots": "ACQShots-RB",
             # 'ACQTriggerHwDly': 'ACQTriggerHwDly-RB',
-            'ACQUpdateTime': 'ACQUpdateTime-RB',
+            "ACQUpdateTime": "ACQUpdateTime-RB",
             # 'ACQNrSamplesPre': 'ACQNrSamplesPre-RB',
-            'ACQSamplesPre': 'ACQSamplesPre-RB',
+            "ACQSamplesPre": "ACQSamplesPre-RB",
             # 'ACQNrSamplesPost': 'ACQNrSamplesPost-RB',
-            'ACQSamplesPost': 'ACQSamplesPost-RB',
+            "ACQSamplesPost": "ACQSamplesPost-RB",
             # 'ACQCtrl': 'ACQCtrl-Sts',
-            'ACQTriggerEvent': 'ACQTriggerEvent-Sts',
+            "ACQTriggerEvent": "ACQTriggerEvent-Sts",
             # 'ACQStatus': 'ACQStatus-Mon',
-            'ACQStatus': 'ACQStatus-Sts',
+            "ACQStatus": "ACQStatus-Sts",
             # 'ACQTriggerType': 'ACQTriggerType-Sts',
-            'ACQTrigger': 'ACQTrigger-Sts',
-            'ACQTriggerRep': 'ACQTriggerRep-Sts',
+            "ACQTrigger": "ACQTrigger-Sts",
+            "ACQTriggerRep": "ACQTriggerRep-Sts",
             # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
-            'ACQDataTrigChan': 'ACQDataTrigChan-Sts',
-            'TbTPhaseSyncEn': 'TbTPhaseSyncEn-Sts',
-            'FOFBPhaseSyncEn': 'FOFBPhaseSyncEn-Sts',
-            'FAcqPhaseSyncEn': 'FAcqPhaseSyncEn-Sts',
-            'MonitPhaseSyncEn': 'MonitPhaseSyncEn-Sts',
-            'TbTDataMaskEn': 'TbTDataMaskEn-Sts',
-            'TbTDataMaskSamplesBeg': 'TbTDataMaskSamplesBeg-RB',
-            'TbTDataMaskSamplesEnd': 'TbTDataMaskSamplesEnd-RB',
-            'XYPosCal': 'XYPosCal-Sts',
-            'SUMPosCal': 'SUMPosCal-Sts',
-            'SwPhaseSyncEn': 'SwPhaseSyncEn-Sel',
-            'TestDataEn': 'TestDataEn-Sel',
-            }
+            "ACQDataTrigChan": "ACQDataTrigChan-Sts",
+            "TbTPhaseSyncEn": "TbTPhaseSyncEn-Sts",
+            "FOFBPhaseSyncEn": "FOFBPhaseSyncEn-Sts",
+            "FAcqPhaseSyncEn": "FAcqPhaseSyncEn-Sts",
+            "MonitPhaseSyncEn": "MonitPhaseSyncEn-Sts",
+            "TbTDataMaskEn": "TbTDataMaskEn-Sts",
+            "TbTDataMaskSamplesBeg": "TbTDataMaskSamplesBeg-RB",
+            "TbTDataMaskSamplesEnd": "TbTDataMaskSamplesEnd-RB",
+            "XYPosCal": "XYPosCal-Sts",
+            "SUMPosCal": "SUMPosCal-Sts",
+            "SwPhaseSyncEn": "SwPhaseSyncEn-Sel",
+            "TestDataEn": "TestDataEn-Sel",
+        }
         self._config_pvs_rb = {
-            k: _PV(pvpref + v, **opt) for k, v in pvs.items()}
-        self._config_pvs_rb['ACQStatus'].auto_monitor = True
-        self._config_pvs_rb['ACQStatus'].add_callback(
-            self._reset_needs_update_cnt)
+            k: _PV(pvpref + v, **opt) for k, v in pvs.items()
+        }
+        self._config_pvs_rb["ACQStatus"].auto_monitor = True
+        self._config_pvs_rb["ACQStatus"].add_callback(
+            self._reset_needs_update_cnt
+        )
 
     @property
     def name(self):
@@ -165,14 +168,24 @@ class BPM(_BaseTimingConfig):
         """."""
         conn = super().connected
         pvs = (
-            self._arrayx, self._arrayy, self._arrays,
-            self._offsetx, self._offsety,
-            self._polyx, self._polyx,
-            self._arraya, self._arrayb, self._arrayc, self._arrayd,
-            self._poskx, self._posky, self._ksum)
+            self._arrayx,
+            self._arrayy,
+            self._arrays,
+            self._offsetx,
+            self._offsety,
+            self._polyx,
+            self._polyx,
+            self._arraya,
+            self._arrayb,
+            self._arrayc,
+            self._arrayd,
+            self._poskx,
+            self._posky,
+            self._ksum,
+        )
         for pvobj in pvs:
             if not pvobj.connected:
-                _log.debug('NOT CONN: ' + pvobj.pvname)
+                _log.debug("NOT CONN: " + pvobj.pvname)
             conn &= pvobj.connected
         return conn
 
@@ -182,45 +195,53 @@ class BPM(_BaseTimingConfig):
         if not super().is_ok:
             return False
 
-        pvobj = self._config_pvs_rb['ACQStatus']
-        stts = _csbpm.AcqStates
+        pvobj = self._config_pvs_rb["ACQStatus"]
+        stts = _CSBPM.AcqStates
         okay = pvobj.value not in {
-            stts.Error, stts.No_Memory, stts.Too_Few_Samples,
-            stts.Too_Many_Samples, stts.Acq_Overflow}
+            stts.Error,
+            stts.No_Memory,
+            stts.Too_Few_Samples,
+            stts.Too_Many_Samples,
+            stts.Acq_Overflow,
+        }
 
-        if self._config_ok_vals['ACQTriggerEvent'] == _csbpm.AcqEvents.Start:
+        if self._config_ok_vals["ACQTriggerEvent"] == _CSBPM.AcqEvents.Start:
             okay &= pvobj.value not in {stts.Idle, stts.Aborted}
         else:
             okay &= pvobj.value not in {
-                stts.Waiting, stts.External_Trig, stts.Data_Trig,
-                stts.Software_Trig, stts.Acquiring}
+                stts.Waiting,
+                stts.External_Trig,
+                stts.Data_Trig,
+                stts.Software_Trig,
+                stts.Acquiring,
+            }
         if not okay:
-            msg = 'ERR: Error in {0:s}'.format(pvobj.pvname)
-            self.run_callbacks('Log-Mon', msg)
+            msg = "ERR: Error in {0:s}".format(pvobj.pvname)
+            self.run_callbacks("Log-Mon", msg)
             _log.warning(msg[5:])
         return okay
 
     @property
     def state(self):
         """."""
-        pvobj = self._config_pvs_rb['asyn.ENBL']
+        pvobj = self._config_pvs_rb["asyn.ENBL"]
         if pvobj.connected:
-            return pvobj.value == _csbpm.EnblTyp.Enable
+            return pvobj.value == _CSBPM.EnblTyp.Enable
         return False
 
     @state.setter
     def state(self, boo):
         """."""
-        val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
-        pvobj = self._config_pvs_sp['asyn.ENBL']
-        self._config_ok_vals['asyn.ENBL'] = val
+        val = _CSBPM.EnblTyp.Enable if boo else _CSBPM.EnblTyp.Disable
+        pvobj = self._config_pvs_sp["asyn.ENBL"]
+        self._config_ok_vals["asyn.ENBL"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def switching_mode(self):
         """."""
-        pvobj = self._config_pvs_rb['SwMode']
+        pvobj = self._config_pvs_rb["SwMode"]
         if pvobj.connected:
             return pvobj.value
         return None
@@ -228,24 +249,24 @@ class BPM(_BaseTimingConfig):
     @switching_mode.setter
     def switching_mode(self, val):
         """."""
-        pvobj = self._config_pvs_sp['SwMode']
-        self._config_ok_vals['SwMode'] = val
+        pvobj = self._config_pvs_sp["SwMode"]
+        self._config_ok_vals["SwMode"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def adcfreq(self):
         """."""
-        defv = 218446014.0 if self._csorb.acc == 'BO' else 220870069.0
-        pvobj = self._config_pvs_rb['INFOClkFreq']
+        defv = 218446014.0 if self._csorb.acc == "BO" else 220870069.0
+        pvobj = self._config_pvs_rb["INFOClkFreq"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
     @property
     def tbtrate(self):
         """."""
-        defv = 362 if self._csorb.acc == 'BO' else 382
-        pvobj = self._config_pvs_rb['INFOTbTRate']
+        defv = 362 if self._csorb.acc == "BO" else 382
+        pvobj = self._config_pvs_rb["INFOTbTRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -257,8 +278,8 @@ class BPM(_BaseTimingConfig):
     @property
     def fofbrate(self):
         """."""
-        defv = (362 if self._csorb.acc == 'BO' else 382) * 24
-        pvobj = self._config_pvs_rb['INFOFOFBRate']
+        defv = (362 if self._csorb.acc == "BO" else 382) * 24
+        pvobj = self._config_pvs_rb["INFOFOFBRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -270,8 +291,8 @@ class BPM(_BaseTimingConfig):
     @property
     def monitrate(self):
         """."""
-        defv = (362 if self._csorb.acc == 'BO' else 382) * 59904
-        pvobj = self._config_pvs_rb['INFOMONITRate']
+        defv = (362 if self._csorb.acc == "BO" else 382) * 59904
+        pvobj = self._config_pvs_rb["INFOMONITRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -283,8 +304,8 @@ class BPM(_BaseTimingConfig):
     @property
     def facqrate(self):
         """."""
-        defv = (362 if self._csorb.acc == 'BO' else 382) * 603
-        pvobj = self._config_pvs_rb['INFOFAcqRate']
+        defv = (362 if self._csorb.acc == "BO" else 382) * 603
+        pvobj = self._config_pvs_rb["INFOFAcqRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -344,14 +365,14 @@ class BPM(_BaseTimingConfig):
     @property
     def mode(self):
         """."""
-        pvobj = self._config_pvs_rb['ACQBPMMode']
-        return pvobj.value if pvobj.connected else _csbpm.OpModes.MultiBunch
+        pvobj = self._config_pvs_rb["ACQBPMMode"]
+        return pvobj.value if pvobj.connected else _CSBPM.OpModes.MultiBunch
 
     @mode.setter
     def mode(self, mode):
         """."""
-        pvobj = self._config_pvs_sp['ACQBPMMode']
-        self._config_ok_vals['ACQBPMMode'] = mode
+        pvobj = self._config_pvs_sp["ACQBPMMode"]
+        self._config_ok_vals["ACQBPMMode"] = mode
         if self.put_enable and pvobj.connected:
             pvobj.value = mode
 
@@ -385,7 +406,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._arrayx
         val = pvobj.get() if pvobj.connected else None
         if val is not None:
-            return self._orb_conv_unit*val
+            return self._orb_conv_unit * val
 
     @property
     def mtposy(self):
@@ -393,7 +414,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._arrayy
         val = pvobj.get() if pvobj.connected else None
         if val is not None:
-            return self._orb_conv_unit*val
+            return self._orb_conv_unit * val
 
     @property
     def mtsum(self):
@@ -409,7 +430,7 @@ class BPM(_BaseTimingConfig):
         pvobj = self._offsetx
         val = pvobj.value if pvobj.connected else None
         if val is not None:
-            return self._orb_conv_unit*val
+            return self._orb_conv_unit * val
 
     @property
     def offsety(self):
@@ -417,36 +438,36 @@ class BPM(_BaseTimingConfig):
         pvobj = self._offsety
         val = pvobj.value if pvobj.connected else None
         if val is not None:
-            return self._orb_conv_unit*val
+            return self._orb_conv_unit * val
 
     @property
     def ctrl(self):
         """."""
         # pvobj = self._config_pvs_rb['ACQCtrl']
-        pvobj = self._config_pvs_rb['ACQTriggerEvent']
+        pvobj = self._config_pvs_rb["ACQTriggerEvent"]
         return pvobj.value if pvobj.connected else None
 
     @ctrl.setter
     def ctrl(self, val):
         """."""
         # pvobj = self._config_pvs_sp['ACQCtrl']
-        pvobj = self._config_pvs_sp['ACQTriggerEvent']
+        pvobj = self._config_pvs_sp["ACQTriggerEvent"]
         # self._config_ok_vals['ACQCtrl'] = val
-        self._config_ok_vals['ACQTriggerEvent'] = val
+        self._config_ok_vals["ACQTriggerEvent"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def acq_type(self):
         """."""
-        pvobj = self._config_pvs_rb['ACQChannel']
+        pvobj = self._config_pvs_rb["ACQChannel"]
         return pvobj.value if pvobj.connected else None
 
     @acq_type.setter
     def acq_type(self, val):
         """."""
-        pvobj = self._config_pvs_sp['ACQChannel']
-        self._config_ok_vals['ACQChannel'] = val
+        pvobj = self._config_pvs_sp["ACQChannel"]
+        self._config_ok_vals["ACQChannel"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -454,30 +475,30 @@ class BPM(_BaseTimingConfig):
     def acq_trigger(self):
         """."""
         # pvobj = self._config_pvs_rb['ACQTriggerType']
-        pvobj = self._config_pvs_rb['ACQTrigger']
+        pvobj = self._config_pvs_rb["ACQTrigger"]
         return pvobj.value if pvobj.connected else None
 
     @acq_trigger.setter
     def acq_trigger(self, val):
         """."""
         # pvobj = self._config_pvs_sp['ACQTriggerType']
-        pvobj = self._config_pvs_sp['ACQTrigger']
+        pvobj = self._config_pvs_sp["ACQTrigger"]
         # self._config_ok_vals['ACQTriggerType'] = val
-        self._config_ok_vals['ACQTrigger'] = val
+        self._config_ok_vals["ACQTrigger"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def acq_repeat(self):
         """."""
-        pvobj = self._config_pvs_rb['ACQTriggerRep']
+        pvobj = self._config_pvs_rb["ACQTriggerRep"]
         return pvobj.value if pvobj.connected else None
 
     @acq_repeat.setter
     def acq_repeat(self, val):
         """."""
-        pvobj = self._config_pvs_sp['ACQTriggerRep']
-        self._config_ok_vals['ACQTriggerRep'] = val
+        pvobj = self._config_pvs_sp["ACQTriggerRep"]
+        self._config_ok_vals["ACQTriggerRep"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -485,159 +506,159 @@ class BPM(_BaseTimingConfig):
     def acq_trig_datatype(self):
         """."""
         # pvobj = self._config_pvs_rb['ACQTriggerDataChan']
-        pvobj = self._config_pvs_rb['ACQDataTrigChan']
+        pvobj = self._config_pvs_rb["ACQDataTrigChan"]
         return pvobj.value if pvobj.connected else None
 
     @acq_trig_datatype.setter
     def acq_trig_datatype(self, val):
         """."""
         # pvobj = self._config_pvs_sp['ACQTriggerDataChan']
-        pvobj = self._config_pvs_sp['ACQDataTrigChan']
+        pvobj = self._config_pvs_sp["ACQDataTrigChan"]
         # self._config_ok_vals['ACQTriggerDataChan'] = val
-        self._config_ok_vals['ACQDataTrigChan'] = val
+        self._config_ok_vals["ACQDataTrigChan"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbTPhaseSyncEn']
+        pvobj = self._config_pvs_rb["TbTPhaseSyncEn"]
         return pvobj.value if pvobj.connected else None
 
     @tbt_sync_enbl.setter
     def tbt_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbTPhaseSyncEn']
-        self._config_ok_vals['TbTPhaseSyncEn'] = val
+        pvobj = self._config_pvs_sp["TbTPhaseSyncEn"]
+        self._config_ok_vals["TbTPhaseSyncEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def fofb_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['FOFBPhaseSyncEn']
+        pvobj = self._config_pvs_rb["FOFBPhaseSyncEn"]
         return pvobj.value if pvobj.connected else None
 
     @fofb_sync_enbl.setter
     def fofb_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['FOFBPhaseSyncEn']
-        self._config_ok_vals['FOFBPhaseSyncEn'] = val
+        pvobj = self._config_pvs_sp["FOFBPhaseSyncEn"]
+        self._config_ok_vals["FOFBPhaseSyncEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def sw_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['SwPhaseSyncEn']
+        pvobj = self._config_pvs_rb["SwPhaseSyncEn"]
         return pvobj.value if pvobj.connected else None
 
     @sw_sync_enbl.setter
     def sw_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['SwPhaseSyncEn']
-        self._config_ok_vals['SwPhaseSyncEn'] = val
+        pvobj = self._config_pvs_sp["SwPhaseSyncEn"]
+        self._config_ok_vals["SwPhaseSyncEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def facq_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['FAcqPhaseSyncEn']
+        pvobj = self._config_pvs_rb["FAcqPhaseSyncEn"]
         return pvobj.value if pvobj.connected else None
 
     @facq_sync_enbl.setter
     def facq_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['FAcqPhaseSyncEn']
-        self._config_ok_vals['FAcqPhaseSyncEn'] = val
+        pvobj = self._config_pvs_sp["FAcqPhaseSyncEn"]
+        self._config_ok_vals["FAcqPhaseSyncEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def monit_sync_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['MonitPhaseSyncEn']
+        pvobj = self._config_pvs_rb["MonitPhaseSyncEn"]
         return pvobj.value if pvobj.connected else None
 
     @monit_sync_enbl.setter
     def monit_sync_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['MonitPhaseSyncEn']
-        self._config_ok_vals['MonitPhaseSyncEn'] = val
+        pvobj = self._config_pvs_sp["MonitPhaseSyncEn"]
+        self._config_ok_vals["MonitPhaseSyncEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def test_data_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TestDataEn']
+        pvobj = self._config_pvs_rb["TestDataEn"]
         return pvobj.value if pvobj.connected else None
 
     @test_data_enbl.setter
     def test_data_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TestDataEn']
-        self._config_ok_vals['TestDataEn'] = val
+        pvobj = self._config_pvs_sp["TestDataEn"]
+        self._config_ok_vals["TestDataEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_enbl(self):
         """."""
-        pvobj = self._config_pvs_rb['TbTDataMaskEn']
+        pvobj = self._config_pvs_rb["TbTDataMaskEn"]
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_enbl.setter
     def tbt_mask_enbl(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbTDataMaskEn']
-        self._config_ok_vals['TbTDataMaskEn'] = val
+        pvobj = self._config_pvs_sp["TbTDataMaskEn"]
+        self._config_ok_vals["TbTDataMaskEn"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_begin(self):
         """."""
-        pvobj = self._config_pvs_rb['TbTDataMaskSamplesBeg']
+        pvobj = self._config_pvs_rb["TbTDataMaskSamplesBeg"]
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_begin.setter
     def tbt_mask_begin(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbTDataMaskSamplesBeg']
-        self._config_ok_vals['TbTDataMaskSamplesBeg'] = val
+        pvobj = self._config_pvs_sp["TbTDataMaskSamplesBeg"]
+        self._config_ok_vals["TbTDataMaskSamplesBeg"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def tbt_mask_end(self):
         """."""
-        pvobj = self._config_pvs_rb['TbTDataMaskSamplesEnd']
+        pvobj = self._config_pvs_rb["TbTDataMaskSamplesEnd"]
         return pvobj.value if pvobj.connected else None
 
     @tbt_mask_end.setter
     def tbt_mask_end(self, val):
         """."""
-        pvobj = self._config_pvs_sp['TbTDataMaskSamplesEnd']
-        self._config_ok_vals['TbTDataMaskSamplesEnd'] = val
+        pvobj = self._config_pvs_sp["TbTDataMaskSamplesEnd"]
+        self._config_ok_vals["TbTDataMaskSamplesEnd"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def polycal(self):
         """."""
-        pvobj = self._config_pvs_rb['XYPosCal']
+        pvobj = self._config_pvs_rb["XYPosCal"]
         return pvobj.value if pvobj.connected else None
 
     @polycal.setter
     def polycal(self, val):
         """."""
-        val = _csbpm.DsblEnbl.enabled if val else _csbpm.DsblEnbl.disabled
-        pv1 = self._config_pvs_sp['XYPosCal']
-        pv2 = self._config_pvs_sp['SUMPosCal']
-        self._config_ok_vals['XYPosCal'] = val
-        self._config_ok_vals['SUMPosCal'] = val
+        val = _CSBPM.DsblEnbl.enabled if val else _CSBPM.DsblEnbl.disabled
+        pv1 = self._config_pvs_sp["XYPosCal"]
+        pv2 = self._config_pvs_sp["SUMPosCal"]
+        self._config_ok_vals["XYPosCal"] = val
+        self._config_ok_vals["SUMPosCal"] = val
         if self.put_enable and pv1.connected:
             pv1.put(val, wait=False)
         if self.put_enable and pv2.connected:
@@ -647,16 +668,16 @@ class BPM(_BaseTimingConfig):
     def nrsamplespost(self):
         """."""
         # pvobj = self._config_pvs_rb['ACQNrSamplesPost']
-        pvobj = self._config_pvs_rb['ACQSamplesPost']
+        pvobj = self._config_pvs_rb["ACQSamplesPost"]
         return pvobj.value if pvobj.connected else None
 
     @nrsamplespost.setter
     def nrsamplespost(self, val):
         """."""
         # pvobj = self._config_pvs_sp['ACQNrSamplesPost']
-        pvobj = self._config_pvs_sp['ACQSamplesPost']
+        pvobj = self._config_pvs_sp["ACQSamplesPost"]
         # self._config_ok_vals['ACQNrSamplesPost'] = val
-        self._config_ok_vals['ACQSamplesPost'] = val
+        self._config_ok_vals["ACQSamplesPost"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -664,16 +685,16 @@ class BPM(_BaseTimingConfig):
     def nrsamplespre(self):
         """."""
         # pvobj = self._config_pvs_rb['ACQNrSamplesPre']
-        pvobj = self._config_pvs_rb['ACQSamplesPre']
+        pvobj = self._config_pvs_rb["ACQSamplesPre"]
         return pvobj.value if pvobj.connected else None
 
     @nrsamplespre.setter
     def nrsamplespre(self, val):
         """."""
         # pvobj = self._config_pvs_sp['ACQNrSamplesPre']
-        pvobj = self._config_pvs_sp['ACQSamplesPre']
+        pvobj = self._config_pvs_sp["ACQSamplesPre"]
         # self._config_ok_vals['ACQNrSamplesPre'] = val
-        self._config_ok_vals['ACQSamplesPre'] = val
+        self._config_ok_vals["ACQSamplesPre"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
@@ -681,27 +702,27 @@ class BPM(_BaseTimingConfig):
     def nrshots(self):
         """."""
         # pvobj = self._config_pvs_rb['ACQNrShots']
-        pvobj = self._config_pvs_rb['ACQShots']
+        pvobj = self._config_pvs_rb["ACQShots"]
         return pvobj.value if pvobj.connected else None
 
     @nrshots.setter
     def nrshots(self, val):
         """."""
         # pvobj = self._config_pvs_sp['ACQNrShots']
-        pvobj = self._config_pvs_sp['ACQShots']
+        pvobj = self._config_pvs_sp["ACQShots"]
         # self._config_ok_vals['ACQNrShots'] = val
-        self._config_ok_vals['ACQShots'] = val
+        self._config_ok_vals["ACQShots"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     def calc_sp_multiturn_pos(self, **kwargs):
         """."""
-        nturns = kwargs.get('nturns', 1)
-        refx = kwargs.get('refx', 0.0)
-        refy = kwargs.get('refy', 0.0)
-        refsum = kwargs.get('refsum', 0.0)
-        maskbeg = kwargs.get('maskbeg', 0)
-        maskend = kwargs.get('maskend', 0)
+        nturns = kwargs.get("nturns", 1)
+        refx = kwargs.get("refx", 0.0)
+        refy = kwargs.get("refy", 0.0)
+        refsum = kwargs.get("refsum", 0.0)
+        maskbeg = kwargs.get("maskbeg", 0)
+        maskend = kwargs.get("maskend", 0)
 
         wsize = self.tbtrate
         maskbeg = min(maskbeg, wsize - 2)
@@ -712,10 +733,13 @@ class BPM(_BaseTimingConfig):
         # the ADCSWAP rate works. Fixed in 2020/07/01 after talking to
         # Daniel Tavares.
         vals = {
-            'A': self.arraya, 'C': self.arrayb,
-            'B': self.arrayc, 'D': self.arrayd}
+            "A": self.arraya,
+            "C": self.arrayb,
+            "B": self.arrayc,
+            "D": self.arrayd,
+        }
         siz = None
-        for key, val in vals.items():
+        for _, val in vals.items():
             if val is None or val.size == 0:
                 siz = 0
                 break
@@ -727,28 +751,29 @@ class BPM(_BaseTimingConfig):
         s_cal = _np.full(nturns, refsum)
 
         # handle cases where length read is smaller than required.
-        rnts = min(siz//wsize, nturns)
+        rnts = min(siz // wsize, nturns)
         if not (siz and rnts):
             return x_cal, y_cal, s_cal
 
         for key, val in vals.items():
-            val = val[:(rnts*wsize)]
+            val = val[: (rnts * wsize)]
             val = val.reshape(-1, wsize)[:, mask]
             vals[key] = _np.std(val, axis=1)
 
-        sum1, sum2 = vals['A'] + vals['C'], vals['D'] + vals['B']
+        sum1, sum2 = vals["A"] + vals["C"], vals["D"] + vals["B"]
         zero1 = _np.logical_not(_np.isclose(sum1, 0.0))
         zero2 = _np.logical_not(_np.isclose(sum2, 0.0))
-        diff1 = (vals['A'][zero1] - vals['C'][zero1]) / sum1[zero1]
-        diff2 = (vals['D'][zero2] - vals['B'][zero2]) / sum2[zero2]
+        diff1 = (vals["A"][zero1] - vals["C"][zero1]) / sum1[zero1]
+        diff2 = (vals["D"][zero2] - vals["B"][zero2]) / sum2[zero2]
         x_uncal = (diff1 + diff2) / 2
         y_uncal = (diff1 - diff2) / 2
-        if self._config_ok_vals['XYPosCal'] == _csbpm.DsblEnbl.disabled:
+        if self._config_ok_vals["XYPosCal"] == _CSBPM.DsblEnbl.disabled:
             x_cal[:rnts][zero1] = x_uncal * self.poskx
             y_cal[:rnts][zero2] = y_uncal * self.posky
         else:
             x_cal[:rnts][zero1], y_cal[:rnts][zero2] = self._apply_polyxy(
-                x_uncal, y_uncal)
+                x_uncal, y_uncal
+            )
         x_cal[:rnts][zero1] *= self._orb_conv_unit
         y_cal[:rnts][zero2] *= self._orb_conv_unit
         x_cal[:rnts][zero1] -= self.offsetx or 0.0
@@ -758,29 +783,37 @@ class BPM(_BaseTimingConfig):
 
     def _apply_polyxy(self, x_uncal, y_uncal):
         """."""
-        x_cal = self._calc_poly(x_uncal, y_uncal, plane='x')
-        y_cal = self._calc_poly(y_uncal, x_uncal, plane='y')
+        x_cal = self._calc_poly(x_uncal, y_uncal, plane="x")
+        y_cal = self._calc_poly(y_uncal, x_uncal, plane="y")
         return x_cal, y_cal
 
-    def _calc_poly(self, th1, ot1, plane='x'):
+    def _calc_poly(self, th1, ot1, plane="x"):
         """."""
-        ot2 = ot1*ot1
-        ot4 = ot2*ot2
-        ot6 = ot4*ot2
-        ot8 = ot4*ot4
-        th2 = th1*th1
-        th3 = th2*th1
-        th5 = th3*th2
-        th7 = th5*th2
-        th9 = th7*th2
-        pol = self.polyx if plane == 'x' else self.polyy
+        ot2 = ot1 * ot1
+        ot4 = ot2 * ot2
+        ot6 = ot4 * ot2
+        ot8 = ot4 * ot4
+        th2 = th1 * th1
+        th3 = th2 * th1
+        th5 = th3 * th2
+        th7 = th5 * th2
+        th9 = th7 * th2
+        pol = self.polyx if plane == "x" else self.polyy
 
         return (
-            th1*(pol[0] + ot2*pol[1] + ot4*pol[2] + ot6*pol[3] + ot8*pol[4]) +
-            th3*(pol[5] + ot2*pol[6] + ot4*pol[7] + ot6*pol[8]) +
-            th5*(pol[9] + ot2*pol[10] + ot4*pol[11]) +
-            th7*(pol[12] + ot2*pol[13]) +
-            th9*pol[14])
+            th1
+            * (
+                pol[0]
+                + ot2 * pol[1]
+                + ot4 * pol[2]
+                + ot6 * pol[3]
+                + ot8 * pol[4]
+            )
+            + th3 * (pol[5] + ot2 * pol[6] + ot4 * pol[7] + ot6 * pol[8])
+            + th5 * (pol[9] + ot2 * pol[10] + ot4 * pol[11])
+            + th7 * (pol[12] + ot2 * pol[13])
+            + th9 * pol[14]
+        )
 
     def _reset_needs_update_cnt(self, *args, **kwargs):
         _ = args, kwargs
@@ -795,65 +828,70 @@ class TimingConfig(_BaseTimingConfig):
         super().__init__(acc, callback=callback)
         trig = self._csorb.trigger_acq_name
         evg = self._csorb.evg_name
-        opt = {'connection_timeout': TIMEOUT}
+        opt = {"connection_timeout": TIMEOUT}
         self._config_ok_vals = {
-            'NrPulses': 1, 'State': _TIConst.TrigStates.Enbl}
+            "NrPulses": 1,
+            "State": _TIConst.TrigStates.Enbl,
+        }
         if _HLTimesearch.has_delay_type(trig):
-            self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
-        pref_name = LL_PREF + trig + ':'
+            self._config_ok_vals["RFDelayType"] = _TIConst.TrigDlyTyp.Manual
+        pref_name = LL_PREF + trig + ":"
         self._config_pvs_rb = {
-            'Delay': _PV(pref_name + 'Delay-RB', **opt),
-            'TotalDelay': _PV(pref_name + 'TotalDelay-Mon', **opt),
-            'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
-            'Duration': _PV(pref_name + 'Duration-RB', **opt),
-            'State': _PV(pref_name + 'State-Sts', **opt),
-            'Injecting': _PV(LL_PREF + evg + ':InjectionEvt-Sts', **opt),
-            'EGTrig': _PV('LI-01:EG-TriggerPS:status', **opt),
-            }
+            "Delay": _PV(pref_name + "Delay-RB", **opt),
+            "TotalDelay": _PV(pref_name + "TotalDelay-Mon", **opt),
+            "NrPulses": _PV(pref_name + "NrPulses-RB", **opt),
+            "Duration": _PV(pref_name + "Duration-RB", **opt),
+            "State": _PV(pref_name + "State-Sts", **opt),
+            "Injecting": _PV(LL_PREF + evg + ":InjectionEvt-Sts", **opt),
+            "EGTrig": _PV("LI-01:EG-TriggerPS:status", **opt),
+        }
         self._config_pvs_sp = {
-            'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
-            'State': _PV(pref_name + 'State-Sel', **opt)}
+            "NrPulses": _PV(pref_name + "NrPulses-SP", **opt),
+            "State": _PV(pref_name + "State-Sel", **opt),
+        }
         if _HLTimesearch.has_delay_type(trig):
-            self._config_pvs_rb['RFDelayType'] = _PV(
-                pref_name + 'RFDelayType-Sts', **opt)
-            self._config_pvs_sp['RFDelayType'] = _PV(
-                pref_name + 'RFDelayType-Sel', **opt)
+            self._config_pvs_rb["RFDelayType"] = _PV(
+                pref_name + "RFDelayType-Sts", **opt
+            )
+            self._config_pvs_sp["RFDelayType"] = _PV(
+                pref_name + "RFDelayType-Sel", **opt
+            )
 
     @property
     def injecting(self):
         """."""
-        inj = bool(self._config_pvs_rb['Injecting'].value)
-        eg_trig = bool(self._config_pvs_rb['EGTrig'].value)
+        inj = bool(self._config_pvs_rb["Injecting"].value)
+        eg_trig = bool(self._config_pvs_rb["EGTrig"].value)
         return inj and eg_trig
 
     @property
     def nrpulses(self):
         """."""
-        pvobj = self._config_pvs_rb['NrPulses']
+        pvobj = self._config_pvs_rb["NrPulses"]
         return pvobj.value if pvobj.connected else None
 
     @nrpulses.setter
     def nrpulses(self, val):
         """."""
-        pvobj = self._config_pvs_sp['NrPulses']
-        self._config_ok_vals['NrPulses'] = val
+        pvobj = self._config_pvs_sp["NrPulses"]
+        self._config_ok_vals["NrPulses"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
 
     @property
     def duration(self):
         """."""
-        pvobj = self._config_pvs_rb['Duration']
+        pvobj = self._config_pvs_rb["Duration"]
         return pvobj.value if pvobj.connected else None
 
     @property
     def delay(self):
         """."""
-        pvobj = self._config_pvs_rb['Delay']
+        pvobj = self._config_pvs_rb["Delay"]
         return pvobj.value if pvobj.connected else None
 
     @property
     def totaldelay(self):
         """."""
-        pvobj = self._config_pvs_rb['TotalDelay']
+        pvobj = self._config_pvs_rb["TotalDelay"]
         return pvobj.value if pvobj.connected else None
