@@ -68,7 +68,7 @@ class SOFB(_BaseClass):
             self._drive_state = self._csorb.DriveState.Open
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
-        self._ref_corr_kicks = None
+        self._ref_corr_kicks = _np.zeros(zer.copy(), dtype=float)
         self._thread = None
         self._havebeam_pv = _PV('SI-Glob:AP-CurrInfo:StoredEBeam-Mon')
 
