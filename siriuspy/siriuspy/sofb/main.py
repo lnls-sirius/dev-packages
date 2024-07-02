@@ -878,8 +878,7 @@ class SOFB(_BaseClass):
             if kicks is None:
                 break
 
-            kicks = self._interact_with_fofb_in_apply_kicks(
-                kicks, dkicks, refx0, refy0)
+            kicks = self._interact_with_fofb_in_apply_kicks(kicks, dkicks)
             if kicks is None:
                 break
             tims.append(_time())
