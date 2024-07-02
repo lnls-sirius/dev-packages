@@ -1547,12 +1547,18 @@ class HLFOFB(_Device):
         self['FOFBAccDecimation-SP'] = value
 
     @property
-    def psconfig_mat(self):
+    def psconfigmat(self):
         """Power Supply Configuration matrix."""
         return self['PSConfigMat-RB']
 
-    @psconfig_mat.setter
-    def psconfig_mat(self, value):
+    @psconfigmat.setter
+    def psconfigmat(self, value):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        if not len(value) == self._data.psconfig_size:
+            raise ValueError(
+                'Setpoint value must have the same shape as the readback.'
+                )
         self['PSConfigMat-SP'] = value
 
     @property
