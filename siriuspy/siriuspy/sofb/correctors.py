@@ -626,7 +626,7 @@ class EpicsCorrectors(BaseCorrectors):
 
         self.timing.state = 0
         self.sync_kicks = value
-        refs = []
+        refs = [c.value for c in self._corrs[:-1]]
         val = _PSConst.OpMode.SlowRefSync
         if value == self._csorb.CorrSync.Off:
             self.set_timing_delay(0)
@@ -641,7 +641,6 @@ class EpicsCorrectors(BaseCorrectors):
             self.set_timing_delay(0)
             self.timing.sync_type = self.timing.RMPBO
             val = _PSConst.OpMode.RmpWfm
-            refs = [c.value for c in self._corrs[:-1]]
 
         # Time to wait any waveform to finish
         _time.sleep(0.6)
@@ -656,8 +655,7 @@ class EpicsCorrectors(BaseCorrectors):
                 return False
             corr.put_enable = mask[i]
             corr.opmode = val
-            if refs:
-                corr.value = refs[i]
+            corr.value = refs[i]
 
         self.timing.state = 1
         strsync = self._csorb.CorrSync._fields[self.sync_kicks]
