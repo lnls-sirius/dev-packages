@@ -27,7 +27,7 @@ class ETypes(_csdev.ETypes):
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
         'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
         'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced',
-        'CurrLoopKpSynced', 'CurrLoopTiSynced')
+        'CurrLoopKpSynced', 'CurrLoopKiSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
@@ -64,7 +64,7 @@ class HLFOFBConst(_csdev.Const):
 
     # PS Config Matrix
     PSCONFIG_KP_COL = 0
-    PSCONFIG_TI_COL = 1
+    PSCONFIG_KI_COL = 1
     PSCONFIG_FILTER_GAIN_COL = 2
     PSCONFIG_COEFF_FIRST_COL = 3
     PSCONFIG_BIQUAD_NR_COEFFS = 5
