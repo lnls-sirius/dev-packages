@@ -1,9 +1,9 @@
 """."""
-from .orbit import EpicsOrbit
-from .matrix import EpicsMatrix
 from .correctors import EpicsCorrectors
 from .csdev import SOFBFactory
 from .main import SOFB
+from .matrix import EpicsMatrix
+from .orbit import EpicsOrbit
 
 del orbit, matrix, correctors, csdev, main
 
