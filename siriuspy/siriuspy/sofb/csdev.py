@@ -1166,11 +1166,11 @@ class SOFBSI(SOFBRings, ConstSI):
                 'prec': 3, 'unit': 'um',
                 'lolim': 0, 'hilim': 10000},
             'FOFBDownloadKicksPerc-SP': {
-                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100.1},
+                'type': 'float', 'value': 40.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 300.1},
             'FOFBDownloadKicksPerc-RB': {
-                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100.1},
+                'type': 'float', 'value': 40.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 300.1},
             'FOFBDownloadKicks-Sel': {
                 'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},

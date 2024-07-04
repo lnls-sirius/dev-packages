@@ -60,7 +60,7 @@ class SOFB(_BaseClass):
         if self.acc == "SI":
             self.fofb = HLFOFB()
             self._download_fofb_kicks = True
-            self._download_fofb_kicks_perc = 0.04
+            self._download_fofb_kicks_perc = 0.40
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
@@ -274,7 +274,7 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value / 100, 0), 1)
+        value = min(max(value / 300, 0), 1)
         self._download_fofb_kicks_perc = value
         self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True

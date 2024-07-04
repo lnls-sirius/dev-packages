@@ -13,7 +13,6 @@ from ..pwrsupply.csdev import Const as _PSConst
 from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
-from ..epics import PV as _PV
 from ..namesys import SiriusPVName as _PVName
 
 from .base_class import BaseClass as _BaseClass, \
