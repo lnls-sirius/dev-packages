@@ -149,7 +149,7 @@ class EpicsMatrix(BaseMatrix):
         self.run_callbacks(pvn, new_)
         return True
 
-    def calc_kicks(self, orbit):
+    def calc_kicks(self, orbit, update_dkicks=True):
         """Calculate the kick from the orbit distortion given."""
         if orbit.size != self.inv_respmat.shape[1]:
             msg = "ERR: Orbit and matrix size not compatible."
@@ -158,7 +158,8 @@ class EpicsMatrix(BaseMatrix):
             return None
         kicks = _np.dot(self.inv_respmat, orbit)
         kicks *= -1
-        self._LQTHREAD.put((self._update_dkicks, (kicks,)))
+        if update_dkicks:
+            self._LQTHREAD.put((self._update_dkicks, (kicks.copy(), )))
         return kicks
 
     def estimate_orbit_variation(self, kicks):
@@ -180,7 +181,6 @@ class EpicsMatrix(BaseMatrix):
         return _np.dot(self.respmat, kicks)
 
     def _update_dkicks(self, kicks):
-        kicks = kicks.copy()
         nr_ch = self._csorb.nr_ch
         nr_chcv = self._csorb.nr_chcv
         self.run_callbacks("DeltaKickCH-Mon", kicks[:nr_ch])

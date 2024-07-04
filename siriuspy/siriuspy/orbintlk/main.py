@@ -75,7 +75,7 @@ class App(_Callback):
         # # EVG
         self._evg_dev = _EVG(props2init=[
             'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
-            'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts',
+            'IntlkCtrlRst-Cmd',
             'IntlkCtrlRepeat-Sel', 'IntlkCtrlRepeat-Sts',
             'IntlkCtrlRepeatTime-SP', 'IntlkCtrlRepeatTime-RB',
             'IntlkTbl0to15-Sel', 'IntlkTbl0to15-Sts',
@@ -105,8 +105,10 @@ class App(_Callback):
         pvo.add_callback(self._callback_evg_rxlock)
 
         # # Fouts
-        foutnames = list(self._const.FOUTS_2_MON) + \
-            list(self._const.FOUTSFIXED_RXENBL.keys())
+        foutnames = list(
+            self._const.FOUTS_2_MON |
+            self._const.FOUTSFIXED_RXENBL.keys()
+        )
         self._thread_cbfout = {fout: None for fout in foutnames}
         self._fout_devs = {
             devname: _Device(
@@ -774,7 +776,7 @@ class App(_Callback):
 
         # if it is a global reset, reset EVG
         if state == 'all':
-            self._evg_dev['IntlkCtrlRst-Sel'] = 1
+            self._evg_dev['IntlkCtrlRst-Cmd'] = 1
             self._update_log('Sent reset EVG interlock flag.')
 
         return True
@@ -864,12 +866,12 @@ class App(_Callback):
 
     def _acq_config(self):
         self._update_log('Aborting BPM acquisition...')
-        ret = self._fambpm_dev.cmd_mturn_acq_abort()
+        ret = self._fambpm_dev.cmd_abort_mturn_acquisition()
         if ret > 0:
             self._update_log('ERR:Failed to abort BPM acquisition.')
             return
         self._update_log('...done. Configuring BPM acquisition...')
-        ret = self._fambpm_dev.mturn_config_acquisition(
+        ret = self._fambpm_dev.config_mturn_acquisition(
             nr_points_before=self._acq_spre,
             nr_points_after=self._acq_spost,
             acq_rate=self._acq_chan,
@@ -1358,13 +1360,23 @@ class App(_Callback):
         if not value:
             return
         # launch thread to log interlock details
+        bpmname = _PVName(pvname).device_name
         _CAThread(
             target=self._log_bpm_intlk,
-            args=(_PVName(pvname).device_name, ),
+            args=(bpmname, ),
             daemon=True).start()
         # launch thread to send interlock to RF as a backup
         if self._thread_cbbpm and self._thread_cbbpm.is_alive():
             return
+
+        # NOTE: the next lines help to avoid killing beam in case one BPM that
+        # is not enabled raises a false positive interlock signal.
+        idx = self._const.bpm_idcs[bpmname]
+        enbl = self._enable_lists['pos'][idx] or self._enable_lists['ang'][idx]
+        if not enbl:
+            self._update_log(f'WARN:{bpmname} false positive')
+            return
+
         self._thread_cbbpm = _CAThread(
             target=self._do_callback_bpm_intlk, daemon=True)
         self._thread_cbbpm.start()

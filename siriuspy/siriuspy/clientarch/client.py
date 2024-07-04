@@ -1,7 +1,9 @@
-#!/usr/bin/env python-sirius
 """Fetcher module.
 
-See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
+See
+    https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
+    http://slacmshankar.github.io/epicsarchiver_docs/details.html
+    http://slacmshankar.github.io/epicsarchiver_docs/api/mgmt_scriptables.html
 """
 
 from threading import Thread as _Thread
@@ -16,6 +18,7 @@ import numpy as _np
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
+from .time import Time as _Time
 
 
 class ClientArchiver:
@@ -32,6 +35,7 @@ class ClientArchiver:
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._ret = None
+        self._request_url = None
         # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
@@ -76,6 +80,11 @@ class ClientArchiver:
         """
         self.logout()
         self._url = url
+
+    @property
+    def last_requested_url(self):
+        """."""
+        return self._request_url
 
     def login(self, username, password):
         """Open login session."""
@@ -132,6 +141,27 @@ class ClientArchiver:
         """Get Paused PVs Report."""
         url = self._create_url(method='getPausedPVsReport')
         resp = self._make_request(url, return_json=True)
+        return None if not resp else resp
+
+    def getRecentlyModifiedPVs(self, limit=None, epoch_time=True):
+        """Get list of PVs with recently modified PVTypeInfo.
+
+        Currently version of the epics archiver appliance returns pvname
+        list from oldest to newest modified timestamps."""
+        method = 'getRecentlyModifiedPVs'
+        # get data
+        if limit is not None:
+            method += f'?limit={str(limit)}'
+        url = self._create_url(method=method)
+        resp = self._make_request(url, return_json=True)
+
+        # convert to epoch, if the case
+        if resp and epoch_time:
+            for item in resp:
+                modtime = item['modificationTime'][:-7]  # remove ISO8601 offset
+                epoch_time = _Time.conv_to_epoch(modtime, '%b/%d/%Y %H:%M:%S')
+                item['modificationTime'] = epoch_time
+
         return None if not resp else resp
 
     def pausePVs(self, pvnames):
@@ -262,10 +292,21 @@ class ClientArchiver:
         resp = self._make_request(url, return_json=True)
         return None if not resp else resp
 
+    def switch_to_online_data(self):
+        """."""
+        self.server_url = _envars.SRVURL_ARCHIVER
+        self.session = None
+
+    def switch_to_offline_data(self):
+        """."""
+        self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+        self.session = None
+
     # ---------- auxiliary methods ----------
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
+        self._request_url = url
         response = self._run_async_event_loop(
             self._handle_request,
             url, return_json=return_json, need_login=need_login)
@@ -285,6 +326,7 @@ class ClientArchiver:
         return url
 
     # ---------- async methods ----------
+
     def _run_async_event_loop(self, *args, **kwargs):
         # NOTE: Run the asyncio commands in a separated Thread to isolate
         # their EventLoop from the external environment (important for class

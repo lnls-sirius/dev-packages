@@ -34,6 +34,7 @@ class App:
         'ImgROIX-RB': ('fitx', 'roi'),
         'ImgROIXCenter-Mon': ('fitx', 'roi_center'),
         'ImgROIXFWHM-Mon': ('fitx', 'roi_fwhm'),
+        'ImgROIXProj-Mon': ('fitx', 'roi_proj'),
         # --- roix_fit ---
         'ImgROIXFitAmplitude-Mon': ('fitx', 'roi_amplitude'),
         'ImgROIXFitMean-Mon': ('fitx', 'roi_mean'),
@@ -43,6 +44,7 @@ class App:
         'ImgROIY-RB': ('fity', 'roi'),
         'ImgROIYCenter-Mon': ('fity', 'roi_center'),
         'ImgROIYFWHM-Mon': ('fity', 'roi_fwhm'),
+        'ImgROIYProj-Mon': ('fity', 'roi_proj'),
         # --- roiy_fit ---
         'ImgROIYFitAmplitude-Mon': ('fity', 'roi_amplitude'),
         'ImgROIYFitMean-Mon': ('fity', 'roi_mean'),
@@ -200,14 +202,19 @@ class App:
 
         if not self.meas.image2dfit.is_with_image:
             self._write_pv('ImgIsWithBeam-Mon', 0)
-            return
 
         invalid_fitx, invalid_fity = [False]*2
+        with_beam = self.meas.image2dfit.is_with_image
+
         for pvname, attr in App._MON_PVS_2_IMGFIT.items():
             # check if is roi_rb and if it needs updating
             if pvname in ('ImgROIX-RB', 'ImgROIY-RB'):
                 if not self.meas.update_roi_with_fwhm:
                     continue
+
+            # if no beam, return if PV is of fit type
+            if not with_beam and 'Fit' in pvname and 'ProcTime' not in pvname:
+                return
 
             # get image attribute value
             value = self._conv_imgattr2value(attr)
@@ -287,7 +294,7 @@ class App:
 
         # create object
         meas = MeasDVF(
-            self.const.devname,
+            self.const,
             fwhmx_factor=fwhmx_factor, fwhmy_factor=fwhmy_factor,
             roi_with_fwhm=roi_with_fwhm,
             intensity_threshold=intensity_threshold,

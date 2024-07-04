@@ -31,6 +31,12 @@ class _PSModel:
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
+        # Wfm
+        'WfmSelected-Mon': _c.V_WFMREF_SELECTED,
+        'WfmSyncMode-Sts': _c.V_WFMREF_SYNC_MODE,
+        'WfmFreq-RB': _c.V_WFMREF_FREQUENCY,
+        'WfmGain-RB': _c.V_WFMREF_GAIN,
+        'WfmOffset-RB': _c.V_WFMREF_OFFSET,
         # Scope
         'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
         'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
@@ -263,20 +269,13 @@ class _PSModel:
     @staticmethod
     def _writer_cfgsiggen(
             device_ids, epics_field, pru_controller, setpoints):
-        p2i = {
-            'CycleType-Sel': 0,
-            'CycleNrCycles-SP': 1,
-            'CycleFreq-SP': 2,
-            'CycleAmpl-SP': 3,
-            'CycleOffset-SP': 4,
-            'CycleAuxParam-SP': 5,
-            }
-        _c = _const_psbsmp.ConstPSBSMP
-        if epics_field in p2i:
-            idx = p2i[epics_field]
+        params_siggen = _controller.StandardPSController.PARMS_SIGGEN
+        if epics_field in params_siggen:
+            idx = params_siggen.index(epics_field)
             return _writers.CfgSiggen(
                 device_ids, pru_controller, idx, setpoints)
         if epics_field == 'CycleDsbl-Cmd':
+            _c = _const_psbsmp.ConstPSBSMP
             return _writers.Command(
                 device_ids, pru_controller, _c.F_DISABLE_SIGGEN, setpoints)
         return None
@@ -296,6 +295,11 @@ class _PSModel:
         if epics_field == 'WfmMonAcq-Sel':
             return _writers.WfmMonAcq(
                 device_ids, pru_controller, setpoints)
+        params_wfm = _controller.StandardPSController.PARMS_WFM
+        if epics_field in params_wfm:
+            idx = params_wfm.index(epics_field)
+            return _writers.CfgWfm(
+                device_ids, pru_controller, idx, setpoints)
         return None
 
 

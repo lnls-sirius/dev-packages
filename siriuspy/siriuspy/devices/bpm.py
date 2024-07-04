@@ -1,13 +1,14 @@
 """BPM devices."""
 
 import time as _time
-# from threading import Event as _Flag
 
 import numpy as _np
 
-from .device import Device as _Device
 from ..diagbeam.bpm.csdev import Const as _csbpm
 from ..search import BPMSearch as _BPMSearch
+from .device import Device as _Device
+
+# from threading import Event as _Flag
 
 
 class BPM(_Device):

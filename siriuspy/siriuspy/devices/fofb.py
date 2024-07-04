@@ -39,6 +39,7 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
         'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
         'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
+        'FOFBAccFilterNumBiquads-Cte',
         )
 
     def __init__(self, devname, props2init='all'):
@@ -141,8 +142,13 @@ class FOFBCtrlRef(_Device, FOFBCtrlBase):
         self['LoopIntlkReset-Cmd'] = 1
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        return self['FOFBAccFilterNumBiquads-Cte']
 
 # ---------------- DCC devices ----------------
+
 
 class _DCCDevice(_Device):
     """FOFB Diamond communication controller device."""
@@ -690,6 +696,12 @@ class FamFOFBControllers(_DeviceSet):
         self._evt_fofb.cmd_external_trigger()
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
+        return ctl.fofbacc_filter_num_biquads
+
 
 class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
@@ -702,6 +714,8 @@ class FamFastCorrs(_DeviceSet):
     DEF_ATOL_FOFBACCSAT = 2e-2
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
+    DEF_ATOL_ACCFILTER = 2**-17
+    DEF_ATOL_ACCFILTERGAIN = 2**-12
 
     def __init__(self, psnames=None):
         """Init."""
@@ -833,6 +847,36 @@ class FamFastCorrs(_DeviceSet):
                 current gain for each power supply.
         """
         return _np.array([p.curr_gain for p in self._psdevs])
+
+    @property
+    def currloop_kp(self):
+        """Current loop Kp.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                CurrLoopKp for each power supply.
+        """
+        return _np.array([p.currloop_kp for p in self._psdevs])
+
+    @property
+    def currloop_ti(self):
+        """Current loop Ti.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                CurrLoopTi for each power supply.
+        """
+        return _np.array([p.currloop_ti for p in self._psdevs])
+
+    @property
+    def fofbacc_filter_gain(self):
+        """Acc filter gain.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                Filter gain for each power supply.
+        """
+        return _np.array([p.fofbacc_filter_gain for p in self._psdevs])
 
     @property
     def strength_2_current_factor(self):
@@ -1071,6 +1115,128 @@ class FamFastCorrs(_DeviceSet):
             dev.cmd_fofbacc_clear()
         return True
 
+    def set_fofbacc_filter(self, values, psnames=None, psindices=None):
+        """Command to set power supply filter coefficients values."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter = values[i]
+        return True
+
+    def check_fofbacc_filter(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTER):
+        """Check power supplies filter coefficients."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            if len(values[i]) != len(dev.fofbacc_filter):
+                return False
+            if not _np.allclose(values[i], dev.fofbacc_filter, atol=atol):
+                return False
+        return True
+
+    def set_fofbacc_filter_gain(self, values, psnames=None, psindices=None):
+        """Command to set accumulator filter gain."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter_gain = values[i]
+        return True
+
+    def check_fofbacc_filter_gain(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTERGAIN):
+        """Check accumulator filter gain."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
+        return _np.allclose(values, impltd, atol=atol)
+
+    def set_currloop_kp(self, values, psnames=None, psindices=None):
+        """Command to set power supply Kp."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.currloop_kp = values[i]
+        return True
+
+    def set_currloop_ti(self, values, psnames=None, psindices=None):
+        """Command to set power supply Ti."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.currloop_ti = values[i]
+        return True
+
+    def check_currloop_kp(
+            self, values, psnames=None, psindices=None):
+        """Check current loop Kp."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        impltd = _np.asarray([d.currloop_kp for d in devs])
+        if _np.allclose(values, impltd, atol=0):
+            return True
+        return False
+
+    def check_currloop_ti(
+            self, values, psnames=None, psindices=None):
+        """Check current loop Ti."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        impltd = _np.asarray([d.currloop_ti for d in devs])
+        if _np.allclose(values, impltd, atol=0):
+            return True
+        return False
+
     # ----- private methods -----
 
     def _get_devices(self, names, indices):
@@ -1115,6 +1281,11 @@ class HLFOFB(_Device):
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
+        'FOFBAccDecimation-Sel', 'FOFBAccDecimation-Sts',
+        'FOFBAccDecimation-SP',  'FOFBAccDecimation-RB',
+        'FOFBAccFilter-Sel', 'FOFBAccFilter-Sts',
+        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
+        'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
         'KickCHAcc-Mon', 'KickCVAcc-Mon',
         'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
@@ -1358,6 +1529,51 @@ class HLFOFB(_Device):
         """Command to reset interlocks of all FOFB controllers."""
         self['CtrlrReset-Cmd'] = 1
         return True
+
+    @property
+    def fofbacc_decimation_enumvalue(self):
+        """Accumulator decimation enum value."""
+        return self['FOFBAccDecimation-Sts']
+
+    @fofbacc_decimation_enumvalue.setter
+    def fofbacc_decimation_enumvalue(self, value):
+        self['FOFBAccDecimation-Sel'] = value
+
+    @property
+    def fofbacc_decimation_value(self):
+        """Accumulator decimation value."""
+        return self['FOFBAccDecimation-RB']
+
+    @fofbacc_decimation_value.setter
+    def fofbacc_decimation_value(self, value):
+        self['FOFBAccDecimation-SP'] = value
+
+    @property
+    def fofbacc_filter_enumvalue(self):
+        """Accumulator filter enum value."""
+        return self['FOFBAccFilter-Sts']
+
+    @fofbacc_filter_enumvalue.setter
+    def fofbacc_filter_enumvalue(self, value):
+        self['FOFBAccFilter-Sel'] = value
+
+    @property
+    def fofbacc_filter_value(self):
+        """Accumulator filter value."""
+        return self['FOFBAccFilter-RB']
+
+    @fofbacc_filter_value.setter
+    def fofbacc_filter_value(self, value):
+        self['FOFBAccFilter-SP'] = value
+
+    @property
+    def fofbacc_filter_gain(self):
+        """Accumulator filter gain value."""
+        return self['FOFBAccFilterGain-RB']
+
+    @fofbacc_filter_gain.setter
+    def fofbacc_filter_gain(self, value):
+        self['FOFBAccFilterGain-SP'] = value
 
     @property
     def kickch_acc(self):

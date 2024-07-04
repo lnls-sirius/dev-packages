@@ -120,11 +120,10 @@ class ConstRings(ConstTLines):
 class ConstSI(ConstRings):
     """Const class defining rings orbitcorr constants."""
 
-    SOFBMode = _csdev.Const.register("SOFBMode", _et.ORB_MODE_SI)
-    CorrSync = _csdev.Const.register("CorrSync", _et.SI_CORR_SYNC)
-    CorrPSSOFBEnbl = _csdev.Const.register("CorrPSSOFBEnbl", _et.DSBL_ENBL)
-    DriveType = _csdev.Const.register("DriveType", _et.DRIVE_TYPE)
-    DriveState = _csdev.Const.register("DriveState", _et.OPEN_CLOSED)
+    SOFBMode = _csdev.Const.register('SOFBMode', _et.ORB_MODE_SI)
+    CorrSync = _csdev.Const.register('CorrSync', _et.SI_CORR_SYNC)
+    DriveType = _csdev.Const.register('DriveType', _et.DRIVE_TYPE)
+    DriveState = _csdev.Const.register('DriveState', _et.OPEN_CLOSED)
 
     CORR_DEF_DELAY = 12  # [ms]
 
@@ -225,202 +224,99 @@ class SOFBTLines(ConstTLines):
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
         dbase = {
-            "Log-Mon": {"type": "char", "value": "", "count": 200},
-            "MeasRespMat-Cmd": {
-                "type": "enum",
-                "value": 0,
-                "enums": self.MeasRespMatCmd._fields,
+            'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
+            'MeasRespMat-Cmd': {
+                'type': 'enum', 'value': 0,
+                'enums': self.MeasRespMatCmd._fields},
+            'MeasRespMat-Mon': {
+                'type': 'enum', 'value': 0,
+                'enums': self.MeasRespMatMon._fields},
+            'MeasRespMatKickCH-SP': {
+                'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
+                'lolim': 0.002, 'hilim': 500},
+            'MeasRespMatKickCH-RB': {
+                'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
+                'lolim': 0.002, 'hilim': 500},
+            'MeasRespMatKickCV-SP': {
+                'type': 'float', 'value': 22.5, 'unit': 'urad', 'prec': 3,
+                'lolim': 0.002, 'hilim': 500},
+            'MeasRespMatKickCV-RB': {
+                'type': 'float', 'value': 22.5, 'unit': 'urad', 'prec': 3,
+                'lolim': 0.002, 'hilim': 500},
+            'MeasRespMatWait-SP': {
+                'type': 'float', 'value': 1, 'unit': 's', 'prec': 3,
+                'lolim': 0.005, 'hilim': 100},
+            'MeasRespMatWait-RB': {
+                'type': 'float', 'value': 1, 'unit': 's', 'prec': 3,
+                'lolim': 0.005, 'hilim': 100},
+            'CalcDelta-Cmd': {
+                'type': 'int', 'value': 0, 'unit': 'Calculate kicks'},
+            'ManCorrGainCH-SP': {
+                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
+                'lolim': -10000, 'hilim': 10000},
+            'ManCorrGainCH-RB': {
+                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
+            'ManCorrGainCV-SP': {
+                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
+                'lolim': -10000, 'hilim': 10000},
+            'ManCorrGainCV-RB': {
+                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
+            'MaxKickCH-SP': {
+                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'lolim': 0, 'hilim': 500000},
+            'MaxKickCH-RB': {
+                'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 500000},
+            'MaxKickCV-SP': {
+                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxKickCV-RB': {
+                'type': 'float', 'value': 300, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickCH-SP': {
+                'type': 'float', 'value': 5, 'unit': 'urad', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickCH-RB': {
+                'type': 'float', 'value': 5, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickCV-SP': {
+                'type': 'float', 'value': 5, 'unit': 'urad', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickCV-RB': {
+                'type': 'float', 'value': 5, 'prec': 3, 'unit': 'urad',
+                'lolim': 0, 'hilim': 10000},
+            'DeltaKickCH-SP': {
+                'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
+                'unit': 'urad'},
+            'DeltaKickCH-RB': {
+                'type': 'float', 'count': self.nr_ch, 'value': self.nr_ch*[0],
+                'unit': 'urad'},
+            'DeltaKickCV-SP': {
+                'type': 'float', 'count': self.nr_cv, 'value': self.nr_cv*[0],
+                'unit': 'urad'},
+            'DeltaKickCV-RB': {
+                'type': 'float', 'count': self.nr_cv, 'value': self.nr_cv*[0],
+                'unit': 'urad'},
+            'ApplyDelta-Cmd': {
+                'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
+                'unit': 'Apply last calculated kicks.'},
+            'ApplyDelta-Mon': {
+                'type': 'enum', 'enums': self.ApplyDeltaMon._fields,
+                'value': 0, 'unit': 'Status of Kicks implementation.'},
+            'Status-Mon': {
+                'type': 'enum', 'value': 1,
+                'enums': self.StsLblsGlob._fields},
+            'RefKickCH-Mon': {
+                'type': 'float',
+                'count': self.nr_ch,
+                'value': self.nr_ch*[0],
+                'unit': 'urad'
             },
-            "MeasRespMat-Mon": {
-                "type": "enum",
-                "value": 0,
-                "enums": self.MeasRespMatMon._fields,
-            },
-            "MeasRespMatKickCH-SP": {
-                "type": "float",
-                "value": 15,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0.002,
-                "hilim": 500,
-            },
-            "MeasRespMatKickCH-RB": {
-                "type": "float",
-                "value": 15,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0.002,
-                "hilim": 500,
-            },
-            "MeasRespMatKickCV-SP": {
-                "type": "float",
-                "value": 22.5,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0.002,
-                "hilim": 500,
-            },
-            "MeasRespMatKickCV-RB": {
-                "type": "float",
-                "value": 22.5,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0.002,
-                "hilim": 500,
-            },
-            "MeasRespMatWait-SP": {
-                "type": "float",
-                "value": 1,
-                "unit": "s",
-                "prec": 3,
-                "lolim": 0.005,
-                "hilim": 100,
-            },
-            "MeasRespMatWait-RB": {
-                "type": "float",
-                "value": 1,
-                "unit": "s",
-                "prec": 3,
-                "lolim": 0.005,
-                "hilim": 100,
-            },
-            "CalcDelta-Cmd": {
-                "type": "int",
-                "value": 0,
-                "unit": "Calculate kicks",
-            },
-            "ManCorrGainCH-SP": {
-                "type": "float",
-                "value": 100,
-                "unit": "%",
-                "prec": 2,
-                "lolim": -10000,
-                "hilim": 10000,
-            },
-            "ManCorrGainCH-RB": {
-                "type": "float",
-                "value": 100,
-                "prec": 2,
-                "unit": "%",
-            },
-            "ManCorrGainCV-SP": {
-                "type": "float",
-                "value": 100,
-                "unit": "%",
-                "prec": 2,
-                "lolim": -10000,
-                "hilim": 10000,
-            },
-            "ManCorrGainCV-RB": {
-                "type": "float",
-                "value": 100,
-                "prec": 2,
-                "unit": "%",
-            },
-            "MaxKickCH-SP": {
-                "type": "float",
-                "value": 300,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0,
-                "hilim": 500000,
-            },
-            "MaxKickCH-RB": {
-                "type": "float",
-                "value": 300,
-                "prec": 3,
-                "unit": "urad",
-                "lolim": 0,
-                "hilim": 500000,
-            },
-            "MaxKickCV-SP": {
-                "type": "float",
-                "value": 300,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "MaxKickCV-RB": {
-                "type": "float",
-                "value": 300,
-                "prec": 3,
-                "unit": "urad",
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "MaxDeltaKickCH-SP": {
-                "type": "float",
-                "value": 5,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "MaxDeltaKickCH-RB": {
-                "type": "float",
-                "value": 5,
-                "prec": 3,
-                "unit": "urad",
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "MaxDeltaKickCV-SP": {
-                "type": "float",
-                "value": 5,
-                "unit": "urad",
-                "prec": 3,
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "MaxDeltaKickCV-RB": {
-                "type": "float",
-                "value": 5,
-                "prec": 3,
-                "unit": "urad",
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "DeltaKickCH-SP": {
-                "type": "float",
-                "count": self.nr_ch,
-                "value": self.nr_ch * [0],
-                "unit": "urad",
-            },
-            "DeltaKickCH-RB": {
-                "type": "float",
-                "count": self.nr_ch,
-                "value": self.nr_ch * [0],
-                "unit": "urad",
-            },
-            "DeltaKickCV-SP": {
-                "type": "float",
-                "count": self.nr_cv,
-                "value": self.nr_cv * [0],
-                "unit": "urad",
-            },
-            "DeltaKickCV-RB": {
-                "type": "float",
-                "count": self.nr_cv,
-                "value": self.nr_cv * [0],
-                "unit": "urad",
-            },
-            "ApplyDelta-Cmd": {
-                "type": "enum",
-                "enums": self.ApplyDelta._fields,
-                "value": 0,
-                "unit": "Apply last calculated kicks.",
-            },
-            "ApplyDelta-Mon": {
-                "type": "enum",
-                "enums": self.ApplyDeltaMon._fields,
-                "value": 0,
-                "unit": "Status of Kicks implementation.",
-            },
-            "Status-Mon": {
-                "type": "enum",
-                "value": 1,
-                "enums": self.StsLblsGlob._fields,
+            'RefKickCV-Mon': {
+                'type': 'float',
+                'count': self.nr_cv,
+                'value': self.nr_cv*[0],
+                'unit': 'urad'
             },
         }
         return self._add_prefix(dbase, prefix)
@@ -894,63 +790,29 @@ class SOFBRings(SOFBTLines, ConstRings):
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
         db_ring = {
-            "MeasRespMatKickRF-SP": {
-                "type": "float",
-                "value": 75,
-                "unit": "Hz",
-                "prec": 2,
-                "lolim": 1,
-                "hilim": 1000,
-            },
-            "MeasRespMatKickRF-RB": {
-                "type": "float",
-                "value": 75,
-                "unit": "Hz",
-                "prec": 2,
-                "lolim": 1,
-                "hilim": 1000,
-            },
-            "ManCorrGainRF-SP": {
-                "type": "float",
-                "value": 100,
-                "unit": "%",
-                "prec": 2,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "ManCorrGainRF-RB": {
-                "type": "float",
-                "value": 100,
-                "prec": 2,
-                "unit": "%",
-            },
-            "MaxDeltaKickRF-SP": {
-                "type": "float",
-                "value": 10,
-                "unit": "Hz",
-                "prec": 2,
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "MaxDeltaKickRF-RB": {
-                "type": "float",
-                "value": 10,
-                "prec": 2,
-                "unit": "Hz",
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "DeltaKickRF-SP": {
-                "type": "float",
-                "value": 0,
-                "prec": 2,
-                "unit": "Hz",
-            },
-            "DeltaKickRF-RB": {
-                "type": "float",
-                "value": 0,
-                "prec": 2,
-                "unit": "Hz",
+            'MeasRespMatKickRF-SP': {
+                'type': 'float', 'value': 75, 'unit': 'Hz', 'prec': 2,
+                'lolim': 1, 'hilim': 1000},
+            'MeasRespMatKickRF-RB': {
+                'type': 'float', 'value': 75, 'unit': 'Hz', 'prec': 2,
+                'lolim': 1, 'hilim': 1000},
+            'ManCorrGainRF-SP': {
+                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
+                'lolim': -1000, 'hilim': 1000},
+            'ManCorrGainRF-RB': {
+                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
+            'MaxDeltaKickRF-SP': {
+                'type': 'float', 'value': 10, 'unit': 'Hz', 'prec': 2,
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickRF-RB': {
+                'type': 'float', 'value': 10, 'prec': 2, 'unit': 'Hz',
+                'lolim': 0, 'hilim': 10000},
+            'DeltaKickRF-SP': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
+            'DeltaKickRF-RB': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz'},
+            'RefKickRF-Mon': {
+                'type': 'float', 'value': 0, 'prec': 2, 'unit': 'Hz',
             },
         }
         dbase = super().get_sofb_database(prefix=prefix)
@@ -1140,706 +1002,301 @@ class SOFBSI(SOFBRings, ConstSI):
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
         db_ring = {
-            "LoopState-Sel": {
-                "type": "enum",
-                "enums": self.LoopState._fields,
-                "value": 0,
-            },
-            "LoopState-Sts": {
-                "type": "enum",
-                "enums": self.LoopState._fields,
-                "value": 0,
-            },
-            "LoopFreq-SP": {
-                "type": "float",
-                "value": self.BPMsFreq,
-                "unit": "Hz",
-                "prec": 3,
-                "lolim": 1e-3,
-                "hilim": 60,
-            },
-            "LoopFreq-RB": {
-                "type": "float",
-                "value": self.BPMsFreq,
-                "unit": "Hz",
-                "prec": 3,
-                "lolim": 1e-3,
-                "hilim": 60,
-            },
-            "LoopPIDKpCH-SP": {
-                "type": "float",
-                "value": 0.0,
-                "unit": "frac",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKpCH-RB": {
-                "type": "float",
-                "value": 0.0,
-                "unit": "frac",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKpCV-SP": {
-                "type": "float",
-                "value": 0.0,
-                "unit": "frac",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKpCV-RB": {
-                "type": "float",
-                "value": 0.0,
-                "unit": "frac",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKiCH-SP": {
-                "type": "float",
-                "value": 0.2,
-                "unit": "frac.Hz",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKiCH-RB": {
-                "type": "float",
-                "value": 0.2,
-                "unit": "frac.Hz",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKiCV-SP": {
-                "type": "float",
-                "value": 0.2,
-                "unit": "frac.Hz",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKiCV-RB": {
-                "type": "float",
-                "value": 0.2,
-                "unit": "frac.Hz",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKdCH-SP": {
-                "type": "float",
-                "value": 0,
-                "unit": "frac.s",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKdCH-RB": {
-                "type": "float",
-                "value": 0,
-                "unit": "frac.s",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKdCV-SP": {
-                "type": "float",
-                "value": 0,
-                "unit": "frac.s",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKdCV-RB": {
-                "type": "float",
-                "value": 0,
-                "unit": "frac.s",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKpRF-SP": {
-                "type": "float",
-                "value": 0.0,
-                "unit": "frac",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKpRF-RB": {
-                "type": "float",
-                "value": 0.0,
-                "unit": "frac",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKiRF-SP": {
-                "type": "float",
-                "value": 0.2,
-                "unit": "frac.Hz",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKiRF-RB": {
-                "type": "float",
-                "value": 0.2,
-                "unit": "frac.Hz",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKdRF-SP": {
-                "type": "float",
-                "value": 0,
-                "unit": "frac.s",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPIDKdRF-RB": {
-                "type": "float",
-                "value": 0,
-                "unit": "frac.s",
-                "prec": 3,
-                "lolim": -1000,
-                "hilim": 1000,
-            },
-            "LoopPerfItersOk-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "%",
-                "prec": 3,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopEffectiveRate-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "Hz",
-                "prec": 3,
-                "lolim": 0,
-                "hilim": 100,
-            },
-            "LoopNumIters-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "#",
-                "prec": 0,
-                "lolim": 0,
-                "hilim": 100000,
-            },
-            "LoopPrintEveryNumIters-SP": {
-                "type": "float",
-                "value": 200,
-                "unit": "#",
-                "prec": 0,
-                "lolim": 1,
-                "hilim": 100000,
-            },
-            "LoopPrintEveryNumIters-RB": {
-                "type": "float",
-                "value": 200,
-                "unit": "#",
-                "prec": 0,
-                "lolim": 1,
-                "hilim": 100000,
-            },
-            "LoopPerfItersTOut-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "%",
-                "prec": 3,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfItersDiff-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "%",
-                "prec": 3,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfDiffNrPSMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "#",
-                "prec": 3,
-                "lolim": -1,
-                "hilim": 400,
-            },
-            "LoopPerfDiffNrPSAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "#",
-                "prec": 3,
-                "lolim": -1,
-                "hilim": 400,
-            },
-            "LoopPerfDiffNrPSStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "#",
-                "prec": 3,
-                "lolim": -1,
-                "hilim": 400,
-            },
-            "LoopPerfTimGetOMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetOMin-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetOAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetOStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetKMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetKMin-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetKAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimGetKStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimCalcMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimCalcMin-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimCalcAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimCalcStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimProcMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimProcMin-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimProcAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimProcStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimAppMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimAppMin-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimAppAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimAppStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimTotMax-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimTotMin-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimTotAvg-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopPerfTimTotStd-Mon": {
-                "type": "float",
-                "value": 0,
-                "unit": "ms",
-                "prec": 1,
-                "lolim": -1,
-                "hilim": 100,
-            },
-            "LoopMaxOrbDistortion-SP": {
-                "type": "float",
-                "value": self.DEF_MAX_ORB_DISTORTION,
-                "prec": 3,
-                "unit": "um",
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "LoopMaxOrbDistortion-RB": {
-                "type": "float",
-                "value": self.DEF_MAX_ORB_DISTORTION,
-                "prec": 3,
-                "unit": "um",
-                "lolim": 0,
-                "hilim": 10000,
-            },
-            "CorrPSSOFBEnbl-Sel": {
-                "type": "enum",
-                "enums": self.CorrPSSOFBEnbl._fields,
-                "value": self.CorrPSSOFBEnbl.Dsbl,
-            },
-            "CorrPSSOFBEnbl-Sts": {
-                "type": "enum",
-                "enums": self.CorrPSSOFBEnbl._fields,
-                "value": self.CorrPSSOFBEnbl.Dsbl,
-            },
-            "CorrPSSOFBEnbl-Mon": {
-                "type": "enum",
-                "enums": self.CorrPSSOFBEnbl._fields,
-                "value": self.CorrPSSOFBEnbl.Dsbl,
-            },
-            "FOFBDownloadKicksPerc-SP": {
-                "type": "float",
-                "value": 4.0,
-                "prec": 2,
-                "unit": "%",
-                "lolim": 0.0,
-                "hilim": 100.1,
-            },
-            "FOFBDownloadKicksPerc-RB": {
-                "type": "float",
-                "value": 4.0,
-                "prec": 2,
-                "unit": "%",
-                "lolim": 0.0,
-                "hilim": 100.1,
-            },
-            "FOFBDownloadKicks-Sel": {
-                "type": "enum",
-                "value": self.DsblEnbl.Enbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBDownloadKicks-Sts": {
-                "type": "enum",
-                "value": self.DsblEnbl.Enbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBDownloadKicks-Mon": {
-                "type": "enum",
-                "value": self.DsblEnbl.Enbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBUpdateRefOrbPerc-SP": {
-                "type": "float",
-                "value": 0.0,
-                "prec": 2,
-                "unit": "%",
-                "lolim": -100.1,
-                "hilim": 100.1,
-            },
-            "FOFBUpdateRefOrbPerc-RB": {
-                "type": "float",
-                "value": 0.0,
-                "prec": 2,
-                "unit": "%",
-                "lolim": -100.1,
-                "hilim": 100.1,
-            },
-            "FOFBUpdateRefOrb-Sel": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBUpdateRefOrb-Sts": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBUpdateRefOrb-Mon": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBNullSpaceProj-Sel": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBNullSpaceProj-Sts": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBNullSpaceProj-Mon": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBZeroDistortionAtBPMs-Sel": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBZeroDistortionAtBPMs-Sts": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "FOFBZeroDistortionAtBPMs-Mon": {
-                "type": "enum",
-                "value": self.DsblEnbl.Dsbl,
-                "enums": self.DsblEnbl._fields,
-            },
-            "DriveFreqDivisor-SP": {
-                "type": "int",
-                "value": 12,
-                "unit": "Div",
-                "lolim": 0,
-                "hilim": 1000,
-            },
-            "DriveFreqDivisor-RB": {
-                "type": "int",
-                "value": 12,
-                "unit": "Div",
-                "lolim": 0,
-                "hilim": 1000,
-            },
-            "DriveFrequency-Mon": {
-                "type": "float",
-                "value": self.BPMsFreq / 12,
-                "prec": 3,
-                "unit": "Hz",
-                "lolim": 0,
-                "hilim": 1000,
-            },
-            "DriveNrCycles-SP": {
-                "type": "int",
-                "value": 10,
-                "unit": "number",
-                "lolim": 0,
-                "hilim": 1000,
-            },
-            "DriveNrCycles-RB": {
-                "type": "int",
-                "value": 10,
-                "unit": "number",
-                "lolim": 0,
-                "hilim": 1000,
-            },
-            "DriveDuration-Mon": {
-                "type": "float",
-                "value": 12 / self.BPMsFreq * 10,
-                "prec": 1,
-                "unit": "s",
-                "lolim": 0,
-                "hilim": 1000,
-            },
-            "DriveAmplitude-SP": {
-                "type": "float",
-                "value": 5,
-                "prec": 2,
-                "unit": "urad or Hz",
-                "lolim": -100,
-                "hilim": 100,
-            },
-            "DriveAmplitude-RB": {
-                "type": "float",
-                "value": 5,
-                "prec": 2,
-                "unit": "urad or Hz",
-                "lolim": -100,
-                "hilim": 100,
-            },
-            "DrivePhase-SP": {
-                "type": "float",
-                "value": 0,
-                "prec": 3,
-                "unit": "deg",
-                "lolim": -360,
-                "hilim": 360,
-            },
-            "DrivePhase-RB": {
-                "type": "float",
-                "value": 0,
-                "prec": 3,
-                "unit": "deg",
-                "lolim": -360,
-                "hilim": 360,
-            },
-            "DriveCorrIndex-SP": {
-                "type": "int",
-                "value": 0,
-                "unit": "#",
-                "lolim": -self.nr_corrs,
-                "hilim": self.nr_corrs,
-            },
-            "DriveCorrIndex-RB": {
-                "type": "int",
-                "value": 0,
-                "unit": "#",
-                "lolim": -self.nr_corrs,
-                "hilim": self.nr_corrs,
-            },
-            "DriveBPMIndex-SP": {
-                "type": "int",
-                "value": 0,
-                "unit": "#",
-                "lolim": -self.nr_bpms * 2,
-                "hilim": self.nr_bpms * 2,
-            },
-            "DriveBPMIndex-RB": {
-                "type": "int",
-                "value": 0,
-                "unit": "#",
-                "lolim": -self.nr_bpms * 2,
-                "hilim": self.nr_bpms * 2,
-            },
-            "DriveType-Sel": {
-                "type": "enum",
-                "enums": self.DriveType._fields,
-                "unit": "Sine_Square_Impulse",
-                "value": 0,
-            },
-            "DriveType-Sts": {
-                "type": "enum",
-                "enums": self.DriveType._fields,
-                "unit": "Sine_Square_Impulse",
-                "value": 0,
-            },
-            "DriveState-Sel": {
-                "type": "enum",
-                "enums": self.DriveState._fields,
-                "unit": "Open_Closed",
-                "value": 0,
-            },
-            "DriveState-Sts": {
-                "type": "enum",
-                "enums": self.DriveState._fields,
-                "unit": "Open_Closed",
-                "value": 0,
-            },
-            "DriveData-Mon": {
-                "type": "float",
-                "unit": "(s, urad, um)",
-                "count": self.MAX_DRIVE_DATA,
-                "value": self.MAX_DRIVE_DATA * [0],
-            },
-        }
+            'LoopState-Sel': {
+                'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
+            'LoopState-Sts': {
+                'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
+            'LoopFreq-SP': {
+                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'prec': 3, 'lolim': 1e-3, 'hilim': 60},
+            'LoopFreq-RB': {
+                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'prec': 3, 'lolim': 1e-3, 'hilim': 60},
+            'LoopPIDKpCH-SP': {
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpCH-RB': {
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpCV-SP': {
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpCV-RB': {
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCH-SP': {
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCH-RB': {
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCV-SP': {
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiCV-RB': {
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCH-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCH-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCV-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdCV-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpRF-SP': {
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKpRF-RB': {
+                'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-SP': {
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKiRF-RB': {
+                'type': 'float', 'value': 0.2, 'unit': 'frac.Hz', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-SP': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPIDKdRF-RB': {
+                'type': 'float', 'value': 0, 'unit': 'frac.s', 'prec': 3,
+                'lolim': -1000, 'hilim': 1000},
+            'LoopPerfItersOk-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopEffectiveRate-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 100},
+            'LoopNumIters-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 0,
+                'lolim': 0, 'hilim': 100000},
+            'LoopPrintEveryNumIters-SP': {
+                'type': 'float', 'value': 200, 'unit': '#', 'prec': 0,
+                'lolim': 1, 'hilim': 100000},
+            'LoopPrintEveryNumIters-RB': {
+                'type': 'float', 'value': 200, 'unit': '#', 'prec': 0,
+                'lolim': 1, 'hilim': 100000},
+            'LoopPerfItersTOut-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfItersDiff-Mon': {
+                'type': 'float', 'value': 0, 'unit': '%', 'prec': 3,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfDiffNrPSMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfDiffNrPSAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfDiffNrPSStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': '#', 'prec': 3,
+                'lolim': -1, 'hilim': 400},
+            'LoopPerfTimGetOMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimGetOStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimCalcStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimProcStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimAppStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotMax-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotMin-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotAvg-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopPerfTimTotStd-Mon': {
+                'type': 'float', 'value': 0, 'unit': 'ms', 'prec': 1,
+                'lolim': -1, 'hilim': 100},
+            'LoopMaxOrbDistortion-SP': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um',
+                'lolim': 0, 'hilim': 10000},
+            'LoopMaxOrbDistortion-RB': {
+                'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
+                'prec': 3, 'unit': 'um',
+                'lolim': 0, 'hilim': 10000},
+            'FOFBDownloadKicksPerc-SP': {
+                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100.1},
+            'FOFBDownloadKicksPerc-RB': {
+                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 100.1},
+            'FOFBDownloadKicks-Sel': {
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBDownloadKicks-Sts': {
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBDownloadKicks-Mon': {
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBDownloadKicksCH-Mon': {
+                'type': 'float',
+                'count': self.nr_ch,
+                'value': self.nr_ch*[0],
+                'unit': 'urad'
+            },
+            'FOFBDownloadKicksCV-Mon': {
+                'type': 'float',
+                'count': self.nr_cv,
+                'value': self.nr_cv*[0],
+                'unit': 'urad'
+            },
+            'FOFBDownloadKicksRF-Mon': {
+                'type': 'float', 'value': 0, 'prec': 3, 'unit': 'Hz',
+            },
+            'FOFBUpdateRefOrbPerc-SP': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
+            'FOFBUpdateRefOrbPerc-RB': {
+                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
+                'lolim': -100.1, 'hilim': 100.1},
+            'FOFBUpdateRefOrb-Sel': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBUpdateRefOrb-Sts': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBUpdateRefOrb-Mon': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBDeltaRefOrbX-Mon': {
+                'type': 'float',
+                'unit': 'um',
+                'count': self.nr_bpms,
+                'value': self.nr_bpms*[0],
+            },
+            'FOFBDeltaRefOrbY-Mon': {
+                'type': 'float',
+                'unit': 'um',
+                'count': self.nr_bpms,
+                'value': self.nr_bpms*[0],
+            },
+            'FOFBNullSpaceProj-Sel': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBNullSpaceProj-Sts': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBNullSpaceProj-Mon': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBZeroDistortionAtBPMs-Sel': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBZeroDistortionAtBPMs-Sts': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'FOFBZeroDistortionAtBPMs-Mon': {
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'enums': self.DsblEnbl._fields},
+            'DriveFreqDivisor-SP': {
+                'type': 'int', 'value': 12, 'unit': 'Div',
+                'lolim': 0, 'hilim': 1000},
+            'DriveFreqDivisor-RB': {
+                'type': 'int', 'value': 12, 'unit': 'Div',
+                'lolim': 0, 'hilim': 1000},
+            'DriveFrequency-Mon': {
+                'type': 'float', 'value': self.BPMsFreq/12, 'prec': 3,
+                'unit': 'Hz', 'lolim': 0, 'hilim': 1000},
+            'DriveNrCycles-SP': {
+                'type': 'int', 'value': 10, 'unit': 'number',
+                'lolim': 0, 'hilim': 1000},
+            'DriveNrCycles-RB': {
+                'type': 'int', 'value': 10, 'unit': 'number',
+                'lolim': 0, 'hilim': 1000},
+            'DriveDuration-Mon': {
+                'type': 'float', 'value': 12/self.BPMsFreq*10, 'prec': 1,
+                'unit': 's', 'lolim': 0, 'hilim': 1000},
+            'DriveAmplitude-SP': {
+                'type': 'float', 'value': 5, 'prec': 2, 'unit': 'urad or Hz',
+                'lolim': -100, 'hilim': 100},
+            'DriveAmplitude-RB': {
+                'type': 'float', 'value': 5, 'prec': 2, 'unit': 'urad or Hz',
+                'lolim': -100, 'hilim': 100},
+            'DrivePhase-SP': {
+                'type': 'float', 'value': 0, 'prec': 3, 'unit': 'deg',
+                'lolim': -360, 'hilim': 360},
+            'DrivePhase-RB': {
+                'type': 'float', 'value': 0, 'prec': 3, 'unit': 'deg',
+                'lolim': -360, 'hilim': 360},
+            'DriveCorrIndex-SP': {
+                'type': 'int', 'value': 0, 'unit': '#',
+                'lolim': -self.nr_corrs, 'hilim': self.nr_corrs},
+            'DriveCorrIndex-RB': {
+                'type': 'int', 'value': 0, 'unit': '#',
+                'lolim': -self.nr_corrs, 'hilim': self.nr_corrs},
+            'DriveBPMIndex-SP': {
+                'type': 'int', 'value': 0, 'unit': '#',
+                'lolim': -self.nr_bpms*2, 'hilim': self.nr_bpms*2},
+            'DriveBPMIndex-RB': {
+                'type': 'int', 'value': 0, 'unit': '#',
+                'lolim': -self.nr_bpms*2, 'hilim': self.nr_bpms*2},
+            'DriveType-Sel': {
+                'type': 'enum', 'enums': self.DriveType._fields,
+                'unit': 'Sine_Square_Impulse', 'value': 0},
+            'DriveType-Sts': {
+                'type': 'enum', 'enums': self.DriveType._fields,
+                'unit': 'Sine_Square_Impulse', 'value': 0},
+            'DriveState-Sel': {
+                'type': 'enum', 'enums': self.DriveState._fields,
+                'unit': 'Open_Closed', 'value': 0},
+            'DriveState-Sts': {
+                'type': 'enum', 'enums': self.DriveState._fields,
+                'unit': 'Open_Closed', 'value': 0},
+            'DriveData-Mon': {
+                'type': 'float', 'unit': '(s, urad, um)',
+                'count': self.MAX_DRIVE_DATA, 'value': self.MAX_DRIVE_DATA*[0]}
+            }
         dbase = super().get_sofb_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
