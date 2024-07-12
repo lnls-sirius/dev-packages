@@ -25,7 +25,6 @@ class ETypes(_csdev.ETypes):
     SWMODES = ('rffe_switching', 'direct', 'inverted', 'switching')
     SWTAGENBL = ('disabled', 'enabled')
     FOFBDATAMASKENBL = ('disabled', 'enabled')
-    MONITENBL = ('No', 'Yes')
 
     OPMODES = ('MultiBunch', 'SinglePass')
     POLARITY = ('Positive', 'Negative')
@@ -63,7 +62,6 @@ class Const(_csdev.Const):
     SwPhaseSyncEnbl = _csdev.Const.register('SwPhaseSyncEnbl', _et.SWTAGENBL)
     FOFBDataMaskEnbl = _csdev.Const.register(
         'FOFBDataMaskEnbl', _et.FOFBDATAMASKENBL)
-    MonitEnbl = _csdev.Const.register('MonitEnbl', _et.MONITENBL)
     OpModes = _csdev.Const.register('OpModes', _et.OPMODES)
     Polarity = _csdev.Const.register('Polarity', _et.POLARITY)
     EnblTyp = _csdev.Const.register('EnblTyp', _et.ENBLTYP)
@@ -271,10 +269,6 @@ class Const(_csdev.Const):
     def get_monit_database(prefix=''):
         """."""
         dbase = {
-            'MonitEnable-Sel': {
-                'type': 'enum', 'enums': Const.MonitEnbl._fields, 'value': 3},
-            'MonitEnable-Sts': {
-                'type': 'enum', 'enums': Const.MonitEnbl._fields, 'value': 3},
             'MONITUpdtTime-SP': {
                 'type': 'float', 'value': 0, 'low': 0.001, 'high': 1.0,
                 'unit': 's'},
