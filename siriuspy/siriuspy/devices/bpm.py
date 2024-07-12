@@ -22,7 +22,7 @@ class BPM(_Device):
         _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
         _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
         _csbpm.AcqStates.Acquiring}
-    ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
+    ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
     PROPERTIES_ACQ = (

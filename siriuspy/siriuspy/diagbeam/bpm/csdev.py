@@ -33,12 +33,12 @@ class ETypes(_csdev.ETypes):
     DSBLDENBLD = ('disabled', 'enabled')
     CONNTYP = _csdev.ETypes.DISCONN_CONN
     ACQREPEAT = ('Normal', 'Repetitive')
-    ACQEVENTS = ('Start', 'Stop', 'Abort')
+    ACQEVENTS = ('Start', 'Stop')
     ACQDATATYP = ('A', 'B', 'C', 'D')
     ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'FAcq')
     ACQSTATES = (
         'Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
-        'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
+        'Acquiring', 'Error', 'Too Many Samples',
         'Too Few Samples', 'No Memory', 'Acq Overflow')
     ACQTRIGTYP = ('Now', 'External', 'Data', 'Software')
     FFTWINDOWTYP = ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW')
