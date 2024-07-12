@@ -51,11 +51,8 @@ class BPM(_Device):
     PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
         'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
         'RFFEAtt-SP', 'RFFEAtt-RB',
-        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
         'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
         'GEN_RawQArrayData',
-        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
-        'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
         'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
         'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
@@ -626,66 +623,6 @@ class BPM(_Device):
     def mtraw_posq(self):
         """Multi turn raw Q array data."""
         return self['GEN_RawQArrayData']
-
-    @property
-    def sp_posx(self):
-        """."""
-        return self['SPPosX-Mon'] * self.CONV_NM2UM
-
-    @property
-    def sp_posy(self):
-        """."""
-        return self['SPPosY-Mon'] * self.CONV_NM2UM
-
-    @property
-    def sp_possum(self):
-        """."""
-        return self['SPSum-Mon']
-
-    @property
-    def sp_posq(self):
-        """."""
-        return self['SPPosQ-Mon']
-
-    @property
-    def sp_ampla(self):
-        """."""
-        return self['SPAmplA-Mon']
-
-    @property
-    def sp_amplb(self):
-        """."""
-        return self['SPAmplB-Mon']
-
-    @property
-    def sp_amplc(self):
-        """."""
-        return self['SPAmplC-Mon']
-
-    @property
-    def sp_ampld(self):
-        """."""
-        return self['SPAmplD-Mon']
-
-    @property
-    def sp_arraya(self):
-        """."""
-        return self['SP_AArrayData']
-
-    @property
-    def sp_arrayb(self):
-        """."""
-        return self['SP_BArrayData']
-
-    @property
-    def sp_arrayc(self):
-        """."""
-        return self['SP_CArrayData']
-
-    @property
-    def sp_arrayd(self):
-        """."""
-        return self['SP_DArrayData']
 
     @property
     def acq_mode(self):
