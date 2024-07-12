@@ -346,6 +346,10 @@ class FamBPMs(_DeviceSet):
         if external:
             trig = self._csbpm.AcqTrigTyp.External
 
+        ret = self.cmd_stop_mturn_acquisition()
+        if ret > 0:
+            return -ret
+
         for bpm in self.bpms:
             bpm.acq_repeat = rep
             bpm.acq_channel = acq_rate
@@ -354,6 +358,26 @@ class FamBPMs(_DeviceSet):
             bpm.acq_nrsamples_post = nr_points_after
 
         return self.cmd_start_mturn_acquisition()
+
+    def cmd_stop_mturn_acquisition(self, wait=True, timeout=10) -> int:
+        """Stop BPMs acquistion.
+
+        Args:
+            wait (bool, optional): whether or not to wait BPMs get ready.
+                Defaults to True.
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: BPMs are ready.
+                >0: Index of the first BPM which did not update plus 1.
+        """
+        for bpm in self.bpms:
+            bpm.acq_ctrl = self._csbpm.AcqEvents.Stop
+
+        if wait:
+            return self.wait_acquisition_finish(timeout=timeout)
+        return 0
 
     def wait_acquisition_finish(self, timeout=10) -> int:
         """Wait for all BPMs to be ready for acquisition.

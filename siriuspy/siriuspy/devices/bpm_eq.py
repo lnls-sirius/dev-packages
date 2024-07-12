@@ -252,6 +252,12 @@ class EqualizeBPMs(_FamBPMs):
 
         # acquire antennas data in FOFB rate
         self._log('Preparing BPMs')
+        ret = self.cmd_stop_mturn_acquisition()
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not stop '
+                'previous acquistion.')
+            return
 
         self.reset_mturn_initial_state()
         ret = self.config_mturn_acquisition(
@@ -324,6 +330,12 @@ class EqualizeBPMs(_FamBPMs):
     def _do_acquire_for_check(self):
         # acquire antennas data in FOFB rate
         self._log('Preparing BPMs')
+        ret = self.cmd_stop_mturn_acquisition()
+        if ret > 0:
+            self._log(
+                f'ERR: BPM {self.bpm_names[ret-1]} did not stop '
+                'previous acquistion.')
+            return
 
         fswtc = self.get_switching_frequency(1)
         fsamp = self.get_sampling_frequency(1)
