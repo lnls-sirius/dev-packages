@@ -28,9 +28,9 @@ class BPM(_Device):
     PROPERTIES_ACQ = (
         'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
         'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
-        'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
-        'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
-        'GEN_QArrayData',
+        'GENAmplAData', 'GENAmplBData', 'GENAmplCData', 'GENAmplDData',
+        'GENPosXData', 'GENPosYData', 'GENSumData',
+        'GEN_PosQData',
         'GENChannel-Sel', 'GENChannel-Sts',
         'GENShots-SP', 'GENShots-RB',
         'GENUpdateTime-SP', 'GENUpdateTime-RB',
@@ -48,7 +48,7 @@ class BPM(_Device):
         )
 
     PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
-        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
+        'SwMode-Sel', 'SwMode-Sts',
         'RFFEAtt-SP', 'RFFEAtt-RB',
         'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
         'GEN_RawQArrayData',
@@ -105,12 +105,8 @@ class BPM(_Device):
     def __str__(self):
         """."""
         stg = '################### Summary Status ###################\n'
-        stg += 'asyn:\n'
-        stg += f'    Enabled: {_csbpm.EnblTyp._fields[self.asyn_state]:s}\n'
-        stg += '    Connected: '
         stg += '    Switching Mode: '
         stg += f'{_csbpm.SwModes._fields[self.switching_mode]:s}\n'
-        stg += f'{_csbpm.ConnTyp._fields[self.asyn_connected]:s}\n'
         stg += '\nAcquisition Parameters:\n'
         stg += f'    - Status: {_csbpm.AcqStates._fields[self.acq_status]:s}\n'
         stg += f'    - Channel: {_csbpm.AcqChan._fields[self.acq_channel]:s}\n'
@@ -135,8 +131,6 @@ class BPM(_Device):
     def is_ok(self):
         """."""
         okay = self.acq_status not in self.ACQSTATES_NOTOK
-        okay &= self.asyn_connected == _csbpm.ConnTyp.Connected
-        okay &= self.asyn_state == _csbpm.EnblTyp.Enable
         return okay
 
     @property
@@ -151,22 +145,6 @@ class BPM(_Device):
         """."""
         if 'RFFEAtt-SP' in self._pvs:
             self['RFFEAtt-SP'] = val
-
-    @property
-    def asyn_state(self):
-        """."""
-        return self['asyn.ENBL']
-
-    @asyn_state.setter
-    def asyn_state(self, boo):
-        """."""
-        val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
-        self['asyn.ENBL'] = val
-
-    @property
-    def asyn_connected(self):
-        """."""
-        return self['asyn.CNCT']
 
     @property
     def switching_mode(self):
@@ -506,42 +484,42 @@ class BPM(_Device):
     @property
     def mt_posx(self):
         """."""
-        return self['GEN_XArrayData'] * self.CONV_NM2UM
+        return self['GENPosXData'] * self.CONV_NM2UM
 
     @property
     def mt_posy(self):
         """."""
-        return self['GEN_YArrayData'] * self.CONV_NM2UM
+        return self['GENPosYData'] * self.CONV_NM2UM
 
     @property
     def mt_possum(self):
         """."""
-        return self['GEN_SUMArrayData']
+        return self['GENSumData']
 
     @property
     def mt_posq(self):
         """."""
-        return self['GEN_QArrayData']
+        return self['GEN_PosQData']
 
     @property
     def mt_ampla(self):
         """."""
-        return self['GEN_AArrayData']
+        return self['GENAmplAData']
 
     @property
     def mt_amplb(self):
         """."""
-        return self['GEN_BArrayData']
+        return self['GENAmplBData']
 
     @property
     def mt_amplc(self):
         """."""
-        return self['GEN_CArrayData']
+        return self['GENAmplCData']
 
     @property
     def mt_ampld(self):
         """."""
-        return self['GEN_DArrayData']
+        return self['GENAmplDData']
 
     @property
     def mt_polyx(self):

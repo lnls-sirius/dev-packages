@@ -116,7 +116,6 @@ class Const(_csdev.Const):
         dbase.update(Const.get_offsets_database())
         dbase.update(Const.get_gain_database())
         dbase.update(Const.get_rffe_database())
-        dbase.update(Const.get_asyn_database())
         dbase.update(Const.get_switch_database())
         dbase.update(Const.get_monit_database())
 
