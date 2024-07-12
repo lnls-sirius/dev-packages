@@ -51,7 +51,6 @@ class ETypes(_csdev.ETypes):
         "TimingConnected",
         "TimingConfigured",
         "BPMsConnected",
-        "BPMsEnabled",
         "BPMsConfigured",
         "BPMsTestDsbld",
         "BPMsSwSyncEnbld",
@@ -438,13 +437,13 @@ class SOFBTLines(ConstTLines):
                 "TrigAcqConfig-Cmd": {"type": "int", "value": 0},
                 "TrigAcqCtrl-Sel": {
                     "type": "enum",
-                    "unit": "Start_Stop_Abort",
+                    "unit": "Start_Stop",
                     "value": self.TrigAcqCtrl.Stop,
                     "enums": self.TrigAcqCtrl._fields,
                 },
                 "TrigAcqCtrl-Sts": {
                     "type": "enum",
-                    "unit": "Start_Stop_Abort.",
+                    "unit": "Start_Stop.",
                     "value": self.TrigAcqCtrl.Stop,
                     "enums": self.TrigAcqCtrl._fields,
                 },
