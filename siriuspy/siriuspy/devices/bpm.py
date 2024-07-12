@@ -875,11 +875,6 @@ class BPM(_Device):
         self.acq_ctrl = _csbpm.AcqEvents.Stop
         return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
 
-    def cmd_acq_abort(self):
-        """Command Abort Acquisition."""
-        self.acq_ctrl = _csbpm.AcqEvents.Abort
-        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Abort)
-
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
         self.switching_mode = _csbpm.SwModes.switching
