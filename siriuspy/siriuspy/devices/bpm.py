@@ -95,7 +95,7 @@ class BPM(_Device):
             props2init = set(BPM.PROPERTIES_DEFAULT)
             props2init -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
             props2init = list(props2init)
-        elif isinstance(props2init, str) and props2init.startswith('gen'):
+        elif isinstance(props2init, str) and props2init.startswith('acq'):
             props2init = list(self.PROPERTIES_ACQ)
 
         super().__init__(
