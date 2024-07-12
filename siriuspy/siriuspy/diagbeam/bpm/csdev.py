@@ -38,8 +38,8 @@ class ETypes(_csdev.ETypes):
     ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'FAcq')
     ACQSTATES = (
         'Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
-        'Acquiring', 'Error', 'Too Many Samples',
-        'Too Few Samples', 'No Memory', 'Acq Overflow')
+        'Acquiring', 'Error', 'Bad Post Samples', 'Too Many Samples',
+        'No Samples', 'No Memory', 'Overflow')
     ACQTRIGTYP = ('Now', 'External', 'Data', 'Software')
     FFTWINDOWTYP = ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW')
     FFTCONVDIRECTION = ('Forward', 'Backward')

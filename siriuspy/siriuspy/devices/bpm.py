@@ -16,8 +16,8 @@ class BPM(_Device):
 
     ACQSTATES_NOTOK = {
         _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
-        _csbpm.AcqStates.Too_Few_Samples,
-        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
+        _csbpm.AcqStates.Bad_Post_Samples, _csbpm.AcqStates.No_Samples,
+        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Overflow}
     ACQSTATES_STARTED = {
         _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
         _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
