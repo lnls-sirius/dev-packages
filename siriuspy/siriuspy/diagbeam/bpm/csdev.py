@@ -123,7 +123,7 @@ class Const(_csdev.Const):
                 dbase.update(Const.get_logical_trigger_database(trig))
 
         # AMPLITUDES AND POSITION CHANNELS
-        for amp_tp in ('', 'SP'):
+        for amp_tp in (''):
             dbase.update(Const.get_amplitudes_database(amp_tp))
 
         # SETTINGS AND STATUS
@@ -137,13 +137,12 @@ class Const(_csdev.Const):
         data_names = {
             'GEN': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
             'PM': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
-            'SP': ['A', 'B', 'C', 'D'],
             }
         data_db = {
             'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
 
         # ARRAY DATA FROM TRIGGERED ACQUISITIONS
-        for acq_tp in ('GEN', 'SP', 'PM'):
+        for acq_tp in ('GEN', 'PM'):
             for prop in data_names[acq_tp]:
                 nm = acq_tp + '_' + prop
                 dbase[nm + 'ArrayData'] = _dcopy(data_db)
@@ -390,8 +389,6 @@ class Const(_csdev.Const):
     def get_config_database(prefix=''):
         """Get the configuration PVs database."""
         dbase = {
-            'BPMMode-Sel': {
-                'type': 'enum', 'enums': Const.OpModes._fields, 'value': 0},
             'BPMMode-Sts': {
                 'type': 'enum', 'enums': Const.OpModes._fields, 'value': 0},
             'Channel-Sel': {
