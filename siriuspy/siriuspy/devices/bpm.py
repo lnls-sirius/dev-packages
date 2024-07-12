@@ -77,7 +77,6 @@ class BPM(_Device):
         'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
         'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
         'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
-        'MonitPhaseSyncEn-Sel', 'MonitPhaseSyncEn-Sts',
         'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
@@ -385,16 +384,6 @@ class BPM(_Device):
     def monit_period(self):
         """."""
         return self.monit_rate / self.adcfreq
-
-    @property
-    def monit_sync_enbl(self):
-        """."""
-        return self['MonitPhaseSyncEn-Sts']
-
-    @monit_sync_enbl.setter
-    def monit_sync_enbl(self, val):
-        """."""
-        self['MonitPhaseSyncEn-Sel'] = val
 
     @property
     def posx_gain(self):
@@ -905,13 +894,6 @@ class BPM(_Device):
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
         return self._wait('FAcqPhaseSyncEn-Sts', 0)
-
-    def cmd_sync_monit(self):
-        """Synchronize Monit acquisitions with Timing System."""
-        self.monit_sync_enbl = 1
-        _time.sleep(0.1)
-        self.monit_sync_enbl = 0
-        return self._wait('MonitPhaseSyncEn-Sts', 0)
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:
