@@ -31,21 +31,21 @@ class BPM(_Device):
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
-        'ACQBPMMode-Sel', 'ACQBPMMode-Sts',
-        'ACQChannel-Sel', 'ACQChannel-Sts',
-        'ACQShots-SP', 'ACQShots-RB',
-        'ACQUpdateTime-SP', 'ACQUpdateTime-RB',
-        'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
-        'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
-        'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-        'ACQStatus-Sts', 'ACQCount-Mon',
-        'ACQTrigger-Sel', 'ACQTrigger-Sts',
-        'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
-        'ACQDataTrigChan-Sel', 'ACQDataTrigChan-Sts',
-        'ACQTriggerDataSel-SP', 'ACQTriggerDataSel-RB',
-        'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
-        'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
-        'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
+        'GENBPMMode-Sel', 'GENBPMMode-Sts',
+        'GENChannel-Sel', 'GENChannel-Sts',
+        'GENShots-SP', 'GENShots-RB',
+        'GENUpdateTime-SP', 'GENUpdateTime-RB',
+        'GENSamplesPre-SP', 'GENSamplesPre-RB',
+        'GENSamplesPost-SP', 'GENSamplesPost-RB',
+        'GENTriggerEvent-Sel', 'GENTriggerEvent-Sts',
+        'GENStatus-Sts', 'GENCount-Mon',
+        'GENTrigger-Sel', 'GENTrigger-Sts',
+        'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
+        'GENDataTrigChan-Sel', 'GENDataTrigChan-Sts',
+        'GENTriggerDataSel-SP', 'GENTriggerDataSel-RB',
+        'GENTriggerDataThres-SP', 'GENTriggerDataThres-RB',
+        'GENTriggerDataPol-Sel', 'GENTriggerDataPol-Sts',
+        'GENTriggerDataHyst-SP', 'GENTriggerDataHyst-RB',
         )
 
     PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
@@ -99,7 +99,7 @@ class BPM(_Device):
             props2init = set(BPM.PROPERTIES_DEFAULT)
             props2init -= {'RFFEAtt-SP', 'RFFEAtt-RB'}
             props2init = list(props2init)
-        elif isinstance(props2init, str) and props2init.startswith('acq'):
+        elif isinstance(props2init, str) and props2init.startswith('gen'):
             props2init = list(self.PROPERTIES_ACQ)
 
         super().__init__(
@@ -701,42 +701,42 @@ class BPM(_Device):
     @property
     def acq_mode(self):
         """."""
-        return self['ACQBPMMode-Sts']
+        return self['GENBPMMode-Sts']
 
     @acq_mode.setter
     def acq_mode(self, mode):
         """."""
-        self['ACQBPMMode-Sel'] = mode
+        self['GENBPMMode-Sel'] = mode
 
     @property
     def acq_ctrl(self):
         """."""
-        return self['ACQTriggerEvent-Sts']
+        return self['GENTriggerEvent-Sts']
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
         """."""
-        self['ACQTriggerEvent-Sel'] = val
+        self['GENTriggerEvent-Sel'] = val
 
     @property
     def acq_status(self):
         """."""
-        return self['ACQStatus-Sts']
+        return self['GENStatus-Sts']
 
     @property
     def acq_count(self):
         """Counter of number of acquisitions so far."""
-        return self['ACQCount-Mon']
+        return self['GENCount-Mon']
 
     @property
     def acq_channel(self):
         """."""
-        return self['ACQChannel-Sts']
+        return self['GENChannel-Sts']
 
     @acq_channel.setter
     def acq_channel(self, val):
         """."""
-        self['ACQChannel-Sel'] = val
+        self['GENChannel-Sel'] = val
 
     @property
     def acq_channel_str(self):
@@ -746,134 +746,134 @@ class BPM(_Device):
     @property
     def acq_trigger(self):
         """."""
-        return self['ACQTrigger-Sts']
+        return self['GENTrigger-Sts']
 
     @acq_trigger.setter
     def acq_trigger(self, val):
         """."""
-        self['ACQTrigger-Sel'] = val
+        self['GENTrigger-Sel'] = val
 
     @property
     def acq_repeat(self):
         """."""
-        return self['ACQTriggerRep-Sts']
+        return self['GENTriggerRep-Sts']
 
     @acq_repeat.setter
     def acq_repeat(self, val):
         """."""
-        self['ACQTriggerRep-Sel'] = val
+        self['GENTriggerRep-Sel'] = val
 
     @property
     def acq_update_time(self):
         """BPMs update time in [s]."""
-        return self['ACQUpdateTime-RB']
+        return self['GENUpdateTime-RB']
 
     @acq_update_time.setter
     def acq_update_time(self, val):
         """BPMs update time in [s]."""
-        self['ACQUpdateTime-SP'] = val
+        self['GENUpdateTime-SP'] = val
 
     @property
     def acq_trig_datachan(self):
         """."""
-        return self['ACQDataTrigChan-Sts']
+        return self['GENDataTrigChan-Sts']
 
     @acq_trig_datachan.setter
     def acq_trig_datachan(self, val):
         """."""
-        self['ACQDataTrigChan-Sel'] = val
+        self['GENDataTrigChan-Sel'] = val
 
     @property
     def acq_trig_datasel(self):
         """."""
-        return self['ACQTriggerDataSel-RB']
+        return self['GENTriggerDataSel-RB']
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
         """."""
-        self['ACQTriggerDataSel-SP'] = val
+        self['GENTriggerDataSel-SP'] = val
 
     @property
     def acq_trig_datathres(self):
         """."""
-        return self['ACQTriggerDataThres-RB']
+        return self['GENTriggerDataThres-RB']
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
         """."""
-        self['ACQTriggerDataThres-SP'] = val
+        self['GENTriggerDataThres-SP'] = val
 
     @property
     def acq_trig_datahyst(self):
         """."""
-        return self['ACQTriggerDataHyst-RB']
+        return self['GENTriggerDataHyst-RB']
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
         """."""
-        self['ACQTriggerDataHyst-SP'] = val
+        self['GENTriggerDataHyst-SP'] = val
 
     @property
     def acq_trig_datapol(self):
         """."""
-        return self['ACQTriggerDataPol-RB']
+        return self['GENTriggerDataPol-RB']
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self['ACQTriggerDataPol-SP'] = val
+        self['GENTriggerDataPol-SP'] = val
 
     @property
     def acq_nrsamples_post(self):
         """."""
-        return self['ACQSamplesPost-RB']
+        return self['GENSamplesPost-RB']
 
     @acq_nrsamples_post.setter
     def acq_nrsamples_post(self, val):
         """."""
-        self['ACQSamplesPost-SP'] = val
+        self['GENSamplesPost-SP'] = val
 
     @property
     def acq_nrsamples_pre(self):
         """."""
-        return self['ACQSamplesPre-RB']
+        return self['GENSamplesPre-RB']
 
     @acq_nrsamples_pre.setter
     def acq_nrsamples_pre(self, val):
         """."""
-        self['ACQSamplesPre-SP'] = val
+        self['GENSamplesPre-SP'] = val
 
     @property
     def acq_nrshots(self):
         """."""
-        return self['ACQShots-RB']
+        return self['GENShots-RB']
 
     @acq_nrshots.setter
     def acq_nrshots(self, val):
         """."""
-        self['ACQShots-SP'] = val
+        self['GENShots-SP'] = val
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            'ACQStatus-Sts', self.ACQSTATES_FINISHED, timeout=timeout,
+            'GENStatus-Sts', self.ACQSTATES_FINISHED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            'ACQStatus-Sts', self.ACQSTATES_STARTED, timeout=timeout,
+            'GENStatus-Sts', self.ACQSTATES_STARTED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Start)
+        return self._wait('GENTriggerEvent-Sts', _csbpm.AcqEvents.Start)
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
+        return self._wait('GENTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
 
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
@@ -955,8 +955,6 @@ class BPM(_Device):
             return prop
         if prop.startswith('GEN'):
             return prop.replace('GEN', 'PM')
-        elif prop.startswith('ACQ'):
-            return prop.replace('ACQ', 'ACQ_PM')
         return prop
 
     def _get_pvname(self, propty):

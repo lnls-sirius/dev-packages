@@ -86,7 +86,7 @@ class FamBPMs(_DeviceSet):
         self._mturn_flags = dict()
         # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
         # for bpm in devs:
-        #     pvo = bpm.pv_object('ACQCount-Mon')
+        #     pvo = bpm.pv_object('GENCount-Mon')
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._set_mturn_flag)
@@ -278,7 +278,7 @@ class FamBPMs(_DeviceSet):
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
-            _log.warning('BPMs are not configured with the same ACQChannel.')
+            _log.warning('BPMs are not configured with the same GENChannel.')
             return None
 
     def get_switching_frequency(self, rf_freq: float) -> float:

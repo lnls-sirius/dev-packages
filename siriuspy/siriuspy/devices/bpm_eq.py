@@ -44,12 +44,12 @@ class EqualizeBPMs(_FamBPMs):
                 'SwInvGainC-RB', 'SwInvGainD-RB', 'SwDirGainA-SP',
                 'SwInvGainA-SP', 'SwDirGainB-SP', 'SwInvGainB-SP',
                 'SwDirGainC-SP', 'SwInvGainC-SP', 'SwDirGainD-SP',
-                'SwInvGainD-SP', 'ACQTriggerEvent-Sel', 'ACQStatus-Sts',
+                'SwInvGainD-SP', 'GENTriggerEvent-Sel', 'GENStatus-Sts',
                 'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData',
-                'GEN_DArrayData', 'ACQTriggerRep-Sel', 'ACQChannel-Sel',
-                'ACQTrigger-Sel', 'ACQSamplesPre-SP', 'ACQSamplesPost-SP',
+                'GEN_DArrayData', 'GENTriggerRep-Sel', 'GENChannel-Sel',
+                'GENTrigger-Sel', 'GENSamplesPre-SP', 'GENSamplesPost-SP',
                 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB', 'SwDivClk-RB',
-                'ACQChannel-Sts', 'INFOFOFBRate-RB', 'PosKx-RB', 'PosKy-RB',
+                'GENChannel-Sts', 'INFOFOFBRate-RB', 'PosKx-RB', 'PosKy-RB',
                 'PosXOffset-RB', 'PosYOffset-RB'])
         self.currinfo = _CurrInfoSI(props2init=['Current-Mon', ])
         self.trigger = Trigger(

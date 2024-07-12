@@ -150,10 +150,6 @@ class Const(_csdev.Const):
                 if acq_tp == 'GEN':
                     dbase.update(Const.get_fft_database(nm))
 
-        # TRIGGERED ACQUISITIONS CONFIGURATION
-        for acq_md in ('ACQ', 'ACQ_PM'):
-            dbase.update(Const.get_config_database(acq_md))
-
         for _, v in dbase.items():
             if 'low' in v:
                 v['lolo'] = v['low']
