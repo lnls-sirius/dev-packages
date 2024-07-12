@@ -115,8 +115,7 @@ class Const(_csdev.Const):
                 dbase.update(Const.get_logical_trigger_database(trig))
 
         # AMPLITUDES AND POSITION CHANNELS
-        for amp_tp in (''):
-            dbase.update(Const.get_amplitudes_database(amp_tp))
+        dbase.update(Const.get_amplitudes_database())
 
         # SETTINGS AND STATUS
         dbase.update(Const.get_offsets_database())
@@ -309,7 +308,7 @@ class Const(_csdev.Const):
         return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
-    def get_amplitudes_database(prefix=''):
+    def get_amplitudes_database():
         """."""
         data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
         dbase = {
@@ -318,7 +317,7 @@ class Const(_csdev.Const):
             'AmplA-Mon': _dcopy(data_db), 'AmplB-Mon': _dcopy(data_db),
             'AmplC-Mon': _dcopy(data_db), 'AmplD-Mon': _dcopy(data_db),
             }
-        return {prefix + k: v for k, v in dbase.items()}
+        return {k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_physical_trigger_database(prefix=''):
@@ -378,8 +377,6 @@ class Const(_csdev.Const):
     def get_config_database(prefix=''):
         """Get the configuration PVs database."""
         dbase = {
-            'BPMMode-Sts': {
-                'type': 'enum', 'enums': Const.OpModes._fields, 'value': 0},
             'Channel-Sel': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
             'Channel-Sts': {

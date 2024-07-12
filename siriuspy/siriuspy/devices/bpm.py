@@ -31,7 +31,6 @@ class BPM(_Device):
         'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
         'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
         'GEN_QArrayData',
-        'GENBPMMode-Sel', 'GENBPMMode-Sts',
         'GENChannel-Sel', 'GENChannel-Sts',
         'GENShots-SP', 'GENShots-RB',
         'GENUpdateTime-SP', 'GENUpdateTime-RB',
@@ -113,7 +112,6 @@ class BPM(_Device):
         stg += f'{_csbpm.ConnTyp._fields[self.asyn_connected]:s}\n'
         stg += '\nAcquisition Parameters:\n'
         stg += f'    - Status: {_csbpm.AcqStates._fields[self.acq_status]:s}\n'
-        stg += f'    - Mode: {_csbpm.OpModes._fields[self.acq_mode]:s}\n'
         stg += f'    - Channel: {_csbpm.AcqChan._fields[self.acq_channel]:s}\n'
         stg += f'    - Nr Shots: {self.acq_nrshots:d}\n'
         stg += f'    - Update Time: {self.acq_update_time:.1f} ms\n'
@@ -623,16 +621,6 @@ class BPM(_Device):
     def mtraw_posq(self):
         """Multi turn raw Q array data."""
         return self['GEN_RawQArrayData']
-
-    @property
-    def acq_mode(self):
-        """."""
-        return self['GENBPMMode-Sts']
-
-    @acq_mode.setter
-    def acq_mode(self, mode):
-        """."""
-        self['GENBPMMode-Sel'] = mode
 
     @property
     def acq_ctrl(self):
