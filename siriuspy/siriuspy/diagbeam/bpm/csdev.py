@@ -44,7 +44,6 @@ class ETypes(_csdev.ETypes):
     FFTWINDOWTYP = ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW')
     FFTCONVDIRECTION = ('Forward', 'Backward')
     FFTAVGSUBTRACT = ('No Subtraction', 'Average', 'Linear')
-    FFTWRITABLEPROPS = ('INDX', 'MXIX', 'WIND', 'CDIR', 'ASUB', 'SPAN')
 
 
 _et = ETypes  # syntactic sugar
@@ -76,13 +75,6 @@ class Const(_csdev.Const):
     AcqChan = _csdev.Const.register('AcqChan', _et.ACQCHAN)
     AcqStates = _csdev.Const.register('AcqStates', _et.ACQSTATES)
     AcqTrigTyp = _csdev.Const.register('AcqTrigTyp', _et.ACQTRIGTYP)
-    FFTWindowTyp = _csdev.Const.register('FFTWindowTyp', _et.FFTWINDOWTYP)
-    FFTConvDirection = _csdev.Const.register(
-        'FFTConvDirection', _et.FFTCONVDIRECTION)
-    FFTAvgSubtract = _csdev.Const.register(
-        'FFTAvgSubtract', _et.FFTAVGSUBTRACT)
-    FFTWritableProps = _csdev.Const.register(
-        'FFTWritableProps', _et.FFTWRITABLEPROPS)
 
     @staticmethod
     def get_bpm_database(prefix=''):
@@ -146,9 +138,10 @@ class Const(_csdev.Const):
             for prop in data_names[acq_tp]:
                 nm = acq_tp + '_' + prop
                 dbase[nm + 'ArrayData'] = _dcopy(data_db)
-                dbase.update(Const.get_statistic_database(nm))
-                if acq_tp == 'GEN':
-                    dbase.update(Const.get_fft_database(nm))
+
+        # TRIGGERED ACQUISITIONS CONFIGURATION
+        for acq_md in ('GEN', 'PM'):
+            dbase.update(Const.get_config_database(acq_md))
 
         for _, v in dbase.items():
             if 'low' in v:
@@ -485,41 +478,4 @@ class Const(_csdev.Const):
             'TbTDataMaskSamplesEnd-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             }
-        return {prefix + k: v for k, v in dbase.items()}
-
-    @staticmethod
-    def get_fft_database(prefix=''):
-        """Get the PV database of the FFT plugin."""
-        data_db = {
-            'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
-        acq_int_db = {'type': 'int', 'value': 1, 'low': 0, 'high': 100000}
-        dbase = dict()
-        dbase['FFTFreq-Mon'] = _dcopy(data_db)
-        dbase['FFTData.SPAN'] = _dcopy(acq_int_db)
-        dbase['FFTData.AMP'] = _dcopy(data_db)
-        dbase['FFTData.PHA'] = _dcopy(data_db)
-        dbase['FFTData.SIN'] = _dcopy(data_db)
-        dbase['FFTData.COS'] = _dcopy(data_db)
-        dbase['FFTData.WAVN'] = _dcopy(data_db)
-        dbase['FFTData.INDX'] = _dcopy(acq_int_db)
-        dbase['FFTData.MXIX'] = _dcopy(acq_int_db)
-        dbase['FFTData.WIND'] = {
-            'type': 'enum', 'enums': Const.FFTWindowTyp._fields, 'value': 0}
-        dbase['FFTData.CDIR'] = {
-            'type': 'enum', 'enums': Const.FFTConvDirection._fields,
-            'value': 0}
-        dbase['FFTData.ASUB'] = {
-            'type': 'enum', 'enums': Const.FFTAvgSubtract._fields, 'value': 0}
-        return {prefix + k: v for k, v in dbase.items()}
-
-    @staticmethod
-    def get_statistic_database(prefix=''):
-        """Get the PV database of the STAT plugin."""
-        acq_data_stat_db = {
-            'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        dbase = dict()
-        dbase['_STATSMaxValue_RBV'] = _dcopy(acq_data_stat_db)
-        dbase['_STATSMeanValue_RBV'] = _dcopy(acq_data_stat_db)
-        dbase['_STATSMinValue_RBV'] = _dcopy(acq_data_stat_db)
-        dbase['_STATSSigma_RBV'] = _dcopy(acq_data_stat_db)
         return {prefix + k: v for k, v in dbase.items()}

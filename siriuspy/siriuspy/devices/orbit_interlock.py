@@ -479,6 +479,14 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
         return self['IntlkAngLowerX-Mon']
 
     @property
+    def ang_inst_upper_x(self):
+        """
+        Instantaneous angulation interlock set when X
+        maximum threshold is exceeded.
+        """
+        return self['IntlkAngUpperX-Mon']
+
+    @property
     def ang_inst_lower_y(self):
         """
         Instantaneous angulation interlock set when Y
