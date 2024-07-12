@@ -332,9 +332,9 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': Const.TrigDirPol._fields, 'value': 1},
             'DirPol-Sts': {
                 'type': 'enum', 'enums': Const.TrigDirPol._fields, 'value': 1},
-            'RcvCntRst-SP': {
+            'RcvCntRst-Cmd': {
                 'type': 'int', 'value': 0},
-            'TrnCntRst-SP': {
+            'TrnCntRst-Cmd': {
                 'type': 'int', 'value': 0},
             'RcvCnt-Mon': {
                 'type': 'int', 'value': 0},
