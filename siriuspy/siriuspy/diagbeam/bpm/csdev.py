@@ -40,9 +40,6 @@ class ETypes(_csdev.ETypes):
         'Acquiring', 'Error', 'Bad Post Samples', 'Too Many Samples',
         'No Samples', 'No Memory', 'Overflow')
     ACQTRIGTYP = ('Now', 'External', 'Data', 'Software')
-    FFTWINDOWTYP = ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW')
-    FFTCONVDIRECTION = ('Forward', 'Backward')
-    FFTAVGSUBTRACT = ('No Subtraction', 'Average', 'Linear')
 
 
 _et = ETypes  # syntactic sugar
