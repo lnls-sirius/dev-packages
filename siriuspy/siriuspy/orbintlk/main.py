@@ -185,13 +185,13 @@ class App(_Callback):
         self._fambpm_dev = _FamBPMs(
             devname=_FamBPMs.DEVICES.SI, ispost_mortem=True,
             props2init=[
-                'ACQChannel-Sel', 'ACQChannel-Sts',
-                'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
-                'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
-                'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
-                'ACQTrigger-Sel', 'ACQTrigger-Sts',
-                'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-                'ACQStatus-Sts',
+                'GENChannel-Sel', 'GENChannel-Sts',
+                'GENSamplesPre-SP', 'GENSamplesPre-RB',
+                'GENSamplesPost-SP', 'GENSamplesPost-RB',
+                'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
+                'GENTrigger-Sel', 'GENTrigger-Sts',
+                'GENTriggerEvent-Sel', 'GENTriggerEvent-Sts',
+                'GENStatus-Sts',
                 'INFOFAcqRate-RB', 'INFOMONITRate-RB',
                 'TRIGGER4TrnSrc-Sel', 'TRIGGER4TrnSrc-Sts',
                 'TRIGGER4TrnOutSel-SP', 'TRIGGER4TrnOutSel-RB',
@@ -866,7 +866,7 @@ class App(_Callback):
 
     def _acq_config(self):
         self._update_log('Aborting BPM acquisition...')
-        ret = self._fambpm_dev.cmd_abort_mturn_acquisition()
+        ret = self._fambpm_dev.cmd_stop_mturn_acquisition()
         if ret > 0:
             self._update_log('ERR:Failed to abort BPM acquisition.')
             return
