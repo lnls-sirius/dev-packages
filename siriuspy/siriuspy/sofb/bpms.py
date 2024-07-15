@@ -192,9 +192,10 @@ class BPM(_BaseTimingConfig):
         okay = pvobj.value not in {
             stts.Error,
             stts.No_Memory,
-            stts.Too_Few_Samples,
+            stts.No_Samples,
             stts.Too_Many_Samples,
-            stts.Acq_Overflow,
+            stts.Overflow,
+            stts.Bad_Post_Samples,
         }
 
         if self._config_ok_vals["ACQTriggerEvent"] == _CSBPM.AcqEvents.Start:
