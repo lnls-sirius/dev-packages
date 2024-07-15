@@ -76,7 +76,7 @@ class BPM(_Device):
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
         'XYPosCal-Sel', 'XYPosCal-Sts',
-        'SUMPosCal-Sel', 'SUMPosCal-Sts',
+        'SumPosCal-Sel', 'SumPosCal-Sts',
         'QPosCal-Sel', 'QPosCal-Sts',
         )
 
@@ -572,12 +572,12 @@ class BPM(_Device):
     @property
     def mt_polysum_enbl(self):
         """."""
-        return self['SUMPosCal-Sts']
+        return self['SumPosCal-Sts']
 
     @mt_polysum_enbl.setter
     def mt_polysum_enbl(self, val):
         """."""
-        self['SUMPosCal-Sel'] = val
+        self['SumPosCal-Sel'] = val
 
     @property
     def mt_polyq_enbl(self):

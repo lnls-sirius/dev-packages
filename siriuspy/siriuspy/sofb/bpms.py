@@ -68,7 +68,7 @@ class BPM(_BaseTimingConfig):
             "TbTDataMaskSamplesBeg": 0,
             "TbTDataMaskSamplesEnd": 0,
             "XYPosCal": _CSBPM.DsblEnbl.enabled,
-            "SUMPosCal": _CSBPM.DsblEnbl.enabled,
+            "SumPosCal": _CSBPM.DsblEnbl.enabled,
             "SwPhaseSyncEn": _CSBPM.DsblEnbl.enabled,  # Enable Switching sync
             "TestDataEn": _CSBPM.DsblEnbl.disabled,
         }
@@ -98,7 +98,7 @@ class BPM(_BaseTimingConfig):
             "TbTDataMaskSamplesBeg": "TbTDataMaskSamplesBeg-SP",
             "TbTDataMaskSamplesEnd": "TbTDataMaskSamplesEnd-SP",
             "XYPosCal": "XYPosCal-Sel",
-            "SUMPosCal": "SUMPosCal-Sel",
+            "SumPosCal": "SumPosCal-Sel",
             "SwPhaseSyncEn": "SwPhaseSyncEn-Sel",  # Enable Switching sync
             "TestDataEn": "TestDataEn-Sel",
         }
@@ -139,7 +139,7 @@ class BPM(_BaseTimingConfig):
             "TbTDataMaskSamplesBeg": "TbTDataMaskSamplesBeg-RB",
             "TbTDataMaskSamplesEnd": "TbTDataMaskSamplesEnd-RB",
             "XYPosCal": "XYPosCal-Sts",
-            "SUMPosCal": "SUMPosCal-Sts",
+            "SumPosCal": "SumPosCal-Sts",
             "SwPhaseSyncEn": "SwPhaseSyncEn-Sel",
             "TestDataEn": "TestDataEn-Sel",
         }
@@ -618,9 +618,9 @@ class BPM(_BaseTimingConfig):
         """."""
         val = _CSBPM.DsblEnbl.enabled if val else _CSBPM.DsblEnbl.disabled
         pv1 = self._config_pvs_sp["XYPosCal"]
-        pv2 = self._config_pvs_sp["SUMPosCal"]
+        pv2 = self._config_pvs_sp["SumPosCal"]
         self._config_ok_vals["XYPosCal"] = val
-        self._config_ok_vals["SUMPosCal"] = val
+        self._config_ok_vals["SumPosCal"] = val
         if self.put_enable and pv1.connected:
             pv1.put(val, wait=False)
         if self.put_enable and pv2.connected:
