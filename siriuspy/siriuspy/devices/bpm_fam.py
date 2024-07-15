@@ -242,6 +242,16 @@ class FamBPMs(_DeviceSet):
             sigs[i] = _np.array(sig).T
         return sigs
 
+    def conv_signal2pvname_format(self, sig):
+        """Convert signal to generate PV name."""
+        if sig == 'S':
+            sig = 'Sum'
+        elif sig == 'X' or 'Y' or 'Q':
+            sig = 'Pos' + sig
+        else:
+            sig = 'Ampl' + sig
+        return sig
+
     def get_mturn_timestamps(self):
         """Get Multiturn data timestamps.
 
@@ -254,8 +264,8 @@ class FamBPMs(_DeviceSet):
             (len(self._mturn_signals2acq), len(self.bpms)), dtype=float)
         for i, s in enumerate(self._mturn_signals2acq):
             for j, bpm in enumerate(self.bpms):
-                s = 'SUM' if s == 'S' else s
-                pvo = bpm.pv_object(f'GEN_{s}ArrayData')
+                s = self.conv_signal2pvname_format(s)
+                pvo = bpm.pv_object(f'GEN{s}Data')
                 tv = pvo.get_timevars(timeout=self.TIMEOUT)
                 tsmps[i, j] = pvo.timestamp if tv is None else tv['timestamp']
         return tsmps
@@ -631,8 +641,8 @@ class FamBPMs(_DeviceSet):
     def _configure_automonitor_acquisition_pvs(self, state):
         for bpm in self.bpms:
             for sig in self._mturn_signals2acq:
-                sig = 'SUM' if sig.upper() == 'S' else sig.upper()
-                bpm.pv_object(f'GEN_{sig}ArrayData').auto_monitor = state
+                sig = self.conv_signal2pvname_format(sig.upper())
+                bpm.pv_object(f'GEN{sig}Data').auto_monitor = state
 
     def _set_mturn_flag(self, pvname, **kwargs):
         _ = kwargs
