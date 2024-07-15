@@ -352,14 +352,9 @@ _bpms = [
     'SI-01M1:DI-BPM',
     ]
 _bpm_propts = [
-    [':INFOClkProp-Sel', 0, 0.0],
     [':ADCSi57xOe-Sel', 1, 0.0],
     [':ADCClkSel-Sel', 1, 0.0],
     [':INFOADCRate-SP', 1, 0.0],
-    [':ADCAD9510PllFunc-SP', 1, 0.0],
-    [':ADCAD9510Outputs-SP', 31, 0.0],
-    [':ADCAD9510ClkSel-Sel', 1, 0.0],
-    [':ADCAD9510CpCurrent-Sel', 7, 0.0],
     [':ADCTrigDir-Sel', 0, 0.0],
     [':ADCTrigTerm-Sel', 0, 0.0],
     [':RFFEPidSpAC-SP', 45.0, 0.0],
@@ -398,7 +393,6 @@ _bpm_propts = [
     [':PosKq-SP', 21389980, 0.0],
     [':ADCAD9510ADiv-SP', 0, 0.0],
     [':ADCAD9510BDiv-SP', 382, 0.0],
-    [':ADCAD9510Prescaler-SP', 0, 0.0],
     [':ADCAD9510RDiv-SP', 120, 0.0],
     [':ADCSi57xFreq-SP', 220910069.0, 0.0],
     [':SwDivClk-SP', 8786, 0.0],
