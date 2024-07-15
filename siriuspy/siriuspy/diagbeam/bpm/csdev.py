@@ -104,7 +104,7 @@ class Const(_csdev.Const):
             dbase.update(Const.get_physical_trigger_database(trig))
 
         # LOGICAL TRIGGERS
-        for trig_tp in ('', '_PM'):
+        for trig_tp in ('_GEN', '_PM'):
             for i in range(24):
                 trig = 'TRIGGER' + trig_tp + '{0:d}'.format(i)
                 dbase.update(Const.get_logical_trigger_database(trig))
@@ -120,8 +120,14 @@ class Const(_csdev.Const):
         dbase.update(Const.get_monit_database())
 
         data_names = {
-            'GEN': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
-            'PM': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
+            'GEN': [
+                'AmplA', 'AmplB', 'AmplC', 'AmplD',
+                'PosQ', 'Sum', 'PosX', 'PosY'
+            ],
+            'PM': [
+                'AmplA', 'AmplB', 'AmplC', 'AmplD',
+                'PosQ', 'Sum', 'PosX', 'PosY'
+            ],
             }
         data_db = {
             'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
@@ -129,8 +135,8 @@ class Const(_csdev.Const):
         # ARRAY DATA FROM TRIGGERED ACQUISITIONS
         for acq_tp in ('GEN', 'PM'):
             for prop in data_names[acq_tp]:
-                nm = acq_tp + '_' + prop
-                dbase[nm + 'ArrayData'] = _dcopy(data_db)
+                nm = acq_tp + prop
+                dbase[nm + 'Data'] = _dcopy(data_db)
 
         # TRIGGERED ACQUISITIONS CONFIGURATION
         for acq_md in ('GEN', 'PM'):

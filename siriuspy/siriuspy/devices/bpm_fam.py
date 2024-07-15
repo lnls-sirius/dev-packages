@@ -84,7 +84,7 @@ class FamBPMs(_DeviceSet):
         self._initial_signals = None
 
         self._mturn_flags = dict()
-        # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
+        # NOTE: GENCount-Mon need to be fixed on BPM's IOC
         # for bpm in devs:
         #     pvo = bpm.pv_object('GENCount-Mon')
         #     pvo.auto_monitor = True
