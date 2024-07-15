@@ -44,7 +44,7 @@ class EqualizeBPMs(_FamBPMs):
                 'SwInvGainC-RB', 'SwInvGainD-RB', 'SwDirGainA-SP',
                 'SwInvGainA-SP', 'SwDirGainB-SP', 'SwInvGainB-SP',
                 'SwDirGainC-SP', 'SwInvGainC-SP', 'SwDirGainD-SP',
-                'SwInvGainD-SP', 'GENTriggerEvent-Sel', 'GENStatus-Sts',
+                'SwInvGainD-SP', 'GENTriggerEvent-Cmd', 'GENStatus-Mon',
                 'GENAmplAData', 'GENAmplBData', 'GENAmplCData',
                 'GENAmplDData', 'GENTriggerRep-Sel', 'GENChannel-Sel',
                 'GENTrigger-Sel', 'GENSamplesPre-SP', 'GENSamplesPost-SP',

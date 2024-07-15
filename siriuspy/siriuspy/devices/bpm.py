@@ -36,8 +36,8 @@ class BPM(_Device):
         'GENUpdateTime-SP', 'GENUpdateTime-RB',
         'GENSamplesPre-SP', 'GENSamplesPre-RB',
         'GENSamplesPost-SP', 'GENSamplesPost-RB',
-        'GENTriggerEvent-Sel', 'GENTriggerEvent-Sts',
-        'GENStatus-Sts', 'GENCount-Mon',
+        'GENTriggerEvent-Cmd',
+        'GENStatus-Mon', 'GENCount-Mon',
         'GENTrigger-Sel', 'GENTrigger-Sts',
         'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
         'GENDataTrigChan-Sel', 'GENDataTrigChan-Sts',
@@ -592,17 +592,17 @@ class BPM(_Device):
     @property
     def acq_ctrl(self):
         """."""
-        return self['GENTriggerEvent-Sts']
+        return self['GENTriggerEvent-Cmd']
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
         """."""
-        self['GENTriggerEvent-Sel'] = val
+        self['GENTriggerEvent-Cmd'] = val
 
     @property
     def acq_status(self):
         """."""
-        return self['GENStatus-Sts']
+        return self['GENStatus-Mon']
 
     @property
     def acq_count(self):
@@ -737,24 +737,24 @@ class BPM(_Device):
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            'GENStatus-Sts', self.ACQSTATES_FINISHED, timeout=timeout,
+            'GENStatus-Mon', self.ACQSTATES_FINISHED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            'GENStatus-Sts', self.ACQSTATES_STARTED, timeout=timeout,
+            'GENStatus-Mon', self.ACQSTATES_STARTED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        return self._wait('GENTriggerEvent-Sts', _csbpm.AcqEvents.Start)
+        return True
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        return self._wait('GENTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
+        return True
 
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""

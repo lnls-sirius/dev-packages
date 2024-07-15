@@ -403,16 +403,11 @@ class Const(_csdev.Const):
             # 'NrSamplesPost-RB': {
             'SamplesPost-RB': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'Ctrl-Sel': {
-            'TriggerEvent-Sel': {
+            # 'Ctrl-Cmd': {
+            'TriggerEvent-Cmd': {
                 'type': 'enum', 'enums': Const.AcqEvents._fields,
                 'value': Const.AcqEvents.Stop},
-            # 'Ctrl-Sts': {
-            'TriggerEvent-Sts': {
-                'type': 'enum', 'enums': Const.AcqEvents._fields,
-                'value': Const.AcqEvents.Stop},
-            # 'Status-Mon': {
-            'Status-Sel': {
+            'Status-Mon': {
                 'type': 'enum', 'enums': Const.AcqStates._fields, 'value': 0},
             # 'TriggerType-Sel': {
             'Trigger-Sel': {
