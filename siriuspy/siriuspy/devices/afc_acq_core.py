@@ -98,11 +98,11 @@ class AFCACQLogicalTrigger(_Device):
         'TrnOutSel-SP', 'TrnOutSel-RB',
     )
 
-    def __init__(self, devname, index, acqcore='', props2init='all'):
+    def __init__(self, devname, index, acqcore='GEN', props2init='all'):
         """Init."""
         if not 0 <= int(index) <= 23:
             raise NotImplementedError(index)
-        propty_prefix = ':TRIGGER'+('_'+acqcore if acqcore else '')+str(index)
+        propty_prefix = f':TRIGGER_{acqcore}{str(index)}'
         super().__init__(devname + propty_prefix, props2init=props2init)
 
     @property
