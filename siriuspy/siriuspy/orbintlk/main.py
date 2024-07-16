@@ -865,10 +865,10 @@ class App(_Callback):
         return True
 
     def _acq_config(self):
-        self._update_log('Aborting BPM acquisition...')
+        self._update_log('Stoping BPM acquisition...')
         ret = self._fambpm_dev.cmd_stop_mturn_acquisition()
         if ret > 0:
-            self._update_log('ERR:Failed to abort BPM acquisition.')
+            self._update_log('ERR:Failed to stop BPM acquisition.')
             return
         self._update_log('...done. Configuring BPM acquisition...')
         ret = self._fambpm_dev.config_mturn_acquisition(
@@ -879,7 +879,7 @@ class App(_Callback):
             external=True)
         if ret < 0:
             self._update_log(
-                'ERR:Failed to abort acquisition for ' +
+                'ERR:Failed to stop acquisition for ' +
                 f'{self._const.bpm_names[-ret-1]:s}.')
             return
         if ret > 0:
