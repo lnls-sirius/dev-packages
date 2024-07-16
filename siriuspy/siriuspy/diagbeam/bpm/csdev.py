@@ -26,7 +26,6 @@ class ETypes(_csdev.ETypes):
     SWTAGENBL = ('disabled', 'enabled')
     FOFBDATAMASKENBL = ('disabled', 'enabled')
 
-    OPMODES = ('MultiBunch', 'SinglePass')
     POLARITY = ('Positive', 'Negative')
     ENBLTYP = ('Disable', 'Enable')
     DSBLDENBLD = ('disabled', 'enabled')
@@ -59,7 +58,6 @@ class Const(_csdev.Const):
     SwPhaseSyncEnbl = _csdev.Const.register('SwPhaseSyncEnbl', _et.SWTAGENBL)
     FOFBDataMaskEnbl = _csdev.Const.register(
         'FOFBDataMaskEnbl', _et.FOFBDATAMASKENBL)
-    OpModes = _csdev.Const.register('OpModes', _et.OPMODES)
     Polarity = _csdev.Const.register('Polarity', _et.POLARITY)
     EnblTyp = _csdev.Const.register('EnblTyp', _et.ENBLTYP)
     DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBLDENBLD)
