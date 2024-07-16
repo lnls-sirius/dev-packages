@@ -377,10 +377,8 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
             'Channel-Sts': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
-            # 'NrShots-SP': {
             'Shots-SP': {
                 'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-            # 'NrShots-RB': {
             'Shots-RB': {
                 'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
             'TriggerHwDly-SP': {
@@ -391,44 +389,31 @@ class Const(_csdev.Const):
                 'type': 'float', 'value': 1.0, 'low': 0.001, 'high': 1e9},
             'UpdateTime-RB': {
                 'type': 'float', 'value': 1.0, 'low': 0.001, 'high': 1e9},
-            # 'NrSamplesPre-SP': {
             'SamplesPre-SP': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'NrSamplesPre-RB': {
             'SamplesPre-RB': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'NrSamplesPost-SP': {
             'SamplesPost-SP': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'NrSamplesPost-RB': {
             'SamplesPost-RB': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'Ctrl-Cmd': {
             'TriggerEvent-Cmd': {
                 'type': 'enum', 'enums': Const.AcqEvents._fields,
                 'value': Const.AcqEvents.Stop},
             'Status-Mon': {
                 'type': 'enum', 'enums': Const.AcqStates._fields, 'value': 0},
-            # 'TriggerType-Sel': {
             'Trigger-Sel': {
                 'type': 'enum', 'enums': Const.AcqTrigTyp._fields, 'value': 1},
-            # 'TriggerType-Sts': {
             'Trigger-Sts': {
                 'type': 'enum', 'enums': Const.AcqTrigTyp._fields, 'value': 1},
             'TriggerRep-Sel': {
                 'type': 'enum', 'enums': Const.AcqRepeat._fields, 'value': 0},
             'TriggerRep-Sts': {
                 'type': 'enum', 'enums': Const.AcqRepeat._fields, 'value': 0},
-            # 'TriggerDataChan-Sel': {
             'DataTrigChan-Sel': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
-            # 'TriggerDataChan-Sts': {
             'DataTrigChan-Sts': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
-            # 'TriggerDataSel-Sel': {
-            #     'type': 'enum', 'enums': AcqDataTyp._fields, 'value': 0},
-            # 'TriggerDataSel-Sts': {
-            #     'type': 'enum', 'enums': AcqDataTyp._fields, 'value': 0},
             'TriggerDataSel-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 4},
             'TriggerDataSel-RB': {

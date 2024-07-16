@@ -45,20 +45,13 @@ class BPM(_BaseTimingConfig):
         self._config_ok_vals = {
             "SwMode": _CSBPM.SwModes.switching,
             "ACQChannel": _CSBPM.AcqChan.ADC,
-            # 'ACQNrShots': 1,
             "ACQShots": 1,
-            # 'ACQTriggerHwDly': 0.0,  # NOTE: leave this property commented
             "ACQUpdateTime": 0.001,
-            # 'ACQNrSamplesPre': 0,
             "ACQSamplesPre": 0,
-            # 'ACQNrSamplesPost': 200,
             "ACQSamplesPost": 382,
-            # 'ACQCtrl': _CSBPM.AcqEvents.Stop,
             "ACQTriggerEvent": _CSBPM.AcqEvents.Stop,
-            # 'ACQTriggerType': _CSBPM.AcqTrigTyp.External,
             "ACQTrigger": _CSBPM.AcqTrigTyp.External,
             "ACQTriggerRep": _CSBPM.AcqRepeat.Repetitive,
-            # 'ACQTriggerDataChan': _CSBPM.AcqChan.FAcq,
             "ACQDataTrigChan": _CSBPM.AcqChan.ADC,
             "TbTPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable TbT sync
             "FOFBPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable FOFB sync
@@ -75,20 +68,13 @@ class BPM(_BaseTimingConfig):
         pvs = {
             "SwMode": "SwMode-Sel",
             "ACQChannel": "GENChannel-Sel",
-            # 'ACQNrShots': 'GENNrShots-SP',
             "ACQShots": "GENShots-SP",
-            # 'ACQTriggerHwDly': 'GENTriggerHwDly-SP',
             "ACQUpdateTime": "GENUpdateTime-SP",
-            # 'ACQNrSamplesPre': 'GENNrSamplesPre-SP',
             "ACQSamplesPre": "GENSamplesPre-SP",
-            # 'ACQNrSamplesPost': 'GENNrSamplesPost-SP',
             "ACQSamplesPost": "GENSamplesPost-SP",
-            # 'ACQCtrl': 'GENCtrl-Cmd',
             "ACQTriggerEvent": "GENTriggerEvent-Cmd",
-            # 'ACQTriggerType': 'GENTriggerType-Sel',
             "ACQTrigger": "GENTrigger-Sel",
             "ACQTriggerRep": "GENTriggerRep-Sel",
-            # 'ACQTriggerDataChan': 'GENTriggerDataChan-Sel',
             "ACQDataTrigChan": "GENDataTrigChan-Sel",
             "TbTPhaseSyncEn": "TbTPhaseSyncEn-Sel",  # Enable TbT sync
             "FOFBPhaseSyncEn": "FOFBPhaseSyncEn-Sel",  # Enable FOFB sync
@@ -114,21 +100,14 @@ class BPM(_BaseTimingConfig):
             "INFOFAcqRate": "INFOFAcqRate-RB",
             "SwMode": "SwMode-Sts",
             "ACQChannel": "GENChannel-Sts",
-            # 'ACQNrShots': 'GENNrShots-RB',
             "ACQShots": "GENShots-RB",
-            # 'ACQTriggerHwDly': 'GENTriggerHwDly-RB',
             "ACQUpdateTime": "GENUpdateTime-RB",
-            # 'ACQNrSamplesPre': 'GENNrSamplesPre-RB',
             "ACQSamplesPre": "GENSamplesPre-RB",
-            # 'ACQNrSamplesPost': 'GENNrSamplesPost-RB',
             "ACQSamplesPost": "GENSamplesPost-RB",
-            # 'ACQCtrl': 'GENCtrl-Cmd',
             "ACQTriggerEvent": "GENTriggerEvent-Cmd",
             "ACQStatus": "GENStatus-Mon",
-            # 'ACQTriggerType': 'GENTriggerType-Sts',
             "ACQTrigger": "GENTrigger-Sts",
             "ACQTriggerRep": "GENTriggerRep-Sts",
-            # 'ACQTriggerDataChan': 'GENTriggerDataChan-Sts',
             "ACQDataTrigChan": "GENDataTrigChan-Sts",
             "TbTPhaseSyncEn": "TbTPhaseSyncEn-Sts",
             "FOFBPhaseSyncEn": "FOFBPhaseSyncEn-Sts",
@@ -629,16 +608,13 @@ class BPM(_BaseTimingConfig):
     @property
     def nrsamplespost(self):
         """."""
-        # pvobj = self._config_pvs_rb['ACQNrSamplesPost']
         pvobj = self._config_pvs_rb["ACQSamplesPost"]
         return pvobj.value if pvobj.connected else None
 
     @nrsamplespost.setter
     def nrsamplespost(self, val):
         """."""
-        # pvobj = self._config_pvs_sp['ACQNrSamplesPost']
         pvobj = self._config_pvs_sp["ACQSamplesPost"]
-        # self._config_ok_vals['ACQNrSamplesPost'] = val
         self._config_ok_vals["ACQSamplesPost"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
@@ -646,16 +622,13 @@ class BPM(_BaseTimingConfig):
     @property
     def nrsamplespre(self):
         """."""
-        # pvobj = self._config_pvs_rb['ACQNrSamplesPre']
         pvobj = self._config_pvs_rb["ACQSamplesPre"]
         return pvobj.value if pvobj.connected else None
 
     @nrsamplespre.setter
     def nrsamplespre(self, val):
         """."""
-        # pvobj = self._config_pvs_sp['ACQNrSamplesPre']
         pvobj = self._config_pvs_sp["ACQSamplesPre"]
-        # self._config_ok_vals['ACQNrSamplesPre'] = val
         self._config_ok_vals["ACQSamplesPre"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
@@ -663,16 +636,13 @@ class BPM(_BaseTimingConfig):
     @property
     def nrshots(self):
         """."""
-        # pvobj = self._config_pvs_rb['ACQNrShots']
         pvobj = self._config_pvs_rb["ACQShots"]
         return pvobj.value if pvobj.connected else None
 
     @nrshots.setter
     def nrshots(self, val):
         """."""
-        # pvobj = self._config_pvs_sp['ACQNrShots']
         pvobj = self._config_pvs_sp["ACQShots"]
-        # self._config_ok_vals['ACQNrShots'] = val
         self._config_ok_vals["ACQShots"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
