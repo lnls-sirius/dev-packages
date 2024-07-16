@@ -1359,6 +1359,8 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 class FOFBCtrlLamp(_FOFBCtrlAcqBase):
     """FOFB controller RTMLAMP acquisition device."""
 
+    LAMP_CHANNELS = ['M1', 'M2', 'C2', 'C3']  # standard
+
     def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
         """Init."""
         # call base class constructor
@@ -1366,11 +1368,50 @@ class FOFBCtrlLamp(_FOFBCtrlAcqBase):
             devname+':LAMP', props2init=props2init,
             auto_monitor_mon=auto_monitor_mon)
 
+    @property
+    def trigger(self):
+        """Trigger type."""
+        # for instance: IA-01RaBPM:BS-FOFBCtrl:LAMPTrigger-Sel, for crate 01
+        return self['LAMPTrigger-Sts']
+
+    @trigger.setter
+    def trigger(self, val):
+        self['LAMPTrigger-Sel'] = val
+
+    @property
+    def repeat(self):
+        """Whether the acquisition is repeat or normal."""
+        # for instance: IA-01RaBPM:BS-FOFBCtrl:LAMPTriggerRep-Sts
+        return self['LAMPTriggerRep-Sts']
+
+    @repeat.setter
+    def repeat(self, val):
+        self['LAMPTriggerRep-Sel'] = val
+
+    @property
+    def nrsamples_pre(self):
+        """Number of samples previous to trigger acquisition."""
+        return self['LAMPSamplesPre-RB']
+
+    @nrsamples_pre.setter
+    def nrsamples_pre(self, val):
+        self['LAMPSamplesPre-SP'] = val
+
+    @property
+    def nrsamples_post(self):
+        """Number of samples posterior to trigger acquisition."""
+        return self['LAMPSamplesPost-RB']
+
+    @nrsamples_post.setter
+    def nrsamples_post(self, val):
+        self['LAMPSamplesPost-SP'] = val
+
 
 class FOFBPSLamp(_Device):
     """FOFB power supply RTMLAMP acquisition device."""
 
-    PROPERTIES_DEFAULT = (
+    PROPERTIES_DEFAULT = _FOFBCtrlAcqBase.PROPERTIES_DEFAULT
+    PROPERTIES_DEFAULT += (
         'LAMPCurrentRawData', 'LAMPCurrentData',
         'LAMPVoltageRawData', 'LAMPVoltageData',
         )
@@ -1381,9 +1422,322 @@ class FOFBPSLamp(_Device):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
+    @property
+    def voltage(self):
+        """RTM-Lamp voltage."""
+        return self['Voltage-RB']
+
+    @voltage.setter
+    def voltage(self, value):
+        self['Voltage-SP'] = value
+
+    @property
+    def current(self):
+        """RTM-Lamp voltage."""
+        return self['Current-RB']
+
+    @current.setter
+    def current(self, value):
+        self['Current-SP'] = value
+
+    def check_current(self, value):
+        """Check whether Current is equal to value."""
+        if not _np.all(self.current == value):
+            return False
+        return True
+
+    def check_voltage(self, value):
+        """Check whether Voltage is equal to value."""
+        if not _np.all(self.voltage == value):
+            return False
+        return True
+
+    @property
+    def current_rawdata(self):
+        """RTM-Lamp current raw data."""
+        return self['LAMPCurrentRawData']
+
+    @property
+    def current_data(self):
+        """RTM-Lamp current data."""
+        return self['LAMPCurrentData']
+
+    @property
+    def voltage_rawdata(self):
+        """RTM-Lamp current voltage data."""
+        return self['LAMPVoltageRawData']
+
+    @property
+    def voltage_data(self):
+        """RTM-Lamp voltage data."""
+        return self['LAMPVoltageData']
+
+    @property
+    def repeat(self):
+        """Whether the acquisition is repeat or normal."""
+        return self['TriggerRep-Sts']
+
+    @repeat.setter
+    def repeat(self, val):
+        self['TriggerRep-Sel'] = val
+
+    @property
+    def nrsamples_pre(self):
+        """Number of samples previous to trigger acquisition."""
+        return self['SamplesPre-RB']
+
+    @nrsamples_pre.setter
+    def nrsamples_pre(self, val):
+        self['SamplesPre-SP'] = val
+
+    @property
+    def nrsamples_post(self):
+        """Number of samples posterior to trigger acquisition."""
+        return self['SamplesPost-RB']
+
+    @nrsamples_post.setter
+    def nrsamples_post(self, val):
+        self['SamplesPost-SP'] = val
+
+    @property
+    def trigger(self):
+        """Trigger."""
+        return self['Trigger-Sts']
+
+    @trigger.setter
+    def trigger(self, val):
+        self['Trigger-Sel'] = val
+
 
 class FamFOFBLamp(_FamFOFBAcqBase):
     """FOFB RTMLAMP acquisition device."""
 
-    FOFBCTRL_CLASS = FOFBCtrlLamp
     FOFBPS_CLASS = FOFBPSLamp
+
+    def __init__(self, ctrlname=None, psnames=None, event=None):
+        """Init."""
+        self._ctrlclass = FOFBCtrlLamp
+
+        ctrlnames = _FOFBCtrlBase.DEVICES if not ctrlname else [ctrlname, ]
+        self._ctlrs, subs = dict(), list()
+        for idx, ctl in enumerate(ctrlnames):
+            self._ctlrs[ctl] = self._ctrlclass(ctl, auto_monitor_mon=False)
+            subs.append(f'{idx+1:02}')
+
+        lamp_channels = self._ctrlclass.LAMP_CHANNELS
+        complete_sub = []
+        for channel in lamp_channels:
+            for sub in subs:
+                complete_sub.append(sub+channel)
+
+        sub = '(' + '|'.join(complete_sub) + ').*'
+
+        # FOFBPS devices
+        if psnames is None:
+            chn = _PSSearch.get_psnames(dict(sec='SI', sub=sub, dev='FCH'))
+            cvn = _PSSearch.get_psnames(dict(sec='SI', sub=sub, dev='FCV'))
+            psnames = chn + cvn
+
+        self._psnames = psnames
+        self._psdevs = {
+            psn: self._ctrlclass(psn, auto_monitor_mon=False)
+            for psn in self._psnames}
+        self._psconv = {
+            psn: StrengthConv(psn, 'Ref-Mon') for psn in self._psnames}
+
+        # FOFBS event
+        event = event or 'FOFBS'
+        self._evt_fofb = Event(event)
+
+        # call base class constructor
+        devices = list()
+        devices.extend(self._ctlrs.values())
+        devices.extend(self._psdevs.values())
+        devices.extend(self._psconv.values())
+        _DeviceSet.__init__(self, devices, devname='SI-Glob:BS-FOFBAcq')
+
+    @property
+    def ctrldevs(self):
+        """FOFBCtrl device list."""
+        return self._ctlrs
+
+    def set_current(self, value):
+        """Set Current for all RTM-Lamps."""
+        for ctrl in self._ctlrs.values():
+            ctrl.current = value
+        return True
+
+    def set_voltage(self, value):
+        """Set Voltage for all RTM-Lamps."""
+        for ctrl in self._ctlrs.values():
+            ctrl.voltage = value
+        return True
+
+    def check_lamps_current(self, value):
+        """Check whether Current is equal to value."""
+        if not self.connected:
+            return False
+        for ctrl in self._ctlrs.values():
+            if not ctrl.check_current(value):
+                return False
+        return True
+
+    def check_lamps_voltage(self, value):
+        """Check whether Voltage is equal to value."""
+        if not self.connected:
+            return False
+        for ctrl in self._ctlrs.values():
+            if not ctrl.check_voltage(value):
+                return False
+        return True
+
+    # TODO: turn these acquisitions functions (config_acquisition,
+    # cmd_stop, cmd_start...) into base/utils functions?
+
+    def config_acquisition(
+            self, nr_points_before: int, nr_points_after=0,
+            repeat=False, external=True) -> int:
+        """Configure acquisition for RTM-LAMP.
+
+        Args:
+            nr_points_before (int): number of points before trigger.
+            nr_points_after (int): number of points after trigger.
+                Defaults to 0.
+            repeat (bool, optional): Whether or not acquisition should be
+                repetitive. Defaults to False.
+            external (bool, optional): Whether or not external trigger should
+                be used. Defaults to True.
+
+        Returns:
+            int: code describing what happened:
+                =0: RTM-Lamps are ready.
+                <0: Index of the first Lam which did not stop
+                    last acq. plus 1.
+                >0: Index of the first Lamp which is not ready
+                    for acq. plus 1.
+
+        """
+        if repeat:
+            repeat = _FOFBCtrlAcqConst.Repeat.repetitive
+        else:
+            repeat = _FOFBCtrlAcqConst.Repeat.normal
+
+        if external:
+            trig = _FOFBCtrlAcqConst.TrigTyp.external
+        else:
+            trig = _FOFBCtrlAcqConst.TrigTyp.now
+
+        ret = self.cmd_stop()
+        if ret > 0:
+            return -ret
+
+        for ctl in self._ctlrs.values():
+            ctl.repeat = repeat
+            ctl.trigger = trig
+            ctl.nrsamples_pre = nr_points_before
+            ctl.nrsamples_post = nr_points_after
+
+        return self.cmd_start()
+
+    def cmd_stop(self, wait=True, timeout=10) -> int:
+        """Stop acquistion.
+
+        Args:
+            wait (bool, optional): whether or not to wait Lamps
+                get ready. Defaults to True.
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: Lamps are ready.
+                >0: Index of the first Lamp which did not
+                    update plus 1.
+
+        """
+        for ctl in self._ctlrs.values():
+            ctl.cmd_ctrl(_FOFBCtrlAcqConst.TrigEvt.stop)
+
+        if wait:
+            _time.sleep(2)
+            return 0
+            # return self.wait_acquisition_finish(timeout=timeout)
+        return 0
+
+    def wait_acquisition_finish(self, timeout=10) -> int:
+        """Wait for all Lamps to be ready for acquisition.
+
+        Args:
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0:Lamps are ready.
+                >0: Index of the first Lamp which did not
+                    update plus 1.
+
+        """
+        for i, ctl in enumerate(self.ctrldevs.values()):
+            t0_ = _time.time()
+            if not ctl.wait_acq_finish(timeout):
+                return i + 1
+            timeout -= _time.time() - t0_
+        return 0
+
+    def cmd_start(self, wait=True, timeout=10) -> int:
+        """Start acquisition.
+
+        Args:
+            wait (bool, optional): whether or not to wait Lamp
+                get ready. Defaults to True.
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: Lamos are ready.
+                >0: Index of the first Lamp which did not
+                    update plus 1.
+
+        """
+        for ctl in self._ctlrs.values():
+            ctl.cmd_ctrl(_FOFBCtrlAcqConst.TrigEvt.start)
+
+        if wait:
+            _time.sleep(2)
+            return 0
+            # return self.wait_acquisition_start(timeout=timeout)
+        return 0
+
+    def wait_acquisition_start(self, timeout=10) -> bool:
+        """Wait for all RTM-Lamps to be ready for acquisition.
+
+        Args:
+            timeout (int, optional): Time to wait. Defaults to 10.
+
+        Returns:
+            int: code describing what happened:
+                =0: RTM-Lamp Lamps are ready.
+                >0: Index of the first RTM-Lamp which did not
+                    update plus 1.
+
+        """
+        for i, ps in enumerate(self.ctrldevs.values()):
+            t0_ = _time.time()
+            if not ps._ctrlclass.wait_acq_start(timeout):
+                return i + 1
+            timeout -= _time.time() - t0_
+        return 0
+
+    def set_repeat(self, val):
+        """Set repeat for all Lamps."""
+        self._set_devices_propty(self._ctlrs, 'TriggerRep-Sel', val)
+        return self._wait_devices_propty(self._ctlrs, 'TriggerRep-Sts', val)
+
+    def set_nrsamples_pre(self, val):
+        """Set nrsamples_pre for all Lamps."""
+        self._set_devices_propty(self._ctlrs, 'SamplesPre-SP', val)
+        return self._wait_devices_propty(self._ctlrs, 'SamplesPre-RB', val)
+
+    def set_trigger(self, val):
+        """Set trigger for all Lamps."""
+        self._set_devices_propty(self._ctlrs, 'Trigger-Sel', val)
+        return self._wait_devices_propty(self._ctlrs, 'Trigger-Sts', val)
