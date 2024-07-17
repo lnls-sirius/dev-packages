@@ -1154,6 +1154,8 @@ class App(_Callback):
                     prp_rb = _PVName.from_sp2rb(prp)
                     okl &= bpm[prp_rb] == val
             value = _updt_bit(value, 9, not okl)
+        else:
+            value = 0b11111111111
 
         self._bpm_status = value
         self.run_callbacks('BPMStatus-Mon', self._bpm_status)
