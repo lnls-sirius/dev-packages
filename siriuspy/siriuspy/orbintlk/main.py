@@ -1145,7 +1145,7 @@ class App(_Callback):
             okb &= all(
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
             okb &= all(
-                d.acq_status == self._const.AcqStates.External_Trig for d in bpms)
+                d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
             value = _updt_bit(value, 8, not okb)
             # LogTrigConfigured
             okl = True
