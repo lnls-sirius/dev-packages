@@ -66,7 +66,6 @@ class BPM(_Device):
         'PosKq-SP', 'PosKq-RB',
         'PosXOffset-SP', 'PosXOffset-RB',
         'PosYOffset-SP', 'PosYOffset-RB',
-        'PosSumOffset-SP', 'PosSumOffset-RB',
         'PosQOffset-SP', 'PosQOffset-RB',
         'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
         'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
@@ -420,15 +419,6 @@ class BPM(_Device):
     @posy_offset.setter
     def posy_offset(self, value):
         self['PosYOffset-SP'] = float(value) / self.CONV_NM2UM
-
-    @property
-    def possum_offset(self):
-        """."""
-        return self['PosSumOffset-RB']
-
-    @possum_offset.setter
-    def possum_offset(self, value):
-        self['PosSumOffset-SP'] = float(value)
 
     @property
     def posq_offset(self):
