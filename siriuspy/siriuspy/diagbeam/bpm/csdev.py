@@ -33,7 +33,7 @@ class ETypes(_csdev.ETypes):
     ACQREPEAT = ('Normal', 'Repetitive')
     ACQEVENTS = ('Start', 'Stop')
     ACQDATATYP = ('A', 'B', 'C', 'D')
-    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'FAcq')
+    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'TbTPha', 'FOFB', 'FOFBPha', 'FAcq')
     ACQSTATES = (
         'Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
         'Acquiring', 'Error', 'Bad Post Samples', 'Too Many Samples',
