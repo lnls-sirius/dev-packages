@@ -761,31 +761,29 @@ class BPM(_BaseTimingConfig):
             vals[key] = _np.std(val, axis=1)
 
         sum1, sum2 = vals["A"] + vals["C"], vals["D"] + vals["B"]
-        zero1 = _np.logical_not(_np.isclose(sum1, 0.0))
-        zero2 = _np.logical_not(_np.isclose(sum2, 0.0))
-        diff1 = (vals["A"][zero1] - vals["C"][zero1]) / sum1[zero1]
-        diff2 = (vals["D"][zero2] - vals["B"][zero2]) / sum2[zero2]
-        x_uncal = (diff1 + diff2) / 2
-        y_uncal = (diff1 - diff2) / 2
-        if self._config_ok_vals["XYPosCal"] == _CSBPM.DsblEnbl.disabled:
-            x_cal[:rnts][zero1] = x_uncal * self.poskx
-            y_cal[:rnts][zero2] = y_uncal * self.posky
-        else:
-            x_cal[:rnts][zero1], y_cal[:rnts][zero2] = self._apply_polyxy(
-                x_uncal, y_uncal
-            )
-        x_cal[:rnts][zero1] *= self._orb_conv_unit
-        y_cal[:rnts][zero2] *= self._orb_conv_unit
-        x_cal[:rnts][zero1] -= self.offsetx or 0.0
-        y_cal[:rnts][zero2] -= self.offsety or 0.0
+        not_zero = _np.logical_not(_np.isclose(sum1, 0.0))
+        not_zero &= _np.logical_not(_np.isclose(sum2, 0.0))
+        diff1 = (vals["A"][not_zero] - vals["C"][not_zero]) / sum1[not_zero]
+        diff2 = (vals["D"][not_zero] - vals["B"][not_zero]) / sum2[not_zero]
+        x_raw = (diff1 + diff2) / 2
+        y_raw = (diff1 - diff2) / 2
+        if self._config_ok_vals["XYPosCal"] == _CSBPM.DsblEnbl.enabled:
+            x_raw, y_raw = self._apply_polyxy(x_raw, y_raw)
+
+        x_cal[:rnts][not_zero] = x_raw * self.poskx
+        y_cal[:rnts][not_zero] = y_raw * self.posky
+        x_cal[:rnts][not_zero] *= self._orb_conv_unit
+        y_cal[:rnts][not_zero] *= self._orb_conv_unit
+        x_cal[:rnts][not_zero] -= self.offsetx or 0.0
+        y_cal[:rnts][not_zero] -= self.offsety or 0.0
         s_cal[:rnts] = (sum1 + sum2) * self.ksum
         return x_cal, y_cal, s_cal
 
-    def _apply_polyxy(self, x_uncal, y_uncal):
+    def _apply_polyxy(self, x_raw, y_raw):
         """."""
-        x_cal = self._calc_poly(x_uncal, y_uncal, plane="x")
-        y_cal = self._calc_poly(y_uncal, x_uncal, plane="y")
-        return x_cal, y_cal
+        x_pol = self._calc_poly(x_raw, y_raw, plane="x")
+        y_pol = self._calc_poly(y_raw, x_raw, plane="y")
+        return x_pol, y_pol
 
     def _calc_poly(self, th1, ot1, plane="x"):
         """."""
