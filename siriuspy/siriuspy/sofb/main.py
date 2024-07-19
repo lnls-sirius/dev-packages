@@ -60,7 +60,7 @@ class SOFB(_BaseClass):
         if self.acc == "SI":
             self.fofb = HLFOFB()
             self._download_fofb_kicks = True
-            self._download_fofb_kicks_perc = 0.04
+            self._download_fofb_kicks_perc = 0.40
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
@@ -75,7 +75,7 @@ class SOFB(_BaseClass):
             self._drive_state = self._csorb.DriveState.Open
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
-        self._ref_corr_kicks = None
+        self._ref_corr_kicks = zer.copy()
         self._thread = None
         self._havebeam_pv = _PV("SI-Glob:AP-CurrInfo:StoredEBeam-Mon")
 
@@ -274,7 +274,7 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value / 100, 0), 1)
+        value = min(max(value / 300, 0), 1)
         self._download_fofb_kicks_perc = value
         self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True
@@ -837,11 +837,11 @@ class SOFB(_BaseClass):
             refy0 = fofb.refy
 
         if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
-            msg = 'Setting Trigger to listen to EVG Clock...'
+            msg = 'Setting Trigger to listen to RmpBO event...'
             self._update_log(msg)
             _log.info(msg)
-            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Clock)
-            self.correctors.set_corrs_mode(self._csorb.CorrSync.Clock)
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.RmpBO)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.RmpBO)
             msg = 'Trigger ready!'
             self._update_log(msg)
             _log.info(msg)
@@ -907,9 +907,7 @@ class SOFB(_BaseClass):
             if kicks is None:
                 break
 
-            kicks = self._interact_with_fofb_in_apply_kicks(
-                kicks, dkicks, refx0, refy0
-            )
+            kicks = self._interact_with_fofb_in_apply_kicks(kicks, dkicks)
             if kicks is None:
                 break
             tims.append(_time())
