@@ -859,14 +859,14 @@ class FamFastCorrs(_DeviceSet):
         return _np.array([p.currloop_kp for p in self._psdevs])
 
     @property
-    def currloop_ti(self):
-        """Current loop Ti.
+    def currloop_ki(self):
+        """Current loop Ki.
 
         Returns:
             state (numpy.ndarray, 160):
-                CurrLoopTi for each power supply.
+                CurrLoopKi for each power supply.
         """
-        return _np.array([p.currloop_ti for p in self._psdevs])
+        return _np.array([p.currloop_ki for p in self._psdevs])
 
     @property
     def fofbacc_filter_gain(self):
@@ -1190,8 +1190,8 @@ class FamFastCorrs(_DeviceSet):
             dev.currloop_kp = values[i]
         return True
 
-    def set_currloop_ti(self, values, psnames=None, psindices=None):
-        """Command to set power supply Ti."""
+    def set_currloop_ki(self, values, psnames=None, psindices=None):
+        """Command to set power supply Ki."""
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
@@ -1200,7 +1200,7 @@ class FamFastCorrs(_DeviceSet):
                 'Values must be the same size as psnames or psindices.'
             )
         for i, dev in enumerate(devs):
-            dev.currloop_ti = values[i]
+            dev.currloop_ki = values[i]
         return True
 
     def check_currloop_kp(
@@ -1220,9 +1220,9 @@ class FamFastCorrs(_DeviceSet):
             return True
         return False
 
-    def check_currloop_ti(
+    def check_currloop_ki(
             self, values, psnames=None, psindices=None):
-        """Check current loop Ti."""
+        """Check current loop Ki."""
         if not self.connected:
             return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
@@ -1232,7 +1232,7 @@ class FamFastCorrs(_DeviceSet):
             raise ValueError(
                 'Values must be the same size as psnames or psindices.'
             )
-        impltd = _np.asarray([d.currloop_ti for d in devs])
+        impltd = _np.asarray([d.currloop_ki for d in devs])
         if _np.allclose(values, impltd, atol=0):
             return True
         return False
@@ -1547,12 +1547,18 @@ class HLFOFB(_Device):
         self['FOFBAccDecimation-SP'] = value
 
     @property
-    def psconfig_mat(self):
+    def psconfigmat(self):
         """Power Supply Configuration matrix."""
         return self['PSConfigMat-RB']
 
-    @psconfig_mat.setter
-    def psconfig_mat(self, value):
+    @psconfigmat.setter
+    def psconfigmat(self, value):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        if not len(value) == self._data.psconfig_size:
+            raise ValueError(
+                'Setpoint value must have the same shape as the readback.'
+                )
         self['PSConfigMat-SP'] = value
 
     @property
