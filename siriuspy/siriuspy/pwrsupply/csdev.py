@@ -1626,8 +1626,8 @@ def _get_ps_FOFB_propty_database():
         # PI control
         'CurrLoopKp-SP': {'type': 'int', 'value': 0},
         'CurrLoopKp-RB': {'type': 'int', 'value': 0},
-        'CurrLoopKi-SP': {'type': 'int', 'value': 0},
-        'CurrLoopKi-RB': {'type': 'int', 'value': 0},
+        'CurrLoopTi-SP': {'type': 'int', 'value': 0},
+        'CurrLoopTi-RB': {'type': 'int', 'value': 0},
         'CurrLoopMode-Sel': {
             'type': 'enum', 'enums': _et.FOFB_CURRLOOPMODES,
             'value': Const.CurrLoopModeFOFB.open_loop_manual,
