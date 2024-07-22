@@ -274,7 +274,7 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value / 300, 0), 1)
+        value = min(max(value / 100, 0), 1)
         self._download_fofb_kicks_perc = value
         self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True
