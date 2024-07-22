@@ -65,7 +65,7 @@ class _PSDev(_Device):
         'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
         'FOFBAcc-Mon',
         'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
-        'FOFBAccFilter-SP', 'FOFBAccFilter-RB', 
+        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
         'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
     )
     _properties_pulsed = (
@@ -926,12 +926,12 @@ class PowerSupplyFC(_PSDev):
         self['CurrLoopKp-SP'] = value
 
     @property
-    def currloop_ti(self):
-        """Current control loop Ti parameter."""
+    def currloop_ki(self):
+        """Current control loop Ki parameter."""
         return self['CurrLoopTi-RB']
 
-    @currloop_ti.setter
-    def currloop_ti(self, value):
+    @currloop_ki.setter
+    def currloop_ki(self, value):
         self['CurrLoopTi-SP'] = value
 
     @property
@@ -1041,7 +1041,7 @@ class PowerSupplyFC(_PSDev):
     @fofbacc_filter.setter
     def fofbacc_filter(self, value):
         self['FOFBAccFilter-SP'] = value
-  
+
     @property
     def fofbacc_filter_gain(self):
         """FOFB accumulator filter gain."""

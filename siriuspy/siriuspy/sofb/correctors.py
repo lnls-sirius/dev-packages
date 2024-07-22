@@ -13,7 +13,6 @@ from ..pwrsupply.csdev import Const as _PSConst
 from ..timesys.csdev import Const as _TIConst
 from ..search import HLTimeSearch as _HLTimesearch
 from ..envars import VACA_PREFIX as LL_PREF
-from ..epics import PV as _PV
 from ..namesys import SiriusPVName as _PVName
 
 from .base_class import BaseClass as _BaseClass, \
@@ -162,6 +161,13 @@ class CHCV(Corrector):
         self._sp = _PV(pvsp, **opt)
         self._rb = _PV(pvrb, **opt)
         self._ref = _PV(pvref, **opt)
+
+        pvoffwfmsp = self._name.substitute(
+            prefix=LL_PREF, propty_name='WfmOffsetKick', propty_suffix='SP')
+        pvoffwfmrb = self._name.substitute(
+            prefix=LL_PREF, propty_name='WfmOffsetKick', propty_suffix='RB')
+        self._wfm_offset_sp = _PV(pvoffwfmsp)
+        self._wfm_offset_rb = _PV(pvoffwfmrb)
         self._config_ok_vals = {
             'OpMode': _PSConst.OpMode.SlowRef,
             'PwrState': _PSConst.PwrStateSel.On}
@@ -192,6 +198,8 @@ class CHCV(Corrector):
             return _PSConst.OpMode.SlowRefSync
         elif pvobj.value == _PSConst.States.SlowRef:
             return _PSConst.OpMode.SlowRef
+        elif pvobj.value == _PSConst.States.RmpWfm:
+            return _PSConst.OpMode.RmpWfm
         return pvobj.value
 
     @opmode.setter
@@ -212,10 +220,42 @@ class CHCV(Corrector):
         return conn
 
     @property
+    def value(self):
+        """Value."""
+        if not self._rb.connected:
+            return None
+        if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
+            return self.wfm_offset_kick
+        return self._rb.value
+
+    @value.setter
+    def value(self, val):
+        """."""
+        if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
+            self.wfm_offset_kick = val
+        else:
+            self._sp.put(val, wait=False)
+
+    @property
+    def wfm_offset_kick(self):
+        """."""
+        if not self._wfm_offset_rb.connected:
+            return None
+        return self._wfm_offset_rb.value
+
+    @wfm_offset_kick.setter
+    def wfm_offset_kick(self, val):
+        """."""
+        self._wfm_offset_sp.put(val, wait=False)
+
+    @property
     def refvalue(self):
         """."""
-        if self._ref.connected:
-            return self._ref.value
+        if not self._ref.connected:
+            return None
+        if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
+            return self.wfm_offset_kick
+        return self._ref.value
 
     def configure(self):
         """Configure method."""
@@ -317,11 +357,18 @@ class TimingConfig(_BaseTimingConfig):
         src_val = self._csorb.CorrExtEvtSrc._fields.index(evt)
         src_val = self._csorb.CorrExtEvtSrc[src_val]
         self.EVT = src_val
+
+        src_val = self._csorb.CorrExtEvtSrc._fields.index(
+            self._csorb.evt_rmpbo)
+        src_val = self._csorb.CorrExtEvtSrc[src_val]
+        self.RMPBO = src_val
+
         src_val = self._csorb.CorrExtEvtSrc._fields.index(
             self._csorb.clk_cor_name
         )
         src_val = self._csorb.CorrExtEvtSrc[src_val]
         self.CLK = src_val
+
         self._config_ok_vals = {
             "Mode": _TIConst.EvtModes.External,
             "Src": src_val,
@@ -364,6 +411,20 @@ class TimingConfig(_BaseTimingConfig):
         self._evt_sender.value = 1
 
     @property
+    def state(self):
+        """State."""
+        pv = self._config_pvs_rb['State']
+        return pv.value if pv.connected else 0
+
+    @state.setter
+    def state(self, val):
+        """."""
+        pv = self._config_pvs_sp['State']
+        self._config_ok_vals['State'] = val
+        if self.put_enable and pv.connected:
+            pv.put(val, wait=False)
+
+    @property
     def sync_type(self):
         """."""
         return self._config_pvs_rb["Src"].value
@@ -371,7 +432,7 @@ class TimingConfig(_BaseTimingConfig):
     @sync_type.setter
     def sync_type(self, value):
         """."""
-        if value not in (self.EVT, self.CLK):
+        if value not in (self.EVT, self.CLK, self.RMPBO):
             return
         self._config_ok_vals["Src"] = value
         pvobj = self._config_pvs_sp["Src"]
@@ -415,7 +476,7 @@ class EpicsCorrectors(BaseCorrectors):
     MAX_PROB = 5
     ACQRATE = 2
 
-    def __init__(self, acc, prefix="", callback=None, dipoleoff=False):
+    def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._sofb = None
@@ -576,7 +637,10 @@ class EpicsCorrectors(BaseCorrectors):
         """Set mode of CHs and CVs method. Only called when acc==SI."""
         if value not in self._csorb.CorrSync:
             return False
+
+        self.timing.state = 0
         self.sync_kicks = value
+        refs = [c.value for c in self._corrs[:-1]]
         val = _PSConst.OpMode.SlowRefSync
         if value == self._csorb.CorrSync.Off:
             self.set_timing_delay(0)
@@ -584,9 +648,16 @@ class EpicsCorrectors(BaseCorrectors):
         elif value == self._csorb.CorrSync.Event:
             self.set_timing_delay(0)
             self.timing.sync_type = self.timing.EVT
-        else:
+        elif value == self._csorb.CorrSync.Clock:
             self.set_timing_delay(self._csorb.CORR_DEF_DELAY)
             self.timing.sync_type = self.timing.CLK
+        elif value == self._csorb.CorrSync.RmpBO:
+            self.set_timing_delay(0)
+            self.timing.sync_type = self.timing.RMPBO
+            val = _PSConst.OpMode.RmpWfm
+
+        # Time to wait any waveform to finish
+        _time.sleep(0.6)
 
         mask = self._get_mask()
         for i, corr in enumerate(self._corrs[:-1]):
@@ -598,7 +669,9 @@ class EpicsCorrectors(BaseCorrectors):
                 return False
             corr.put_enable = mask[i]
             corr.opmode = val
+            corr.value = refs[i]
 
+        self.timing.state = 1
         strsync = self._csorb.CorrSync._fields[self.sync_kicks]
         msg = "Synchronization set to {0:s}".format(strsync)
         self._update_log(msg)

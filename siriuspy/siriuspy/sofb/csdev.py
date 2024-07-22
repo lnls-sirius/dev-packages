@@ -16,24 +16,24 @@ class ETypes(_csdev.ETypes):
     """Local enumerate types."""
 
     ENBL_RF = _csdev.ETypes.OFF_ON
-    OPEN_CLOSED = ("Open", "Closed")
-    ORB_MODE_SI = ("SlowOrb", "MultiTurn", "SinglePass")
-    ORB_MODE_RINGS = ("MultiTurn", "SinglePass")
-    ORB_MODE_TLINES = ("SinglePass",)
-    SMOOTH_METH = ("Average", "Median")
-    RESPMAT_MODE = ("Mxx", "Myy", "NoCoup", "Full")
-    SPASS_METHOD = ("FromBPMs", "Calculated")
-    MTURN_ACQUIRE = ("Idle", "Acquire")
-    APPLY_CORR_TLINES = ("CH", "CV", "All")
-    APPLY_CORR_RINGS = ("CH", "CV", "RF", "All")
-    APPLY_DELTA_MON = ("Idle", "Applying", "Done", "Error")
-    SI_CORR_SYNC = ("Off", "Event", "Clock")
-    ORB_ACQ_CHAN = ("FAcq", "FOFB", "TbT", "ADC", "ADCSwp")
-    MEAS_RMAT_CMD = ("Start", "Stop", "Reset")
-    MEAS_RMAT_MON = ("Idle", "Measuring", "Completed", "Aborted")
-    DRIVE_TYPE = ("Sine", "Square", "Impulse")
-    TLINES = ("TB", "TS")
-    RINGS = ("BO", "SI")
+    OPEN_CLOSED = ('Open', 'Closed')
+    ORB_MODE_SI = ('SlowOrb', 'MultiTurn', 'SinglePass')
+    ORB_MODE_RINGS = ('MultiTurn', 'SinglePass')
+    ORB_MODE_TLINES = ('SinglePass', )
+    SMOOTH_METH = ('Average', 'Median')
+    RESPMAT_MODE = ('Mxx', 'Myy', 'NoCoup', 'Full')
+    SPASS_METHOD = ('FromBPMs', 'Calculated')
+    MTURN_ACQUIRE = ('Idle', 'Acquire')
+    APPLY_CORR_TLINES = ('CH', 'CV', 'All')
+    APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
+    APPLY_DELTA_MON = ('Idle', 'Applying', 'Done', 'Error')
+    SI_CORR_SYNC = ('Off', 'Event', 'Clock', 'RmpBO')
+    ORB_ACQ_CHAN = ('FAcq', 'FOFB', 'TbT', 'ADC', 'ADCSwp')
+    MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
+    MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
+    DRIVE_TYPE = ('Sine', 'Square', 'Impulse')
+    TLINES = ('TB', 'TS')
+    RINGS = ('BO', 'SI')
     ACCELERATORS = TLINES + RINGS
 
     STS_LBLS_CORR_TLINES = (
@@ -194,11 +194,12 @@ class SOFBTLines(ConstTLines):
         ext = acc.lower() + "respmat"
         self.respmat_fname = _os.path.join(ioc_fol, "respmat." + ext)
 
-        self.trigger_acq_name = self.acc + "-Fam:TI-BPM"
-        if self.acc == "SI":
-            self.trigger_cor_name = self.acc + "-Glob:TI-Mags-Corrs"
-            self.evt_cor_name = "Orb" + self.acc
-            self.clk_cor_name = "Clock3"
+        self.trigger_acq_name = self.acc + '-Fam:TI-BPM'
+        if self.acc == 'SI':
+            self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
+            self.evt_cor_name = 'Orb' + self.acc
+            self.clk_cor_name = 'Clock3'
+            self.evt_rmpbo = 'RmpBO'
 
         self.evt_acq_name = "Linac"
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
@@ -1164,11 +1165,11 @@ class SOFBSI(SOFBRings, ConstSI):
                 'prec': 3, 'unit': 'um',
                 'lolim': 0, 'hilim': 10000},
             'FOFBDownloadKicksPerc-SP': {
-                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100.1},
+                'type': 'float', 'value': 40.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 300.1},
             'FOFBDownloadKicksPerc-RB': {
-                'type': 'float', 'value': 4.0, 'prec': 2, 'unit': '%',
-                'lolim': 0.0, 'hilim': 100.1},
+                'type': 'float', 'value': 40.0, 'prec': 2, 'unit': '%',
+                'lolim': 0.0, 'hilim': 300.1},
             'FOFBDownloadKicks-Sel': {
                 'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
@@ -1303,19 +1304,13 @@ class SOFBSI(SOFBRings, ConstSI):
     def get_corrs_database(self, prefix=""):
         """Return SOFB correctors database."""
         db_ring = {
-            "CorrSync-Sel": {
-                "type": "enum",
-                "enums": self.CorrSync._fields,
-                "unit": "Off_Event_Clock",
-                "value": self.CorrSync.Off,
-            },
-            "CorrSync-Sts": {
-                "type": "enum",
-                "enums": self.CorrSync._fields,
-                "unit": "Off_Event_Clock",
-                "value": self.CorrSync.Off,
-            },
-        }
+            'CorrSync-Sel': {
+                'type': 'enum', 'enums': self.CorrSync._fields,
+                'unit': 'Off_Event_Clock_RmpBO', 'value': self.CorrSync.Off},
+            'CorrSync-Sts': {
+                'type': 'enum', 'enums': self.CorrSync._fields,
+                'unit': 'Off_Event_Clock_RmpBO', 'value': self.CorrSync.Off},
+            }
         dbase = super().get_corrs_database(prefix=prefix)
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase

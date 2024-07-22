@@ -12,7 +12,7 @@ from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _PVName
-from ..devices import FamFOFBControllers as _FamFOFBCtrls, Device as _Device,\
+from ..devices import FamFOFBControllers as _FamFOFBCtrls, Device as _Device, \
     FamFastCorrs as _FamFastCorrs, SOFB as _SOFB, RFGen as _RFGen
 
 from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
@@ -81,7 +81,7 @@ class App(_Callback):
             dtype=float
         )
         self._corr_currloop_kp = _np.ones(self._const.nr_chcv, dtype=float)
-        self._corr_currloop_ti = _np.ones(self._const.nr_chcv, dtype=float)
+        self._corr_currloop_ki = _np.ones(self._const.nr_chcv, dtype=float)
         self._psconfig_mat = _np.zeros(
             (self._const.nr_chcv, self._const.psconfig_nr_coeffs_columns + 3),
             dtype=float
@@ -602,7 +602,7 @@ class App(_Callback):
         self._corrs_dev.set_fofbacc_filter(self._corr_accfilter_val)
         self._corrs_dev.set_fofbacc_filter_gain(self._corr_accfilter_gain)
         self._corrs_dev.set_currloop_kp(self._corr_currloop_kp)
-        self._corrs_dev.set_currloop_ti(self._corr_currloop_ti)
+        self._corrs_dev.set_currloop_ki(self._corr_currloop_ki)
         self._update_log('...done!')
 
     def cmd_corr_pwrstate_on(self, _):
@@ -991,13 +991,13 @@ class App(_Callback):
 
         # select attributes
         kpcol = self._const.PSCONFIG_KP_COL
-        ticol = self._const.PSCONFIG_TI_COL
+        kicol = self._const.PSCONFIG_KI_COL
         gaincol = self._const.PSCONFIG_FILTER_GAIN_COL
         coeffcol = self._const.PSCONFIG_COEFF_FIRST_COL
 
         self._psconfig_mat = mat
         self._corr_currloop_kp = self._psconfig_mat[:, kpcol]
-        self._corr_currloop_ti = self._psconfig_mat[:, ticol]
+        self._corr_currloop_ki = self._psconfig_mat[:, kicol]
         self._corr_accfilter_gain = self._psconfig_mat[:, gaincol]
         self._corr_accfilter_val = self._psconfig_mat[:, coeffcol:]
 
@@ -1898,9 +1898,9 @@ class App(_Callback):
                 kp = self._corr_currloop_kp
                 if not self._corrs_dev.check_currloop_kp(kp):
                     value = _updt_bit(value, 10, 1)
-                # CurrLoopTiSynced
-                ti = self._corr_currloop_ti
-                if not self._corrs_dev.check_currloop_ti(ti):
+                # CurrLoopKiSynced
+                ki = self._corr_currloop_ki
+                if not self._corrs_dev.check_currloop_ki(ki):
                     value = _updt_bit(value, 11, 1)
 
             else:

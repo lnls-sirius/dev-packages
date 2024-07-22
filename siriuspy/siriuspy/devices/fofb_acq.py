@@ -528,12 +528,12 @@ class FOFBPSSysId(_Device):
         self['CurrLoopKp-SP'] = value
 
     @property
-    def currloop_ti(self):
-        """Current control loop Ti parameter."""
+    def currloop_ki(self):
+        """Current control loop Ki parameter."""
         return self['CurrLoopTi-RB']
 
-    @currloop_ti.setter
-    def currloop_ti(self, value):
+    @currloop_ki.setter
+    def currloop_ki(self, value):
         self['CurrLoopTi-SP'] = value
 
 
@@ -669,15 +669,15 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             [self._psdevs[psn].currloop_kp for psn in self._psnames])
 
     @property
-    def currloop_ti(self):
-        """Current Loop Ti.
+    def currloop_ki(self):
+        """Current Loop Ki.
 
         Returns:
-            ti (numpy.ndarray, 160):
-                current loop Ti for each power supply.
+            ki (numpy.ndarray, 160):
+                current loop Ki for each power supply.
         """
         return _np.array(
-            [self._psdevs[psn].currloop_ti for psn in self._psnames])
+            [self._psdevs[psn].currloop_ki for psn in self._psnames])
 
     @property
     def strength_2_current_factor(self):
@@ -1339,18 +1339,18 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             dev.currloop_kp = values[i]
         return True
 
-    def set_currloop_ti(self, values):
-        """Set current loop Ti parameter for all correctors.
+    def set_currloop_ki(self, values):
+        """Set current loop Ki parameter for all correctors.
 
         Args:
             values (numpy.ndarray, (160,)):
-                Array with values to be applied to correctors Ti
+                Array with values to be applied to correctors Ki
                 parameter in psnames order.
 
         """
         for i, psn in enumerate(self._psnames):
             dev = self._psdevs[psn]
-            dev.currloop_ti = values[i]
+            dev.currloop_ki = values[i]
         return True
 
 
