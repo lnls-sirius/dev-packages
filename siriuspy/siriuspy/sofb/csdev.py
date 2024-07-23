@@ -1007,10 +1007,10 @@ class SOFBSI(SOFBRings, ConstSI):
             'LoopState-Sts': {
                 'type': 'enum', 'enums': self.LoopState._fields, 'value': 0},
             'LoopFreq-SP': {
-                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'type': 'float', 'value': self.BPMsFreq / 10, 'unit': 'Hz',
                 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopFreq-RB': {
-                'type': 'float', 'value': self.BPMsFreq, 'unit': 'Hz',
+                'type': 'float', 'value': self.BPMsFreq / 10, 'unit': 'Hz',
                 'prec': 3, 'lolim': 1e-3, 'hilim': 60},
             'LoopPIDKpCH-SP': {
                 'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,

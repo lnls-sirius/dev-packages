@@ -145,7 +145,7 @@ class BPM(_BaseTimingConfig):
             self._offsetx,
             self._offsety,
             self._polyx,
-            self._polyx,
+            self._polyy,
             self._arraya,
             self._arrayb,
             self._arrayc,
