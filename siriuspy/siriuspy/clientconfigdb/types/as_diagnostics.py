@@ -414,6 +414,14 @@ _bpm_propts = [
     [':SwInvGainB-SP', 1.0, 0.0],
     [':SwInvGainC-SP', 1.0, 0.0],
     [':SwInvGainD-SP', 1.0, 0.0],
+    [':GEN_PolyXArrayCoeff-SP', 1.0, 0.0],
+    [':GEN_PolyYArrayCoeff-SP', 1.0, 0.0],
+    [':GEN_PolySUMArrayCoeff-SP', 1.0, 0.0],
+    [':GEN_PolyQArrayCoeff-SP', 1.0, 0.0],
+    [':PM_PolyXArrayCoeff-SP', 1.0, 0.0],
+    [':PM_PolyYArrayCoeff-SP', 1.0, 0.0],
+    [':PM_PolySUMArrayCoeff-SP', 1.0, 0.0],
+    [':PM_PolyQArrayCoeff-SP', 1.0, 0.0],
 ]
 for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
     _bpm_propts.extend([
