@@ -368,7 +368,7 @@ class PSSearch:
             return PSSearch._splims_ps_unit
         elif psmodel in ('APU', ):
             return 'mm'
-        elif psmodel in ('FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
+        elif psmodel in ('FP_SEPT', 'FP_KCKR', 'FP_KCKRCCOIL', 'FP_PINGER'):
             return PSSearch._splims_pu_unit
         else:
             raise ValueError(psmodel)
