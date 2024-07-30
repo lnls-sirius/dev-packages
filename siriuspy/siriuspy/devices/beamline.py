@@ -42,7 +42,7 @@ class CAXCtrl(_Device):
         return self['A:PP01:A.RBV']
 
     @mirror_m1_roty_pos.setter
-    def mirror_m1_roty(self, value):
+    def mirror_m1_roty_pos(self, value):
         """Set the linear actuator pos related to RotY rotation [mm].
 
         RotY is performed by a linear actuator in one of
