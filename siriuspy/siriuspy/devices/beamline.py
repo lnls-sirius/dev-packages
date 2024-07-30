@@ -39,7 +39,7 @@ class CAXCtrl(_Device):
         at its longitudinal center and the linear actuator induces
         a rotation around the Y axis.
         """
-        return ['A:PP01:A.RBV']
+        return self['A:PP01:A.RBV']
 
     @mirror_m1_roty_pos.setter
     def mirror_m1_roty(self, value):
@@ -59,7 +59,7 @@ class CAXCtrl(_Device):
         This linear actuator translates directly to the horizontal
         transverse position of the mirror.
         """
-        return ['A:PP01:B.RBV']
+        return self['A:PP01:B.RBV']
 
     @mirror_m1_tx_pos.setter
     def mirror_m1_tx_pos(self, value):
@@ -79,7 +79,7 @@ class CAXCtrl(_Device):
         longitudinal side of the mirror base whereas Y2 amd Y3 are located in
         the other side, in oposite horizontal ends.
         """
-        return ['A:PP01:C.RBV']
+        return self['A:PP01:C.RBV']
 
     @mirror_m1_y1_pos.setter
     def mirror_m1_y1_pos(self, value):
@@ -101,7 +101,7 @@ class CAXCtrl(_Device):
         longitudinal side of the mirror base whereas Y2 amd Y3 are located in
         the other side, in opposite horizontal ends.
         """
-        return ['A:PP01:D.RBV']
+        return self['A:PP01:D.RBV']
 
     @mirror_m1_y2_pos.setter
     def mirror_m1_y2_pos(self, value):
@@ -123,7 +123,7 @@ class CAXCtrl(_Device):
         longitudinal side of the mirror base whereas Y2 amd Y3 are located in
         the other side, in opposite horizontal ends.
         """
-        return ['A:PP01:E.RBV']
+        return self['A:PP01:E.RBV']
 
     @mirror_m1_y3_pos.setter
     def mirror_m1_y3_pos(self, value):
@@ -139,7 +139,7 @@ class CAXCtrl(_Device):
     @property
     def dvf2_z_pos(self):
         """Return DVF2 base motor longitudinal position [mm]."""
-        return ['B:PP01:E.RBV']
+        return self['B:PP01:E.RBV']
 
     @dvf2_z_pos.setter
     def dvf2_z_pos(self, value):
