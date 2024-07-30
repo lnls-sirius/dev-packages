@@ -71,7 +71,7 @@ class CAXCtrl(_Device):
         self[':A:PP01:B'] = value
 
     @property
-    def mirror_m1_pos_y1(self):
+    def mirror_m1_y1_pos(self):
         """Return the first linear actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -81,8 +81,8 @@ class CAXCtrl(_Device):
         """
         return [':A:PP01:C.RBV']
 
-    @mirror_m1_pos_y1.setter
-    def mirror_m1_pos_y1(self, value):
+    @mirror_m1_y1_pos.setter
+    def mirror_m1_y1_pos(self, value):
         """Set the first linear actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -93,7 +93,7 @@ class CAXCtrl(_Device):
         self[':A:PP01:C'] = value
 
     @property
-    def mirror_m1_pos_y2(self):
+    def mirror_m1_y2_pos(self):
         """Return the second linear actuator pos Y2 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -103,8 +103,8 @@ class CAXCtrl(_Device):
         """
         return [':A:PP01:D.RBV']
 
-    @mirror_m1_pos_y2.setter
-    def mirror_m1_pos_y2(self, value):
+    @mirror_m1_y2_pos.setter
+    def mirror_m1_y2_pos(self, value):
         """Set the second linear actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -115,7 +115,7 @@ class CAXCtrl(_Device):
         self[':A:PP01:D'] = value
 
     @property
-    def mirror_m1_pos_y3(self):
+    def mirror_m1_y3_pos(self):
         """Return the third linear actuator pos Y2 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -125,8 +125,8 @@ class CAXCtrl(_Device):
         """
         return [':A:PP01:E.RBV']
 
-    @mirror_m1_pos_y3.setter
-    def mirror_m1_pos_y3(self, value):
+    @mirror_m1_y3_pos.setter
+    def mirror_m1_y3_pos(self, value):
         """Set the third linear actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -137,11 +137,11 @@ class CAXCtrl(_Device):
         self[':A:PP01:E'] = value
 
     @property
-    def dvf2_pos_z(self):
+    def dvf2_z_pos(self):
         """Return DVF2 base motor longitudinal position [mm]."""
         return [':B:PP01:E.RBV']
 
-    @dvf2_pos_z.setter
-    def dvf2_pos_z(self, value):
+    @dvf2_z_pos.setter
+    def dvf2_z_pos(self, value):
         """Set DVF2 base motor longitudinal position [mm]."""
-        self[':B:PP01:E.RBV'] = value
+        self[':B:PP01:E'] = value
