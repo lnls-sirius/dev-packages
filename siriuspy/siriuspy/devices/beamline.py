@@ -37,7 +37,7 @@ class CAXCtrl(_Device):
     @mirror_m1_pos_tx.setter
     def mirror_m1_pos_tx(self, value):
         """Set mirror M1 linear position axis for Tx [mm]."""
-        self[':A:PP01:B.RBV'] = value
+        self[':A:PP01:B'] = value
 
     @property
     def mirror_m1_pos_y1(self):
@@ -47,7 +47,7 @@ class CAXCtrl(_Device):
     @mirror_m1_pos_y1.setter
     def mirror_m1_pos_y1(self, value):
         """Set mirror M1 linear position y1 for Rx, Rz and Ty [mm]."""
-        self[':A:PP01:C.RBV'] = value
+        self[':A:PP01:C'] = value
 
     @property
     def mirror_m1_pos_y2(self):
@@ -57,7 +57,7 @@ class CAXCtrl(_Device):
     @mirror_m1_pos_y2.setter
     def mirror_m1_pos_y2(self, value):
         """Set mirror M1 linear position y2 for Rx, Rz and Ty [mm]."""
-        self[':A:PP01:D.RBV'] = value
+        self[':A:PP01:D'] = value
 
     @property
     def mirror_m1_pos_y3(self):
@@ -67,4 +67,4 @@ class CAXCtrl(_Device):
     @mirror_m1_pos_y3.setter
     def mirror_m1_pos_y3(self, value):
         """Set mirror M1 linear position y3 for Rx, Rz and Ty [mm]."""
-        self[':A:PP01:E.RBV'] = value
+        self[':A:PP01:E'] = value
