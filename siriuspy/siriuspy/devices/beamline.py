@@ -3,75 +3,68 @@
 from .device import Device as _Device
 
 
-class BeamLineMirror(_Device):
-    """Beamline control."""
-
-    class DEVICES:
-        """Devices names."""
-
-        CAX = 'CAX:A:PP01'
-        ALL = (CAX, )
+class CAXCtrl(_Device):
+    """Carcara beamline control."""
 
     PROPERTIES_DEFAULT = (
-        ':A', ':A.RBV',
-        ':B', ':B.RBV',
-        ':C', ':C.RBV',
-        ':D', ':D.RBV',
-        ':E', ':E.RBV',
+        ':A:PP01:A', ':A:PP01:A.RBV',
+        ':A:PP01:B', ':A:PP01:B.RBV',
+        ':A:PP01:C', ':A:PP01:C.RBV',
+        ':A:PP01:D', ':A:PP01:D.RBV',
+        ':A:PP01:E', ':A:PP01:E.RBV',
         )
 
-    def __init__(self, devname, props2init='all', **kwargs):
+    def __init__(self, devname=None, props2init='all', **kwargs):
         """Init."""
-        if devname not in BeamLineMirror.DEVICES.ALL:
-            raise NotImplementedError(devname)
+        devname = 'CAX' if devname is None else devname
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
-    def m1_pos_ry(self):
+    def mirror_m1_pos_ry(self):
         """Return mirror M1 linear position axis for Ry [mm]."""
-        return [':A.RBV']
+        return [':A:PP01::A.RBV']
 
-    @m1_pos_ry.setter
-    def m1_pos_ry(self, value):
+    @mirror_m1_pos_ry.setter
+    def mirror_m1_pos_ry(self, value):
         """Set mirror M1 linear position axis for Ry [mm]."""
-        self[':A'] = value
+        self[':A:PP01:A'] = value
 
     @property
-    def m1_pos_tx(self):
+    def mirror_m1_pos_tx(self):
         """Return mirror M1 linear position axis for Tx [mm]."""
-        return [':B.RBV']
+        return [':A:PP01:B.RBV']
 
-    @m1_pos_tx.setter
-    def m1_pos_tx(self, value):
+    @mirror_m1_pos_tx.setter
+    def mirror_m1_pos_tx(self, value):
         """Set mirror M1 linear position axis for Tx [mm]."""
-        self[':B.RBV'] = value
+        self[':A:PP01:B.RBV'] = value
 
     @property
-    def m1_pos_y1(self):
+    def mirror_m1_pos_y1(self):
         """Return mirror M1 linear position y1 for Rx, Rz and Ty [mm]."""
-        return [':C.RBV']
+        return [':A:PP01:C.RBV']
 
-    @m1_pos_y1.setter
-    def m1_pos_y1(self, value):
+    @mirror_m1_pos_y1.setter
+    def mirror_m1_pos_y1(self, value):
         """Set mirror M1 linear position y1 for Rx, Rz and Ty [mm]."""
-        self[':C.RBV'] = value
+        self[':A:PP01:C.RBV'] = value
 
     @property
-    def m1_pos_y2(self):
+    def mirror_m1_pos_y2(self):
         """Return mirror M1 linear position y2 for Rx, Rz and Ty [mm]."""
-        return [':D.RBV']
+        return [':A:PP01:D.RBV']
 
-    @m1_pos_y2.setter
-    def m1_pos_y2(self, value):
+    @mirror_m1_pos_y2.setter
+    def mirror_m1_pos_y2(self, value):
         """Set mirror M1 linear position y2 for Rx, Rz and Ty [mm]."""
-        self[':D.RBV'] = value
+        self[':A:PP01:D.RBV'] = value
 
     @property
-    def m1_pos_y3(self):
+    def mirror_m1_pos_y3(self):
         """Return mirror M1 linear position y3 for Rx, Rz and Ty [mm]."""
-        return [':E.RBV']
+        return [':A:PP01:E.RBV']
 
-    @m1_pos_y3.setter
-    def m1_pos_y3(self, value):
+    @mirror_m1_pos_y3.setter
+    def mirror_m1_pos_y3(self, value):
         """Set mirror M1 linear position y3 for Rx, Rz and Ty [mm]."""
-        self[':E.RBV'] = value
+        self[':A:PP01:E.RBV'] = value
