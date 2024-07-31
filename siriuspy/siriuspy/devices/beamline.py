@@ -16,13 +16,24 @@ class CAXCtrl(_Device):
     https://drive.autodesk.com/de29ccb7d/shares/SH9285eQTcf875d3c5396deb53e725438482
     """
 
+    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+
     PROPERTIES_DEFAULT = (
-        'A:PP01:A', 'A:PP01:A.RBV',
-        'A:PP01:B', 'A:PP01:B.RBV',
-        'A:PP01:C', 'A:PP01:C.RBV',
-        'A:PP01:D', 'A:PP01:D.RBV',
-        'A:PP01:E', 'A:PP01:E.RBV',
-        'B:PP01:E', 'B:PP01:E.RBV',
+        # mirror controls
+        'A:PP01:A', 'A:PP01:A.RBV', 'A:PP01:A.STOP',
+        'A:PP01:B', 'A:PP01:B.RBV', 'A:PP01:B.STOP',
+        'A:PP01:C', 'A:PP01:C.RBV', 'A:PP01:C.STOP',
+        'A:PP01:D', 'A:PP01:D.RBV', 'A:PP01:D.STOP',
+        'A:PP01:E', 'A:PP01:E.RBV', 'A:PP01:E.STOP',
+        # mirror photocollector
+        'A:RIO01:9215A:ai0',
+        # mirror temperatures
+        'A:RIO01:9226B:temp0', 'A:RIO01:9226B:temp1',
+        'A:RIO01:9226B:temp2', 'A:RIO01:9226B:temp3',
+        'A:RIO01:9226B:temp4',
+        # dvf motors
+        'B:PP01:E', 'B:PP01:E.RBV', 'B:PP01:E.STOP',
+        'B:PP01:F', 'B:PP01:F.RBV', 'B:PP01:F.STOP',
         )
 
     def __init__(self, devname=None, props2init='all', **kwargs):
@@ -31,7 +42,7 @@ class CAXCtrl(_Device):
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
-    def mirror_m1_roty_pos(self):
+    def m1_roty_pos(self):
         """Return the linear actuator pos related to RotY rotation [mm].
 
         RotY is performed by a linear actuator in one of
@@ -41,8 +52,8 @@ class CAXCtrl(_Device):
         """
         return self['A:PP01:A.RBV']
 
-    @mirror_m1_roty_pos.setter
-    def mirror_m1_roty_pos(self, value):
+    @m1_roty_pos.setter
+    def m1_roty_pos(self, value):
         """Set the linear actuator pos related to RotY rotation [mm].
 
         RotY is performed by a linear actuator in one of
@@ -53,7 +64,7 @@ class CAXCtrl(_Device):
         self['A:PP01:A'] = value
 
     @property
-    def mirror_m1_tx_pos(self):
+    def m1_tx_pos(self):
         """Return the linear actuator pos related to Tx translation [mm].
 
         This linear actuator translates directly to the horizontal
@@ -61,8 +72,8 @@ class CAXCtrl(_Device):
         """
         return self['A:PP01:B.RBV']
 
-    @mirror_m1_tx_pos.setter
-    def mirror_m1_tx_pos(self, value):
+    @m1_tx_pos.setter
+    def m1_tx_pos(self, value):
         """Set the linear actuator pos related to Tx translation [mm].
 
         This linear actuator is directly related to the horizontal
@@ -71,8 +82,8 @@ class CAXCtrl(_Device):
         self['A:PP01:B'] = value
 
     @property
-    def mirror_m1_y1_pos(self):
-        """Return the first linear actuator pos Y1 [mm].
+    def m1_y1_pos(self):
+        """Return the first linear vertical actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -81,9 +92,9 @@ class CAXCtrl(_Device):
         """
         return self['A:PP01:C.RBV']
 
-    @mirror_m1_y1_pos.setter
-    def mirror_m1_y1_pos(self, value):
-        """Set the first linear actuator pos Y1 [mm].
+    @m1_y1_pos.setter
+    def m1_y1_pos(self, value):
+        """Set the first linear vertical actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -93,8 +104,8 @@ class CAXCtrl(_Device):
         self['A:PP01:C'] = value
 
     @property
-    def mirror_m1_y2_pos(self):
-        """Return the second linear actuator pos Y2 [mm].
+    def m1_y2_pos(self):
+        """Return the second linear vertical actuator pos Y2 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -103,9 +114,9 @@ class CAXCtrl(_Device):
         """
         return self['A:PP01:D.RBV']
 
-    @mirror_m1_y2_pos.setter
-    def mirror_m1_y2_pos(self, value):
-        """Set the second linear actuator pos Y1 [mm].
+    @m1_y2_pos.setter
+    def m1_y2_pos(self, value):
+        """Set the second linear vertical actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -115,7 +126,7 @@ class CAXCtrl(_Device):
         self['A:PP01:D'] = value
 
     @property
-    def mirror_m1_y3_pos(self):
+    def m1_y3_pos(self):
         """Return the third linear actuator pos Y2 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
@@ -125,9 +136,9 @@ class CAXCtrl(_Device):
         """
         return self['A:PP01:E.RBV']
 
-    @mirror_m1_y3_pos.setter
-    def mirror_m1_y3_pos(self, value):
-        """Set the third linear actuator pos Y1 [mm].
+    @m1_y3_pos.setter
+    def m1_y3_pos(self, value):
+        """Set the third linear vertical actuator pos Y1 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -135,6 +146,11 @@ class CAXCtrl(_Device):
         the other side, in opposite horizontal ends.
         """
         self['A:PP01:E'] = value
+
+    @property
+    def m1_photocurrent_signal(self):
+        """Return induced voltage in the mirror photocollector [V]."""
+        return self['A:RIO01:9215A:ai0']
 
     @property
     def dvf2_z_pos(self):
@@ -145,3 +161,46 @@ class CAXCtrl(_Device):
     def dvf2_z_pos(self, value):
         """Set DVF2 base motor longitudinal position [mm]."""
         self['B:PP01:E'] = value
+
+    @property
+    def dvf2_lens_pos(self):
+        """Return DVF2 lens motor position [mm]."""
+        return self['B:PP01:F.RBV']
+
+    @dvf2_lens_pos.setter
+    def dvf2_lens_pos(self, value):
+        """Set DVF2 lens motor position [mm]."""
+        self['B:PP01:F'] = value
+
+    def cmd_m1_roty_stop(self, timeout=None):
+        """Stop linear actuator for RotY rotation."""
+        return self._cmd_motor_stop('A:PP01:A.STOP', timeout)
+
+    def cmd_m1_tx_stop(self, timeout=None):
+        """Stop linear actuator for Tx translation."""
+        return self._cmd_motor_stop('A:PP01:B.STOP', timeout)
+
+    def cmd_m1_y1_stop(self, timeout=None):
+        """Stop linear actuator Y1."""
+        return self._cmd_motor_stop('A:PP01:C.STOP', timeout)
+
+    def cmd_m1_y2_stop(self, timeout=None):
+        """Stop linear actuator Y2."""
+        return self._cmd_motor_stop('A:PP01:D.STOP', timeout)
+
+    def cmd_m1_y3_stop(self, timeout=None):
+        """Stop linear actuator Y3."""
+        return self._cmd_motor_stop('A:PP01:E.STOP', timeout)
+
+    def cmd_dvf2_z_stop(self, timeout=None):
+        """Stop DVF2 base motor."""
+        return self._cmd_motor_stop('B:PP01:E.STOP', timeout)
+
+    def cmd_dvf2_lens_stop(self, timeout=None):
+        """Stop DVF2 lens motor."""
+        return self._cmd_motor_stop('B:PP01:F', timeout)
+
+    def _cmd_motor_stop(self, propty, timeout):
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        self[propty] = 1
+        return self._wait(propty, 0, timeout=timeout)
