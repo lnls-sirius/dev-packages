@@ -20,20 +20,21 @@ class CAXCtrl(_Device):
 
     PROPERTIES_DEFAULT = (
         # mirror controls
-        'A:PP01:A', 'A:PP01:A.RBV', 'A:PP01:A.STOP',
-        'A:PP01:B', 'A:PP01:B.RBV', 'A:PP01:B.STOP',
-        'A:PP01:C', 'A:PP01:C.RBV', 'A:PP01:C.STOP',
-        'A:PP01:D', 'A:PP01:D.RBV', 'A:PP01:D.STOP',
-        'A:PP01:E', 'A:PP01:E.RBV', 'A:PP01:E.STOP',
+        'A:PP01:A', 'A:PP01:A.RBV', 'A:PP01:A.STOP',  # RotY
+        'A:PP01:B', 'A:PP01:B.RBV', 'A:PP01:B.STOP',  # Tx
+        'A:PP01:C', 'A:PP01:C.RBV', 'A:PP01:C.STOP',  # Y1
+        'A:PP01:D', 'A:PP01:D.RBV', 'A:PP01:D.STOP',  # Y2
+        'A:PP01:E', 'A:PP01:E.RBV', 'A:PP01:E.STOP',  # Y3
         # mirror photocollector
         'A:RIO01:9215A:ai0',
         # mirror temperatures
+        'A:RIO01:M1_CtrltempSp',
         'A:RIO01:9226B:temp0', 'A:RIO01:9226B:temp1',
         'A:RIO01:9226B:temp2', 'A:RIO01:9226B:temp3',
         'A:RIO01:9226B:temp4',
         # dvf motors
-        'B:PP01:E', 'B:PP01:E.RBV', 'B:PP01:E.STOP',
-        'B:PP01:F', 'B:PP01:F.RBV', 'B:PP01:F.STOP',
+        'B:PP01:E', 'B:PP01:E.RBV', 'B:PP01:E.STOP',  # z pos
+        'B:PP01:F', 'B:PP01:F.RBV', 'B:PP01:F.STOP',  # lens
         )
 
     def __init__(self, devname=None, props2init='all', **kwargs):
@@ -172,6 +173,42 @@ class CAXCtrl(_Device):
         """Set DVF2 lens motor position [mm]."""
         self['B:PP01:F'] = value
 
+    @property
+    def m1_temperature_ref(self):
+        """Return M1 temperature reference setpoint [°C]."""
+        return self['A:RIO01:M1_CtrltempSp']
+
+    @m1_temperature_ref.setter
+    def m1_temperature_ref(self, value):
+        """Set M1 temperature reference [°C]."""
+        self['A:RIO01:M1_CtrltempSp'] = value
+
+    @property
+    def m1_temperature_0(self):
+        """Return M1 temperature at cold finger [°C]."""
+        return self['A:RIO01:9226B:temp0']
+
+    @property
+    def m1_temperature_1(self):
+        """Return M1 temperature at braid mirror [°C]."""
+        return self['A:RIO01:9226B:temp1']
+
+    @property
+    def m1_temperature_2(self):
+        """Return M1 temperature at bar braid cold finger [°C]."""
+        return self['A:RIO01:9226B:temp2']
+
+    @property
+    def m1_temperature_3(self):
+        """Return M1 temperature at peltier cold side [°C]."""
+        return self['A:RIO01:9226B:temp3']
+
+    @property
+    def m1_temperature_4(self):
+        """Return M1 temperature at peltier hot side [°C]."""
+        return self['A:RIO01:9226B:temp4']
+
+    @property
     def cmd_m1_roty_stop(self, timeout=None):
         """Stop linear actuator for RotY rotation."""
         return self._cmd_motor_stop('A:PP01:A.STOP', timeout)
