@@ -235,7 +235,7 @@ class CAXCtrl(_Device):
 
     def cmd_dvf2_lens_stop(self, timeout=None):
         """Stop DVF2 lens motor."""
-        return self._cmd_motor_stop('B:PP01:F', timeout)
+        return self._cmd_motor_stop('B:PP01:F.STOP', timeout)
 
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
