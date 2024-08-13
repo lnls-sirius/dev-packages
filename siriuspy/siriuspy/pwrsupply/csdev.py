@@ -1370,13 +1370,13 @@ def _get_ps_sofb_propty_database():
 def _get_ps_idff_propty_database():
     """Return PSIDFF properties."""
     dbase = {
-        'SOFBMode-Sel': {
+        'IDFFMode-Sel': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
             'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
-        'SOFBMode-Sts': {
+        'IDFFMode-Sts': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
             'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
-        'SOFBUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        'IDFFUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         }
     return dbase
 
