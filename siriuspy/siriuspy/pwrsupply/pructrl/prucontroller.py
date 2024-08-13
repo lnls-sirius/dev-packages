@@ -59,6 +59,9 @@ class PRUController:
         # init sofb mode to false
         self._sofb_mode = False
 
+        # init idff mode to false
+        self._idff_mode = False
+
         # index of device in self._device_ids for next update in SOFB mode
         self._sofb_update_dev_idx = 0  # cyclical updates!
 
@@ -240,10 +243,14 @@ class PRUController:
         -------
         status : bool
             True is operation was queued or False, if operation was rejected
-            because of the SOFBMode state.
+            because of the SOFBMode or IDFF state.
         """
         # if in SOFBMode on, do not accept exec functions
         if self._sofb_mode:
+            return False
+
+        # if in IDFFMode on, do not accept exec functions
+        if self._idff_mode:
             return False
 
         # prepare arguments
@@ -263,6 +270,10 @@ class PRUController:
         """Update device parameters."""
         # if in SOFBMode on, do not accept comm. commands
         if self._sofb_mode:
+            return False
+
+        # if in IDFFMode on, do not accept comm. commands
+        if self._idff_mode:
             return False
 
         if isinstance(device_ids, int):
@@ -303,6 +314,10 @@ class PRUController:
         if self._sofb_mode:
             return False
 
+        # if in IDFFMode on, do not accept exec functions
+        if self._idff_mode:
+            return False
+
         # prepare arguments
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
@@ -338,6 +353,37 @@ class PRUController:
         psupply = self._psupplies[device_id]
         with self._lock:
             return _dcopy(psupply.scope)
+
+    # --- IDFF parameters ---
+
+    def idff_mode_set(self, state):
+        """Change IDFF mode: True or False."""
+        self._idff_mode = state
+        if state:
+            while not self._queue.empty():  # wait until queue is empty
+                pass
+
+    @property
+    def idff_mode(self):
+        """Return IDFF mode."""
+        return self._idff_mode
+
+    def idff_update_variables_state(self):
+        """Update variables state mirror."""
+        # do sofb update only if in IDFFMode On
+        if not self._idff_mode:
+            return
+
+        while not self._queue.empty():  # wait until queue is empty
+            pass
+
+        # select power supply dev_id for updating
+        self._sofb_update_dev_idx = \
+            (self._sofb_update_dev_idx + 1) % len(self._device_ids)
+        dev_id = self._device_ids[self._sofb_update_dev_idx]
+
+        # update variables state mirror for selected power supply
+        self.bsmp_update_variables(dev_id)
 
     # --- SOFBCurrent parameters ---
 
@@ -511,7 +557,8 @@ class PRUController:
             # run scan method once
             if self.scanning and \
                self._scan_interval != 0 and \
-               not self._sofb_mode:
+               not self._sofb_mode and \
+               not self._idff_mode:
                 self.bsmp_scan()
 
             # update scan interval

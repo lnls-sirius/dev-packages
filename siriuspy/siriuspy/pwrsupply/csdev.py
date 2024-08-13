@@ -1367,6 +1367,20 @@ def _get_ps_sofb_propty_database():
     return dbase
 
 
+def _get_ps_idff_propty_database():
+    """Return PSIDFF properties."""
+    dbase = {
+        'SOFBMode-Sel': {
+            'type': 'enum', 'enums': _et.DSBL_ENBL,
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+        'SOFBMode-Sts': {
+            'type': 'enum', 'enums': _et.DSBL_ENBL,
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+        'SOFBUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
+        }
+    return dbase
+
+
 def _get_id_apu_propty_database():
     """Return database of APU ID."""
     dbase = {
@@ -1730,8 +1744,11 @@ def _get_ps_FBP_propty_database():
             'type': 'float', 'value': 0.0, 'unit': 'p.u.',
             'prec': PS_CURRENT_PRECISION},
         }
+
     propty_db.update(dbase)
     dbase = _get_ps_sofb_propty_database()
+    propty_db.update(dbase)
+    dbase = _get_ps_idff_propty_database()
     propty_db.update(dbase)
     return propty_db
 

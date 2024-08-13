@@ -97,8 +97,9 @@ class PSController:
         if pvname in self._writers:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if value == 0 and 'SOFBMode-Sel' in field:
+        # update all setpoint properties upon return from SOFBMode or IDFFMode
+        if value == 0 and (
+                ('SOFBMode-Sel' in field) or ('IDFFMode-Sel' in field)):
             self._update_setpoints(devname)
 
         # return priority pvs
@@ -215,8 +216,9 @@ class StandardPSController(PSController):
         else:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if 'SOFBMode-Sel' in field and value == 0:
+        # update all setpoint properties upon return from SOFBMode or IDFFMode
+        if (('SOFBMode-Sel' in field) or ('IDFFMode-Sel' in field)) and \
+                value == 0:
             self._update_setpoints(devname)
 
         # return priority pvs
