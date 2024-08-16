@@ -946,12 +946,12 @@ class CycleController:
             psnames.extend(self.trimnames)
             timeout += TIMEOUT_CHECK
 
-        self.set_pwrsupplies_sofbmode(psnames)
-        if not self.check_pwrsupplies_sofbmode(psnames, timeout):
+        self.set_pwrsupplies_idffmode(psnames)
+        if not self.check_pwrsupplies_idffmode(psnames, timeout):
             self._update_log(
-                'There are power supplies in SOFBMode.', error=True)
+                'There are power supplies in IDFFMode.', error=True)
             return
-        self._update_log('Power supplies SOFBMode preparation finished!')
+        self._update_log('Power supplies IDFFMode preparation finished!')
 
     def prepare_pwrsupplies_opmode_slowref(self):
         """Prepare OpMode to slowref."""
