@@ -132,8 +132,23 @@ _amcfpgaevrs = [
     'IA-20RaBPM:TI-AMCFPGAEVR:',
     'IA-20RaBPMTL:TI-AMCFPGAEVR:',
     ]
-_amcfpgaevr_amcs = ['AMC3', 'AMC6']
 _amcfpgaevr_propts = [
+    ['DevEnbl-Sel', 0, 0.0],
+    ['RTMFreqPropGain-SP', 0, 0.0],
+    ['RTMFreqIntgGain-SP', 0, 0.0],
+    ['RTMPhasePropGain-SP', 0, 0.0],
+    ['RTMPhaseIntgGain-SP', 0, 0.0],
+    ['RTMPhaseNavg-SP', 0, 0.0],
+    ['RTMPhaseDiv-SP', 0, 0.0],
+    ['AFCFreqPropGain-SP', 0, 0.0],
+    ['AFCFreqIntgGain-SP', 0, 0.0],
+    ['AFCPhasePropGain-SP', 0, 0.0],
+    ['AFCPhaseIntgGain-SP', 0, 0.0],
+    ['AFCPhaseNavg-SP', 0, 0.0],
+    ['AFCPhaseDiv-SP', 0, 0.0],
+]
+_amcfpgaevr_amcs = ['AMC3', 'AMC6']
+_amcfpgaevr_amcs_propts = [
     ['State-Sel', 1, 0.0],
     ['Src-Sel', 3, 0.0],
     ['Dir-Sel', 0, 0.0],
@@ -145,8 +160,12 @@ _amcfpgaevr_propts = [
     ]
 _amcfpgaevr_pvs = list()
 for dev in _amcfpgaevrs:
+    # for AFC and RTM freq loops
+    for ppt, val, dly in _amcfpgaevr_propts:
+        _amcfpgaevr_pvs.append([dev+ppt, val, dly])
+    # for AMCs
     for amc in _amcfpgaevr_amcs:
-        for ppt, val, dly in _amcfpgaevr_propts:
+        for ppt, val, dly in _amcfpgaevr_amcs_propts:
             _amcfpgaevr_pvs.append([dev+amc+ppt, val, dly])
 
 _bpms = [
