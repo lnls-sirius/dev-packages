@@ -1,11 +1,8 @@
 """Power Supply Model classes."""
 
-from . import pscreaders as _readers
-from . import pscwriters as _writers
-from . import pscontroller as _controller
-
-from ..bsmp import constants as _const_psbsmp
-from ..bsmp import entities as _etity_psbsmp
+from ..bsmp import constants as _const_psbsmp, entities as _etity_psbsmp
+from . import pscontroller as _controller, pscreaders as _readers, \
+    pscwriters as _writers
 
 
 class _PSModel:
@@ -245,7 +242,8 @@ class _PSModel:
         elif epics_field == 'ScopeFreq-SP':
             return _writers.ScopeFreq(device_ids, pru_controller, setpoints)
         elif epics_field == 'ScopeDuration-SP':
-            return _writers.ScopeDuration(device_ids, pru_controller, setpoints)
+            return _writers.ScopeDuration(
+                device_ids, pru_controller, setpoints)
         elif epics_field == 'ScopeSrcAddr-SP':
             return _writers.ScopeSrcAddr(device_ids, pru_controller, setpoints)
         return None
@@ -348,7 +346,7 @@ class PSModelFBP(_PSModel):
             device_ids, epics_field, pru_controller, setpoints)
 
 
-class PSModelFAC_DCDC(_PSModel):
+class PSModelFAC_DCDC(_PSModel):  # noqa: N801
     """FAC power supply model."""
 
     _n = 'FAC_DCDC'
@@ -385,7 +383,7 @@ class PSModelFAC_DCDC(_PSModel):
     }
 
 
-class PSModelFAC_2S_DCDC(_PSModel):
+class PSModelFAC_2S_DCDC(_PSModel):  # noqa: N801
     """FAC_2S_DCDC power supply model."""
 
     _n = 'FAC_2S_DCDC'
@@ -437,7 +435,7 @@ class PSModelFAC_2S_DCDC(_PSModel):
         }
 
 
-class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
+class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):  # noqa: N801
     """FAC_2P4S_DCDC power supply model (BO Dipoles)."""
 
     _n = 'FAC_2P4S_DCDC'
@@ -545,7 +543,7 @@ class PSModelFAP(_PSModel):
         }
 
 
-class PSModelFAP_4P(_PSModel):
+class PSModelFAP_4P(_PSModel):  # noqa: N801, N801
     """FAP_4P power supply model."""
 
     _n = 'FAP_4P'
@@ -648,7 +646,7 @@ class PSModelFAP_4P(_PSModel):
         }
 
 
-class PSModelFAP_2P2S(_PSModel):
+class PSModelFAP_2P2S(_PSModel):  # noqa: N801
     """FAP_2P2S power supply model."""
 
     _n = 'FAP_2P2S'
@@ -760,7 +758,7 @@ class PSModelFAP_2P2S(_PSModel):
 # --- ACDC ---
 
 
-class PSModelFBP_DCLink(_PSModel):
+class PSModelFBP_DCLink(_PSModel):  # noqa: N801
     """FBP_DCLink model."""
 
     _n = 'FBP_DCLink'
@@ -811,7 +809,7 @@ class PSModelFBP_DCLink(_PSModel):
             readers, writers, pru_controller, devices)
 
 
-class PSModelFAC_2S_ACDC(_PSModel):
+class PSModelFAC_2S_ACDC(_PSModel):  # noqa: N801
     """FAC_2S_ACDC model."""
 
     _n = 'FAC_2S_ACDC'
@@ -881,7 +879,7 @@ class PSModelFAC_2S_ACDC(_PSModel):
             readers, writers, pru_controller, devices)
 
 
-class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
+class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):  # noqa: N801
     """FAC_2P4S_ACDC model."""
 
     _n = 'FAC_2P4S_ACDC'

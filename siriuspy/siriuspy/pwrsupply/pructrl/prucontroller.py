@@ -5,20 +5,17 @@ communications, be it with PRU or BSMP requests to power supply controllers
 at the other end of the serial line.
 """
 
-from time import (time as _time, sleep as _sleep)
-from socket import timeout as _socket_timeout
 from copy import deepcopy as _dcopy
-from threading import Thread as _Thread
-from threading import Lock as _Lock
+from socket import timeout as _socket_timeout
+from threading import Lock as _Lock, Thread as _Thread
+from time import sleep as _sleep, time as _time
 
-from ...util import get_timestamp as _get_timestamp
 from ...bsmp import SerialError as _SerialError
-
-from ..bsmp.constants import _const_bsmp
-from ..bsmp.constants import __version__ as _firmware_version_siriuspy
-
-from .udc import UDC as _UDC
+from ...util import get_timestamp as _get_timestamp
+from ..bsmp.constants import __version__ as _firmware_version_siriuspy, \
+    _const_bsmp
 from .psdevstate import PSDevState as _PSDevState
+from .udc import UDC as _UDC
 
 
 class PRUController:
@@ -150,7 +147,8 @@ class PRUController:
     @property
     def connected(self):
         """Store connection state."""
-        return all((self.check_connected(id) for id in self._device_ids))
+        return all(
+            (self.check_connected(dev_id) for dev_id in self._device_ids))
 
     def check_connected(self, device_id):
         """Return connection state of a device."""
@@ -167,8 +165,7 @@ class PRUController:
     # --- bsmp variables and parameters ---
 
     def read_variables(self, device_ids, variable_id=None):
-        """
-        Return device variables.
+        """Return device variables.
 
         Parameters
         ----------
@@ -181,7 +178,6 @@ class PRUController:
         Returns
         -------
         Selected BSMP device variable values.
-
         """
         # process device_ids
         if isinstance(device_ids, int):
@@ -247,10 +243,6 @@ class PRUController:
         """
         # if in SOFBMode on, do not accept exec functions
         if self._sofb_mode:
-            return False
-
-        # if in IDFFMode on, do not accept exec functions
-        if self._idff_mode:
             return False
 
         # prepare arguments
@@ -367,23 +359,6 @@ class PRUController:
     def idff_mode(self):
         """Return IDFF mode."""
         return self._idff_mode
-
-    def idff_update_variables_state(self):
-        """Update variables state mirror."""
-        # do sofb update only if in IDFFMode On
-        if not self._idff_mode:
-            return
-
-        while not self._queue.empty():  # wait until queue is empty
-            pass
-
-        # select power supply dev_id for updating
-        self._sofb_update_dev_idx = \
-            (self._sofb_update_dev_idx + 1) % len(self._device_ids)
-        dev_id = self._device_ids[self._sofb_update_dev_idx]
-
-        # update variables state mirror for selected power supply
-        self.bsmp_update_variables(dev_id)
 
     # --- SOFBCurrent parameters ---
 
@@ -557,8 +532,7 @@ class PRUController:
             # run scan method once
             if self.scanning and \
                self._scan_interval != 0 and \
-               not self._sofb_mode and \
-               not self._idff_mode:
+               not self._sofb_mode:
                 self.bsmp_scan()
 
             # update scan interval
@@ -689,7 +663,7 @@ class PRUController:
         self._psupplies = psupplies  # atomic operation
 
     def bsmp_update_sofb_setpoint(self, value):
-
+        """."""
         # execute sofb current setpoint
         self._udc.sofb_current_set(value)
 

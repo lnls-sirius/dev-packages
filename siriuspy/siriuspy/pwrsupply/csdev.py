@@ -5,11 +5,9 @@ import numpy as _np
 # from pcaspy import Severity as _Severity
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch
-
-from .bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
-from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP
+from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP, \
+    UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
-
 
 # --- Wfm ---
 # NOTE: _SIZE has to be consistent with
@@ -1376,7 +1374,6 @@ def _get_ps_idff_propty_database():
         'IDFFMode-Sts': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
             'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
-        'IDFFUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
         }
     return dbase
 
@@ -1451,17 +1448,17 @@ def _get_pu_common_propty_database():
     return dbase
 
 
-def _get_pu_FP_SEPT_propty_database():
+def _get_pu_FP_SEPT_propty_database():  # noqa: N802
     """."""
     return _get_pu_septum_propty_database()
 
 
-def _get_pu_FP_KCKR_propty_database():
+def _get_pu_FP_KCKR_propty_database():  # noqa: N802
     """."""
     return _get_pu_common_propty_database()
 
 
-def _get_pu_FP_KCKRCCOIL_propty_database():
+def _get_pu_FP_KCKRCCOIL_propty_database():  # noqa: N802
     """."""
     dbase = {
         'Voltage-SP': {'type': 'float', 'value': 0.0,
@@ -1474,18 +1471,18 @@ def _get_pu_FP_KCKRCCOIL_propty_database():
     return dbase
 
 
-def _get_pu_FP_PINGER_propty_database():
+def _get_pu_FP_PINGER_propty_database():  # noqa: N802
     """."""
     return _get_pu_common_propty_database()
 
 
-def _get_ps_LINAC_propty_database():
+def _get_ps_LINAC_propty_database():  # noqa: N802
     """Return LINAC pwrsupply props."""
     # NOTE: This is a mirror of the PS IOC database in linac-ioc-ps repo.
-    VERSION = '2021-11-23'
+    version = '2021-11-23'
     propty_db = {
         # --- ioc metapvs
-        'Version-Cte': {'type': 'string', 'value': VERSION},
+        'Version-Cte': {'type': 'string', 'value': version},
         'TimestampBoot-Cte': {
             'type': 'float', 'value': 0.0, 'unit': 'timestamp'},
         'TimestampUpdate-Mon': {
@@ -1579,7 +1576,7 @@ def _get_ps_LINAC_propty_database():
     return propty_db
 
 
-def _get_ps_FOFB_propty_database():
+def _get_ps_FOFB_propty_database():  # noqa: N802
     """This is not a primary source database.
 
     Primary sources can be found in Fast Orbit Feedback EPICS Support:
@@ -1709,7 +1706,7 @@ def _get_ps_FOFB_propty_database():
 # --- FBP ---
 
 
-def _get_ps_FBP_propty_database():
+def _get_ps_FBP_propty_database():  # noqa: N802
     """Return database with FBP pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     dbase = {
@@ -1753,7 +1750,7 @@ def _get_ps_FBP_propty_database():
     return propty_db
 
 
-def _get_ps_FBP_DCLink_propty_database():
+def _get_ps_FBP_DCLink_propty_database():  # noqa: N802
     """Return database with FBP_DCLink pwrsupply model PVs."""
     propty_db = _get_ps_common_propty_database()
     # FBP DCLinks have different units for Voltage-* PVs
@@ -1798,7 +1795,7 @@ def _get_ps_FBP_DCLink_propty_database():
 # --- FAC DCDC ---
 
 
-def _get_ps_FAC_DCDC_propty_database():
+def _get_ps_FAC_DCDC_propty_database():  # noqa: N802
     """Return database with FAC_DCDC pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
@@ -1878,7 +1875,7 @@ def _get_ps_FAC_DCDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2S_DCDC_propty_database():
+def _get_ps_FAC_2S_DCDC_propty_database():  # noqa: N802
     """Return database with FAC_2S_DCDC pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
@@ -1998,7 +1995,7 @@ def _get_ps_FAC_2S_DCDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2P4S_DCDC_propty_database():
+def _get_ps_FAC_2P4S_DCDC_propty_database():  # noqa: N802
     """Return database with FAC_2P4S_DCDC pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
@@ -2157,7 +2154,7 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
 # --- FAC ACDC ---
 
 
-def _get_ps_FAC_2S_ACDC_propty_database():
+def _get_ps_FAC_2S_ACDC_propty_database():  # noqa: N802
     """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     propty_db = _get_ps_common_propty_database()
     db_ps = {
@@ -2260,7 +2257,7 @@ def _get_ps_FAC_2S_ACDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2P4S_ACDC_propty_database():
+def _get_ps_FAC_2P4S_ACDC_propty_database():  # noqa: N802
     """Return database with FAC_2P4S_ACDC pwrsupply model PVs."""
     propty_db = _get_ps_common_propty_database()
     db_ps = {
@@ -2366,7 +2363,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
 # --- FAP ---
 
 
-def _get_ps_FAP_propty_database():
+def _get_ps_FAP_propty_database():  # noqa: N802
     """Return database with FAP pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
@@ -2461,7 +2458,7 @@ def _get_ps_FAP_propty_database():
     return propty_db
 
 
-def _get_ps_FAP_4P_propty_database():
+def _get_ps_FAP_4P_propty_database():  # noqa: N802
     """Return database with FAP_4P pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
@@ -2743,7 +2740,7 @@ def _get_ps_FAP_4P_propty_database():
     return propty_db
 
 
-def _get_ps_FAP_2P2S_propty_database():
+def _get_ps_FAP_2P2S_propty_database():  # noqa: N802
     """Return database with FAP_2P2S pwrsupply model PVs."""
     propty_db = _get_ps_basic_propty_database()
     db_ps = {
@@ -3043,7 +3040,7 @@ def _get_ps_FAP_2P2S_propty_database():
 # --- Others ---
 
 
-def _get_ps_REGATRON_DCLink_database():
+def _get_ps_REGATRON_DCLink_database():  # noqa: N802
     """Return database with REGATRON DCLink model PVs."""
     # TODO: implement!!!
     return dict()
@@ -3116,12 +3113,7 @@ def _get_model_db(psmodel):
             'DB for psmodel "{}" not implemented!'.format(psmodel))
 
 
-def _insert_strengths(database, pstype):
-    prec_kick = 3
-    prec_energy = 5
-    prec_kl = 5
-    prec_sl = 5
-    prec_id_k = 4
+def _insert_strengths_pulsed(database, pstype, prec):
     pulsed_pstypes = (
         'tb-injseptum',
         'bo-injkicker', 'bo-ejekicker',
@@ -3129,88 +3121,86 @@ def _insert_strengths(database, pstype):
         'ts-injseptum-thin', 'ts-injseptum-thick',
         'si-injdpk', 'si-injnlk', 'si-injnlk-ccoilh', 'si-injnlk-ccoilv',
         'si-hping', 'si-vping')
-
-    # pulsed
     if pstype in pulsed_pstypes:
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
-        return database
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'mrad'}
+        return True
+    return False
 
-    # linac spectrometer
+
+def _insert_strengths_spectrometer(database, pstype, prec):
     if pstype.startswith('li-spect'):
         database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'deg'}
         database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'deg'}
         database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
-        return database
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'deg'}
+        return True
+    return False
 
-    # insertion devices
+
+def _insert_strengths_id_k(database, pstype, prec):
     if pstype.startswith('si-id-apu'):
         database['Kx-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_id_k, 'unit': 'ID_K'}
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'ID_K'}
         database['Kx-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_id_k, 'unit': 'ID_K'}
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': 'ID_K'}
+        return True
+    return False
+
+
+def _insert_strengths_magtype(database, magfunc, magtypes, prec, mtype, unit):
+    if magfunc in magtypes:
+        database[mtype + '-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': unit}
+        database[mtype + '-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': unit}
+        database[mtype + 'Ref-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': unit}
+        database[mtype + '-Mon'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': unit}
+        database['WfmOffset' + mtype + '-SP'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': unit}
+        database['WfmOffset' + mtype + '-RB'] = {
+            'type': 'float', 'value': 0.0, 'prec': prec, 'unit': unit}
+        return True
+    return False
+
+
+def _insert_strengths(database, pstype):
+    prec_kick = 3
+    prec_kl = 5
+    prec_sl = 5
+    prec_energy = 5
+    prec_id_k = 4
+
+    # pulsed
+    if _insert_strengths_pulsed(database, pstype, prec_kick):
+        return database
+    # linac spectrometer
+    if _insert_strengths_spectrometer(database, pstype, prec_kick):
+        return database
+    # insertion devices
+    if _insert_strengths_id_k(database, pstype, prec_id_k):
         return database
 
+    corrs = {'corrector-horizontal', 'corrector-vertical'}
+    mcs = (
+        ({'quadrupole', 'quadrupole-skew'}, prec_kl, 'KL', '1/m'),
+        ({'sextupole', }, prec_sl, 'SL', '1/m^2'),
+        ({'dipole', }, prec_energy, 'Energy', 'GeV'),
+        (corrs, prec_kick, 'Kick', 'urad'),
+    )
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
-    if magfunc in {'quadrupole', 'quadrupole-skew'}:
-        database['KL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['KL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['KLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['KL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['WfmOffsetKL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['WfmOffsetKL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-    elif magfunc == 'sextupole':
-        database['SL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['SL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['SLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['SL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['WfmOffsetSL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['WfmOffsetSL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-    elif magfunc == 'dipole':
-        database['Energy-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['Energy-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['EnergyRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['Energy-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['WfmOffsetEnergy-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['WfmOffsetEnergy-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-    elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
-        database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['KickRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['WfmOffsetKick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['WfmOffsetKick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
+    _ = _insert_strengths_magtype(database, magfunc, *(mcs[0])) \
+        and _insert_strengths_magtype(database, magfunc, *(mcs[1])) \
+        and _insert_strengths_magtype(database, magfunc, *(mcs[2])) \
+        and _insert_strengths_magtype(database, magfunc, *(mcs[3]))
 
     if pstype.startswith('li-'):
         if 'KickRef-Mon' in database:
