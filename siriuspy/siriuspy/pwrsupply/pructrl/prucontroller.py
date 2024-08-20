@@ -239,7 +239,7 @@ class PRUController:
         -------
         status : bool
             True is operation was queued or False, if operation was rejected
-            because of the SOFBMode or IDFF state.
+            because of the SOFBMode state.
         """
         # if in SOFBMode on, do not accept exec functions
         if self._sofb_mode:
