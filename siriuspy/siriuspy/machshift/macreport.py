@@ -258,6 +258,7 @@ class MacReport:
         [_Time(2023, 3, 3, 22, 56, 0, 0), _Time(2023, 3, 3, 23, 0, 0, 0)],
         # power grid failure, archiver was down
         [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
+        [_Time(2024, 1, 18, 14, 0, 0, 0), _Time(2024, 1, 18, 19, 45, 0, 0)],
     ]
 
     def __init__(self, connector=None, logger=None):
