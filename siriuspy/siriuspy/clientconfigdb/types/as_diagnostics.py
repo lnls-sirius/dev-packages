@@ -133,19 +133,19 @@ _amcfpgaevrs = [
     'IA-20RaBPMTL:TI-AMCFPGAEVR:',
     ]
 _amcfpgaevr_propts = [
-    ['DevEnbl-Sel', 0, 0.0],
-    ['RTMFreqPropGain-SP', 0, 0.0],
-    ['RTMFreqIntgGain-SP', 0, 0.0],
-    ['RTMPhasePropGain-SP', 0, 0.0],
-    ['RTMPhaseIntgGain-SP', 0, 0.0],
+    ['DevEnbl-Sel', 1, 0.0],
+    ['RTMFreqPropGain-SP', 1, 0.0],
+    ['RTMFreqIntgGain-SP', 128, 0.0],
+    ['RTMPhasePropGain-SP', 100, 0.0],
+    ['RTMPhaseIntgGain-SP', 1, 0.0],
     ['RTMPhaseNavg-SP', 0, 0.0],
     ['RTMPhaseDiv-SP', 0, 0.0],
-    ['AFCFreqPropGain-SP', 0, 0.0],
-    ['AFCFreqIntgGain-SP', 0, 0.0],
-    ['AFCPhasePropGain-SP', 0, 0.0],
-    ['AFCPhaseIntgGain-SP', 0, 0.0],
-    ['AFCPhaseNavg-SP', 0, 0.0],
-    ['AFCPhaseDiv-SP', 0, 0.0],
+    ['AFCFreqPropGain-SP', 1, 0.0],
+    ['AFCFreqIntgGain-SP', 1500, 0.0],
+    ['AFCPhasePropGain-SP', 10, 0.0],
+    ['AFCPhaseIntgGain-SP', 1, 0.0],
+    ['AFCPhaseNavg-SP', 7, 0.0],
+    ['AFCPhaseDiv-SP', 1, 0.0],
 ]
 _amcfpgaevr_amcs = ['AMC3', 'AMC6']
 _amcfpgaevr_amcs_propts = [
