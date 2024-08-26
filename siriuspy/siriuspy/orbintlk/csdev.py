@@ -109,8 +109,8 @@ class Const(_csdev.Const):
         ('TrnLen-SP', 20),
     )
     SIBPMLOGTRIG_CONFIGS = (
-        ('TRIGGER4TrnSrc-Sel', 1),
-        ('TRIGGER4TrnOutSel-SP', 2),
+        ('TRIGGER_GEN4TrnSrc-Sel', 1),
+        ('TRIGGER_GEN4TrnOutSel-SP', 2),
         ('TRIGGER_PM0RcvSrc-Sel', 0),
         ('TRIGGER_PM0RcvInSel-SP', 2),
         ('TRIGGER_PM1RcvSrc-Sel', 0),

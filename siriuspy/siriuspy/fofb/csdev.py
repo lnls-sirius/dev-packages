@@ -49,6 +49,7 @@ class HLFOFBConst(_csdev.Const):
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
     DEF_MAX_ORB_DISTORTION = 200  # [um]
+    DEF_ACC_DECIMATION = 4600
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -161,22 +162,22 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1200, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1200, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1660, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1660, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
@@ -233,16 +234,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'prec': 0, 'value': 5, 'unit': 's',
                 'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CHAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
@@ -276,24 +277,26 @@ class HLFOFBConst(_csdev.Const):
             # decimation configuration
             'FOFBAccDecimation-Sel': {
                 'type': 'enum', 'enums': _et.DEC_OPT,
-                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+                'value': self.DecOpt.Monit, 'unit': 'FOFB_Monit_Custom'},
             'FOFBAccDecimation-Sts': {
                 'type': 'enum', 'enums': _et.DEC_OPT,
-                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+                'value': self.DecOpt.Monit, 'unit': 'FOFB_Monit_Custom'},
             'FOFBAccDecimation-SP': {
-                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
-                'hilim': 8600, 'unit': 'count'},
+                'type': 'float', 'value': self.DEF_ACC_DECIMATION, 'prec': 0,
+                'lolim': 1, 'hilim': 8600, 'unit': 'count'},
             'FOFBAccDecimation-RB': {
-                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
-                'hilim': 8600, 'unit': 'count'},
+                'type': 'float', 'value': self.DEF_ACC_DECIMATION, 'prec': 0,
+                'lolim': 1, 'hilim': 8600, 'unit': 'count'},
 
             # filter configuration
             'PSConfigMat-SP': {
                 'type': 'float', 'value': _np.zeros(self.psconfig_size),
-                'prec': 5, 'count': self.psconfig_size, 'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
+                'prec': 5, 'count': self.psconfig_size,
+                'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
             'PSConfigMat-RB': {
                 'type': 'float', 'value': _np.zeros(self.psconfig_size),
-                'prec': 5, 'count': self.psconfig_size, 'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
+                'prec': 5, 'count': self.psconfig_size,
+                'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {

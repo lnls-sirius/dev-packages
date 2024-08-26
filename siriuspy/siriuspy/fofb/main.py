@@ -32,25 +32,26 @@ class App(_Callback):
         self._init = False
 
         # internal states
+        pvdb = self._pvs_database
         self._loop_state = self._const.LoopState.Open
         self._loop_state_lastsp = self._const.LoopState.Open
-        self._loop_gain_h = 0.0520
+        self._loop_gain_h = pvdb['LoopGainH-RB']['value']
         self._loop_gain_mon_h = 0
-        self._loop_gain_v = 0.0520
+        self._loop_gain_v = pvdb['LoopGainV-RB']['value']
         self._loop_gain_mon_v = 0
         self._thread_loopstate = None
         self._abort_thread = False
         self._loop_max_orb_dist = self._const.DEF_MAX_ORB_DISTORTION
         self._loop_max_orb_dist_enbl = self._const.DsblEnbl.Dsbl
         self._loop_packloss_detec_enbl = self._const.DsblEnbl.Dsbl
-        self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
+        self._corr_status = pvdb['CorrStatus-Mon']['value']
         self._corr_setcurrzero_dur = 5
         self._thread_currzero = None
         self._abort_thread_currzero = False
-        self._ch_maxacccurr = self._pvs_database['CHAccSatMax-RB']['value']
-        self._cv_maxacccurr = self._pvs_database['CVAccSatMax-RB']['value']
-        self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
-        self._fofbctrl_status = self._pvs_database['CtrlrStatus-Mon']['value']
+        self._ch_maxacccurr = pvdb['CHAccSatMax-RB']['value']
+        self._cv_maxacccurr = pvdb['CVAccSatMax-RB']['value']
+        self._time_frame_len = pvdb['TimeFrameLen-RB']['value']
+        self._fofbctrl_status = pvdb['CtrlrStatus-Mon']['value']
         self._thread_syncnet = None
         self._thread_reset = None
         self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
@@ -70,8 +71,8 @@ class App(_Callback):
             'cv': _np.ones(self._const.nr_cv, dtype=bool),
             'rf': _np.ones(1, dtype=bool),
         }
-        self._corr_accdec_val = 1
-        self._corr_accdec_enm = self._const.DecOpt.FOFB
+        self._corr_accdec_val = pvdb['FOFBAccDecimation-RB']['value']
+        self._corr_accdec_enm = pvdb['FOFBAccDecimation-Sts']['value']
         self._corr_accfilter_val = _np.zeros(
             (self._const.nr_chcv, self._const.psconfig_nr_coeffs_columns),
             dtype=float
@@ -718,9 +719,9 @@ class App(_Callback):
                     fofb = self._auxbpm['INFOFOFBRate-RB']
                     dec = monit // fofb
                 else:
+                    dec = self._const.DEF_ACC_DECIMATION
                     self._update_log('WARN:Could not read decimation from BPM')
-                    self._update_log('WARN:rates. Using value 4600.')
-                    dec = 4600
+                    self._update_log(f'WARN:rates. Using value {dec}.')
             else:
                 dec = self._corr_accdec_val
             self._corr_accdec_enm = value

@@ -392,14 +392,9 @@ _bpms = [
     'SI-01M1:DI-BPM',
     ]
 _bpm_propts = [
-    [':INFOClkProp-Sel', 0, 0.0],
     [':ADCSi57xOe-Sel', 1, 0.0],
     [':ADCClkSel-Sel', 1, 0.0],
     [':INFOADCRate-SP', 1, 0.0],
-    [':ADCAD9510PllFunc-SP', 1, 0.0],
-    [':ADCAD9510Outputs-SP', 31, 0.0],
-    [':ADCAD9510ClkSel-Sel', 1, 0.0],
-    [':ADCAD9510CpCurrent-Sel', 7, 0.0],
     [':ADCTrigDir-Sel', 0, 0.0],
     [':ADCTrigTerm-Sel', 0, 0.0],
     [':RFFEPidSpAC-SP', 45.0, 0.0],
@@ -413,11 +408,10 @@ _bpm_propts = [
     [':RFFEPidBDTd-SP', 2.0, 0.0],
     [':RFFEHeaterAC-SP', 0.0, 0.0],
     [':RFFEHeaterBD-SP', 0.0, 0.0],
-    [':ADC0RstModes-Sel', 1, 0.0],
-    [':ADC1RstModes-Sel', 1, 0.0],
-    [':ADC2RstModes-Sel', 1, 0.0],
-    [':ADC3RstModes-Sel', 1, 0.0],
-    [':ACQBPMMode-Sel', 1, 0.0],
+    # [':ADC0RstModes-Sel', 1, 0.0],
+    # [':ADC1RstModes-Sel', 1, 0.0],
+    # [':ADC2RstModes-Sel', 1, 0.0],
+    # [':ADC3RstModes-Sel', 1, 0.0],
     [':TbTPhaseSyncDly-SP', 0.0, 0.0],
     [':TbTDataMaskEn-Sel', 1, 0.0],
     [':TbTDataMaskSamplesBeg-SP', 0.0, 0.0],
@@ -426,9 +420,9 @@ _bpm_propts = [
     [':PosXOffset-SP', 0, 0.0],
     [':PosYOffset-SP', 0, 0.0],
     [':PosQOffset-SP', 0, 0.0],
-    [':ACQTriggerHwDly-SP', 0, 0.0],
-    [':ACQ_PMTriggerHwDly-SP', 0, 0.0],
-    [':INFOClkFreq-SP', 220910069.0, 0.0],
+    [':GENTriggerHwDly-SP', 0, 0.0],
+    [':PMTriggerHwDly-SP', 0, 0.0],
+    # [':INFOClkFreq-SP', 220910069.0, 0.0],
     [':INFOHarmonicNumber-SP', 864, 0.0],
     [':INFOTbTRate-SP', 382, 0.0],
     [':INFOFOFBRate-SP', 8786, 0.0],
@@ -439,7 +433,6 @@ _bpm_propts = [
     [':PosKq-SP', 21389980, 0.0],
     [':ADCAD9510ADiv-SP', 0, 0.0],
     [':ADCAD9510BDiv-SP', 382, 0.0],
-    [':ADCAD9510Prescaler-SP', 0, 0.0],
     [':ADCAD9510RDiv-SP', 120, 0.0],
     [':ADCSi57xFreq-SP', 220910069.0, 0.0],
     [':SwDivClk-SP', 8786, 0.0],
@@ -470,7 +463,7 @@ for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
         [f':TRIGGER{phy_trig}RcvLen-SP', 0, 0.0],
         [f':TRIGGER{phy_trig}TrnLen-SP', 0, 0.0],
     ])
-for acq_core in ['', '_PM']:
+for acq_core in ['_GEN', '_PM']:
     for log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
         _bpm_propts.extend([
             [f':TRIGGER{acq_core}{log_trig}RcvInSel-SP', 0, 0.0],

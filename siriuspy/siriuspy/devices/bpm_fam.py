@@ -84,9 +84,9 @@ class FamBPMs(_DeviceSet):
         self._initial_signals = None
 
         self._mturn_flags = dict()
-        # NOTE: ACQCount-Mon need to be fixed on BPM's IOC
+        # NOTE: GENCount-Mon need to be fixed on BPM's IOC
         # for bpm in devs:
-        #     pvo = bpm.pv_object('ACQCount-Mon')
+        #     pvo = bpm.pv_object('GENCount-Mon')
         #     pvo.auto_monitor = True
         #     self._mturn_flags[pvo.pvname] = _Flag()
         #     pvo.add_callback(self._set_mturn_flag)
@@ -242,6 +242,16 @@ class FamBPMs(_DeviceSet):
             sigs[i] = _np.array(sig).T
         return sigs
 
+    def conv_signal2pvname_format(self, sig):
+        """Convert signal to generate PV name."""
+        if sig == 'S':
+            sig = 'Sum'
+        elif sig == 'X' or 'Y' or 'Q':
+            sig = 'Pos' + sig
+        else:
+            sig = 'Ampl' + sig
+        return sig
+
     def get_mturn_timestamps(self):
         """Get Multiturn data timestamps.
 
@@ -254,8 +264,8 @@ class FamBPMs(_DeviceSet):
             (len(self._mturn_signals2acq), len(self.bpms)), dtype=float)
         for i, s in enumerate(self._mturn_signals2acq):
             for j, bpm in enumerate(self.bpms):
-                s = 'SUM' if s == 'S' else s
-                pvo = bpm.pv_object(f'GEN_{s}ArrayData')
+                s = self.conv_signal2pvname_format(s)
+                pvo = bpm.pv_object(f'GEN{s}Data')
                 tv = pvo.get_timevars(timeout=self.TIMEOUT)
                 tsmps[i, j] = pvo.timestamp if tv is None else tv['timestamp']
         return tsmps
@@ -278,7 +288,7 @@ class FamBPMs(_DeviceSet):
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
-            _log.warning('BPMs are not configured with the same ACQChannel.')
+            _log.warning('BPMs are not configured with the same GENChannel.')
             return None
 
     def get_switching_frequency(self, rf_freq: float) -> float:
@@ -346,7 +356,7 @@ class FamBPMs(_DeviceSet):
         if external:
             trig = self._csbpm.AcqTrigTyp.External
 
-        ret = self.cmd_abort_mturn_acquisition()
+        ret = self.cmd_stop_mturn_acquisition()
         if ret > 0:
             return -ret
 
@@ -359,8 +369,8 @@ class FamBPMs(_DeviceSet):
 
         return self.cmd_start_mturn_acquisition()
 
-    def cmd_abort_mturn_acquisition(self, wait=True, timeout=10) -> int:
-        """Abort BPMs acquistion.
+    def cmd_stop_mturn_acquisition(self, wait=True, timeout=10) -> int:
+        """Stop BPMs acquistion.
 
         Args:
             wait (bool, optional): whether or not to wait BPMs get ready.
@@ -371,10 +381,9 @@ class FamBPMs(_DeviceSet):
             int: code describing what happened:
                 =0: BPMs are ready.
                 >0: Index of the first BPM which did not update plus 1.
-
         """
         for bpm in self.bpms:
-            bpm.acq_ctrl = self._csbpm.AcqEvents.Abort
+            bpm.acq_ctrl = self._csbpm.AcqEvents.Stop
 
         if wait:
             return self.wait_acquisition_finish(timeout=timeout)
@@ -632,8 +641,8 @@ class FamBPMs(_DeviceSet):
     def _configure_automonitor_acquisition_pvs(self, state):
         for bpm in self.bpms:
             for sig in self._mturn_signals2acq:
-                sig = 'SUM' if sig.upper() == 'S' else sig.upper()
-                bpm.pv_object(f'GEN_{sig}ArrayData').auto_monitor = state
+                sig = self.conv_signal2pvname_format(sig.upper())
+                bpm.pv_object(f'GEN{sig}Data').auto_monitor = state
 
     def _set_mturn_flag(self, pvname, **kwargs):
         _ = kwargs

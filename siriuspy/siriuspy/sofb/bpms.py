@@ -32,35 +32,26 @@ class BPM(_BaseTimingConfig):
         self._ksum = _PV(pvpref + "PosKsum-RB", **opt)
         self._polyx = _PV(pvpref + "GEN_PolyXArrayCoeff-RB", **opt)
         self._polyy = _PV(pvpref + "GEN_PolyYArrayCoeff-RB", **opt)
-        self._arraya = _PV(pvpref + "GEN_AArrayData", **opt)
-        self._arrayb = _PV(pvpref + "GEN_BArrayData", **opt)
-        self._arrayc = _PV(pvpref + "GEN_CArrayData", **opt)
-        self._arrayd = _PV(pvpref + "GEN_DArrayData", **opt)
-        self._arrayx = _PV(pvpref + "GEN_XArrayData", **opt)
-        self._arrayy = _PV(pvpref + "GEN_YArrayData", **opt)
-        self._arrays = _PV(pvpref + "GEN_SUMArrayData", **opt)
+        self._arraya = _PV(pvpref + "GENAmplAData", **opt)
+        self._arrayb = _PV(pvpref + "GENAmplBData", **opt)
+        self._arrayc = _PV(pvpref + "GENAmplCData", **opt)
+        self._arrayd = _PV(pvpref + "GENAmplDData", **opt)
+        self._arrayx = _PV(pvpref + "GENPosXData", **opt)
+        self._arrayy = _PV(pvpref + "GENPosYData", **opt)
+        self._arrays = _PV(pvpref + "GENSumData", **opt)
         opt.pop("auto_monitor")
         self._offsetx = _PV(pvpref + "PosXOffset-RB", **opt)
         self._offsety = _PV(pvpref + "PosYOffset-RB", **opt)
         self._config_ok_vals = {
-            "asyn.ENBL": _CSBPM.EnblTyp.Enable,
             "SwMode": _CSBPM.SwModes.switching,
-            "ACQBPMMode": _CSBPM.OpModes.MultiBunch,
             "ACQChannel": _CSBPM.AcqChan.ADC,
-            # 'ACQNrShots': 1,
             "ACQShots": 1,
-            # 'ACQTriggerHwDly': 0.0,  # NOTE: leave this property commented
             "ACQUpdateTime": 0.001,
-            # 'ACQNrSamplesPre': 0,
             "ACQSamplesPre": 0,
-            # 'ACQNrSamplesPost': 200,
             "ACQSamplesPost": 382,
-            # 'ACQCtrl': _CSBPM.AcqEvents.Stop,
             "ACQTriggerEvent": _CSBPM.AcqEvents.Stop,
-            # 'ACQTriggerType': _CSBPM.AcqTrigTyp.External,
             "ACQTrigger": _CSBPM.AcqTrigTyp.External,
             "ACQTriggerRep": _CSBPM.AcqRepeat.Repetitive,
-            # 'ACQTriggerDataChan': _CSBPM.AcqChan.FAcq,
             "ACQDataTrigChan": _CSBPM.AcqChan.ADC,
             "TbTPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable TbT sync
             "FOFBPhaseSyncEn": _CSBPM.DsblEnbl.disabled,  # Enable FOFB sync
@@ -70,30 +61,21 @@ class BPM(_BaseTimingConfig):
             "TbTDataMaskSamplesBeg": 0,
             "TbTDataMaskSamplesEnd": 0,
             "XYPosCal": _CSBPM.DsblEnbl.enabled,
-            "SUMPosCal": _CSBPM.DsblEnbl.enabled,
+            "SumPosCal": _CSBPM.DsblEnbl.enabled,
             "SwPhaseSyncEn": _CSBPM.DsblEnbl.enabled,  # Enable Switching sync
             "TestDataEn": _CSBPM.DsblEnbl.disabled,
         }
         pvs = {
-            "asyn.ENBL": "asyn.ENBL",
             "SwMode": "SwMode-Sel",
-            "ACQBPMMode": "ACQBPMMode-Sel",
-            "ACQChannel": "ACQChannel-Sel",
-            # 'ACQNrShots': 'ACQNrShots-SP',
-            "ACQShots": "ACQShots-SP",
-            # 'ACQTriggerHwDly': 'ACQTriggerHwDly-SP',
-            "ACQUpdateTime": "ACQUpdateTime-SP",
-            # 'ACQNrSamplesPre': 'ACQNrSamplesPre-SP',
-            "ACQSamplesPre": "ACQSamplesPre-SP",
-            # 'ACQNrSamplesPost': 'ACQNrSamplesPost-SP',
-            "ACQSamplesPost": "ACQSamplesPost-SP",
-            # 'ACQCtrl': 'ACQCtrl-Sel',
-            "ACQTriggerEvent": "ACQTriggerEvent-Sel",
-            # 'ACQTriggerType': 'ACQTriggerType-Sel',
-            "ACQTrigger": "ACQTrigger-Sel",
-            "ACQTriggerRep": "ACQTriggerRep-Sel",
-            # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
-            "ACQDataTrigChan": "ACQDataTrigChan-Sel",
+            "ACQChannel": "GENChannel-Sel",
+            "ACQShots": "GENShots-SP",
+            "ACQUpdateTime": "GENUpdateTime-SP",
+            "ACQSamplesPre": "GENSamplesPre-SP",
+            "ACQSamplesPost": "GENSamplesPost-SP",
+            "ACQTriggerEvent": "GENTriggerEvent-Cmd",
+            "ACQTrigger": "GENTrigger-Sel",
+            "ACQTriggerRep": "GENTriggerRep-Sel",
+            "ACQDataTrigChan": "GENDataTrigChan-Sel",
             "TbTPhaseSyncEn": "TbTPhaseSyncEn-Sel",  # Enable TbT sync
             "FOFBPhaseSyncEn": "FOFBPhaseSyncEn-Sel",  # Enable FOFB sync
             "FAcqPhaseSyncEn": "FAcqPhaseSyncEn-Sel",  # Enable FAcq sync
@@ -102,7 +84,7 @@ class BPM(_BaseTimingConfig):
             "TbTDataMaskSamplesBeg": "TbTDataMaskSamplesBeg-SP",
             "TbTDataMaskSamplesEnd": "TbTDataMaskSamplesEnd-SP",
             "XYPosCal": "XYPosCal-Sel",
-            "SUMPosCal": "SUMPosCal-Sel",
+            "SumPosCal": "SumPosCal-Sel",
             "SwPhaseSyncEn": "SwPhaseSyncEn-Sel",  # Enable Switching sync
             "TestDataEn": "TestDataEn-Sel",
         }
@@ -110,8 +92,6 @@ class BPM(_BaseTimingConfig):
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()
         }
         pvs = {
-            "asyn.ENBL": "asyn.ENBL",
-            "asyn.CNCT": "asyn.CNCT",
             "INFOClkFreq": "INFOClkFreq-RB",
             "INFOHarmonicNumber": "INFOHarmonicNumber-RB",
             "INFOTbTRate": "INFOTbTRate-RB",
@@ -119,25 +99,16 @@ class BPM(_BaseTimingConfig):
             "INFOMONITRate": "INFOMONITRate-RB",
             "INFOFAcqRate": "INFOFAcqRate-RB",
             "SwMode": "SwMode-Sts",
-            "ACQBPMMode": "ACQBPMMode-Sts",
-            "ACQChannel": "ACQChannel-Sts",
-            # 'ACQNrShots': 'ACQNrShots-RB',
-            "ACQShots": "ACQShots-RB",
-            # 'ACQTriggerHwDly': 'ACQTriggerHwDly-RB',
-            "ACQUpdateTime": "ACQUpdateTime-RB",
-            # 'ACQNrSamplesPre': 'ACQNrSamplesPre-RB',
-            "ACQSamplesPre": "ACQSamplesPre-RB",
-            # 'ACQNrSamplesPost': 'ACQNrSamplesPost-RB',
-            "ACQSamplesPost": "ACQSamplesPost-RB",
-            # 'ACQCtrl': 'ACQCtrl-Sts',
-            "ACQTriggerEvent": "ACQTriggerEvent-Sts",
-            # 'ACQStatus': 'ACQStatus-Mon',
-            "ACQStatus": "ACQStatus-Sts",
-            # 'ACQTriggerType': 'ACQTriggerType-Sts',
-            "ACQTrigger": "ACQTrigger-Sts",
-            "ACQTriggerRep": "ACQTriggerRep-Sts",
-            # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
-            "ACQDataTrigChan": "ACQDataTrigChan-Sts",
+            "ACQChannel": "GENChannel-Sts",
+            "ACQShots": "GENShots-RB",
+            "ACQUpdateTime": "GENUpdateTime-RB",
+            "ACQSamplesPre": "GENSamplesPre-RB",
+            "ACQSamplesPost": "GENSamplesPost-RB",
+            "ACQTriggerEvent": "GENTriggerEvent-Cmd",
+            "ACQStatus": "GENStatus-Mon",
+            "ACQTrigger": "GENTrigger-Sts",
+            "ACQTriggerRep": "GENTriggerRep-Sts",
+            "ACQDataTrigChan": "GENDataTrigChan-Sts",
             "TbTPhaseSyncEn": "TbTPhaseSyncEn-Sts",
             "FOFBPhaseSyncEn": "FOFBPhaseSyncEn-Sts",
             "FAcqPhaseSyncEn": "FAcqPhaseSyncEn-Sts",
@@ -146,7 +117,7 @@ class BPM(_BaseTimingConfig):
             "TbTDataMaskSamplesBeg": "TbTDataMaskSamplesBeg-RB",
             "TbTDataMaskSamplesEnd": "TbTDataMaskSamplesEnd-RB",
             "XYPosCal": "XYPosCal-Sts",
-            "SUMPosCal": "SUMPosCal-Sts",
+            "SumPosCal": "SumPosCal-Sts",
             "SwPhaseSyncEn": "SwPhaseSyncEn-Sel",
             "TestDataEn": "TestDataEn-Sel",
         }
@@ -174,7 +145,7 @@ class BPM(_BaseTimingConfig):
             self._offsetx,
             self._offsety,
             self._polyx,
-            self._polyx,
+            self._polyy,
             self._arraya,
             self._arrayb,
             self._arrayc,
@@ -200,13 +171,14 @@ class BPM(_BaseTimingConfig):
         okay = pvobj.value not in {
             stts.Error,
             stts.No_Memory,
-            stts.Too_Few_Samples,
+            stts.No_Samples,
             stts.Too_Many_Samples,
-            stts.Acq_Overflow,
+            stts.Overflow,
+            stts.Bad_Post_Samples,
         }
 
         if self._config_ok_vals["ACQTriggerEvent"] == _CSBPM.AcqEvents.Start:
-            okay &= pvobj.value not in {stts.Idle, stts.Aborted}
+            okay &= pvobj.value != stts.Idle
         else:
             okay &= pvobj.value not in {
                 stts.Waiting,
@@ -220,23 +192,6 @@ class BPM(_BaseTimingConfig):
             self.run_callbacks("Log-Mon", msg)
             _log.warning(msg[5:])
         return okay
-
-    @property
-    def state(self):
-        """."""
-        pvobj = self._config_pvs_rb["asyn.ENBL"]
-        if pvobj.connected:
-            return pvobj.value == _CSBPM.EnblTyp.Enable
-        return False
-
-    @state.setter
-    def state(self, boo):
-        """."""
-        val = _CSBPM.EnblTyp.Enable if boo else _CSBPM.EnblTyp.Disable
-        pvobj = self._config_pvs_sp["asyn.ENBL"]
-        self._config_ok_vals["asyn.ENBL"] = val
-        if self.put_enable and pvobj.connected:
-            pvobj.put(val, wait=False)
 
     @property
     def switching_mode(self):
@@ -361,20 +316,6 @@ class BPM(_BaseTimingConfig):
         pvobj = self._ksum
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
-
-    @property
-    def mode(self):
-        """."""
-        pvobj = self._config_pvs_rb["ACQBPMMode"]
-        return pvobj.value if pvobj.connected else _CSBPM.OpModes.MultiBunch
-
-    @mode.setter
-    def mode(self, mode):
-        """."""
-        pvobj = self._config_pvs_sp["ACQBPMMode"]
-        self._config_ok_vals["ACQBPMMode"] = mode
-        if self.put_enable and pvobj.connected:
-            pvobj.value = mode
 
     @property
     def arraya(self):
@@ -656,9 +597,9 @@ class BPM(_BaseTimingConfig):
         """."""
         val = _CSBPM.DsblEnbl.enabled if val else _CSBPM.DsblEnbl.disabled
         pv1 = self._config_pvs_sp["XYPosCal"]
-        pv2 = self._config_pvs_sp["SUMPosCal"]
+        pv2 = self._config_pvs_sp["SumPosCal"]
         self._config_ok_vals["XYPosCal"] = val
-        self._config_ok_vals["SUMPosCal"] = val
+        self._config_ok_vals["SumPosCal"] = val
         if self.put_enable and pv1.connected:
             pv1.put(val, wait=False)
         if self.put_enable and pv2.connected:
@@ -667,16 +608,13 @@ class BPM(_BaseTimingConfig):
     @property
     def nrsamplespost(self):
         """."""
-        # pvobj = self._config_pvs_rb['ACQNrSamplesPost']
         pvobj = self._config_pvs_rb["ACQSamplesPost"]
         return pvobj.value if pvobj.connected else None
 
     @nrsamplespost.setter
     def nrsamplespost(self, val):
         """."""
-        # pvobj = self._config_pvs_sp['ACQNrSamplesPost']
         pvobj = self._config_pvs_sp["ACQSamplesPost"]
-        # self._config_ok_vals['ACQNrSamplesPost'] = val
         self._config_ok_vals["ACQSamplesPost"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
@@ -684,16 +622,13 @@ class BPM(_BaseTimingConfig):
     @property
     def nrsamplespre(self):
         """."""
-        # pvobj = self._config_pvs_rb['ACQNrSamplesPre']
         pvobj = self._config_pvs_rb["ACQSamplesPre"]
         return pvobj.value if pvobj.connected else None
 
     @nrsamplespre.setter
     def nrsamplespre(self, val):
         """."""
-        # pvobj = self._config_pvs_sp['ACQNrSamplesPre']
         pvobj = self._config_pvs_sp["ACQSamplesPre"]
-        # self._config_ok_vals['ACQNrSamplesPre'] = val
         self._config_ok_vals["ACQSamplesPre"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
@@ -701,16 +636,13 @@ class BPM(_BaseTimingConfig):
     @property
     def nrshots(self):
         """."""
-        # pvobj = self._config_pvs_rb['ACQNrShots']
         pvobj = self._config_pvs_rb["ACQShots"]
         return pvobj.value if pvobj.connected else None
 
     @nrshots.setter
     def nrshots(self, val):
         """."""
-        # pvobj = self._config_pvs_sp['ACQNrShots']
         pvobj = self._config_pvs_sp["ACQShots"]
-        # self._config_ok_vals['ACQNrShots'] = val
         self._config_ok_vals["ACQShots"] = val
         if self.put_enable and pvobj.connected:
             pvobj.put(val, wait=False)
