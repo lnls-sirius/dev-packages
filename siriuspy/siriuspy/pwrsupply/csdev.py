@@ -3113,116 +3113,6 @@ def _get_model_db(psmodel):
             'DB for psmodel "{}" not implemented!'.format(psmodel))
 
 
-def _insert_strengths(database, pstype):
-    prec_kick = 3
-    prec_energy = 5
-    prec_kl = 5
-    prec_sl = 5
-    prec_id_k = 4
-    pulsed_pstypes = (
-        'tb-injseptum',
-        'bo-injkicker', 'bo-ejekicker',
-        'ts-ejeseptum-thin', 'ts-ejeseptum-thick',
-        'ts-injseptum-thin', 'ts-injseptum-thick',
-        'si-injdpk', 'si-injnlk', 'si-injnlk-ccoilh', 'si-injnlk-ccoilv',
-        'si-hping', 'si-vping')
-
-    # pulsed
-    if pstype in pulsed_pstypes:
-        database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
-        database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
-        database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'mrad'}
-        return database
-
-    # linac spectrometer
-    if pstype.startswith('li-spect'):
-        database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
-        database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
-        database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'deg'}
-        return database
-
-    # insertion devices
-    if pstype.startswith('si-id-apu'):
-        database['Kx-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_id_k, 'unit': 'ID_K'}
-        database['Kx-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_id_k, 'unit': 'ID_K'}
-        return database
-
-    magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
-    if magfunc in {'quadrupole', 'quadrupole-skew'}:
-        database['KL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['KL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['KLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['KL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['WfmOffsetKL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-        database['WfmOffsetKL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kl, 'unit': '1/m'}
-    elif magfunc == 'sextupole':
-        database['SL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['SL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['SLRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['SL-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['WfmOffsetSL-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-        database['WfmOffsetSL-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_sl, 'unit': '1/m^2'}
-    elif magfunc == 'dipole':
-        database['Energy-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['Energy-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['EnergyRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['Energy-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['WfmOffsetEnergy-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-        database['WfmOffsetEnergy-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_energy, 'unit': 'GeV'}
-    elif magfunc in {'corrector-horizontal', 'corrector-vertical'}:
-        database['Kick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['Kick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['KickRef-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['Kick-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['WfmOffsetKick-SP'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-        database['WfmOffsetKick-RB'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-
-    if pstype.startswith('li-'):
-        if 'KickRef-Mon' in database:
-            del database['KickRef-Mon']
-        if 'KLRef-Mon' in database:
-            del database['KLRef-Mon']
-        if 'SLRef-Mon' in database:
-            del database['SLRef-Mon']
-    elif '-fc' in pstype and 'ffc' not in pstype:
-        database['KickAcc-Mon'] = {
-            'type': 'float', 'value': 0.0, 'prec': prec_kick, 'unit': 'urad'}
-
-    return database
-
-
 def _insert_strengths_pulsed(database, pstype, prec):
     pulsed_pstypes = (
         'tb-injseptum',
@@ -3282,7 +3172,7 @@ def _insert_strengths_magtype(database, magfunc, magtypes, prec, mtype, unit):
     return False
 
 
-def _insert_strengths_new(database, pstype):
+def _insert_strengths(database, pstype):
     prec_kick = 3
     prec_kl = 5
     prec_sl = 5
@@ -3308,9 +3198,9 @@ def _insert_strengths_new(database, pstype):
     )
     magfunc = _PSSearch.conv_pstype_2_magfunc(pstype)
     _ = _insert_strengths_magtype(database, magfunc, *(mcs[0])) \
-        and _insert_strengths_magtype(database, magfunc, *(mcs[1])) \
-        and _insert_strengths_magtype(database, magfunc, *(mcs[2])) \
-        and _insert_strengths_magtype(database, magfunc, *(mcs[3]))
+        or _insert_strengths_magtype(database, magfunc, *(mcs[1])) \
+        or _insert_strengths_magtype(database, magfunc, *(mcs[2])) \
+        or _insert_strengths_magtype(database, magfunc, *(mcs[3]))
 
     if pstype.startswith('li-'):
         if 'KickRef-Mon' in database:
