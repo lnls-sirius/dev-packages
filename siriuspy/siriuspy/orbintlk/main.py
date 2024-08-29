@@ -185,16 +185,16 @@ class App(_Callback):
         self._fambpm_dev = _FamBPMs(
             devname=_FamBPMs.DEVICES.SI, ispost_mortem=True,
             props2init=[
-                'ACQChannel-Sel', 'ACQChannel-Sts',
-                'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
-                'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
-                'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
-                'ACQTrigger-Sel', 'ACQTrigger-Sts',
-                'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-                'ACQStatus-Sts',
+                'GENChannel-Sel', 'GENChannel-Sts',
+                'GENSamplesPre-SP', 'GENSamplesPre-RB',
+                'GENSamplesPost-SP', 'GENSamplesPost-RB',
+                'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
+                'GENTrigger-Sel', 'GENTrigger-Sts',
+                'GENTriggerEvent-Cmd',
+                'GENStatus-Mon',
                 'INFOFAcqRate-RB', 'INFOMONITRate-RB',
-                'TRIGGER4TrnSrc-Sel', 'TRIGGER4TrnSrc-Sts',
-                'TRIGGER4TrnOutSel-SP', 'TRIGGER4TrnOutSel-RB',
+                'TRIGGER_GEN4TrnSrc-Sel', 'TRIGGER_GEN4TrnSrc-Sts',
+                'TRIGGER_GEN4TrnOutSel-SP', 'TRIGGER_GEN4TrnOutSel-RB',
                 'TRIGGER_PM0RcvSrc-Sel', 'TRIGGER_PM0RcvSrc-Sts',
                 'TRIGGER_PM0RcvInSel-SP', 'TRIGGER_PM0RcvInSel-RB',
                 'TRIGGER_PM1RcvSrc-Sel', 'TRIGGER_PM1RcvSrc-Sts',
@@ -865,10 +865,10 @@ class App(_Callback):
         return True
 
     def _acq_config(self):
-        self._update_log('Aborting BPM acquisition...')
-        ret = self._fambpm_dev.cmd_abort_mturn_acquisition()
+        self._update_log('Stoping BPM acquisition...')
+        ret = self._fambpm_dev.cmd_stop_mturn_acquisition()
         if ret > 0:
-            self._update_log('ERR:Failed to abort BPM acquisition.')
+            self._update_log('ERR:Failed to stop BPM acquisition.')
             return
         self._update_log('...done. Configuring BPM acquisition...')
         ret = self._fambpm_dev.config_mturn_acquisition(
@@ -879,7 +879,7 @@ class App(_Callback):
             external=True)
         if ret < 0:
             self._update_log(
-                'ERR:Failed to abort acquisition for ' +
+                'ERR:Failed to stop acquisition for ' +
                 f'{self._const.bpm_names[-ret-1]:s}.')
             return
         if ret > 0:
@@ -1145,7 +1145,7 @@ class App(_Callback):
             okb &= all(
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
             okb &= all(
-                d.acq_status == self._const.AcqStates.External_Trig for d in bpms)
+                d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
             value = _updt_bit(value, 8, not okb)
             # LogTrigConfigured
             okl = True
@@ -1154,6 +1154,8 @@ class App(_Callback):
                     prp_rb = _PVName.from_sp2rb(prp)
                     okl &= bpm[prp_rb] == val
             value = _updt_bit(value, 9, not okl)
+        else:
+            value = 0b11111111111
 
         self._bpm_status = value
         self.run_callbacks('BPMStatus-Mon', self._bpm_status)

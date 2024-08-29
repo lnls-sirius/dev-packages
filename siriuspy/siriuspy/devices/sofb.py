@@ -426,16 +426,6 @@ class TLSOFB(_Device):
         _time.sleep(0.6)  # Status PV updates at 2Hz
         return self.wait_orb_status_ok(timeout=timeout)
 
-    def cmd_trigacq_abort(self, timeout=10):
-        """."""
-        self['TrigAcqCtrl-Sel'] = 'Abort'
-        ret = self._wait(
-            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Abort, timeout=timeout)
-        if not ret:
-            return False
-        _time.sleep(0.6)  # Status PV updates at 2Hz
-        return self.wait_orb_status_ok(timeout=timeout)
-
     def cmd_trigacq_config(self, timeout=10):
         """."""
         self['TrigAcqConfig-Cmd'] = 1
