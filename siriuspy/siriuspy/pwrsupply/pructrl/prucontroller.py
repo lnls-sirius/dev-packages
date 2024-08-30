@@ -31,6 +31,8 @@ class PRUController:
 
     # --- public interface ---
 
+    _TINY_SLEEP = 0.005  # [s]
+
     def __init__(self,
                  pru,
                  prucqueue,
@@ -353,7 +355,7 @@ class PRUController:
         self._idff_mode = state
         if state:
             while not self._queue.empty():  # wait until queue is empty
-                pass
+                _sleep(PRUController._TINY_SLEEP)
 
     @property
     def idff_mode(self):
@@ -367,7 +369,7 @@ class PRUController:
         self._sofb_mode = state
         if state:
             while not self._queue.empty():  # wait until queue is empty
-                pass
+                _sleep(PRUController._TINY_SLEEP)
 
     @property
     def sofb_mode(self):
@@ -377,7 +379,7 @@ class PRUController:
     def sofb_current_set(self, value):
         """."""
         while not self._queue.empty():  # wait until queue is empty
-            pass
+            _sleep(PRUController._TINY_SLEEP)
 
         # execute SOFB setpoint
         self.bsmp_update_sofb_setpoint(value)
@@ -406,7 +408,7 @@ class PRUController:
             return
 
         while not self._queue.empty():  # wait until queue is empty
-            pass
+            _sleep(PRUController._TINY_SLEEP)
 
         # select power supply dev_id for updating
         self._sofb_update_dev_idx = \
