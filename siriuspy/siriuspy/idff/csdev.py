@@ -111,6 +111,9 @@ class IDFFConst(_csdev.Const):
                 'CorrQS2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            })
+        if self.has_lccorrs:
+            dbase.update({
                 'ControlLC-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
                     'value': self.DEFAULT_CONTROL_LC,
