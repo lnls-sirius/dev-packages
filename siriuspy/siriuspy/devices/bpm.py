@@ -16,46 +16,40 @@ class BPM(_Device):
 
     ACQSTATES_NOTOK = {
         _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
-        _csbpm.AcqStates.Too_Few_Samples,
-        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Acq_Overflow}
+        _csbpm.AcqStates.Bad_Post_Samples, _csbpm.AcqStates.No_Samples,
+        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Overflow}
     ACQSTATES_STARTED = {
         _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
         _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
         _csbpm.AcqStates.Acquiring}
-    ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle, _csbpm.AcqStates.Aborted}
+    ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
     PROPERTIES_ACQ = (
         'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
         'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
-        'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData', 'GEN_DArrayData',
-        'GEN_XArrayData', 'GEN_YArrayData', 'GEN_SUMArrayData',
-        'GEN_QArrayData',
-        'ACQBPMMode-Sel', 'ACQBPMMode-Sts',
-        'ACQChannel-Sel', 'ACQChannel-Sts',
-        'ACQShots-SP', 'ACQShots-RB',
-        'ACQUpdateTime-SP', 'ACQUpdateTime-RB',
-        'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
-        'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
-        'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-        'ACQStatus-Sts', 'ACQCount-Mon',
-        'ACQTrigger-Sel', 'ACQTrigger-Sts',
-        'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
-        'ACQDataTrigChan-Sel', 'ACQDataTrigChan-Sts',
-        'ACQTriggerDataSel-SP', 'ACQTriggerDataSel-RB',
-        'ACQTriggerDataThres-SP', 'ACQTriggerDataThres-RB',
-        'ACQTriggerDataPol-Sel', 'ACQTriggerDataPol-Sts',
-        'ACQTriggerDataHyst-SP', 'ACQTriggerDataHyst-RB',
+        'GENAmplAData', 'GENAmplBData', 'GENAmplCData', 'GENAmplDData',
+        'GENPosXData', 'GENPosYData', 'GENSumData',
+        'GENPosQData',
+        'GENChannel-Sel', 'GENChannel-Sts',
+        'GENShots-SP', 'GENShots-RB',
+        'GENUpdateTime-SP', 'GENUpdateTime-RB',
+        'GENSamplesPre-SP', 'GENSamplesPre-RB',
+        'GENSamplesPost-SP', 'GENSamplesPost-RB',
+        'GENTriggerEvent-Cmd',
+        'GENStatus-Mon', 'GENCount-Mon',
+        'GENTrigger-Sel', 'GENTrigger-Sts',
+        'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
+        'GENDataTrigChan-Sel', 'GENDataTrigChan-Sts',
+        'GENTriggerDataSel-SP', 'GENTriggerDataSel-RB',
+        'GENTriggerDataThres-SP', 'GENTriggerDataThres-RB',
+        'GENTriggerDataPol-Sel', 'GENTriggerDataPol-Sts',
+        'GENTriggerDataHyst-SP', 'GENTriggerDataHyst-RB',
         )
 
     PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
-        'asyn.ENBL', 'asyn.CNCT', 'SwMode-Sel', 'SwMode-Sts',
+        'SwMode-Sel', 'SwMode-Sts',
         'RFFEAtt-SP', 'RFFEAtt-RB',
-        'SP_AArrayData', 'SP_BArrayData', 'SP_CArrayData', 'SP_DArrayData',
-        'GEN_RawXArrayData', 'GEN_RawYArrayData', 'GEN_RawSUMArrayData',
-        'GEN_RawQArrayData',
-        'SPPosX-Mon', 'SPPosY-Mon', 'SPSum-Mon', 'SPPosQ-Mon',
-        'SPAmplA-Mon', 'SPAmplB-Mon', 'SPAmplC-Mon', 'SPAmplD-Mon',
         'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
         'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
         'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
@@ -72,7 +66,6 @@ class BPM(_Device):
         'PosKq-SP', 'PosKq-RB',
         'PosXOffset-SP', 'PosXOffset-RB',
         'PosYOffset-SP', 'PosYOffset-RB',
-        'PosSumOffset-SP', 'PosSumOffset-RB',
         'PosQOffset-SP', 'PosQOffset-RB',
         'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
         'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
@@ -82,7 +75,7 @@ class BPM(_Device):
         'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
         'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
         'XYPosCal-Sel', 'XYPosCal-Sts',
-        'SUMPosCal-Sel', 'SUMPosCal-Sts',
+        'SumPosCal-Sel', 'SumPosCal-Sts',
         'QPosCal-Sel', 'QPosCal-Sts',
         )
 
@@ -109,15 +102,10 @@ class BPM(_Device):
     def __str__(self):
         """."""
         stg = '################### Summary Status ###################\n'
-        stg += 'asyn:\n'
-        stg += f'    Enabled: {_csbpm.EnblTyp._fields[self.asyn_state]:s}\n'
-        stg += '    Connected: '
         stg += '    Switching Mode: '
         stg += f'{_csbpm.SwModes._fields[self.switching_mode]:s}\n'
-        stg += f'{_csbpm.ConnTyp._fields[self.asyn_connected]:s}\n'
         stg += '\nAcquisition Parameters:\n'
         stg += f'    - Status: {_csbpm.AcqStates._fields[self.acq_status]:s}\n'
-        stg += f'    - Mode: {_csbpm.OpModes._fields[self.acq_mode]:s}\n'
         stg += f'    - Channel: {_csbpm.AcqChan._fields[self.acq_channel]:s}\n'
         stg += f'    - Nr Shots: {self.acq_nrshots:d}\n'
         stg += f'    - Update Time: {self.acq_update_time:.1f} ms\n'
@@ -140,8 +128,6 @@ class BPM(_Device):
     def is_ok(self):
         """."""
         okay = self.acq_status not in self.ACQSTATES_NOTOK
-        okay &= self.asyn_connected == _csbpm.ConnTyp.Connected
-        okay &= self.asyn_state == _csbpm.EnblTyp.Enable
         return okay
 
     @property
@@ -156,22 +142,6 @@ class BPM(_Device):
         """."""
         if 'RFFEAtt-SP' in self._pvs:
             self['RFFEAtt-SP'] = val
-
-    @property
-    def asyn_state(self):
-        """."""
-        return self['asyn.ENBL']
-
-    @asyn_state.setter
-    def asyn_state(self, boo):
-        """."""
-        val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
-        self['asyn.ENBL'] = val
-
-    @property
-    def asyn_connected(self):
-        """."""
-        return self['asyn.CNCT']
 
     @property
     def switching_mode(self):
@@ -451,15 +421,6 @@ class BPM(_Device):
         self['PosYOffset-SP'] = float(value) / self.CONV_NM2UM
 
     @property
-    def possum_offset(self):
-        """."""
-        return self['PosSumOffset-RB']
-
-    @possum_offset.setter
-    def possum_offset(self, value):
-        self['PosSumOffset-SP'] = float(value)
-
-    @property
     def posq_offset(self):
         """."""
         return self['PosQOffset-RB']
@@ -511,42 +472,42 @@ class BPM(_Device):
     @property
     def mt_posx(self):
         """."""
-        return self['GEN_XArrayData'] * self.CONV_NM2UM
+        return self['GENPosXData'] * self.CONV_NM2UM
 
     @property
     def mt_posy(self):
         """."""
-        return self['GEN_YArrayData'] * self.CONV_NM2UM
+        return self['GENPosYData'] * self.CONV_NM2UM
 
     @property
     def mt_possum(self):
         """."""
-        return self['GEN_SUMArrayData']
+        return self['GENSumData']
 
     @property
     def mt_posq(self):
         """."""
-        return self['GEN_QArrayData']
+        return self['GENPosQData']
 
     @property
     def mt_ampla(self):
         """."""
-        return self['GEN_AArrayData']
+        return self['GENAmplAData']
 
     @property
     def mt_amplb(self):
         """."""
-        return self['GEN_BArrayData']
+        return self['GENAmplBData']
 
     @property
     def mt_amplc(self):
         """."""
-        return self['GEN_CArrayData']
+        return self['GENAmplCData']
 
     @property
     def mt_ampld(self):
         """."""
-        return self['GEN_DArrayData']
+        return self['GENAmplDData']
 
     @property
     def mt_polyx(self):
@@ -601,12 +562,12 @@ class BPM(_Device):
     @property
     def mt_polysum_enbl(self):
         """."""
-        return self['SUMPosCal-Sts']
+        return self['SumPosCal-Sts']
 
     @mt_polysum_enbl.setter
     def mt_polysum_enbl(self, val):
         """."""
-        self['SUMPosCal-Sel'] = val
+        self['SumPosCal-Sel'] = val
 
     @property
     def mt_polyq_enbl(self):
@@ -619,124 +580,34 @@ class BPM(_Device):
         self['QPosCal-Sel'] = val
 
     @property
-    def mtraw_posx(self):
-        """Multi turn raw X array data."""
-        return self['GEN_RawXArrayData'] * self.CONV_NM2UM
-
-    @property
-    def mtraw_posy(self):
-        """Multi turn raw Y array data."""
-        return self['GEN_RawYArrayData'] * self.CONV_NM2UM
-
-    @property
-    def mtraw_possum(self):
-        """Multi turn raw sum array data."""
-        return self['GEN_RawSUMArrayData']
-
-    @property
-    def mtraw_posq(self):
-        """Multi turn raw Q array data."""
-        return self['GEN_RawQArrayData']
-
-    @property
-    def sp_posx(self):
-        """."""
-        return self['SPPosX-Mon'] * self.CONV_NM2UM
-
-    @property
-    def sp_posy(self):
-        """."""
-        return self['SPPosY-Mon'] * self.CONV_NM2UM
-
-    @property
-    def sp_possum(self):
-        """."""
-        return self['SPSum-Mon']
-
-    @property
-    def sp_posq(self):
-        """."""
-        return self['SPPosQ-Mon']
-
-    @property
-    def sp_ampla(self):
-        """."""
-        return self['SPAmplA-Mon']
-
-    @property
-    def sp_amplb(self):
-        """."""
-        return self['SPAmplB-Mon']
-
-    @property
-    def sp_amplc(self):
-        """."""
-        return self['SPAmplC-Mon']
-
-    @property
-    def sp_ampld(self):
-        """."""
-        return self['SPAmplD-Mon']
-
-    @property
-    def sp_arraya(self):
-        """."""
-        return self['SP_AArrayData']
-
-    @property
-    def sp_arrayb(self):
-        """."""
-        return self['SP_BArrayData']
-
-    @property
-    def sp_arrayc(self):
-        """."""
-        return self['SP_CArrayData']
-
-    @property
-    def sp_arrayd(self):
-        """."""
-        return self['SP_DArrayData']
-
-    @property
-    def acq_mode(self):
-        """."""
-        return self['ACQBPMMode-Sts']
-
-    @acq_mode.setter
-    def acq_mode(self, mode):
-        """."""
-        self['ACQBPMMode-Sel'] = mode
-
-    @property
     def acq_ctrl(self):
         """."""
-        return self['ACQTriggerEvent-Sts']
+        return self['GENTriggerEvent-Cmd']
 
     @acq_ctrl.setter
     def acq_ctrl(self, val):
         """."""
-        self['ACQTriggerEvent-Sel'] = val
+        self['GENTriggerEvent-Cmd'] = val
 
     @property
     def acq_status(self):
         """."""
-        return self['ACQStatus-Sts']
+        return self['GENStatus-Mon']
 
     @property
     def acq_count(self):
         """Counter of number of acquisitions so far."""
-        return self['ACQCount-Mon']
+        return self['GENCount-Mon']
 
     @property
     def acq_channel(self):
         """."""
-        return self['ACQChannel-Sts']
+        return self['GENChannel-Sts']
 
     @acq_channel.setter
     def acq_channel(self, val):
         """."""
-        self['ACQChannel-Sel'] = val
+        self['GENChannel-Sel'] = val
 
     @property
     def acq_channel_str(self):
@@ -746,139 +617,134 @@ class BPM(_Device):
     @property
     def acq_trigger(self):
         """."""
-        return self['ACQTrigger-Sts']
+        return self['GENTrigger-Sts']
 
     @acq_trigger.setter
     def acq_trigger(self, val):
         """."""
-        self['ACQTrigger-Sel'] = val
+        self['GENTrigger-Sel'] = val
 
     @property
     def acq_repeat(self):
         """."""
-        return self['ACQTriggerRep-Sts']
+        return self['GENTriggerRep-Sts']
 
     @acq_repeat.setter
     def acq_repeat(self, val):
         """."""
-        self['ACQTriggerRep-Sel'] = val
+        self['GENTriggerRep-Sel'] = val
 
     @property
     def acq_update_time(self):
         """BPMs update time in [s]."""
-        return self['ACQUpdateTime-RB']
+        return self['GENUpdateTime-RB']
 
     @acq_update_time.setter
     def acq_update_time(self, val):
         """BPMs update time in [s]."""
-        self['ACQUpdateTime-SP'] = val
+        self['GENUpdateTime-SP'] = val
 
     @property
     def acq_trig_datachan(self):
         """."""
-        return self['ACQDataTrigChan-Sts']
+        return self['GENDataTrigChan-Sts']
 
     @acq_trig_datachan.setter
     def acq_trig_datachan(self, val):
         """."""
-        self['ACQDataTrigChan-Sel'] = val
+        self['GENDataTrigChan-Sel'] = val
 
     @property
     def acq_trig_datasel(self):
         """."""
-        return self['ACQTriggerDataSel-RB']
+        return self['GENTriggerDataSel-RB']
 
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
         """."""
-        self['ACQTriggerDataSel-SP'] = val
+        self['GENTriggerDataSel-SP'] = val
 
     @property
     def acq_trig_datathres(self):
         """."""
-        return self['ACQTriggerDataThres-RB']
+        return self['GENTriggerDataThres-RB']
 
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
         """."""
-        self['ACQTriggerDataThres-SP'] = val
+        self['GENTriggerDataThres-SP'] = val
 
     @property
     def acq_trig_datahyst(self):
         """."""
-        return self['ACQTriggerDataHyst-RB']
+        return self['GENTriggerDataHyst-RB']
 
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
         """."""
-        self['ACQTriggerDataHyst-SP'] = val
+        self['GENTriggerDataHyst-SP'] = val
 
     @property
     def acq_trig_datapol(self):
         """."""
-        return self['ACQTriggerDataPol-RB']
+        return self['GENTriggerDataPol-RB']
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self['ACQTriggerDataPol-SP'] = val
+        self['GENTriggerDataPol-SP'] = val
 
     @property
     def acq_nrsamples_post(self):
         """."""
-        return self['ACQSamplesPost-RB']
+        return self['GENSamplesPost-RB']
 
     @acq_nrsamples_post.setter
     def acq_nrsamples_post(self, val):
         """."""
-        self['ACQSamplesPost-SP'] = val
+        self['GENSamplesPost-SP'] = val
 
     @property
     def acq_nrsamples_pre(self):
         """."""
-        return self['ACQSamplesPre-RB']
+        return self['GENSamplesPre-RB']
 
     @acq_nrsamples_pre.setter
     def acq_nrsamples_pre(self, val):
         """."""
-        self['ACQSamplesPre-SP'] = val
+        self['GENSamplesPre-SP'] = val
 
     @property
     def acq_nrshots(self):
         """."""
-        return self['ACQShots-RB']
+        return self['GENShots-RB']
 
     @acq_nrshots.setter
     def acq_nrshots(self, val):
         """."""
-        self['ACQShots-SP'] = val
+        self['GENShots-SP'] = val
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            'ACQStatus-Sts', self.ACQSTATES_FINISHED, timeout=timeout,
+            'GENStatus-Mon', self.ACQSTATES_FINISHED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            'ACQStatus-Sts', self.ACQSTATES_STARTED, timeout=timeout,
+            'GENStatus-Mon', self.ACQSTATES_STARTED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Start
-        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Start)
+        return True
 
     def cmd_acq_stop(self):
         """Command Stop Acquisition."""
         self.acq_ctrl = _csbpm.AcqEvents.Stop
-        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Stop)
-
-    def cmd_acq_abort(self):
-        """Command Abort Acquisition."""
-        self.acq_ctrl = _csbpm.AcqEvents.Abort
-        return self._wait('ACQTriggerEvent-Sts', _csbpm.AcqEvents.Abort)
+        return True
 
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
@@ -960,8 +826,6 @@ class BPM(_Device):
             return prop
         if prop.startswith('GEN'):
             return prop.replace('GEN', 'PM')
-        elif prop.startswith('ACQ'):
-            return prop.replace('ACQ', 'ACQ_PM')
         return prop
 
     def _get_pvname(self, propty):

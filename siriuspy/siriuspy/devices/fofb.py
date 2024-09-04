@@ -714,7 +714,7 @@ class FamFastCorrs(_DeviceSet):
     DEF_ATOL_FOFBACCSAT = 2e-2
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
-    DEF_ATOL_ACCFILTER = 2**-17
+    DEF_ATOL_ACCFILTER = 2**-12
     DEF_ATOL_ACCFILTERGAIN = 2**-12
 
     def __init__(self, psnames=None):

@@ -37,7 +37,7 @@ class SOFB(_BaseClass):
         self._tests = tests
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
-        self._loop_freq = self._csorb.BPMsFreq
+        self._loop_freq = self._csorb.BPMsFreq / 10
         self._loop_print_every_num_iter = 200
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
@@ -274,7 +274,7 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value / 300, 0), 1)
+        value = min(max(value / 100, 0), 1)
         self._download_fofb_kicks_perc = value
         self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True
