@@ -480,7 +480,7 @@ class FOFBPSSysId(_Device):
         'SYSIDPRBSFOFBAccLvl0-SP', 'SYSIDPRBSFOFBAccLvl0-RB',
         'SYSIDPRBSFOFBAccLvl1-SP', 'SYSIDPRBSFOFBAccLvl1-RB',
         'CurrLoopKp-SP', 'CurrLoopKp-RB',
-        'CurrLoopTi-SP', 'CurrLoopTi-RB',
+        'CurrLoopKi-SP', 'CurrLoopKi-RB',
     )
 
     def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
@@ -530,11 +530,11 @@ class FOFBPSSysId(_Device):
     @property
     def currloop_ki(self):
         """Current control loop Ki parameter."""
-        return self['CurrLoopTi-RB']
+        return self['CurrLoopKi-RB']
 
     @currloop_ki.setter
     def currloop_ki(self, value):
-        self['CurrLoopTi-SP'] = value
+        self['CurrLoopKi-SP'] = value
 
 
 class FamFOFBSysId(_FamFOFBAcqBase):
