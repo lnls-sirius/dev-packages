@@ -83,16 +83,16 @@ _pvs_bo_llrf = [
     ['RA-RaBO01:RF-LLRF:IntlkDly-SP', 0, 0.0],
     # Settings PVs values lims
     ### Are we still saving this?
-    ['BR-RF-DLLRF-01:mV:AL:REF-SP.DRVH', 0, 0.0],
-    ['BR-RF-DLLRF-01:mV:AL:REF-SP.DRVL', 0, 0.0],
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP.DRVH', 0, 0.0],
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP.DRVL', 0, 0.0],
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP.DRVH', 0, 0.0],
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP.DRVL', 0, 0.0],
-    ['BR-RF-DLLRF-01:OLGAIN:S.DRVH', 0, 0.0],
-    ['BR-RF-DLLRF-01:OLGAIN:S.DRVL', 0, 0.0],
-    ['BR-RF-DLLRF-01:SL:KP:S.DRVH', 0, 0.0],
-    ['BR-RF-DLLRF-01:SL:KP:S.DRVL', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:ALRef-SP.DRVH', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:ALRef-SP.DRVL', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RampAmpTop-SP.DRVH', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RampAmpTop-SP.DRVL', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RampAmpBot-SP.DRVH', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RampAmpBot-SP.DRVL', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:OLGain-SP.DRVH', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:OLGain-SP.DRVL', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:SLKP-SP.DRVH', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:SLKP-SP.DRVL', 0, 0.0],
     # Pressure threshold
     ['BO-05D:VA-CCG-RFC:FastRelay-SP', 0, 0.0],
     # Pressure Lock power increase
@@ -342,12 +342,12 @@ _pvs_sia_llrf = [
     ['RA-RaSIA01:RF-LLRF-A:IntlkDly-SP', 0, 0.0],
     # Set PVs value lims
     ###Are we still saving this?
-    # ['SR-RF-DLLRF-01:mV:AL:REF-SP.DRVH', 0, 0.0],
-    # ['SR-RF-DLLRF-01:mV:AL:REF-SP.DRVL', 0, 0.0],
-    # ['$(device):OLGAIN:S.DRVH', 0, 0.0],
-    # ['$(device):OLGAIN:S.DRVL', 0, 0.0],
-    # ['$(device):SL:KP:S.DRVH', 0, 0.0],
-    # ['$(device):SL:KP:S.DRVL', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:ALRef-SP.DRVH', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:ALRef-SP-SP.DRVL', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:OLGain-SP.DRVH', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:OLGain-SP.DRVL', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:SLKP-SP.DRVH', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:SLKP-SP.DRVL', 0, 0.0],
     # Pressure Lock power increase
     ['RA-RaSIA01:RF-LLRF-A:CondAuto-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF-A:EPSEn-Sel', 0, 0.0],
@@ -655,12 +655,12 @@ _pvs_sib_llrf = [
     ['RA-RaSIB01:RF-LLRF-A:IntlkDly-SP', 0, 0.0],
     # Set PVs value lims
     ###Are we still saving this?
-    # ['SR-RF-DLLRF-01:mV:AL:REF-SP.DRVH', 0, 0.0],
-    # ['SR-RF-DLLRF-01:mV:AL:REF-SP.DRVL', 0, 0.0],
-    # ['$(device):OLGAIN:S.DRVH', 0, 0.0],
-    # ['$(device):OLGAIN:S.DRVL', 0, 0.0],
-    # ['$(device):SL:KP:S.DRVH', 0, 0.0],
-    # ['$(device):SL:KP:S.DRVL', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:ALRef-SP-SP.DRVL', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:ALRef-SP.DRVH', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:OLGain-SP.DRVH', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:OLGain-SP.DRVL', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:SLKP-SP.DRVH', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:SLKP-SP.DRVL', 0, 0.0],
     # Pressure Lock power increase
     ['RA-RaSIB01:RF-LLRF-A:CondAuto-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF-A:EPSEn-Sel', 0, 0.0],
