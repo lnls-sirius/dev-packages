@@ -1340,10 +1340,10 @@ def _get_ps_sofb_propty_database():
     dbase = {
         'SOFBMode-Sel': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'iocmode'},
         'SOFBMode-Sts': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'iocmode'},
         'SOFBCurrent-SP': {
             'type': 'float', 'count': count,
             'unit': 'A', 'prec': PS_CURRENT_PRECISION,
@@ -1370,10 +1370,10 @@ def _get_ps_idff_propty_database():
     dbase = {
         'IDFFMode-Sel': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'iocmode'},
         'IDFFMode-Sts': {
             'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'sofbmode'},
+            'value': Const.DsblEnbl.Dsbl, 'unit': 'iocmode'},
         }
     return dbase
 
