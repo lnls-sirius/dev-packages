@@ -55,14 +55,8 @@ class PRUController:
         # init time interval
         t0_ = _time()
 
-        # init sofb mode to false
-        self._sofb_mode = False
-
         # init idff mode to false
         self._idff_mode = False
-
-        # index of device in self._device_ids for next update in SOFB mode
-        self._sofb_update_dev_idx = 0  # cyclical updates!
 
         # create lock
         self._lock = _Lock()
@@ -240,13 +234,8 @@ class PRUController:
         Returns
         -------
         status : bool
-            True is operation was queued or False, if operation was rejected
-            because of the SOFBMode state.
+            True if operation was queued.
         """
-        # if in SOFBMode on, do not accept exec functions
-        if self._sofb_mode:
-            return False
-
         # prepare arguments
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
@@ -262,10 +251,6 @@ class PRUController:
 
     def update_parameters(self, device_ids):
         """Update device parameters."""
-        # if in SOFBMode on, do not accept comm. commands
-        if self._sofb_mode:
-            return False
-
         # if in IDFFMode on, do not accept comm. commands
         if self._idff_mode:
             return False
@@ -304,10 +289,6 @@ class PRUController:
 
     def wfmref_write(self, device_ids, data):
         """Write wfm curves."""
-        # if in SOFBMode on, do not accept exec functions
-        if self._sofb_mode:
-            return False
-
         # if in IDFFMode on, do not accept exec functions
         if self._idff_mode:
             return False
@@ -361,62 +342,6 @@ class PRUController:
     def idff_mode(self):
         """Return IDFF mode."""
         return self._idff_mode
-
-    # --- SOFBCurrent parameters ---
-
-    def sofb_mode_set(self, state):
-        """Change SOFB mode: True or False."""
-        self._sofb_mode = state
-        if state:
-            while not self._queue.empty():  # wait until queue is empty
-                _sleep(PRUController._TINY_SLEEP)
-
-    @property
-    def sofb_mode(self):
-        """Return SOFB mode."""
-        return self._sofb_mode
-
-    def sofb_current_set(self, value):
-        """."""
-        while not self._queue.empty():  # wait until queue is empty
-            _sleep(PRUController._TINY_SLEEP)
-
-        # execute SOFB setpoint
-        self.bsmp_update_sofb_setpoint(value)
-
-        return True
-
-    @property
-    def sofb_current_rb(self):
-        """."""
-        return self._udc.sofb_current_rb_get()
-
-    @property
-    def sofb_current_refmon(self):
-        """."""
-        return self._udc.sofb_current_refmon_get()
-
-    @property
-    def sofb_current_mon(self):
-        """."""
-        return self._udc.sofb_current_mon_get()
-
-    def sofb_update_variables_state(self):
-        """Update variables state mirror."""
-        # do sofb update only if in SOFBMode On
-        if not self._sofb_mode:
-            return
-
-        while not self._queue.empty():  # wait until queue is empty
-            _sleep(PRUController._TINY_SLEEP)
-
-        # select power supply dev_id for updating
-        self._sofb_update_dev_idx = \
-            (self._sofb_update_dev_idx + 1) % len(self._device_ids)
-        dev_id = self._device_ids[self._sofb_update_dev_idx]
-
-        # update variables state mirror for selected power supply
-        self.bsmp_update_variables(dev_id)
 
     # --- scan and process loop methods ---
 
@@ -533,8 +458,7 @@ class PRUController:
 
             # run scan method once
             if self.scanning and \
-               self._scan_interval != 0 and \
-               not self._sofb_mode:
+               self._scan_interval != 0:
                 self.bsmp_scan()
 
             # update scan interval
@@ -664,20 +588,6 @@ class PRUController:
         # stores updated psupplies dict
         self._psupplies = psupplies  # atomic operation
 
-    def bsmp_update_sofb_setpoint(self, value):
-        """."""
-        # execute sofb current setpoint
-        self._udc.sofb_current_set(value)
-
-        # update sofb state
-        self._udc.sofb_update()
-
-        # # update all other device parameters
-        # self.bsmp_update()
-
-        # print('{:<30s} : {:>9.3f} ms'.format(
-        #     'PRUC.bsmp_update_sofb_setpoint (end)', 1e3*(_time() % 1)))
-
     def _bsmp_wfmref_write(self, device_ids, curve):
         """Write wfmref curve to devices."""
         try:
@@ -756,12 +666,6 @@ class PRUController:
         dt_ = _time() - t0_
         print(fmt.format('bsmp_init_update', 'waveform_values', 1e3*dt_))
 
-        # initialize sofb
-        t0_ = _time()
-        self._bsmp_init_sofb_values()
-        dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_update', 'sofb_values', 1e3*dt_))
-
         # initialize parameters
         t0_ = _time()
         self._bsmp_init_parameter_values()
@@ -798,10 +702,6 @@ class PRUController:
     def _bsmp_init_parameter_values(self):
         # init psupplies parameters
         self._bsmp_read_parameter_values()
-
-    def _bsmp_init_sofb_values(self):
-
-        self._udc.sofb_update()
 
     def _bsmp_read_parameter_values(self, device_ids=None):
         device_ids = device_ids or self._device_ids

@@ -595,7 +595,6 @@ class PSCyclerFBP(PSCycler):
         'Current-SP', 'Current-RB', 'CurrentRef-Mon',
         'PwrState-Sel', 'PwrState-Sts',
         'OpMode-Sel', 'OpMode-Sts',
-        'SOFBMode-Sel', 'SOFBMode-Sts',
         'IDFFMode-Sel', 'IDFFMode-Sts',
         'CycleType-Sel', 'CycleType-Sts',
         'CycleFreq-SP', 'CycleFreq-RB',
@@ -610,16 +609,6 @@ class PSCyclerFBP(PSCycler):
         'SyncPulse-Cmd'
     ]
 
-    def set_sofbmode(self, state):
-        """Set SOFBMode."""
-        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
-        return _pv_conn_put(self['SOFBMode-Sel'], state)
-
-    def check_sofbmode(self, state, wait=1):
-        """Check if SOFBMode."""
-        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
-        return _pv_timed_get(self['SOFBMode-Sts'], state, wait=wait)
-
     def set_idffmode(self, state):
         """Set IDFFMode."""
         state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
@@ -632,9 +621,6 @@ class PSCyclerFBP(PSCycler):
 
     def prepare(self, mode):
         """Config power supply to cycling mode."""
-        if not self.check_sofbmode('off', wait=1):
-            return False
-
         if not self.check_idffmode('off', wait=1):
             return False
 
