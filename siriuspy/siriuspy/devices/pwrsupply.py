@@ -1088,7 +1088,7 @@ class PowerSupplyFBP(PowerSupply):
 
     def cmd_idffmode_enable(self, timeout=_PSDev._default_timeout):
         """Command to enable IDFFMode. Send command and wait."""
-        return self._cmd_sofbmode(
+        return self._cmd_idffmode(
             timeout, self.IDFFMODE_SEL.Enbl, self.IDFFMODE_STS.Enbl)
 
     def cmd_idffmode_disable(self, timeout=_PSDev._default_timeout):
