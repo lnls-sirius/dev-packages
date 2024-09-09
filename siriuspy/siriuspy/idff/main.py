@@ -1,18 +1,16 @@
 """ID feedforward App."""
 
-import os as _os
 import logging as _log
+import os as _os
 import time as _time
 
 import epics as _epics
-import numpy as _np
 
-from ..util import update_bit as _updt_bit
 from ..callbacks import Callback as _Callback
 from ..clientconfigdb import ConfigDBException as _ConfigDBException
 from ..devices import IDFF as _IDFF
-
-from .csdev import IDFFConst as _Const, ETypes as _ETypes
+from ..util import update_bit as _updt_bit
+from .csdev import ETypes as _ETypes, IDFFConst as _Const
 
 
 class App(_Callback):
@@ -99,10 +97,12 @@ class App(_Callback):
         if sleep_time > 0:
             _time.sleep(sleep_time)
         else:
-            _log.debug('process took {0:f}ms.'.format((dtime)*1000))
+            strf = 'process took {0:f}ms.'.format((dtime)*1000)
+            _log.debug(strf)
 
     def read(self, reason):
         """Read from IOC database."""
+        _ = reason
         value = None
         return value
 
@@ -285,9 +285,11 @@ class App(_Callback):
         if tsleep > 0:
             _time.sleep(tsleep)
         else:
-            _log.warning(
+            strf1 = (
                 'Feedforward step took more than planned... '
-                '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+                '{0:.3f}/{1:.3f} s')
+            strf2 = strf1.format(ttook, tplanned)
+            _log.warning(strf2)
 
     def _do_update_polarization(self):
         new_pol, *_ = self._idff.get_polarization_state()
@@ -352,15 +354,3 @@ class App(_Callback):
                     pvname = 'Corr' + corrlabel + 'Current-Mon'
                     value = setpoints[corr_pvname]
                     self.run_callbacks(pvname, value)
-
-    # ----- idff preparation -----
-
-    def _idff_prepare_corrs_state(self):
-        """Configure PSSOFB mode state ."""
-        if not self._idff.wait_for_connection():
-            return False
-        corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
-        for dev in corrdevs:
-            if not dev.cmd_sofbmode_disable(timeout=App.DEF_PS_TIMEOUT):
-                return False
-        return True

@@ -1334,37 +1334,6 @@ def _get_ps_basic_propty_database():
     return dbase
 
 
-def _get_ps_sofb_propty_database():
-    """Return PSSOFB properties."""
-    count = _UDC_MAX_NR_DEV * PSSOFB_MAX_NR_UDC
-    dbase = {
-        'SOFBMode-Sel': {
-            'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'iocmode'},
-        'SOFBMode-Sts': {
-            'type': 'enum', 'enums': _et.DSBL_ENBL,
-            'value': Const.DsblEnbl.Dsbl, 'unit': 'iocmode'},
-        'SOFBCurrent-SP': {
-            'type': 'float', 'count': count,
-            'unit': 'A', 'prec': PS_CURRENT_PRECISION,
-            'value': _np.zeros(count)},
-        'SOFBUpdate-Cmd': {'type': 'int', 'value': 0, 'unit': 'count'},
-        'SOFBCurrent-RB': {
-            'type': 'float', 'count': count,
-            'unit': 'A', 'prec': PS_CURRENT_PRECISION,
-            'value': _np.zeros(count)},
-        'SOFBCurrentRef-Mon': {
-            'type': 'float', 'count': count,
-            'unit': 'A', 'prec': PS_CURRENT_PRECISION,
-            'value': _np.zeros(count)},
-        'SOFBCurrent-Mon': {
-            'type': 'float', 'count': count,
-            'unit': 'A', 'prec': PS_CURRENT_PRECISION,
-            'value': _np.zeros(count)},
-        }
-    return dbase
-
-
 def _get_ps_idff_propty_database():
     """Return PSIDFF properties."""
     dbase = {
@@ -1741,12 +1710,11 @@ def _get_ps_FBP_propty_database():  # noqa: N802
             'type': 'float', 'value': 0.0, 'unit': 'p.u.',
             'prec': PS_CURRENT_PRECISION},
         }
+    propty_db.update(dbase)
 
-    propty_db.update(dbase)
-    dbase = _get_ps_sofb_propty_database()
-    propty_db.update(dbase)
     dbase = _get_ps_idff_propty_database()
     propty_db.update(dbase)
+
     return propty_db
 
 
