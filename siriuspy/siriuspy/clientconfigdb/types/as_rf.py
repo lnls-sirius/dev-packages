@@ -146,6 +146,7 @@ _pvs_bo_llrf = [
     # Open loop gain
     ['RA-RaBO01:RF-LLRF:OLGain-SP', 0, 0.0],
     # Tuning loop config
+    ['RA-RaBO01:RF-LLRF:Tune-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:TuneDir-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:TuneFwdMin-SP', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],
@@ -157,6 +158,7 @@ _pvs_bo_llrf = [
     ['RA-RaBO01:RF-LLRF:TuneTrig-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:RampTuneTop-Sel', 0, 0.0],
     # Field Flatness loop config
+    ['RA-RaBO01:RF-LLRF:FFEn-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:FFDir-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:FFDeadBand-SP', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:FFGainCell2-SP', 0, 0.0],
@@ -341,7 +343,6 @@ _pvs_sia_llrf = [
     # Interlock delay
     ['RA-RaSIA01:RF-LLRF-A:IntlkDly-SP', 0, 0.0],
     # Set PVs value lims
-    ###Are we still saving this?
     ['RA-RaSIA01:RF-LLRF-A:ALRef-SP.DRVH', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF-A:ALRef-SP-SP.DRVL', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF-A:OLGain-SP.DRVH', 0, 0.0],
@@ -401,6 +402,7 @@ _pvs_sia_llrf = [
     # Phase ref
     ['RA-RaSIA01:RF-LLRF-A:PLRef-SP', 0, 0.0],
     # Tuning loop config
+    ['RA-RaSIA01:RF-LLRF-A:Tune-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF-A:TuneDir-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF-A:TuneFwdMin-SP', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF-A:TuneMarginHI-SP', 0, 0.0],
@@ -427,7 +429,10 @@ _pvs_sia_llrf = [
     # Enable ADC phase and gain
     ['RA-RaSIA01:RF-LLRF-A:PhShADC-Sel', 0, 0.0],
     # Enable DAC phase and gain
-    ['RA-RaSIA01:RF-LLRF-A:PhShDAC-Sel', 0, 0.0]
+    ['RA-RaSIA01:RF-LLRF-A:PhShDAC-Sel', 0, 0.0],
+    # Dac5 outputs
+    ['RA-RaSIA01:RF-LLRF-A:CavMonGain-Sel', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF-A:CavMonCh-Sel', 0, 0.0],
 ]
 
 _pvs_sia_rfssa = [
@@ -714,6 +719,7 @@ _pvs_sib_llrf = [
     # Phase ref
     ['RA-RaSIB01:RF-LLRF-A:PLRef-SP', 0, 0.0],
     # Tuning loop config
+    ['RA-RaSIA01:RF-LLRF-A:Tune-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF-A:TuneDir-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF-A:TuneFwdMin-SP', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF-A:TuneMarginHI-SP', 0, 0.0],
@@ -740,7 +746,10 @@ _pvs_sib_llrf = [
     # Enable ADC phase and gain
     ['RA-RaSIB01:RF-LLRF-A:PhShADC-Sel', 0, 0.0],
     # Enable DAC phase and gain
-    ['RA-RaSIB01:RF-LLRF-A:PhShDAC-Sel', 0, 0.0]
+    ['RA-RaSIB01:RF-LLRF-A:PhShDAC-Sel', 0, 0.0],
+    # DAC5 Output
+    ['RA-RaSIB01:RF-LLRF-A:CavMonGain-Sel', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF-A:CavMonCh-Sel', 0, 0.0],
 ]
 
 _pvs_sib_rfssa = [
