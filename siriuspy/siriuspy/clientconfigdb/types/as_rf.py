@@ -316,6 +316,7 @@ _pvs_sia_llrf = [
     ['RA-RaSIA01:RF-LLRF:FIMRFIn14-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF:FIMRFIn15-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF:FIMOrbitIntlk-Sel', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:FIMQuenchCond1-Sts', 0, 0.0],
     # End switches logic
     ['RA-RaSIA01:RF-LLRF:EndSwLogicInv-Sel', 0, 0.0],
     # Beam trip logic
@@ -632,6 +633,7 @@ _pvs_sib_llrf = [
     ['RA-RaSIB01:RF-LLRF:FIMRFIn14-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:FIMRFIn15-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:FIMOrbitIntlk-Sel', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:FIMQuenchCond1-Sts', 0, 0.0],
     # End switches logic
     ['RA-RaSIB01:RF-LLRF:EndSwLogicInv-Sel', 0, 0.0],
     # Beam trip logic
