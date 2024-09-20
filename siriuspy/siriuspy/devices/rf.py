@@ -566,6 +566,14 @@ class RFGen(_Device):
 class ASLLRF(_Device):
     """AS LLRF."""
 
+    VoltIncRates = _get_namedtuple('VoltIncRates', (
+        'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
+        'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
+        'vel_20p0', 'vel_30p0', 'vel_50p0', 'Immediately'))
+    PhsIncRates = _get_namedtuple('PhsIncRates', (
+        'vel_0p1', 'vel_0p2', 'vel_0p5', 'vel_1p0', 'vel_2p0', 'vel_5p0',
+        'vel_10p0', 'Immediately'))
+
     BO = 'RA-RaBO01:RF-LLRF'
     SIA = 'RA-RaSIA01:RF-LLRF'
     SIB = 'RA-RaSIB01:RF-LLRF'
@@ -585,14 +593,6 @@ class ASLLRF(_Device):
 
 class _BaseLLRF(_Device):
     """Base LLRF."""
-
-    VoltIncRates = _get_namedtuple('VoltIncRates', (
-        'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
-        'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
-        'vel_20p0', 'vel_30p0', 'vel_50p0', 'Immediately'))
-    PhsIncRates = _get_namedtuple('PhsIncRates', (
-        'vel_0p1', 'vel_0p2', 'vel_0p5', 'vel_1p0', 'vel_2p0', 'vel_5p0',
-        'vel_10p0', 'Immediately'))
 
     PROPERTIES_DEFAULT = (
         'SL-Sel', 'SL-Sts',
@@ -702,7 +702,7 @@ class _BaseLLRF(_Device):
     @property
     def phase_incrate_str(self):
         """."""
-        return self.PhsIncRates._fields[self['PhsIncRate-RB']]
+        return ASLLRF.PhsIncRates._fields[self['PhsIncRate-RB']]
 
     @property
     def phase_incrate(self):
@@ -711,7 +711,7 @@ class _BaseLLRF(_Device):
 
     @phase_incrate.setter
     def phase_incrate(self, value):
-        self._enum_setter('PhsIncRate-SP', value, self.PhsIncRates)
+        self._enum_setter('PhsIncRate-SP', value, ASLLRF.PhsIncRates)
 
     def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
@@ -746,7 +746,7 @@ class _BaseLLRF(_Device):
     @property
     def voltage_incrate_str(self):
         """Voltage increase rate enum string."""
-        return self.VoltIncRates._fields[self['AmpIncRate-RB']]
+        return ASLLRF.VoltIncRates._fields[self['AmpIncRate-RB']]
 
     @property
     def voltage_incrate(self):
@@ -755,7 +755,7 @@ class _BaseLLRF(_Device):
 
     @voltage_incrate.setter
     def voltage_incrate(self, value):
-        self._enum_setter('AmpIncRate-SP', value, self.VoltIncRates)
+        self._enum_setter('AmpIncRate-SP', value, ASLLRF.VoltIncRates)
 
     def set_voltage_incrate(self, value, timeout=None):
         """Set and wait voltage increase rate to reach `value`."""
