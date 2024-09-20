@@ -681,7 +681,7 @@ class _BaseLLRF(_Device):
     @property
     def phase_mon(self):
         """."""
-        return self['SL:INP:PHS']
+        return self['SLInpPhs-Mon']
 
     @property
     def phase_ref(self):
@@ -719,13 +719,13 @@ class _BaseLLRF(_Device):
     def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
         self.phase = value
-        pv2wait = 'SL:INP:PHS' if wait_mon else 'SLRefPhs-Mon'
+        pv2wait = 'SLInpPhs-Mon' if wait_mon else 'SLRefPhs-Mon'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def voltage_mon(self):
         """."""
-        return self['SL:INP:AMP']
+        return self['SLInpAmp-Mon']
 
     @property
     def voltage_ref(self):
@@ -768,7 +768,7 @@ class _BaseLLRF(_Device):
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
         """Set RF voltage and wait until it gets there."""
         self.voltage = value
-        pv2wait = 'SL:INP:AMP' if wait_mon else 'SLRefAmp-Mon'
+        pv2wait = 'SLInpAmp-Mon' if wait_mon else 'SLRefAmp-Mon'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
@@ -1265,14 +1265,15 @@ class RFKillBeam(ASLLRF):
         # set Amplitude Reference to 60mV and wait
         self.voltage = self.REFMIN_VALUE
         if not self._wait_float(
-                'SL:INP:AMP', self.REFMIN_VALUE, abs_tol=1,
+                'SLInpAmp-Mon', self.REFMIN_VALUE, abs_tol=1,
                 timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Voltage to low value.']
 
         # set Amplitude Reference to initial value
         self.voltage = amp_init
         if not self._wait_float(
-                'SL:INP:AMP', amp_init, abs_tol=1, timeout=self.TIMEOUT_WAIT):
+                'SLInpAmp-Mon', amp_init,
+                abs_tol=1, timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Voltage back to original value.']
 
         # set Amplitude Increase Rate to initial value
