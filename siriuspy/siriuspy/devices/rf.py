@@ -574,10 +574,13 @@ class ASLLRF(_Device):
         'vel_0p1', 'vel_0p2', 'vel_0p5', 'vel_1p0', 'vel_2p0', 'vel_5p0',
         'vel_10p0', 'Immediately'))
 
-    BO = 'RA-RaBO01:RF-LLRF'
-    SIA = 'RA-RaSIA01:RF-LLRF'
-    SIB = 'RA-RaSIB01:RF-LLRF'
-    ALL = (BO, SIA, SIB)
+    class DEVICES:
+        """Devices names."""
+
+        BO = 'RA-RaBO01:RF-LLRF'
+        SIA = 'RA-RaSIA01:RF-LLRF'
+        SIB = 'RA-RaSIB01:RF-LLRF'
+        ALL = (BO, SIA, SIB)
 
     def __new__(cls, devname, props2init='all'):
         """."""
