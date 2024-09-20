@@ -603,7 +603,7 @@ class _BaseLLRF(_Device):
         'ALRef-SP', 'ALRef-RB', 'SLRefAmp-Mon', 'SLInpAmp-Mon',
         'Detune-SP', 'Detune-RB', 'TuneDephs-Mon',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
-        'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
+        'RmpEn-Sel', 'RmpEn-Sts', 'RmpRdy-Mon',
         'AmpIncRate-RB', 'AmpIncRate-SP',
         'PhsIncRate-RB', 'PhsIncRate-SP',
         'AmpRefMin-RB', 'AmpRefMin-SP', 'PhsRefMin-RB', 'PhsRefMin-SP',
