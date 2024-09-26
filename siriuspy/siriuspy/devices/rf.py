@@ -603,11 +603,11 @@ class _BaseLLRF(_Device):
         'ALRef-SP', 'ALRef-RB', 'SLRefAmp-Mon', 'SLInpAmp-Mon',
         'Detune-SP', 'Detune-RB', 'TuneDephs-Mon',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
-        'RmpEn-Sel', 'RmpEn-Sts', 'RmpRdy-Mon',
+        'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
         'AmpIncRate-RB', 'AmpIncRate-SP',
         'PhsIncRate-RB', 'PhsIncRate-SP',
         'AmpRefMin-RB', 'AmpRefMin-SP', 'PhsRefMin-RB', 'PhsRefMin-SP',
-        'CondEn-Sts', 'CondEn-Sel', 'CondDuty-RB', 'CondDuty-SP',
+        'CondEnbl-Sts', 'CondEnbl-Sel', 'CondDuty-RB', 'CondDuty-SP',
         'CondDutyCycle-Mon',
         )
 
@@ -802,21 +802,21 @@ class _BaseLLRF(_Device):
     @property
     def conditioning_state(self):
         """."""
-        return self['CondEn-Sts']
+        return self['CondEnbl-Sts']
 
     @conditioning_state.setter
     def conditioning_state(self, value):
-        self['CondEn-Sel'] = bool(value)
+        self['CondEnbl-Sel'] = bool(value)
 
     def cmd_turn_on_conditioning(self, timeout=10):
         """Turn on conditioning mode."""
         self.conditioning_state = 1
-        return self._wait('CondEn-Sts', 1, timeout=timeout)
+        return self._wait('CondEnbl-Sts', 1, timeout=timeout)
 
     def cmd_turn_off_conditioning(self, timeout=10):
         """Turn off conditioning mode."""
         self.conditioning_state = 0
-        return self._wait('CondEn-Sts', 0, timeout=timeout)
+        return self._wait('CondEnbl-Sts', 0, timeout=timeout)
 
     @property
     def conditioning_duty_cycle_mon(self):
@@ -863,7 +863,7 @@ class BOLLRF(_BaseLLRF):
 
     # fieldflatness properties that are exclusive for P5Cav at BO
     PROPERTIES_DEFAULT = _BaseLLRF.PROPERTIES_DEFAULT + (
-        'FFOn-Mon', 'FFEn-Sts', 'FFEn-Sel', 'FFDir-Sts', 'FFDir-Sel',
+        'FFOn-Mon', 'FFEnbl-Sts', 'FFEnbl-Sel', 'FFDir-Sts', 'FFDir-Sel',
         'FFGainCell2-RB', 'FFGainCell2-SP', 'FFGainCell4-RB', 'FFGainCell4-SP',
         'FFDeadBand-RB', 'FFDeadBand-SP', 'FFCell2-Mon', 'FFCell4-Mon',
         'FFError-Mon',
@@ -877,12 +877,12 @@ class BOLLRF(_BaseLLRF):
     @property
     def field_flatness_enable(self):
         """Return whether the field flatness loop is enabled."""
-        return self['FFEn-Sts']
+        return self['FFEnbl-Sts']
 
     @field_flatness_enable.setter
     def field_flatness_enable(self, value):
         """Control state of field flatness loop."""
-        self['FFEn-Sel'] = bool(value)
+        self['FFEnbl-Sel'] = bool(value)
 
     @property
     def field_flatness_position(self):
