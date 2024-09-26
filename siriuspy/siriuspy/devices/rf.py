@@ -597,7 +597,12 @@ class ASLLRF(_Device):
 class _BaseLLRF(_Device):
     """Base LLRF."""
 
-    PROPERTIES_DEFAULT = (
+    PROPERTIES_INTERLOCK = (
+        'FIMOrbitIntlk-Sel', 'FIMOrbitIntlk-Sts', 'IntlkAll-Mon',
+        'FIMManual-Sel', 'FIMManual-Sts',
+        'IntlkManual-Sel', 'IntlkManual-Sts', 'IntlkReset-Cmd',
+    )
+    PROPERTIES_DEFAULT = PROPERTIES_INTERLOCK + (
         'SL-Sel', 'SL-Sts',
         'PLRef-RB', 'PLRef-SP', 'SLRefPhs-Mon', 'SLInpPhs-Mon',
         'ALRef-SP', 'ALRef-RB', 'SLRefAmp-Mon', 'SLInpAmp-Mon',
