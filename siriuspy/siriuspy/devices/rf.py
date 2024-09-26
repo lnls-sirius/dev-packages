@@ -1290,10 +1290,13 @@ class SILLRFPreAmp(_Device):
 
     class DEVICES:
         """Devices names."""
-
-        SSA1 = 'RA-ToSIA03:RF-CtrlPanel'
-        SSA2 = 'RA-ToSIA04:RF-CtrlPanel'
-        ALL = (SSA1, SSA2)
+        # Cavity A
+        SSA1 = 'RA-ToSIA01:RF-CtrlPanel'
+        SSA2 = 'RA-ToSIA02:RF-CtrlPanel'
+        # Cavity B
+        SSA3 = 'RA-ToSIB03:RF-CtrlPanel'
+        SSA4 = 'RA-ToSIB04:RF-CtrlPanel'
+        ALL = (SSA1, SSA2, SSA3, SSA4)
 
     PROPERTIES_DEFAULT = (
         'PINSwEnbl-Cmd', 'PINSwDsbl-Cmd', 'PINSwSts-Mon',
@@ -1367,10 +1370,13 @@ class SIRFDCAmp(_Device):
 
     class DEVICES:
         """Devices names."""
-
-        SSA1 = 'RA-ToSIA03:RF-TDKSource'
-        SSA2 = 'RA-ToSIA04:RF-TDKSource'
-        ALL = (SSA1, SSA2)
+        # Cavity A
+        SSA1 = 'RA-ToSIA01:RF-TDKSource'
+        SSA2 = 'RA-ToSIA02:RF-TDKSource'
+        # Cavity B
+        SSA3 = 'RA-ToSIB03:RF-TDKSource'
+        SSA4 = 'RA-ToSIB04:RF-TDKSource'
+        ALL = (SSA1, SSA2, SSA3, SSA4)
 
     PROPERTIES_DEFAULT = (
         'PwrDCEnbl-Cmd', 'PwrDCDsbl-Cmd', 'PwrDC-Mon',
@@ -1444,10 +1450,13 @@ class SIRFACAmp(_Device):
 
     class DEVICES:
         """Devices names."""
-
-        SSA1 = 'RA-ToSIA03:RF-ACPanel'
-        SSA2 = 'RA-ToSIA04:RF-ACPanel'
-        ALL = (SSA1, SSA2)
+        # Cavity A
+        SSA1 = 'RA-ToSIA01:RF-ACPanel'
+        SSA2 = 'RA-ToSIA02:RF-ACPanel'
+        # Cavity B
+        SSA3 = 'RA-ToSIB03:RF-ACPanel'
+        SSA4 = 'RA-ToSIB04:RF-ACPanel'
+        ALL = (SSA1, SSA2, SSA3, SSA4)
 
     PROPERTIES_DEFAULT = (
         'PwrACEnbl-Cmd', 'PwrACDsbl-Cmd', 'PwrAC-Mon',
