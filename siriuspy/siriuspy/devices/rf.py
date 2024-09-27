@@ -1142,6 +1142,14 @@ class SIRFCavMonitor(_Device):
         super().__init__(devname, props2init=props2init)
 
     @property
+    def system_nickname(self):
+        """."""
+        if self.devname == ASLLRF.DEVICES.SIA:
+            return "A"
+        if self.devname == ASLLRF.DEVICES.SIB:
+            return "B"
+
+    @property
     def status(self):
         """."""
         return self['Sts-Mon']
