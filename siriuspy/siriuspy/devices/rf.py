@@ -1115,25 +1115,31 @@ class BORFCavMonitor(_Device):
 
 
 class SIRFCavMonitor(_Device):
-    """."""
+    """TODO: UPDATE WITH PVS FOR SC CAVITIES."""
 
     class DEVICES:
         """Devices names."""
 
-        SI = 'SI-02SB:RF-P7Cav'
+        SIA = 'SI-03SP:RF-SRFCav-A'
+        SIB = 'SI-03SP:RF-SRFCav-B'
+        ALL = (SIA, SIB, )
 
-    PROPERTIES_DEFAULT = (
-        'PwrRev-Mon', 'PwrFwd-Mon',
-        'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
-        'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
-        'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
-        'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
-        )
+    # OLD PVs
+    # PROPERTIES_DEFAULT = (
+    #     'PwrRev-Mon', 'PwrFwd-Mon',
+    #     'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
+    #     'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
+    #     'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
+    #     'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
+    #     )
 
-    def __init__(self, props2init='all'):
+    PROPERTIES_DEFAULT = ()
+
+    def __init__(self, devname, props2init='all'):
         """."""
-        # call base class constructor
-        super().__init__(SIRFCavMonitor.DEVICES.SI, props2init=props2init)
+        if devname not in SIRFCavMonitor.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def status(self):
@@ -1233,8 +1239,9 @@ class RFCav(_DeviceSet):
         """Devices names."""
 
         BO = 'BO-05D:RF-P5Cav'
-        SI = 'SI-02SB:RF-P7Cav'
-        ALL = (BO, SI)
+        SIA = 'SI-03SP:RF-SRFCav-A'
+        SIB = 'SI-03SP:RF-SRFCav-B'
+        ALL = (BO, SIA, SIB)
 
     def __init__(self, devname, props2init='all'):
         """RFCav DeviceSet.
@@ -1256,9 +1263,14 @@ class RFCav(_DeviceSet):
                 "props2init must be 'all' or bool(props2init) == False")
 
         self.dev_rfgen = RFGen(props2init=props2init)
-        if devname == RFCav.DEVICES.SI:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI, props2init=props2init)
-            self.dev_cavmon = SIRFCavMonitor(props2init=props2init)
+        if devname == RFCav.DEVICES.SIA:
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SIA, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(
+                SIRFCavMonitor.DEVICES.SIA, props2init=props2init)
+        elif devname == RFCav.DEVICES.SIB:
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SIB, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(
+                SIRFCavMonitor.DEVICES.SIB, props2init=props2init)
         elif devname == RFCav.DEVICES.BO:
             self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO, props2init=props2init)
             self.dev_cavmon = BORFCavMonitor(props2init=props2init)
