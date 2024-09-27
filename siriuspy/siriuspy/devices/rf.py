@@ -593,6 +593,16 @@ class ASLLRF(_Device):
         elif 'BO' in devname:
             return BOLLRF(devname, props2init=props2init)
 
+    @property
+    def system_nickname(self):
+        """."""
+        if self.devname == ASLLRF.DEVICES.BO:
+            return "BO"
+        if self.devname == ASLLRF.DEVICES.SIA:
+            return "SIA"
+        if self.devname == ASLLRF.DEVICES.SIB:
+            return "SIB"
+
 
 class _BaseLLRF(_Device):
     """Base LLRF."""
@@ -861,6 +871,48 @@ class _BaseLLRF(_Device):
     def _wrap_phase(phase):
         """Phase must be in [-180, +180] interval."""
         return (phase + 180) % 360 - 180
+
+    # interlock properties
+    @property
+    def fast_interlock_monitor_orbit(self):
+        """."""
+        return self['FIMOrbitIntlk-Sts']
+
+    @fast_interlock_monitor_orbit.setter
+    def fast_interlock_monitor_orbit(self, value):
+        """."""
+        self['FIMOrbitIntlk-Sel'] = value
+
+    @property
+    def fast_interlock_monitor_manual(self):
+        """."""
+        return self['FIMManual-Sts']
+
+    @fast_interlock_monitor_manual.setter
+    def fast_interlock_monitor_manual(self, value):
+        """."""
+        self['FIMManual-Sel'] = value
+
+    @property
+    def interlock_manual(self):
+        """."""
+        return self['IntlkManual-Sts']
+
+    @interlock_manual.setter
+    def interlock_manual(self, value):
+        """."""
+        self['IntlkManual-Sel'] = value
+
+    @property
+    def interlock_mon(self):
+        """."""
+        return self['IntlkAll-Mon']
+
+    def cmd_reset_interlock(self, wait=1):
+        """Reset interlocks."""
+        self['IntlkReset-Cmd'] = 1
+        _time.sleep(wait)
+        self['IntlkReset-Cmd'] = 0
 
 
 class BOLLRF(_BaseLLRF):
