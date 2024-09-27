@@ -97,8 +97,9 @@ class PSController:
         if pvname in self._writers:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if value == 0 and 'SOFBMode-Sel' in field:
+        # update all setpoint properties upon return from SOFBMode or IDFFMode
+        if value == 0 and (
+                ('SOFBMode-Sel' in field) or ('IDFFMode-Sel' in field)):
             self._update_setpoints(devname)
 
         # return priority pvs
@@ -208,6 +209,8 @@ class StandardPSController(PSController):
 
         if field == 'SOFBCurrent-SP':
             self._set_sofb_current(pvname, value, devname, field, priority_pvs)
+        elif field == 'IDFFMode-Sel':
+            self._set_idff_mode(pvname, value, devname, field, priority_pvs)
         elif field in StandardPSController.PARMS_SIGGEN:
             self._set_siggen(pvname, value, devname, field, priority_pvs)
         elif field in StandardPSController.PARMS_WFM:
@@ -215,8 +218,9 @@ class StandardPSController(PSController):
         else:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if 'SOFBMode-Sel' in field and value == 0:
+        # update all setpoint properties upon return from SOFBMode or IDFFMode
+        if (('SOFBMode-Sel' in field) or ('IDFFMode-Sel' in field)) and \
+                value == 0:
             self._update_setpoints(devname)
 
         # return priority pvs
@@ -262,6 +266,16 @@ class StandardPSController(PSController):
                     if devname_ != devname:
                         pvn = devname_ + ':SOFBCurrent-SP'
                         priority_pvs[pvn] = value
+
+    def _set_idff_mode(self, pvname, value, devname, field, priority_pvs):
+        _, _, _ = pvname, field, priority_pvs
+        # loop over all UDC devices
+        for udc_devnames in self._udc2dev.values():
+            if devname in udc_devnames:
+                # loop over other UDC devices
+                for devname_ in udc_devnames:
+                    pvn = devname_ + ':IDFFMode-Sel'
+                    self._writers[pvn].execute(value)
 
     def _get_siggen_arg_values(self, devname):
         """Get cfg_siggen args."""
