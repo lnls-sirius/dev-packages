@@ -612,22 +612,26 @@ class PSCyclerFBP(PSCycler):
 
     def set_sofbmode(self, state):
         """Set SOFBMode."""
-        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        state = _PSConst.OffOn.On if state.lower() == 'on' \
+            else _PSConst.OffOn.Off
         return _pv_conn_put(self['SOFBMode-Sel'], state)
 
     def check_sofbmode(self, state, wait=1):
         """Check if SOFBMode."""
-        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        state = _PSConst.OffOn.On if state.lower() == 'on' \
+            else _PSConst.OffOn.Off
         return _pv_timed_get(self['SOFBMode-Sts'], state, wait=wait)
 
     def set_idffmode(self, state):
         """Set IDFFMode."""
-        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        state = _PSConst.OffOn.On if state.lower() == 'on' \
+            else _PSConst.OffOn.Off
         return _pv_conn_put(self['IDFFMode-Sel'], state)
 
     def check_idffmode(self, state, wait=1):
         """Check if IDFFMode."""
-        state = _PSConst.OffOn.On if state == 'on' else _PSConst.OffOn.Off
+        state = _PSConst.OffOn.On if state.lower() == 'on' \
+            else _PSConst.OffOn.Off
         return _pv_timed_get(self['IDFFMode-Sts'], state, wait=wait)
 
     def prepare(self, mode):
