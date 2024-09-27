@@ -1050,27 +1050,27 @@ class BORFCavMonitor(_Device):
 
     @property
     def power_cell1(self):
-        """."""
+        """Power on Cell1 in [W]."""
         return self['Cell1PwrW-Mon']
 
     @property
     def power_cell2(self):
-        """."""
+        """Power on Cell2 in [W]."""
         return self['Cell2PwrW-Mon']
 
     @property
     def power_cell3(self):
-        """."""
+        """Power on Cell3 in [W]."""
         return self['Cell3PwrW-Mon']
 
     @property
     def power_cell4(self):
-        """."""
+        """Power on Cell4 in [W]."""
         return self['Cell4PwrW-Mon']
 
     @property
     def power_cell5(self):
-        """."""
+        """Power on Cell5 in [W]."""
         return self['Cell5PwrW-Mon']
 
     @property
