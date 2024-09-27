@@ -41,6 +41,8 @@ class Cmd:
         self.devs = devs
         self.sofbmode_sp = PVGroup(devs, 'SOFBMode-Sel')
         self.sofbmode_rb = PVGroup(devs, 'SOFBMode-Sts')
+        self.idffmode_sp = PVGroup(devs, 'IDFFMode-Sel')
+        self.idffmode_rb = PVGroup(devs, 'IDFFMode-Sts')
         self.opmode_sp = PVGroup(devs, 'OpMode-Sel')
         self.opmode_rb = PVGroup(devs, 'OpMode-Sts')
 
@@ -48,6 +50,8 @@ class Cmd:
 def wait_for_connection(cmd):
     cmd.sofbmode_sp.wait_for_connection()
     cmd.sofbmode_rb.wait_for_connection()
+    cmd.idffmode_sp.wait_for_connection()
+    cmd.idffmode_rb.wait_for_connection()
     cmd.opmode_sp.wait_for_connection()
     cmd.opmode_rb.wait_for_connection()
 
@@ -56,13 +60,23 @@ def connected(cmd):
     conn = True
     conn &= cmd.sofbmode_sp.connected
     conn &= cmd.sofbmode_rb.connected
+    conn &= cmd.idffmode_sp.connected
+    conn &= cmd.idffmode_rb.connected
     conn &= cmd.opmode_sp.connected
     conn &= cmd.opmode_rb.connected
     return conn
 
 
-def is_stressed(cmd):
+def is_stressed_sofb(cmd):
     values = cmd.sofbmode_rb.value
+    for i in range(len(values)):
+        if values[i] != 0:
+            print(cmd.devs[i])
+    return not all(map(lambda x: x == 0, values))
+
+
+def is_stressed_idff(cmd):
+    values = cmd.idffmode_rb.value
     for i in range(len(values)):
         if values[i] != 0:
             print(cmd.devs[i])
@@ -88,6 +102,7 @@ def try_to_stress(pssofb, cmd, nr_iters=100, rate=25.14):
     pssofb.bsmp_sofb_current_set(curr)
     time.sleep(0.1)
     cmd.sofbmode_sp.value = 1
+    cmd.idffmode_sp.value = 1
     time.sleep(1)
 
     for i in range(nr_iters):
@@ -99,9 +114,10 @@ def try_to_stress(pssofb, cmd, nr_iters=100, rate=25.14):
 
     time.sleep(1)
     cmd.sofbmode_sp.value = 0
+    cmd.idffmode_sp.value = 0
     cmd.opmode_sp.value = 0
     time.sleep(1)
-    return is_stressed(cmd)
+    return is_stressed_sofb(cmd) or is_stressed_idff(cmd)
 
 
 # Next Steps 2020-01-18
@@ -146,7 +162,9 @@ time.sleep(2)
 # cmd.sofbmode_sp.value = 0
 # cmd.opmode_sp.value = 0
 
-print(is_stressed(cmd))
+print(is_stressed_sofb(cmd))
+
+print(is_stressed_idff(cmd))
 
 # for i in range(1):
 #     try_to_stress(pssofb, cmd, nr_iters=1)

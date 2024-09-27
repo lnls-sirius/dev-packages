@@ -44,7 +44,8 @@ class _PSDev(_Device):
         'CycleEnbl-Mon',
     )
     _properties_fbp = _properties_magps + (
-        'SOFBMode-Sel', 'SOFBMode-Sts'
+        'SOFBMode-Sel', 'SOFBMode-Sts',
+        'IDFFMode-Sel', 'IDFFMode-Sts',
         )
     _properties_fc = (
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
@@ -1051,16 +1052,24 @@ class PowerSupplyFC(_PSDev):
     def fofbacc_filter_gain(self, value):
         self['FOFBAccFilterGain-SP'] = value
 
+
 class PowerSupplyFBP(PowerSupply):
     """FBP Power Supply Device."""
 
     SOFBMODE_SEL = _Const.DsblEnbl
     SOFBMODE_STS = _Const.DsblEnbl
+    IDFFMODE_SEL = _Const.DsblEnbl
+    IDFFMODE_STS = _Const.DsblEnbl
 
     @property
     def sofbmode(self):
         """SOFB mode status."""
         return self['SOFBMode-Sts']
+
+    @property
+    def idffmode(self):
+        """IDFF mode status."""
+        return self['IDFFMode-Sts']
 
     def cmd_sofbmode_enable(self, timeout=_PSDev._default_timeout):
         """Command to enable SOFBMode. Send command and wait."""
@@ -1076,3 +1085,18 @@ class PowerSupplyFBP(PowerSupply):
         self['SOFBMode-Sel'] = state_sel
         return self._wait(
             'SOFBMode-Sts', state_sts, timeout=timeout)
+
+    def cmd_idffmode_enable(self, timeout=_PSDev._default_timeout):
+        """Command to enable IDFFMode. Send command and wait."""
+        return self._cmd_idffmode(
+            timeout, self.IDFFMODE_SEL.Enbl, self.IDFFMODE_STS.Enbl)
+
+    def cmd_idffmode_disable(self, timeout=_PSDev._default_timeout):
+        """Command to disable IDFFMode. Send command and wait."""
+        return self._cmd_idffmode(
+            timeout, self.IDFFMODE_SEL.Dsbl, self.IDFFMODE_STS.Dsbl)
+
+    def _cmd_idffmode(self, timeout, state_sel, state_sts):
+        self['IDFFMode-Sel'] = state_sel
+        return self._wait(
+            'IDFFMode-Sts', state_sts, timeout=timeout)
