@@ -1006,12 +1006,12 @@ class BORFCavMonitor(_Device):
         BO = 'BO-05D:RF-P5Cav'
 
     PROPERTIES_DEFAULT = (
-        'PwrFwd-Mon', 'PwrRev-Mon',
-        'Cell3PwrTop-Mon', 'Cell3PwrBot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
-        'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
-        'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
+        'FwdPwrW-Mon', 'RevPwrW-Mon',
+        'Cell3TopPwrW-Mon', 'Cell3BotPwrW-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
+        'Cell1PwrW-Mon', 'Cell2PwrW-Mon', 'Cell3PwrW-Mon', 'Cell4PwrW-Mon',
+        'Cell5PwrW-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
         'Cylin4T-Mon', 'Cylin5T-Mon', 'CoupT-Mon',
-        'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
+        'Cell3BotVGap-Mon', 'Cell3TopVGap-Mon',
         )
 
     def __init__(self, props2init='all'):
@@ -1030,48 +1030,48 @@ class BORFCavMonitor(_Device):
 
     @property
     def power_top(self):
-        """."""
-        return self['Cell3PwrTop-Mon']
+        """Power at Top in [W]."""
+        return self['Cell3TopPwrW-Mon']
 
     @property
     def power_bottom(self):
-        """."""
-        return self['Cell3PwrBot-Mon']
+        """Power at Bottom in [W]."""
+        return self['Cell3BotPwrW-Mon']
 
     @property
     def power_reverse(self):
-        """."""
-        return self['PwrRev-Mon']
+        """Reverse power in [W]."""
+        return self['RevPwrW-Mon']
 
     @property
     def power_forward(self):
-        """."""
-        return self['PwrFwd-Mon']
+        """Forward power in [W]."""
+        return self['FwdPwrW-Mon']
 
     @property
     def power_cell1(self):
         """."""
-        return self['Cell1Pwr-Mon']
+        return self['Cell1PwrW-Mon']
 
     @property
     def power_cell2(self):
         """."""
-        return self['Cell2Pwr-Mon']
+        return self['Cell2PwrW-Mon']
 
     @property
     def power_cell3(self):
         """."""
-        return self['Cell3Pwr-Mon']
+        return self['Cell3PwrW-Mon']
 
     @property
     def power_cell4(self):
         """."""
-        return self['Cell4Pwr-Mon']
+        return self['Cell4PwrW-Mon']
 
     @property
     def power_cell5(self):
         """."""
-        return self['Cell5Pwr-Mon']
+        return self['Cell5PwrW-Mon']
 
     @property
     def temp_coupler(self):
@@ -1106,12 +1106,12 @@ class BORFCavMonitor(_Device):
     @property
     def gap_voltage_bottom(self):
         """Gap Voltage in [V]."""
-        return self['RmpAmpVCavBot-Mon']
+        return self['Cell3BotVGap-Mon']
 
     @property
     def gap_voltage_top(self):
         """Gap Voltage in [V]."""
-        return self['RmpAmpVCavTop-Mon']
+        return self['Cell3TopVGap-Mon']
 
 
 class SIRFCavMonitor(_Device):
