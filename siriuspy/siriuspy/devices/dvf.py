@@ -47,11 +47,10 @@ class DVF(_Device):
 
     PROPERTIES_DEFAULT = (
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
-        'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
-        'cam1:Width', 'cam1:Width_RBV',
-        'cam1:Height', 'cam1:Height_RBV',
-        'cam1:OffsetX', 'cam1:OffsetX_RBV',
-        'cam1:OffsetY', 'cam1:OffsetY_RBV',
+        'cam1:SizeX', 'cam1:SizeX_RBV',
+        'cam1:SizeY', 'cam1:SizeY_RBV',
+        'cam1:MinX', 'cam1:MinX_RBV',
+        'cam1:MinY', 'cam1:MinY_RBV',
         'cam1:CenterX', 'cam1:CenterX_RBV',
         'cam1:CenterY', 'cam1:CenterY_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
@@ -157,73 +156,63 @@ class DVF(_Device):
 
     @property
     def cam_sizex(self):
-        """Camera second dimension size [pixel]."""
-        return self['cam1:SizeX_RBV']
-
-    @property
-    def cam_sizey(self):
-        """Camera first dimension size [pixel]."""
-        return self['cam1:SizeY_RBV']
-
-    @property
-    def cam_width(self):
         """Camera image X width [pixels]."""
         # NOTE: the same as cam_sizex
-        return self['cam1:Width_RBV']
+        return self['cam1:SizeX_RBV']
 
-    @cam_width.setter
-    def cam_width(self, value):
+    @cam_sizex.setter
+    def cam_sizex(self, value):
         """Set camera image X width [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
-        if 0 < self.cam_offsetx + value <= self.cam_max_sizex:
-            self['cam1:Width'] = value
+        if 0 < self.cam_minx + value <= self.cam_max_sizex:
+            self['cam1:SizeX'] = value
         else:
             raise ValueError('Invalid offsetx and width combination!')
 
     @property
-    def cam_height(self):
+    def cam_sizey(self):
         """Camera image Y height [pixels]."""
         # NOTE: the same as cam_sizey
-        return self['cam1:Height_RBV']
+        return self['cam1:SizeY_RBV']
 
-    @cam_height.setter
-    def cam_height(self, value):
+    @cam_sizey.setter
+    def cam_sizey(self, value):
         """Set camera image Y height [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
-        if 0 < self.cam_offsety + value <= self.cam_max_sizey:
-            self['cam1:Height'] = value
+        if 0 < self.cam_miny + value <= self.cam_max_sizey:
+            self['cam1:SizeY'] = value
         else:
             raise ValueError('Invalid offsety and height combination!')
 
     @property
-    def cam_offsetx(self):
+    def cam_minx(self):
         """Camera image X offset [pixels]."""
-        return self['cam1:OffsetX_RBV']
+        return self['cam1:MinX_RBV']
 
-    @cam_offsetx.setter
-    def cam_offsetx(self, value):
+    @cam_minx.setter
+    def cam_minx(self, value):
         """Set camera image X offset [pixel]."""
         value = int(value)
-        if 0 < value + self.cam_width <= self.cam_max_sizex:
-            self['cam1:OffsetX'] = value
+        if 0 < value + self.cam_sizex <= self.cam_max_sizex:
+            self['cam1:MinX'] = value
         else:
             raise ValueError('Invalid offsetx and width combination!')
 
     @property
-    def cam_offsety(self):
+    def cam_miny(self):
         """Camera image Y offset [pixels]."""
-        return self['cam1:OffsetY_RBV']
+        return self['cam1:MinY_RBV']
 
-    @cam_offsety.setter
-    def cam_offsety(self, value):
+    @cam_miny.setter
+    def cam_miny(self, value):
         """Set camera image Y offset [pixel]."""
         value = int(value)
-        if 0 <= value + self.cam_height <= self.cam_max_sizey:
-            self['cam1:OffsetY'] = value
+        if 0 <= value + self.cam_sizey <= self.cam_max_sizey:
+            self['cam1:MinY'] = value
         else:
             raise ValueError('Invalid offsety and height combination!')
 
@@ -231,8 +220,8 @@ class DVF(_Device):
     def cam_roi(self):
         """Return current ROI (offsetx, offsety, width, height)."""
         roi = (
-            self.cam_offsetx, self.cam_offsety,
-            self.cam_width, self.cam_height)
+            self.cam_minx, self.cam_miny,
+            self.cam_sizex, self.cam_sizey)
         return roi
 
     @property
@@ -418,23 +407,23 @@ class DVF(_Device):
 
     def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
         """Set cam image ROI and reset aquisition."""
-        c_width, c_height = self.cam_width, self.cam_height
+        c_width, c_height = self.cam_sizex, self.cam_sizey
         n_width, n_height = int(width), int(height)
 
         if not self.cmd_acquire_off(timeout=timeout):
             return False
         if n_width < c_width:
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:SizeX', width, timeout=timeout)
+            self._set_and_wait('cam1:MinX', offsetx, timeout=timeout)
         else:
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
+            self._set_and_wait('cam1:MinX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:SizeX', width, timeout=timeout)
         if n_height < c_height:
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:SizeY', height, timeout=timeout)
+            self._set_and_wait('cam1:MinY', offsety, timeout=timeout)
         else:
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
+            self._set_and_wait('cam1:MinY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:SizeY', height, timeout=timeout)
         if not self.cmd_acquire_on(timeout=timeout):
             return False
 
@@ -709,14 +698,14 @@ class DVFImgProc(DVF):
         width = 2 * self.roix_fwhm * abs(roix_fwhm_factor)
         width = int(width)
         width -= width % multp
-        centerx = self.cam_offsetx + self.roix_center
+        centerx = self.cam_minx + self.roix_center
         offsetx = int(centerx - width/2)
         offsetx -= offsetx % multp
 
         height = 2 * self.roiy_fwhm * abs(roiy_fwhm_factor)
         height = int(height)
         height -= height % multp
-        centery = self.cam_offsety + self.roiy_center
+        centery = self.cam_miny + self.roiy_center
         offsety = int(centery - height/2)
         offsety -= offsety % multp
 
