@@ -51,8 +51,6 @@ class DVF(_Device):
         'cam1:SizeY', 'cam1:SizeY_RBV',
         'cam1:MinX', 'cam1:MinX_RBV',
         'cam1:MinY', 'cam1:MinY_RBV',
-        'cam1:CenterX', 'cam1:CenterX_RBV',
-        'cam1:CenterY', 'cam1:CenterY_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
