@@ -58,7 +58,6 @@ class DVF(_Device):
         'cam1:ImageMode', 'cam1:ImageMode_RBV',
         'cam1:Gain', 'cam1:Gain_RBV',
         'cam1:GainAuto', 'cam1:GainAuto_RBV',
-        'cam1:DataType', 'cam1:DataType_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:GC_TemperatureAbs_RBV',
@@ -66,6 +65,7 @@ class DVF(_Device):
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
+        'image1:DataType_RBV',
         'image1:ArrayData',
         'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
         'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
@@ -323,13 +323,8 @@ class DVF(_Device):
 
     @property
     def data_type(self):
-        """Return camera data type."""
-        return self['cam1:DataType_RBV']
-
-    @data_type.setter
-    def data_type(self, value):
-        """Set camera data type."""
-        self['cam1:DataType'] = value
+        """Return image data type."""
+        return self['image1:DataType_RBV']
 
     @property
     def pixel_size(self):
@@ -362,7 +357,6 @@ class DVF(_Device):
             'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
             'cam1:PixelFormat': 1,  # Mono12
-            'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
             'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
             'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
             'ROI1:MinX': 0,  # [pixel]
