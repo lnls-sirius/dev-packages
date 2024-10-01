@@ -61,7 +61,7 @@ class DVF(_Device):
         'cam1:DataType', 'cam1:DataType_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
-        'cam1:Temperature',
+        'cam1:GC_TemperatureAbs_RBV',
         'cam1:ARFrameFailures', 'cam1:ARFramesCompleted',
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
@@ -345,7 +345,7 @@ class DVF(_Device):
     @property
     def cam_temperature(self):
         """Return camera temperature"""
-        return self['cam1:Temperature']
+        return self['cam1:GC_TemperatureAbs_RBV']
 
     @property
     def cam_frames_completed(self):
@@ -449,6 +449,7 @@ class DVF(_Device):
                 plug = plug.replace('Trans', 'Transf')
                 plug = plug.replace('ARFrameFailures', 'FAILURES_RBV')
                 plug = plug.replace('ARFramesCompleted', 'COMPLETED_RBV')
+                plug = plug.replace('GC_TemperatureAbs_RBV', 'Temp-Mon')
                 propty = plug + prop
             propty_name_map[propty] = propty
         return propty_name_map[propty]
