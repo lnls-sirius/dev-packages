@@ -76,7 +76,6 @@ class DVF(_Device):
         'ROI1:EnableX', 'ROI1:EnableX_RBV',
         'ROI1:EnableY', 'ROI1:EnableY_RBV',
         'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
-        'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         )
 
@@ -375,7 +374,6 @@ class DVF(_Device):
             'ROI1:ArrayCallbacks': 1,  # Enable passing array
             'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
             'image1:EnableCallbacks': 1,  # Enable
-            'ffmstream1:EnableCallbacks': 0,  # Disable
             'Trans1:EnableCallbacks': 0,  # Disable
         }
 
