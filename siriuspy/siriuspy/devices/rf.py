@@ -589,19 +589,23 @@ class ASLLRF(_Device):
             raise NotImplementedError(devname)
 
         if 'SI' in devname:
-            return _BaseLLRF(devname, props2init=props2init)
+            obj = _BaseLLRF(devname, props2init)
         elif 'BO' in devname:
-            return BOLLRF(devname, props2init=props2init)
+            obj = _BOLLRF(devname, props2init)
 
-    @property
-    def system_nickname(self):
+        obj.system_nickname = cls.get_system_nickname(devname)
+        return obj
+
+    @staticmethod
+    def get_system_nickname(devname):
         """."""
-        if self.devname == ASLLRF.DEVICES.BO:
+        if devname == ASLLRF.DEVICES.BO:
             return "BO"
-        if self.devname == ASLLRF.DEVICES.SIA:
-            return "SIA"
-        if self.devname == ASLLRF.DEVICES.SIB:
-            return "SIB"
+        if devname == ASLLRF.DEVICES.SIA:
+            return "SI-A"
+        if devname == ASLLRF.DEVICES.SIB:
+            return "SI-B"
+        return ""
 
 
 class _BaseLLRF(_Device):
@@ -915,7 +919,7 @@ class _BaseLLRF(_Device):
         self['IntlkReset-Cmd'] = 0
 
 
-class BOLLRF(_BaseLLRF):
+class _BOLLRF(_BaseLLRF):
     """."""
 
     # fieldflatness properties that are exclusive for P5Cav at BO
@@ -1148,6 +1152,7 @@ class SIRFCavMonitor(_Device):
             return "A"
         if self.devname == ASLLRF.DEVICES.SIB:
             return "B"
+        return ""
 
     @property
     def status(self):
