@@ -59,7 +59,6 @@ class DVF(_Device):
         'cam1:Gain', 'cam1:Gain_RBV',
         'cam1:GainAuto', 'cam1:GainAuto_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
-        'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:GC_TemperatureAbs_RBV',
         'cam1:ARFrameFailures', 'cam1:ARFramesCompleted',
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
@@ -325,16 +324,6 @@ class DVF(_Device):
     def data_type(self):
         """Return image data type."""
         return self['image1:DataType_RBV']
-
-    @property
-    def pixel_size(self):
-        """Return camera pixel size."""
-        return self['cam1:PixelSize_RBV']
-
-    @pixel_size.setter
-    def pixel_size(self, value):
-        """Set camera pixel size."""
-        self['cam1:PixelSize'] = value
 
     @property
     def cam_temperature(self):
