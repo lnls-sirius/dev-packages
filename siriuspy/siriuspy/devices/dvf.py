@@ -62,7 +62,7 @@ class DVF(_Device):
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
         'cam1:PixelSize', 'cam1:PixelSize_RBV',
         'cam1:Temperature',
-        'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'cam1:ARFrameFailures', 'cam1:ARFramesCompleted',
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
@@ -350,12 +350,12 @@ class DVF(_Device):
     @property
     def cam_frames_completed(self):
         """Return number of acquisition frames completed."""
-        return self['cam1:COMPLETED_RBV']
+        return self['cam1:ARFramesCompleted']
 
     @property
     def cam_frames_failures(self):
         """Return number of acquisition frames failures."""
-        return self['cam1:FAILURES_RBV']
+        return self['cam1:ARFrameFailures']
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
@@ -447,6 +447,8 @@ class DVF(_Device):
                 plug = plug.replace('cam', 'Cam')
                 plug = plug.replace('image', 'Image')
                 plug = plug.replace('Trans', 'Transf')
+                plug = plug.replace('ARFrameFailures', 'FAILURES_RBV')
+                plug = plug.replace('ARFramesCompleted', 'COMPLETED_RBV')
                 propty = plug + prop
             propty_name_map[propty] = propty
         return propty_name_map[propty]
