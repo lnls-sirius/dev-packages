@@ -1326,7 +1326,7 @@ class RFKillBeam(ASLLRF):
 
     def __init__(self):
         """Init."""
-        super().__init__(ASLLRF.DEVICES.SI)
+        super().__init__(ASLLRF.DEVICES.SIA)
 
     def cmd_kill_beam(self):
         """Kill beam."""
