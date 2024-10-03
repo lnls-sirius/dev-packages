@@ -51,6 +51,7 @@ class DVF(_Device):
         'cam1:SizeY', 'cam1:SizeY_RBV',
         'cam1:MinX', 'cam1:MinX_RBV',
         'cam1:MinY', 'cam1:MinY_RBV',
+        'cam1:PortName_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
@@ -66,6 +67,7 @@ class DVF(_Device):
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
         'image1:DataType_RBV',
         'image1:ArrayData',
+        'ROI1:PortName_RBV',
         'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
         'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
         'ROI1:MinX', 'ROI1:MinX_RBV',
@@ -346,7 +348,8 @@ class DVF(_Device):
             'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
             'cam1:PixelFormat': 1,  # Mono12
-            'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
+            # ROI1 takes images from camera driver
+            'ROI1:NDArrayPort': self['cam1:PortName_RBV'],
             'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
             'ROI1:MinX': 0,  # [pixel]
             'ROI1:MinY': 0,  # [pixel]
@@ -355,7 +358,8 @@ class DVF(_Device):
             'ROI1:EnableX': 1,  # Enable
             'ROI1:EnableY': 1,  # Enable
             'ROI1:ArrayCallbacks': 1,  # Enable passing array
-            'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
+            # image1 takes images from ROI1
+            'image1:NDArrayPort': self['ROI1:PortName_RBV'],
             'image1:EnableCallbacks': 1,  # Enable
             'Trans1:EnableCallbacks': 0,  # Disable
         }
