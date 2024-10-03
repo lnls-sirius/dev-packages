@@ -1080,19 +1080,28 @@ _pvs_bo_llrf = [
     ]
 
 
-_pvs_si_llrf = [
-    ['SR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
-    ['SR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
-    ['SR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
+_pvs_si_llrf_a = [
+    ['RA-RaSIA01:RF-LLRF:SLKI-SP', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:SLKP-SP', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:AmpIncRate-SP', 0, 0.0],  # mV
+    ['RA-RaSIA01:RF-LLRF:PhsIncRate-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:ALRef-SP', 0, 0.0],  # mV
+    ['RA-RaSIA01:RF-LLRF:PLRef-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:TuneMarginLO-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
+    ]
+
+_pvs_si_llrf_b = [
+    ['RA-RaSIB01:RF-LLRF:SLKI-SP', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:SLKP-SP', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:AmpIncRate-SP', 0, 0.0],  # mV
+    ['RA-RaSIB01:RF-LLRF:PhsIncRate-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:ALRef-SP', 0, 0.0],  # mV
+    ['RA-RaSIB01:RF-LLRF:PLRef-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:TuneMarginLO-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
     ]
 
 _bpm_propts = [
@@ -2693,7 +2702,7 @@ _template_dict = {
     _pvs_as_ti +
     _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
     _pvs_as_pu +
-    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf +
+    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
     _bpm_pvs +
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +
