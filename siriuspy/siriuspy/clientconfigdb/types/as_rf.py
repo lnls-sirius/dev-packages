@@ -189,7 +189,7 @@ _pvs_bo_llrf = [
 
 _pvs_bo_rfssa = [
     # SSA tower offsets
-    ['RA-ToBO:OffsetConfig:UpperIncidentPower', 0, 0.0],  # [dB] 
+    ['RA-ToBO:OffsetConfig:UpperIncidentPower', 0, 0.0],  # [dB]
     ['RA-ToBO:OffsetConfig:UpperReflectedPower', 0, 0.0],  # [dB]
     ['RA-ToBO:OffsetConfig:LowerIncidentPower', 0, 0.0],  # [dB]
     ['RA-ToBO:OffsetConfig:LowerReflectedPower', 0, 0.0],  # [dB]
@@ -215,41 +215,41 @@ _pvs_bo_rfssa = [
 
 _pvs_bo_rfcal = [
     ['RA-RaBO01:RF-LLRF:CavOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:CavSysCal-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:CavSysCalInv-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:CavSysCal-SP', az, 0.0],
+    ['RA-RaBO01:RF-LLRF:CavSysCalInv-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:FwdCavOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:FwdCavSysCal-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:FwdCavSysCalInv-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FwdCavSysCal-SP', az, 0.0],
+    ['RA-RaBO01:RF-LLRF:FwdCavSysCalInv-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:RevCavOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:RevCavSysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RevCavSysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:MOOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:MOSysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:MOSysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:FwdSSA1Offset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:FwdSSA1SysCal-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:FwdSSA1SysCalInv-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FwdSSA1SysCal-SP', az, 0.0],
+    ['RA-RaBO01:RF-LLRF:FwdSSA1SysCalInv-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:RevSSA1Offset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:RevSSA1SysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RevSSA1SysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:Cell2Offset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:Cell2SysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:Cell2SysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:Cell4Offset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:Cell4SysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:Cell4SysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:Cell1Offset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:Cell1SysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:Cell1SysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:Cell5Offset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:Cell5SysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:Cell5SysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:InPre1AmpOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:InPre1AmpSysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:InPre1AmpSysCal-SP', az, 0.0],
 
 
     ['RA-RaBO01:RF-LLRF:RevPreAmpOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:RevPreAmpSysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RevPreAmpSysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:FwdCircOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:FwdCircSysCal-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FwdCircSysCal-SP', az, 0.0],
     ['RA-RaBO01:RF-LLRF:RevCircOffset-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:RevCircSysCal-SP', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:AmpVCav2HwCoeff-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:RevCircSysCal-SP', az, 0.0],
+    ['RA-RaBO01:RF-LLRF:AmpVCav2HwCoeff-SP', az, 0.0],
     ['BO-05D:RF-P5Cav:Rsh-Cte', 0, 0.0],
-    ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:Hw2AmpVCavCoeff-SP', az, 0.0],
     # CalSys Offsets
     ['RA-RaBO01:RF-RFCalSys:OFSdB1-Mon', 0, 0.0],
     ['RA-RaBO01:RF-RFCalSys:OFSdB2-Mon', 0, 0.0],
@@ -516,7 +516,7 @@ _pvs_sia_rfssa = [
 ## Commented out temporarily in case we need to switch back to the Petra 7 cavity.
 _pvs_sia_rfcav = [
 #     # CavP7 water flow rate
-#     ['SI-02SB:RF-P7Cav:Disc1FlwRt-Mon', 0, 0.0],  # [L/h] 
+#     ['SI-02SB:RF-P7Cav:Disc1FlwRt-Mon', 0, 0.0],  # [L/h]
 #     ['SI-02SB:RF-P7Cav:Cell1FlwRt-Mon', 0, 0.0],  # [L/h]
 #     ['SI-02SB:RF-P7Cav:Disc2FlwRt-Mon', 0, 0.0],  # [L/h]
 #     ['SI-02SB:RF-P7Cav:Cell2FlwRt-Mon', 0, 0.0],  # [L/h]
@@ -707,7 +707,7 @@ _pvs_sib_llrf = [
     # Phase ref
     ['RA-RaSIB01:RF-LLRF:PLRef-SP', 0, 0.0],
     # Tuning loop config
-    ['RA-RaSIA01:RF-LLRF:Tune-Sel', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:Tune-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:TuneDir-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:TuneFwdMin-SP', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],
@@ -883,9 +883,8 @@ _pvs_sib_rfcal = [
 ##
 _template_dict = {
     'pvs':
-    _pvs_as_rf + _pvs_li_llrf + 
+    _pvs_as_rf + _pvs_li_llrf +
     _pvs_bo_pow_sensor + _pvs_bo_llrf + _pvs_bo_rfssa + _pvs_bo_rfcal +
-    _pvs_sia_llrf + _pvs_sia_rfssa + _pvs_sia_rfcav + _pvs_sia_rfcal + 
+    _pvs_sia_llrf + _pvs_sia_rfssa + _pvs_sia_rfcav + _pvs_sia_rfcal +
     _pvs_sib_llrf + _pvs_sib_rfssa + _pvs_sib_rfcav + _pvs_sib_rfcal
     }
-    
