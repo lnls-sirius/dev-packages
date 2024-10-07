@@ -589,7 +589,7 @@ class ASLLRF(_Device):
             raise NotImplementedError(devname)
 
         if 'SI' in devname:
-            obj = _BaseLLRF(devname, props2init)
+            obj = _SILLRF(devname, props2init)
         elif 'BO' in devname:
             obj = _BOLLRF(devname, props2init)
 
@@ -1001,6 +1001,10 @@ class _BOLLRF(_BaseLLRF):
         return self['FFError-Mon']
 
 
+class _SILLRF(_BaseLLRF):
+    pass
+
+
 class BORFCavMonitor(_Device):
     """."""
 
@@ -1317,7 +1321,7 @@ class RFCav(_DeviceSet):
         return self.dev_rfgen.set_frequency(value, tol=tol, timeout=timeout)
 
 
-class RFKillBeam(ASLLRF):
+class RFKillBeam(_SILLRF):
     """RF Kill Beam Button."""
 
     TIMEOUT_WAIT = 20.0  # [s]
@@ -1326,7 +1330,7 @@ class RFKillBeam(ASLLRF):
 
     def __init__(self):
         """Init."""
-        super().__init__(ASLLRF.DEVICES.SI)
+        super().__init__(ASLLRF.DEVICES.SIA)
 
     def cmd_kill_beam(self):
         """Kill beam."""

@@ -29,8 +29,8 @@ class RFDiagApp(_App):
         pvs[_BORFStatusPV.PV_SIRIUS_INTLK] = \
             pref+'RA-RaBO02:RF-IntlkCtrl:IntlkSirius-Mon'
         pvs[_BORFStatusPV.PV_LLRF_INTLK] = pref+'RA-RaBO01:RF-LLRF:Intlk-Mon'
-        pvs[_BORFStatusPV.PV_RMP_ENBLD] = pref+'BR-RF-DLLRF-01:RmpEnbl-Sts'
-        pvs[_BORFStatusPV.PV_RMP_READY] = pref+'BR-RF-DLLRF-01:RmpReady-Mon'
+        pvs[_BORFStatusPV.PV_RMP_ENBLD] = pref+'RA-RaBO01:RF-LLRF:RmpEnbl-Sts'
+        pvs[_BORFStatusPV.PV_RMP_READY] = pref+'RA-RaBO01:RF-LLRF:RmpReady-Mon'
         pvo = _ComputedPV(
             devname + ':DiagStatus-Mon', _BORFStatusPV(),
             self._queue, pvs, monitor=False)
@@ -40,29 +40,33 @@ class RFDiagApp(_App):
         devname = SiriusPVName(_Const.SI_DEV)
         prefname = devname.substitute(prefix=self._prefix)
 
+        names = ['RA-RaSIA01:RF-LLRF', 'RA-RaSIB01:RF-LLRF']
+
         # DiagAmpErrSts-Mon
-        pvs = [None]*1
-        pvs[_SICheckAmpErrPV.PV_ERR] = pref+'SR-RF-DLLRF-01:SL:ERR:AMP'
-        pvo = _ComputedPV(
-            devname + ':DiagAmpErrSts-Mon', _SICheckAmpErrPV(),
-            self._queue, pvs, monitor=False)
-        self.pvs.append(pvo)
 
-        # DiagPhsErrSts-Mon
-        pvs = [None]*1
-        pvs[_SICheckPhsErrPV.PV_ERR] = pref+'SR-RF-DLLRF-01:SL:ERR:PHS'
-        pvo = _ComputedPV(
-            devname + ':DiagPhsErrSts-Mon', _SICheckPhsErrPV(),
-            self._queue, pvs, monitor=False)
-        self.pvs.append(pvo)
+        for name in names:
+            pvs = [None]*1
+            pvs[_SICheckAmpErrPV.PV_ERR] = pref+name+':SLErrorAmp-Mon'
+            pvo = _ComputedPV(
+                devname + ':DiagAmpErrSts-Mon', _SICheckAmpErrPV(),
+                self._queue, pvs, monitor=False)
+            self.pvs.append(pvo)
 
-        # DiagDTuneErrSts-Mon
-        pvs = [None]*1
-        pvs[_SICheckDTuneErrPV.PV_ERR] = pref+'SR-RF-DLLRF-01:TUNE:DEPHS'
-        pvo = _ComputedPV(
-            devname + ':DiagDTuneErrSts-Mon', _SICheckDTuneErrPV(),
-            self._queue, pvs, monitor=False)
-        self.pvs.append(pvo)
+            # DiagPhsErrSts-Mon
+            pvs = [None]*1
+            pvs[_SICheckPhsErrPV.PV_ERR] = pref+name+':SLErrorPhs-Mon'
+            pvo = _ComputedPV(
+                devname + ':DiagPhsErrSts-Mon', _SICheckPhsErrPV(),
+                self._queue, pvs, monitor=False)
+            self.pvs.append(pvo)
+
+            # DiagDTuneErrSts-Mon
+            pvs = [None]*1
+            pvs[_SICheckDTuneErrPV.PV_ERR] = pref+name+':TuneDephs-Mon'
+            pvo = _ComputedPV(
+                devname + ':DiagDTuneErrSts-Mon', _SICheckDTuneErrPV(),
+                self._queue, pvs, monitor=False)
+            self.pvs.append(pvo)
 
         # DiagStatus-Mon
         pvs = [None]*5
