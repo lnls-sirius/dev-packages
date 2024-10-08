@@ -35,12 +35,12 @@ class _MagnetNormalizer:
         self._default_strengths_dipole = None
         self._brho = None
         self.default_strengths_dipole = default_strengths_dipole  # [GeV]
-        self._maname = _SiriusPVName(maname) if type(maname) == str else maname
+        self._maname = _SiriusPVName(maname)
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
-        self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
-        self._pstype = _PSSearch.conv_psname_2_pstype(self._psnames[0])
+        self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[-1])
+        self._pstype = _PSSearch.conv_psname_2_pstype(self._psnames[-1])
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
-        self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[0])
+        self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[-1])
         self._magnet_conv_sign = magnet_conv_sign
         self._mfmult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
