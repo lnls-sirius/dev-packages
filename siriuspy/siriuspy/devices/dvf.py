@@ -47,13 +47,11 @@ class DVF(_Device):
 
     PROPERTIES_DEFAULT = (
         'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
-        'cam1:SizeX_RBV', 'cam1:SizeY_RBV',
-        'cam1:Width', 'cam1:Width_RBV',
-        'cam1:Height', 'cam1:Height_RBV',
-        'cam1:OffsetX', 'cam1:OffsetX_RBV',
-        'cam1:OffsetY', 'cam1:OffsetY_RBV',
-        'cam1:CenterX', 'cam1:CenterX_RBV',
-        'cam1:CenterY', 'cam1:CenterY_RBV',
+        'cam1:SizeX', 'cam1:SizeX_RBV',
+        'cam1:SizeY', 'cam1:SizeY_RBV',
+        'cam1:MinX', 'cam1:MinX_RBV',
+        'cam1:MinY', 'cam1:MinY_RBV',
+        'cam1:PortName_RBV',
         'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
         'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
         'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
@@ -61,15 +59,15 @@ class DVF(_Device):
         'cam1:ImageMode', 'cam1:ImageMode_RBV',
         'cam1:Gain', 'cam1:Gain_RBV',
         'cam1:GainAuto', 'cam1:GainAuto_RBV',
-        'cam1:DataType', 'cam1:DataType_RBV',
         'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
-        'cam1:PixelSize', 'cam1:PixelSize_RBV',
-        'cam1:Temperature',
-        'cam1:FAILURES_RBV', 'cam1:COMPLETED_RBV',
+        'cam1:GC_TemperatureAbs_RBV',
+        'cam1:ARFrameFailures', 'cam1:ARFramesCompleted',
         'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
         'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
         'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
+        'image1:DataType_RBV',
         'image1:ArrayData',
+        'ROI1:PortName_RBV',
         'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
         'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
         'ROI1:MinX', 'ROI1:MinX_RBV',
@@ -79,7 +77,6 @@ class DVF(_Device):
         'ROI1:EnableX', 'ROI1:EnableX_RBV',
         'ROI1:EnableY', 'ROI1:EnableY_RBV',
         'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
-        'ffmstream1:EnableCallbacks', 'ffmstream1:EnableCallbacks_RBV',
         'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
         )
 
@@ -104,8 +101,23 @@ class DVF(_Device):
     @property
     def intensity_saturation_value(self):
         """Image intensity saturation value."""
-        pixel_format_to_num_bits = {0: 8, 1: 12}  # 0: 'Mono8, 1: 'Mono12
-        data_type_to_num_bits = {0: 8, 1: 16} # 0: 'UInt8', 1: 'UInt16'
+        pixel_format_to_num_bits = {
+            0: 8,   # Mono8
+            1: 12,  # Mono12
+            2: 12   # Mono12Packed
+        }
+        data_type_to_num_bits = {
+            0: 8,   # Int8
+            1: 8,   # UInt8
+            2: 16,  # Int16
+            3: 16,  # Uint16
+            4: 32,  # Int32
+            5: 32,  # UInt32
+            6: 64,  # Int64
+            7: 64,  # UInt64
+            8: 32,  # Float32
+            9: 64,  # Float64
+        }
         used_bits = pixel_format_to_num_bits[self.pixel_format]
         max_bits = data_type_to_num_bits[self.data_type]
         max_intensity = (1 << used_bits) - 1
@@ -157,73 +169,63 @@ class DVF(_Device):
 
     @property
     def cam_sizex(self):
-        """Camera second dimension size [pixel]."""
-        return self['cam1:SizeX_RBV']
-
-    @property
-    def cam_sizey(self):
-        """Camera first dimension size [pixel]."""
-        return self['cam1:SizeY_RBV']
-
-    @property
-    def cam_width(self):
         """Camera image X width [pixels]."""
         # NOTE: the same as cam_sizex
-        return self['cam1:Width_RBV']
+        return self['cam1:SizeX_RBV']
 
-    @cam_width.setter
-    def cam_width(self, value):
+    @cam_sizex.setter
+    def cam_sizex(self, value):
         """Set camera image X width [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
-        if 0 < self.cam_offsetx + value <= self.cam_max_sizex:
-            self['cam1:Width'] = value
+        if 0 < self.cam_minx + value <= self.cam_max_sizex:
+            self['cam1:SizeX'] = value
         else:
             raise ValueError('Invalid offsetx and width combination!')
 
     @property
-    def cam_height(self):
+    def cam_sizey(self):
         """Camera image Y height [pixels]."""
         # NOTE: the same as cam_sizey
-        return self['cam1:Height_RBV']
+        return self['cam1:SizeY_RBV']
 
-    @cam_height.setter
-    def cam_height(self, value):
+    @cam_sizey.setter
+    def cam_sizey(self, value):
         """Set camera image Y height [pixel]."""
         # NOTE: acquisition has to be turned off and on for
         # this to take effect on ROI and image1 modules
         value = int(value)
-        if 0 < self.cam_offsety + value <= self.cam_max_sizey:
-            self['cam1:Height'] = value
+        if 0 < self.cam_miny + value <= self.cam_max_sizey:
+            self['cam1:SizeY'] = value
         else:
             raise ValueError('Invalid offsety and height combination!')
 
     @property
-    def cam_offsetx(self):
+    def cam_minx(self):
         """Camera image X offset [pixels]."""
-        return self['cam1:OffsetX_RBV']
+        return self['cam1:MinX_RBV']
 
-    @cam_offsetx.setter
-    def cam_offsetx(self, value):
+    @cam_minx.setter
+    def cam_minx(self, value):
         """Set camera image X offset [pixel]."""
         value = int(value)
-        if 0 < value + self.cam_width <= self.cam_max_sizex:
-            self['cam1:OffsetX'] = value
+        if 0 < value + self.cam_sizex <= self.cam_max_sizex:
+            self['cam1:MinX'] = value
         else:
             raise ValueError('Invalid offsetx and width combination!')
 
     @property
-    def cam_offsety(self):
+    def cam_miny(self):
         """Camera image Y offset [pixels]."""
-        return self['cam1:OffsetY_RBV']
+        return self['cam1:MinY_RBV']
 
-    @cam_offsety.setter
-    def cam_offsety(self, value):
+    @cam_miny.setter
+    def cam_miny(self, value):
         """Set camera image Y offset [pixel]."""
         value = int(value)
-        if 0 <= value + self.cam_height <= self.cam_max_sizey:
-            self['cam1:OffsetY'] = value
+        if 0 <= value + self.cam_sizey <= self.cam_max_sizey:
+            self['cam1:MinY'] = value
         else:
             raise ValueError('Invalid offsety and height combination!')
 
@@ -231,8 +233,8 @@ class DVF(_Device):
     def cam_roi(self):
         """Return current ROI (offsetx, offsety, width, height)."""
         roi = (
-            self.cam_offsetx, self.cam_offsety,
-            self.cam_width, self.cam_height)
+            self.cam_minx, self.cam_miny,
+            self.cam_sizex, self.cam_sizey)
         return roi
 
     @property
@@ -337,38 +339,23 @@ class DVF(_Device):
 
     @property
     def data_type(self):
-        """Return camera data type."""
-        return self['cam1:DataType_RBV']
-
-    @data_type.setter
-    def data_type(self, value):
-        """Set camera data type."""
-        self['cam1:DataType'] = value
-
-    @property
-    def pixel_size(self):
-        """Return camera pixel size."""
-        return self['cam1:PixelSize_RBV']
-
-    @pixel_size.setter
-    def pixel_size(self, value):
-        """Set camera pixel size."""
-        self['cam1:PixelSize'] = value
+        """Return image data type."""
+        return self['image1:DataType_RBV']
 
     @property
     def cam_temperature(self):
         """Return camera temperature"""
-        return self['cam1:Temperature']
+        return self['cam1:GC_TemperatureAbs_RBV']
 
     @property
     def cam_frames_completed(self):
         """Return number of acquisition frames completed."""
-        return self['cam1:COMPLETED_RBV']
+        return self['cam1:ARFramesCompleted']
 
     @property
     def cam_frames_failures(self):
         """Return number of acquisition frames failures."""
-        return self['cam1:FAILURES_RBV']
+        return self['cam1:ARFrameFailures']
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
@@ -376,8 +363,8 @@ class DVF(_Device):
             'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
             'cam1:PixelFormat': 1,  # Mono12
-            'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
-            'ROI1:NDArrayPort': 'CAMPORT',  # Take img from camport
+            # ROI1 takes images from camera driver
+            'ROI1:NDArrayPort': self['cam1:PortName_RBV'],
             'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
             'ROI1:MinX': 0,  # [pixel]
             'ROI1:MinY': 0,  # [pixel]
@@ -386,9 +373,9 @@ class DVF(_Device):
             'ROI1:EnableX': 1,  # Enable
             'ROI1:EnableY': 1,  # Enable
             'ROI1:ArrayCallbacks': 1,  # Enable passing array
-            'image1:NDArrayPort': 'ROI1',  # image1 takes img from ROI1
+            # image1 takes images from ROI1
+            'image1:NDArrayPort': self['ROI1:PortName_RBV'],
             'image1:EnableCallbacks': 1,  # Enable
-            'ffmstream1:EnableCallbacks': 0,  # Disable
             'Trans1:EnableCallbacks': 0,  # Disable
         }
 
@@ -418,23 +405,23 @@ class DVF(_Device):
 
     def cmd_cam_roi_set(self, offsetx, offsety, width, height, timeout=None):
         """Set cam image ROI and reset aquisition."""
-        c_width, c_height = self.cam_width, self.cam_height
+        c_width, c_height = self.cam_sizex, self.cam_sizey
         n_width, n_height = int(width), int(height)
 
         if not self.cmd_acquire_off(timeout=timeout):
             return False
         if n_width < c_width:
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:SizeX', width, timeout=timeout)
+            self._set_and_wait('cam1:MinX', offsetx, timeout=timeout)
         else:
-            self._set_and_wait('cam1:OffsetX', offsetx, timeout=timeout)
-            self._set_and_wait('cam1:Width', width, timeout=timeout)
+            self._set_and_wait('cam1:MinX', offsetx, timeout=timeout)
+            self._set_and_wait('cam1:SizeX', width, timeout=timeout)
         if n_height < c_height:
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:SizeY', height, timeout=timeout)
+            self._set_and_wait('cam1:MinY', offsety, timeout=timeout)
         else:
-            self._set_and_wait('cam1:OffsetY', offsety, timeout=timeout)
-            self._set_and_wait('cam1:Height', height, timeout=timeout)
+            self._set_and_wait('cam1:MinY', offsety, timeout=timeout)
+            self._set_and_wait('cam1:SizeY', height, timeout=timeout)
         if not self.cmd_acquire_on(timeout=timeout):
             return False
 
@@ -460,6 +447,9 @@ class DVF(_Device):
                 plug = plug.replace('cam', 'Cam')
                 plug = plug.replace('image', 'Image')
                 plug = plug.replace('Trans', 'Transf')
+                plug = plug.replace('ARFrameFailures', 'FAILURES_RBV')
+                plug = plug.replace('ARFramesCompleted', 'COMPLETED_RBV')
+                plug = plug.replace('GC_TemperatureAbs_RBV', 'Temp-Mon')
                 propty = plug + prop
             propty_name_map[propty] = propty
         return propty_name_map[propty]
@@ -709,14 +699,14 @@ class DVFImgProc(DVF):
         width = 2 * self.roix_fwhm * abs(roix_fwhm_factor)
         width = int(width)
         width -= width % multp
-        centerx = self.cam_offsetx + self.roix_center
+        centerx = self.cam_minx + self.roix_center
         offsetx = int(centerx - width/2)
         offsetx -= offsetx % multp
 
         height = 2 * self.roiy_fwhm * abs(roiy_fwhm_factor)
         height = int(height)
         height -= height % multp
-        centery = self.cam_offsety + self.roiy_center
+        centery = self.cam_miny + self.roiy_center
         offsety = int(centery - height/2)
         offsety -= offsety % multp
 
