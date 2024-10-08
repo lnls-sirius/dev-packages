@@ -101,8 +101,23 @@ class DVF(_Device):
     @property
     def intensity_saturation_value(self):
         """Image intensity saturation value."""
-        pixel_format_to_num_bits = {0: 8, 1: 12}  # 0: 'Mono8, 1: 'Mono12
-        data_type_to_num_bits = {0: 8, 1: 16} # 0: 'UInt8', 1: 'UInt16'
+        pixel_format_to_num_bits = {
+            0: 8,   # Mono8
+            1: 12,  # Mono12
+            2: 12   # Mono12Packed
+        }
+        data_type_to_num_bits = {
+            0: 8,   # Int8
+            1: 8,   # UInt8
+            2: 16,  # Int16
+            3: 16,  # Uint16
+            4: 32,  # Int32
+            5: 32,  # UInt32
+            6: 64,  # Int64
+            7: 64,  # UInt64
+            8: 32,  # Float32
+            9: 64,  # Float64
+        }
         used_bits = pixel_format_to_num_bits[self.pixel_format]
         max_bits = data_type_to_num_bits[self.data_type]
         max_intensity = (1 << used_bits) - 1
