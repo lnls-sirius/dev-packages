@@ -4,8 +4,8 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 
-from ..search import IDSearch as _IDSearch
 from ..clientconfigdb import ConfigDBDocument as _ConfigDBDocument
+from ..search import IDSearch as _IDSearch
 
 
 class IDFFConfig(_ConfigDBDocument):
@@ -67,6 +67,11 @@ class IDFFConfig(_ConfigDBDocument):
     def qs_pvnames(self):
         """Return QS corrector power supply pvnames."""
         return self._get_corr_pvnames('qs1', 'qs2')
+
+    @property
+    def lc_pvnames(self):
+        """Return LC corrector power supply pvnames."""
+        return self._get_corr_pvnames('lch', '')
 
     @property
     def polarizations(self):
@@ -170,7 +175,7 @@ class IDFFConfig(_ConfigDBDocument):
         for pol, table in self.value['polarizations'].items():
             stg += f'\n--- {pol} ---'
             for key, value in table.items():
-                if isinstance(value, (int, float)):
+                if value is None or isinstance(value, (int, float)):
                     nrpts = 1
                     str_ = f'{value}'
                 else:
@@ -206,10 +211,12 @@ class IDFFConfig(_ConfigDBDocument):
         getch = _IDSearch.conv_idname_2_idff_chnames
         getcv = _IDSearch.conv_idname_2_idff_cvnames
         getqs = _IDSearch.conv_idname_2_idff_qsnames
+        getlc = _IDSearch.conv_idname_2_idff_lcnames
         chnames = [corr + ':Current-SP' for corr in getch(self.idname)]
         cvnames = [corr + ':Current-SP' for corr in getcv(self.idname)]
         qsnames = [corr + ':Current-SP' for corr in getqs(self.idname)]
-        pvsidsearch = set(chnames + cvnames + qsnames)
+        lcnames = [corr + ':Current-SP' for corr in getlc(self.idname)]
+        pvsidsearch = set(chnames + cvnames + qsnames + lcnames)
         symm_diff = pvsconfig ^ pvsidsearch
 
         if symm_diff:
@@ -294,11 +301,10 @@ class IDFFConfig(_ConfigDBDocument):
         for idname in _IDSearch.get_idnames():
             kparam_propty = _IDSearch.conv_idname_2_kparameter_propty(idname)
             pparam_propty = _IDSearch.conv_idname_2_pparameter_propty(idname)
-            if None in (kparam_propty, pparam_propty):
+            if kparam_propty is None and pparam_propty is None:
                 continue
-            kparam = idname + ':' + kparam_propty
-            pparam = idname + ':' + pparam_propty
-
+            kparam = idname + ':' + kparam_propty if kparam_propty else None
+            pparam = idname + ':' + pparam_propty if pparam_propty else None
             if kparam == kparameter and pparam == pparameter:
                 self._idname = idname
                 break
