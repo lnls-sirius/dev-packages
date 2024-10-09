@@ -42,7 +42,7 @@ class BunchbyBunch(_DeviceSet):
                 "props2init must be 'all' or bool(props2init) == False")
 
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4, props2init=props2init)
-        self.rfcav = RFCav(RFCav.DEVICES.SI, props2init=props2init)
+        self.rfcav = RFCav(RFCav.DEVICES.SIA, props2init=props2init)
         self.info = SystemInfo(devname, props2init=props2init)
         self.timing = Timing(devname, props2init=props2init)
         self.sram = Acquisition(devname, acqtype='SRAM', props2init=props2init)
