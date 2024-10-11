@@ -195,31 +195,26 @@ class BunchbyBunch(_DeviceSet):
         self.coeffs.cmd_edit_apply()
         return _np.array(mon_values)
 
-    def sweep_rf_phase(self, values, wait=2, mon_type='mean', cavity='A'):
-        """Sweep RF Phase for each `value` in `values`."""
+    def sweep_rf_phase(self, delta_phases, wait=2, mon_type='mean'):
+        """Sweep RF Phase for each dphase in `delta_phases`."""
         mon_values = []
         ctrl, mon = 'RF Phase', 'SRAM Mean'
         print(f'Idx: {ctrl:15s} {mon:15s}')
 
-        if cavity.upper() == 'A':
-            rfcav = self.rfcav_a
-        if cavity.upper() == 'B':
-            rfcav = self.rfcav_b
-        else:
-            raise ValueError("cavity must be 'A' or 'B'.")
-
-        llrf = rfcav.dev_llrf
-        init_val = llrf.phase
-        for i, val in enumerate(values):
-            rfcav.set_phase(val)
+        rfcavs = [self.rfcav_a, self.rfcav_b]
+        init_phases = [rfcav.dev_llrf.phase for rfcav in rfcavs]
+        for i, dphase in enumerate(delta_phases):
+            for phase0, rfcav in zip(init_phases, rfcavs):
+                rfcav.set_phase(phase0 + dphase)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
             else:
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
-        llrf.phase = init_val
+            print(f'{i:03d}: {dphase:15.6f} {_np.mean(mon_val):15.6f}')
+        for phase0, rfcav in zip(init_phases, rfcavs):
+            rfcav.set_phase(phase0)
         return _np.array(mon_values)
 
 
