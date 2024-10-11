@@ -19,6 +19,7 @@ class _ParamPVs:
     BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
     BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     MOVE_ABORT = None
+    RESET = None
 
     # --- PPARAM ---
     PPARAM_SP = None
@@ -61,6 +62,21 @@ class _ParamPVs:
     POL_STS = None
     POL_MON = None
     POL_CHANGE_CMD = None
+
+    # --- POSITION ADJUSTS ---
+    CENTER_MODE_SEL = None
+    CENTER_MODE_STS = None
+    CENTER_OFFSET_SP = None
+    CENTER_OFFSET_RB = None
+    CENTER_OFFSET_MON = None
+    PITCH_MODE_SEL = None
+    PITCH_MODE_STS = None
+    PITCH_OFFSET_SP = None
+    PITCH_OFFSET_RB = None
+    PITCH_OFFSET_MON = None
+    KPARAM_TAPER_SP = None
+    KPARAM_TAPER_RB = None
+    KPARAM_TAPER_MON = None
 
     def __str__(self):
         """Print parameters."""
@@ -340,7 +356,7 @@ class IDBase(_Device):
     @property
     def kparameter_speed(self):
         """Return kparameter speed readback [mm/s]."""
-        return self[self.PARAM_PVS.KPARAM_VELO_SP]
+        return self[self.PARAM_PVS.KPARAM_VELO_RB]
 
     @property
     def kparameter_speed_mon(self):
@@ -1473,9 +1489,10 @@ class IVU(IDBase):
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
     # PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
-    # PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
     # PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
-    # PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
     # PARAM_PVS.PPARAM_SP = 'PParam-SP'
     # PARAM_PVS.PPARAM_RB = 'PParam-RB'
     # PARAM_PVS.PPARAM_MON = 'PParam-Mon'
@@ -1497,15 +1514,36 @@ class IVU(IDBase):
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
     PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
     PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
-    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
-    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
-    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    # PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    # PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    # PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    # PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVel-SP' # Voltar para Velo
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVel-RB' # Voltar para Velo
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVel-SP' # Voltar para Velo
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVel-RB' # Voltar para Velo
     PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
     PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
+
+    PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
+    PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
+    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
+    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
+
+    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
+    PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
+    PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
+
+
     # PARAM_PVS.KPARAM_TOL_SP = 'PosTol-SP'
     # PARAM_PVS.KPARAM_TOL_RB = 'PosTol-RB'
-    # PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
     # PARAM_PVS.POL_SEL = 'Pol-Sel'
     # PARAM_PVS.POL_STS = 'Pol-Sts'
     # PARAM_PVS.POL_MON = 'Pol-Mon'
@@ -1525,6 +1563,70 @@ class IVU(IDBase):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
+     # --- gap speeds ----
+
+    @property
+    def gap_speed(self):
+        """Return gap speed readback [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def gap_speed_mon(self):
+        """Return gap speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
+    @property
+    def gap_speed_max(self):
+        """Return max gap speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def gap_speed_max_lims(self):
+        """Return max gap speed limits."""
+        return self.kparameter_speed_max_lims
+
+    # --- gap ---
+
+    @property
+    def gap_parked(self):
+        """Return ID parked gap value [mm]."""
+        return self.kparameter_parked
+
+    @property
+    def gap(self):
+        """Return ID gap readback [mm]."""
+        return self.kparameter
+
+    @property
+    def gap_lims(self):
+        """Return ID gap control limits [mm]."""
+        return self.kparameter_lims
+
+    @property
+    def gap_mon(self):
+        """Return ID gap monitor [mm]."""
+        return self.kparameter_mon
+
+
+    # --- set methods ---
+
+    def set_gap(self, gap, timeout=None):
+        """Set ID target gap for movement [mm]."""
+        return self.set_kparameter(gap, timeout)
+
+    def set_gap_speed(self, gap_speed, timeout=None):
+        """Set ID cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed(gap_speed, timeout)
+
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
+        """Set ID max cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed_max(gap_speed_max, timeout)
+
+    # -- cmd_move
+
+    def cmd_move_gap_start(self, timeout=None):
+        """Command to start gap movement."""
+        return self.cmd_move_kparameter_start(timeout)
 
 class ID(IDBase):
     """Insertion Device."""
