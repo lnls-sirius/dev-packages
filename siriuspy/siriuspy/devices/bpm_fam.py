@@ -264,8 +264,8 @@ class FamBPMs(_DeviceSet):
             (len(self._mturn_signals2acq), len(self.bpms)), dtype=float)
         for i, s in enumerate(self._mturn_signals2acq):
             for j, bpm in enumerate(self.bpms):
-                s = self.conv_signal2pvname_format(s)
-                pvo = bpm.pv_object(f'GEN{s}Data')
+                pname = self.conv_signal2pvname_format(s)
+                pvo = bpm.pv_object(f'GEN{pname}Data')
                 tv = pvo.get_timevars(timeout=self.TIMEOUT)
                 tsmps[i, j] = pvo.timestamp if tv is None else tv['timestamp']
         return tsmps
