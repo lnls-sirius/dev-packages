@@ -1505,7 +1505,7 @@ class App(_Callback):
         if self._is_dry_run:
             # wait a little and rearming FDL acquisition
             _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
-            # sending interlock for all LLRFs systems, then wait
+            # sending interlock reset for all LLRFs systems, then wait
             for llrf in self._llrfs:
                 llrf.interlock_reset = 1
             _time.sleep(1)
