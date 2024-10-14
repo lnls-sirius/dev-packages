@@ -1608,6 +1608,52 @@ class IVU(IDBase):
         return self.kparameter_mon
 
 
+    # --- taper ---
+
+    @property
+    def taper(self):
+        """Return ID taper readback [mm]."""
+        return self[self.PARAM_PVS.KPARAM_TAPER_RB]
+
+    @property
+    def taper_mon(self):
+        """Return ID taper monitor [mm]."""
+        return self[self.PARAM_PVS.KPARAM_TAPER_MON]
+
+    # --- pitch ---
+
+    @property
+    def pitch_mode_status(self):
+        """Return ID pitch mode status."""
+        return self[self.PARAM_PVS.PITCH_MODE_STS]
+
+    @property
+    def pitch(self):
+        """Return ID pitch readback [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_RB]
+
+    @property
+    def pitch_mon(self):
+        """Return ID pitch monitor [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_MON]
+
+    # --- center ---
+
+    @property
+    def center_mode_status(self):
+        """Return ID center mode status."""
+        return self[self.PARAM_PVS.CENTER_MODE_STS]
+
+    @property
+    def center_offset(self):
+        """Return ID center offset readback [mm]."""
+        return self[self.PARAM_PVS.CENTER_OFFSET_RB]
+
+    @property
+    def center_offset_mon(self):
+        """Return ID center offset monitor [mm]."""
+        return self[self.PARAM_PVS.CENTER_OFFSET_MON]
+
     # --- set methods ---
 
     def set_gap(self, gap, timeout=None):
@@ -1622,11 +1668,39 @@ class IVU(IDBase):
         """Set ID max cruise gap speed for movement [mm/s]."""
         return self.set_kparameter_speed_max(gap_speed_max, timeout)
 
-    # -- cmd_move
+    def set_taper(self, taper, timeout=None):
+        """Set ID target taper for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.KPARAM_TAPER_SP, taper, timeout)
+
+    def set_center_mode(self, mode, timeout=None):
+        """Set ID center mode True or False."""
+        return self._write_sp(self.PARAM_PVS.CENTER_MODE_SEL, mode, timeout)
+
+    def set_pitch_mode(self, mode, timeout=None):
+        """Set ID pitch mode True or False."""
+        return self._write_sp(self.PARAM_PVS.PITCH_MODE_SEL, mode, timeout)
+
+    # --- cmd_move
 
     def cmd_move_gap_start(self, timeout=None):
         """Command to start gap movement."""
         return self.cmd_move_kparameter_start(timeout)
+
+    def cmd_move_taper_start(self, timeout=None):
+        """Command to start taper movement.""" # Need to change PV for taper mov in IOC
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_pitch_start(self, timeout=None):
+        """Command to start pitch movement.""" # Need to change PV for pitch mov in IOC
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_center_start(self, timeout=None):
+        """Command to start center movement.""" # Need to change PV for center mov in IOC
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
 
 class ID(IDBase):
     """Insertion Device."""
