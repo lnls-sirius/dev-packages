@@ -566,6 +566,12 @@ class RFGen(_Device):
 class ASLLRF(_Device):
     """AS LLRF."""
 
+    PROPERTIES_INTERLOCK = (
+        'FIMOrbitIntlk-Sel', 'FIMOrbitIntlk-Sts', 'IntlkAll-Mon',
+        'FIMManual-Sel', 'FIMManual-Sts',
+        'IntlkManual-Sel', 'IntlkManual-Sts', 'IntlkReset-Cmd',
+    )
+
     VoltIncRates = _get_namedtuple('VoltIncRates', (
         'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
         'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
@@ -611,12 +617,7 @@ class ASLLRF(_Device):
 class _BaseLLRF(_Device):
     """Base LLRF."""
 
-    PROPERTIES_INTERLOCK = (
-        'FIMOrbitIntlk-Sel', 'FIMOrbitIntlk-Sts', 'IntlkAll-Mon',
-        'FIMManual-Sel', 'FIMManual-Sts',
-        'IntlkManual-Sel', 'IntlkManual-Sts', 'IntlkReset-Cmd',
-    )
-    PROPERTIES_DEFAULT = PROPERTIES_INTERLOCK + (
+    PROPERTIES_DEFAULT = ASLLRF.PROPERTIES_INTERLOCK + (
         'SL-Sel', 'SL-Sts',
         'PLRef-RB', 'PLRef-SP', 'SLRefPhs-Mon', 'SLInpPhs-Mon',
         'ALRef-SP', 'ALRef-RB', 'SLRefAmp-Mon', 'SLInpAmp-Mon',
