@@ -1,12 +1,11 @@
 """Insertion Device Feedforward Devices."""
 
+from ..idff.config import IDFFConfig as _IDFFConfig
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
-from ..idff.config import IDFFConfig as _IDFFConfig
-
-from .device import Device as _Device, DeviceSet as _DeviceSet
-from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
+from .device import DeviceSet as _DeviceSet
 from .ids import ID as _ID
+from .pwrsupply import PowerSupplyFBP as _PowerSupplyFBP
 
 
 class IDFF(_DeviceSet):
@@ -31,8 +30,8 @@ class IDFF(_DeviceSet):
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
-        self._devid, self._devsch, self._devscv, self._devsqs = \
-            self._create_devices(devname)
+        (self._devid, self._devsch, self._devscv,
+         self._devsqs, self._devslc) = self._create_devices(devname)
 
         devices = [self._devid, ]
         devices += self._devsch
@@ -56,6 +55,11 @@ class IDFF(_DeviceSet):
         return _IDSearch.conv_idname_2_idff_qsnames(self.devname)
 
     @property
+    def lcnames(self):
+        """Return LC corrector power supply names."""
+        return _IDSearch.conv_idname_2_idff_lcnames(self.devname)
+
+    @property
     def iddev(self):
         """Return ID device."""
         return self._devid
@@ -74,6 +78,11 @@ class IDFF(_DeviceSet):
     def qsdevs(self):
         """Return QS corrector power supply names."""
         return self._devsqs
+
+    @property
+    def lcdevs(self):
+        """Return LC corrector power supply names."""
+        return self._devslc
 
     @property
     def pparametername(self):
@@ -158,7 +167,8 @@ class IDFF(_DeviceSet):
         else:
             polarization, pparameter_value, kparameter_value = [None, ] * 3
         if corrdevs is None:
-            corrdevs = self._devsch + self._devscv + self._devsqs
+            corrdevs = \
+                self._devsch + self._devscv + self._devsqs + self._devslc
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:
@@ -181,7 +191,8 @@ class IDFF(_DeviceSet):
 
         # check pvnames in configs
         pvsconfig = set(pvnames.values())
-        pvsidsearch = set(self.chnames + self.cvnames + self.qsnames)
+        pvsidsearch = set(
+            self.chnames + self.cvnames + self.qsnames + self.lcnames)
         symm_diff = pvsconfig ^ pvsidsearch
         if symm_diff:
             raise ValueError('List of pvnames in config is not consistent')
@@ -258,4 +269,5 @@ class IDFF(_DeviceSet):
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-        return devid, devsch, devscv, devsqs
+        devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
+        return devid, devsch, devscv, devsqs, devslc

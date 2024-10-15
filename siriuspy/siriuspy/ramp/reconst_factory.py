@@ -626,7 +626,7 @@ class BORFRampFactory:
     """Class to rebuild RF ramp parameters from machine state."""
 
     V_2_KV = 1e-3
-    _DevName = 'BR-RF-DLLRF-01'
+    _DevName = 'RA-RaBO01:RF-LLRF'
     _ppties = {
         'bottom_duration': _DevName+':RmpTs1-SP',
         'rampup_duration': _DevName+':RmpTs2-SP',

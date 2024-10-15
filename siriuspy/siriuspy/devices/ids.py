@@ -1,15 +1,15 @@
 """Insertion Devices."""
 
-import time as _time
 import inspect as _inspect
+import time as _time
+
 import numpy as _np
 
 from ..search import IDSearch as _IDSearch
-
 from .device import Device as _Device
 
 
-class _PARAM_PVS:
+class _ParamPVs:
     """."""
 
     # --- GENERAL ---
@@ -79,10 +79,11 @@ class IDBase(_Device):
     _SHORT_SHUT_EYE = 0.1  # [s]
     _DEF_TIMEOUT = 8  # [s]
 
-    PARAM_PVS = _PARAM_PVS()
+    PARAM_PVS = _ParamPVs()
 
     PROPERTIES_DEFAULT = \
-        tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
             if not key.startswith('_') and value is not None))
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
@@ -454,6 +455,7 @@ class IDBase(_Device):
 
     def wait_while_busy(self, timeout=None):
         """Command wait within timeout while ID control is busy."""
+        _ = timeout
         return True
 
     def wait_move_start(self, timeout=None):
@@ -766,7 +768,7 @@ class APU(IDBase):
     _CMD_MOVE = 3
 
     # --- PARAM_PVS ---
-    PARAM_PVS = _PARAM_PVS()
+    PARAM_PVS = _ParamPVs()
     PARAM_PVS.KPARAM_SP = 'Phase-SP'
     PARAM_PVS.KPARAM_RB = 'Phase-SP'  # There is no Phase-RB!
     PARAM_PVS.KPARAM_MON = 'Phase-Mon'
@@ -778,7 +780,8 @@ class APU(IDBase):
     PARAM_PVS.KPARAM_CHANGE_CMD = 'DevCtrl-Cmd'
 
     PROPERTIES_DEFAULT = \
-        tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
             if not key.startswith('_') and value is not None))
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
@@ -853,6 +856,7 @@ class APU(IDBase):
 
     def cmd_move_stop(self, timeout=None):
         """Send command to stop ID movement."""
+        _ = timeout
         self['DevCtrl-Cmd'] = self._CMD_MOVE_STOP
         return True
 
@@ -878,7 +882,7 @@ class PAPU(IDBase):
         ALL = (PAPU50_17SA, )
 
     # --- PARAM_PVS ---
-    PARAM_PVS = _PARAM_PVS()
+    PARAM_PVS = _ParamPVs()
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.KPARAM_SP = 'Phase-SP'
     PARAM_PVS.KPARAM_RB = 'Phase-RB'
@@ -903,7 +907,8 @@ class PAPU(IDBase):
         )
 
     PROPERTIES_DEFAULT = \
-        tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
             if not key.startswith('_') and value is not None)) + \
         _properties + _properties_papu
 
@@ -1073,7 +1078,7 @@ class EPU(PAPU):
         ALL = (EPU50_10SB, )
 
     # --- PARAM_PVS ---
-    PARAM_PVS = _PARAM_PVS()
+    PARAM_PVS = _ParamPVs()
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'IsMoving-Mon'
     PARAM_PVS.PPARAM_SP = 'Phase-SP'
@@ -1102,13 +1107,13 @@ class EPU(PAPU):
     PARAM_PVS.POL_CHANGE_CMD = 'ChangePolarization-Cmd'
 
     PROPERTIES_DEFAULT = PAPU._properties + \
-        tuple(set(value for key, value in _inspect.getmembers(PARAM_PVS) \
-            if not key.startswith('_') and value is not None)) + (
-        'EnblPwrAll-Cmd', 'PwrGap-Mon', 'Status-Mon',
-        'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
-        'AllowedToChangeGap-Mon',
-        'IsBusy-Mon', 'Stop-Cmd',
-        )
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None)) + \
+        ('EnblPwrAll-Cmd', 'PwrGap-Mon', 'Status-Mon',
+         'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
+         'AllowedToChangeGap-Mon',
+         'IsBusy-Mon', 'Stop-Cmd',)
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -1280,6 +1285,7 @@ class EPU(PAPU):
         return self.cmd_move_kparameter_start(timeout)
 
     def calc_move_eta_composed(self, pparam_eta, kparam_eta):
+        """."""
         # model: here pparam and kparam as parallel in time
         eta = max(pparam_eta, kparam_eta)
         return eta
@@ -1301,7 +1307,7 @@ class DELTA(IDBase):
         ALL = (DELTA52_10SB, )
 
     # --- PARAM_PVS ---
-    PARAM_PVS = _PARAM_PVS()
+    PARAM_PVS = _ParamPVs()
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
@@ -1454,23 +1460,92 @@ class WIG(IDBase):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
 
+class IVU(IDBase):
+    """IVU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        IVU18_08SB = 'SI-08SB:ID-IVU18'
+        IVU18_14SB = 'SI-14SB:ID-IVU18'
+        ALL = (IVU18_08SB, IVU18_14SB)
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    # PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    # PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    # PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    # PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    # PARAM_PVS.PPARAM_SP = 'PParam-SP'
+    # PARAM_PVS.PPARAM_RB = 'PParam-RB'
+    # PARAM_PVS.PPARAM_MON = 'PParam-Mon'
+    # PARAM_PVS.PPARAM_PARKED_CTE = 'PParamParked-Cte'
+    # PARAM_PVS.PPARAM_MAXACC_SP = 'MaxAcc-SP'
+    # PARAM_PVS.PPARAM_MAXACC_RB = 'MaxAcc-RB'
+    # PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    # PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    # PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
+    # PARAM_PVS.PPARAM_VELO_RB = 'PParamVelo-RB'
+    # PARAM_PVS.PPARAM_ACC_SP = 'PParamAcc-SP'
+    # PARAM_PVS.PPARAM_ACC_RB = 'PParamAcc-RB'
+    # PARAM_PVS.PPARAM_TOL_SP = 'PolTol-SP'
+    # PARAM_PVS.PPARAM_TOL_RB = 'PolTol-RB'
+    # PARAM_PVS.PPARAM_CHANGE_CMD = 'PParamChange-Cmd'
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
+    PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
+    # PARAM_PVS.KPARAM_TOL_SP = 'PosTol-SP'
+    # PARAM_PVS.KPARAM_TOL_RB = 'PosTol-RB'
+    # PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+    # PARAM_PVS.POL_SEL = 'Pol-Sel'
+    # PARAM_PVS.POL_STS = 'Pol-Sts'
+    # PARAM_PVS.POL_MON = 'Pol-Mon'
+    # PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
+
+    PROPERTIES_DEFAULT = tuple(set(
+        value for key, value in _inspect.getmembers(PARAM_PVS)
+        if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+
 class ID(IDBase):
     """Insertion Device."""
 
     class DEVICES:
+        """Device names."""
         APU = APU.DEVICES
         PAPU = PAPU.DEVICES
         EPU = EPU.DEVICES
         DELTA = DELTA.DEVICES
         WIG = WIG.DEVICES
+        IVU = IVU.DEVICES
         ALL = APU.ALL + PAPU.ALL + \
-            EPU.ALL + DELTA.ALL + WIG.ALL
+            EPU.ALL + DELTA.ALL + \
+            WIG.ALL + IVU.ALL
 
     def __new__(cls, devname, **kwargs):
         """."""
-        IDClass = ID.get_idclass(devname)
-        if IDClass:
-            return IDClass(devname, **kwargs)
+        idclass = ID.get_idclass(devname)
+        if idclass:
+            return idclass(devname, **kwargs)
         else:
             raise NotImplementedError(devname)
 
@@ -1487,5 +1562,7 @@ class ID(IDBase):
             return DELTA
         elif devname in WIG.DEVICES.ALL:
             return WIG
+        elif devname in IVU.DEVICES.ALL:
+            return IVU
         else:
             return None

@@ -299,7 +299,7 @@ class FamFOFBControllers(_DeviceSet):
             self._bpm_trgs[bpm] = AFCACQLogicalTrigger(bpm, self.BPM_TRIGS_ID)
         bpm2dsbl = [
             'SI-'+sub+':DI-BPM-'+idx
-            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
+            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB', '14SB']
             for idx in ['1', '2']
         ]
         self._bpmdcc2dsbl = dict()
