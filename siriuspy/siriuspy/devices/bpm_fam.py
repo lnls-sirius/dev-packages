@@ -246,7 +246,7 @@ class FamBPMs(_DeviceSet):
         """Convert signal to generate PV name."""
         if sig == 'S':
             sig = 'Sum'
-        elif sig == 'X' or 'Y' or 'Q':
+        elif sig in 'XYQ':
             sig = 'Pos' + sig
         else:
             sig = 'Ampl' + sig
