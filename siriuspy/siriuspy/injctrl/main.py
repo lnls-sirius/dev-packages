@@ -59,8 +59,9 @@ class App(_Callback):
         self._thread_watdev = None
         self._target_current = 100.0
         self._bucketlist_start = 1
-        self._bucketlist_stop = 864
+        self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
+        self._bucketlist_allowed_mask = _np.ones(_Const.MAX_BKT, dtype=bool)
         self._isinj_delay = 0
         self._isinj_duration = 300
 
@@ -226,6 +227,7 @@ class App(_Callback):
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
             'BucketListStep-SP': self.set_bucketlist_step,
+            'BucketListAllowedMask-SP': self.set_bucketlist_allowed_mask,
             'IsInjDelay-SP': self.set_isinj_delay,
             'IsInjDuration-SP': self.set_isinj_duration,
             'AccumState-Sel': self.set_accum_state,
@@ -672,6 +674,20 @@ class App(_Callback):
                 return False
         self._bucketlist_step = step
         self.run_callbacks('BucketListStep-RB', step)
+        return True
+
+    def set_bucketlist_allowed_mask(self, values):
+        """Set allowed buckets for injection."""
+        if not isinstance(values, _np.ndarray):
+            self._update_log('ERR:BucketListAllowedMask not set. wrong type.')
+            return False
+        elif values.size != self._bucketlist_allowed_mask.size:
+            self._update_log('ERR:BucketListAllowedMask not set. wrong size.')
+            return False
+        self._bucketlist_allowed_mask = _np.array(values, dtype=bool)
+        self.run_callbacks(
+            'BucketListAllowedMask-RB', self._bucketlist_allowed_mask
+        )
         return True
 
     def set_isinj_delay(self, value):
@@ -1255,20 +1271,40 @@ class App(_Callback):
             self._update_log('ERR:EVG is disconnected.')
             return False
 
+        nrpulses = nrpulses or self._topup_nrpulses
         if step is None:
             step = self._bucketlist_step
 
         lastfilledbucket = self._evg_dev.bucketlist_mon[-1]
         if not _Const.MIN_BKT <= lastfilledbucket <= _Const.MAX_BKT:
             lastfilledbucket = 1
+        allowed_buckets = self._bucketlist_allowed_mask.nonzero()[0] + 1
+        buckets = self._compute_which_buckets2inject(
+            step, nrpulses, lastfilledbucket, allowed_buckets
+        )
+        return self._set_bucket_list(buckets)
 
-        nrpulses = nrpulses or self._topup_nrpulses
-        bucket = _np.arange(nrpulses) + 1
-        bucket *= step
-        bucket += lastfilledbucket - 1
-        bucket %= 864
-        bucket += 1
-        return self._set_bucket_list(bucket)
+    def _compute_which_buckets2inject(
+        self, step, nrpulses, lastfilledbucket, allowed_buckets
+    ):
+        buckets = []
+        for _ in range(nrpulses):
+            # finite loop here in case it is not possible to fill bucket list:
+            for _ in range(_Const.MAX_BKT):
+                bucket = lastfilledbucket + step - 1
+                bucket %= _Const.MAX_BKT
+                bucket += 1
+                lastfilledbucket = bucket
+                if bucket in allowed_buckets:
+                    break
+            else:
+                self._update_log(
+                    'ERR:Could not fill bucket list. '
+                    'Impossible configurations.'
+                )
+                return buckets
+            buckets.append(bucket)
+        return buckets
 
     def _set_bucket_list(self, value):
         self._evg_dev.bucketlist = value

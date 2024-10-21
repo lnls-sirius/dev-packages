@@ -235,6 +235,18 @@ def get_injctrl_propty_database():
         'BucketListStep-RB': {
             'type': 'int', 'value': 29, 'unit': 'buckets',
             'lolim': -_ct.MAX_BKT, 'hilim': _ct.MAX_BKT},
+        "BucketListAllowedMask-SP": {
+            "type": "int",
+            "count": _ct.MAX_BKT,
+            "value": _ct.MAX_BKT * [1],
+            "unit": "Buckets where injection is allowed",
+        },
+        "BucketListAllowedMask-RB": {
+            "type": "int",
+            "count": _ct.MAX_BKT,
+            "value": _ct.MAX_BKT * [1],
+            "unit": "Buckets where injection is allowed",
+        },
         'IsInjecting-Mon': {
             'type': 'enum', 'value': _ct.IdleInjecting.Idle,
             'enums': _et.IDLEINJECTING, 'unit': 'Idle_Inj'},
