@@ -1,8 +1,90 @@
 
 import time as _time
 
-from ..namesys import SiriusPVName
-from .device import Device as _Device
+from ..namesys import SiriusPVName as _PVName
+from .device import Device as _Device, DeviceSet as _DeviceSet
+from mathphys.functions import get_namedtuple as _get_namedtuple
+
+# ------- AMC devices -------
+
+
+class AMCCtrlBase:
+    """Advanced Mezzanine Cards (AMC) control base class."""
+
+    keys = [f'IA{i:02d}' for i in range(1, 21)]
+    _devices = {}
+    for key in keys:
+        temp = []
+        for j in range(1, 13):
+            # Slot 3 is not used
+            if j != 3:
+                temp.append(f'IA-{key}RaBPM:CO-AMC-{j:01d}')
+        _devices[key] = temp
+    temp = []
+    for j in range(1, 13):
+        if j != 3:
+            temp.append(f'IA-20RaBPMTL:CO-AMC-{j:01d}')
+    _devices['IA20TL'] = temp
+    DEVICES = _get_namedtuple('DEVICES', *zip(*_devices.items()))
+
+
+class AMCCtrlAcqBase(_Device, AMCCtrlBase):
+    """AMC acquisition base device."""
+
+    PROPERTIES_DEFAULT = (
+        'Status-Cte',
+        # 'FruId-Cte',
+        # 'BoarManuf-Cte', 'BoardName-Cte',
+        # 'BoardSN-Cte', 'BoardPN-Cte',
+        # 'ProdManuf-Cte', 'ProdName-Cte',
+        # 'ProdSN-Cte', 'ProdPN-Cte',
+        # 'PowerCtl-Sel',
+        'SoftRst-Cmd',
+        'SoftRstSts-Mon',
+        # 'PowerCtl-Sel',
+    )
+
+    def __init__(self, devname, **kws):
+        """Init."""
+        # call base class constructor
+        _Device.__init__(self, devname, **kws)
+
+    @property
+    def status(self):
+        """."""
+        return self['Status-Cte']
+
+    @property
+    def soft_rst(self):
+        """."""
+        return self['SoftRst-Cmd']
+
+    @property
+    def soft_rst_sts(self):
+        """."""
+        return self['SoftRstSts-Mon']
+
+
+class FamAMCAcq(_DeviceSet):
+
+    AMCCTRL_CLASS = AMCCtrlAcqBase
+
+    def __init__(self, ctrlname=None, bpmnames=None, event=None):
+        # AMCCtrl devices
+        ctrlnames = AMCCtrlBase.DEVICES if not ctrlname else [ctrlname, ]
+        self._ctlrs, subs = dict(), list()
+        for idx, ctl in enumerate(ctrlnames):
+            for i, k in enumerate(ctl):
+                self._ctlrs[ctl[i]] = self.AMCCTRL_CLASS(
+                    ctl[i], auto_monitor_mon=False
+                    )
+                subs.append(f'{idx+1:02}')
+        # sub = '(' + '|'.join(subs) + ').*'
+
+    # call base class constructor
+        devices = list()
+        devices.extend(self._ctlrs.values())
+        _DeviceSet.__init__(self, devices, devname='')
 
 
 class AFCPhysicalTrigger(_Device):
