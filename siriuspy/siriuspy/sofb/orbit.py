@@ -367,7 +367,7 @@ class EpicsOrbit(BaseOrbit):
     def _prepare_mode(self, oldmode=None):
         """."""
         oldmode = self._mode if oldmode is None else oldmode
-        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Stop)
 
         if not self.is_trigmode():
             self.acq_config_bpms()
@@ -426,12 +426,10 @@ class EpicsOrbit(BaseOrbit):
         for i, bpm in enumerate(self.bpms):
             bpm.put_enable = mask[i]
             if self.is_multiturn():
-                bpm.mode = _CSBPM.OpModes.MultiBunch
                 bpm.switching_mode = _CSBPM.SwModes.direct
                 bpm.configure()
                 self.timing.configure()
             elif self.is_singlepass():
-                bpm.mode = _CSBPM.OpModes.MultiBunch
                 bpm.switching_mode = _CSBPM.SwModes.direct
                 bpm.configure()
                 self.timing.configure()
@@ -890,9 +888,8 @@ class EpicsOrbit(BaseOrbit):
 
         bpms = self._get_used_bpms()
         bpm_conn = all(bpm.connected for bpm in bpms)
-        bpm_stt = all(bpm.state for bpm in bpms)
+
         status = _util.update_bit(v=status, bit_pos=2, bit_val=not bpm_conn)
-        status = _util.update_bit(v=status, bit_pos=3, bit_val=not bpm_stt)
 
         isok = True
         if self.is_trigmode():
@@ -904,22 +901,22 @@ class EpicsOrbit(BaseOrbit):
                     bpms,
                 )
             )
-        status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
+        status = _util.update_bit(v=status, bit_pos=3, bit_val=not isok)
 
         # Check if test data is disabled
         isok = all(
             map(lambda x: x.test_data_enbl == _CSBPM.DsblEnbl.disabled, bpms)
         )
-        status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
+        status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
         # Check if switching sync is enabled
         isok = all(
             map(lambda x: x.sw_sync_enbl == _CSBPM.DsblEnbl.enabled, bpms)
         )
-        status = _util.update_bit(v=status, bit_pos=6, bit_val=not isok)
+        status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
 
         orb_conn = self._sloworb_raw_pv.connected if self.acc == "SI" else True
-        status = _util.update_bit(v=status, bit_pos=7, bit_val=not orb_conn)
+        status = _util.update_bit(v=status, bit_pos=6, bit_val=not orb_conn)
 
         self._status = status
         self.run_callbacks("OrbStatus-Mon", status)

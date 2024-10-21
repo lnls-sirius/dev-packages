@@ -134,7 +134,7 @@ class _FOFBCtrlAcqBase(_Device, _FOFBCtrlBase, _FOFBCtrlAcqConst):
     @property
     def status(self):
         """Acquisition status."""
-        return self['Status-Sts']
+        return self['Status-Mon']
 
     @property
     def count(self):
@@ -148,13 +148,13 @@ class _FOFBCtrlAcqBase(_Device, _FOFBCtrlBase, _FOFBCtrlAcqConst):
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            'Status-Sts', _FOFBCtrlAcqConst.STATES_FINISHED,
+            'Status-Mon', _FOFBCtrlAcqConst.STATES_FINISHED,
             timeout=timeout, comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            'Status-Sts', _FOFBCtrlAcqConst.STATES_STARTED,
+            'Status-Mon', _FOFBCtrlAcqConst.STATES_STARTED,
             timeout=timeout, comp=lambda x, y: x in y)
 
 
@@ -480,7 +480,7 @@ class FOFBPSSysId(_Device):
         'SYSIDPRBSFOFBAccLvl0-SP', 'SYSIDPRBSFOFBAccLvl0-RB',
         'SYSIDPRBSFOFBAccLvl1-SP', 'SYSIDPRBSFOFBAccLvl1-RB',
         'CurrLoopKp-SP', 'CurrLoopKp-RB',
-        'CurrLoopTi-SP', 'CurrLoopTi-RB',
+        'CurrLoopKi-SP', 'CurrLoopKi-RB',
     )
 
     def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
@@ -530,11 +530,11 @@ class FOFBPSSysId(_Device):
     @property
     def currloop_ki(self):
         """Current control loop Ki parameter."""
-        return self['CurrLoopTi-RB']
+        return self['CurrLoopKi-RB']
 
     @currloop_ki.setter
     def currloop_ki(self, value):
-        self['CurrLoopTi-SP'] = value
+        self['CurrLoopKi-SP'] = value
 
 
 class FamFOFBSysId(_FamFOFBAcqBase):
@@ -1142,9 +1142,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             ctl.cmd_ctrl(_FOFBCtrlAcqConst.TrigEvt.stop)
 
         if wait:
-            _time.sleep(2)
-            return 0
-            # return self.wait_acquisition_finish(timeout=timeout)
+            return self.wait_acquisition_finish(timeout=timeout)
         return 0
 
     def wait_acquisition_finish(self, timeout=10) -> int:
@@ -1186,9 +1184,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             ctl.cmd_ctrl(_FOFBCtrlAcqConst.TrigEvt.start)
 
         if wait:
-            _time.sleep(2)
-            return 0
-            # return self.wait_acquisition_start(timeout=timeout)
+            return self.wait_acquisition_start(timeout=timeout)
         return 0
 
     def wait_acquisition_start(self, timeout=10) -> bool:

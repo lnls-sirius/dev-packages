@@ -6,8 +6,8 @@ an `execute` method.
 
 import re as _re
 
-from ..csdev import Const as _const_psdev
 from ..bsmp.constants import ConstPSBSMP as _const_psbsmp
+from ..csdev import Const as _const_psdev
 
 
 class Function:
@@ -177,7 +177,7 @@ class PSPwrState(Function):
                 self.turn_off.execute()
 
 
-class PSPwrStateFBP_DCLink(Function):
+class PSPwrStateFBP_DCLink(Function):  # noqa: N801
     """Adapter to deal with FBP_DCLink turn on/off functions."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
@@ -424,6 +424,21 @@ class SOFBMode(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.sofb_mode_set(value)
+
+
+class IDFFMode(Function):
+    """."""
+
+    def __init__(self, pru_controller, setpoints=None):
+        """Create command to set IDFFMode."""
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.idff_mode_set(value)
 
 
 class SOFBUpdate(Function):

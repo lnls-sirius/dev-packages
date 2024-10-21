@@ -299,7 +299,7 @@ class FamFOFBControllers(_DeviceSet):
             self._bpm_trgs[bpm] = AFCACQLogicalTrigger(bpm, self.BPM_TRIGS_ID)
         bpm2dsbl = [
             'SI-'+sub+':DI-BPM-'+idx
-            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB']
+            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB', '14SB']
             for idx in ['1', '2']
         ]
         self._bpmdcc2dsbl = dict()
@@ -714,7 +714,7 @@ class FamFastCorrs(_DeviceSet):
     DEF_ATOL_FOFBACCSAT = 2e-2
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
-    DEF_ATOL_ACCFILTER = 2**-17
+    DEF_ATOL_ACCFILTER = 2**-12
     DEF_ATOL_ACCFILTERGAIN = 2**-12
 
     def __init__(self, psnames=None):

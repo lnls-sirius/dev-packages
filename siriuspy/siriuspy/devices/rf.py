@@ -566,6 +566,12 @@ class RFGen(_Device):
 class ASLLRF(_Device):
     """AS LLRF."""
 
+    PROPERTIES_INTERLOCK = (
+        'FIMOrbitIntlk-Sel', 'FIMOrbitIntlk-Sts', 'IntlkAll-Mon',
+        'FIMManual-Sel', 'FIMManual-Sts',
+        'IntlkManual-Sel', 'IntlkManual-Sts', 'IntlkReset-Cmd',
+    )
+
     VoltIncRates = _get_namedtuple('VoltIncRates', (
         'vel_0p01', 'vel_0p03', 'vel_0p1', 'vel_0p25', 'vel_0p5', 'vel_1p0',
         'vel_2p0', 'vel_4p0', 'vel_6p0', 'vel_8p0', 'vel_10p0', 'vel_15p0',
@@ -577,24 +583,52 @@ class ASLLRF(_Device):
     class DEVICES:
         """Devices names."""
 
-        BO = 'BR-RF-DLLRF-01'
-        SI = 'SR-RF-DLLRF-01'
-        ALL = (BO, SI)
+        BO = 'RA-RaBO01:RF-LLRF'
+        SIA = 'RA-RaSIA01:RF-LLRF'
+        SIB = 'RA-RaSIB01:RF-LLRF'
+        ALL = (BO, SIA, SIB)
 
-    PROPERTIES_DEFAULT = (
-        'SL:S', 'SL',
-        'PL:REF', 'PL:REF:S', 'SL:REF:PHS', 'SL:INP:PHS',
-        'mV:AL:REF-SP', 'mV:AL:REF-RB', 'SL:REF:AMP', 'SL:INP:AMP',
-        'DTune-SP', 'DTune-RB', 'TUNE:DEPHS',
+    def __new__(cls, devname, props2init='all'):
+        """."""
+        # check if device exists
+        if devname not in ASLLRF.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        if 'SI' in devname:
+            obj = _SILLRF(devname, props2init)
+        elif 'BO' in devname:
+            obj = _BOLLRF(devname, props2init)
+
+        obj.system_nickname = cls.get_system_nickname(devname)
+        return obj
+
+    @staticmethod
+    def get_system_nickname(devname):
+        """."""
+        if devname == ASLLRF.DEVICES.BO:
+            return "BO"
+        if devname == ASLLRF.DEVICES.SIA:
+            return "SI-A"
+        if devname == ASLLRF.DEVICES.SIB:
+            return "SI-B"
+        return ""
+
+
+class _BaseLLRF(_Device):
+    """Base LLRF."""
+
+    PROPERTIES_DEFAULT = ASLLRF.PROPERTIES_INTERLOCK + (
+        'SL-Sel', 'SL-Sts',
+        'PLRef-RB', 'PLRef-SP', 'SLRefPhs-Mon', 'SLInpPhs-Mon',
+        'ALRef-SP', 'ALRef-RB', 'SLRefAmp-Mon', 'SLInpAmp-Mon',
+        'Detune-SP', 'Detune-RB', 'TuneDephs-Mon',
         'RmpPhsBot-SP', 'RmpPhsBot-RB', 'RmpPhsTop-SP', 'RmpPhsTop-RB',
         'RmpEnbl-Sel', 'RmpEnbl-Sts', 'RmpReady-Mon',
-        'FF:ON', 'FF', 'FF:S', 'FF:POS', 'FF:POS:S',
-        'FF:GAIN:CELL2', 'FF:GAIN:CELL2:S', 'FF:GAIN:CELL4', 'FF:GAIN:CELL4:S',
-        'FF:DEADBAND', 'FF:DEADBAND:S', 'FF:CELL2', 'FF:CELL4', 'FF:ERR',
-        'AMPREF:INCRATE', 'AMPREF:INCRATE:S',
-        'PHSREF:INCRATE', 'PHSREF:INCRATE:S',
-        'mV:AMPREF:MIN', 'mV:AMPREF:MIN:S', 'PHSREF:MIN', 'PHSREF:MIN:S',
-        'PULSE', 'PULSE:S', 'COND:DC', 'COND:DC:S', 'DUTYCYCLE',
+        'AmpIncRate-RB', 'AmpIncRate-SP',
+        'PhsIncRate-RB', 'PhsIncRate-SP',
+        'AmpRefMin-RB', 'AmpRefMin-SP', 'PhsRefMin-RB', 'PhsRefMin-SP',
+        'CondEnbl-Sts', 'CondEnbl-Sel', 'CondDuty-RB', 'CondDuty-SP',
+        'CondDutyCycle-Mon',
         )
 
     def __init__(self, devname, props2init='all'):
@@ -607,16 +641,16 @@ class ASLLRF(_Device):
     @property
     def slow_loop_state(self):
         """Slow loop state."""
-        return self['SL']
+        return self['SL-Sts']
 
     @slow_loop_state.setter
     def slow_loop_state(self, value):
-        self['SL:S'] = int(value)
+        self['SL-Sel'] = int(value)
 
     def set_slow_loop_state(self, value, timeout=None):
         """Wait for slow loop state to reach `value`."""
         self.slow_loop_state = value
-        return self._wait('SL', value, timeout=timeout)
+        return self._wait('SL-Sts', value, timeout=timeout)
 
     @property
     def is_cw(self):
@@ -667,251 +701,309 @@ class ASLLRF(_Device):
     @property
     def phase_mon(self):
         """."""
-        return self['SL:INP:PHS']
+        return self['SLInpPhs-Mon']
 
     @property
     def phase_ref(self):
         """."""
-        return self['SL:REF:PHS']
+        return self['SLRefPhs-Mon']
 
     @property
     def phase_sp(self):
         """."""
-        return self['PL:REF:S']
+        return self['PLRef-SP']
 
     @property
     def phase(self):
         """."""
-        return self['PL:REF']
+        return self['PLRef-RB']
 
     @phase.setter
     def phase(self, value):
-        self['PL:REF:S'] = self._wrap_phase(value)
+        self['PLRef-SP'] = self._wrap_phase(value)
 
     @property
     def phase_incrate_str(self):
         """."""
-        return self.PhsIncRates._fields[self['PHSREF:INCRATE']]
+        return ASLLRF.PhsIncRates._fields[self['PhsIncRate-RB']]
 
     @property
     def phase_incrate(self):
         """."""
-        return self['PHSREF:INCRATE']
+        return self['PhsIncRate-RB']
 
     @phase_incrate.setter
     def phase_incrate(self, value):
-        self._enum_setter('PHSREF:INCRATE:S', value, self.PhsIncRates)
+        self._enum_setter('PhsIncRate-SP', value, ASLLRF.PhsIncRates)
 
     def set_phase(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set RF phase and wait until it gets there."""
         self.phase = value
-        pv2wait = 'SL:INP:PHS' if wait_mon else 'SL:REF:PHS'
+        pv2wait = 'SLInpPhs-Mon' if wait_mon else 'SLRefPhs-Mon'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def voltage_mon(self):
         """."""
-        return self['SL:INP:AMP']
+        return self['SLInpAmp-Mon']
 
     @property
     def voltage_ref(self):
         """."""
-        return self['SL:REF:AMP']
+        return self['SLRefAmp-Mon']
 
     @property
     def voltage_sp(self):
         """."""
-        return self['mV:AL:REF-SP']
+        return self['ALRef-SP']
 
     @property
     def voltage(self):
         """."""
-        return self['mV:AL:REF-RB']
+        return self['ALRef-RB']
 
     @voltage.setter
     def voltage(self, value):
-        self['mV:AL:REF-SP'] = value
+        self['ALRef-SP'] = value
 
     @property
     def voltage_incrate_str(self):
         """Voltage increase rate enum string."""
-        return self.VoltIncRates._fields[self['AMPREF:INCRATE']]
+        return ASLLRF.VoltIncRates._fields[self['AmpIncRate-RB']]
 
     @property
     def voltage_incrate(self):
         """Voltage increase rate."""
-        return self['AMPREF:INCRATE']
+        return self['AmpIncRate-RB']
 
     @voltage_incrate.setter
     def voltage_incrate(self, value):
-        self._enum_setter('AMPREF:INCRATE:S', value, self.VoltIncRates)
+        self._enum_setter('AmpIncRate-SP', value, ASLLRF.VoltIncRates)
 
     def set_voltage_incrate(self, value, timeout=None):
         """Set and wait voltage increase rate to reach `value`."""
         self.voltage_incrate = value
-        return self._wait('AMPREF:INCRATE', value, timeout=timeout)
+        return self._wait('AmpIncRate-RB', value, timeout=timeout)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
         """Set RF voltage and wait until it gets there."""
         self.voltage = value
-        pv2wait = 'SL:INP:AMP' if wait_mon else 'SL:REF:AMP'
+        pv2wait = 'SLInpAmp-Mon' if wait_mon else 'SLRefAmp-Mon'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def voltage_refmin_sp(self):
         """."""
-        return self['mV:AMPREF:MIN:S']
+        return self['AmpRefMin-SP']
 
     @property
     def voltage_refmin(self):
         """."""
-        return self['mV:AMPREF:MIN']
+        return self['AmpRefMin-RB']
 
     @voltage_refmin.setter
     def voltage_refmin(self, value):
-        self['mV:AMPREF:MIN:S'] = value
+        self['AmpRefMin-SP'] = value
 
     @property
     def phase_refmin_sp(self):
         """."""
-        return self['PHSREF:MIN:S']
+        return self['PhsRefMin-SP']
 
     @property
     def phase_refmin(self):
         """."""
-        return self['PHSREF:MIN']
+        return self['PhsRefMin-RB']
 
     @phase_refmin.setter
     def phase_refmin(self, value):
-        self['PHSREF:MIN:S'] = value
+        self['PhsRefMin-SP'] = value
 
     @property
     def conditioning_state(self):
         """."""
-        return self['PULSE']
+        return self['CondEnbl-Sts']
 
     @conditioning_state.setter
     def conditioning_state(self, value):
-        self['PULSE:S'] = bool(value)
+        self['CondEnbl-Sel'] = bool(value)
 
     def cmd_turn_on_conditioning(self, timeout=10):
         """Turn on conditioning mode."""
         self.conditioning_state = 1
-        return self._wait('PULSE', 1, timeout=timeout)
+        return self._wait('CondEnbl-Sts', 1, timeout=timeout)
 
     def cmd_turn_off_conditioning(self, timeout=10):
         """Turn off conditioning mode."""
         self.conditioning_state = 0
-        return self._wait('PULSE', 0, timeout=timeout)
+        return self._wait('CondEnbl-Sts', 0, timeout=timeout)
 
     @property
     def conditioning_duty_cycle_mon(self):
         """Duty cycle in %."""
-        return self['DUTYCYCLE']
+        return self['CondDutyCycle-Mon']
 
     @property
     def conditioning_duty_cycle(self):
         """Duty cycle in %."""
-        return self['COND:DC']
+        return self['CondDuty-RB']
 
     @conditioning_duty_cycle.setter
     def conditioning_duty_cycle(self, value):
-        self['COND:DC:S'] = value
+        self['CondDuty-SP'] = value
 
     def set_duty_cycle(self, value, tol=1, timeout=10, wait_mon=True):
         """Set RF phase and wait until it gets there."""
         self.conditioning_duty_cycle = value
-        pv2wait = 'COND:DC' if wait_mon else 'DUTYCYCLE'
+        pv2wait = 'CondDuty-RB' if wait_mon else 'CondDutyCycle-Mon'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def detune(self):
         """."""
-        return self['DTune-RB']
+        return self['Detune-RB']
 
     @detune.setter
     def detune(self, value):
-        self['DTune-SP'] = value
+        self['Detune-SP'] = value
 
     @property
     def detune_error(self):
         """."""
-        return self['TUNE:DEPHS']
-
-    @property
-    def field_flatness_acting(self):
-        """Return whether the field flatness loop is acting."""
-        return self['FF:ON']
-
-    @property
-    def field_flatness_enable(self):
-        """Return whether the field flatness loop is enabled."""
-        return self['FF']
-
-    @field_flatness_enable.setter
-    def field_flatness_enable(self, value):
-        """Control state of field flatness loop."""
-        self['FF:S'] = bool(value)
-
-    @property
-    def field_flatness_position(self):
-        """Return the field flatness position."""
-        return self['FF:POS']
-
-    @field_flatness_position.setter
-    def field_flatness_position(self, value):
-        """Control the field flatness position."""
-        self['FF:POS:S'] = bool(value)
-
-    @property
-    def field_flatness_gain1(self):
-        """Return the gain of the first cell controlled."""
-        return self['FF:GAIN:CELL2']
-
-    @field_flatness_gain1.setter
-    def field_flatness_gain1(self, value):
-        """Control the gain of the first cell controlled."""
-        self['FF:GAIN:CELL2:S'] = value
-
-    @property
-    def field_flatness_gain2(self):
-        """Return the gain of the second cell controle."""
-        return self['FF:GAIN:CELL4']
-
-    @field_flatness_gain2.setter
-    def field_flatness_gain2(self, value):
-        """Control the gain of the second cell controlled."""
-        self['FF:GAIN:CELL4:S'] = value
-
-    @property
-    def field_flatness_deadband(self):
-        """Return the loop action deadband in [%]."""
-        return self['FF:DEADBAND']
-
-    @field_flatness_deadband.setter
-    def field_flatness_deadband(self, value):
-        """Control the loop action deadband in [%]."""
-        self['FF:DEADBAND:S'] = value
-
-    @property
-    def field_flatness_amp1(self):
-        """Amplitude of the first cell controled in [mV]."""
-        return self['FF:CELL2']
-
-    @property
-    def field_flatness_amp2(self):
-        """Amplitude of the second cell controled in [mV]."""
-        return self['FF:CELL4']
-
-    @property
-    def field_flatness_error(self):
-        """Return the amplitude error in [mV]."""
-        return self['FF:ERR']
+        return self['TuneDephs-Mon']
 
     @staticmethod
     def _wrap_phase(phase):
         """Phase must be in [-180, +180] interval."""
         return (phase + 180) % 360 - 180
+
+    # interlock properties
+    @property
+    def fast_interlock_monitor_orbit(self):
+        """."""
+        return self['FIMOrbitIntlk-Sts']
+
+    @fast_interlock_monitor_orbit.setter
+    def fast_interlock_monitor_orbit(self, value):
+        """."""
+        self['FIMOrbitIntlk-Sel'] = value
+
+    @property
+    def fast_interlock_monitor_manual(self):
+        """."""
+        return self['FIMManual-Sts']
+
+    @fast_interlock_monitor_manual.setter
+    def fast_interlock_monitor_manual(self, value):
+        """."""
+        self['FIMManual-Sel'] = value
+
+    @property
+    def interlock_manual(self):
+        """."""
+        return self['IntlkManual-Sts']
+
+    @interlock_manual.setter
+    def interlock_manual(self, value):
+        """."""
+        self['IntlkManual-Sel'] = value
+
+    @property
+    def interlock_mon(self):
+        """."""
+        return self['IntlkAll-Mon']
+
+    def cmd_reset_interlock(self, wait=1):
+        """Reset interlocks."""
+        self['IntlkReset-Cmd'] = 1
+        _time.sleep(wait)
+        self['IntlkReset-Cmd'] = 0
+
+
+class _BOLLRF(_BaseLLRF):
+    """."""
+
+    # fieldflatness properties that are exclusive for P5Cav at BO
+    PROPERTIES_DEFAULT = _BaseLLRF.PROPERTIES_DEFAULT + (
+        'FFOn-Mon', 'FFEnbl-Sts', 'FFEnbl-Sel', 'FFDir-Sts', 'FFDir-Sel',
+        'FFGainCell2-RB', 'FFGainCell2-SP', 'FFGainCell4-RB', 'FFGainCell4-SP',
+        'FFDeadBand-RB', 'FFDeadBand-SP', 'FFCell2-Mon', 'FFCell4-Mon',
+        'FFError-Mon',
+        )
+
+    @property
+    def field_flatness_acting(self):
+        """Return whether the field flatness loop is acting."""
+        return self['FFOn-Mon']
+
+    @property
+    def field_flatness_enable(self):
+        """Return whether the field flatness loop is enabled."""
+        return self['FFEnbl-Sts']
+
+    @field_flatness_enable.setter
+    def field_flatness_enable(self, value):
+        """Control state of field flatness loop."""
+        self['FFEnbl-Sel'] = bool(value)
+
+    @property
+    def field_flatness_position(self):
+        """Return the field flatness position."""
+        return self['FFDir-Sts']
+
+    @field_flatness_position.setter
+    def field_flatness_position(self, value):
+        """Control the field flatness position."""
+        self['FFDir-Sel'] = bool(value)
+
+    @property
+    def field_flatness_gain1(self):
+        """Return the gain of the first cell controlled."""
+        return self['FFGainCell2-RB']
+
+    @field_flatness_gain1.setter
+    def field_flatness_gain1(self, value):
+        """Control the gain of the first cell controlled."""
+        self['FFGainCell2-SP'] = value
+
+    @property
+    def field_flatness_gain2(self):
+        """Return the gain of the second cell controle."""
+        return self['FFGainCell4-RB']
+
+    @field_flatness_gain2.setter
+    def field_flatness_gain2(self, value):
+        """Control the gain of the second cell controlled."""
+        self['FFGainCell4-SP'] = value
+
+    @property
+    def field_flatness_deadband(self):
+        """Return the loop action deadband in [%]."""
+        return self['FFDeadBand-RB']
+
+    @field_flatness_deadband.setter
+    def field_flatness_deadband(self, value):
+        """Control the loop action deadband in [%]."""
+        self['FFDeadBand-SP'] = value
+
+    @property
+    def field_flatness_amp1(self):
+        """Amplitude of the first cell controled in [mV]."""
+        return self['FFCell2-Mon']
+
+    @property
+    def field_flatness_amp2(self):
+        """Amplitude of the second cell controled in [mV]."""
+        return self['FFCell4-Mon']
+
+    @property
+    def field_flatness_error(self):
+        """Return the amplitude error in [mV]."""
+        return self['FFError-Mon']
+
+
+class _SILLRF(_BaseLLRF):
+    pass
 
 
 class BORFCavMonitor(_Device):
@@ -923,12 +1015,12 @@ class BORFCavMonitor(_Device):
         BO = 'BO-05D:RF-P5Cav'
 
     PROPERTIES_DEFAULT = (
-        'PwrFwd-Mon', 'PwrRev-Mon',
-        'Cell3PwrTop-Mon', 'Cell3PwrBot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
-        'Cell1Pwr-Mon', 'Cell2Pwr-Mon', 'Cell3Pwr-Mon', 'Cell4Pwr-Mon',
-        'Cell5Pwr-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
+        'FwdPwrW-Mon', 'RevPwrW-Mon',
+        'Cell3TopPwrW-Mon', 'Cell3BotPwrW-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
+        'Cell1PwrW-Mon', 'Cell2PwrW-Mon', 'Cell3PwrW-Mon', 'Cell4PwrW-Mon',
+        'Cell5PwrW-Mon', 'Cylin1T-Mon', 'Cylin2T-Mon', 'Cylin3T-Mon',
         'Cylin4T-Mon', 'Cylin5T-Mon', 'CoupT-Mon',
-        'RmpAmpVCavBot-Mon', 'RmpAmpVCavTop-Mon',
+        'Cell3BotVGap-Mon', 'Cell3TopVGap-Mon',
         )
 
     def __init__(self, props2init='all'):
@@ -947,48 +1039,48 @@ class BORFCavMonitor(_Device):
 
     @property
     def power_top(self):
-        """."""
-        return self['Cell3PwrTop-Mon']
+        """Power at Top in [W]."""
+        return self['Cell3TopPwrW-Mon']
 
     @property
     def power_bottom(self):
-        """."""
-        return self['Cell3PwrBot-Mon']
+        """Power at Bottom in [W]."""
+        return self['Cell3BotPwrW-Mon']
 
     @property
     def power_reverse(self):
-        """."""
-        return self['PwrRev-Mon']
+        """Reverse power in [W]."""
+        return self['RevPwrW-Mon']
 
     @property
     def power_forward(self):
-        """."""
-        return self['PwrFwd-Mon']
+        """Forward power in [W]."""
+        return self['FwdPwrW-Mon']
 
     @property
     def power_cell1(self):
-        """."""
-        return self['Cell1Pwr-Mon']
+        """Power on Cell1 in [W]."""
+        return self['Cell1PwrW-Mon']
 
     @property
     def power_cell2(self):
-        """."""
-        return self['Cell2Pwr-Mon']
+        """Power on Cell2 in [W]."""
+        return self['Cell2PwrW-Mon']
 
     @property
     def power_cell3(self):
-        """."""
-        return self['Cell3Pwr-Mon']
+        """Power on Cell3 in [W]."""
+        return self['Cell3PwrW-Mon']
 
     @property
     def power_cell4(self):
-        """."""
-        return self['Cell4Pwr-Mon']
+        """Power on Cell4 in [W]."""
+        return self['Cell4PwrW-Mon']
 
     @property
     def power_cell5(self):
-        """."""
-        return self['Cell5Pwr-Mon']
+        """Power on Cell5 in [W]."""
+        return self['Cell5PwrW-Mon']
 
     @property
     def temp_coupler(self):
@@ -1023,34 +1115,49 @@ class BORFCavMonitor(_Device):
     @property
     def gap_voltage_bottom(self):
         """Gap Voltage in [V]."""
-        return self['RmpAmpVCavBot-Mon']
+        return self['Cell3BotVGap-Mon']
 
     @property
     def gap_voltage_top(self):
         """Gap Voltage in [V]."""
-        return self['RmpAmpVCavTop-Mon']
+        return self['Cell3TopVGap-Mon']
 
 
 class SIRFCavMonitor(_Device):
-    """."""
+    """TODO: UPDATE WITH PVS FOR SC CAVITIES."""
 
     class DEVICES:
         """Devices names."""
 
-        SI = 'SI-02SB:RF-P7Cav'
+        SIA = 'SI-03SP:RF-SRFCav-A'
+        SIB = 'SI-03SP:RF-SRFCav-B'
+        ALL = (SIA, SIB, )
 
-    PROPERTIES_DEFAULT = (
-        'PwrRev-Mon', 'PwrFwd-Mon',
-        'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
-        'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
-        'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
-        'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
-        )
+    # OLD PVs
+    # PROPERTIES_DEFAULT = (
+    #     'PwrRev-Mon', 'PwrFwd-Mon',
+    #     'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
+    #     'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
+    #     'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
+    #     'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
+    #     )
 
-    def __init__(self, props2init='all'):
+    PROPERTIES_DEFAULT = ()
+
+    def __init__(self, devname, props2init='all'):
         """."""
-        # call base class constructor
-        super().__init__(SIRFCavMonitor.DEVICES.SI, props2init=props2init)
+        if devname not in SIRFCavMonitor.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init)
+
+    @property
+    def system_nickname(self):
+        """."""
+        if self.devname == ASLLRF.DEVICES.SIA:
+            return "A"
+        if self.devname == ASLLRF.DEVICES.SIB:
+            return "B"
+        return ""
 
     @property
     def status(self):
@@ -1150,8 +1257,9 @@ class RFCav(_DeviceSet):
         """Devices names."""
 
         BO = 'BO-05D:RF-P5Cav'
-        SI = 'SI-02SB:RF-P7Cav'
-        ALL = (BO, SI)
+        SIA = 'SI-03SP:RF-SRFCav-A'
+        SIB = 'SI-03SP:RF-SRFCav-B'
+        ALL = (BO, SIA, SIB)
 
     def __init__(self, devname, props2init='all'):
         """RFCav DeviceSet.
@@ -1173,9 +1281,14 @@ class RFCav(_DeviceSet):
                 "props2init must be 'all' or bool(props2init) == False")
 
         self.dev_rfgen = RFGen(props2init=props2init)
-        if devname == RFCav.DEVICES.SI:
-            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SI, props2init=props2init)
-            self.dev_cavmon = SIRFCavMonitor(props2init=props2init)
+        if devname == RFCav.DEVICES.SIA:
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SIA, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(
+                SIRFCavMonitor.DEVICES.SIA, props2init=props2init)
+        elif devname == RFCav.DEVICES.SIB:
+            self.dev_llrf = ASLLRF(ASLLRF.DEVICES.SIB, props2init=props2init)
+            self.dev_cavmon = SIRFCavMonitor(
+                SIRFCavMonitor.DEVICES.SIB, props2init=props2init)
         elif devname == RFCav.DEVICES.BO:
             self.dev_llrf = ASLLRF(ASLLRF.DEVICES.BO, props2init=props2init)
             self.dev_cavmon = BORFCavMonitor(props2init=props2init)
@@ -1209,7 +1322,7 @@ class RFCav(_DeviceSet):
         return self.dev_rfgen.set_frequency(value, tol=tol, timeout=timeout)
 
 
-class RFKillBeam(ASLLRF):
+class RFKillBeam(_SILLRF):
     """RF Kill Beam Button."""
 
     TIMEOUT_WAIT = 20.0  # [s]
@@ -1218,7 +1331,7 @@ class RFKillBeam(ASLLRF):
 
     def __init__(self):
         """Init."""
-        super().__init__(ASLLRF.DEVICES.SI)
+        super().__init__(ASLLRF.DEVICES.SIA)
 
     def cmd_kill_beam(self):
         """Kill beam."""
@@ -1232,27 +1345,28 @@ class RFKillBeam(ASLLRF):
         # set Amplitude Increase Rate to 50 mV/s and wait
         self.voltage_incrate = self.INCRATE_VALUE
         if not self._wait(
-                'AMPREF:INCRATE', self.INCRATE_VALUE,
+                'AmpIncRate-RB', self.INCRATE_VALUE,
                 timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Amplitude Increase Rate.']
 
         # set Amplitude Reference to 60mV and wait
         self.voltage = self.REFMIN_VALUE
         if not self._wait_float(
-                'SL:INP:AMP', self.REFMIN_VALUE, abs_tol=1,
+                'SLInpAmp-Mon', self.REFMIN_VALUE, abs_tol=1,
                 timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Voltage to low value.']
 
         # set Amplitude Reference to initial value
         self.voltage = amp_init
         if not self._wait_float(
-                'SL:INP:AMP', amp_init, abs_tol=1, timeout=self.TIMEOUT_WAIT):
+                'SLInpAmp-Mon', amp_init,
+                abs_tol=1, timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Voltage back to original value.']
 
         # set Amplitude Increase Rate to initial value
         self.voltage_incrate = amp_incrate_init
         if not self._wait(
-                'AMPREF:INCRATE', self.INCRATE_VALUE,
+                'AmpIncRate-RB', self.INCRATE_VALUE,
                 timeout=self.TIMEOUT_WAIT):
             return [False, 'Could not set RF Amplitude Increase Rate back.']
         return [True, '']
@@ -1263,10 +1377,13 @@ class SILLRFPreAmp(_Device):
 
     class DEVICES:
         """Devices names."""
-
-        SSA1 = 'RA-ToSIA03:RF-CtrlPanel'
-        SSA2 = 'RA-ToSIA04:RF-CtrlPanel'
-        ALL = (SSA1, SSA2)
+        # Cavity A
+        SSA1 = 'RA-ToSIA01:RF-CtrlPanel'
+        SSA2 = 'RA-ToSIA02:RF-CtrlPanel'
+        # Cavity B
+        SSA3 = 'RA-ToSIB03:RF-CtrlPanel'
+        SSA4 = 'RA-ToSIB04:RF-CtrlPanel'
+        ALL = (SSA1, SSA2, SSA3, SSA4)
 
     PROPERTIES_DEFAULT = (
         'PINSwEnbl-Cmd', 'PINSwDsbl-Cmd', 'PINSwSts-Mon',
@@ -1340,10 +1457,13 @@ class SIRFDCAmp(_Device):
 
     class DEVICES:
         """Devices names."""
-
-        SSA1 = 'RA-ToSIA03:RF-TDKSource'
-        SSA2 = 'RA-ToSIA04:RF-TDKSource'
-        ALL = (SSA1, SSA2)
+        # Cavity A
+        SSA1 = 'RA-ToSIA01:RF-TDKSource'
+        SSA2 = 'RA-ToSIA02:RF-TDKSource'
+        # Cavity B
+        SSA3 = 'RA-ToSIB03:RF-TDKSource'
+        SSA4 = 'RA-ToSIB04:RF-TDKSource'
+        ALL = (SSA1, SSA2, SSA3, SSA4)
 
     PROPERTIES_DEFAULT = (
         'PwrDCEnbl-Cmd', 'PwrDCDsbl-Cmd', 'PwrDC-Mon',
@@ -1417,10 +1537,13 @@ class SIRFACAmp(_Device):
 
     class DEVICES:
         """Devices names."""
-
-        SSA1 = 'RA-ToSIA03:RF-ACPanel'
-        SSA2 = 'RA-ToSIA04:RF-ACPanel'
-        ALL = (SSA1, SSA2)
+        # Cavity A
+        SSA1 = 'RA-ToSIA01:RF-ACPanel'
+        SSA2 = 'RA-ToSIA02:RF-ACPanel'
+        # Cavity B
+        SSA3 = 'RA-ToSIB03:RF-ACPanel'
+        SSA4 = 'RA-ToSIB04:RF-ACPanel'
+        ALL = (SSA1, SSA2, SSA3, SSA4)
 
     PROPERTIES_DEFAULT = (
         'PwrACEnbl-Cmd', 'PwrACDsbl-Cmd', 'PwrAC-Mon',

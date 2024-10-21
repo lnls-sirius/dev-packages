@@ -185,16 +185,16 @@ class App(_Callback):
         self._fambpm_dev = _FamBPMs(
             devname=_FamBPMs.DEVICES.SI, ispost_mortem=True,
             props2init=[
-                'ACQChannel-Sel', 'ACQChannel-Sts',
-                'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
-                'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
-                'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
-                'ACQTrigger-Sel', 'ACQTrigger-Sts',
-                'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-                'ACQStatus-Sts',
+                'GENChannel-Sel', 'GENChannel-Sts',
+                'GENSamplesPre-SP', 'GENSamplesPre-RB',
+                'GENSamplesPost-SP', 'GENSamplesPost-RB',
+                'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
+                'GENTrigger-Sel', 'GENTrigger-Sts',
+                'GENTriggerEvent-Cmd',
+                'GENStatus-Mon',
                 'INFOFAcqRate-RB', 'INFOMONITRate-RB',
-                'TRIGGER4TrnSrc-Sel', 'TRIGGER4TrnSrc-Sts',
-                'TRIGGER4TrnOutSel-SP', 'TRIGGER4TrnOutSel-RB',
+                'TRIGGER_GEN4TrnSrc-Sel', 'TRIGGER_GEN4TrnSrc-Sts',
+                'TRIGGER_GEN4TrnOutSel-SP', 'TRIGGER_GEN4TrnOutSel-RB',
                 'TRIGGER_PM0RcvSrc-Sel', 'TRIGGER_PM0RcvSrc-Sts',
                 'TRIGGER_PM0RcvInSel-SP', 'TRIGGER_PM0RcvInSel-RB',
                 'TRIGGER_PM1RcvSrc-Sel', 'TRIGGER_PM1RcvSrc-Sts',
@@ -233,13 +233,8 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_afcphystrigs)
 
         # # RF devices
-        self._llrf = _ASLLRF(
-            devname=_ASLLRF.DEVICES.SI,
-            props2init=[
-                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON',
-                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd', 'Reset-Cmd',
-            ])
-        self._llrf.pv_object('FASTINLK-MON').auto_monitor = True
+        names = [_ASLLRF.DEVICES.SIA, _ASLLRF.DEVICES.SIB]
+        self._llrfs = self._create_llrfs(names)
 
         # # auxiliary devices
         self._fofb = _FOFB(
@@ -290,6 +285,14 @@ class App(_Callback):
             is_cathread=True)
         self.thread_check_configs.pause()
         self.thread_check_configs.start()
+
+    def _create_llrfs(self, names):
+        """."""
+        props_itlk = _ASLLRF.PROPERTIES_INTERLOCK
+        devs = [_ASLLRF(devname=name, props2init=props_itlk) for name in names]
+        for dev in devs:
+            dev.pv_object('IntlkAll-Mon').auto_monitor = True
+        return devs
 
     def init_database(self):
         """Set initial PV values."""
@@ -366,7 +369,8 @@ class App(_Callback):
         self._handle_lock_fouts(init)
         self._handle_lock_afcti(init)
         self._handle_lock_hltriggers(init)
-        self._handle_lock_llrf(init)
+        for dev in self._llrfs:
+            self._handle_lock_llrf(dev, init)
         self._handle_lock_bpm_configs(init)
         self._handle_lock_afcphytrigs(init)
         if init:
@@ -425,21 +429,23 @@ class App(_Callback):
                 pvo = trigdev.pv_object(prop_rb)
                 if init:
                     pvo.add_callback(
-                        _part(self._callback_lock, trigdev, prop_sp, desired_val))
+                        _part(
+                            self._callback_lock,
+                            trigdev, prop_sp, desired_val))
                 else:
                     pvo.run_callbacks()
 
-    def _handle_lock_llrf(self, init=False):
-        self._llrf.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
-        pvo_beamtrip = self._llrf.pv_object('ILK:BEAM:TRIP')
-        pvo_manintlk = self._llrf.pv_object('ILK:MAN')
+    def _handle_lock_llrf(self, dev, init=False):
+        dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
+        pvo_beamtrip = dev.pv_object('FIMOrbitIntlk-Sts')
+        pvo_manintlk = dev.pv_object('FIMManual-Sts')
         if init:
             pvo_beamtrip.add_callback(_part(
-                self._callback_lock, self._llrf,
-                'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
+                self._callback_lock, dev,
+                'FIMOrbitIntlk-Sel', self._llrf_intlk_state))
             pvo_manintlk.add_callback(_part(
-                self._callback_lock, self._llrf,
-                'ILK:MAN:S', self._llrf_intlk_state))
+                self._callback_lock, dev,
+                'FIMManual-Sel', self._llrf_intlk_state))
         else:
             pvo_beamtrip.run_callbacks()
             pvo_manintlk.run_callbacks()
@@ -865,10 +871,10 @@ class App(_Callback):
         return True
 
     def _acq_config(self):
-        self._update_log('Aborting BPM acquisition...')
-        ret = self._fambpm_dev.cmd_abort_mturn_acquisition()
+        self._update_log('Stoping BPM acquisition...')
+        ret = self._fambpm_dev.cmd_stop_mturn_acquisition()
         if ret > 0:
-            self._update_log('ERR:Failed to abort BPM acquisition.')
+            self._update_log('ERR:Failed to stop BPM acquisition.')
             return
         self._update_log('...done. Configuring BPM acquisition...')
         ret = self._fambpm_dev.config_mturn_acquisition(
@@ -879,7 +885,7 @@ class App(_Callback):
             external=True)
         if ret < 0:
             self._update_log(
-                'ERR:Failed to abort acquisition for ' +
+                'ERR:Failed to stop acquisition for ' +
                 f'{self._const.bpm_names[-ret-1]:s}.')
             return
         if ret > 0:
@@ -953,11 +959,13 @@ class App(_Callback):
     def cmd_config_llrf(self, value):
         """Configure LLRF interlock according to lock configurations."""
         _ = value
-        if not self._llrf.connected:
-            self._update_log(f'ERR:LLRF disconnected.')
-            return False
-        self._llrf['ILK:BEAM:TRIP:S'] = self._llrf_intlk_state
-        self._llrf['ILK:MAN:S'] = self._llrf_intlk_state
+        for llrf in self._llrfs:
+            if not llrf.connected:
+                name = llrf.system_nickname
+                self._update_log(f'ERR:LLRF-{name} disconnected.')
+                return False
+            llrf.fast_interlock_monitor_orbit = self._llrf_intlk_state
+            llrf.fast_interlock_monitor_manual = self._llrf_intlk_state
         return True
 
     def cmd_config_bpms(self, value):
@@ -1145,7 +1153,7 @@ class App(_Callback):
             okb &= all(
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
             okb &= all(
-                d.acq_status == self._const.AcqStates.External_Trig for d in bpms)
+                d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
             value = _updt_bit(value, 8, not okb)
             # LogTrigConfigured
             okl = True
@@ -1154,6 +1162,8 @@ class App(_Callback):
                     prp_rb = _PVName.from_sp2rb(prp)
                     okl &= bpm[prp_rb] == val
             value = _updt_bit(value, 9, not okl)
+        else:
+            value = 0b11111111111
 
         self._bpm_status = value
         self.run_callbacks('BPMStatus-Mon', self._bpm_status)
@@ -1224,13 +1234,15 @@ class App(_Callback):
 
         # LLRF Status
         value = (1 << 2) - 1
-        dev = self._llrf
-        if dev.connected:
-            value = _updt_bit(value, 0, 0)
-            okc = dev['ILK:BEAM:TRIP'] == self._llrf_intlk_state
-            okc &= dev['ILK:MAN'] == self._llrf_intlk_state
-            value = _updt_bit(value, 1, not okc)
-        self.run_callbacks('LLRFStatus-Mon', value)
+        for dev in self._llrfs:
+            if dev.connected:
+                value = _updt_bit(value, 0, 0)
+                fim_orbit = dev.fast_interlock_monitor_orbit
+                fim_manual = dev.fast_interlock_monitor_manual
+                okc = fim_orbit == self._llrf_intlk_state
+                okc &= fim_manual == self._llrf_intlk_state
+                value = _updt_bit(value, 1, not okc)
+            self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
         ttook = _time.time() - _t0
@@ -1414,8 +1426,12 @@ class App(_Callback):
             self._update_log('ERR:EVG did not propagate event Intlk')
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
-        if not self._llrf['FASTINLK-MON'] & (1 << 12):
-            self._update_log('ERR:LLRF did not received RFKill event')
+
+        for llrf in self._llrfs:
+            if not llrf.interlock_mon & (1 << 12):
+                name = llrf.system_nickname
+                self._update_log(
+                    f'ERR:LLRF-{name} did not receive RFKill event')
 
     def _get_bpm_rates_factor(self):
         if self._monitsum2intlksum_factor:
@@ -1479,15 +1495,22 @@ class App(_Callback):
             return
         # send soft interlock to RF
         self._update_log('FATAL:sending soft interlock to LLRF.')
-        self._llrf['IntlkSet-Cmd'] = 1
+        # sending interlock for all LLRFs systems, then wait
+        for llrf in self._llrfs:
+            llrf.interlock_manual = 1
         _time.sleep(1)
-        self._llrf['IntlkSet-Cmd'] = 0
+        for llrf in self._llrfs:
+            llrf.interlock_manual = 0
+
         if self._is_dry_run:
             # wait a little and rearming FDL acquisition
             _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
-            self._llrf['Reset-Cmd'] = 1
+            # sending interlock reset for all LLRFs systems, then wait
+            for llrf in self._llrfs:
+                llrf.interlock_reset = 1
             _time.sleep(1)
-            self._llrf['Reset-Cmd'] = 0
+            for llrf in self._llrfs:
+                llrf.interlock_reset = 0
 
     # --- device lock methods ---
 
@@ -1588,10 +1611,7 @@ class App(_Callback):
             return
 
         # else, apply value as desired
-        if device == self._llrf:
-            propty_rb = propty_sp.replace(':S', '')
-        else:
-            propty_rb = _PVName.from_sp2rb(propty_sp)
+        propty_rb = _PVName.from_sp2rb(propty_sp)
         self._update_log(f'WARN:Locking {pvname}')
         device[propty_sp] = desired_value
 
