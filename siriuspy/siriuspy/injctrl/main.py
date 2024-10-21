@@ -1295,6 +1295,7 @@ class App(_Callback):
                 bucket %= _Const.MAX_BKT
                 bucket += 1
                 lastfilledbucket = bucket
+                print(bucket, allowed_buckets)
                 if bucket in allowed_buckets:
                     break
             else:
