@@ -322,6 +322,17 @@ class InjCtrl(_Device):
     def bucketlist_stop(self, value):
         self['BucketListStop-SP'] = value
 
+    @property
+    def bucketlist_allowed_mask(self):
+        """Bucket list stop value."""
+        return self['BucketListAllowedMask-RB']
+
+    @bucketlist_allowed_mask.setter
+    def bucketlist_allowed_mask(self, value):
+        if not isinstance(value, _np.ndarray) or value.size != _Const.MAX_BKT:
+            return
+        self['BucketListAllowedMask-SP'] = _np.array(value, dtype=bool)
+
     # ----- injection mode properties -----
 
     @property
