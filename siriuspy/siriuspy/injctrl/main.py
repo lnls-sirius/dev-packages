@@ -678,11 +678,8 @@ class App(_Callback):
 
     def set_bucketlist_allowed_mask(self, values):
         """Set allowed buckets for injection."""
-        if not isinstance(values, _np.ndarray):
-            self._update_log('ERR:BucketListAllowedMask not set. wrong type.')
-            return False
-        elif values.size != self._bucketlist_allowed_mask.size:
-            self._update_log('ERR:BucketListAllowedMask not set. wrong size.')
+        if len(values) != self._bucketlist_allowed_mask.size:
+            self._update_log('ERR:Allowed buckets not set. wrong size.')
             return False
         self._bucketlist_allowed_mask = _np.array(values, dtype=bool)
         self.run_callbacks(
@@ -1295,7 +1292,6 @@ class App(_Callback):
                 bucket %= _Const.MAX_BKT
                 bucket += 1
                 lastfilledbucket = bucket
-                print(bucket, allowed_buckets)
                 if bucket in allowed_buckets:
                     break
             else:
