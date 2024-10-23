@@ -628,7 +628,8 @@ class _BaseLLRF(_Device):
         'PhsIncRate-RB', 'PhsIncRate-SP',
         'AmpRefMin-RB', 'AmpRefMin-SP', 'PhsRefMin-RB', 'PhsRefMin-SP',
         'CondEnbl-Sts', 'CondEnbl-Sel', 'CondDuty-RB', 'CondDuty-SP',
-        'CondDutyCycle-Mon',
+        'CondDutyCycle-Mon', 'PhShCav-SP', 'PhShCav-RB',
+        'SLPILim-SP', 'SLPILim-RB', 'SLKI-SP', 'SLKI-RB' 'SLKP-SP', 'SLKI-RB'
         )
 
     def __init__(self, devname, props2init='all'):
@@ -742,6 +743,32 @@ class _BaseLLRF(_Device):
         pv2wait = 'SLInpPhs-Mon' if wait_mon else 'SLRefPhs-Mon'
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
+    def phase_shift_cav_sp(self):
+        """."""
+        return self['PhShCav-SP']
+
+    def phase_shift_cav(self):
+        """."""
+        return self['PhShCav-RB']
+
+    @phase_shift_cav
+    def phase_shift_cav(self, value):
+        self['PhShCav-SP'] = self._wrap_phase(value)
+
+    @property
+    def phase_refmin_sp(self):
+        """."""
+        return self['PhsRefMin-SP']
+
+    @property
+    def phase_refmin(self):
+        """."""
+        return self['PhsRefMin-RB']
+
+    @phase_refmin.setter
+    def phase_refmin(self, value):
+        self['PhsRefMin-SP'] = value
+
     @property
     def voltage_mon(self):
         """."""
@@ -804,20 +831,6 @@ class _BaseLLRF(_Device):
     @voltage_refmin.setter
     def voltage_refmin(self, value):
         self['AmpRefMin-SP'] = value
-
-    @property
-    def phase_refmin_sp(self):
-        """."""
-        return self['PhsRefMin-SP']
-
-    @property
-    def phase_refmin(self):
-        """."""
-        return self['PhsRefMin-RB']
-
-    @phase_refmin.setter
-    def phase_refmin(self, value):
-        self['PhsRefMin-SP'] = value
 
     @property
     def conditioning_state(self):
@@ -918,6 +931,39 @@ class _BaseLLRF(_Device):
         self['IntlkReset-Cmd'] = 1
         _time.sleep(wait)
         self['IntlkReset-Cmd'] = 0
+
+    def loop_pi_limit_sp(self):
+        return self['SLPILim-SP']
+
+    @property
+    def loop_pi_limit(self):
+        return self['SLPILim-RB']
+
+    @loop_pi_limit.setter
+    def loop_pi_limit(self, value):
+        self['SLPILim-SP'] = value
+
+    def loop_ki_sp(self):
+        return self['SLKI-SP']
+
+    @property
+    def loop_ki(self):
+        return self['SLKI-RB']
+
+    @loop_ki.setter
+    def loop_ki(self, value):
+        self['SLKI-SP'] = value
+
+    def loop_kp_sp(self):
+        return self['SLKP-SP']
+
+    @property
+    def loop_kp(self):
+        return self['SLKP-RB']
+
+    @loop_kp.setter
+    def loop_kp(self, value):
+        self['SLKP-SP'] = value
 
 
 class _BOLLRF(_BaseLLRF):
