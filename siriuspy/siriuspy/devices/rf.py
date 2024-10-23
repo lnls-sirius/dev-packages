@@ -747,11 +747,12 @@ class _BaseLLRF(_Device):
         """."""
         return self['PhShCav-SP']
 
+    @property
     def phase_shift_cav(self):
         """."""
         return self['PhShCav-RB']
 
-    @phase_shift_cav
+    @phase_shift_cav.setter
     def phase_shift_cav(self, value):
         self['PhShCav-SP'] = self._wrap_phase(value)
 
