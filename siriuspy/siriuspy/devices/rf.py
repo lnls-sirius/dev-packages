@@ -1180,16 +1180,12 @@ class SIRFCavMonitor(_Device):
         SIB = 'SI-03SP:RF-SRFCav-B'
         ALL = (SIA, SIB, )
 
-    # OLD PVs
-    # PROPERTIES_DEFAULT = (
-    #     'PwrRev-Mon', 'PwrFwd-Mon',
-    #     'PwrCell4Top-Mon', 'PwrCell4Bot-Mon', 'PwrRFIntlk-Mon', 'Sts-Mon',
-    #     'PwrCell2-Mon', 'PwrCell4-Mon', 'PwrCell6-Mon', 'Cylin1T-Mon',
-    #     'Cylin2T-Mon', 'Cylin3T-Mon', 'Cylin4T-Mon', 'Cylin5T-Mon',
-    #     'Cylin6T-Mon', 'Cylin7T-Mon', 'CoupT-Mon', 'AmpVCav-Mon',
-    #     )
-
-    PROPERTIES_DEFAULT = ()
+    PROPERTIES_DEFAULT = (
+        'PwrW-Mon', 'PwrdBm-Mon', 'Amp-Mon',
+        'FwdPwrW-Mon', 'FwdPwrdBm-Mon', 'FwdAmp-Mon',
+        'RevPwrW-Mon', 'RevPwrdBm-Mon', 'RevAmp-Mon',
+        'TunerMoveDown-Mon', 'TunerMoveUp-Mon', 'VGap-Mon',
+        )
 
     def __init__(self, devname, props2init='all'):
         """."""
@@ -1207,94 +1203,64 @@ class SIRFCavMonitor(_Device):
         return ""
 
     @property
-    def status(self):
-        """."""
-        return self['Sts-Mon']
+    def gap_voltage(self):
+        """Gap voltage in [V]."""
+        return self['VGap-Mon']
 
     @property
-    def power_interlock(self):
-        """."""
-        return self['PwrRFIntlk-Mon']
+    def power(self):
+        """Power at cavity in [W]."""
+        return self['PwrW-Mon']
 
     @property
-    def power_top(self):
-        """."""
-        return self['PwrCell4Top-Mon']
+    def power_dbm(self):
+        """Power at cavity in [dBm]."""
+        return self['PwrdBm-Mon']
 
     @property
-    def power_bottom(self):
-        """."""
-        return self['PwrCell4Bot-Mon']
-
-    @property
-    def power_reverse(self):
-        """."""
-        return self['PwrRev-Mon']
+    def amplitude(self):
+        """Amplitude at cavity in [mV]."""
+        return self['Amp-Mon']
 
     @property
     def power_forward(self):
-        """."""
-        return self['PwrFwd-Mon']
+        """Forward power in [W]."""
+        return self['FwdPwrW-Mon']
 
     @property
-    def power_cell2(self):
-        """."""
-        return self['PwrCell2-Mon']
+    def power_forward_dbm(self):
+        """Forward power in [dBm]."""
+        return self['FwdPwrdBm-Mon']
 
     @property
-    def power_cell4(self):
-        """."""
-        return self['PwrCell4-Mon']
+    def power_reverse(self):
+        """Reverse power in [W]."""
+        return self['RevPwrW-Mon']
 
     @property
-    def power_cell6(self):
-        """."""
-        return self['PwrCell6-Mon']
+    def power_reverse_dbm(self):
+        """Reverse power in [dBm]."""
+        return self['RevPwrdBm-Mon']
 
     @property
-    def temp_coupler(self):
-        """."""
-        return self['CoupT-Mon']
+    def amplitude_forward(self):
+        """Forward amplitude in [mV]."""
+        return self['FwdAmp-Mon']
 
     @property
-    def temp_cell1(self):
-        """."""
-        return self['Cylin1T-Mon']
+    def amplitude_reverse(self):
+        """Reverse amplitude in [mV]."""
+        return self['RevAmp-Mon']
 
     @property
-    def temp_cell2(self):
-        """."""
-        return self['Cylin2T-Mon']
+    def tuner_moving_down(self):
+        """Is tuner moving down?."""
+        return self['TunerMoveDown-Mon']
 
     @property
-    def temp_cell3(self):
-        """."""
-        return self['Cylin3T-Mon']
-
-    @property
-    def temp_cell4(self):
-        """."""
-        return self['Cylin4T-Mon']
-
-    @property
-    def temp_cell5(self):
-        """."""
-        return self['Cylin5T-Mon']
-
-    @property
-    def temp_cell6(self):
-        """."""
-        return self['Cylin6T-Mon']
-
-    @property
-    def temp_cell7(self):
-        """."""
-        return self['Cylin7T-Mon']
-
-    @property
-    def gap_voltage(self):
-        """."""
-        return self['AmpVCav-Mon']
+    def tuner_moving_up(self):
+        """Is tuner moving up?."""
+        return self['TunerMoveUp-Mon']
 
 
 class RFCav(_DeviceSet):
