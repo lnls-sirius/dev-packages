@@ -1233,16 +1233,16 @@ class App(_Callback):
         self.run_callbacks('TimingStatus-Mon', self._timing_status)
 
         # LLRF Status
-        value = (1 << 2) - 1
-        for dev in self._llrfs:
+        value = (1 << 4) - 1
+        for i, dev in enumerate(self._llrfs):
             if dev.connected:
-                value = _updt_bit(value, 0, 0)
+                value = _updt_bit(value, 2*i, 0)
                 fim_orbit = dev.fast_interlock_monitor_orbit
                 fim_manual = dev.fast_interlock_monitor_manual
                 okc = fim_orbit == self._llrf_intlk_state
                 okc &= fim_manual == self._llrf_intlk_state
-                value = _updt_bit(value, 1, not okc)
-            self.run_callbacks('LLRFStatus-Mon', value)
+                value = _updt_bit(value, 2*i+1, not okc)
+        self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
         ttook = _time.time() - _t0
