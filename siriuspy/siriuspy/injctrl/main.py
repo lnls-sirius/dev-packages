@@ -192,6 +192,9 @@ class App(_Callback):
         curr_pvo = self.currinfo_dev.pv_object('Current-Mon')
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
+        self.currinfo_dev.set_auto_monitor('StoredEBeam-Mon', True)
+        stored_pvo = self.currinfo_dev.pv_object('StoredEBeam-Mon')
+        stored_pvo.add_callback(self._callback_havebeam)
 
         self._pu_names, self._pu_devs = list(), list()
         self._pu_refvolt = list()
@@ -1173,6 +1176,16 @@ class App(_Callback):
         self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Injecting)
         _time.sleep(self._isinj_duration/1000)
         self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Idle)
+
+    def _callback_havebeam(self, value, **kws):
+        if value:
+            return
+        if self._mode != _Const.InjMode.TopUp:
+            return
+        if self._topup_state_sts != _Const.TopUpSts.Off:
+            self._update_log('FATAL:We do not have stored beam!')
+            self._update_log('FATAL:Opening TopUp loop...')
+            self.set_topup_state(_Const.OffOn.Off)
 
     # --- auxiliary injection methods ---
 
