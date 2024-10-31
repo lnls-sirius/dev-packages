@@ -11,6 +11,7 @@ from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from .afc_acq_core import AFCACQLogicalTrigger
+from .bpm_fam import FamBPMs
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
@@ -297,13 +298,9 @@ class FamFOFBControllers(_DeviceSet):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
             self._bpm_trgs[bpm] = AFCACQLogicalTrigger(bpm, self.BPM_TRIGS_ID)
-        bpm2dsbl = [
-            'SI-'+sub+':DI-BPM-'+idx
-            for sub in ['06SB', '07SP', '08SB', '09SA', '10SB', '11SP', '12SB', '14SB']
-            for idx in ['1', '2']
-        ]
+        # # DCCs to disable (ID BPMs)
         self._bpmdcc2dsbl = dict()
-        for bpm in bpm2dsbl:
+        for bpm in FamBPMs.ID_BPMS:
             self._bpmdcc2dsbl[bpm] = BPMDCC(bpm)
         # fofb event
         self._evt_fofb = Event('FOFBS')
