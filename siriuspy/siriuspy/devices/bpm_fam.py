@@ -24,16 +24,29 @@ class FamBPMs(_DeviceSet):
     PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
     ALL_MTURN_SIGNALS2ACQ = ('A', 'B', 'C', 'D', 'X', 'Y', 'Q', 'S')
 
+    ID_BPMS = (
+        'SI-06SB:DI-BPM-1', 'SI-06SB:DI-BPM-2',
+        'SI-07SP:DI-BPM-1', 'SI-07SP:DI-BPM-2',
+        'SI-08SB:DI-BPM-1', 'SI-08SB:DI-BPM-2',
+        'SI-09SA:DI-BPM-1', 'SI-09SA:DI-BPM-2',
+        'SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2',
+        'SI-11SP:DI-BPM-1', 'SI-11SP:DI-BPM-2',
+        'SI-12SB:DI-BPM-1', 'SI-12SB:DI-BPM-2',
+        'SI-14SB:DI-BPM-1', 'SI-14SB:DI-BPM-2'
+    )
+
     class DEVICES:
         """."""
 
         SI = 'SI-Fam:DI-BPM'
         BO = 'BO-Fam:DI-BPM'
-        ALL = (BO, SI)
+        SI_ID = "SI-Fam:DI-BPM-ID"
+        ALL = (BO, SI, SI_ID)
 
     def __init__(
             self, devname=None, bpmnames=None, ispost_mortem=False,
-            props2init='all', mturn_signals2acq=('X', 'Y')):
+            props2init='all', mturn_signals2acq=('X', 'Y')
+        ):
         """Family of BPMs.
 
         Args:
@@ -65,8 +78,14 @@ class FamBPMs(_DeviceSet):
             raise ValueError('Wrong value for devname')
 
         devname = _PVName(devname)
-        bpm_names = bpmnames or _BPMSearch.get_names(
-            filters={'sec': devname.sec, 'dev': devname.dev})
+        if bpmnames is not None:
+            bpm_names = bpmnames
+        elif devname.idx == 'ID':
+            bpm_names = list(self.ID_BPMS)
+        else:
+            bpm_names = _BPMSearch.get_names(
+                filters={'sec': devname.sec, 'dev': devname.dev}
+            )
         self._ispost_mortem = ispost_mortem
 
         self._mturn_signals2acq = ''
