@@ -148,16 +148,27 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # RF EVE
-        trgsrc = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtm')
-        pvname = _LLTimeSearch.get_channel_output_port_pvname(trgsrc[0])
-        self._llrf_evtcnt_pvname = f'{pvname.propty}EvtCnt-Mon'
-        self._everf_dev = _Device(
-            pvname.device_name,
-            props2init=[self._llrf_evtcnt_pvname, ],
-            auto_monitor_mon=True)
-        pvo = self._everf_dev.pv_object(self._llrf_evtcnt_pvname)
-        pvo.wait_for_connection()
-        self._everf_evtcnt = pvo.get() or 0
+        trgsrcs = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtm')
+        pvnames = {
+            _LLTimeSearch.get_channel_output_port_pvname(src)
+            for src in trgsrcs
+        }
+        self._llrf_evtcnt_pvnames, self._everf_devs = dict(), dict()
+        for pvn in pvnames:
+            devn = pvn.device_name
+            propty = f'{pvn.propty}EvtCnt-Mon'
+
+            self._llrf_evtcnt_pvnames[devn] = propty
+
+            self._everf_devs[devn] = _Device(
+                devn, props2init=[propty, ], auto_monitor_mon=True
+            )
+
+        self._everf_evtcnts = dict()
+        for devn, propty in self._llrf_evtcnt_pvnames.items():
+            pvo = self._everf_devs[devn].pv_object(propty)
+            pvo.wait_for_connection()
+            self._everf_evtcnts[devn] = pvo.get() or 0
 
         # # HL triggers
         self._hltrig_devs = dict()
@@ -1233,16 +1244,16 @@ class App(_Callback):
         self.run_callbacks('TimingStatus-Mon', self._timing_status)
 
         # LLRF Status
-        value = (1 << 2) - 1
-        for dev in self._llrfs:
+        value = (1 << 4) - 1
+        for i, dev in enumerate(self._llrfs):
             if dev.connected:
-                value = _updt_bit(value, 0, 0)
+                value = _updt_bit(value, 2*i, 0)
                 fim_orbit = dev.fast_interlock_monitor_orbit
                 fim_manual = dev.fast_interlock_monitor_manual
                 okc = fim_orbit == self._llrf_intlk_state
                 okc &= fim_manual == self._llrf_intlk_state
-                value = _updt_bit(value, 1, not okc)
-            self.run_callbacks('LLRFStatus-Mon', value)
+                value = _updt_bit(value, 2*i+1, not okc)
+        self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
         ttook = _time.time() - _t0
@@ -1414,10 +1425,11 @@ class App(_Callback):
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE counted the event PsMtm
-        new_evtcnt = self._everf_dev[self._llrf_evtcnt_pvname]
-        if new_evtcnt == self._everf_evtcnt:
-            self._update_log('WARN:RF EVE did not count event PsMtm')
-        self._everf_evtcnt = new_evtcnt
+        for devn, propty in self._llrf_evtcnt_pvnames.items():
+            new_evtcnt = self._everf_devs[devn][propty]
+            if new_evtcnt == self._everf_evtcnts[devn]:
+                self._update_log('WARN:RF EVE did not count event PsMtm')
+            self._everf_evtcnts[devn] = new_evtcnt
         # wait minimum period for BPM to update interlock PVs
         _time.sleep(2)
         # verify if EVG propagated the event Intlk
