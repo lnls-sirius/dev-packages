@@ -1335,53 +1335,29 @@ class RFCav(_DeviceSet):
         return self.dev_rfgen.set_frequency(value, tol=tol, timeout=timeout)
 
 
-class RFKillBeam(_SILLRF):
+class RFKillBeam(_DeviceSet):
     """RF Kill Beam Button."""
 
-    TIMEOUT_WAIT = 20.0  # [s]
-    INCRATE_VALUE = ASLLRF.VoltIncRates.vel_50p0  # [mV/s]
-    REFMIN_VALUE = 60  # Minimum Amplitude Reference [mV]
+    TIMEOUT_WAIT = 10  # [s]
 
     def __init__(self):
         """Init."""
-        super().__init__(ASLLRF.DEVICES.SIA)
+        props2init = ASLLRF.PROPERTIES_INTERLOCK
+        si_a = ASLLRF(devname=ASLLRF.DEVICES.SIA, props2init=props2init)
+        si_b = ASLLRF(devname=ASLLRF.DEVICES.SIB, props2init=props2init)
+        devs = [si_a, si_b]
+        super().__init__(devices=devs, devname='SI-Glob:RF-KillBeam')
 
     def cmd_kill_beam(self):
         """Kill beam."""
         if not self.wait_for_connection(self.TIMEOUT_WAIT):
             return [False, 'Could not read RF PVs.']
 
-        # get initial values
-        amp_incrate_init = self.voltage_incrate
-        amp_init = self.voltage
-
-        # set Amplitude Increase Rate to 50 mV/s and wait
-        self.voltage_incrate = self.INCRATE_VALUE
-        if not self._wait(
-                'AmpIncRate-RB', self.INCRATE_VALUE,
-                timeout=self.TIMEOUT_WAIT):
-            return [False, 'Could not set RF Amplitude Increase Rate.']
-
-        # set Amplitude Reference to 60mV and wait
-        self.voltage = self.REFMIN_VALUE
-        if not self._wait_float(
-                'SLInpAmp-Mon', self.REFMIN_VALUE, abs_tol=1,
-                timeout=self.TIMEOUT_WAIT):
-            return [False, 'Could not set RF Voltage to low value.']
-
-        # set Amplitude Reference to initial value
-        self.voltage = amp_init
-        if not self._wait_float(
-                'SLInpAmp-Mon', amp_init,
-                abs_tol=1, timeout=self.TIMEOUT_WAIT):
-            return [False, 'Could not set RF Voltage back to original value.']
-
-        # set Amplitude Increase Rate to initial value
-        self.voltage_incrate = amp_incrate_init
-        if not self._wait(
-                'AmpIncRate-RB', self.INCRATE_VALUE,
-                timeout=self.TIMEOUT_WAIT):
-            return [False, 'Could not set RF Amplitude Increase Rate back.']
+        for llrf in self.devices:
+            llrf.interlock_manual = 1
+        _time.sleep(1)
+        for llrf in self.devices:
+            llrf.interlock_manual = 0
         return [True, '']
 
 
