@@ -166,7 +166,7 @@ class App(_Callback):
 
         self._everf_evtcnts = dict()
         for devn, propty in self._llrf_evtcnt_pvnames.items():
-            pvo = dev.pv_object(propty)
+            pvo = self._everf_devs[devn].pv_object(propty)
             pvo.wait_for_connection()
             self._everf_evtcnts[devn] = pvo.get() or 0
 
