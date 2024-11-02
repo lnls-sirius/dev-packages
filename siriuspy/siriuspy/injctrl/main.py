@@ -88,7 +88,7 @@ class App(_Callback):
         self._topup_nrpulses = 1
         self._topup_job = None
         self._accum_job = None
-        self._stop_topup_job = None
+        self._aborttopup_job = None
         self._abort = False
         self._setting_mode = False
 
@@ -1183,15 +1183,15 @@ class App(_Callback):
             return
         if self._mode != _Const.InjMode.TopUp:
             return
-        if self._stop_topup_job is not None and \
-                self._stop_topup_job.is_alive():
+        if self._aborttopup_job is not None and \
+                self._aborttopup_job.is_alive():
             return
         if self._topup_state_sts != _Const.TopUpSts.Off:
             self._update_log('FATAL:We do not have stored beam!')
             self._update_log('FATAL:Opening TopUp loop...')
-            self._stop_topup_job = _epics.ca.CAThread(
+            self._aborttopup_job = _epics.ca.CAThread(
                 target=self.set_topup_state, args=[_Const.OffOn.Off, ], daemon=True)
-            self._stop_topup_job.start()
+            self._aborttopup_job.start()
 
     # --- auxiliary injection methods ---
 
