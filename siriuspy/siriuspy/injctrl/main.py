@@ -69,7 +69,7 @@ class App(_Callback):
         self._accum_period = 5  # [s]
 
         self._topup_state_sts = _Const.TopUpSts.Off
-        self._topup_period = 3*60  # [s]
+        self._topup_period = 1*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
@@ -759,8 +759,15 @@ class App(_Callback):
 
     def set_topup_period(self, value):
         """Set top-up period [min]."""
-        if not 1 <= value <= 6*60:
+        if not 0.5 <= value <= 6*60:
             return False
+
+        if value < 1:
+            # for period < 1min, only permits 30s
+            value = 0.5
+        else:
+            # for period > 1min, only permits integer periods
+            value = int(value)
 
         sec = value * 60
         if self._topup_state_sts != _Const.TopUpSts.Off:
