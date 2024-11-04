@@ -427,6 +427,20 @@ _pvs_sia_llrf = [
     # Dac5 outputs
     ['RA-RaSIA01:RF-LLRF:CavMonGain-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF:CavMonCh-Sel', 0, 0.0],
+    # Quench Condition
+    ['RA-RaSIA01:RF-LLRF:QuenchCond1RvRatio-SP',0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:QuenchCond1Dly-SP',0, 0.0],
+    # Dynamic Interlock setpoints
+    ['RA-RaSIA01:RF-LLRF:CurrentDelta-SP', 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimRevCavCoeff-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimFwdCavCoeff-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioCoeff-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimRevCavOffset-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimFwdCavOffset-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimRevCavEn-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimFwdCavEn-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioEn-SP", 0, 0.0],
 ]
 
 _pvs_sia_rfssa = [
@@ -738,6 +752,20 @@ _pvs_sib_llrf = [
     # DAC5 Output
     ['RA-RaSIB01:RF-LLRF:CavMonGain-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:CavMonCh-Sel', 0, 0.0],
+    # Quench Condition
+    ['RA-RaSIB01:RF-LLRF:QuenchCond1RvRatio-SP',0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:QuenchCond1Dly-SP',0, 0.0],
+    # Dynamic Interlock setpoints
+    ['RA-RaSIB01:RF-LLRF:CurrentDelta-SP', 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimRevCavCoeff-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimFwdCavCoeff-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioCoeff-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimRevCavOffset-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimFwdCavOffset-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimRevCavEn-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimFwdCavEn-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioEn-SP", 0, 0.0],
 ]
 
 _pvs_sib_rfssa = [
