@@ -50,19 +50,12 @@ class MacScheduleData:
         return _np.sum(tags) if begin != end else 0
 
     @staticmethod
-    def get_users_shift_day_count(begin, end, count_sundays=True):
+    def get_users_shift_day_count(begin, end):
         """Get users shift day count for a period."""
         begin, end = MacScheduleData._handle_interval_data(begin, end)
-        tims, tags = MacScheduleData._get_numeric_data_for_interval(
+        _, tags = MacScheduleData._get_numeric_data_for_interval(
             begin, end, dtype='macsched_byday')
-
-        count = 0
-        if begin != end:
-            for tim, tag in zip(tims, tags):
-                weekday = _Time(tim).weekday()
-                if (weekday == 6 and count_sundays) or weekday != 6:
-                    count += tag
-        return count
+        return _np.sum(tags) if begin != end else 0
 
 
     @staticmethod
