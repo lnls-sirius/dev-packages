@@ -438,9 +438,9 @@ _pvs_sia_llrf = [
     ["RA-RaSIA01:RF-LLRF:LimRevCavOffset-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimFwdCavOffset-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
-    ["RA-RaSIA01:RF-LLRF:LimRevCavEn-SP", 0, 0.0],
-    ["RA-RaSIA01:RF-LLRF:LimFwdCavEn-SP", 0, 0.0],
-    ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioEn-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimRevCavEn-Sel", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:LimFwdCavEn-Sel", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioEn-Sel", 0, 0.0],
 ]
 
 _pvs_sia_rfssa = [
@@ -763,9 +763,9 @@ _pvs_sib_llrf = [
     ["RA-RaSIB01:RF-LLRF:LimRevCavOffset-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimFwdCavOffset-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
-    ["RA-RaSIB01:RF-LLRF:LimRevCavEn-SP", 0, 0.0],
-    ["RA-RaSIB01:RF-LLRF:LimFwdCavEn-SP", 0, 0.0],
-    ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioEn-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimRevCavEn-Sel", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:LimFwdCavEn-Sel", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioEn-Sel", 0, 0.0],
 ]
 
 _pvs_sib_rfssa = [
