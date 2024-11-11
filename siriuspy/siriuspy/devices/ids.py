@@ -1539,7 +1539,7 @@ class IVU(IDBase):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
-     # --- gap speeds ----
+    # --- gap speeds ----
 
     @property
     def gap_speed(self):
@@ -1715,6 +1715,7 @@ class IVU(IDBase):
         """Command to reset undulator."""
         return self._write_sp(
             self.PARAM_PVS.RESET, timeout=timeout)
+
 
 class ID(IDBase):
     """Insertion Device."""
