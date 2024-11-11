@@ -503,7 +503,7 @@ class IDFF(_DeviceSet):
         devcorrs += self.lcdevs
         corrs = dict()
         for devcorr in devcorrs:
-            # check power supply status
+            # TODO: check power supply status
             pvname_sp = devcorr.devname + ':Current-SP'
             curr0 = devcorr.current
             curr1 = curr1 = setpoints[pvname_sp]
