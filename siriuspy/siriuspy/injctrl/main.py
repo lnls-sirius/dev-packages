@@ -88,9 +88,10 @@ class App(_Callback):
         self._topup_nrpulses = 1
         self._topup_job = None
         self._accum_job = None
-        self._stop_topup_job = None
+        self._beamdump_job = None
         self._abort = False
         self._setting_mode = False
+        self._beamdumped = False
 
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
 
@@ -1179,19 +1180,29 @@ class App(_Callback):
         self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Idle)
 
     def _callback_havebeam(self, value, **kws):
+        _ = kws
         if value:
             return
-        if self._mode != _Const.InjMode.TopUp:
+        if self._mode not in [_Const.InjMode.TopUp, _Const.InjMode.Accum]:
             return
-        if self._stop_topup_job is not None and \
-                self._stop_topup_job.is_alive():
+        if self._beamdump_job is not None and self._beamdump_job.is_alive():
             return
-        if self._topup_state_sts != _Const.TopUpSts.Off:
-            self._update_log('FATAL:We do not have stored beam!')
-            self._update_log('FATAL:Opening TopUp loop...')
-            self._stop_topup_job = _epics.ca.CAThread(
-                target=self.set_topup_state, args=[_Const.OffOn.Off, ], daemon=True)
-            self._stop_topup_job.start()
+        self._update_log('FATAL:We do not have stored beam!')
+        self._beamdump_job = _epics.ca.CAThread(
+            target=self._thread_beamdump, daemon=True)
+        self._beamdump_job.start()
+
+    def _thread_beamdump(self):
+        self._beamdumped = True
+        if self._mode == _Const.InjMode.TopUp:
+            if self._topup_state_sts != _Const.TopUpSts.Off:
+                self._update_log('FATAL:Opening TopUp loop...')
+                self.set_topup_state(_Const.OffOn.Off)
+        else:
+            if self._accum_state_sts != _Const.AccumSts.Off:
+                self._update_log('FATAL:Opening Accumulation loop...')
+                self.set_accum_state(_Const.OffOn.Off)
+        self._beamdumped = False
 
     # --- auxiliary injection methods ---
 
@@ -1366,11 +1377,11 @@ class App(_Callback):
             if not self._continue_accum():
                 break
 
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.TurningOn)
+            self._update_accumsts(_Const.AccumSts.TurningOn)
             if not self._start_injection():
                 break
 
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Injecting)
+            self._update_accumsts(_Const.AccumSts.Injecting)
             if not self._wait_injection():
                 break
             self._update_bucket_list(nrpulses=1)
@@ -1378,7 +1389,7 @@ class App(_Callback):
             dt_ = self._accum_period - (_time.time() - t0_)
             if dt_ <= 0:
                 continue
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
+            self._update_accumsts(_Const.AccumSts.Waiting)
             self._update_log('Waiting for next injection...')
 
             while dt_ > 0:
@@ -1395,10 +1406,10 @@ class App(_Callback):
 
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
 
-        # update top-up status
-        self.run_callbacks('AccumState-Sts', _Const.AccumSts.Off)
+        # update acummulation status
+        self._update_accumsts(_Const.AccumSts.Off)
         self._update_log('Stopped accumulation loop.')
-        if not self._abort or self._setting_mode:
+        if not self._abort or self._setting_mode or self._beamdumped:
             self.run_callbacks('AccumState-Sel', _Const.OffOn.Off)
 
     def _continue_accum(self):
@@ -1505,7 +1516,7 @@ class App(_Callback):
         # update top-up status
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
-        if not self._abort or self._setting_mode:
+        if not self._abort or self._setting_mode or self._beamdumped:
             self.run_callbacks('TopUpState-Sel', _Const.OffOn.Off)
 
     def _wait_topup_period(self):
@@ -1668,6 +1679,10 @@ class App(_Callback):
         else:
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
+
+    def _update_accumsts(self, sts):
+        self._accum_state_sts = sts
+        self.run_callbacks('AccumState-Sts', sts)
 
     def _update_topupsts(self, sts):
         self._topup_state_sts = sts
