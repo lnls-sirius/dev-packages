@@ -441,6 +441,7 @@ class LinacStandbyHandler(_BaseHandler):
     """LI LLRF standby mode handler for injection procedure."""
 
     WAIT_2_TURNON = 2  # [s]
+    WAIT_2_TRIGS = 0.6  # [s]
 
     def __init__(self, hltiming=None):
         """Init."""
@@ -467,12 +468,16 @@ class LinacStandbyHandler(_BaseHandler):
         # NOTE: Triggers ordering is important so that LINAC LLRF does
         # not have any transient during source migration between events
         # Linac and RmpBO.
-        self._trig_names = HLTimeSearch.get_hl_triggers(
+        self._trig_names_mod = HLTimeSearch.get_hl_triggers(
             {'sec': 'LI', 'dev': '(Mod|Osc)'})
-        self._trig_names += HLTimeSearch.get_hl_triggers(
+        self._trig_names_ssa = HLTimeSearch.get_hl_triggers(
             {'sec': 'LI', 'dev': 'SSAmp'})
-        self._trig_names += HLTimeSearch.get_hl_triggers(
+        self._trig_names_llrf = HLTimeSearch.get_hl_triggers(
             {'sec': 'LI', 'dev': 'LLRF'})
+        self._trig_names = \
+            self._trig_names_mod + \
+            self._trig_names_ssa + \
+            self._trig_names_llrf
 
         self._on_values = dict()
         for dev in self._llrf_devs:
@@ -630,13 +635,31 @@ class LinacStandbyHandler(_BaseHandler):
 
     def change_trigs_to_linac_evt(self):
         """Change triggers source to Linac."""
-        return self.hltiming.change_triggers_source(
-            self._trig_names[::-1], new_src='Linac')
+        notchanged = list()
+        # stop triggers to LLRF first
+        notchanged.extend(self.hltiming.change_triggers_source(
+            self._trig_names_llrf, new_src='Linac'))
+        _time.sleep(LinacStandbyHandler.WAIT_2_TRIGS)   # wait for some pulses
+        # stop triggers to SSAmp and Modulators
+        notchanged.extend(self.hltiming.change_triggers_source(
+            self._trig_names_ssa, new_src='Linac'))
+        notchanged.extend(self.hltiming.change_triggers_source(
+            self._trig_names_mod, new_src='Linac'))
+        return notchanged
 
     def change_trigs_to_rmpbo_evt(self):
         """Change triggers source to RmpBO."""
-        return self.hltiming.change_triggers_source(
-            self._trig_names, new_src='RmpBO')
+        notchanged = list()
+        # start triggers to SSAmp and Modulators
+        notchanged.extend(self.hltiming.change_triggers_source(
+            self._trig_names_mod, new_src='RmpBO'))
+        notchanged.extend(self.hltiming.change_triggers_source(
+            self._trig_names_ssa, new_src='RmpBO'))
+        # start triggers to LLRF after all
+        _time.sleep(LinacStandbyHandler.WAIT_2_TRIGS)   # wait for some pulses
+        notchanged.extend(self.hltiming.change_triggers_source(
+            self._trig_names_llrf, new_src='RmpBO'))
+        return notchanged
 
     def check_mps_status(self):
         """."""
