@@ -199,9 +199,19 @@ class IDFFCtrlHard(IDFFCtrlBase):
     class DEVICES:
         """Device names."""
 
-        IVU18_08SB = 'SI-08SB:ID-IVU18'
-        IVU18_14SB = 'SI-14SB:ID-IVU18'
+        IVU18_08SB = 'SI-08SB:BS-IDFF-CHCV'
+        IVU18_14SB = 'SI-14SB:BS-IDFF-CHCV'
         ALL = (IVU18_08SB, IVU18_14SB)
+
+    @staticmethod
+    def conv_iddevname_2_idffctrldevnames(iddevname):
+        """."""
+        if iddevname == _ID.DEVICES.IVU.IVU18_08SB:
+            return IDFFCtrlHard.DEVICES.IVU18_08SB
+        elif iddevname == _ID.DEVICES.IVU.IVU18_14SB:
+            return IDFFCtrlHard.DEVICES.IVU18_14SB
+        else:
+            raise ValueError('Invalid iddevname!')
 
 
 class IDFFCtrl(IDFFCtrlBase):
@@ -215,7 +225,7 @@ class IDFFCtrl(IDFFCtrlBase):
 
     def __new__(cls, devname, **kwargs):
         """."""
-        idclass = IDFFCtrl.get_idclass(devname)
+        idclass, devname = IDFFCtrl.get_idclass(devname)
         if idclass:
             return idclass(devname, **kwargs)
         else:
@@ -225,10 +235,16 @@ class IDFFCtrl(IDFFCtrlBase):
     def get_idclass(devname):
         """."""
         if devname in IDFFCtrlSoft.DEVICES.ALL:
-            return IDFFCtrlSoft
+            return IDFFCtrlSoft, devname
         elif devname in IDFFCtrlHard.DEVICES.ALL:
-            return IDFFCtrlHard
+            return IDFFCtrlHard, devname
         else:
+            try:
+                devname = \
+                    IDFFCtrlHard.conv_iddevname_2_idffctrldevnames(devname)
+                return IDFFCtrlHard, devname
+            except ValueError:
+                pass
             return None
 
 
@@ -492,10 +508,16 @@ class IDFF(_DeviceSet):
 
     def rampup_corr_currents(
             self, nrpts=50, time_interval=10,
-            pparameter_value=None, kparameter_value=None):
+            pparameter_value=None, kparameter_value=None,
+            dry_run=False):
         """."""
-        setpoints, *_ = self.calculate_setpoints(
-            pparameter_value, kparameter_value)
+        setpoints, polarization, pparameter_value, kparameter_value = \
+            self.calculate_setpoints(pparameter_value, kparameter_value)
+        if dry_run:
+            print(f'polarization : {polarization}')
+            print(f'pparameter   : {pparameter_value}')
+            print(f'kparameter   : {kparameter_value}')
+            print()
         devcorrs = []
         devcorrs += self.chdevs
         devcorrs += self.cvdevs
@@ -511,10 +533,17 @@ class IDFF(_DeviceSet):
 
         for idx in range(nrpts):
             delta_ramp = (idx + 1) / nrpts
+            if dry_run:
+                print(f'point {idx+1}/{nrpts}')
             for psname in corrs:
                 devcorr, curr0, curr1 = corrs[psname]
                 curr = curr0 + delta_ramp * (curr1 - curr0)
-                devcorr.current = curr
+                if dry_run:
+                    print(f'{psname:<20s}: {curr:+.6f}')
+                else:
+                    devcorr.current = curr
+            if dry_run:
+                print()
             _time.sleep(time_interval / (nrpts - 1))
 
     def _create_devices(self, devname):
