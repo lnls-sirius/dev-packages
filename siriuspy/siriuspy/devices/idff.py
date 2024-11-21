@@ -527,8 +527,8 @@ class IDFF(_DeviceSet):
         for devcorr in devcorrs:
             # TODO: check power supply status
             pvname_sp = devcorr.devname + ':Current-SP'
-            curr0 = devcorr.current
-            curr1 = curr1 = setpoints[pvname_sp]
+            curr0 = devcorr.current_mon  # after an interlock, RB <> Mon=0
+            curr1 = setpoints[pvname_sp]
             corrs[devcorr.devname] = (devcorr, curr0, curr1)
 
         for idx in range(nrpts):
