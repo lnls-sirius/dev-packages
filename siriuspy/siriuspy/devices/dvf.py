@@ -17,8 +17,11 @@ class DVF(_Device):
 
         CAX_DVF1 = 'CAX:A:BASLER01'
         CAX_DVF2 = 'CAX:B:BASLER01'
+        EMA_DVF2 = 'EMA:A:BASLER02'
+        PNR_DVF2 = 'PNR:A:BASLER02'
         BO_DVF = 'BO-50U:DI-VLightCam'
-        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF)
+        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF,
+               EMA_DVF2, PNR_DVF2)
 
     _default_timeout = 10  # [s]
 
