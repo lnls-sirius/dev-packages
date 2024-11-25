@@ -210,11 +210,11 @@ def get_injctrl_propty_database():
             'prec': 3, 'lolim': -8.0, 'low': -8.0, 'lolo': -8.0,
             'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},
         'TargetCurrent-SP': {
-            'type': 'float', 'value': 100.0, 'unit': 'mA',
+            'type': 'float', 'value': 200.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 500.0, 'high': 500.0, 'hihi': 500.0},
         'TargetCurrent-RB': {
-            'type': 'float', 'value': 100.0, 'unit': 'mA',
+            'type': 'float', 'value': 200.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 500.0, 'high': 500.0, 'hihi': 500.0},
         'BucketListStart-SP': {

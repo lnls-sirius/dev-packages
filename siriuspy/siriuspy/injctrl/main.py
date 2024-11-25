@@ -57,7 +57,7 @@ class App(_Callback):
             },
         }
         self._thread_watdev = None
-        self._target_current = 100.0
+        self._target_current = 200.0
         self._bucketlist_start = 1
         self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
