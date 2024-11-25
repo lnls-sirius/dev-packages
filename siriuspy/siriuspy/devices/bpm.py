@@ -687,12 +687,12 @@ class BPM(_Device):
     @property
     def acq_trig_datapol(self):
         """."""
-        return self['GENTriggerDataPol-RB']
+        return self['GENTriggerDataPol-Sts']
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self['GENTriggerDataPol-SP'] = val
+        self['GENTriggerDataPol-Sel'] = val
 
     @property
     def acq_nrsamples_post(self):
