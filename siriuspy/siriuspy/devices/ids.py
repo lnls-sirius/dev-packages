@@ -1679,7 +1679,7 @@ class IVU(IDBase):
             raise ValueError('Center offset mode must be disabled.')
         if self.pitch_mode_status:
             raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-4):
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
             raise ValueError('Taper must be zero.')
         return self.cmd_move_kparameter_start(timeout)
 
@@ -1696,7 +1696,7 @@ class IVU(IDBase):
         """Command to start pitch movement."""  # Need to change PV for pitch mov in IOC
         if self.center_mode_status:
             raise ValueError('Center offset mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-4):
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
             raise ValueError('Taper must be zero.')
         return self._move_start(
             self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
@@ -1705,7 +1705,7 @@ class IVU(IDBase):
         """Command to start center movement."""  # Need to change PV for center mov in IOC
         if self.pitch_mode_status:
             raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-4):
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
             raise ValueError('Taper must be zero.')
         return self._move_start(
             self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)

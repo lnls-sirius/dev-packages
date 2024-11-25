@@ -1435,21 +1435,36 @@ class MacReport:
 
     def _get_egunmode_data(self):
         # single/multi bunch mode data
+        # get EVG injection data and oversample considering current data
         inj_ts, inj_vs = self._get_pv_data(self._injevt_pv)
         inj_vs = _interp1d_previous(inj_ts, inj_vs, self._curr_times)
+        # get egun trigger data and oversample considering current data
         trig_ts, trig_vs = self._get_pv_data(self._egtrgen_pv)
         trig_vs = _interp1d_previous(trig_ts, trig_vs, self._curr_times)
+        # get single bunch data and oversample considering current data
         sb_ts, sb_vs = self._get_pv_data(self._egpusel_pv)
         sb_vs = _interp1d_previous(sb_ts, sb_vs, self._curr_times)
+        # find points where the injection was with single bunch mode,
+        # store 1 for single bunch
         idcs1 = _np.where(inj_vs*trig_vs*sb_vs)[0]
         mode_ts = self._curr_times[idcs1]
         mode_vs = [1]*len(idcs1)
+        # find points where the injection was with multi bunch mode,
+        # considering this is complementary to single bunch injections,
+        # store 0 for multi bunch
         idcs2 = _np.where(inj_vs*trig_vs*1*_np.logical_not(sb_vs))[0]
         mode_ts = _np.r_[mode_ts, self._curr_times[idcs2]]
         mode_vs = _np.r_[mode_vs, [0]*len(idcs2)]
+        # sort results
         ind = mode_ts.argsort()
         mode_ts, mode_vs = mode_ts[ind], mode_vs[ind]
-        mode_vs = _interp1d_previous(mode_ts, mode_vs, self._curr_times)
+        # if there is injections in the period, oversample
+        if len(mode_ts):
+            mode_vs = _interp1d_previous(mode_ts, mode_vs, self._curr_times)
+        else:
+            # else, generate an array considering with multi bunch mode
+            mode_vs = _np.zeros(len(self._curr_times))
+        # build sb and mb values
         sbvals = mode_vs
         mbvals = _np.logical_not(mode_vs)
         return sbvals, mbvals
