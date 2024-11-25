@@ -1547,10 +1547,13 @@ class App(_Callback):
             cond &= not self._bias_feedback.already_set
             if cond and self.currinfo_dev.connected:
                 dcur = self._bias_feedback.get_delta_current_per_pulse(
-                    per=self._topup_period, nrpul=self._topup_nrpulses,
+                    per=self._topup_period,
+                    nrpul=self._topup_nrpulses,
                     curr_avg=self._target_current,
                     curr_now=self.currinfo_dev.current,
-                    ltime=self.currinfo_dev.lifetime)
+                    ltime=self.currinfo_dev.lifetime,
+                    ahead_tim=_Const.BIASFB_AHEADSETIME
+                )
                 self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
