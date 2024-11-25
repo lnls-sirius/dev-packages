@@ -183,6 +183,12 @@ class IDSearch:
             # 'qs1': 'SI-08SB:PS-QS-1:Current-SP',
             # 'qs2': 'SI-08SB:PS-QS-2:Current-SP',
             'lch': 'SI-08SB:PS-LCH:Current-SP',
+            'qa1': 'SI-08M1:PS-QDB1:Current-SP',
+            'qa2': 'SI-08M2:PS-QDB1:Current-SP',
+            'qb1': 'SI-08M1:PS-QFB:Current-SP',
+            'qb2': 'SI-08M2:PS-QFB:Current-SP',
+            'qc1': 'SI-08M1:PS-QDB2:Current-SP',
+            'qc2': 'SI-08M2:PS-QDB2:Current-SP',
         },
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
@@ -223,6 +229,12 @@ class IDSearch:
             # 'qs1': 'SI-08SB:PS-QS-1:Current-SP',
             # 'qs2': 'SI-08SB:PS-QS-2:Current-SP',
             'lch': 'SI-14SB:PS-LCH:Current-SP',
+            'qa1': 'SI-14M1:PS-QDB1:Current-SP',
+            'qb1': 'SI-14M1:PS-QFB:Current-SP',
+            'qc1': 'SI-14M1:PS-QDB2:Current-SP',
+            'qc2': 'SI-14M2:PS-QDB2:Current-SP',
+            'qb2': 'SI-14M2:PS-QFB:Current-SP',
+            'qa2': 'SI-14M2:PS-QDB1:Current-SP',
         },
         'SI-17SA:ID-APU22': {
             'polarizations': ('horizontal', ),
@@ -331,6 +343,12 @@ class IDSearch:
     def conv_idname_2_idff_lcnames(idname):
         """."""
         return IDSearch._get_devname_from_idff(idname, ('lch', ))
+
+    @staticmethod
+    def conv_idname_2_idff_qdnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(
+            idname, ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2'))
 
     @staticmethod
     def conv_idname_2_polarizations(idname):

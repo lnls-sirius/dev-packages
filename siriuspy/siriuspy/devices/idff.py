@@ -33,6 +33,12 @@ class _ParamPVs:
     CORRQS1CURRENT_MON = None
     CORRQS2CURRENT_MON = None
     CORRLCHCURRENT_MON = None
+    CORRQA1CURRENT_MON = None
+    CORRQB1CURRENT_MON = None
+    CORRQC1CURRENT_MON = None
+    CORRQC2CURRENT_MON = None
+    CORRQB2CURRENT_MON = None
+    CORRQA2CURRENT_MON = None
 
     def __str__(self):
         """Print parameters."""
@@ -75,45 +81,81 @@ class IDFFCtrlBase(_Device):
         return self[curr_sts] if curr_sts else None
 
     @property
-    def calculated_ch1_current(self):
+    def calc_corr_current_ch1(self):
         """Return calculated CH1 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCH1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ch2_current(self):
+    def calc_corr_current_ch2(self):
         """Return calculated CH2 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCH2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_cv1(self):
+    def calc_corr_current_cv1(self):
         """Return calculated CV1 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCV1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_cv2(self):
+    def calc_corr_current_cv2(self):
         """Return calculated CV2 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCV2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_qs1(self):
+    def calc_corr_current_qs1(self):
         """Return calculated QS1 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRQS1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_qs2(self):
+    def calc_corr_current_qs2(self):
         """Return calculated Q2 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRQS2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_lch(self):
+    def calc_corr_current_lch(self):
         """Return calculated LCH power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRLCHCURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qa1(self):
+        """Return calculated QA1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQA1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qb1(self):
+        """Return calculated QB1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQB1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qc1(self):
+        """Return calculated QC1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQC1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qc2(self):
+        """Return calculated QC2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQC2CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qb2(self):
+        """Return calculated QB2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQB2CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qa2(self):
+        """Return calculated QA2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQA2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
@@ -173,7 +215,6 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     CORRCV2CURRENT_MON = 'CorrCV2Current-Mon'
     CORRQS1CURRENT_MON = 'CorrQS1Current-Mon'
     CORRQS2CURRENT_MON = 'CorrQS2Current-Mon'
-    CORRLCHCURRENT_MON = 'CorrLCHCurrent-Mon'
 
     PROPERTIES_DEFAULT = \
         tuple(set(
@@ -270,13 +311,16 @@ class IDFF(_DeviceSet):
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
+        alldevs = self._create_devices(devname)
         (self._devctrl, self._devid, self._devsch, self._devscv,
-         self._devsqs, self._devslc) = self._create_devices(devname)
+         self._devsqs, self._devslc, self._devsqd) = alldevs
 
         devices = [self._devctrl, self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
+        devices += self._devslc
+        devices += self._devsqd
         super().__init__(devices, devname=devname)
 
     @property
@@ -298,6 +342,11 @@ class IDFF(_DeviceSet):
     def lcnames(self):
         """Return LC corrector power supply names."""
         return _IDSearch.conv_idname_2_idff_lcnames(self.devname)
+
+    @property
+    def qdnames(self):
+        """Return QD corrector power supply names."""
+        return _IDSearch.conv_idname_2_idff_qdnames(self.devname)
 
     @property
     def ctrldev(self):
@@ -328,6 +377,11 @@ class IDFF(_DeviceSet):
     def lcdevs(self):
         """Return LC corrector power supply names."""
         return self._devslc
+
+    @property
+    def qddevs(self):
+        """Return QD corrector power supply names."""
+        return self._devsqd
 
     @property
     def pparametername(self):
@@ -559,4 +613,5 @@ class IDFF(_DeviceSet):
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
         devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
+        devslc = [_PowerSupplyFBP(devname=dev) for dev in self.qdnames]
         return devctrl, devid, devsch, devscv, devsqs, devslc

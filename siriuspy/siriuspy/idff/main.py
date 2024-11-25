@@ -27,8 +27,11 @@ class App(_Callback):
 
         self._loop_state = _Const.DEFAULT_LOOP_STATE
         self._loop_freq = _Const.DEFAULT_LOOP_FREQ
+        self._control_ch = _Const.DEFAULT_CONTROL_CH
+        self._control_cv = _Const.DEFAULT_CONTROL_CV
         self._control_qs = _Const.DEFAULT_CONTROL_QS
         self._control_lc = _Const.DEFAULT_CONTROL_LC
+        self._control_qd = _Const.DEFAULT_CONTROL_QD
         self._polarization = 'none'
         self._config_name = ''
         self.read_autosave_file()
@@ -43,10 +46,13 @@ class App(_Callback):
         self.map_pv2write = {
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
-            'ControlQS-Sel': self.set_control_qs,
-            'ControlLC-Sel': self.set_control_lc,
             'ConfigName-SP': self.set_config_name,
             'CorrConfig-Cmd': self.cmd_corrconfig,
+            'ControlCH-Sel': self.set_control_ch,
+            'ControlCV-Sel': self.set_control_cv,
+            'ControlQS-Sel': self.set_control_qs,
+            'ControlLC-Sel': self.set_control_lc,
+            'ControlQD-Sel': self.set_control_qd,
         }
 
         self._quit = False
@@ -68,6 +74,16 @@ class App(_Callback):
             'CorrConfig-Cmd': 0,
             'CorrStatus-Mon': _Const.DEFAULT_CORR_STATUS,
         }
+        if self._const.has_chcorrs:
+            pvn2vals.update({
+                'ControlCH-Sel': self._control_ch,
+                'ControlCH-Sts': self._control_ch,
+                })
+        if self._const.has_cvcorrs:
+            pvn2vals.update({
+                'ControlCV-Sel': self._control_cv,
+                'ControlCV-Sts': self._control_cv,
+                })
         if self._const.has_qscorrs:
             pvn2vals.update({
                 'ControlQS-Sel': self._control_qs,
@@ -77,6 +93,11 @@ class App(_Callback):
             pvn2vals.update({
                 'ControlLC-Sel': self._control_lc,
                 'ControlLC-Sts': self._control_lc,
+                })
+        if self._const.has_qdcorrs:
+            pvn2vals.update({
+                'ControlQD-Sel': self._control_qd,
+                'ControlQD-Sts': self._control_qd,
                 })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
@@ -144,6 +165,26 @@ class App(_Callback):
         self.run_callbacks('LoopFreq-RB', value)
         return True
 
+    def set_control_ch(self, value):
+        """Set whether to include CH or not in feedforward."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+        self._control_ch = value
+        act = ('En' if value else 'Dis')
+        self._update_log(f'{act}abled CH control.')
+        self.run_callbacks('ControlCH-Sts', value)
+        return True
+
+    def set_control_cv(self, value):
+        """Set whether to include CV or not in feedforward."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+        self._control_ch = value
+        act = ('En' if value else 'Dis')
+        self._update_log(f'{act}abled CV control.')
+        self.run_callbacks('ControlCV-Sts', value)
+        return True
+
     def set_control_qs(self, value):
         """Set whether to include QS or not in feedforward."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
@@ -162,6 +203,16 @@ class App(_Callback):
         act = ('En' if value else 'Dis')
         self._update_log(f'{act}abled LC control.')
         self.run_callbacks('ControlLC-Sts', value)
+        return True
+
+    def set_control_qd(self, value):
+        """Set whether to include QD or not in feedforward."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+        self._control_lc = value
+        act = ('En' if value else 'Dis')
+        self._update_log(f'{act}abled QD control.')
+        self.run_callbacks('ControlQD-Sts', value)
         return True
 
     def set_config_name(self, value):
@@ -186,7 +237,8 @@ class App(_Callback):
 
         corrdevs = \
             self._idff.chdevs + self._idff.cvdevs + \
-            self._idff.qsdevs + self._idff.lcdevs
+            self._idff.qsdevs + self._idff.lcdevs + \
+            self._idff.qddevs
         for dev in corrdevs:
             # turn on
             if not dev.cmd_turn_on():
