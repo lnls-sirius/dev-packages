@@ -283,10 +283,10 @@ def get_injctrl_propty_database():
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS,
             'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
         'TopUpPeriod-SP': {
-            'type': 'int', 'value': 3, 'unit': 'min',
+            'type': 'int', 'value': 1, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
-            'type': 'int', 'value': 3, 'unit': 'min',
+            'type': 'int', 'value': 1, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpHeadStartTime-SP': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,

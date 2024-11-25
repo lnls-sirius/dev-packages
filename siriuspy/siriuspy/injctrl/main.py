@@ -69,7 +69,7 @@ class App(_Callback):
         self._accum_period = 5  # [s]
 
         self._topup_state_sts = _Const.TopUpSts.Off
-        self._topup_period = 3*60  # [s]
+        self._topup_period = 1*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
