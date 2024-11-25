@@ -431,16 +431,16 @@ def get_biasfb_database():
             'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'MinVoltage-SP': {
-            'type': 'float', 'value': -52, 'unit': 'V',
+            'type': 'float', 'value': -44, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MinVoltage-RB': {
-            'type': 'float', 'value': -52, 'unit': 'V',
+            'type': 'float', 'value': -44, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MaxVoltage-SP': {
-            'type': 'float', 'value': -45, 'unit': 'V',
+            'type': 'float', 'value': -37, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MaxVoltage-RB': {
-            'type': 'float', 'value': -45, 'unit': 'V',
+            'type': 'float', 'value': -37, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
 
         'ModelType-Sel': {
@@ -509,13 +509,13 @@ def get_biasfb_database():
             'type': 'float', 'value': 15, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModOffCoeff-SP': {
-            'type': 'float', 'value': -52, 'unit': 'V/mA',
+            'type': 'float', 'value': -44, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'hilim': -30.0},
         'LinModOffCoeff-RB': {
-            'type': 'float', 'value': -52, 'unit': 'V/mA',
+            'type': 'float', 'value': -44, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'hilim': -30.0},
         'LinModOffCoeff-Mon': {
-            'type': 'float', 'value': -52, 'unit': 'V/mA',
+            'type': 'float', 'value': -44, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'hilim': -30.0},
 
         # These are used to give the model inference about the bias
