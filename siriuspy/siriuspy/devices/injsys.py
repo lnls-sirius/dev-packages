@@ -441,7 +441,7 @@ class LinacStandbyHandler(_BaseHandler):
     """LI LLRF standby mode handler for injection procedure."""
 
     WAIT_2_TURNON = 2  # [s]
-    WAIT_2_TRIGS = 0.6  # [s]
+    WAIT_2_TRIGS = 2.0  # [s]
 
     def __init__(self, hltiming=None):
         """Init."""
