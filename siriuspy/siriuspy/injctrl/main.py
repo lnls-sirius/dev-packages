@@ -75,13 +75,13 @@ class App(_Callback):
         self._topup_puwarmuptime = 30
         self._aspu_standby_state = None
         self._topup_liwarmupenbl = _Const.DsblEnbl.Enbl
-        self._topup_liwarmuptime = 30
+        self._topup_liwarmuptime = 10
         self._liti_warmup_state = None
         self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_bopswarmuptime = 10
         self._bops_standby_state = None
-        self._topup_borfstandbyenbl = _Const.DsblEnbl.Dsbl
-        self._topup_borfwarmuptime = 10
+        self._topup_borfstandbyenbl = _Const.DsblEnbl.Enbl
+        self._topup_borfwarmuptime = 5
         self._borf_standby_state = None
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60

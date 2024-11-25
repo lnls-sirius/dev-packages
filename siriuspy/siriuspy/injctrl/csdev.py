@@ -307,16 +307,16 @@ def get_injctrl_propty_database():
             'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpLIWarmUpEnbl-Sel': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpLIWarmUpEnbl-Sts': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpLIWarmUpTime-SP': {
-            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpLIWarmUpTime-RB': {
-            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpBOPSStandbyEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
@@ -331,16 +331,16 @@ def get_injctrl_propty_database():
             'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpBORFStandbyEnbl-Sel': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpBORFStandbyEnbl-Sts': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpBORFWarmUpTime-SP': {
-            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 5, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpBORFWarmUpTime-RB': {
-            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 5, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
