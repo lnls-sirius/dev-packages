@@ -450,13 +450,13 @@ def get_biasfb_database():
             'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
             'enums': _et.BIASFB_MODEL_TYPES, 'unit': 'Lin_GP'},
         'ModelMaxNrPts-SP': {
-            'type': 'int', 'value': 20, 'unit': '#',
+            'type': 'int', 'value': 30, 'unit': '#',
             'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelMaxNrPts-RB': {
-            'type': 'int', 'value': 20, 'unit': '#',
+            'type': 'int', 'value': 30, 'unit': '#',
             'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelNrPts-Mon': {
-            'type': 'int', 'value': 20, 'unit': '#',
+            'type': 'int', 'value': 30, 'unit': '#',
             'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelFitParamsNow-Cmd': {'type': 'int', 'value': 0},
         'ModelAutoFitParams-Sel': {
@@ -500,13 +500,13 @@ def get_biasfb_database():
             'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'mA'},
 
         'LinModAngCoeff-SP': {
-            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModAngCoeff-RB': {
-            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModAngCoeff-Mon': {
-            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModOffCoeff-SP': {
             'type': 'float', 'value': -44, 'unit': 'V/mA',
