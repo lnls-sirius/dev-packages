@@ -175,7 +175,7 @@ class IDSearch:
         'SI-08SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
-            'kparameter': 'SI-08SB:ID-IVU18:Gap-Mon',
+            'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
             'ch1': 'SI-08SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-08SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-08SB:PS-CV-1:Current-SP',
@@ -215,7 +215,7 @@ class IDSearch:
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
-            'kparameter': 'SI-14SB:ID-IVU18:Gap-Mon',
+            'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
             'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-14SB:PS-CV-1:Current-SP',

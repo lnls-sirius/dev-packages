@@ -6,8 +6,8 @@ from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
 from ..search import IDSearch as _IDSearch
 
-
 # --- Enumeration Types ---
+
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
