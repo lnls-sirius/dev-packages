@@ -18,20 +18,27 @@ class App(_Callback):
 
     DEF_PS_TIMEOUT = 5  # [s]
 
-    def __init__(self, idname):
+    def __init__(self, idname,
+                 enbl_chcorrs, enbl_cvcorrs,
+                 enbl_qscorrs, enbl_lccorrs,
+                 enbl_qdcorrs):
         """Class constructor."""
         super().__init__()
-        self._const = _Const(idname)
+        self._const = _Const(
+            idname,
+            enbl_chcorrs, enbl_cvcorrs,
+            enbl_qscorrs, enbl_lccorrs,
+            enbl_qdcorrs)
         self._pvs_prefix = self._const.idffname
         self._pvs_database = self._const.get_propty_database()
 
         self._loop_state = _Const.DEFAULT_LOOP_STATE
         self._loop_freq = _Const.DEFAULT_LOOP_FREQ
-        self._control_ch = _Const.DEFAULT_CONTROL_CH
-        self._control_cv = _Const.DEFAULT_CONTROL_CV
-        self._control_qs = _Const.DEFAULT_CONTROL_QS
-        self._control_lc = _Const.DEFAULT_CONTROL_LC
-        self._control_qd = _Const.DEFAULT_CONTROL_QD
+        self._control_ch = self._const.enbl_chcorrs
+        self._control_cv = self._const.enbl_cvcorrs
+        self._control_qs = self._const.enbl_qscorrs
+        self._control_lc = self._const.enbl_lccorrs
+        self._control_qd = self._const.enbl_qdcorrs
         self._polarization = 'none'
         self._config_name = ''
         self.read_autosave_file()
@@ -48,6 +55,8 @@ class App(_Callback):
             'LoopFreq-SP': self.set_loop_freq,
             'ConfigName-SP': self.set_config_name,
             'CorrConfig-Cmd': self.cmd_corrconfig,
+            # following mappings are only used if
+            # corresponding correctors are in IDFF
             'ControlCH-Sel': self.set_control_ch,
             'ControlCV-Sel': self.set_control_cv,
             'ControlQS-Sel': self.set_control_qs,
@@ -74,27 +83,27 @@ class App(_Callback):
             'CorrConfig-Cmd': 0,
             'CorrStatus-Mon': _Const.DEFAULT_CORR_STATUS,
         }
-        if self._const.has_chcorrs:
+        if self._const.enbl_chcorrs:
             pvn2vals.update({
                 'ControlCH-Sel': self._control_ch,
                 'ControlCH-Sts': self._control_ch,
                 })
-        if self._const.has_cvcorrs:
+        if self._const.enbl_cvcorrs:
             pvn2vals.update({
                 'ControlCV-Sel': self._control_cv,
                 'ControlCV-Sts': self._control_cv,
                 })
-        if self._const.has_qscorrs:
+        if self._const.enbl_qscorrs:
             pvn2vals.update({
                 'ControlQS-Sel': self._control_qs,
                 'ControlQS-Sts': self._control_qs,
                 })
-        if self._const.has_lccorrs:
+        if self._const.enbl_lccorrs:
             pvn2vals.update({
                 'ControlLC-Sel': self._control_lc,
                 'ControlLC-Sts': self._control_lc,
                 })
-        if self._const.has_qdcorrs:
+        if self._const.enbl_qdcorrs:
             pvn2vals.update({
                 'ControlQD-Sel': self._control_qd,
                 'ControlQD-Sts': self._control_qd,

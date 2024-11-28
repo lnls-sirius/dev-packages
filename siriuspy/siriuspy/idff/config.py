@@ -9,7 +9,7 @@ from ..search import IDSearch as _IDSearch
 
 
 class IDFFConfig(_ConfigDBDocument):
-    """Insertion Device Feedforward Configuration."""
+    """ID Feedforward ConfigDB configuration."""
 
     CONFIGDB_TYPE = 'si_idff'
 
@@ -76,7 +76,7 @@ class IDFFConfig(_ConfigDBDocument):
     @property
     def qd_pvnames(self):
         """Return QD corrector power supply pvnames."""
-        return self._get_corr_pvnames('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
+        return self._get_corr_pvnames('qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2')
 
     @property
     def polarizations(self):
@@ -167,6 +167,7 @@ class IDFFConfig(_ConfigDBDocument):
         """."""
         stg = ''
         stg += f'name: {self.name}'
+        stg += f'\nidname: {self.idname}'
         value = self.value
         if value is None:
             return stg
@@ -273,12 +274,19 @@ class IDFFConfig(_ConfigDBDocument):
                     'are not consistent')
         return True
 
-    def _get_corr_pvnames(self, cname1, cname2):
+    def _get_corr_pvnames(
+            self,
+            cname_a1=None, cname_a2=None,
+            cname_b1=None, cname_b2=None,
+            cname_c1=None, cname_c2=None):
         """Return corrector power supply pvnames."""
         if self._value:
             pvnames = self._value['pvnames']
-            corr1, corr2 = pvnames.get(cname1), pvnames.get(cname2)
-            return corr1, corr2
+            corr_a1, corr_a2 = pvnames.get(cname_a1), pvnames.get(cname_a2)
+            corr_b1, corr_b2 = pvnames.get(cname_b1), pvnames.get(cname_b2)
+            corr_c1, corr_c2 = pvnames.get(cname_c1), pvnames.get(cname_c2)
+            allc = corr_a1, corr_a2, corr_b1, corr_b2, corr_c1, corr_c2
+            return [corr for corr in allc if corr is not None]
         else:
             raise ValueError('Configuration not defined!')
 

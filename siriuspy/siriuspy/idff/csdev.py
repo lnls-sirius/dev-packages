@@ -34,14 +34,12 @@ class IDFFConst(_csdev.Const):
     DEFAULT_LOOP_FREQ_MAX = 100  # [Hz]
     DEFAULT_LOOP_FREQ = 10  # [Hz]
     DEFAULT_LOOP_STATE = LoopState.Open
-    DEFAULT_CONTROL_CH = _csdev.Const.DsblEnbl.Enbl
-    DEFAULT_CONTROL_CV = _csdev.Const.DsblEnbl.Dsbl
-    DEFAULT_CONTROL_QS = _csdev.Const.DsblEnbl.Enbl
-    DEFAULT_CONTROL_LC = _csdev.Const.DsblEnbl.Dsbl
-    DEFAULT_CONTROL_QD = _csdev.Const.DsblEnbl.Dsbl
     DEFAULT_CORR_PREC = 4
 
-    def __init__(self, idname):
+    def __init__(self, idname,
+                 enbl_chcorrs=False, enbl_cvcorrs=False,
+                 enbl_qscorrs=False, enbl_lccorrs=False,
+                 enbl_qdcorrs=False):
         """Init."""
         self.idname = _PVName(idname)
         self.idffname = 'SI-' + self.idname.sub + ':AP-IDFF'
@@ -50,16 +48,17 @@ class IDFFConst(_csdev.Const):
         fname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
         fname = fname.lower()
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
+
         chnames = _IDSearch.conv_idname_2_idff_chnames(idname)
-        self.has_chcorrs = True if chnames else False
+        self.enbl_chcorrs = enbl_chcorrs and chnames
         cvnames = _IDSearch.conv_idname_2_idff_cvnames(idname)
-        self.has_cvcorrs = True if cvnames else False
+        self.enbl_cvcorrs = enbl_cvcorrs and cvnames
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
-        self.has_qscorrs = True if qsnames else False
+        self.enbl_qscorrs = enbl_qscorrs and qsnames
         lcnames = _IDSearch.conv_idname_2_idff_lcnames(idname)
-        self.has_lccorrs = True if lcnames else False
+        self.enbl_lccorrs = enbl_lccorrs and lcnames
         qdnames = _IDSearch.conv_idname_2_idff_qdnames(idname)
-        self.has_qdcorrs = True if qdnames else False
+        self.enbl_qdcorrs = enbl_qdcorrs and qdnames
 
     def get_propty_database(self):
         """Return property database."""
@@ -69,9 +68,11 @@ class IDFFConst(_csdev.Const):
             'LoopState-Sel': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.DEFAULT_LOOP_STATE},
+                'unit': 'open_closed',
             'LoopState-Sts': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.DEFAULT_LOOP_STATE},
+                'unit': 'open_closed',
             'LoopFreq-SP': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
                 'unit': 'Hz', 'prec': 3,
@@ -92,16 +93,16 @@ class IDFFConst(_csdev.Const):
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields},
         }
-        if self.has_chcorrs:
+        if self.enbl_chcorrs:
             dbase.update({
                 'ControlCH-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_CH,
-                    'unit': 'If CH are included in loop'},
+                    'value': self.enbl_chcorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlCH-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_CH,
-                    'unit': 'If CH are included in loop'},
+                    'value': self.enbl_chcorrs,
+                    'unit': 'dsbl_enbl'},
                 'CorrCH1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
@@ -109,16 +110,16 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
-        if self.has_cvcorrs:
+        if self.enbl_cvcorrs:
             dbase.update({
                 'ControlCV-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_CV,
-                    'unit': 'If CV are included in loop'},
+                    'value': self.enbl_cvcorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlCV-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_CV,
-                    'unit': 'If CV are included in loop'},
+                    'value': self.enbl_cvcorrs,
+                    'unit': 'dsbl_enbl'},
                 'CorrCV1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
@@ -126,17 +127,16 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
-
-        if self.has_qscorrs:
+        if self.enbl_qscorrs:
             dbase.update({
                 'ControlQS-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QS,
-                    'unit': 'If QS are included in loop'},
+                    'value': self.enbl_qscorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlQS-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QS,
-                    'unit': 'If QS are included in loop'},
+                    'value': self.enbl_qscorrs,
+                    'unit': 'dsbl_enbl'},
                 'CorrQS1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
@@ -144,30 +144,30 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
-        if self.has_lccorrs:
+        if self.enbl_lccorrs:
             dbase.update({
                 'ControlLC-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_LC,
-                    'unit': 'If LC are included in loop'},
+                    'value': self.enbl_lccorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlLC-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_LC,
+                    'value': self.enbl_lccorrs,
                     'unit': 'If LC are included in loop'},
                 'CorrLCHCurrent-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
-        if self.has_qdcorrs:
+        if self.enbl_qdcorrs:
             dbase.update({
                 'ControlQD-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QD,
-                    'unit': 'If LC are included in loop'},
+                    'value': self.enbl_qdcorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlQD-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QD,
-                    'unit': 'If LC are included in loop'},
+                    'value': self.enbl_qdcorrs,
+                    'unit': 'dsbl_enbl'},
                 'CorrQA1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
