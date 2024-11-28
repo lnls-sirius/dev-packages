@@ -359,7 +359,8 @@ class TimingConfig(_BaseTimingConfig):
         self.EVT = src_val
 
         src_val = self._csorb.CorrExtEvtSrc._fields.index(
-            self._csorb.evt_rmpbo)
+            self._csorb.evt_rmpbo
+        )
         src_val = self._csorb.CorrExtEvtSrc[src_val]
         self.RMPBO = src_val
 
@@ -384,6 +385,7 @@ class TimingConfig(_BaseTimingConfig):
             "Mode": _PV(pref_name + "Mode-Sts", **opt),
             "Src": _PV(pref_trig + "Src-Sts", **opt),
             "DelayRaw": _PV(pref_trig + "DelayRaw-RB", **opt),
+            "DeltaDelayRaw": _PV(pref_trig + "DeltaDelayRaw-RB", **opt),
             "NrPulses": _PV(pref_trig + "NrPulses-RB", **opt),
             "Duration": _PV(pref_trig + "Duration-RB", **opt),
             "State": _PV(pref_trig + "State-Sts", **opt),
@@ -393,6 +395,7 @@ class TimingConfig(_BaseTimingConfig):
             "Mode": _PV(pref_name + "Mode-Sel", **opt),
             "Src": _PV(pref_trig + "Src-Sel", **opt),
             "DelayRaw": _PV(pref_trig + "DelayRaw-SP", **opt),
+            "DeltaDelayRaw": _PV(pref_trig + "DeltaDelayRaw-SP", **opt),
             "NrPulses": _PV(pref_trig + "NrPulses-SP", **opt),
             "Duration": _PV(pref_trig + "Duration-SP", **opt),
             "State": _PV(pref_trig + "State-Sel", **opt),
@@ -450,6 +453,11 @@ class TimingConfig(_BaseTimingConfig):
     @delayraw.setter
     def delayraw(self, value):
         """."""
+        # Make sure Delta Delay is zero:
+        pvobj = self._config_pvs_sp["DeltaDelayRaw"]
+        if self.put_enable and pvobj.connected:
+            pvobj.value *= 0
+
         pvobj = self._config_pvs_sp["DelayRaw"]
         if self.put_enable and pvobj.connected:
             pvobj.value = int(value)
