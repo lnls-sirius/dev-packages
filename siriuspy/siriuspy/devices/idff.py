@@ -276,7 +276,9 @@ class IDFF(_DeviceSet):
 
         devices = list()
         if self._with_devctrl:
-            devices += [self._devctrl, ]
+            devices += [self._devctrl, self._devid]
+        else:
+            devices += [self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
