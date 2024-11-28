@@ -295,9 +295,10 @@ class IDFF(_DeviceSet):
     class DEVICES(_ID.DEVICES):
         """."""
 
-    def __init__(self, devname):
+    def __init__(self, devname, with_devctrl=True):
         """."""
         devname = _SiriusPVName(devname)
+        self._with_devctrl = with_devctrl
 
         # check if device exists
         if devname not in IDFF.DEVICES.ALL:
@@ -315,7 +316,11 @@ class IDFF(_DeviceSet):
         (self._devctrl, self._devid, self._devsch, self._devscv,
          self._devsqs, self._devslc, self._devsqd) = alldevs
 
-        devices = [self._devctrl, self._devid, ]
+        devices = list()
+        if self._with_devctrl:
+            devices += [self._devctrl, self._devid]
+        else:
+            devices += [self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
@@ -601,7 +606,7 @@ class IDFF(_DeviceSet):
             _time.sleep(time_interval / (nrpts - 1))
 
     def _create_devices(self, devname):
-        devctrl = IDFFCtrl(devname=devname)
+        devctrl = IDFFCtrl(devname=devname) if self._with_devctrl else None
         pol_mon = _ID.get_idclass(devname).PARAM_PVS.POL_MON
         params = (
             self._pparametername, self._kparametername, pol_mon)

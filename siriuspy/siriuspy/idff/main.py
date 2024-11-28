@@ -44,7 +44,7 @@ class App(_Callback):
         self.read_autosave_file()
 
         # IDFF object with IDFF config
-        self._idff = _IDFF(idname)
+        self._idff = _IDFF(idname, with_devctrl=False)
 
         # load idff in configdb
         self._load_config(self._config_name)
