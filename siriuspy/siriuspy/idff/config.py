@@ -96,6 +96,12 @@ class IDFFConfig(_ConfigDBDocument):
         """Set configuration."""
         self._set_value(value)
 
+    @property
+    def offsets(self):
+        """Correctors offsets."""
+        val = self._value
+        return val['offsets'] if 'offsets' in val else dict()
+
     def calculate_setpoints(
             self, polarization, pparameter_value, kparameter_value):
         """Return correctors setpoints for a particular ID config.
@@ -113,10 +119,13 @@ class IDFFConfig(_ConfigDBDocument):
                 params = idff['kparameter']
                 param_value = kparameter_value
             setpoints = dict()
+            offsets = self.offsets
             for corrlabel, table in idff.items():
                 if corrlabel not in ('pparameter', 'kparameter'):
                     # linear interpolation
-                    setpoint = _np.interp(param_value, params, table)
+                    curr = _np.interp(param_value, params, table)
+                    offset = offsets.get(corrlabel, 0)
+                    setpoint = curr + offset
                     corr_pvname = self._value['pvnames'][corrlabel]
                     setpoints[corr_pvname] = setpoint
             return setpoints
