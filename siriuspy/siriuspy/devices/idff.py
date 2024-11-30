@@ -316,6 +316,8 @@ class IDFF(_DeviceSet):
         (self._devctrl, self._devid, self._devsch, self._devscv,
          self._devsqs, self._devslc, self._devsqd) = alldevs
 
+        self._lab2corrdevs = self._create_labels_2_corrdevs_dict()
+
         devices = list()
         if self._with_devctrl:
             devices += [self._devctrl, self._devid]
@@ -426,6 +428,15 @@ class IDFF(_DeviceSet):
         """."""
         return self._idffconfig
 
+    def get_correctors_offsets_values(self):
+        """Read current corrector values."""
+        corrlabels = _IDSearch.conv_idname_2_idff_offsets(self._devid.devname)
+        offsets = dict()
+        for corrlabel in corrlabels:
+            corrdev = self._lab2corrdevs[corrlabel]
+            offsets[corrlabel] = corrdev.current
+        return offsets
+
     def find_configs(self):
         """Find si_idff configurations in configdb."""
         return self._idffconfig.configdbclient.find_configs()
@@ -445,13 +456,13 @@ class IDFF(_DeviceSet):
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        if not self._idffconfig:
+            ValueError('IDFFConfig is not loaded!')
+
         polarization, pparameter_value, kparameter_value = \
             self.get_polarization_state(
                 pparameter_value=pparameter_value,
                 kparameter_value=kparameter_value)
-
-        if not self._idffconfig:
-            ValueError('IDFFConfig is not loaded!')
 
         if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
@@ -475,7 +486,8 @@ class IDFF(_DeviceSet):
             polarization, pparameter_value, kparameter_value = [None, ] * 3
         if corrdevs is None:
             corrdevs = \
-                self._devsch + self._devscv + self._devsqs + self._devslc
+                self._devsch + self._devscv + \
+                self._devsqs + self._devslc + self._devsqd
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:
@@ -618,5 +630,19 @@ class IDFF(_DeviceSet):
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
         devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
-        devslc = [_PowerSupplyFBP(devname=dev) for dev in self.qdnames]
-        return devctrl, devid, devsch, devscv, devsqs, devslc
+        devsqd = [_PowerSupplyFBP(devname=dev) for dev in self.qdnames]
+        return devctrl, devid, devsch, devscv, devsqs, devslc, devsqd
+
+    def _create_labels_2_corrdevs_dict(self):
+        ch_labels = _IDSearch.IDFF_CH_LABELS
+        cv_labels = _IDSearch.IDFF_CV_LABELS
+        qs_labels = _IDSearch.IDFF_QS_LABELS
+        lc_labels = _IDSearch.IDFF_LC_LABELS
+        qd_labels = _IDSearch.IDFF_QD_LABELS
+        devs = dict()
+        devs.update({lab: self._devsch[lab] for lab in ch_labels})
+        devs.update({lab: self._devscv[lab] for lab in cv_labels})
+        devs.update({lab: self._devsqs[lab] for lab in qs_labels})
+        devs.update({lab: self._devslc[lab] for lab in lc_labels})
+        devs.update({lab: self._devsqd[lab] for lab in qd_labels})
+        return devs
