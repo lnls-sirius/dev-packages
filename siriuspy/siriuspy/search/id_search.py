@@ -249,6 +249,12 @@ class IDSearch:
         },
     }
 
+    IDFF_CH_LABELS = ('ch1', 'ch2')
+    IDFF_CV_LABELS = ('cv1', 'cv2')
+    IDFF_QS_LABELS = ('qs1', 'qs2')
+    IDFF_LC_LABELS = ('lch', )
+    IDFF_QD_LABELS = ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
+
     @staticmethod
     def get_idnames(filters=None):
         """Return a sorted and filtered list of all ID names."""
@@ -338,28 +344,27 @@ class IDSearch:
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('ch1', 'ch2'))
+        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_CH_LABELS)
 
     @staticmethod
     def conv_idname_2_idff_cvnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
+        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_CV_LABELS)
 
     @staticmethod
     def conv_idname_2_idff_qsnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
+        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_QS_LABELS)
 
     @staticmethod
     def conv_idname_2_idff_lcnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, ('lch', ))
+        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_LC_LABELS)
 
     @staticmethod
     def conv_idname_2_idff_qdnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(
-            idname, ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2'))
+        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_QD_LABELS)
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
