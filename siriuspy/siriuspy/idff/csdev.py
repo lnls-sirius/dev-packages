@@ -29,6 +29,8 @@ class IDFFConst(_csdev.Const):
     StsLblsCorr = _csdev.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR)
 
+    DEFAULT_AUTOSAVE_FOLDER = \
+        _os.path.join('/home', 'sirius', 'iocs-log', 'si-ap-idff', 'data')
     DEFAULT_CORR_STATUS = 0b11111111
     DEFAULT_LOOP_FREQ_MIN = 0.001  # [Hz]
     DEFAULT_LOOP_FREQ_MAX = 100  # [Hz]
@@ -43,22 +45,21 @@ class IDFFConst(_csdev.Const):
         """Init."""
         self.idname = _PVName(idname)
         self.idffname = 'SI-' + self.idname.sub + ':AP-IDFF'
-        ioc_fol = _os.path.join(
-            '/home', 'sirius', 'iocs-log', 'si-ap-idff', 'data')
-        fname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
-        fname = fname.lower()
-        self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
+        cname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
+        self.configname = cname.lower()
+        ioc_fol = IDFFConst.DEFAULT_AUTOSAVE_FOLDER
+        self.autosave_fname = _os.path.join(ioc_fol, self.configname + '.txt')
 
         chnames = _IDSearch.conv_idname_2_idff_chnames(idname)
-        self.enbl_chcorrs = enbl_chcorrs and chnames
+        self.enbl_chcorrs = enbl_chcorrs and len(chnames) > 0
         cvnames = _IDSearch.conv_idname_2_idff_cvnames(idname)
-        self.enbl_cvcorrs = enbl_cvcorrs and cvnames
+        self.enbl_cvcorrs = enbl_cvcorrs and len(cvnames) > 0
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
-        self.enbl_qscorrs = enbl_qscorrs and qsnames
+        self.enbl_qscorrs = enbl_qscorrs and len(qsnames) > 0
         lcnames = _IDSearch.conv_idname_2_idff_lcnames(idname)
-        self.enbl_lccorrs = enbl_lccorrs and lcnames
+        self.enbl_lccorrs = enbl_lccorrs and len(lcnames) > 0
         qdnames = _IDSearch.conv_idname_2_idff_qdnames(idname)
-        self.enbl_qdcorrs = enbl_qdcorrs and qdnames
+        self.enbl_qdcorrs = enbl_qdcorrs and len(qdnames) > 0
 
     def get_propty_database(self):
         """Return property database."""
@@ -67,12 +68,12 @@ class IDFFConst(_csdev.Const):
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
             'LoopState-Sel': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
-                'value': self.DEFAULT_LOOP_STATE},
-                'unit': 'open_closed',
+                'value': self.DEFAULT_LOOP_STATE,
+                'unit': 'open_closed'},
             'LoopState-Sts': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
-                'value': self.DEFAULT_LOOP_STATE},
-                'unit': 'open_closed',
+                'value': self.DEFAULT_LOOP_STATE,
+                'unit': 'open_closed'},
             'LoopFreq-SP': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
                 'unit': 'Hz', 'prec': 3,
