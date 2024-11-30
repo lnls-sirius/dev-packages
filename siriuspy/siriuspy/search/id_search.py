@@ -327,7 +327,7 @@ class IDSearch:
             return None
 
     @staticmethod
-    def conv_idname_2_offsets_labels(idname):
+    def conv_idname_2_idff_offsets(idname):
         """."""
         idff = IDSearch._idname_2_idff[idname]
         if idff is None or 'offsets' not in idff:
