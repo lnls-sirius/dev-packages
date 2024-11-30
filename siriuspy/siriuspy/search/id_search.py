@@ -180,8 +180,8 @@ class IDSearch:
             'ch2': 'SI-08SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-08SB:PS-CV-1:Current-SP',
             'cv2': 'SI-08SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-08SB:PS-QS-1:Current-SP',
-            'qs2': 'SI-08SB:PS-QS-2:Current-SP',
+            'qs1': 'SI-08M1:PS-QS:Current-SP',
+            'qs2': 'SI-08M2:PS-QS:Current-SP',
             'lch': 'SI-08SB:PS-LCH:Current-SP',
             'qa1': 'SI-08M1:PS-QDB1:Current-SP',
             'qa2': 'SI-08M2:PS-QDB1:Current-SP',
@@ -189,6 +189,7 @@ class IDSearch:
             'qb2': 'SI-08M2:PS-QFB:Current-SP',
             'qc1': 'SI-08M1:PS-QDB2:Current-SP',
             'qc2': 'SI-08M2:PS-QDB2:Current-SP',
+            'offsets': ['qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2'],  # [A]
         },
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
@@ -226,8 +227,8 @@ class IDSearch:
             'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-14SB:PS-CV-1:Current-SP',
             'cv2': 'SI-14SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-08SB:PS-QS-1:Current-SP',
-            'qs2': 'SI-08SB:PS-QS-2:Current-SP',
+            'qs1': 'SI-14M1:PS-QS:Current-SP',
+            'qs2': 'SI-14M2:PS-QS:Current-SP',
             'lch': 'SI-14SB:PS-LCH:Current-SP',
             'qa1': 'SI-14M1:PS-QDB1:Current-SP',
             'qa2': 'SI-14M2:PS-QDB1:Current-SP',
@@ -235,6 +236,7 @@ class IDSearch:
             'qb2': 'SI-14M2:PS-QFB:Current-SP',
             'qc1': 'SI-14M1:PS-QDB2:Current-SP',
             'qc2': 'SI-14M2:PS-QDB2:Current-SP',
+            'offsets': ['qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2'],  # [A]
         },
         'SI-17SA:ID-APU22': {
             'polarizations': ('horizontal', ),
@@ -323,6 +325,15 @@ class IDSearch:
             return pvname.propty
         else:
             return None
+
+    @staticmethod
+    def conv_idname_2_offsets_labels(idname):
+        """."""
+        idff = IDSearch._idname_2_idff[idname]
+        if idff is None or 'offsets' not in idff:
+            return list()
+        else:
+            return idff['offsets']
 
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
