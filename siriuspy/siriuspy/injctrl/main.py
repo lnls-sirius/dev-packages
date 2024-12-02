@@ -57,7 +57,7 @@ class App(_Callback):
             },
         }
         self._thread_watdev = None
-        self._target_current = 100.0
+        self._target_current = 200.0
         self._bucketlist_start = 1
         self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
@@ -69,19 +69,19 @@ class App(_Callback):
         self._accum_period = 5  # [s]
 
         self._topup_state_sts = _Const.TopUpSts.Off
-        self._topup_period = 3*60  # [s]
+        self._topup_period = 1*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
         self._aspu_standby_state = None
         self._topup_liwarmupenbl = _Const.DsblEnbl.Enbl
-        self._topup_liwarmuptime = 30
+        self._topup_liwarmuptime = 10
         self._liti_warmup_state = None
         self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_bopswarmuptime = 10
         self._bops_standby_state = None
-        self._topup_borfstandbyenbl = _Const.DsblEnbl.Dsbl
-        self._topup_borfwarmuptime = 10
+        self._topup_borfstandbyenbl = _Const.DsblEnbl.Enbl
+        self._topup_borfwarmuptime = 5
         self._borf_standby_state = None
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
@@ -356,10 +356,10 @@ class App(_Callback):
             'TopUpBOPSStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
             'TopUpBOPSWarmUpTime-SP': self._topup_bopswarmuptime,
             'TopUpBOPSWarmUpTime-RB': self._topup_bopswarmuptime,
-            'TopUpBORFStandbyEnbl-Sel': self._topup_bopsstandbyenbl,
-            'TopUpBORFStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
-            'TopUpBORFWarmUpTime-SP': self._topup_bopswarmuptime,
-            'TopUpBORFWarmUpTime-RB': self._topup_bopswarmuptime,
+            'TopUpBORFStandbyEnbl-Sel': self._topup_borfstandbyenbl,
+            'TopUpBORFStandbyEnbl-Sts': self._topup_borfstandbyenbl,
+            'TopUpBORFWarmUpTime-SP': self._topup_borfwarmuptime,
+            'TopUpBORFWarmUpTime-RB': self._topup_borfwarmuptime,
             'TopUpNextInj-Mon': self._topup_next,
             'TopUpNrPulses-SP': self._topup_nrpulses,
             'TopUpNrPulses-RB': self._topup_nrpulses,
@@ -1547,10 +1547,13 @@ class App(_Callback):
             cond &= not self._bias_feedback.already_set
             if cond and self.currinfo_dev.connected:
                 dcur = self._bias_feedback.get_delta_current_per_pulse(
-                    per=self._topup_period, nrpul=self._topup_nrpulses,
+                    per=self._topup_period,
+                    nrpul=self._topup_nrpulses,
                     curr_avg=self._target_current,
                     curr_now=self.currinfo_dev.current,
-                    ltime=self.currinfo_dev.lifetime)
+                    ltime=self.currinfo_dev.lifetime,
+                    ahead_tim=_Const.BIASFB_AHEADSETIME
+                )
                 self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
