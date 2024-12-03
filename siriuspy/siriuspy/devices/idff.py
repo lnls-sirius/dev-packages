@@ -428,13 +428,11 @@ class IDFF(_DeviceSet):
         """."""
         return self._idffconfig
 
-    def get_correctors_offsets_values(self):
+    def read_corr_offset_values(self):
         """Read current corrector values."""
-        corrlabels = _IDSearch.conv_idname_2_idff_offsets(self._devid.devname)
         offsets = dict()
-        for corrlabel in corrlabels:
-            corrdev = self._lab2corrdevs[corrlabel]
-            offsets[corrlabel] = corrdev.current
+        for label, corrdev in self._lab2corrdevs.items():
+            offsets[label] = corrdev.current
         return offsets
 
     def find_configs(self):

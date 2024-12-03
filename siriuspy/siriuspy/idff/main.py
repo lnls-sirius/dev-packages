@@ -54,6 +54,7 @@ class App(_Callback):
             'LoopFreq-SP': self.write_loop_freq,
             'ConfigName-SP': self.write_config_name,
             'CorrConfig-Cmd': self.write_cmd_corr_config,
+            'CorrSaveOffsets-Cmd': self.write_cmd_save_offsets,
             # following mappings are only used if
             # corresponding correctors are in IDFF
             'ControlCH-Sel': self.write_control_ch,
@@ -248,6 +249,14 @@ class App(_Callback):
 
         return True
 
+    def write_cmd_offsets(self, _):
+        """Save current values of correctors' currents to si_idff configdb."""
+        if self.loop_state == self.const.LoopState.Closed:
+            self.update_log('ERR:Open loop before saving correctors offsets.')
+            return False
+
+        return self.save_config_offsets()
+
     # ----- feedforward loop methods -----
 
     @property
@@ -345,6 +354,23 @@ class App(_Callback):
             self.update_log('ERR: could not load config ' + self.config_name)
             raise err
         return True
+
+    def save_config_offsets(self):
+        """."""
+        try:
+            offsets = self.idff.read_corr_offset_values()
+        except:  # noqa: E722
+            self.update_log('ERR: could not read correctors offsets')
+            return False
+        config = self.idff.idffconfig
+        value = config.value
+        value['offsets'] = offsets
+        try:
+            config.save()
+        except:  # noqa: E722
+            self.update_log('ERR: could not save configuration')
+            return False
+        self.update_log('Correctors offsets saved in ' + self.config_name)
 
     # ----- update methods -----
 

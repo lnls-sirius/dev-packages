@@ -88,6 +88,7 @@ class IDFFConst(_csdev.Const):
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
+            'CorrSaveOffsets-Cmd': {'type': 'int', 'value': 0},
             'CorrStatus-Mon': {
                 'type': 'int', 'value': self.DEFAULT_CORR_STATUS},
             'CorrStatusLabels-Cte': {
