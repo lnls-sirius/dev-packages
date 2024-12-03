@@ -640,9 +640,9 @@ class IDFF(_DeviceSet):
         lc_labels = _IDSearch.IDFF_LC_LABELS
         qd_labels = _IDSearch.IDFF_QD_LABELS
         devs = dict()
-        devs.update({lab: self._devsch[lab] for lab in ch_labels})
-        devs.update({lab: self._devscv[lab] for lab in cv_labels})
-        devs.update({lab: self._devsqs[lab] for lab in qs_labels})
-        devs.update({lab: self._devslc[lab] for lab in lc_labels})
-        devs.update({lab: self._devsqd[lab] for lab in qd_labels})
+        devs.update({lab: dev for lab, dev in zip(ch_labels, self._devsch)})
+        devs.update({lab: dev for lab, dev in zip(cv_labels, self._devscv)})
+        devs.update({lab: dev for lab, dev in zip(qs_labels, self._devsqs)})
+        devs.update({lab: dev for lab, dev in zip(lc_labels, self._devslc)})
+        devs.update({lab: dev for lab, dev in zip(qd_labels, self._devsqd)})
         return devs

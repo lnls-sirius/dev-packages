@@ -38,11 +38,12 @@ class App(_Callback):
         self.control_lc = self.const.enbl_lccorrs
         self.control_qd = self.const.enbl_qdcorrs
         self.polarization = 'none'
-        self.config_name = ''  # stored in autosave file
-        self.read_autosave_file()
 
         # IDFF object with IDFF config
         self.idff = _IDFF(idname, with_devctrl=False)
+
+        self.config_name = ''  # stored in autosave file
+        self.read_autosave_file()
 
         # load idff in configdb
         self.load_config(self.config_name)
