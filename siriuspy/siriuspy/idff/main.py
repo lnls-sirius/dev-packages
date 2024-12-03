@@ -362,6 +362,10 @@ class App(_Callback):
         except:  # noqa: E722
             self.update_log('ERR: could not read correctors offsets')
             return False
+        if not offsets:
+            self.update_log('WARN: Offsets not defined for this IDFF')
+            return False
+
         config = self.idff.idffconfig
         value = config.value
         value['offsets'] = offsets
