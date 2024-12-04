@@ -1617,7 +1617,12 @@ class App(_Callback):
             return
         self._aspu_standby_state[puidx] = state
 
-        new_factor = 0.8 if _PU_STBY_NICKS[puidx] == 'TBInjSept' else 0.5
+        # NOTE: The voltage of the TB pulsed septum is used to define
+        # enable conditions of the egun trigger. To avoid changing the
+        # trigger enable status during top-up, we will reduce its standby
+        # voltage by a different factor.
+        new_factor = 0.7 if _PU_STBY_NICKS[puidx] == 'TBInjSept' else 0.5
+
         factor = 1 if state == _Const.StandbyInject.Inject else new_factor
         nick = _PU_STBY_NICKS[puidx]
         self._update_log(f'Setting {nick} Voltage to {factor*100}%...')

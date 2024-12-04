@@ -96,10 +96,6 @@ class Const(_csdev.Const):
         if cls.__TOPUP_STANDBY_PUNAMES is not None:
             return cls.__TOPUP_STANDBY_PUNAMES
 
-        # NOTE: The voltage of the TB pulsed magnets are used to define
-        # enable conditions of the egun trigger. To avoid changing the
-        # trigger enable status during top-up, we will not include these
-        # magnets in standby/warm up.
         names = _PSSearch.get_psnames(
             {
                 'sec': '(TB|BO|TS|SI)',
