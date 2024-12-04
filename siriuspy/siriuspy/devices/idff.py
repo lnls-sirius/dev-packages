@@ -33,6 +33,12 @@ class _ParamPVs:
     CORRQS1CURRENT_MON = None
     CORRQS2CURRENT_MON = None
     CORRLCHCURRENT_MON = None
+    CORRQA1CURRENT_MON = None
+    CORRQB1CURRENT_MON = None
+    CORRQC1CURRENT_MON = None
+    CORRQC2CURRENT_MON = None
+    CORRQB2CURRENT_MON = None
+    CORRQA2CURRENT_MON = None
 
     def __str__(self):
         """Print parameters."""
@@ -75,45 +81,81 @@ class IDFFCtrlBase(_Device):
         return self[curr_sts] if curr_sts else None
 
     @property
-    def calculated_ch1_current(self):
+    def calc_corr_current_ch1(self):
         """Return calculated CH1 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCH1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ch2_current(self):
+    def calc_corr_current_ch2(self):
         """Return calculated CH2 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCH2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_cv1(self):
+    def calc_corr_current_cv1(self):
         """Return calculated CV1 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCV1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_cv2(self):
+    def calc_corr_current_cv2(self):
         """Return calculated CV2 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRCV2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_qs1(self):
+    def calc_corr_current_qs1(self):
         """Return calculated QS1 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRQS1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_qs2(self):
+    def calc_corr_current_qs2(self):
         """Return calculated Q2 power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRQS2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calculated_ps_current_lch(self):
+    def calc_corr_current_lch(self):
         """Return calculated LCH power supply current [A]."""
         curr_name = self.PARAM_PVS.CORRLCHCURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qa1(self):
+        """Return calculated QA1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQA1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qb1(self):
+        """Return calculated QB1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQB1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qc1(self):
+        """Return calculated QC1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQC1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qc2(self):
+        """Return calculated QC2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQC2CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qb2(self):
+        """Return calculated QB2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQB2CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qa2(self):
+        """Return calculated QA2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQA2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
@@ -173,7 +215,6 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     CORRCV2CURRENT_MON = 'CorrCV2Current-Mon'
     CORRQS1CURRENT_MON = 'CorrQS1Current-Mon'
     CORRQS2CURRENT_MON = 'CorrQS2Current-Mon'
-    CORRLCHCURRENT_MON = 'CorrLCHCurrent-Mon'
 
     PROPERTIES_DEFAULT = \
         tuple(set(
@@ -254,9 +295,10 @@ class IDFF(_DeviceSet):
     class DEVICES(_ID.DEVICES):
         """."""
 
-    def __init__(self, devname):
+    def __init__(self, devname, with_devctrl=True):
         """."""
         devname = _SiriusPVName(devname)
+        self._with_devctrl = with_devctrl
 
         # check if device exists
         if devname not in IDFF.DEVICES.ALL:
@@ -270,13 +312,22 @@ class IDFF(_DeviceSet):
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(devname)
 
+        alldevs = self._create_devices(devname)
         (self._devctrl, self._devid, self._devsch, self._devscv,
-         self._devsqs, self._devslc) = self._create_devices(devname)
+         self._devsqs, self._devslc, self._devsqn) = alldevs
 
-        devices = [self._devctrl, self._devid, ]
+        self._lab2corrdevs = self._create_labels_2_corrdevs_dict()
+
+        devices = list()
+        if self._with_devctrl:
+            devices += [self._devctrl, self._devid]
+        else:
+            devices += [self._devid, ]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
+        devices += self._devslc
+        devices += self._devsqn
         super().__init__(devices, devname=devname)
 
     @property
@@ -298,6 +349,11 @@ class IDFF(_DeviceSet):
     def lcnames(self):
         """Return LC corrector power supply names."""
         return _IDSearch.conv_idname_2_idff_lcnames(self.devname)
+
+    @property
+    def qnnames(self):
+        """Return QD corrector power supply names."""
+        return _IDSearch.conv_idname_2_idff_qnnames(self.devname)
 
     @property
     def ctrldev(self):
@@ -328,6 +384,11 @@ class IDFF(_DeviceSet):
     def lcdevs(self):
         """Return LC corrector power supply names."""
         return self._devslc
+
+    @property
+    def qndevs(self):
+        """Return QD corrector power supply names."""
+        return self._devsqn
 
     @property
     def pparametername(self):
@@ -367,6 +428,13 @@ class IDFF(_DeviceSet):
         """."""
         return self._idffconfig
 
+    def read_corr_offset_values(self):
+        """Read current corrector values."""
+        offsets = dict()
+        for label, corrdev in self._lab2corrdevs.items():
+            offsets[label] = corrdev.current
+        return offsets
+
     def find_configs(self):
         """Find si_idff configurations in configdb."""
         return self._idffconfig.configdbclient.find_configs()
@@ -386,13 +454,13 @@ class IDFF(_DeviceSet):
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        if not self._idffconfig:
+            ValueError('IDFFConfig is not loaded!')
+
         polarization, pparameter_value, kparameter_value = \
             self.get_polarization_state(
                 pparameter_value=pparameter_value,
                 kparameter_value=kparameter_value)
-
-        if not self._idffconfig:
-            ValueError('IDFFConfig is not loaded!')
 
         if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
@@ -416,7 +484,8 @@ class IDFF(_DeviceSet):
             polarization, pparameter_value, kparameter_value = [None, ] * 3
         if corrdevs is None:
             corrdevs = \
-                self._devsch + self._devscv + self._devsqs + self._devslc
+                self._devsch + self._devscv + \
+                self._devsqs + self._devslc + self._devsqn
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:
@@ -547,7 +616,7 @@ class IDFF(_DeviceSet):
             _time.sleep(time_interval / (nrpts - 1))
 
     def _create_devices(self, devname):
-        devctrl = IDFFCtrl(devname=devname)
+        devctrl = IDFFCtrl(devname=devname) if self._with_devctrl else None
         pol_mon = _ID.get_idclass(devname).PARAM_PVS.POL_MON
         params = (
             self._pparametername, self._kparametername, pol_mon)
@@ -559,4 +628,19 @@ class IDFF(_DeviceSet):
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
         devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
-        return devctrl, devid, devsch, devscv, devsqs, devslc
+        devsqn = [_PowerSupplyFBP(devname=dev) for dev in self.qnnames]
+        return devctrl, devid, devsch, devscv, devsqs, devslc, devsqn
+
+    def _create_labels_2_corrdevs_dict(self):
+        ch_labels = _IDSearch.IDFF_CH_LABELS
+        cv_labels = _IDSearch.IDFF_CV_LABELS
+        qs_labels = _IDSearch.IDFF_QS_LABELS
+        lc_labels = _IDSearch.IDFF_LC_LABELS
+        qn_labels = _IDSearch.IDFF_QN_LABELS
+        devs = dict()
+        devs.update({lab: dev for lab, dev in zip(ch_labels, self._devsch)})
+        devs.update({lab: dev for lab, dev in zip(cv_labels, self._devscv)})
+        devs.update({lab: dev for lab, dev in zip(qs_labels, self._devsqs)})
+        devs.update({lab: dev for lab, dev in zip(lc_labels, self._devslc)})
+        devs.update({lab: dev for lab, dev in zip(qn_labels, self._devsqn)})
+        return devs

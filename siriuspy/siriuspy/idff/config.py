@@ -9,7 +9,7 @@ from ..search import IDSearch as _IDSearch
 
 
 class IDFFConfig(_ConfigDBDocument):
-    """Insertion Device Feedforward Configuration."""
+    """ID Feedforward ConfigDB configuration."""
 
     CONFIGDB_TYPE = 'si_idff'
 
@@ -74,6 +74,11 @@ class IDFFConfig(_ConfigDBDocument):
         return self._get_corr_pvnames('lch', '')
 
     @property
+    def qn_pvnames(self):
+        """Return QD corrector power supply pvnames."""
+        return self._get_corr_pvnames('qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2')
+
+    @property
     def polarizations(self):
         """Return list of light polarizations in the IDFF config."""
         if self._value:
@@ -90,6 +95,12 @@ class IDFFConfig(_ConfigDBDocument):
     def value(self, value):
         """Set configuration."""
         self._set_value(value)
+
+    @property
+    def offsets(self):
+        """Correctors offsets."""
+        val = self._value
+        return val['offsets'] if 'offsets' in val else dict()
 
     def calculate_setpoints(
             self, polarization, pparameter_value, kparameter_value):
@@ -108,10 +119,13 @@ class IDFFConfig(_ConfigDBDocument):
                 params = idff['kparameter']
                 param_value = kparameter_value
             setpoints = dict()
+            offsets = self.offsets
             for corrlabel, table in idff.items():
                 if corrlabel not in ('pparameter', 'kparameter'):
                     # linear interpolation
-                    setpoint = _np.interp(param_value, params, table)
+                    curr = _np.interp(param_value, params, table)
+                    offset = offsets.get(corrlabel, 0)
+                    setpoint = curr + offset
                     corr_pvname = self._value['pvnames'][corrlabel]
                     setpoints[corr_pvname] = setpoint
             return setpoints
@@ -162,6 +176,7 @@ class IDFFConfig(_ConfigDBDocument):
         """."""
         stg = ''
         stg += f'name: {self.name}'
+        stg += f'\nidname: {self.idname}'
         value = self.value
         if value is None:
             return stg
@@ -212,11 +227,13 @@ class IDFFConfig(_ConfigDBDocument):
         getcv = _IDSearch.conv_idname_2_idff_cvnames
         getqs = _IDSearch.conv_idname_2_idff_qsnames
         getlc = _IDSearch.conv_idname_2_idff_lcnames
+        getqn = _IDSearch.conv_idname_2_idff_qnnames
         chnames = [corr + ':Current-SP' for corr in getch(self.idname)]
         cvnames = [corr + ':Current-SP' for corr in getcv(self.idname)]
         qsnames = [corr + ':Current-SP' for corr in getqs(self.idname)]
         lcnames = [corr + ':Current-SP' for corr in getlc(self.idname)]
-        pvsidsearch = set(chnames + cvnames + qsnames + lcnames)
+        qnnames = [corr + ':Current-SP' for corr in getqn(self.idname)]
+        pvsidsearch = set(chnames + cvnames + qsnames + lcnames + qnnames)
         symm_diff = pvsconfig ^ pvsidsearch
 
         if symm_diff:
@@ -266,12 +283,19 @@ class IDFFConfig(_ConfigDBDocument):
                     'are not consistent')
         return True
 
-    def _get_corr_pvnames(self, cname1, cname2):
+    def _get_corr_pvnames(
+            self,
+            cname_a1=None, cname_a2=None,
+            cname_b1=None, cname_b2=None,
+            cname_c1=None, cname_c2=None):
         """Return corrector power supply pvnames."""
         if self._value:
             pvnames = self._value['pvnames']
-            corr1, corr2 = pvnames.get(cname1), pvnames.get(cname2)
-            return corr1, corr2
+            corr_a1, corr_a2 = pvnames.get(cname_a1), pvnames.get(cname_a2)
+            corr_b1, corr_b2 = pvnames.get(cname_b1), pvnames.get(cname_b2)
+            corr_c1, corr_c2 = pvnames.get(cname_c1), pvnames.get(cname_c2)
+            allc = corr_a1, corr_a2, corr_b1, corr_b2, corr_c1, corr_c2
+            return [corr for corr in allc if corr is not None]
         else:
             raise ValueError('Configuration not defined!')
 

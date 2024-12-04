@@ -29,28 +29,37 @@ class IDFFConst(_csdev.Const):
     StsLblsCorr = _csdev.Const.register(
         'StsLblsCorr', _et.STS_LBLS_CORR)
 
+    DEFAULT_AUTOSAVE_FOLDER = \
+        _os.path.join('/home', 'sirius', 'iocs-log', 'si-ap-idff', 'data')
     DEFAULT_CORR_STATUS = 0b11111111
     DEFAULT_LOOP_FREQ_MIN = 0.001  # [Hz]
     DEFAULT_LOOP_FREQ_MAX = 100  # [Hz]
     DEFAULT_LOOP_FREQ = 10  # [Hz]
     DEFAULT_LOOP_STATE = LoopState.Open
-    DEFAULT_CONTROL_QS = _csdev.Const.DsblEnbl.Enbl
-    DEFAULT_CONTROL_LC = _csdev.Const.DsblEnbl.Dsbl
     DEFAULT_CORR_PREC = 4
 
-    def __init__(self, idname):
+    def __init__(self, idname,
+                 enbl_chcorrs=False, enbl_cvcorrs=False,
+                 enbl_qscorrs=False, enbl_lccorrs=False,
+                 enbl_qncorrs=False):
         """Init."""
         self.idname = _PVName(idname)
         self.idffname = 'SI-' + self.idname.sub + ':AP-IDFF'
-        ioc_fol = _os.path.join(
-            '/home', 'sirius', 'iocs-log', 'si-ap-idff', 'data')
-        fname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
-        fname = fname.lower()
-        self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
+        cname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
+        self.configname = cname.lower()
+        ioc_fol = IDFFConst.DEFAULT_AUTOSAVE_FOLDER
+        self.autosave_fname = _os.path.join(ioc_fol, self.configname + '.txt')
+
+        chnames = _IDSearch.conv_idname_2_idff_chnames(idname)
+        self.enbl_chcorrs = enbl_chcorrs and len(chnames) > 0
+        cvnames = _IDSearch.conv_idname_2_idff_cvnames(idname)
+        self.enbl_cvcorrs = enbl_cvcorrs and len(cvnames) > 0
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
-        self.has_qscorrs = True if qsnames else False
+        self.enbl_qscorrs = enbl_qscorrs and len(qsnames) > 0
         lcnames = _IDSearch.conv_idname_2_idff_lcnames(idname)
-        self.has_lccorrs = True if lcnames else False
+        self.enbl_lccorrs = enbl_lccorrs and len(lcnames) > 0
+        qnnames = _IDSearch.conv_idname_2_idff_qnnames(idname)
+        self.enbl_qncorrs = enbl_qncorrs and len(qnnames) > 0
 
     def get_propty_database(self):
         """Return property database."""
@@ -59,10 +68,12 @@ class IDFFConst(_csdev.Const):
             'Log-Mon': {'type': 'string', 'value': 'Starting...'},
             'LoopState-Sel': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
-                'value': self.DEFAULT_LOOP_STATE},
+                'value': self.DEFAULT_LOOP_STATE,
+                'unit': 'open_closed'},
             'LoopState-Sts': {
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
-                'value': self.DEFAULT_LOOP_STATE},
+                'value': self.DEFAULT_LOOP_STATE,
+                'unit': 'open_closed'},
             'LoopFreq-SP': {
                 'type': 'float', 'value': self.DEFAULT_LOOP_FREQ,
                 'unit': 'Hz', 'prec': 3,
@@ -77,34 +88,57 @@ class IDFFConst(_csdev.Const):
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
+            'CorrSaveOffsets-Cmd': {'type': 'int', 'value': 0},
             'CorrStatus-Mon': {
                 'type': 'int', 'value': self.DEFAULT_CORR_STATUS},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsCorr._fields),
                 'value': self.StsLblsCorr._fields},
-            'CorrCH1Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-            'CorrCH2Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-            'CorrCV1Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-            'CorrCV2Current-Mon': {
-                'type': 'float', 'value': 0,
-                'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
         }
-        if self.has_qscorrs:
+        if self.enbl_chcorrs:
+            dbase.update({
+                'ControlCH-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_chcorrs,
+                    'unit': 'dsbl_enbl'},
+                'ControlCH-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_chcorrs,
+                    'unit': 'dsbl_enbl'},
+                'CorrCH1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrCH2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            })
+        if self.enbl_cvcorrs:
+            dbase.update({
+                'ControlCV-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_cvcorrs,
+                    'unit': 'dsbl_enbl'},
+                'ControlCV-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_cvcorrs,
+                    'unit': 'dsbl_enbl'},
+                'CorrCV1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrCV2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            })
+        if self.enbl_qscorrs:
             dbase.update({
                 'ControlQS-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QS,
-                    'unit': 'If QS are included in loop'},
+                    'value': self.enbl_qscorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlQS-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_QS,
-                    'unit': 'If QS are included in loop'},
+                    'value': self.enbl_qscorrs,
+                    'unit': 'dsbl_enbl'},
                 'CorrQS1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
@@ -112,17 +146,46 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
-        if self.has_lccorrs:
+        if self.enbl_lccorrs:
             dbase.update({
                 'ControlLC-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_LC,
-                    'unit': 'If LC are included in loop'},
+                    'value': self.enbl_lccorrs,
+                    'unit': 'dsbl_enbl'},
                 'ControlLC-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.DEFAULT_CONTROL_LC,
+                    'value': self.enbl_lccorrs,
                     'unit': 'If LC are included in loop'},
                 'CorrLCHCurrent-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            })
+        if self.enbl_qncorrs:
+            dbase.update({
+                'ControlQN-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_qncorrs,
+                    'unit': 'dsbl_enbl'},
+                'ControlQN-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_qncorrs,
+                    'unit': 'dsbl_enbl'},
+                'CorrQA1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrQB1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrQC1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrQA2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrQB2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrQC2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
