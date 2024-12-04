@@ -102,7 +102,7 @@ class Const(_csdev.Const):
         # magnets in standby/warm up.
         names = _PSSearch.get_psnames(
             {
-                'sec': '(BO|TS|SI)',
+                'sec': '(TB|BO|TS|SI)',
                 'dis': 'PU', 'dev': '.*(Kckr|Sept)',
                 'propty_name': '(?!:CCoil).*'
             })
@@ -119,6 +119,7 @@ class Const(_csdev.Const):
         """Define nicknames for TOPUP_STANDBY_PUNAMES."""
         cls.TOPUP_STANDBY_PUNAMES
         return cls.__TOPUP_STANDBY_PUNICKNAMES
+
 
 _ct = Const
 
@@ -453,10 +454,10 @@ def get_injctrl_propty_database():
                 'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
                 'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
             f'TopUp{puid}WarmUpTime-SP': {
-                'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+                'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
                 'lolim': 0, 'hilim': 2*60},
             f'TopUp{puid}WarmUpTime-RB': {
-                'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+                'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
                 'lolim': 0, 'hilim': 2*60},
         })
     dbase = _csdev.add_pvslist_cte(dbase)

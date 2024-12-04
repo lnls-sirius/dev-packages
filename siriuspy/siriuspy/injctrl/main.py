@@ -24,6 +24,10 @@ from .csdev import Const as _Const, ETypes as _ETypes, \
 from .bias_feedback import BiasFeedback as _BiasFeedback
 
 
+_PU_STBY_NICKS = _Const.TOPUP_STANDBY_PUNICKNAMES
+_PU_STBY_NAMES = _Const.TOPUP_STANDBY_PUNAMES
+
+
 class App(_Callback):
     """Main application for handling machine shift."""
 
@@ -72,7 +76,7 @@ class App(_Callback):
         self._topup_state_sts = _Const.TopUpSts.Off
         self._topup_period = 1*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
-        pucnt = len(_Const.TOPUP_STANDBY_PUNICKNAMES)
+        pucnt = len(_PU_STBY_NICKS)
         self._topup_pustandbyenbl = pucnt*[_Const.DsblEnbl.Dsbl]
         self._topup_puwarmuptime = pucnt*[30]
         self._aspu_standby_state = pucnt*[None]
@@ -201,7 +205,7 @@ class App(_Callback):
         stored_pvo.add_callback(self._callback_havebeam)
 
         self._pu_devs, self._pu_refvolt = list(), list()
-        for puname in _Const.TOPUP_STANDBY_PUNAMES:
+        for puname in _PU_STBY_NAMES:
             # reuse connection from injsys_dev
             idx = self._injsys_dev.handlers['as_pu'].punames.index(puname)
             dev = self._injsys_dev.handlers['as_pu'].pudevices[idx]
@@ -249,7 +253,7 @@ class App(_Callback):
             'InjSysTurnOffOrder-SP': self.set_injsys_off_order,
             'RFKillBeam-Cmd': self.cmd_rfkillbeam,
         }
-        for idx, punick in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+        for idx, punick in enumerate(_PU_STBY_NICKS):
             self.map_pv2write[f'TopUp{punick}StandbyEnbl-Sel'] = \
                 _part(self.set_topup_pustandbyenbl, idx)
             self.map_pv2write[f'TopUp{punick}WarmUpTime-SP'] = \
@@ -369,7 +373,7 @@ class App(_Callback):
             'DiagStatus-Mon': self._status['AS'],
             'InjStatus-Mon': self._injstatus,
         }
-        for idx, nick in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+        for idx, nick in enumerate(_PU_STBY_NICKS):
             pvn2vals.update({
                 f'TopUp{nick}StandbyEnbl-Sel': self._topup_pustandbyenbl[idx],
                 f'TopUp{nick}StandbyEnbl-Sts': self._topup_pustandbyenbl[idx],
@@ -803,7 +807,7 @@ class App(_Callback):
             'TopUpBOPSWarmUpTime-': self._topup_bopswarmuptime,
             'TopUpBORFWarmUpTime-': self._topup_borfwarmuptime,
         }
-        for idx, nick in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+        for idx, nick in enumerate(_PU_STBY_NICKS):
             self._topup_puwarmuptime[idx] = max(minwut, self._topup_puwarmuptime[idx])
             pvn2val[f'TopUp{nick}WarmUpTime-'] = self._topup_puwarmuptime[idx]
 
@@ -821,7 +825,7 @@ class App(_Callback):
             self._handle_aspu_standby_state(puidx, _Const.StandbyInject.Inject)
         self._topup_pustandbyenbl[puidx] = value
         text = 'En' if value else 'Dis'
-        nick = _Const.TOPUP_STANDBY_PUNICKNAMES[puidx]
+        nick = _PU_STBY_NICKS[puidx]
         self._update_log(f'{text}abled {nick} standby between injections.')
         self.run_callbacks(
             f'TopUp{nick}StandbyEnbl-Sts', self._topup_pustandbyenbl[puidx])
@@ -832,7 +836,7 @@ class App(_Callback):
         if not self._topup_headstarttime+1 <= value < 2*60:
             return False
         self._topup_puwarmuptime[puidx] = value
-        nick = _Const.TOPUP_STANDBY_PUNICKNAMES[puidx]
+        nick = _PU_STBY_NICKS[puidx]
         self.run_callbacks(
             f'TopUp{nick}WarmUpTime-RB', self._topup_puwarmuptime[puidx])
         return True
@@ -1152,7 +1156,7 @@ class App(_Callback):
         if value is None:
             return
         devname = _PVName(pvname).device_name
-        index = _Const.TOPUP_STANDBY_PUNAMES.index(devname)
+        index = _PU_STBY_NAMES.index(devname)
         # do not update PU reference voltage if standby is enabled
         if self._topup_pustandbyenbl[index] == _Const.DsblEnbl.Enbl:
             return
@@ -1375,7 +1379,7 @@ class App(_Callback):
         # update bucket list according to settings
         self._update_bucket_list(nrpulses=1)
 
-        for idx, _ in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+        for idx, _ in enumerate(_PU_STBY_NICKS):
             self._handle_aspu_standby_state(idx, _Const.StandbyInject.Inject)
         self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
         self._handle_bops_standby_state(_Const.StandbyInject.Inject)
@@ -1503,10 +1507,11 @@ class App(_Callback):
                 self._update_log('Skipping injection...')
                 _time.sleep(2)
 
-            for idx, _ in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+            for idx, _ in enumerate(_PU_STBY_NICKS):
                 if not self._topup_pustandbyenbl[idx]:
                     continue
-                self._handle_aspu_standby_state(idx, _Const.StandbyInject.Standby)
+                self._handle_aspu_standby_state(
+                    idx, _Const.StandbyInject.Standby)
             if self._topup_liwarmupenbl:
                 self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
             if self._topup_bopsstandbyenbl:
@@ -1517,7 +1522,7 @@ class App(_Callback):
             self._topup_next += self._topup_period
             self.run_callbacks('TopUpNextInj-Mon', self._topup_next)
 
-        for idx, _ in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+        for idx, _ in enumerate(_PU_STBY_NICKS):
             self._handle_aspu_standby_state(idx, _Const.StandbyInject.Inject)
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
         self._handle_bops_standby_state(_Const.StandbyInject.Inject)
@@ -1544,10 +1549,11 @@ class App(_Callback):
                 _log.info(text)
 
             # prepare subsystems
-            for idx, _ in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+            for idx, _ in enumerate(_PU_STBY_NICKS):
                 if remaining > self._topup_puwarmuptime[idx]:
                     continue
-                self._handle_aspu_standby_state(idx, _Const.StandbyInject.Inject)
+                self._handle_aspu_standby_state(
+                    idx, _Const.StandbyInject.Inject)
             if remaining <= self._topup_liwarmuptime:
                 self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
             if remaining <= self._topup_bopswarmuptime:
@@ -1584,7 +1590,7 @@ class App(_Callback):
         # If remaining time is too short do not put in standby or warmup
         standby = _Const.StandbyInject.Standby
         # PU
-        for idx, _ in enumerate(_Const.TOPUP_STANDBY_PUNICKNAMES):
+        for idx, _ in enumerate(_PU_STBY_NICKS):
             if not self._topup_pustandbyenbl[idx]:
                 continue
             if self._topup_next-_time.time() < self._topup_puwarmuptime[idx]*2:
@@ -1611,8 +1617,9 @@ class App(_Callback):
             return
         self._aspu_standby_state[puidx] = state
 
-        factor = 1 if state == _Const.StandbyInject.Inject else 0.5
-        nick = _Const.TOPUP_STANDBY_PUNICKNAMES[puidx]
+        new_factor = 0.8 if _PU_STBY_NICKS[puidx] == 'TBInjSept' else 0.5
+        factor = 1 if state == _Const.StandbyInject.Inject else new_factor
+        nick = _PU_STBY_NICKS[puidx]
         self._update_log(f'Setting {nick} Voltage to {factor*100}%...')
         dev = self._pu_devs[puidx]
         if not dev.connected:
