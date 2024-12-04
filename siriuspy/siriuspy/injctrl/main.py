@@ -57,10 +57,11 @@ class App(_Callback):
             },
         }
         self._thread_watdev = None
-        self._target_current = 100.0
+        self._target_current = 200.0
         self._bucketlist_start = 1
-        self._bucketlist_stop = 864
+        self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
+        self._bucketlist_allowed_mask = _np.ones(_Const.MAX_BKT, dtype=bool)
         self._isinj_delay = 0
         self._isinj_duration = 300
 
@@ -68,27 +69,29 @@ class App(_Callback):
         self._accum_period = 5  # [s]
 
         self._topup_state_sts = _Const.TopUpSts.Off
-        self._topup_period = 3*60  # [s]
+        self._topup_period = 1*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
         self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_puwarmuptime = 30
         self._aspu_standby_state = None
         self._topup_liwarmupenbl = _Const.DsblEnbl.Enbl
-        self._topup_liwarmuptime = 30
+        self._topup_liwarmuptime = 10
         self._liti_warmup_state = None
         self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_bopswarmuptime = 10
         self._bops_standby_state = None
-        self._topup_borfstandbyenbl = _Const.DsblEnbl.Dsbl
-        self._topup_borfwarmuptime = 10
+        self._topup_borfstandbyenbl = _Const.DsblEnbl.Enbl
+        self._topup_borfwarmuptime = 5
         self._borf_standby_state = None
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
         self._topup_job = None
         self._accum_job = None
+        self._beamdump_job = None
         self._abort = False
         self._setting_mode = False
+        self._beamdumped = False
 
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
 
@@ -191,6 +194,9 @@ class App(_Callback):
         curr_pvo = self.currinfo_dev.pv_object('Current-Mon')
         curr_pvo.add_callback(self._callback_autostop)
         curr_pvo.connection_callbacks.append(self._callback_conn_autostop)
+        self.currinfo_dev.set_auto_monitor('StoredEBeam-Mon', True)
+        stored_pvo = self.currinfo_dev.pv_object('StoredEBeam-Mon')
+        stored_pvo.add_callback(self._callback_havebeam)
 
         self._pu_names, self._pu_devs = list(), list()
         self._pu_refvolt = list()
@@ -226,6 +232,7 @@ class App(_Callback):
             'BucketListStart-SP': self.set_bucketlist_start,
             'BucketListStop-SP': self.set_bucketlist_stop,
             'BucketListStep-SP': self.set_bucketlist_step,
+            'BucketListAllowedMask-SP': self.set_bucketlist_allowed_mask,
             'IsInjDelay-SP': self.set_isinj_delay,
             'IsInjDuration-SP': self.set_isinj_duration,
             'AccumState-Sel': self.set_accum_state,
@@ -349,10 +356,10 @@ class App(_Callback):
             'TopUpBOPSStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
             'TopUpBOPSWarmUpTime-SP': self._topup_bopswarmuptime,
             'TopUpBOPSWarmUpTime-RB': self._topup_bopswarmuptime,
-            'TopUpBORFStandbyEnbl-Sel': self._topup_bopsstandbyenbl,
-            'TopUpBORFStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
-            'TopUpBORFWarmUpTime-SP': self._topup_bopswarmuptime,
-            'TopUpBORFWarmUpTime-RB': self._topup_bopswarmuptime,
+            'TopUpBORFStandbyEnbl-Sel': self._topup_borfstandbyenbl,
+            'TopUpBORFStandbyEnbl-Sts': self._topup_borfstandbyenbl,
+            'TopUpBORFWarmUpTime-SP': self._topup_borfwarmuptime,
+            'TopUpBORFWarmUpTime-RB': self._topup_borfwarmuptime,
             'TopUpNextInj-Mon': self._topup_next,
             'TopUpNrPulses-SP': self._topup_nrpulses,
             'TopUpNrPulses-RB': self._topup_nrpulses,
@@ -672,6 +679,17 @@ class App(_Callback):
                 return False
         self._bucketlist_step = step
         self.run_callbacks('BucketListStep-RB', step)
+        return True
+
+    def set_bucketlist_allowed_mask(self, values):
+        """Set allowed buckets for injection."""
+        if len(values) != self._bucketlist_allowed_mask.size:
+            self._update_log('ERR:Allowed buckets not set. wrong size.')
+            return False
+        self._bucketlist_allowed_mask = _np.array(values, dtype=bool)
+        self.run_callbacks(
+            'BucketListAllowedMask-RB', self._bucketlist_allowed_mask
+        )
         return True
 
     def set_isinj_delay(self, value):
@@ -1161,6 +1179,31 @@ class App(_Callback):
         _time.sleep(self._isinj_duration/1000)
         self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Idle)
 
+    def _callback_havebeam(self, value, **kws):
+        _ = kws
+        if value:
+            return
+        if self._mode not in [_Const.InjMode.TopUp, _Const.InjMode.Accum]:
+            return
+        if self._beamdump_job is not None and self._beamdump_job.is_alive():
+            return
+        self._update_log('FATAL:We do not have stored beam!')
+        self._beamdump_job = _epics.ca.CAThread(
+            target=self._thread_beamdump, daemon=True)
+        self._beamdump_job.start()
+
+    def _thread_beamdump(self):
+        self._beamdumped = True
+        if self._mode == _Const.InjMode.TopUp:
+            if self._topup_state_sts != _Const.TopUpSts.Off:
+                self._update_log('FATAL:Opening TopUp loop...')
+                self.set_topup_state(_Const.OffOn.Off)
+        else:
+            if self._accum_state_sts != _Const.AccumSts.Off:
+                self._update_log('FATAL:Opening Accumulation loop...')
+                self.set_accum_state(_Const.OffOn.Off)
+        self._beamdumped = False
+
     # --- auxiliary injection methods ---
 
     def _check_allok_2_inject(self, show_warn=True):
@@ -1255,20 +1298,40 @@ class App(_Callback):
             self._update_log('ERR:EVG is disconnected.')
             return False
 
+        nrpulses = nrpulses or self._topup_nrpulses
         if step is None:
             step = self._bucketlist_step
 
         lastfilledbucket = self._evg_dev.bucketlist_mon[-1]
         if not _Const.MIN_BKT <= lastfilledbucket <= _Const.MAX_BKT:
             lastfilledbucket = 1
+        allowed_buckets = self._bucketlist_allowed_mask.nonzero()[0] + 1
+        buckets = self._compute_which_buckets2inject(
+            step, nrpulses, lastfilledbucket, allowed_buckets
+        )
+        return self._set_bucket_list(buckets)
 
-        nrpulses = nrpulses or self._topup_nrpulses
-        bucket = _np.arange(nrpulses) + 1
-        bucket *= step
-        bucket += lastfilledbucket - 1
-        bucket %= 864
-        bucket += 1
-        return self._set_bucket_list(bucket)
+    def _compute_which_buckets2inject(
+        self, step, nrpulses, lastfilledbucket, allowed_buckets
+    ):
+        buckets = []
+        for _ in range(nrpulses):
+            # finite loop here in case it is not possible to fill bucket list:
+            for _ in range(_Const.MAX_BKT):
+                bucket = lastfilledbucket + step - 1
+                bucket %= _Const.MAX_BKT
+                bucket += 1
+                lastfilledbucket = bucket
+                if bucket in allowed_buckets:
+                    break
+            else:
+                self._update_log(
+                    'ERR:Could not fill bucket list. '
+                    'Impossible configurations.'
+                )
+                return buckets
+            buckets.append(bucket)
+        return buckets
 
     def _set_bucket_list(self, value):
         self._evg_dev.bucketlist = value
@@ -1314,11 +1377,11 @@ class App(_Callback):
             if not self._continue_accum():
                 break
 
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.TurningOn)
+            self._update_accumsts(_Const.AccumSts.TurningOn)
             if not self._start_injection():
                 break
 
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Injecting)
+            self._update_accumsts(_Const.AccumSts.Injecting)
             if not self._wait_injection():
                 break
             self._update_bucket_list(nrpulses=1)
@@ -1326,7 +1389,7 @@ class App(_Callback):
             dt_ = self._accum_period - (_time.time() - t0_)
             if dt_ <= 0:
                 continue
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
+            self._update_accumsts(_Const.AccumSts.Waiting)
             self._update_log('Waiting for next injection...')
 
             while dt_ > 0:
@@ -1343,10 +1406,10 @@ class App(_Callback):
 
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
 
-        # update top-up status
-        self.run_callbacks('AccumState-Sts', _Const.AccumSts.Off)
+        # update acummulation status
+        self._update_accumsts(_Const.AccumSts.Off)
         self._update_log('Stopped accumulation loop.')
-        if not self._abort or self._setting_mode:
+        if not self._abort or self._setting_mode or self._beamdumped:
             self.run_callbacks('AccumState-Sel', _Const.OffOn.Off)
 
     def _continue_accum(self):
@@ -1453,7 +1516,7 @@ class App(_Callback):
         # update top-up status
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
-        if not self._abort or self._setting_mode:
+        if not self._abort or self._setting_mode or self._beamdumped:
             self.run_callbacks('TopUpState-Sel', _Const.OffOn.Off)
 
     def _wait_topup_period(self):
@@ -1484,10 +1547,13 @@ class App(_Callback):
             cond &= not self._bias_feedback.already_set
             if cond and self.currinfo_dev.connected:
                 dcur = self._bias_feedback.get_delta_current_per_pulse(
-                    per=self._topup_period, nrpul=self._topup_nrpulses,
+                    per=self._topup_period,
+                    nrpul=self._topup_nrpulses,
                     curr_avg=self._target_current,
                     curr_now=self.currinfo_dev.current,
-                    ltime=self.currinfo_dev.lifetime)
+                    ltime=self.currinfo_dev.lifetime,
+                    ahead_tim=_Const.BIASFB_AHEADSETIME
+                )
                 self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
@@ -1616,6 +1682,10 @@ class App(_Callback):
         else:
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
+
+    def _update_accumsts(self, sts):
+        self._accum_state_sts = sts
+        self.run_callbacks('AccumState-Sts', sts)
 
     def _update_topupsts(self, sts):
         self._topup_state_sts = sts

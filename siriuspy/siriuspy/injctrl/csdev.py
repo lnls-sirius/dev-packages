@@ -210,11 +210,11 @@ def get_injctrl_propty_database():
             'prec': 3, 'lolim': -8.0, 'low': -8.0, 'lolo': -8.0,
             'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},
         'TargetCurrent-SP': {
-            'type': 'float', 'value': 100.0, 'unit': 'mA',
+            'type': 'float', 'value': 200.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 500.0, 'high': 500.0, 'hihi': 500.0},
         'TargetCurrent-RB': {
-            'type': 'float', 'value': 100.0, 'unit': 'mA',
+            'type': 'float', 'value': 200.0, 'unit': 'mA',
             'prec': 2, 'lolim': 0.0, 'low': 0.0, 'lolo': 0.0,
             'hilim': 500.0, 'high': 500.0, 'hihi': 500.0},
         'BucketListStart-SP': {
@@ -235,6 +235,18 @@ def get_injctrl_propty_database():
         'BucketListStep-RB': {
             'type': 'int', 'value': 29, 'unit': 'buckets',
             'lolim': -_ct.MAX_BKT, 'hilim': _ct.MAX_BKT},
+        "BucketListAllowedMask-SP": {
+            "type": "int",
+            "count": _ct.MAX_BKT,
+            "value": _ct.MAX_BKT * [1],
+            "unit": "Buckets where injection is allowed",
+        },
+        "BucketListAllowedMask-RB": {
+            "type": "int",
+            "count": _ct.MAX_BKT,
+            "value": _ct.MAX_BKT * [1],
+            "unit": "Buckets where injection is allowed",
+        },
         'IsInjecting-Mon': {
             'type': 'enum', 'value': _ct.IdleInjecting.Idle,
             'enums': _et.IDLEINJECTING, 'unit': 'Idle_Inj'},
@@ -271,10 +283,10 @@ def get_injctrl_propty_database():
             'type': 'enum', 'value': _ct.TopUpSts.Off, 'enums': _et.TOPUPSTS,
             'unit': 'Off_Wai_TOn_Inj_TOff_Skip'},
         'TopUpPeriod-SP': {
-            'type': 'int', 'value': 3, 'unit': 'min',
+            'type': 'int', 'value': 1, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpPeriod-RB': {
-            'type': 'int', 'value': 3, 'unit': 'min',
+            'type': 'int', 'value': 1, 'unit': 'min',
             'lolim': 1, 'hilim': 6*60},
         'TopUpHeadStartTime-SP': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
@@ -295,16 +307,16 @@ def get_injctrl_propty_database():
             'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpLIWarmUpEnbl-Sel': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpLIWarmUpEnbl-Sts': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpLIWarmUpTime-SP': {
-            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpLIWarmUpTime-RB': {
-            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpBOPSStandbyEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
@@ -319,16 +331,16 @@ def get_injctrl_propty_database():
             'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpBORFStandbyEnbl-Sel': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpBORFStandbyEnbl-Sts': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+            'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
         'TopUpBORFWarmUpTime-SP': {
-            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 5, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpBORFWarmUpTime-RB': {
-            'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+            'type': 'float', 'value': 5, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
         'TopUpNextInj-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 's'},
@@ -419,16 +431,16 @@ def get_biasfb_database():
             'type': 'enum', 'value': _ct.OffOn.On, 'enums': _et.OFF_ON,
             'unit': 'Off_On'},
         'MinVoltage-SP': {
-            'type': 'float', 'value': -52, 'unit': 'V',
+            'type': 'float', 'value': -44, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MinVoltage-RB': {
-            'type': 'float', 'value': -52, 'unit': 'V',
+            'type': 'float', 'value': -44, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MaxVoltage-SP': {
-            'type': 'float', 'value': -45, 'unit': 'V',
+            'type': 'float', 'value': -37, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
         'MaxVoltage-RB': {
-            'type': 'float', 'value': -45, 'unit': 'V',
+            'type': 'float', 'value': -37, 'unit': 'V',
             'prec': 1, 'lolim': -120, 'hilim': -30.0},
 
         'ModelType-Sel': {
@@ -438,13 +450,13 @@ def get_biasfb_database():
             'type': 'enum', 'value': _ct.BiasFBModelTypes.GaussianProcess,
             'enums': _et.BIASFB_MODEL_TYPES, 'unit': 'Lin_GP'},
         'ModelMaxNrPts-SP': {
-            'type': 'int', 'value': 20, 'unit': '#',
+            'type': 'int', 'value': 30, 'unit': '#',
             'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelMaxNrPts-RB': {
-            'type': 'int', 'value': 20, 'unit': '#',
+            'type': 'int', 'value': 30, 'unit': '#',
             'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelNrPts-Mon': {
-            'type': 'int', 'value': 20, 'unit': '#',
+            'type': 'int', 'value': 30, 'unit': '#',
             'lolim': 2, 'hilim': _ct.BIASFB_MAX_DATA_SIZE},
         'ModelFitParamsNow-Cmd': {'type': 'int', 'value': 0},
         'ModelAutoFitParams-Sel': {
@@ -488,22 +500,22 @@ def get_biasfb_database():
             'value': [0]*_ct.BIASFB_MAX_DATA_SIZE, 'unit': 'mA'},
 
         'LinModAngCoeff-SP': {
-            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModAngCoeff-RB': {
-            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModAngCoeff-Mon': {
-            'type': 'float', 'value': 15, 'unit': 'V/mA',
+            'type': 'float', 'value': 10, 'unit': 'V/mA',
             'prec': 2, 'lolim': 0.1, 'hilim': 30.0},
         'LinModOffCoeff-SP': {
-            'type': 'float', 'value': -52, 'unit': 'V/mA',
+            'type': 'float', 'value': -44, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'hilim': -30.0},
         'LinModOffCoeff-RB': {
-            'type': 'float', 'value': -52, 'unit': 'V/mA',
+            'type': 'float', 'value': -44, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'hilim': -30.0},
         'LinModOffCoeff-Mon': {
-            'type': 'float', 'value': -52, 'unit': 'V/mA',
+            'type': 'float', 'value': -44, 'unit': 'V/mA',
             'prec': 2, 'lolim': -120, 'hilim': -30.0},
 
         # These are used to give the model inference about the bias

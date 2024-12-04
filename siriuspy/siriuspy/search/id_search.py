@@ -4,8 +4,7 @@ import copy as _copy
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from ..namesys import SiriusPVName as _SiriusPVName
-from ..namesys import Filter as _Filter
+from ..namesys import Filter as _Filter, SiriusPVName as _SiriusPVName
 
 
 class IDSearch:
@@ -20,12 +19,12 @@ class IDSearch:
     _beamline2idname = {
         'CARNAUBA': 'SI-06SB:ID-APU22',  # titular: VPU19
         'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU19
-        'EMA':      'SI-08SB:ID-APU22',  # titular: IVU18
+        'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
         'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
         'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
-        'PAINEIRA': 'SI-14SB:ID-WIG180',  # titular: IVU18
-        'SAPUCAIA': 'SI-17SA:ID-PAPU50',  # titular: 2 x APU22
+        'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
+        'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
     }
 
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
@@ -62,6 +61,12 @@ class IDSearch:
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None)),
+        'SI-08SB:ID-IVU18': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                18.5,
+                4.2, 24, 24, 24, 0.01,
+                None, None, None, None)),
         'SI-09SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
@@ -94,11 +99,23 @@ class IDSearch:
                 180,
                 49.73, 49.73, 150, 150, 0.1,
                 None, None, None, None)),
+        'SI-14SB:ID-IVU18': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                18.5,
+                4.2, 24, 24, 24, 0.01,
+                None, None, None, None)),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 50,
                 0, 25, 25, 0, 0.1,
+                None, None, None, None)),
+        'SI-17SA:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.01,
                 None, None, None, None)),
     }
 
@@ -113,6 +130,9 @@ class IDSearch:
             0: ('horizontal', None),  # [mm]
         },
         'SI-08SB:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-08SB:ID-IVU18': {
             0: ('horizontal', None),  # [mm]
         },
         'SI-09SA:ID-APU22': {
@@ -133,7 +153,13 @@ class IDSearch:
         'SI-11SP:ID-APU58': {
             0: ('horizontal', None),  # [mm]
         },
+        'SI-14SB:ID-IVU18': {
+            0: ('horizontal', None),  # [mm]
+        },
         'SI-17SA:ID-PAPU50': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-17SA:ID-APU22': {
             0: ('horizontal', None),  # [mm]
         },
     }
@@ -146,7 +172,18 @@ class IDSearch:
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,
         'SI-07SP:ID-APU22': None,
-        'SI-08SB:ID-APU22': None,
+        'SI-08SB:ID-IVU18': {
+            'polarizations': ('horizontal', ),
+            'pparameter': None,
+            'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
+            'ch1': 'SI-08SB:PS-CH-1:Current-SP',  # upstream
+            'ch2': 'SI-08SB:PS-CH-2:Current-SP',  # downstream
+            'cv1': 'SI-08SB:PS-CV-1:Current-SP',
+            'cv2': 'SI-08SB:PS-CV-2:Current-SP',
+            # 'qs1': 'SI-08SB:PS-QS-1:Current-SP',
+            # 'qs2': 'SI-08SB:PS-QS-2:Current-SP',
+            'lch': 'SI-08SB:PS-LCH:Current-SP',
+        },
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
             'polarizations': tuple(
@@ -175,17 +212,22 @@ class IDSearch:
             'qs2': 'SI-10SB:PS-QS-2:Current-SP',
         },
         'SI-11SP:ID-APU58': None,
-        'SI-14SB:ID-WIG180': {
+        'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
-            'kparameter': 'SI-14SB:ID-WIG180:Gap-Mon',
+            'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
             'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
+            'cv1': 'SI-14SB:PS-CV-1:Current-SP',
+            'cv2': 'SI-14SB:PS-CV-2:Current-SP',
+            # 'qs1': 'SI-08SB:PS-QS-1:Current-SP',
+            # 'qs2': 'SI-08SB:PS-QS-2:Current-SP',
+            'lch': 'SI-14SB:PS-LCH:Current-SP',
         },
-        'SI-17SA:ID-PAPU50': {
+        'SI-17SA:ID-APU22': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
-            'kparameter': 'SI-17SA:ID-PAPU50:Phase-Mon',
+            'kparameter': 'SI-17SA:ID-APU22:Phase-Mon',
             'ch1': 'SI-17SA:PS-CH-1:Current-SP',  # upstream
             'ch2': 'SI-17SA:PS-CH-2:Current-SP',  # downstream
             'cv1': 'SI-17SA:PS-CV-1:Current-SP',
@@ -286,6 +328,11 @@ class IDSearch:
         return IDSearch._get_devname_from_idff(idname, ('qs1', 'qs2'))
 
     @staticmethod
+    def conv_idname_2_idff_lcnames(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('lch', ))
+
+    @staticmethod
     def conv_idname_2_polarizations(idname):
         """Return ID polarizations (sel)."""
         pols = IDSearch._idname2pol_sel[idname]
@@ -300,8 +347,11 @@ class IDSearch:
     @staticmethod
     def conv_idname_2_polarization_state(idname, pparameter, kparameter):
         """Return polarization state index."""
-        params = IDSearch.conv_idname_2_parameters(idname)
         pols_sts = IDSearch._idname2pol_sts[idname]
+        if len(pols_sts) == 1:
+            return next(iter(pols_sts))
+
+        params = IDSearch.conv_idname_2_parameters(idname)
 
         # check if polarization is defined
         for pol_idx, pol in pols_sts.items():

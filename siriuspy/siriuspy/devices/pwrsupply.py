@@ -48,7 +48,7 @@ class _PSDev(_Device):
         )
     _properties_fc = (
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
-        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopTi-RB', 'CurrLoopTi-SP',
+        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopKi-RB', 'CurrLoopKi-SP',
         'CurrLoopMode-Sts', 'CurrLoopMode-Sel',
         'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
         'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
@@ -928,11 +928,11 @@ class PowerSupplyFC(_PSDev):
     @property
     def currloop_ki(self):
         """Current control loop Ki parameter."""
-        return self['CurrLoopTi-RB']
+        return self['CurrLoopKi-RB']
 
     @currloop_ki.setter
     def currloop_ki(self, value):
-        self['CurrLoopTi-SP'] = value
+        self['CurrLoopKi-SP'] = value
 
     @property
     def currloop_mode(self):

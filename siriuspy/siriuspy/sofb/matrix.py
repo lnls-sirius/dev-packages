@@ -33,7 +33,7 @@ class EpicsMatrix(BaseMatrix):
             "bpmy": "BPMYEnblList-RB",
         }
         if self.isring:
-            self.select_items["rf"] = _np.zeros(1, dtype=bool)
+            self.select_items["rf"] = _np.ones(1, dtype=bool)
             self.selection_pv_names["rf"] = "RFEnbl-Sts"
         self._respmat_mode = self._csorb.RespMatMode.Full
         self.min_sing_val = self._csorb.MIN_SING_VAL

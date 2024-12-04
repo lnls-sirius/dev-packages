@@ -38,7 +38,12 @@ class ETypes(_csdev.ETypes):
         'DCCT13C4PsMtmTrigConfig', 'DCCT14C4PsMtmTrigConn',
         'DCCT14C4PsMtmTrigStatusOK', 'DCCT14C4PsMtmTrigConfig',
         )
-    STS_LBLS_LLRF = ('Connected', 'Configured')
+    STS_LBLS_LLRF = (
+        'A Connected',
+        'A Configured',
+        'B Connected',
+        'B Configured',
+        )
 
 
 _et = ETypes  # syntactic sugar
@@ -127,7 +132,9 @@ class Const(_csdev.Const):
         ('TRIGGER_PM14RcvInSel-SP', 2),
     )
     REDUNDANCY_TABLE = {
+        'IA-08RaBPM:TI-AMCFPGAEVR': 'IA-08RaBPM:TI-EVR',
         'IA-10RaBPM:TI-AMCFPGAEVR': 'IA-10RaBPM:TI-EVR',
+        'IA-14RaBPM:TI-AMCFPGAEVR': 'IA-14RaDiag03:TI-EVE',
     }
 
     __EVG_CONFIGS = None
@@ -263,7 +270,7 @@ class Const(_csdev.Const):
                 'value': self.DsblEnbl.Dsbl},
             'BPMStatus-Mon': {'type': 'int', 'value': 0b111111111},
             'TimingStatus-Mon': {'type': 'int', 'value': (1 << 19) - 1},
-            'LLRFStatus-Mon': {'type': 'int', 'value': 0b11},
+            'LLRFStatus-Mon': {'type': 'int', 'value': 0b1111},
             'BPMStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_BPM),
                 'value': _et.STS_LBLS_BPM},

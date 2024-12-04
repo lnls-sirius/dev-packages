@@ -28,6 +28,7 @@ class App(_Callback):
         self._loop_state = _Const.DEFAULT_LOOP_STATE
         self._loop_freq = _Const.DEFAULT_LOOP_FREQ
         self._control_qs = _Const.DEFAULT_CONTROL_QS
+        self._control_lc = _Const.DEFAULT_CONTROL_LC
         self._polarization = 'none'
         self._config_name = ''
         self.read_autosave_file()
@@ -43,6 +44,7 @@ class App(_Callback):
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
             'ControlQS-Sel': self.set_control_qs,
+            'ControlLC-Sel': self.set_control_lc,
             'ConfigName-SP': self.set_config_name,
             'CorrConfig-Cmd': self.cmd_corrconfig,
         }
@@ -71,6 +73,11 @@ class App(_Callback):
                 'ControlQS-Sel': self._control_qs,
                 'ControlQS-Sts': self._control_qs,
                 })
+        if self._const.has_lccorrs:
+            pvn2vals.update({
+                'ControlLC-Sel': self._control_lc,
+                'ControlLC-Sts': self._control_lc,
+                })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
         self._update_log('Started.')
@@ -97,7 +104,7 @@ class App(_Callback):
         if sleep_time > 0:
             _time.sleep(sleep_time)
         else:
-            strf = 'process took {0:f}ms.'.format((dtime)*1000)
+            strf = f'process took {(dtime)*1000:f}ms.'
             _log.debug(strf)
 
     def read(self, reason):
@@ -147,6 +154,16 @@ class App(_Callback):
         self.run_callbacks('ControlQS-Sts', value)
         return True
 
+    def set_control_lc(self, value):
+        """Set whether to include LC or not in feedforward."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+        self._control_lc = value
+        act = ('En' if value else 'Dis')
+        self._update_log(f'{act}abled LC control.')
+        self.run_callbacks('ControlLC-Sts', value)
+        return True
+
     def set_config_name(self, value):
         """Set configuration name."""
         if self._loop_state == self._const.LoopState.Closed:
@@ -167,7 +184,9 @@ class App(_Callback):
             self._update_log('ERR:Open loop before configure correctors.')
             return False
 
-        corrdevs = self._idff.chdevs + self._idff.cvdevs + self._idff.qsdevs
+        corrdevs = \
+            self._idff.chdevs + self._idff.cvdevs + \
+            self._idff.qsdevs + self._idff.lcdevs
         for dev in corrdevs:
             # turn on
             if not dev.cmd_turn_on():
@@ -266,6 +285,8 @@ class App(_Callback):
             return 'papu50_ref'
         elif self._const.idname.dev == 'DELTA52':
             return 'delta52_ref'
+        elif self._const.idname.dev == 'IVU18':
+            return 'ivu18_ref'
         return ''
 
     def _load_config(self, config_name):
@@ -285,11 +306,10 @@ class App(_Callback):
         if tsleep > 0:
             _time.sleep(tsleep)
         else:
-            strf1 = (
-                'Feedforward step took more than planned... '
-                '{0:.3f}/{1:.3f} s')
-            strf2 = strf1.format(ttook, tplanned)
-            _log.warning(strf2)
+            strf = (
+                f'Feedforward step took more than planned... '
+                f'{ttook:.3f}/{tplanned:.3f} s')
+            _log.warning(strf)
 
     def _do_update_polarization(self):
         new_pol, *_ = self._idff.get_polarization_state()
@@ -311,9 +331,11 @@ class App(_Callback):
             self._update_log('ERR:'+str(err))
 
     def _do_implement_correctors(self):
-        corrdevs = None
-        if self._control_qs == self._const.DsblEnbl.Dsbl:
-            corrdevs = self._idff.chdevs + self._idff.cvdevs
+        corrdevs = self._idff.chdevs + self._idff.cvdevs
+        if self._control_qs == self._const.DsblEnbl.Enbl:
+            corrdevs = corrdevs + self._idff.qsdevs
+        if self._control_lc == self._const.DsblEnbl.Enbl:
+            corrdevs = corrdevs + self._idff.lcdevs
         try:
             # use PS IOCs (IDFF) to implement setpoints
             setpoints, *_ = self._corr_setpoints
@@ -328,6 +350,8 @@ class App(_Callback):
         devs = self._idff.chdevs + self._idff.cvdevs
         if self._control_qs == self._const.DsblEnbl.Enbl:
             devs.extend(self._idff.qsdevs)
+        if self._control_lc == self._const.DsblEnbl.Enbl:
+            devs.extend(self._idff.lcdevs)
 
         status = 0
         if all(d.connected for d in devs):
@@ -346,8 +370,8 @@ class App(_Callback):
             return
         setpoints, *_ = self._corr_setpoints
         idff = self._idff
-        corrnames = idff.chnames + idff.cvnames + idff.qsnames
-        corrlabels = ('CH1', 'CH2', 'CV1', 'CV2', 'QS1', 'QS2')
+        corrnames = idff.chnames + idff.cvnames + idff.qsnames + idff.lcnames
+        corrlabels = ('CH1', 'CH2', 'CV1', 'CV2', 'QS1', 'QS2', 'LCH', )
         for corrlabel, corrname in zip(corrlabels, corrnames):
             for corr_pvname in setpoints:
                 if corrname in corr_pvname:

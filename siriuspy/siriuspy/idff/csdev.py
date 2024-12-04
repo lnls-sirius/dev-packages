@@ -6,8 +6,8 @@ from .. import csdev as _csdev
 from ..namesys import SiriusPVName as _PVName
 from ..search import IDSearch as _IDSearch
 
-
 # --- Enumeration Types ---
+
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
@@ -35,6 +35,7 @@ class IDFFConst(_csdev.Const):
     DEFAULT_LOOP_FREQ = 10  # [Hz]
     DEFAULT_LOOP_STATE = LoopState.Open
     DEFAULT_CONTROL_QS = _csdev.Const.DsblEnbl.Enbl
+    DEFAULT_CONTROL_LC = _csdev.Const.DsblEnbl.Dsbl
     DEFAULT_CORR_PREC = 4
 
     def __init__(self, idname):
@@ -48,6 +49,8 @@ class IDFFConst(_csdev.Const):
         self.autosave_fname = _os.path.join(ioc_fol, fname+'.txt')
         qsnames = _IDSearch.conv_idname_2_idff_qsnames(idname)
         self.has_qscorrs = True if qsnames else False
+        lcnames = _IDSearch.conv_idname_2_idff_lcnames(idname)
+        self.has_lccorrs = True if lcnames else False
 
     def get_propty_database(self):
         """Return property database."""
@@ -106,6 +109,20 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
                 'CorrQS2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            })
+        if self.has_lccorrs:
+            dbase.update({
+                'ControlLC-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.DEFAULT_CONTROL_LC,
+                    'unit': 'If LC are included in loop'},
+                'ControlLC-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.DEFAULT_CONTROL_LC,
+                    'unit': 'If LC are included in loop'},
+                'CorrLCHCurrent-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
