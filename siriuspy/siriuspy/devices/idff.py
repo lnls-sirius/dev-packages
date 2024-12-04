@@ -314,7 +314,7 @@ class IDFF(_DeviceSet):
 
         alldevs = self._create_devices(devname)
         (self._devctrl, self._devid, self._devsch, self._devscv,
-         self._devsqs, self._devslc, self._devsqd) = alldevs
+         self._devsqs, self._devslc, self._devsqn) = alldevs
 
         self._lab2corrdevs = self._create_labels_2_corrdevs_dict()
 
@@ -327,7 +327,7 @@ class IDFF(_DeviceSet):
         devices += self._devscv
         devices += self._devsqs
         devices += self._devslc
-        devices += self._devsqd
+        devices += self._devsqn
         super().__init__(devices, devname=devname)
 
     @property
@@ -351,9 +351,9 @@ class IDFF(_DeviceSet):
         return _IDSearch.conv_idname_2_idff_lcnames(self.devname)
 
     @property
-    def qdnames(self):
+    def qnnames(self):
         """Return QD corrector power supply names."""
-        return _IDSearch.conv_idname_2_idff_qdnames(self.devname)
+        return _IDSearch.conv_idname_2_idff_qnnames(self.devname)
 
     @property
     def ctrldev(self):
@@ -386,9 +386,9 @@ class IDFF(_DeviceSet):
         return self._devslc
 
     @property
-    def qddevs(self):
+    def qndevs(self):
         """Return QD corrector power supply names."""
-        return self._devsqd
+        return self._devsqn
 
     @property
     def pparametername(self):
@@ -485,7 +485,7 @@ class IDFF(_DeviceSet):
         if corrdevs is None:
             corrdevs = \
                 self._devsch + self._devscv + \
-                self._devsqs + self._devslc + self._devsqd
+                self._devsqs + self._devslc + self._devsqn
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:
@@ -628,19 +628,19 @@ class IDFF(_DeviceSet):
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
         devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
-        devsqd = [_PowerSupplyFBP(devname=dev) for dev in self.qdnames]
-        return devctrl, devid, devsch, devscv, devsqs, devslc, devsqd
+        devsqn = [_PowerSupplyFBP(devname=dev) for dev in self.qnnames]
+        return devctrl, devid, devsch, devscv, devsqs, devslc, devsqn
 
     def _create_labels_2_corrdevs_dict(self):
         ch_labels = _IDSearch.IDFF_CH_LABELS
         cv_labels = _IDSearch.IDFF_CV_LABELS
         qs_labels = _IDSearch.IDFF_QS_LABELS
         lc_labels = _IDSearch.IDFF_LC_LABELS
-        qd_labels = _IDSearch.IDFF_QD_LABELS
+        qn_labels = _IDSearch.IDFF_QN_LABELS
         devs = dict()
         devs.update({lab: dev for lab, dev in zip(ch_labels, self._devsch)})
         devs.update({lab: dev for lab, dev in zip(cv_labels, self._devscv)})
         devs.update({lab: dev for lab, dev in zip(qs_labels, self._devsqs)})
         devs.update({lab: dev for lab, dev in zip(lc_labels, self._devslc)})
-        devs.update({lab: dev for lab, dev in zip(qd_labels, self._devsqd)})
+        devs.update({lab: dev for lab, dev in zip(qn_labels, self._devsqn)})
         return devs

@@ -174,7 +174,7 @@ class IDSearch:
     IDFF_CV_LABELS = ('cv1', 'cv2')
     IDFF_QS_LABELS = ('qs1', 'qs2')
     IDFF_LC_LABELS = ('lch', )
-    IDFF_QD_LABELS = ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
+    IDFF_QN_LABELS = ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
 
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,
@@ -190,15 +190,15 @@ class IDSearch:
             IDFF_QS_LABELS[0]: 'SI-08M1:PS-QS:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-08M2:PS-QS:Current-SP',
             IDFF_LC_LABELS[0]: 'SI-08SB:PS-LCH:Current-SP',
-            IDFF_QD_LABELS[0]: 'SI-08M1:PS-QDB1:Current-SP',
-            IDFF_QD_LABELS[1]: 'SI-08M1:PS-QFB:Current-SP',
-            IDFF_QD_LABELS[2]: 'SI-08M1:PS-QDB2:Current-SP',
-            IDFF_QD_LABELS[3]: 'SI-08M2:PS-QDB2:Current-SP',
-            IDFF_QD_LABELS[4]: 'SI-08M2:PS-QFB:Current-SP',
-            IDFF_QD_LABELS[5]: 'SI-08M2:PS-QDB1:Current-SP',
+            IDFF_QN_LABELS[0]: 'SI-08M1:PS-QDB1:Current-SP',
+            IDFF_QN_LABELS[1]: 'SI-08M1:PS-QFB:Current-SP',
+            IDFF_QN_LABELS[2]: 'SI-08M1:PS-QDB2:Current-SP',
+            IDFF_QN_LABELS[3]: 'SI-08M2:PS-QDB2:Current-SP',
+            IDFF_QN_LABELS[4]: 'SI-08M2:PS-QFB:Current-SP',
+            IDFF_QN_LABELS[5]: 'SI-08M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QD_LABELS[0], IDFF_QD_LABELS[1], IDFF_QD_LABELS[2],
-                IDFF_QD_LABELS[3], IDFF_QD_LABELS[4], IDFF_QD_LABELS[5],
+                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
             ],  # [A]
         },
         'SI-09SA:ID-APU22': None,
@@ -240,15 +240,15 @@ class IDSearch:
             IDFF_QS_LABELS[0]: 'SI-14M1:PS-QS:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-14M2:PS-QS:Current-SP',
             IDFF_LC_LABELS[0]: 'SI-14SB:PS-LCH:Current-SP',
-            IDFF_QD_LABELS[0]: 'SI-14M1:PS-QDB1:Current-SP',
-            IDFF_QD_LABELS[1]: 'SI-14M1:PS-QFB:Current-SP',
-            IDFF_QD_LABELS[2]: 'SI-14M1:PS-QDB2:Current-SP',
-            IDFF_QD_LABELS[3]: 'SI-14M2:PS-QDB2:Current-SP',
-            IDFF_QD_LABELS[4]: 'SI-14M2:PS-QFB:Current-SP',
-            IDFF_QD_LABELS[5]: 'SI-14M2:PS-QDB1:Current-SP',
+            IDFF_QN_LABELS[0]: 'SI-14M1:PS-QDB1:Current-SP',
+            IDFF_QN_LABELS[1]: 'SI-14M1:PS-QFB:Current-SP',
+            IDFF_QN_LABELS[2]: 'SI-14M1:PS-QDB2:Current-SP',
+            IDFF_QN_LABELS[3]: 'SI-14M2:PS-QDB2:Current-SP',
+            IDFF_QN_LABELS[4]: 'SI-14M2:PS-QFB:Current-SP',
+            IDFF_QN_LABELS[5]: 'SI-14M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QD_LABELS[0], IDFF_QD_LABELS[1], IDFF_QD_LABELS[2],
-                IDFF_QD_LABELS[3], IDFF_QD_LABELS[4], IDFF_QD_LABELS[5],
+                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
             ],  # [A]
         },
         'SI-17SA:ID-APU22': {
@@ -369,9 +369,9 @@ class IDSearch:
         return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_LC_LABELS)
 
     @staticmethod
-    def conv_idname_2_idff_qdnames(idname):
+    def conv_idname_2_idff_qnnames(idname):
         """."""
-        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_QD_LABELS)
+        return IDSearch._get_devname_from_idff(idname, IDSearch.IDFF_QN_LABELS)
 
     @staticmethod
     def conv_idname_2_polarizations(idname):

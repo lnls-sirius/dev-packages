@@ -41,7 +41,7 @@ class IDFFConst(_csdev.Const):
     def __init__(self, idname,
                  enbl_chcorrs=False, enbl_cvcorrs=False,
                  enbl_qscorrs=False, enbl_lccorrs=False,
-                 enbl_qdcorrs=False):
+                 enbl_qncorrs=False):
         """Init."""
         self.idname = _PVName(idname)
         self.idffname = 'SI-' + self.idname.sub + ':AP-IDFF'
@@ -58,8 +58,8 @@ class IDFFConst(_csdev.Const):
         self.enbl_qscorrs = enbl_qscorrs and len(qsnames) > 0
         lcnames = _IDSearch.conv_idname_2_idff_lcnames(idname)
         self.enbl_lccorrs = enbl_lccorrs and len(lcnames) > 0
-        qdnames = _IDSearch.conv_idname_2_idff_qdnames(idname)
-        self.enbl_qdcorrs = enbl_qdcorrs and len(qdnames) > 0
+        qnnames = _IDSearch.conv_idname_2_idff_qnnames(idname)
+        self.enbl_qncorrs = enbl_qncorrs and len(qnnames) > 0
 
     def get_propty_database(self):
         """Return property database."""
@@ -160,15 +160,15 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
-        if self.enbl_qdcorrs:
+        if self.enbl_qncorrs:
             dbase.update({
-                'ControlQD-Sel': {
+                'ControlQN-Sel': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.enbl_qdcorrs,
+                    'value': self.enbl_qncorrs,
                     'unit': 'dsbl_enbl'},
-                'ControlQD-Sts': {
+                'ControlQN-Sts': {
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
-                    'value': self.enbl_qdcorrs,
+                    'value': self.enbl_qncorrs,
                     'unit': 'dsbl_enbl'},
                 'CorrQA1Current-Mon': {
                     'type': 'float', 'value': 0,
