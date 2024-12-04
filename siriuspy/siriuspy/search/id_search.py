@@ -169,6 +169,13 @@ class IDSearch:
     _idname2pol_sts['SI-10SB:ID-DELTA52'].update(
         {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
+    # define IDFF correctors labeling (and ordering)
+    IDFF_CH_LABELS = ('ch1', 'ch2')
+    IDFF_CV_LABELS = ('cv1', 'cv2')
+    IDFF_QS_LABELS = ('qs1', 'qs2')
+    IDFF_LC_LABELS = ('lch', )
+    IDFF_QD_LABELS = ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
+
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,
         'SI-07SP:ID-APU22': None,
@@ -176,20 +183,23 @@ class IDSearch:
             'polarizations': ('horizontal', ),
             'pparameter': None,
             'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
-            'ch1': 'SI-08SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-08SB:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-08SB:PS-CV-1:Current-SP',
-            'cv2': 'SI-08SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-08M1:PS-QS:Current-SP',
-            'qs2': 'SI-08M2:PS-QS:Current-SP',
-            'lch': 'SI-08SB:PS-LCH:Current-SP',
-            'qa1': 'SI-08M1:PS-QDB1:Current-SP',
-            'qa2': 'SI-08M2:PS-QDB1:Current-SP',
-            'qb1': 'SI-08M1:PS-QFB:Current-SP',
-            'qb2': 'SI-08M2:PS-QFB:Current-SP',
-            'qc1': 'SI-08M1:PS-QDB2:Current-SP',
-            'qc2': 'SI-08M2:PS-QDB2:Current-SP',
-            'offsets': ['qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2'],  # [A]
+            IDFF_CH_LABELS[0]: 'SI-08SB:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-08SB:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-08SB:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-08SB:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-08M1:PS-QS:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-08M2:PS-QS:Current-SP',
+            IDFF_LC_LABELS[0]: 'SI-08SB:PS-LCH:Current-SP',
+            IDFF_QD_LABELS[0]: 'SI-08M1:PS-QDB1:Current-SP',
+            IDFF_QD_LABELS[1]: 'SI-08M1:PS-QFB:Current-SP',
+            IDFF_QD_LABELS[2]: 'SI-08M1:PS-QDB2:Current-SP',
+            IDFF_QD_LABELS[3]: 'SI-08M2:PS-QDB2:Current-SP',
+            IDFF_QD_LABELS[4]: 'SI-08M2:PS-QFB:Current-SP',
+            IDFF_QD_LABELS[5]: 'SI-08M2:PS-QDB1:Current-SP',
+            'offsets': [
+                IDFF_QD_LABELS[0], IDFF_QD_LABELS[1], IDFF_QD_LABELS[2],
+                IDFF_QD_LABELS[3], IDFF_QD_LABELS[4], IDFF_QD_LABELS[5],
+            ],  # [A]
         },
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
@@ -198,12 +208,12 @@ class IDSearch:
                 _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
             'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
-            'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-10SB:PS-CV-1:Current-SP',
-            'cv2': 'SI-10SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
-            'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+            IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-10SB:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-10SB:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-10SB:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-10SB:PS-QS-1:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-10SB:PS-QS-2:Current-SP',
         },
         'SI-10SB:ID-DELTA52': {
             'polarizations': tuple(
@@ -211,49 +221,46 @@ class IDSearch:
                 _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
-            'ch1': 'SI-10SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-10SB:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-10SB:PS-CV-1:Current-SP',
-            'cv2': 'SI-10SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-10SB:PS-QS-1:Current-SP',
-            'qs2': 'SI-10SB:PS-QS-2:Current-SP',
+            IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-10SB:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-10SB:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-10SB:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-10SB:PS-QS-1:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-10SB:PS-QS-2:Current-SP',
         },
         'SI-11SP:ID-APU58': None,
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
             'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
-            'ch1': 'SI-14SB:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-14SB:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-14SB:PS-CV-1:Current-SP',
-            'cv2': 'SI-14SB:PS-CV-2:Current-SP',
-            'qs1': 'SI-14M1:PS-QS:Current-SP',
-            'qs2': 'SI-14M2:PS-QS:Current-SP',
-            'lch': 'SI-14SB:PS-LCH:Current-SP',
-            'qa1': 'SI-14M1:PS-QDB1:Current-SP',
-            'qa2': 'SI-14M2:PS-QDB1:Current-SP',
-            'qb1': 'SI-14M1:PS-QFB:Current-SP',
-            'qb2': 'SI-14M2:PS-QFB:Current-SP',
-            'qc1': 'SI-14M1:PS-QDB2:Current-SP',
-            'qc2': 'SI-14M2:PS-QDB2:Current-SP',
-            'offsets': ['qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2'],  # [A]
+            IDFF_CH_LABELS[0]: 'SI-14SB:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-14SB:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-14SB:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-14SB:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-14M1:PS-QS:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-14M2:PS-QS:Current-SP',
+            IDFF_LC_LABELS[0]: 'SI-14SB:PS-LCH:Current-SP',
+            IDFF_QD_LABELS[0]: 'SI-14M1:PS-QDB1:Current-SP',
+            IDFF_QD_LABELS[1]: 'SI-14M1:PS-QFB:Current-SP',
+            IDFF_QD_LABELS[2]: 'SI-14M1:PS-QDB2:Current-SP',
+            IDFF_QD_LABELS[3]: 'SI-14M2:PS-QDB2:Current-SP',
+            IDFF_QD_LABELS[4]: 'SI-14M2:PS-QFB:Current-SP',
+            IDFF_QD_LABELS[5]: 'SI-14M2:PS-QDB1:Current-SP',
+            'offsets': [
+                IDFF_QD_LABELS[0], IDFF_QD_LABELS[1], IDFF_QD_LABELS[2],
+                IDFF_QD_LABELS[3], IDFF_QD_LABELS[4], IDFF_QD_LABELS[5],
+            ],  # [A]
         },
         'SI-17SA:ID-APU22': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
             'kparameter': 'SI-17SA:ID-APU22:Phase-Mon',
-            'ch1': 'SI-17SA:PS-CH-1:Current-SP',  # upstream
-            'ch2': 'SI-17SA:PS-CH-2:Current-SP',  # downstream
-            'cv1': 'SI-17SA:PS-CV-1:Current-SP',
-            'cv2': 'SI-17SA:PS-CV-2:Current-SP',
+            IDFF_CH_LABELS[0]: 'SI-17SA:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-17SA:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
     }
-
-    IDFF_CH_LABELS = ('ch1', 'ch2')
-    IDFF_CV_LABELS = ('cv1', 'cv2')
-    IDFF_QS_LABELS = ('qs1', 'qs2')
-    IDFF_LC_LABELS = ('lch', )
-    IDFF_QD_LABELS = ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
 
     @staticmethod
     def get_idnames(filters=None):
@@ -333,7 +340,7 @@ class IDSearch:
             return None
 
     @staticmethod
-    def conv_idname_2_idff_offsets(idname):
+    def conv_idname_2_idff_offsets_labels(idname):
         """."""
         idff = IDSearch._idname_2_idff[idname]
         if idff is None or 'offsets' not in idff:
