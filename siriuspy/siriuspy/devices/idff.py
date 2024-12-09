@@ -209,12 +209,12 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     CORRCONFIG_CMD = 'CorrConfig-Cmd'
     CORRSTATUS_MON = 'CorrStatus-Mon'
     CORRSTATUSLABELS_CTE = 'CorrStatusLabels-Cte'
-    CORRCH1CURRENT_MON = 'CorrCH1Current-Mon'
-    CORRCH2CURRENT_MON = 'CorrCH2Current-Mon'
-    CORRCV1CURRENT_MON = 'CorrCV1Current-Mon'
-    CORRCV2CURRENT_MON = 'CorrCV2Current-Mon'
-    CORRQS1CURRENT_MON = 'CorrQS1Current-Mon'
-    CORRQS2CURRENT_MON = 'CorrQS2Current-Mon'
+    CORRCH1CURRENT_MON = 'CorrCH_1Current-Mon'
+    CORRCH2CURRENT_MON = 'CorrCH_2Current-Mon'
+    CORRCV1CURRENT_MON = 'CorrCV_1Current-Mon'
+    CORRCV2CURRENT_MON = 'CorrCV_2Current-Mon'
+    CORRQS1CURRENT_MON = 'CorrQS_1Current-Mon'
+    CORRQS2CURRENT_MON = 'CorrQS_2Current-Mon'
 
     PROPERTIES_DEFAULT = \
         tuple(set(

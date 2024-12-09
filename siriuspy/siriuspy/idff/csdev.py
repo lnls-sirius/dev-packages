@@ -105,10 +105,10 @@ class IDFFConst(_csdev.Const):
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
                     'value': self.enbl_chcorrs,
                     'unit': 'dsbl_enbl'},
-                'CorrCH1Current-Mon': {
+                'CorrCH_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrCH2Current-Mon': {
+                'CorrCH_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
@@ -122,10 +122,10 @@ class IDFFConst(_csdev.Const):
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
                     'value': self.enbl_cvcorrs,
                     'unit': 'dsbl_enbl'},
-                'CorrCV1Current-Mon': {
+                'CorrCV_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrCV2Current-Mon': {
+                'CorrCV_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
@@ -139,10 +139,10 @@ class IDFFConst(_csdev.Const):
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
                     'value': self.enbl_qscorrs,
                     'unit': 'dsbl_enbl'},
-                'CorrQS1Current-Mon': {
+                'CorrQS_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQS2Current-Mon': {
+                'CorrQS_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
@@ -159,6 +159,9 @@ class IDFFConst(_csdev.Const):
                 'CorrLCHCurrent-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrLCVCurrent-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
         if self.enbl_qncorrs:
             dbase.update({
@@ -170,22 +173,22 @@ class IDFFConst(_csdev.Const):
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
                     'value': self.enbl_qncorrs,
                     'unit': 'dsbl_enbl'},
-                'CorrQDB1_1Current-Mon': {
+                'CorrQD1_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
                 'CorrQF_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQDB2_1Current-Mon': {
+                'CorrQD2_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQDB2_2Current-Mon': {
+                'CorrQD2_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
                 'CorrQF_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQDB1_2Current-Mon': {
+                'CorrQD1_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })

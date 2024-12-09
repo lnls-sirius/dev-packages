@@ -249,7 +249,7 @@ class App(_Callback):
 
         return True
 
-    def write_cmd_offsets(self, _):
+    def write_cmd_save_offsets(self, _):
         """Save current values of correctors' currents to si_idff configdb."""
         if self.loop_state == self.const.LoopState.Closed:
             self.update_log('ERR:Open loop before saving correctors offsets.')
