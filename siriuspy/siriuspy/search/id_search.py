@@ -170,11 +170,11 @@ class IDSearch:
         {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
     # define IDFF correctors labeling (and ordering)
-    IDFF_CH_LABELS = ('ch1', 'ch2')
-    IDFF_CV_LABELS = ('cv1', 'cv2')
-    IDFF_QS_LABELS = ('qs1', 'qs2')
-    IDFF_LC_LABELS = ('lch', )
-    IDFF_QN_LABELS = ('qa1', 'qb1', 'qc1', 'qc2', 'qb2', 'qa2')
+    IDFF_CH_LABELS = ('ch_1', 'ch_2')
+    IDFF_CV_LABELS = ('cv_1', 'cv_2')
+    IDFF_QS_LABELS = ('qs_1', 'qs_2')
+    IDFF_LC_LABELS = ('lch', 'lcv')
+    IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
 
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,

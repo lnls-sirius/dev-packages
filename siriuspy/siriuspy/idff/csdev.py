@@ -170,22 +170,22 @@ class IDFFConst(_csdev.Const):
                     'type': 'enum', 'enums': _et.DSBL_ENBL,
                     'value': self.enbl_qncorrs,
                     'unit': 'dsbl_enbl'},
-                'CorrQA1Current-Mon': {
+                'CorrQDB1_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQB1Current-Mon': {
+                'CorrQF_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQC1Current-Mon': {
+                'CorrQDB2_1Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQA2Current-Mon': {
+                'CorrQDB2_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQB2Current-Mon': {
+                'CorrQF_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
-                'CorrQC2Current-Mon': {
+                'CorrQDB1_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })

@@ -56,27 +56,27 @@ class IDFFConfig(_ConfigDBDocument):
     @property
     def ch_pvnames(self):
         """Return CH corrector power supply pvnames."""
-        return self._get_corr_pvnames('ch1', 'ch2')
+        return self._get_corr_pvnames(*_IDSearch.IDFF_CH_LABELS)
 
     @property
     def cv_pvnames(self):
         """Return CV corrector power supply pvnames."""
-        return self._get_corr_pvnames('cv1', 'cv2')
+        return self._get_corr_pvnames(*_IDSearch.IDFF_CV_LABELS)
 
     @property
     def qs_pvnames(self):
         """Return QS corrector power supply pvnames."""
-        return self._get_corr_pvnames('qs1', 'qs2')
+        return self._get_corr_pvnames(*_IDSearch.IDFF_QS_LABELS)
 
     @property
     def lc_pvnames(self):
         """Return LC corrector power supply pvnames."""
-        return self._get_corr_pvnames('lch', '')
+        return self._get_corr_pvnames(*_IDSearch.IDFF_LC_LABELS)
 
     @property
     def qn_pvnames(self):
         """Return QD corrector power supply pvnames."""
-        return self._get_corr_pvnames('qa1', 'qa2', 'qb1', 'qb2', 'qc1', 'qc2')
+        return self._get_corr_pvnames(*_IDSearch.IDFF_QN_LABELS)
 
     @property
     def polarizations(self):
@@ -283,19 +283,13 @@ class IDFFConfig(_ConfigDBDocument):
                     'are not consistent')
         return True
 
-    def _get_corr_pvnames(
-            self,
-            cname_a1=None, cname_a2=None,
-            cname_b1=None, cname_b2=None,
-            cname_c1=None, cname_c2=None):
+    def _get_corr_pvnames(self, corrlabels):
         """Return corrector power supply pvnames."""
         if self._value:
             pvnames = self._value['pvnames']
-            corr_a1, corr_a2 = pvnames.get(cname_a1), pvnames.get(cname_a2)
-            corr_b1, corr_b2 = pvnames.get(cname_b1), pvnames.get(cname_b2)
-            corr_c1, corr_c2 = pvnames.get(cname_c1), pvnames.get(cname_c2)
-            allc = corr_a1, corr_a2, corr_b1, corr_b2, corr_c1, corr_c2
-            return [corr for corr in allc if corr is not None]
+            defcorrs = [pvnames.get(label) for label in corrlabels]
+            defcorrs = [corr for corr in defcorrs if corr is not None]
+            return defcorrs
         else:
             raise ValueError('Configuration not defined!')
 
