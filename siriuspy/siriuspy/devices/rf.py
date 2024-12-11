@@ -629,8 +629,8 @@ class _BaseLLRF(_Device):
         'AmpRefMin-RB', 'AmpRefMin-SP', 'PhsRefMin-RB', 'PhsRefMin-SP',
         'CondEnbl-Sts', 'CondEnbl-Sel', 'CondDuty-RB', 'CondDuty-SP',
         'CondDutyCycle-Mon', 'PhShCav-SP', 'PhShCav-RB',
-        'SLPILim-SP', 'SLPILim-RB', 'SLKI-SP', 'SLKI-RB' 'SLKP-SP', 'SLKI-RB'
-        )
+        'SLPILim-SP', 'SLPILim-RB', 'SLKI-SP', 'SLKI-RB', 'SLKP-SP', 'SLKI-RB',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
