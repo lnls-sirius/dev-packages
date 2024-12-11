@@ -26,19 +26,20 @@ class _ParamPVs:
     CORRCONFIG_CMD = None
     CORRSTATUS_MON = None
     CORRSTATUSLABELS_CTE = None
-    CORRCH1CURRENT_MON = None
-    CORRCH2CURRENT_MON = None
-    CORRCV1CURRENT_MON = None
-    CORRCV2CURRENT_MON = None
-    CORRQS1CURRENT_MON = None
-    CORRQS2CURRENT_MON = None
+    CORRCH_1CURRENT_MON = None
+    CORRCH_2CURRENT_MON = None
+    CORRCV_1CURRENT_MON = None
+    CORRCV_2CURRENT_MON = None
+    CORRQS_1CURRENT_MON = None
+    CORRQS_2CURRENT_MON = None
     CORRLCHCURRENT_MON = None
-    CORRQA1CURRENT_MON = None
-    CORRQB1CURRENT_MON = None
-    CORRQC1CURRENT_MON = None
-    CORRQC2CURRENT_MON = None
-    CORRQB2CURRENT_MON = None
-    CORRQA2CURRENT_MON = None
+    CORRLCVCURRENT_MON = None
+    CORRQD1_1CURRENT_MON = None
+    CORRQF_1CURRENT_MON = None
+    CORRQD2_1CURRENT_MON = None
+    CORRQD2_2CURRENT_MON = None
+    CORRQF_2CURRENT_MON = None
+    CORRQB1_2CURRENT_MON = None
 
     def __str__(self):
         """Print parameters."""
@@ -81,39 +82,39 @@ class IDFFCtrlBase(_Device):
         return self[curr_sts] if curr_sts else None
 
     @property
-    def calc_corr_current_ch1(self):
-        """Return calculated CH1 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRCH1CURRENT_MON
+    def calc_corr_current_ch_1(self):
+        """Return calculated CH_1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRCH_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_ch2(self):
-        """Return calculated CH2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRCH2CURRENT_MON
+    def calc_corr_current_ch_2(self):
+        """Return calculated CH_2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRCH_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_cv1(self):
-        """Return calculated CV1 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRCV1CURRENT_MON
+    def calc_corr_current_cv_1(self):
+        """Return calculated CV_1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRCV_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_cv2(self):
-        """Return calculated CV2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRCV2CURRENT_MON
+    def calc_corr_current_cv_2(self):
+        """Return calculated CV_2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRCV_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qs1(self):
-        """Return calculated QS1 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQS1CURRENT_MON
+    def calc_corr_current_qs_1(self):
+        """Return calculated QS_1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQS_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qs2(self):
-        """Return calculated Q2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQS2CURRENT_MON
+    def calc_corr_current_qs_2(self):
+        """Return calculated Q_2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQS_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
@@ -123,39 +124,45 @@ class IDFFCtrlBase(_Device):
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qa1(self):
-        """Return calculated QA1 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQA1CURRENT_MON
+    def calc_corr_current_lcv(self):
+        """Return calculated LCV power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRLCVCURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qb1(self):
-        """Return calculated QB1 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQB1CURRENT_MON
+    def calc_corr_current_qd1_1(self):
+        """Return calculated QD1_1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQD1_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qc1(self):
-        """Return calculated QC1 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQC1CURRENT_MON
+    def calc_corr_current_qf_1(self):
+        """Return calculated QF_1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQF_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qc2(self):
-        """Return calculated QC2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQC2CURRENT_MON
+    def calc_corr_current_qd2_1(self):
+        """Return calculated QD2_1 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQD2_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qb2(self):
-        """Return calculated QB2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQB2CURRENT_MON
+    def calc_corr_current_qd2_2(self):
+        """Return calculated QD2_2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQD2_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_qa2(self):
-        """Return calculated QA2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQA2CURRENT_MON
+    def calc_corr_current_qf_2(self):
+        """Return calculated QF_2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQF_2CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_qd1_2(self):
+        """Return calculated QD1_2 power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRQB1_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
@@ -209,12 +216,12 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     CORRCONFIG_CMD = 'CorrConfig-Cmd'
     CORRSTATUS_MON = 'CorrStatus-Mon'
     CORRSTATUSLABELS_CTE = 'CorrStatusLabels-Cte'
-    CORRCH1CURRENT_MON = 'CorrCH_1Current-Mon'
-    CORRCH2CURRENT_MON = 'CorrCH_2Current-Mon'
-    CORRCV1CURRENT_MON = 'CorrCV_1Current-Mon'
-    CORRCV2CURRENT_MON = 'CorrCV_2Current-Mon'
-    CORRQS1CURRENT_MON = 'CorrQS_1Current-Mon'
-    CORRQS2CURRENT_MON = 'CorrQS_2Current-Mon'
+    CORRCH_1CURRENT_MON = 'CorrCH_1Current-Mon'
+    CORRCH_2CURRENT_MON = 'CorrCH_2Current-Mon'
+    CORRCV_1CURRENT_MON = 'CorrCV_1Current-Mon'
+    CORRCV_2CURRENT_MON = 'CorrCV_2Current-Mon'
+    CORRQS_1CURRENT_MON = 'CorrQS_1Current-Mon'
+    CORRQS_2CURRENT_MON = 'CorrQS_2Current-Mon'
 
     PROPERTIES_DEFAULT = \
         tuple(set(

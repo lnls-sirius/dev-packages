@@ -423,9 +423,10 @@ class App(_Callback):
         corrnames = idff.chnames + idff.cvnames + \
             idff.qsnames + idff.lcnames + idff.qnnames
         corrlabels = (
-            'CH1', 'CH2', 'CV1', 'CV2',
-            'QS1', 'QS2', 'LCH',
-            'QA1', 'QA2', 'QB1', 'QB2', 'QC1', 'QC2')
+            'CH_1', 'CH_2', 'CV_1', 'CV_2',
+            'QS_1', 'QS_2', 'LCH', 'LCV',
+            'QD1_1', 'QF_1', 'QD2_1', 'QD2_2', 'QF_2', 'QD1_2',
+            )
         for corrlabel, corrname in zip(corrlabels, corrnames):
             for corr_pvname in setpoints:
                 if corrname in corr_pvname:
