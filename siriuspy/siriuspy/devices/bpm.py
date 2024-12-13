@@ -799,7 +799,9 @@ class BPM(_Device):
         """
         acq_rate = self.acq_channel_str if not acq_rate else acq_rate
         fadc = rf_freq / self.harmonic_number * self.tbt_rate
-        if acq_rate.lower().startswith('tbt'):
+        if acq_rate.lower().startswith('adc'):
+            return fadc
+        elif acq_rate.lower().startswith('tbt'):
             return fadc / self.tbt_rate
         elif acq_rate.lower().startswith('fofb'):
             return fadc / self.fofb_rate
