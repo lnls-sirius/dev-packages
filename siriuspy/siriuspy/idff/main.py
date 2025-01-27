@@ -284,7 +284,7 @@ class App(_Callback):
         elif self._const.idname.dev == 'PAPU50':
             return 'papu50_ref'
         elif self._const.idname.dev == 'DELTA52':
-            return 'delta52_ref'
+            return 'si_10sb_delta52_ref'
         elif self._const.idname.dev == 'IVU18':
             return 'ivu18_ref'
         return ''
