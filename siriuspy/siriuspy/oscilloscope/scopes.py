@@ -4,9 +4,9 @@
 class Scopes:
     """Keysight oscilloscopes names and IPs."""
 
-    AS_DI_FCTDIG = 'AS-DI-FCTDig.lnls-sirius.com.br'  # '10.128.150.124'
+    AS_DI_FCTDIG = 'AS-DI-FCTDig.lnls-sirius.com.br'  # '10.128.150.78'
     AS_DI_FPMDIG = 'AS-DI-FPMDig.lnls-sirius.com.br'  # '10.128.150.77'
-    LI_DI_ICTOSC = 'li-di-ictosc.lnls-sirius.com.br'  # '10.128.1.52'
+    LI_DI_ICTOSC = 'li-di-ictosc.lnls-sirius.com.br'  # '10.128.1.220'
     LI_PU_OSC_MODLTR = 'KEYSIGH-QQI8MNR.abtlus.org.br'  # '10.0.38.48'
     TB_PU_OSC_INJBO = 'TB-PU-Osc-InjBO.abtlus.org.br'  # '10.0.38.74'
     TS_PU_OSC_EJEBO = 'TS-PU-Osc-EjeBO.abtlus.org.br'  # '10.0.38.77'
