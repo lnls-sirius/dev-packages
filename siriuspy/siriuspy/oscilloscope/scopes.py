@@ -25,10 +25,14 @@ class ScopeSignals:
     SI_PINGV_PULSE = (Scopes.TS_PU_OSC_EJEBO, 5025, 'CHAN4')
 
     @staticmethod
-    def get_scope_name(scopesignal=None, scope_ip=None):
+    def get_scope_name(scopesignal=None, scope_hostname=None):
         """."""
+        if scopesignal is not None:
+            if scope_hostname and scopesignal[0] != scope_hostname:
+                raise ValueError('Inconsistent inputs!')
+            scope_hostname = scopesignal[0]
         for symb in Scopes.__dict__:
             if symb[:2] in ('AS', 'LI', 'TB', 'BO', 'TS', 'SI'):
-                scope_ip = getattr(Scopes, symb)
-                if scope_ip == scopesignal[0] or scope_ip == scope_ip:
+                host = getattr(Scopes, symb)
+                if host == scope_hostname:
                     return symb
