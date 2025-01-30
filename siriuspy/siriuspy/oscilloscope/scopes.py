@@ -23,6 +23,13 @@ class ScopeSignals:
     TS_EJESEPTF_PULSE = (Scopes.TS_PU_OSC_EJEBO, 5025, 'CHAN2')
     BO_EJEKCKR_PULSE = (Scopes.TS_PU_OSC_EJEBO, 5025, 'CHAN3')
     SI_PINGV_PULSE = (Scopes.TS_PU_OSC_EJEBO, 5025, 'CHAN4')
+    LI_ICT1 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN1')
+    LI_ICT2 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN2')
+    TB_ICT1 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN3')
+    TB_ICT2 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN4')
+    # TB_04_ICT = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN2')  # not working
+    MODLTR1_PULSE = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN1')
+    MODLTR2_PULSE = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN3')
 
     @staticmethod
     def get_scope_name(scopesignal=None, scope_hostname=None):
