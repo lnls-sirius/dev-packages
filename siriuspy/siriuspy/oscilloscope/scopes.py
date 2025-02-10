@@ -27,7 +27,6 @@ class ScopeSignals:
     LI_ICT2 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN2')
     TB_ICT1 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN3')
     TB_ICT2 = (Scopes.LI_DI_ICTOSC, 5025, 'CHAN4')
-    # TB_04_ICT = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN2')  # not working
     MODLTR1_PULSE = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN1')
     MODLTR2_PULSE = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN3')
 
