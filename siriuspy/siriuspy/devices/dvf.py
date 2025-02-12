@@ -39,10 +39,10 @@ class DVF(_Device):
     _dev2params = {
         DEVICES.CAX_DVF1: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0)),
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0)),
         DEVICES.BO_DVF: _get_namedtuple(
             'DVFParameters',
             _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
@@ -347,7 +347,7 @@ class DVF(_Device):
 
     @property
     def cam_temperature(self):
-        """Return camera temperature"""
+        """Return camera temperature."""
         return self['cam1:GC_TemperatureAbs_RBV']
 
     @property
