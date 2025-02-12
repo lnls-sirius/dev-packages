@@ -517,6 +517,11 @@ class Trigger(_Device):
         self.lock_low_level = 0
         return self._wait('LowLvlLock-Sts', 0, timeout)
 
+    def cmd_set_source(self, value, timeout=3):
+        """Set source with timeout."""
+        self.source = value
+        return self._wait('Src-Sts', value, timeout)
+
 
 class HLTiming(_DeviceSet):
     """."""
@@ -594,7 +599,7 @@ class HLTiming(_DeviceSet):
         return map_table2evt
 
     def change_triggers_source(
-            self, trigs, new_src='Linac', printlog=True) -> list:
+            self, trigs, new_src='Linac', printlog=True, timeout=None) -> list:
         """."""
         notchanged = list()
         for tn in trigs:
@@ -633,7 +638,7 @@ class HLTiming(_DeviceSet):
                 continue
 
             tr.delay_raw = dly
-            tr.source = new_src
+            tr.cmd_set_source(new_src, timeout=timeout)
             if printlog:
                 print(f'{tn:25s} -> Change OK: .')
         return notchanged
