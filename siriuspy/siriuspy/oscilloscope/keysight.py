@@ -51,7 +51,7 @@ class Keysight:
     @property
     def scope_name(self):
         """."""
-        return _scopes.ScopeSignals.get_scope_name(self.host)
+        return _scopes.ScopeSignals.get_scope_name(scope_hostname=self.host)
 
     def connect(self):
         """."""
