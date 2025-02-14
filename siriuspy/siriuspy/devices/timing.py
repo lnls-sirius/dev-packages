@@ -638,7 +638,10 @@ class HLTiming(_DeviceSet):
                 continue
 
             tr.delay_raw = dly
-            tr.cmd_set_source(new_src, timeout=timeout)
+            if timeout is None:
+                tr.source = new_src
+            else:
+                tr.cmd_set_source(new_src, timeout=timeout)
             if printlog:
                 print(f'{tn:25s} -> Change OK: .')
         return notchanged
