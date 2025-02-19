@@ -247,6 +247,13 @@ class _PSDev(_Device):
             else self._strength_rb_propty
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
+    def set_current(self, value, tol=0.2, timeout=10, wait_mon=False):
+        """Set current and wait until it gets there."""
+        self.current = value
+        pv2wait = "Current-Mon" if wait_mon \
+            else "Current-RB"
+        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+
     def cmd_turn_on(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.On
