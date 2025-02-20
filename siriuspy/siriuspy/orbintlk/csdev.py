@@ -107,6 +107,7 @@ class Const(_csdev.Const):
         ('RTMFreqIntgGain-SP', 128),
         ('RTMPhaseNavg-SP', 0),
         ('RTMPhaseDiv-SP', 0),
+        ('UpstreamDebugEn-Sel', 0),
     )
     AFCPHYTRIG_CONFIGS = (
         ('Dir-Sel', 0),
