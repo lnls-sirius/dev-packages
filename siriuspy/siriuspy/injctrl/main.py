@@ -1,26 +1,25 @@
 """Main module of Machine Shift Application."""
-import time as _time
 import logging as _log
+import time as _time
+
 import epics as _epics
 import numpy as _np
 
-from ..util import update_bit as _updt_bit, get_bit as _get_bit
-from ..namesys import SiriusPVName as _PVName
-from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..clientarch import Time as _Time
-
-from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
+from ..devices import CurrInfoSI, EGun, EVG, HLTiming, InjSysPUModeHandler, \
+    InjSysStandbyHandler, RFKillBeam
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, HLTiming, \
-    RFKillBeam, InjSysPUModeHandler
-
+from ..epics import PV as _PV
+from ..namesys import SiriusPVName as _PVName
+from ..search import HLTimeSearch as _HLTimeSearch, PSSearch as _PSSearch
+from ..util import get_bit as _get_bit, update_bit as _updt_bit
+from .bias_feedback import BiasFeedback as _BiasFeedback
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
     get_status_labels as _get_sts_lbls
-from .bias_feedback import BiasFeedback as _BiasFeedback
 
 
 class App(_Callback):
