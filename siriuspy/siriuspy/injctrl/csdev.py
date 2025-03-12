@@ -120,6 +120,8 @@ def get_injctrl_propty_database():
 
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'TimestampBoot-Cte': {'type': 'float', 'value': 0,
+                              'prec': 7, 'unit': 'timestamp'},
         'Log-Mon': {'type': 'str', 'value': 'Starting...'},
 
         'Mode-Sel': {
