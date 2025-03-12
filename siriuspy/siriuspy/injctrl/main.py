@@ -291,7 +291,6 @@ class App(_Callback):
 
         # Create object to make bias feedback:
         self._bias_feedback = _BiasFeedback(self)
-        self._pvs_database.update(self._bias_feedback.database)
         for prop, write in self._bias_feedback.map_pv2write.items():
             pvname = _Const.BIASFB_PROPTY_PREFIX + prop
             self.map_pv2write[pvname] = write
