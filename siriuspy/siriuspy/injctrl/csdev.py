@@ -419,7 +419,7 @@ def get_injctrl_propty_database():
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.INJ_STATUS_LABELS)},
     }
-    dbase = dbase.update(get_biasfb_database())
+    dbase.update(get_biasfb_database())
     dbase = _csdev.add_pvslist_cte(dbase)
     return dbase
 
