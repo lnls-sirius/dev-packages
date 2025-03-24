@@ -1520,10 +1520,10 @@ class App(_Callback):
             _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
             # sending interlock reset for all LLRFs systems, then wait
             for llrf in self._llrfs:
-                llrf.interlock_reset = 1
+                llrf['IntlkReset-Cmd'] = 1
             _time.sleep(1)
             for llrf in self._llrfs:
-                llrf.interlock_reset = 0
+                llrf['IntlkReset-Cmd'] = 0
 
     # --- device lock methods ---
 
