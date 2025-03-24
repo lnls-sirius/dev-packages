@@ -140,6 +140,7 @@ class App(_Callback):
                     'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
                     'RTMPhaseNavg-SP', 'RTMPhaseNavg-RB',
                     'RTMPhaseDiv-SP', 'RTMPhaseDiv-RB',
+                    'UpstreamDebugEn-Sel', 'UpstreamDebugEn-Sts',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
