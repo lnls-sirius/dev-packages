@@ -1,15 +1,15 @@
 """Main Module of the IOC Logic."""
 
-import warnings
 import time as _time
+import warnings
+
 import numpy as _np
 from epics import PV as _PV
 
 from ...callbacks import Callback as _Callback
-from ...epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ...envars import VACA_PREFIX as _vaca_prefix
-from ..csdev import \
-    Const as _Const, get_lifetime_database as _get_database
+from ...epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..csdev import Const as _Const, get_lifetime_database as _get_database
 
 _MAX_BUFFER_SIZE = 36000
 

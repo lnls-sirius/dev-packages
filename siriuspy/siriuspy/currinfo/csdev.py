@@ -5,8 +5,8 @@ import numpy as _np
 
 from .. import csdev as _csdev
 
-
 # --- Enumeration Types ---
+
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""

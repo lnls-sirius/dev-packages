@@ -1,6 +1,5 @@
 """."""
-from .device import Device as _Device
-from .device import DeviceSet as _DeviceSet
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .ict import ICT
 
 
