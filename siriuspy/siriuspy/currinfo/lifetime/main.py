@@ -11,6 +11,7 @@ from ...envars import VACA_PREFIX as _vaca_prefix
 from ...epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ..csdev import Const as _Const, get_lifetime_database as _get_database
 
+_MIN_BUFFER_SIZE = 100
 _MAX_BUFFER_SIZE = 36000
 
 
@@ -122,7 +123,7 @@ class SILifetimeApp(_Callback):
                 val_dq -= self._current_offset
 
                 # check min number of points in buffer
-                if len(val_dq) > 100:
+                if len(val_dq) > _MIN_BUFFER_SIZE:
                     fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
                     value = self._least_squares_fit(ts_dq, val_dq, fit=fit)
                     setattr(self, lt_name, value)
