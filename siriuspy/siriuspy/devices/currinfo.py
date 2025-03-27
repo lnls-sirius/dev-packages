@@ -211,6 +211,7 @@ class CurrInfoSI(_Device):
         'Charge-Mon', 'Current-Mon',
         'InjEff-Mon', 'InjCurr-Mon', 'InjCharge-Mon',
         'Lifetime-Mon', 'LifetimeBPM-Mon',
+        'LifetimeHour-Mon', 'LifetimeBPMHour-Mon',
         'StoredEBeam-Mon',
         'BufferValue-Mon', 'BufferTimestamp-Mon',
     )
@@ -251,9 +252,19 @@ class CurrInfoSI(_Device):
         return self['Lifetime-Mon']
 
     @property
+    def lifetimehour(self):
+        """."""
+        return self['LifetimeHour-Mon']
+
+    @property
     def lifetimebpm(self):
         """."""
         return self['LifetimeBPM-Mon']
+
+    @property
+    def lifetimebpmhour(self):
+        """."""
+        return self['LifetimeBPMHour-Mon']
 
     @property
     def storedbeam(self):

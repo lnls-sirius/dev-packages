@@ -126,6 +126,8 @@ class SILifetimeApp(_Callback):
                     fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
                     value = self._least_squares_fit(ts_dq, val_dq, fit=fit)
                     setattr(self, lt_name, value)
+                    lt_hour = 'Lifetime' + lt_type + 'Hour-Mon'
+                    self.run_callbacks(lt_hour, value / 3600)
 
             # update pvs
             self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
