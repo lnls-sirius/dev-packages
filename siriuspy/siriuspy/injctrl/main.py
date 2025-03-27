@@ -1254,7 +1254,7 @@ class App(_Callback):
         self._update_log('InjectionEvt is on!')
         return True
 
-    def _wait_injection(self):
+    def _wait_injection(self, wait_time=None):
         # wait for injectionevt to be off (done)
         _t0 = _time.time()
         while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
@@ -1264,6 +1264,8 @@ class App(_Callback):
             if not self._evg_dev.injection_state:
                 break
             _time.sleep(0.02)
+        if wait_time is not None:
+            _time.sleep(wait_time)
         return True
 
     def _stop_injection(self):
@@ -1485,7 +1487,7 @@ class App(_Callback):
 
                 self._update_topupsts(_Const.TopUpSts.Injecting)
                 self._update_log('Injecting...')
-                if not self._wait_injection():
+                if not self._wait_injection(wait_time=0.5):
                     break
 
                 self._update_bucket_list()
