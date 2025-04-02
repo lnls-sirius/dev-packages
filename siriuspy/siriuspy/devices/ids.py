@@ -1497,14 +1497,14 @@ class IVU(IDBase):
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-    PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
-    PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
-    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
-    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    # PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
+    # PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
+    # PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    # PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
     PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
-    PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
-    PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
+    # PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
+    # PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
 
     PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
     PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
@@ -1539,7 +1539,7 @@ class IVU(IDBase):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
-     # --- gap speeds ----
+    # --- gap speeds ----
 
     @property
     def gap_speed(self):
@@ -1679,7 +1679,7 @@ class IVU(IDBase):
             raise ValueError('Center offset mode must be disabled.')
         if self.pitch_mode_status:
             raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-4):
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
             raise ValueError('Taper must be zero.')
         return self.cmd_move_kparameter_start(timeout)
 
@@ -1696,7 +1696,7 @@ class IVU(IDBase):
         """Command to start pitch movement."""  # Need to change PV for pitch mov in IOC
         if self.center_mode_status:
             raise ValueError('Center offset mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-4):
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
             raise ValueError('Taper must be zero.')
         return self._move_start(
             self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
@@ -1705,7 +1705,7 @@ class IVU(IDBase):
         """Command to start center movement."""  # Need to change PV for center mov in IOC
         if self.pitch_mode_status:
             raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-4):
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
             raise ValueError('Taper must be zero.')
         return self._move_start(
             self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
@@ -1715,6 +1715,7 @@ class IVU(IDBase):
         """Command to reset undulator."""
         return self._write_sp(
             self.PARAM_PVS.RESET, timeout=timeout)
+
 
 class ID(IDBase):
     """Insertion Device."""

@@ -845,13 +845,13 @@ class SOFBRings(SOFBTLines, ConstRings):
             "RFEnbl-Sel": {
                 "type": "enum",
                 "enums": self.EnblRF._fields,
-                "value": 0,
+                "value": 1,
                 "unit": "Off_On",
             },
             "RFEnbl-Sts": {
                 "type": "enum",
                 "enums": self.EnblRF._fields,
-                "value": 0,
+                "value": 1,
                 "unit": "Off_On",
             },
             "DeltaKickRF-Mon": {

@@ -17,8 +17,11 @@ class DVF(_Device):
 
         CAX_DVF1 = 'CAX:A:BASLER01'
         CAX_DVF2 = 'CAX:B:BASLER01'
+        EMA_DVF2 = 'EMA:A:BASLER02'
+        PNR_DVF2 = 'PNR:A:BASLER02'
         BO_DVF = 'BO-50U:DI-VLightCam'
-        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF)
+        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF,
+               EMA_DVF2, PNR_DVF2)
 
     _default_timeout = 10  # [s]
 
@@ -36,10 +39,10 @@ class DVF(_Device):
     _dev2params = {
         DEVICES.CAX_DVF1: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0)),
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.005, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields, (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0)),
         DEVICES.BO_DVF: _get_namedtuple(
             'DVFParameters',
             _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
@@ -344,7 +347,7 @@ class DVF(_Device):
 
     @property
     def cam_temperature(self):
-        """Return camera temperature"""
+        """Return camera temperature."""
         return self['cam1:GC_TemperatureAbs_RBV']
 
     @property

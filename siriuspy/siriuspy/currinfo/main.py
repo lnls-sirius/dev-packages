@@ -209,7 +209,7 @@ class BOCurrInfoApp(_CurrInfoApp):
 
     HARMNUM = 828
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
-    MAX_CURRENT = 1.0  # [A]
+    MAX_CURRENT = 3.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
         '150MeV': 0.0000,
         '1GeV': 0.0859,

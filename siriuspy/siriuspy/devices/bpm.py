@@ -687,12 +687,12 @@ class BPM(_Device):
     @property
     def acq_trig_datapol(self):
         """."""
-        return self['GENTriggerDataPol-RB']
+        return self['GENTriggerDataPol-Sts']
 
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         """."""
-        self['GENTriggerDataPol-SP'] = val
+        self['GENTriggerDataPol-Sel'] = val
 
     @property
     def acq_nrsamples_post(self):
@@ -799,7 +799,9 @@ class BPM(_Device):
         """
         acq_rate = self.acq_channel_str if not acq_rate else acq_rate
         fadc = rf_freq / self.harmonic_number * self.tbt_rate
-        if acq_rate.lower().startswith('tbt'):
+        if acq_rate.lower().startswith('adc'):
+            return fadc
+        elif acq_rate.lower().startswith('tbt'):
             return fadc / self.tbt_rate
         elif acq_rate.lower().startswith('fofb'):
             return fadc / self.fofb_rate

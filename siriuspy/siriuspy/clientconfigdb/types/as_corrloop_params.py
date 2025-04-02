@@ -274,8 +274,8 @@ _si_fofb = [
 
 _si_injbiasfb = [
     ['AS-Glob:AP-InjCtrl:BiasFBLoopState-Sel', 0, 0.0],
-    ['AS-Glob:AP-InjCtrl:BiasFBMinVoltage-SP', -52.0, 0.0],
-    ['AS-Glob:AP-InjCtrl:BiasFBMaxVoltage-SP', -40.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBMinVoltage-SP', -44.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBMaxVoltage-SP', -37.0, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBModelType-Sel', 0, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBModelMaxNrPts-SP', 0, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBModelAutoFitParams-Sel', 0, 0.0],
@@ -284,7 +284,7 @@ _si_injbiasfb = [
     ['AS-Glob:AP-InjCtrl:BiasFBModelDataBias-SP', [0]*1000, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBModelDataInjCurr-SP', [0]*1000, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBLinModAngCoeff-SP', 10.0, 0.0],
-    ['AS-Glob:AP-InjCtrl:BiasFBLinModOffCoeff-SP', -52.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBLinModOffCoeff-SP', -44.0, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBGPModNoiseStd-SP', 0.05, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBGPModKernStd-SP', 0.4, 0.0],
     ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenScl-SP', 4, 0.0],

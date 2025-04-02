@@ -1,20 +1,19 @@
 """Epics Devices and Device Application."""
 
-import time as _time
-import operator as _opr
 import math as _math
+import operator as _opr
+import time as _time
 from functools import partial as _partial
 
-from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure, \
-    CASeverityException as _CASeverityException
 import numpy as _np
+from epics.ca import CASeverityException as _CASeverityException, \
+    ChannelAccessGetFailure as _ChannelAccessGetFailure
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
-from ..epics import PV as _PV, CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
-    GET_TIMEOUT as _GET_TIMEOUT
-from ..simul import SimPV as _PVSim
-from ..simul import Simulation as _Simulation
+from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
+    GET_TIMEOUT as _GET_TIMEOUT, PV as _PV
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..simul import SimPV as _PVSim, Simulation as _Simulation
 
 _DEF_TIMEOUT = 10  # s
 _TINY_INTERVAL = 0.050  # s
