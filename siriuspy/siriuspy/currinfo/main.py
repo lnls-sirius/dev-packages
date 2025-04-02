@@ -7,6 +7,8 @@ from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 
 import numpy as _np
+import scipy.optimize as _scyopt
+import scipy.signal as _scysig
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -16,7 +18,8 @@ from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
-from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
+from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes, \
+    ScopeSignals as _ScopeSignals
 
 from .csdev import Const as _Const, \
     get_currinfo_database as _get_database
@@ -414,6 +417,13 @@ class SICurrInfoApp(_CurrInfoApp):
         else:
             self._charge = data['value'][0]
 
+        self._fillpat_fid_offset = 0
+        self._fillpat_update_time = 0
+        self._fillpat_osc = _Keysight(
+            scopesignal=_ScopeSignals.SI_FILL_PATTERN
+        )
+        self._fillpat_thread = None
+
         # pvs
         self._current_13c4_pv = _PV(
             self._prefix+'SI-13C4:DI-DCCT:Current-Mon',
@@ -502,21 +512,33 @@ class SICurrInfoApp(_CurrInfoApp):
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        status = False
         if reason == 'SI-Glob:AP-CurrInfo:DCCT-Sel':
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
-                done = self._update_dcct_mode(value)
-                if done:
+                if self._update_dcct_mode(value):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:DCCT-Sts', self._dcct_mode)
-                    status = True
+                    return True
         elif reason == 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
             self.run_callbacks(
                 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts',
                 self._dcctfltcheck_mode)
-            status = True
-        return status
+            return True
+        elif reason == 'SI-Glob:AP-CurrInfo:FillPatternUpdateTime-SP':
+            self._fillpat_update_time = float(value)
+            self.run_callbacks(
+                'SI-Glob:AP-CurrInfo:FillPatternUpdateTime-RB',
+                self._fillpat_update_time
+            )
+            return True
+        elif reason == 'SI-Glob:AP-CurrInfo:FillPatternFiducialOffset-SP':
+            self._fillpat_fid_offset = max(864, min(0, int(value)))
+            self.run_callbacks(
+                'SI-Glob:AP-CurrInfo:FillPatternFiducialOffset-RB',
+                self._fillpat_fid_offset
+            )
+            return True
+        return False
 
     # ----- handle writes -----
     def _update_dcct_mode(self, value):
@@ -560,9 +582,83 @@ class SICurrInfoApp(_CurrInfoApp):
             return
         self._current_value = current
 
+        # trigger update of filling pattern from oscilloscope.
+        if (
+            self._fillpat_thread is not None and
+            not self._fillpat_thread.is_alive()
+        ):
+            self._fillpat_thread = _Thread(
+                self._update_filling_pattern, daemon=True
+            )
+            self._fillpat_thread.start()
+
         # update pvs
         self.run_callbacks(
             'SI-Glob:AP-CurrInfo:Current-Mon', self._current_value)
+
+    def _update_filling_pattern(self):
+        t0_ = _time.time()
+        frf = 499667557.37  # default value
+        if self._rffreq_pv.connected:
+            frf = self._rffreq_pv.value
+        bun_spacing = _np.arange(864) / frf * 1e9
+
+        try:
+            tim, fill = self._fillpat_osc.wfm_get_data()
+        except Exception:
+            _log.warning('Could not read oscilloscope data.')
+            return
+        tim *= 1e9
+        tim -= tim[0]
+        fill -= fill.mean()
+        hil = _np.abs(_scysig.hilbert(fill))
+
+        if tim[-1] < bun_spacing[-1]:
+            _log.warning('oscilloscope data is incomplete.')
+            return
+
+        def get_interp(off, return_res=False):
+            fil2ns = _np.interp(bun_spacing + off, tim, hil)
+
+            if return_res:
+                return fil2ns
+            return hil.max() - fil2ns.max()
+
+        try:
+            res = _scyopt.least_squares(get_interp, 0.6)
+        except Exception:
+            _log.warning('Fitting did not work.')
+            return
+        fil2ns = get_interp(res.x, return_res=True)
+        fil2ns = _np.roll(fil2ns, -self._fillpat_fid_offset)
+
+        # Roll raw data to be in accordance with processed data
+        idx = bun_spacing[self._fillpat_fid_offset] < tim
+        idx = idx.nonzero()[0][0]
+        fill = _np.roll(fill, -idx)
+
+        # Scale filling pattern so that its sum is equal to
+        # the total current stored
+        if self._current_13c4_pv.connected:
+            _log.warning('Could not read current from DCCT.')
+            return
+        fac = self._current_13c4_pv.value / fil2ns.sum()
+        fil2ns *= fac
+        fill *= fac
+
+        # Update PVs:
+        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPattern-Mon', fil2ns)
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:FillPatternTime-Mon', bun_spacing
+        )
+        self.run_callbacks(
+            'SI-Glob:AP-CurrInfo:FillPatternTimeOffset-Mon', res.x
+        )
+        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRaw-Mon', tim)
+        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRawTime-Mon', fill)
+        dt_ = _time.time() - t0_
+        dt_ = self._fillpat_update_time - dt_
+        _time.sleep(max(dt_, 0))
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
         _ = kws
