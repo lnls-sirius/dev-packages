@@ -772,7 +772,7 @@ class APU(IDBase):
     class DEVICES:
         """Device names."""
 
-        APU22_06SB = 'SI-06SB:ID-APU22'
+        # APU22_06SB = 'SI-06SB:ID-APU22'
         APU22_07SP = 'SI-07SP:ID-APU22'
         APU22_08SB = 'SI-08SB:ID-APU22'
         APU22_09SA = 'SI-09SA:ID-APU22'
@@ -1715,6 +1715,67 @@ class IVU(IDBase):
         """Command to reset undulator."""
         return self._write_sp(
             self.PARAM_PVS.RESET, timeout=timeout)
+
+
+class VPU(APU):
+    """VPU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        VPU29_06SB = 'SI-06SB:ID-VPU29'
+        # VPU29_07SP = 'SI
+        # -07SP:ID-VPU29'
+        ALL = (VPU29_06SB, )  # VPU29_07SP, )
+
+    # DevCtrl PV
+    # _CMD_MOVE_STOP, _CMD_MOVE_START = 300, 320
+    # _CMD_RESET, _CMD_SCAN_START = 310, 340
+    # _CMD_SCAN_MODE = 330
+
+    # # --- PARAM_PVS ---
+    # PARAM_PVS = _ParamPVs()
+    # PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    # PARAM_PVS.KPARAM_RB = 'KParam-SP'  # There is no Phase-RB!
+    # PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    # PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
+    # PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
+    # PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    # PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-SP'
+    # PARAM_PVS.KPARAM_VELO_MON = 'KParamVelo-Mon'
+    # PARAM_PVS.KPARAM_CHANGE_CMD = 'DevCtrl-Cmd'
+
+    PARAM_PVS = _ParamPVs()
+
+    # --- GENERAL ---
+    PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    # PARAM_PVS.RESET = None
+
+    # --- KPARAM ---
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-SP'  # Can we read from CPL?
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    # PARAM_PVS.KPARAM_MAXACC_SP = None
+    # PARAM_PVS.KPARAM_MAXACC_RB = None
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_VELO_MON = 'KParamVelo-Mon'
+    PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-SP'  # Can we read from CPL?
+    # PARAM_PVS.KPARAM_TOL_SP = None
+    # PARAM_PVS.KPARAM_TOL_RB = None
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
 
 
 class ID(IDBase):
