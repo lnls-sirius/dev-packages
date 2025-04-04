@@ -1733,18 +1733,6 @@ class VPU(APU):
     # _CMD_RESET, _CMD_SCAN_START = 310, 340
     # _CMD_SCAN_MODE = 330
 
-    # # --- PARAM_PVS ---
-    # PARAM_PVS = _ParamPVs()
-    # PARAM_PVS.KPARAM_SP = 'KParam-SP'
-    # PARAM_PVS.KPARAM_RB = 'KParam-SP'  # There is no Phase-RB!
-    # PARAM_PVS.KPARAM_MON = 'KParam-Mon'
-    # PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
-    # PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
-    # PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    # PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-SP'
-    # PARAM_PVS.KPARAM_VELO_MON = 'KParamVelo-Mon'
-    # PARAM_PVS.KPARAM_CHANGE_CMD = 'DevCtrl-Cmd'
-
     PARAM_PVS = _ParamPVs()
 
     # --- GENERAL ---
