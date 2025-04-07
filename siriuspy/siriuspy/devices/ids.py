@@ -1657,7 +1657,7 @@ class IVU(IDBase):
 
     def set_center_mode(self, mode, timeout=None):
         """Set ID center mode True or False."""
-        if type(mode) != bool:
+        if type(mode) is not bool:
             raise ValueError('Center mode must be boolean.')
         if not mode:
             self.set_taper(0, timeout)
@@ -1665,7 +1665,7 @@ class IVU(IDBase):
 
     def set_pitch_mode(self, mode, timeout=None):
         """Set ID pitch mode True or False."""
-        if type(mode) != bool:
+        if type(mode) is not bool:
             raise ValueError('Pitch mode must be boolean.')
         if not mode:
             self.set_center_offset(0, timeout)
