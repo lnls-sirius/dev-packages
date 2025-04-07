@@ -623,10 +623,11 @@ class SICurrInfoApp(_CurrInfoApp):
             return
 
         def get_interp(off, return_res=False):
+            tim2ns = bun_spacing + off
             fil2ns = _np.interp(bun_spacing + off, tim, hil)
 
             if return_res:
-                return fil2ns
+                return tim2ns, fil2ns
             hil_max = hil[200:-200].max()  # avoid borders
             weight = fil2ns[fil2ns > hil_max * 20/100]
             obj = weight - hil_max
@@ -638,13 +639,10 @@ class SICurrInfoApp(_CurrInfoApp):
         except Exception:
             _log.warning('Fitting did not work.')
             return
-        fil2ns = get_interp(res.x, return_res=True)
-        fil2ns = _np.roll(fil2ns, -self._fillpat_fid_offset)
-
-        # Roll raw data to be in accordance with processed data
-        idx = bun_spacing[self._fillpat_fid_offset] < tim
-        idx = idx.nonzero()[0][0]
-        fill = _np.roll(fill, -idx)
+        tim2ns, fil2ns = get_interp(res.x, return_res=True)
+        fid = self._fillpat_fid_offset
+        fil2ns = _np.roll(fil2ns, -fid)
+        tim2ns = _np.roll(tim2ns, -fid)
 
         # Scale filling pattern so that its sum is equal to
         # the total current stored
@@ -658,9 +656,7 @@ class SICurrInfoApp(_CurrInfoApp):
 
         # Update PVs:
         self.run_callbacks('SI-Glob:DI-FPMOsc:FillPattern-Mon', fil2ns)
-        self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternTime-Mon', bun_spacing
-        )
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternTime-Mon', tim2ns)
         self.run_callbacks(
             'SI-Glob:DI-FPMOsc:FillPatternTimeOffset-Mon', res.x
         )
