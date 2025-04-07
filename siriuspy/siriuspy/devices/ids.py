@@ -1487,23 +1487,15 @@ class IVU(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    # PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    # PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
     PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
     PARAM_PVS.RESET = 'Reset-Cmd'
     PARAM_PVS.KPARAM_SP = 'KParam-SP'
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-    # PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
-    # PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
-    # PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
-    # PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
     PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
-    # PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
-    # PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
 
     PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
     PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
@@ -1520,8 +1512,6 @@ class IVU(IDBase):
     PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
     PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
 
-    # PARAM_PVS.KPARAM_TOL_SP = 'PosTol-SP'
-    # PARAM_PVS.KPARAM_TOL_RB = 'PosTol-RB'
     PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
 
     PROPERTIES_DEFAULT = tuple(set(
@@ -1716,7 +1706,7 @@ class IVU(IDBase):
             self.PARAM_PVS.RESET, timeout=timeout)
 
 
-class VPU(APU):
+class VPU(IVU):
     """VPU Insertion Device."""
 
     class DEVICES:
