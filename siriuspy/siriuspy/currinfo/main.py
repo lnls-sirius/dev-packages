@@ -1,28 +1,25 @@
 """Main Module of the IOC Logic."""
 
-import time as _time
-from datetime import datetime as _datetime
 import logging as _log
+import time as _time
 from copy import deepcopy as _dcopy
+from datetime import datetime as _datetime
 from threading import Thread as _Thread
 
 import numpy as _np
 import scipy.optimize as _scyopt
 import scipy.signal as _scysig
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
-from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie, PV as _PV
-from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
-from ..pwrsupply.csdev import Const as _PSc
-from ..search import LLTimeSearch as _LLTimeSearch
+from ..envars import VACA_PREFIX as _vaca_prefix
+from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes, \
     ScopeSignals as _ScopeSignals
-
-from .csdev import Const as _Const, \
-    get_currinfo_database as _get_database
+from ..pwrsupply.csdev import Const as _PSc
+from ..search import LLTimeSearch as _LLTimeSearch
+from .csdev import Const as _Const, get_currinfo_database as _get_database
 
 
 class _CurrInfoApp(_Callback):
