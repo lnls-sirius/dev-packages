@@ -28,6 +28,9 @@ class Const(_csdev.Const):
     DCCTFltCheck = _csdev.Const.register('DCCTFltCheck', _et.OFF_ON)
     BuffAutoRst = _csdev.Const.register('BuffAutoRst', _et.BUFFAUTORSTTYP)
     Fit = _csdev.Const.register('Fit', _et.FITTYP)
+    FP_MAX_ARR_SIZE = 40000
+    FP_HARM_NUM = 864
+    FP_MAX_UPDT_TIME = 600  # [s]
 
 
 _c = Const  # syntactic sugar
@@ -151,6 +154,54 @@ def get_si_currinfo_database():
 
     dev = 'AS-Glob:AP-CurrInfo:'
     pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
+
+    pvs_db[dev+'FillPatternUpdateTime-SP'] = {
+        'type': 'int', 'value': 5, 'unit': 's',
+        'low': 0, 'high': _c.FP_MAX_UPDT_TIME,
+        'lolo': 0, 'hihi': _c.FP_MAX_UPDT_TIME,
+        'lolim': 0, 'hilim': _c.FP_MAX_UPDT_TIME,
+    }
+    pvs_db[dev+'FillPatternUpdateTime-RB'] = {
+        'type': 'int', 'value': 5, 'unit': 's',
+        'low': 0, 'high': _c.FP_MAX_UPDT_TIME,
+        'lolo': 0, 'hihi': _c.FP_MAX_UPDT_TIME,
+        'lolim': 0, 'hilim': _c.FP_MAX_UPDT_TIME,
+    }
+    pvs_db[dev+'FillPatternFiducialOffset-SP'] = {
+        'type': 'int', 'value': 0, 'unit': 'bunches',
+        'low': -_c.FP_HARM_NUM, 'high': _c.FP_HARM_NUM,
+        'lolo': -_c.FP_HARM_NUM, 'hihi': _c.FP_HARM_NUM,
+        'lolim': -_c.FP_HARM_NUM, 'hilim': _c.FP_HARM_NUM,
+    }
+    pvs_db[dev+'FillPatternFiducialOffset-RB'] = {
+        'type': 'int', 'value': 0, 'unit': 'bunches',
+        'low': -_c.FP_HARM_NUM, 'high': _c.FP_HARM_NUM,
+        'lolo': -_c.FP_HARM_NUM, 'hihi': _c.FP_HARM_NUM,
+        'lolim': -_c.FP_HARM_NUM, 'hilim': _c.FP_HARM_NUM,
+    }
+    pvs_db[dev+'FillPatternTimeOffset-Mon'] = {
+        'type': 'float', 'value': 0.0,
+    }
+    pvs_db[dev+'FillPattern-Mon'] = {
+        'type': 'float', 'prec': 3, 'count': _c.FP_HARM_NUM,
+        'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'mA'
+    }
+    pvs_db[dev+'FillPatternTime-Mon'] = {
+        'type': 'float', 'prec': 3, 'count': _c.FP_HARM_NUM,
+        'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'ns'
+    }
+    pvs_db[dev+'FillPatternRaw-Mon'] = {
+        'type': 'float', 'prec': 3, 'count': _c.FP_MAX_ARR_SIZE,
+        'value': [0.0, ] * _c.FP_MAX_ARR_SIZE, 'unit': 'mA'
+    }
+    pvs_db[dev+'FillPatternRawAmp-Mon'] = {
+        'type': 'float', 'prec': 3, 'count': _c.FP_MAX_ARR_SIZE,
+        'value': [0.0, ] * _c.FP_MAX_ARR_SIZE, 'unit': 'mA'
+    }
+    pvs_db[dev+'FillPatternRawTime-Mon'] = {
+        'type': 'float', 'prec': 3, 'count': _c.FP_MAX_ARR_SIZE,
+        'value': [0.0, ] * _c.FP_MAX_ARR_SIZE, 'unit': 'ns'
+    }
 
     pvs_db = _csdev.add_pvslist_cte(pvs_db, prefix=dev)
     return pvs_db

@@ -418,7 +418,7 @@ class SICurrInfoApp(_CurrInfoApp):
             self._charge = data['value'][0]
 
         self._fillpat_fid_offset = 0
-        self._fillpat_update_time = 0
+        self._fillpat_update_time = 5  # [s]
         self._fillpat_osc = _Keysight(
             scopesignal=_ScopeSignals.SI_FILL_PATTERN
         )
@@ -525,14 +525,18 @@ class SICurrInfoApp(_CurrInfoApp):
                 self._dcctfltcheck_mode)
             return True
         elif reason == 'SI-Glob:AP-CurrInfo:FillPatternUpdateTime-SP':
-            self._fillpat_update_time = float(value)
+            self._fillpat_update_time = min(
+                _Const.FP_MAX_UPDT_TIME, max(0, float(value))
+            )
             self.run_callbacks(
                 'SI-Glob:AP-CurrInfo:FillPatternUpdateTime-RB',
                 self._fillpat_update_time
             )
             return True
         elif reason == 'SI-Glob:AP-CurrInfo:FillPatternFiducialOffset-SP':
-            self._fillpat_fid_offset = max(864, min(0, int(value)))
+            self._fillpat_fid_offset = min(
+                _Const.FP_HARM_NUM, max(-_Const.FP_HARM_NUM, int(value))
+            )
             self.run_callbacks(
                 'SI-Glob:AP-CurrInfo:FillPatternFiducialOffset-RB',
                 self._fillpat_fid_offset
@@ -601,14 +605,18 @@ class SICurrInfoApp(_CurrInfoApp):
         frf = 499667557.37  # default value
         if self._rffreq_pv.connected:
             frf = self._rffreq_pv.value
-        bun_spacing = _np.arange(864) / frf * 1e9
+        # first peak in Hilbert transform is compromized by dft issues, so get
+        # data starting from second:
+        bun_spacing = _np.arange(1, _Const.FP_HARM_NUM + 1) / frf * 1e9  # [ns]
 
         try:
             tim, fill = self._fillpat_osc.wfm_get_data()
+            tim = tim[:_Const.FP_MAX_ARR_SIZE]
+            fill = fill[:_Const.FP_MAX_ARR_SIZE]
         except Exception:
             _log.warning('Could not read oscilloscope data.')
             return
-        tim *= 1e9
+        tim *= 1e9  # from [s] to [ns]
         tim -= tim[0]
         fill -= fill.mean()
         hil = _np.abs(_scysig.hilbert(fill))
@@ -622,10 +630,14 @@ class SICurrInfoApp(_CurrInfoApp):
 
             if return_res:
                 return fil2ns
-            return hil.max() - fil2ns.max()
+            hil_max = hil[200:-200].max()  # avoid borders
+            weight = fil2ns[fil2ns > hil_max * 20/100]
+            obj = weight - hil_max
+            return obj * _np.sqrt(weight)
 
         try:
-            res = _scyopt.least_squares(get_interp, 0.6)
+            init_guess_offset = 0.2  # [ns]
+            res = _scyopt.least_squares(get_interp, init_guess_offset)
         except Exception:
             _log.warning('Fitting did not work.')
             return
@@ -642,9 +654,10 @@ class SICurrInfoApp(_CurrInfoApp):
         if self._current_13c4_pv.connected:
             _log.warning('Could not read current from DCCT.')
             return
-        fac = self._current_13c4_pv.value / fil2ns.sum()
+        fac = max(0.0, self._current_13c4_pv.value) / fil2ns.sum()
         fil2ns *= fac
         fill *= fac
+        hil *= fac
 
         # Update PVs:
         self.run_callbacks('SI-Glob:AP-CurrInfo:FillPattern-Mon', fil2ns)
@@ -654,10 +667,14 @@ class SICurrInfoApp(_CurrInfoApp):
         self.run_callbacks(
             'SI-Glob:AP-CurrInfo:FillPatternTimeOffset-Mon', res.x
         )
-        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRaw-Mon', tim)
-        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRawTime-Mon', fill)
-        dt_ = _time.time() - t0_
-        dt_ = self._fillpat_update_time - dt_
+        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRaw-Mon', fill)
+        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRawAmp-Mon', hil)
+        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRawTime-Mon', tim)
+
+        # This thread is triggered by the update of the current, which is
+        # faster than the frequency we want to update the filling pattern.
+        # Hence, we need to wait here:
+        dt_ = self._fillpat_update_time - (_time.time() - t0_)
         _time.sleep(max(dt_, 0))
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
