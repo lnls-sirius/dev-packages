@@ -140,6 +140,7 @@ class Const(_csdev.Const):
         ('TRIGGER_PM14RcvInSel-SP', 2),
     )
     REDUNDANCY_TABLE = {
+        'IA-06RaBPM:TI-AMCFPGAEVR': 'IA-06RaBPM:TI-EVR',
         'IA-08RaBPM:TI-AMCFPGAEVR': 'IA-08RaBPM:TI-EVR',
         'IA-10RaBPM:TI-AMCFPGAEVR': 'IA-10RaBPM:TI-EVR',
         'IA-14RaBPM:TI-AMCFPGAEVR': 'IA-14RaDiag03:TI-EVE',
