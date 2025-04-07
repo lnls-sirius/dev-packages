@@ -521,21 +521,21 @@ class SICurrInfoApp(_CurrInfoApp):
                 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts',
                 self._dcctfltcheck_mode)
             return True
-        elif reason == 'SI-Glob:AP-CurrInfo:FillPatternUpdateTime-SP':
+        elif reason == 'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-SP':
             self._fillpat_update_time = min(
                 _Const.FP_MAX_UPDT_TIME, max(0, float(value))
             )
             self.run_callbacks(
-                'SI-Glob:AP-CurrInfo:FillPatternUpdateTime-RB',
+                'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-RB',
                 self._fillpat_update_time
             )
             return True
-        elif reason == 'SI-Glob:AP-CurrInfo:FillPatternFiducialOffset-SP':
+        elif reason == 'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-SP':
             self._fillpat_fid_offset = min(
                 _Const.FP_HARM_NUM, max(-_Const.FP_HARM_NUM, int(value))
             )
             self.run_callbacks(
-                'SI-Glob:AP-CurrInfo:FillPatternFiducialOffset-RB',
+                'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-RB',
                 self._fillpat_fid_offset
             )
             return True
@@ -657,16 +657,16 @@ class SICurrInfoApp(_CurrInfoApp):
         hil *= fac
 
         # Update PVs:
-        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPattern-Mon', fil2ns)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPattern-Mon', fil2ns)
         self.run_callbacks(
-            'SI-Glob:AP-CurrInfo:FillPatternTime-Mon', bun_spacing
+            'SI-Glob:DI-FPMOsc:FillPatternTime-Mon', bun_spacing
         )
         self.run_callbacks(
-            'SI-Glob:AP-CurrInfo:FillPatternTimeOffset-Mon', res.x
+            'SI-Glob:DI-FPMOsc:FillPatternTimeOffset-Mon', res.x
         )
-        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRaw-Mon', fill)
-        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRawAmp-Mon', hil)
-        self.run_callbacks('SI-Glob:AP-CurrInfo:FillPatternRawTime-Mon', tim)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRaw-Mon', fill)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRawAmp-Mon', hil)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRawTime-Mon', tim)
 
         # This thread is triggered by the update of the current, which is
         # faster than the frequency we want to update the filling pattern.

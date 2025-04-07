@@ -155,6 +155,7 @@ def get_si_currinfo_database():
     dev = 'AS-Glob:AP-CurrInfo:'
     pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
 
+    dev = 'SI-Glob:DI-FPMOsc:'
     pvs_db[dev+'FillPatternUpdateTime-SP'] = {
         'type': 'int', 'value': 5, 'unit': 's',
         'low': 0, 'high': _c.FP_MAX_UPDT_TIME,
@@ -179,9 +180,7 @@ def get_si_currinfo_database():
         'lolo': -_c.FP_HARM_NUM, 'hihi': _c.FP_HARM_NUM,
         'lolim': -_c.FP_HARM_NUM, 'hilim': _c.FP_HARM_NUM,
     }
-    pvs_db[dev+'FillPatternTimeOffset-Mon'] = {
-        'type': 'float', 'value': 0.0,
-    }
+    pvs_db[dev+'FillPatternTimeOffset-Mon'] = {'type': 'float', 'value': 0.0}
     pvs_db[dev+'FillPattern-Mon'] = {
         'type': 'float', 'prec': 3, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'mA'
