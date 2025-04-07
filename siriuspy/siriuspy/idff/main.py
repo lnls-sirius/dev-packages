@@ -208,12 +208,12 @@ class App(_Callback):
         return True
 
     def write_control_qn(self, value):
-        """Set whether to include QD or not in feedforward."""
+        """Set whether to include QN or not in feedforward."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
         self.control_qn = value
         act = ('En' if value else 'Dis')
-        self.update_log(f'{act}abled QD control.')
+        self.update_log(f'{act}abled QN control.')
         self.run_callbacks('ControlQN-Sts', value)
         return True
 
