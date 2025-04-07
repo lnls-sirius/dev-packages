@@ -75,7 +75,7 @@ class IDFFConfig(_ConfigDBDocument):
 
     @property
     def qn_pvnames(self):
-        """Return QD corrector power supply pvnames."""
+        """Return QN corrector power supply pvnames."""
         return self._get_corr_pvnames(*_IDSearch.IDFF_QN_LABELS)
 
     @property
