@@ -1726,27 +1726,35 @@ class VPU(IVU):
     # --- GENERAL ---
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
-    # PARAM_PVS.RESET = None
+    PARAM_PVS.RESET = None
 
     # --- KPARAM ---
-    PARAM_PVS.KPARAM_SP = 'KParam-SP'
     PARAM_PVS.KPARAM_RB = 'KParam-SP'  # Can we read from CPL?
-    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
-    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-    # PARAM_PVS.KPARAM_MAXACC_SP = None
-    # PARAM_PVS.KPARAM_MAXACC_RB = None
     PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
-    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
     PARAM_PVS.KPARAM_VELO_MON = 'KParamVelo-Mon'
     PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
     PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-SP'  # Can we read from CPL?
-    # PARAM_PVS.KPARAM_TOL_SP = None
-    # PARAM_PVS.KPARAM_TOL_RB = None
-    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
+    # --- OFFSET --
+    PARAM_PVS.CENTER_MODE_STS = None
+    PARAM_PVS.CENTER_MODE_SEL = None
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
+
+    # --- PITCH --
+    PARAM_PVS.PITCH_MODE_STS = None
+    PARAM_PVS.PITCH_MODE_SEL = None
+    # PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
+    # PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+
+    # --- TAPER --
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'  # Define if we will keep KParam
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-SP'  # Define if we will keep KParam
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'  # Define if we will keep KParam
+
+    # IVU params
 
     PROPERTIES_DEFAULT = \
         tuple(set(
