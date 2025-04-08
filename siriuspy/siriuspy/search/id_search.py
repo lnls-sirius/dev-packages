@@ -47,7 +47,7 @@ class IDSearch:
             'IDParameters',
             _idparam_fields, (
                 29,
-                9.7, 80, 40, 40, 0.01,
+                9.7, 80, 80, 80, 0.01,
                 None, None, None, None)),
         'SI-07SP:ID-APU22': _get_namedtuple(
             'IDParameters',
