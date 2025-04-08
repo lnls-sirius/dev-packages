@@ -17,7 +17,7 @@ class IDSearch:
     # https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Insertion_Devices
 
     _beamline2idname = {
-        'CARNAUBA': 'SI-06SB:ID-APU22',  # titular: VPU29
+        'CARNAUBA': 'SI-06SB:ID-VPU29',  # titular: VPU29
         'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU29
         'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
@@ -329,6 +329,16 @@ class IDSearch:
     def conv_idname_2_idff_cvnames(idname):
         """."""
         return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
+
+    @staticmethod
+    def conv_idname_2_idff_cc1names(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('cc1-1', 'cc1-2'))
+
+    @staticmethod
+    def conv_idname_2_idff_cc2names(idname):
+        """."""
+        return IDSearch._get_devname_from_idff(idname, ('cc2-1', 'cc2-2'))
 
     @staticmethod
     def conv_idname_2_idff_qsnames(idname):
