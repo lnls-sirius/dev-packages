@@ -175,6 +175,7 @@ class IDSearch:
     IDFF_QS_LABELS = ('qs_1', 'qs_2')
     IDFF_LC_LABELS = ('lch', 'lcv')
     IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
+    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc2_2', 'cc1_2')
 
     _idname_2_idff = {
         'SI-06SB:ID-APU22': None,
@@ -377,6 +378,12 @@ class IDSearch:
         """."""
         return IDSearch.conv_idname_labels_2_corrnames(
             idname, IDSearch.IDFF_QN_LABELS)
+
+    @staticmethod
+    def conv_idname_2_idff_ccnames(idname):
+        """."""
+        return IDSearch.conv_idname_labels_2_corrnames(
+            idname, IDSearch.IDFF_CC_LABELS)
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
