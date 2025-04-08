@@ -17,8 +17,8 @@ class IDSearch:
     # https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Insertion_Devices
 
     _beamline2idname = {
-        'CARNAUBA': 'SI-06SB:ID-VPU29',  # titular: VPU29
-        'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU29
+        'CARNAUBA': 'SI-06SB:ID-APU22',  # titular: VPU19
+        'CATERETE': 'SI-07SP:ID-APU22',  # titular: VPU19
         'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
         'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
@@ -43,11 +43,11 @@ class IDSearch:
         )
 
     _idname2params = {
-        'SI-06SB:ID-VPU29': _get_namedtuple(
+        'SI-06SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
-                29,
-                9.7, 80, 80, 80, 0.01,
+                22,
+                0, 11, 11, 0, 0.01,
                 None, None, None, None)),
         'SI-07SP:ID-APU22': _get_namedtuple(
             'IDParameters',
@@ -123,8 +123,8 @@ class IDSearch:
     POL_UNDEF_STR = 'undef'
 
     _idname2pol_sel = {
-        'SI-06SB:ID-VPU29': {
-            0: ('vertical', None),  # [mm]
+        'SI-06SB:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
         },
         'SI-07SP:ID-APU22': {
             0: ('horizontal', None),  # [mm]
@@ -170,15 +170,7 @@ class IDSearch:
         {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
     _idname_2_idff = {
-        'SI-06SB:ID-VPU29': {
-            'polarizations': ('vertical', ),
-            'pparameter': None,
-            'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
-            'cc1-1': 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
-            'cc1-2': 'SI-06SB:PS-CC1-2:Current-SP',  # downstream
-            'cc2-1': 'SI-06SB:PS-CC2-1:Current-SP',
-            'cc2-2': 'SI-06SB:PS-CC2-2:Current-SP',
-        },
+        'SI-06SB:ID-APU22': None,
         'SI-07SP:ID-APU22': None,
         'SI-08SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
@@ -329,16 +321,6 @@ class IDSearch:
     def conv_idname_2_idff_cvnames(idname):
         """."""
         return IDSearch._get_devname_from_idff(idname, ('cv1', 'cv2'))
-
-    @staticmethod
-    def conv_idname_2_idff_cc1names(idname):
-        """."""
-        return IDSearch._get_devname_from_idff(idname, ('cc1-1', 'cc1-2'))
-
-    @staticmethod
-    def conv_idname_2_idff_cc2names(idname):
-        """."""
-        return IDSearch._get_devname_from_idff(idname, ('cc2-1', 'cc2-2'))
 
     @staticmethod
     def conv_idname_2_idff_qsnames(idname):
