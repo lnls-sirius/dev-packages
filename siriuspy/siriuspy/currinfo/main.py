@@ -624,7 +624,7 @@ class SICurrInfoApp(_CurrInfoApp):
 
         def get_interp(off, return_res=False):
             tim2ns = bun_spacing + off
-            fil2ns = _np.interp(bun_spacing + off, tim, hil)
+            fil2ns = _np.interp(tim2ns, tim, hil)
 
             if return_res:
                 return tim2ns, fil2ns
