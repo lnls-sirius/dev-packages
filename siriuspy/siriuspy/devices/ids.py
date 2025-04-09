@@ -83,6 +83,9 @@ class _ParamPVs:
     CENTER_OFFSET_VELO_MON = None
     CENTER_OFFSET_MIN_CTE = None
     CENTER_OFFSET_MAX_CTE = None
+    PITCH_OFFSET_VELO_MON = None
+    PITCH_OFFSET_MIN_CTE = None
+    PITCH_OFFSET_MAX_CTE = None
 
     def __str__(self):
         """Print parameters."""
@@ -779,6 +782,7 @@ class IDFullMovCtrl(IDBase):
     PARAM_PVS = _ParamPVs()
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
     PARAM_PVS.KPARAM_SP = 'KParam-SP'
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
@@ -902,7 +906,8 @@ class IDFullMovCtrl(IDBase):
 
     def set_center_offset(self, center_offset, timeout=None):
         """Set ID center offset for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset, timeout)
+        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset, 
+                              timeout)
 
 
 class APU(IDBase):
@@ -1632,7 +1637,6 @@ class IVU(IDFullMovCtrl):
     PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
     PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
     PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
-    PARAM_PVS.RESET = 'Reset-Cmd'
 
     PROPERTIES_DEFAULT = tuple(set(
         value for key, value in _inspect.getmembers(PARAM_PVS)
@@ -1763,13 +1767,14 @@ class VPU(IDFullMovCtrl):
 
     # --- OFFSET --
     PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-SP'
-    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
     PARAM_PVS.CENTER_OFFSET_VELO_MON = 'CenterOffsetVelo-Mon'
     PARAM_PVS.CENTER_OFFSET_MIN_CTE = 'CenterOffMinPos-Cte'
     PARAM_PVS.CENTER_OFFSET_MAX_CTE = 'CenterOffMaxPos-Cte'
 
     # --- PITCH --
-    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+    PARAM_PVS.PITCH_OFFSET_VELO_MON = 'PitchOffsetVelo-Mon'
+    PARAM_PVS.PITCH_OFFSET_MIN_CTE = 'PitchOffMinPos-Cte'
+    PARAM_PVS.PITCH_OFFSET_MAX_CTE = 'PitchOffMaxPos-Cte'
 
     # --- TAPER --
     PARAM_PVS.KPARAM_TAPER_SP = 'Taper-SP'
@@ -1785,6 +1790,52 @@ class VPU(IDFullMovCtrl):
         tuple(set(
             value for key, value in _inspect.getmembers(PARAM_PVS)
             if not key.startswith('_') and value is not None))
+
+    @property
+    def center_offset_speed_mon(self):
+        """Return center offset speed monitor [mm/s]."""
+        if self.PARAM_PVS.CENTER_OFFSET_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CENTER_OFFSET_VELO_MON]
+
+    @property
+    def pitch_speed_mon(self):
+        """Return pitch speed monitor [mm/s]."""
+        if self.PARAM_PVS.PITCH_OFFSET_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PITCH_OFFSET_VELO_MON]
+
+    @property
+    def taper_speed_mon(self):
+        """Return taper speed monitor [mm/s]."""
+        if self.PARAM_PVS.TAPER_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.TAPER_VELO_MON]
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- cmd move
+    def cmd_move_start(self, timeout=None):
+        """Command to move undulator."""
+        return self._write_sp(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, _CMD_MOVE_START, timeout=timeout)
+
+    # --- cmd_reset
+    def cmd_reset(self, timeout=None):
+        """Command to reset undulator."""
+        return self._write_sp(
+            self.PARAM_PVS.RESET, _CMD_RESET, timeout=timeout)
 
 
 class ID(IDBase):
