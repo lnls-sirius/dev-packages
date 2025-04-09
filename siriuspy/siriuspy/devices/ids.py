@@ -779,7 +779,6 @@ class IDFullMovCtrl(IDBase):
     PARAM_PVS = _ParamPVs()
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
-    PARAM_PVS.RESET = 'Reset-Cmd'
     PARAM_PVS.KPARAM_SP = 'KParam-SP'
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
@@ -872,11 +871,6 @@ class IDFullMovCtrl(IDBase):
         return self[self.PARAM_PVS.PITCH_OFFSET_MON]
 
     # --- center ---
-
-    @property
-    def center_mode_status(self):
-        """Return ID center mode status."""
-        return self[self.PARAM_PVS.CENTER_MODE_STS]
 
     @property
     def center_offset(self):
@@ -1638,6 +1632,7 @@ class IVU(IDFullMovCtrl):
     PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
     PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
     PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.RESET = 'Reset-Cmd'
 
     PROPERTIES_DEFAULT = tuple(set(
         value for key, value in _inspect.getmembers(PARAM_PVS)
@@ -1652,6 +1647,12 @@ class IVU(IDFullMovCtrl):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- center offset ---
+    @property
+    def center_mode_status(self):
+        """Return ID center mode status."""
+        return self[self.PARAM_PVS.CENTER_MODE_STS]
 
     # --- pitch ---
     @property
@@ -1727,7 +1728,7 @@ class IVU(IDFullMovCtrl):
     def cmd_reset(self, timeout=None):
         """Command to reset undulator."""
         return self._write_sp(
-            self.PARAM_PVS.RESET, timeout=timeout)
+            self.PARAM_PVS.RESET, True, timeout=timeout)
 
 
 class VPU(IDFullMovCtrl):
@@ -1741,11 +1742,11 @@ class VPU(IDFullMovCtrl):
         ALL = (VPU29_06SB, )  # VPU29_07SP, )
 
     # DevCtrl PV
-    # _CMD_MOVE_STOP, _CMD_MOVE_START = 300, 320
-    # _CMD_RESET, _CMD_SCAN_START = 310, 340
-    # _CMD_SCAN_MODE = 330
+    _CMD_MOVE_STOP, _CMD_MOVE_START = 300, 320
+    _CMD_RESET, _CMD_SCAN_START = 310, 340
+    _CMD_SCAN_MODE = 330
 
-    PARAM_PVS = _ParamPVs()
+    PARAM_PVS = IDFullMovCtrl.PARAM_PVS
 
     # --- GENERAL ---
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
@@ -1754,7 +1755,6 @@ class VPU(IDFullMovCtrl):
     PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-SP'
     PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
     PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-SP'  # Can we read from CPL?
-    PARAM_PVS.RESET = None
 
     # --- KPARAM ---
     PARAM_PVS.KPARAM_RB = 'KParam-SP'  # Can we read from CPL?
