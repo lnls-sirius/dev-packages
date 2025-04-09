@@ -77,6 +77,12 @@ class _ParamPVs:
     KPARAM_TAPER_SP = None
     KPARAM_TAPER_RB = None
     KPARAM_TAPER_MON = None
+    TAPER_VELO_MON = None
+    TAPER_MIN_CTE = None
+    TAPER_MAX_CTE = None
+    CENTER_OFFSET_VELO_MON = None
+    CENTER_OFFSET_MIN_CTE = None
+    CENTER_OFFSET_MAX_CTE = None
 
     def __str__(self):
         """Print parameters."""
@@ -769,8 +775,6 @@ class IDBase(_Device):
 class IDFullMovCtrl(IDBase):
     """Base class for IDs with taper, pitch and offset control."""
 
-    PARAM_PVS = _ParamPVs()
-
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
@@ -783,16 +787,9 @@ class IDFullMovCtrl(IDBase):
     PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
 
-    PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
-    PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
-    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
-    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
-
     PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
     PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
     PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
-    PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
-    PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
     PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
     PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
     PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
@@ -870,16 +867,6 @@ class IDFullMovCtrl(IDBase):
     # --- pitch ---
 
     @property
-    def pitch_mode_status(self):
-        """Return ID pitch mode status."""
-        return self[self.PARAM_PVS.PITCH_MODE_STS]
-
-    @property
-    def pitch(self):
-        """Return ID pitch readback [mm]."""
-        return self[self.PARAM_PVS.PITCH_OFFSET_RB]
-
-    @property
     def pitch_mon(self):
         """Return ID pitch monitor [mm]."""
         return self[self.PARAM_PVS.PITCH_OFFSET_MON]
@@ -919,74 +906,9 @@ class IDFullMovCtrl(IDBase):
         """Set ID target taper for movement [mm]."""
         return self._write_sp(self.PARAM_PVS.KPARAM_TAPER_SP, taper, timeout)
 
-    def set_pitch(self, pitch, timeout=None):
-        """Set ID pitch for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.PITCH_OFFSET_SP, pitch, timeout)
-
     def set_center_offset(self, center_offset, timeout=None):
         """Set ID center offset for movement [mm]."""
         return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset, timeout)
-
-    def set_center_mode(self, mode, timeout=None):
-        """Set ID center mode True or False."""
-        if type(mode) is not bool:
-            raise ValueError('Center mode must be boolean.')
-        if not mode:
-            self.set_taper(0, timeout)
-        return self._write_sp(self.PARAM_PVS.CENTER_MODE_SEL, mode, timeout)
-
-    def set_pitch_mode(self, mode, timeout=None):
-        """Set ID pitch mode True or False."""
-        if type(mode) is not bool:
-            raise ValueError('Pitch mode must be boolean.')
-        if not mode:
-            self.set_center_offset(0, timeout)
-        return self._write_sp(self.PARAM_PVS.PITCH_MODE_SEL, mode, timeout)
-
-    # --- cmd_move
-
-    def cmd_move_gap_start(self, timeout=None):
-        """Command to start gap movement."""
-        if self.center_mode_status:
-            raise ValueError('Center offset mode must be disabled.')
-        if self.pitch_mode_status:
-            raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
-            raise ValueError('Taper must be zero.')
-        return self.cmd_move_kparameter_start(timeout)
-
-    def cmd_move_taper_start(self, timeout=None):
-        """Command to start taper movement."""
-        if self.center_mode_status:
-            raise ValueError('Center offset mode must be disabled.')
-        if self.pitch_mode_status:
-            raise ValueError('Pitch mode must be disabled.')
-        return self._move_start(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
-
-    def cmd_move_pitch_start(self, timeout=None):
-        """Command to start pitch movement."""
-        if self.center_mode_status:
-            raise ValueError('Center offset mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
-            raise ValueError('Taper must be zero.')
-        return self._move_start(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
-
-    def cmd_move_center_start(self, timeout=None):
-        """Command to start center movement."""
-        if self.pitch_mode_status:
-            raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
-            raise ValueError('Taper must be zero.')
-        return self._move_start(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
-
-    # --- cmd_reset
-    def cmd_reset(self, timeout=None):
-        """Command to reset undulator."""
-        return self._write_sp(
-            self.PARAM_PVS.RESET, timeout=timeout)
 
 
 class APU(IDBase):
@@ -1709,8 +1631,13 @@ class IVU(IDFullMovCtrl):
         ALL = (IVU18_08SB, IVU18_14SB)
 
     # --- PARAM_PVS ---
-    PARAM_PVS = _ParamPVs()
-    
+    PARAM_PVS = IDFullMovCtrl.PARAM_PVS
+    PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
+    PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
+    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
+    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
+    PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
+    PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
 
     PROPERTIES_DEFAULT = tuple(set(
         value for key, value in _inspect.getmembers(PARAM_PVS)
@@ -1725,6 +1652,82 @@ class IVU(IDFullMovCtrl):
         # call base class constructor
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- pitch ---
+    @property
+    def pitch_mode_status(self):
+        """Return ID pitch mode status."""
+        return self[self.PARAM_PVS.PITCH_MODE_STS]
+
+    @property
+    def pitch(self):
+        """Return ID pitch readback [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_RB]
+
+    # Set methods
+    def set_pitch(self, pitch, timeout=None):
+        """Set ID pitch for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.PITCH_OFFSET_SP, pitch, timeout)
+
+    def set_center_mode(self, mode, timeout=None):
+        """Set ID center mode True or False."""
+        if type(mode) is not bool:
+            raise ValueError('Center mode must be boolean.')
+        if not mode:
+            self.set_taper(0, timeout)
+        return self._write_sp(self.PARAM_PVS.CENTER_MODE_SEL, mode, timeout)
+
+    def set_pitch_mode(self, mode, timeout=None):
+        """Set ID pitch mode True or False."""
+        if type(mode) is not bool:
+            raise ValueError('Pitch mode must be boolean.')
+        if not mode:
+            self.set_center_offset(0, timeout)
+        return self._write_sp(self.PARAM_PVS.PITCH_MODE_SEL, mode, timeout)
+
+    # --- cmd_move
+    def cmd_move_gap_start(self, timeout=None):
+        """Command to start gap movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self.cmd_move_kparameter_start(timeout)
+
+    def cmd_move_taper_start(self, timeout=None):
+        """Command to start taper movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_pitch_start(self, timeout=None):
+        """Command to start pitch movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_center_start(self, timeout=None):
+        """Command to start center movement."""
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    # --- cmd_reset
+    def cmd_reset(self, timeout=None):
+        """Command to reset undulator."""
+        return self._write_sp(
+            self.PARAM_PVS.RESET, timeout=timeout)
 
 
 class VPU(IDFullMovCtrl):
@@ -1747,35 +1750,34 @@ class VPU(IDFullMovCtrl):
     # --- GENERAL ---
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    PARAM_PVS.KPARAM_VELO_SP = 'MoveVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-SP'
+    PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-SP'  # Can we read from CPL?
     PARAM_PVS.RESET = None
 
     # --- KPARAM ---
     PARAM_PVS.KPARAM_RB = 'KParam-SP'  # Can we read from CPL?
     PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
-    PARAM_PVS.KPARAM_VELO_SP = 'MoveVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-SP'
-    PARAM_PVS.KPARAM_VELO_MON = 'KParamVelo-Mon'
-    PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
-    PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-SP'  # Can we read from CPL?
 
     # --- OFFSET --
-    PARAM_PVS.CENTER_MODE_STS = None
-    PARAM_PVS.CENTER_MODE_SEL = None
     PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-SP'
     PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
+    PARAM_PVS.CENTER_OFFSET_VELO_MON = 'CenterOffsetVelo-Mon'
+    PARAM_PVS.CENTER_OFFSET_MIN_CTE = 'CenterOffMinPos-Cte'
+    PARAM_PVS.CENTER_OFFSET_MAX_CTE = 'CenterOffMaxPos-Cte'
 
     # --- PITCH --
-    PARAM_PVS.PITCH_MODE_STS = None
-    PARAM_PVS.PITCH_MODE_SEL = None
-    PARAM_PVS.PITCH_OFFSET_SP = None
-    PARAM_PVS.PITCH_OFFSET_RB = None
     PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
 
     # --- TAPER --
-    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'  # Define if we will keep KParam
-    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-SP'  # Define if we will keep KParam
-    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'  # Define if we will keep KParam
+    PARAM_PVS.KPARAM_TAPER_SP = 'Taper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'Taper-SP'
+    PARAM_PVS.KPARAM_TAPER_MON = 'Taper-Mon'
+    PARAM_PVS.TAPER_VELO_MON = 'TaperVelo-Mon'
+    PARAM_PVS.TAPER_MIN_CTE = 'TaperMinPos-Cte'
+    PARAM_PVS.TAPER_MAX_CTE = 'TaperMaxPos-Cte'
 
     PARAM_PVS.KPARAM_CHANGE_CMD = 'MoveStart-Cmd'
 
