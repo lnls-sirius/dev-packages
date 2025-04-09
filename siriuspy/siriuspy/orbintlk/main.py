@@ -1451,10 +1451,11 @@ class App(_Callback):
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
 
+        llrfbit = self._const.LLRF_ORBINTLK_BIT
         for llrf in self._llrfs:
             # orbit interlock for LLRF A and B were moved to interlock
             # input 1, bit 5
-            if not llrf.interlock_input1_mon & (1 << 5):
+            if not llrf.interlock_input1_mon & (1 << llrfbit):
                 name = llrf.system_nickname
                 self._update_log(
                     f'ERR:LLRF-{name} did not receive RFKill event')

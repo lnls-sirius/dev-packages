@@ -64,6 +64,8 @@ class Const(_csdev.Const):
 
     DEF_TIME2WAIT_INTLKREARM = 30  # [s]
 
+    LLRF_ORBINTLK_BIT = 5
+
     HLTRIG_2_CONFIG = [
         ('SI-Fam:TI-BPM-OrbIntlk', (
             ('Src-Sel', 4),
