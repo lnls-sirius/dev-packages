@@ -766,6 +766,229 @@ class IDBase(_Device):
         return dtime_total
 
 
+class IDFullMovCtrl(IDBase):
+    """Base class for IDs with taper, pitch and offset control."""
+
+    PARAM_PVS = _ParamPVs()
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+
+    PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
+    PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
+    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
+    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
+
+    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
+    PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
+    PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
+
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+        # --- gap speeds ----
+
+    @property
+    def gap_speed(self):
+        """Return gap speed readback [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def gap_speed_mon(self):
+        """Return gap speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
+    @property
+    def gap_speed_max(self):
+        """Return max gap speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def gap_speed_max_lims(self):
+        """Return max gap speed limits."""
+        return self.kparameter_speed_max_lims
+
+    # --- gap ---
+
+    @property
+    def gap_parked(self):
+        """Return ID parked gap value [mm]."""
+        return self.kparameter_parked
+
+    @property
+    def gap(self):
+        """Return ID gap readback [mm]."""
+        return self.kparameter
+
+    @property
+    def gap_lims(self):
+        """Return ID gap control limits [mm]."""
+        return self.kparameter_lims
+
+    @property
+    def gap_mon(self):
+        """Return ID gap monitor [mm]."""
+        return self.kparameter_mon
+
+    # --- taper ---
+
+    @property
+    def taper(self):
+        """Return ID taper readback [mm]."""
+        return self[self.PARAM_PVS.KPARAM_TAPER_RB]
+
+    @property
+    def taper_mon(self):
+        """Return ID taper monitor [mm]."""
+        return self[self.PARAM_PVS.KPARAM_TAPER_MON]
+
+    # --- pitch ---
+
+    @property
+    def pitch_mode_status(self):
+        """Return ID pitch mode status."""
+        return self[self.PARAM_PVS.PITCH_MODE_STS]
+
+    @property
+    def pitch(self):
+        """Return ID pitch readback [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_RB]
+
+    @property
+    def pitch_mon(self):
+        """Return ID pitch monitor [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_MON]
+
+    # --- center ---
+
+    @property
+    def center_mode_status(self):
+        """Return ID center mode status."""
+        return self[self.PARAM_PVS.CENTER_MODE_STS]
+
+    @property
+    def center_offset(self):
+        """Return ID center offset readback [mm]."""
+        return self[self.PARAM_PVS.CENTER_OFFSET_RB]
+
+    @property
+    def center_offset_mon(self):
+        """Return ID center offset monitor [mm]."""
+        return self[self.PARAM_PVS.CENTER_OFFSET_MON]
+
+    # --- set methods ---
+
+    def set_gap(self, gap, timeout=None):
+        """Set ID target gap for movement [mm]."""
+        return self.set_kparameter(gap, timeout)
+
+    def set_gap_speed(self, gap_speed, timeout=None):
+        """Set ID cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed(gap_speed, timeout)
+
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
+        """Set ID max cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed_max(gap_speed_max, timeout)
+
+    def set_taper(self, taper, timeout=None):
+        """Set ID target taper for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.KPARAM_TAPER_SP, taper, timeout)
+
+    def set_pitch(self, pitch, timeout=None):
+        """Set ID pitch for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.PITCH_OFFSET_SP, pitch, timeout)
+
+    def set_center_offset(self, center_offset, timeout=None):
+        """Set ID center offset for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset, timeout)
+
+    def set_center_mode(self, mode, timeout=None):
+        """Set ID center mode True or False."""
+        if type(mode) is not bool:
+            raise ValueError('Center mode must be boolean.')
+        if not mode:
+            self.set_taper(0, timeout)
+        return self._write_sp(self.PARAM_PVS.CENTER_MODE_SEL, mode, timeout)
+
+    def set_pitch_mode(self, mode, timeout=None):
+        """Set ID pitch mode True or False."""
+        if type(mode) is not bool:
+            raise ValueError('Pitch mode must be boolean.')
+        if not mode:
+            self.set_center_offset(0, timeout)
+        return self._write_sp(self.PARAM_PVS.PITCH_MODE_SEL, mode, timeout)
+
+    # --- cmd_move
+
+    def cmd_move_gap_start(self, timeout=None):
+        """Command to start gap movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self.cmd_move_kparameter_start(timeout)
+
+    def cmd_move_taper_start(self, timeout=None):
+        """Command to start taper movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_pitch_start(self, timeout=None):
+        """Command to start pitch movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_center_start(self, timeout=None):
+        """Command to start center movement."""
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    # --- cmd_reset
+    def cmd_reset(self, timeout=None):
+        """Command to reset undulator."""
+        return self._write_sp(
+            self.PARAM_PVS.RESET, timeout=timeout)
+
+
 class APU(IDBase):
     """APU Insertion Device."""
 
@@ -1475,7 +1698,7 @@ class WIG(IDBase):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
 
-class IVU(IDBase):
+class IVU(IDFullMovCtrl):
     """IVU Insertion Device."""
 
     class DEVICES:
@@ -1487,32 +1710,7 @@ class IVU(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
-    PARAM_PVS.RESET = 'Reset-Cmd'
-    PARAM_PVS.KPARAM_SP = 'KParam-SP'
-    PARAM_PVS.KPARAM_RB = 'KParam-RB'
-    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
-    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
-
-    PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
-    PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
-    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
-    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
-
-    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
-    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
-    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
-    PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
-    PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
-    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
-    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
-    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
-    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
-
-    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+    
 
     PROPERTIES_DEFAULT = tuple(set(
         value for key, value in _inspect.getmembers(PARAM_PVS)
@@ -1528,185 +1726,8 @@ class IVU(IDBase):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
-    # --- gap speeds ----
 
-    @property
-    def gap_speed(self):
-        """Return gap speed readback [mm/s]."""
-        return self.kparameter_speed
-
-    @property
-    def gap_speed_mon(self):
-        """Return gap speed monitor [mm/s]."""
-        return self.kparameter_speed_mon
-
-    @property
-    def gap_speed_max(self):
-        """Return max gap speed readback [mm/s]."""
-        return self.kparameter_speed_max
-
-    @property
-    def gap_speed_max_lims(self):
-        """Return max gap speed limits."""
-        return self.kparameter_speed_max_lims
-
-    # --- gap ---
-
-    @property
-    def gap_parked(self):
-        """Return ID parked gap value [mm]."""
-        return self.kparameter_parked
-
-    @property
-    def gap(self):
-        """Return ID gap readback [mm]."""
-        return self.kparameter
-
-    @property
-    def gap_lims(self):
-        """Return ID gap control limits [mm]."""
-        return self.kparameter_lims
-
-    @property
-    def gap_mon(self):
-        """Return ID gap monitor [mm]."""
-        return self.kparameter_mon
-
-    # --- taper ---
-
-    @property
-    def taper(self):
-        """Return ID taper readback [mm]."""
-        return self[self.PARAM_PVS.KPARAM_TAPER_RB]
-
-    @property
-    def taper_mon(self):
-        """Return ID taper monitor [mm]."""
-        return self[self.PARAM_PVS.KPARAM_TAPER_MON]
-
-    # --- pitch ---
-
-    @property
-    def pitch_mode_status(self):
-        """Return ID pitch mode status."""
-        return self[self.PARAM_PVS.PITCH_MODE_STS]
-
-    @property
-    def pitch(self):
-        """Return ID pitch readback [mm]."""
-        return self[self.PARAM_PVS.PITCH_OFFSET_RB]
-
-    @property
-    def pitch_mon(self):
-        """Return ID pitch monitor [mm]."""
-        return self[self.PARAM_PVS.PITCH_OFFSET_MON]
-
-    # --- center ---
-
-    @property
-    def center_mode_status(self):
-        """Return ID center mode status."""
-        return self[self.PARAM_PVS.CENTER_MODE_STS]
-
-    @property
-    def center_offset(self):
-        """Return ID center offset readback [mm]."""
-        return self[self.PARAM_PVS.CENTER_OFFSET_RB]
-
-    @property
-    def center_offset_mon(self):
-        """Return ID center offset monitor [mm]."""
-        return self[self.PARAM_PVS.CENTER_OFFSET_MON]
-
-    # --- set methods ---
-
-    def set_gap(self, gap, timeout=None):
-        """Set ID target gap for movement [mm]."""
-        return self.set_kparameter(gap, timeout)
-
-    def set_gap_speed(self, gap_speed, timeout=None):
-        """Set ID cruise gap speed for movement [mm/s]."""
-        return self.set_kparameter_speed(gap_speed, timeout)
-
-    def set_gap_speed_max(self, gap_speed_max, timeout=None):
-        """Set ID max cruise gap speed for movement [mm/s]."""
-        return self.set_kparameter_speed_max(gap_speed_max, timeout)
-
-    def set_taper(self, taper, timeout=None):
-        """Set ID target taper for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.KPARAM_TAPER_SP, taper, timeout)
-
-    def set_pitch(self, pitch, timeout=None):
-        """Set ID pitch for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.PITCH_OFFSET_SP, pitch, timeout)
-
-    def set_center_offset(self, center_offset, timeout=None):
-        """Set ID center offset for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset, timeout)
-
-    def set_center_mode(self, mode, timeout=None):
-        """Set ID center mode True or False."""
-        if type(mode) != bool:
-            raise ValueError('Center mode must be boolean.')
-        if not mode:
-            self.set_taper(0, timeout)
-        return self._write_sp(self.PARAM_PVS.CENTER_MODE_SEL, mode, timeout)
-
-    def set_pitch_mode(self, mode, timeout=None):
-        """Set ID pitch mode True or False."""
-        if type(mode) != bool:
-            raise ValueError('Pitch mode must be boolean.')
-        if not mode:
-            self.set_center_offset(0, timeout)
-        return self._write_sp(self.PARAM_PVS.PITCH_MODE_SEL, mode, timeout)
-
-    # --- cmd_move
-
-    def cmd_move_gap_start(self, timeout=None):
-        """Command to start gap movement."""
-        if self.center_mode_status:
-            raise ValueError('Center offset mode must be disabled.')
-        if self.pitch_mode_status:
-            raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
-            raise ValueError('Taper must be zero.')
-        return self.cmd_move_kparameter_start(timeout)
-
-    def cmd_move_taper_start(self, timeout=None):
-        """Command to start taper movement."""  # Need to change PV for taper mov in IOC
-        if self.center_mode_status:
-            raise ValueError('Center offset mode must be disabled.')
-        if self.pitch_mode_status:
-            raise ValueError('Pitch mode must be disabled.')
-        return self._move_start(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
-
-    def cmd_move_pitch_start(self, timeout=None):
-        """Command to start pitch movement."""  # Need to change PV for pitch mov in IOC
-        if self.center_mode_status:
-            raise ValueError('Center offset mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
-            raise ValueError('Taper must be zero.')
-        return self._move_start(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
-
-    def cmd_move_center_start(self, timeout=None):
-        """Command to start center movement."""  # Need to change PV for center mov in IOC
-        if self.pitch_mode_status:
-            raise ValueError('Pitch mode must be disabled.')
-        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
-            raise ValueError('Taper must be zero.')
-        return self._move_start(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
-
-    # --- cmd_reset
-    def cmd_reset(self, timeout=None):
-        """Command to reset undulator."""
-        return self._write_sp(
-            self.PARAM_PVS.RESET, timeout=timeout)
-
-
-class VPU(IVU):
+class VPU(IDFullMovCtrl):
     """VPU Insertion Device."""
 
     class DEVICES:
@@ -1732,9 +1753,11 @@ class VPU(IVU):
     PARAM_PVS.KPARAM_RB = 'KParam-SP'  # Can we read from CPL?
     PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'MoveVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-SP'
     PARAM_PVS.KPARAM_VELO_MON = 'KParamVelo-Mon'
-    PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
-    PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-SP'  # Can we read from CPL?
+    PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-SP'  # Can we read from CPL?
 
     # --- OFFSET --
     PARAM_PVS.CENTER_MODE_STS = None
@@ -1745,8 +1768,8 @@ class VPU(IVU):
     # --- PITCH --
     PARAM_PVS.PITCH_MODE_STS = None
     PARAM_PVS.PITCH_MODE_SEL = None
-    # PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
-    # PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.PITCH_OFFSET_SP = None
+    PARAM_PVS.PITCH_OFFSET_RB = None
     PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
 
     # --- TAPER --
@@ -1754,7 +1777,7 @@ class VPU(IVU):
     PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-SP'  # Define if we will keep KParam
     PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'  # Define if we will keep KParam
 
-    # IVU params
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'MoveStart-Cmd'
 
     PROPERTIES_DEFAULT = \
         tuple(set(
