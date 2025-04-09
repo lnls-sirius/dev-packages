@@ -416,6 +416,7 @@ class SICurrInfoApp(_CurrInfoApp):
 
         self._fillpat_fid_offset = 0
         self._fillpat_update_time = 5  # [s]
+        self._fillpat_ref = _np.ones(_Const.FP_HARM_NUM) / _Const.FP_HARM_NUM
         self._fillpat_osc = _Keysight(
             scopesignal=_ScopeSignals.SI_FILL_PATTERN
         )
@@ -486,6 +487,30 @@ class SICurrInfoApp(_CurrInfoApp):
             'SI-Glob:AP-CurrInfo:InjCurr-Mon', self._injcurr)
         self.run_callbacks(
             'SI-Glob:AP-CurrInfo:InjCharge-Mon', self._injcharge)
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-SP',
+            self._fillpat_update_time
+        )
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-RB',
+            self._fillpat_update_time
+        )
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-SP',
+            self._fillpat_fid_offset
+        )
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-RB',
+            self._fillpat_fid_offset
+        )
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternRef-SP',
+            self._fillpat_ref
+        )
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternRef-RB',
+            self._fillpat_ref
+        )
 
     def read(self, reason):
         """Read from IOC database."""
@@ -501,8 +526,7 @@ class SICurrInfoApp(_CurrInfoApp):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
                 else:
-                    _log.warning(
-                        'Current value is too high: {0:.3f}A.'.format(current))
+                    _log.warning(f'Current value is too high: {current:.3f}A.')
                 value = self._charge
             self._time0 = timestamp
         return value
@@ -537,6 +561,18 @@ class SICurrInfoApp(_CurrInfoApp):
             self.run_callbacks(
                 'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-RB',
                 self._fillpat_fid_offset
+            )
+            return True
+        elif reason == 'SI-Glob:DI-FPMOsc:FillPatternRef-SP':
+            if not isinstance(value, (_np.ndarray, list, tuple)):
+                return False
+            value = _np.array(value)
+            if value.size != 864 or value.min() < 0:
+                return False
+            self._fillpat_ref = value / value.sum()
+            self.run_callbacks(
+                'SI-Glob:DI-FPMOsc:FillPatternRef-RB',
+                self._fillpat_ref
             )
             return True
         return False
@@ -585,11 +621,11 @@ class SICurrInfoApp(_CurrInfoApp):
 
         # trigger update of filling pattern from oscilloscope.
         if (
-            self._fillpat_thread is not None and
+            self._fillpat_thread is None or
             not self._fillpat_thread.is_alive()
         ):
             self._fillpat_thread = _Thread(
-                self._update_filling_pattern, daemon=True
+                target=self._update_filling_pattern, daemon=True
             )
             self._fillpat_thread.start()
 
@@ -646,16 +682,32 @@ class SICurrInfoApp(_CurrInfoApp):
 
         # Scale filling pattern so that its sum is equal to
         # the total current stored
-        if self._current_13c4_pv.connected:
+        current = self._get_current()
+        if current is None:
             _log.warning('Could not read current from DCCT.')
             return
-        fac = max(0.0, self._current_13c4_pv.value) / fil2ns.sum()
+        fac = max(0.0, current) / fil2ns.sum()
         fil2ns *= fac
         fill *= fac
         hil *= fac
 
+        avg_curr = fil2ns.mean()
+        filref = self._fillpat_ref * current
+        fil_err = _np.std(filref - fil2ns) / avg_curr * 100
+        # Compute KL Divergence between distributions:
+        idx = self._fillpat_ref > 0
+        fil_kld = _np.sum(
+            self._fillpat_ref[idx] * _np.log2(filref[idx]/fil2ns[idx]))
+
         # Update PVs:
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternErrorStd-Mon', fil_err
+        )
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternErrorKLDiv-Mon', fil_kld
+        )
         self.run_callbacks('SI-Glob:DI-FPMOsc:FillPattern-Mon', fil2ns)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRef-Mon', filref)
         self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternTime-Mon', tim2ns)
         self.run_callbacks(
             'SI-Glob:DI-FPMOsc:FillPatternTimeOffset-Mon', res.x

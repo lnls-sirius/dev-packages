@@ -180,9 +180,30 @@ def get_si_currinfo_database():
         'lolo': -_c.FP_HARM_NUM, 'hihi': _c.FP_HARM_NUM,
         'lolim': -_c.FP_HARM_NUM, 'hilim': _c.FP_HARM_NUM,
     }
-    pvs_db[dev+'FillPatternTimeOffset-Mon'] = {'type': 'float', 'value': 0.0}
+    pvs_db[dev+'FillPatternTimeOffset-Mon'] = {
+        'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'ns'
+    }
+    pvs_db[dev+'FillPatternRef-SP'] = {
+        'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
+        'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'rel'
+    }
+    pvs_db[dev+'FillPatternRef-RB'] = {
+        'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
+        'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'rel'
+    }
+
+    pvs_db[dev+'FillPatternErrorStd-Mon'] = {
+        'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
+    }
+    pvs_db[dev+'FillPatternErrorKLDiv-Mon'] = {
+        'type': 'float', 'value': 0, 'unit': '', 'prec': 5,
+    }
+    pvs_db[dev+'FillPatternRef-Mon'] = {
+        'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
+        'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'mA'
+    }
     pvs_db[dev+'FillPattern-Mon'] = {
-        'type': 'float', 'prec': 3, 'count': _c.FP_HARM_NUM,
+        'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'mA'
     }
     pvs_db[dev+'FillPatternTime-Mon'] = {
