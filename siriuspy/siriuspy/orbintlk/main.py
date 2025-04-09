@@ -978,8 +978,8 @@ class App(_Callback):
                 name = llrf.system_nickname
                 self._update_log(f'ERR:LLRF-{name} disconnected.')
                 return False
-            llrf['FIMLLRF1-Sel'] = self._llrf_intlk_state
-            llrf['FIMManual-Sel'] = self._llrf_intlk_state
+            llrf.fast_interlock_monitor_orbit = self._llrf_intlk_state
+            llrf.fast_interlock_monitor_manual = self._llrf_intlk_state
         return True
 
     def cmd_config_bpms(self, value):
@@ -1260,8 +1260,8 @@ class App(_Callback):
         for i, dev in enumerate(self._llrfs):
             if dev.connected:
                 value = _updt_bit(value, 2*i, 0)
-                fim_orbit = dev['FIMLLRF1-Sts']
-                fim_manual = dev['FIMManual-Sts']
+                fim_orbit = dev.fast_interlock_monitor_orbit
+                fim_manual = dev.fast_interlock_monitor_manual
                 okc = fim_orbit == self._llrf_intlk_state
                 okc &= fim_manual == self._llrf_intlk_state
                 value = _updt_bit(value, 2*i+1, not okc)
@@ -1454,7 +1454,7 @@ class App(_Callback):
         for llrf in self._llrfs:
             # orbit interlock for LLRF A and B were moved to interlock
             # input 1, bit 5
-            if not llrf['Inp1Intlk-Mon'] & (1 << 5):
+            if not llrf.interlock_input1_mon & (1 << 5):
                 name = llrf.system_nickname
                 self._update_log(
                     f'ERR:LLRF-{name} did not receive RFKill event')
@@ -1523,10 +1523,10 @@ class App(_Callback):
         self._update_log('FATAL:sending soft interlock to LLRF.')
         # sending interlock for all LLRFs systems, then wait
         for llrf in self._llrfs:
-            llrf['IntlkManual-Sel'] = 1
+            llrf.interlock_manual = 1
         _time.sleep(1)
         for llrf in self._llrfs:
-            llrf['IntlkManual-Sel'] = 0
+            llrf.interlock_manual = 0
 
         if self._is_dry_run:
             # wait a little and rearming FDL acquisition
