@@ -39,6 +39,7 @@ class App(_Callback):
         self._llrf_intlk_state = 0b111011 if self._is_dry_run else 0b000000
         self._state = self._const.OffOn.Off
         self._bpm_status = self._pvs_database['BPMStatus-Mon']['value']
+        self._acq_status = self._pvs_database['PsMtmAcqStatus-Mon']['value']
         self._timing_status = self._pvs_database['TimingStatus-Mon']['value']
         self._enable_lists = {
             'pos': _np.zeros(self._const.nr_bpms, dtype=bool),
@@ -312,6 +313,7 @@ class App(_Callback):
             'Enable-Sel': self._state,
             'Enable-Sts': self._state,
             'BPMStatus-Mon': self._bpm_status,
+            'PsMtmAcqStatus-Mon': self._acq_status,
             'TimingStatus-Mon': self._timing_status,
             'ResetBPMGen-Cmd': 0,
             'ResetBPMPos-Cmd': 0,
@@ -1155,6 +1157,22 @@ class App(_Callback):
             # MinSumLimsSynced
             oks = _np.array_equal(dev.minsum_thres, self._limits['minsum'])
             value = _updt_bit(value, 7, not oks)
+            # LogicalTrigConfigured
+            okl = True
+            for bpm in self._fambpm_dev.devices:
+                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    okl &= bpm[prp_rb] == val
+            value = _updt_bit(value, 8, not okl)
+        else:
+            value = 0b111111111
+
+        self._bpm_status = value
+        self.run_callbacks('BPMStatus-Mon', self._bpm_status)
+
+        # PsMtm Acq. status
+        value = 0
+        if self._fambpm_dev.connected:
             # AcqConfigured
             bpms = self._fambpm_dev.devices
             okb = all(d.acq_channel == self._acq_chan for d in bpms)
@@ -1166,19 +1184,12 @@ class App(_Callback):
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
             okb &= all(
                 d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
-            value = _updt_bit(value, 8, not okb)
-            # LogTrigConfigured
-            okl = True
-            for bpm in self._fambpm_dev.devices:
-                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
-                    prp_rb = _PVName.from_sp2rb(prp)
-                    okl &= bpm[prp_rb] == val
-            value = _updt_bit(value, 9, not okl)
+            value = _updt_bit(value, 1, not okb)
         else:
-            value = 0b11111111111
+            value = 0b11
 
-        self._bpm_status = value
-        self.run_callbacks('BPMStatus-Mon', self._bpm_status)
+        self._acq_status = value
+        self.run_callbacks('PsMtmAcqStatus-Mon', self._acq_status)
 
         # Timing Status
         value = 0

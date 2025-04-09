@@ -23,7 +23,8 @@ class ETypes(_csdev.ETypes):
         'Connected',
         'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
         'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced',
-        'AcqConfigured', 'LogTrigConfig')
+        'LogicalTrigConfig')
+    STS_LBLS_BPMACQ = ('Connected', 'AcqConfigured')
     STS_LBLS_TIMING = (
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
         'FoutsConn', 'FoutsConfig',
@@ -278,11 +279,15 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'BPMStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'PsMtmAcqStatus-Mon': {'type': 'int', 'value': 0b11},
             'TimingStatus-Mon': {'type': 'int', 'value': (1 << 19) - 1},
             'LLRFStatus-Mon': {'type': 'int', 'value': 0b1111},
             'BPMStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_BPM),
                 'value': _et.STS_LBLS_BPM},
+            'PsMtmAcqStatusLabels-Cte': {
+                'type': 'string', 'count': len(_et.STS_LBLS_BPMACQ),
+                'value': _et.STS_LBLS_BPMACQ},
             'TimingStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_TIMING),
                 'value': _et.STS_LBLS_TIMING},
