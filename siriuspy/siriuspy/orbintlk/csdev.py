@@ -99,6 +99,9 @@ class Const(_csdev.Const):
     ]
     FOUTSFIXED_RXENBL = {
         'CA-RaTim:TI-Fout-2': 0b01000001,
+        'CA-RaTim:TI-Fout-3': 0b11111111,
+        'CA-RaTim:TI-Fout-4': 0b11111111,
+        'CA-RaTim:TI-Fout-5': 0b11111111,
     }
     # The configurations below are checked and reported in the Status
     # PVs, and also locked when in critical paths (sectors where the orbit
