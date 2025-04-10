@@ -3,7 +3,10 @@ import time as _time
 import logging as _logging
 
 import numpy as _np
-import matplotlib.pyplot as _mplt
+try:
+    import matplotlib.pyplot as _mplt
+except:
+    _mplt = None
 
 from mathphys.functions import save as _save, load as _load, \
     get_namedtuple as _namedtuple

@@ -465,6 +465,8 @@ class App(_Callback):
             corrdevs.extend(self.idff.qndevs)
         return corrdevs
 
+    # ----- update pvs methods -----
+
     def _do_sleep(self, time0, tplanned):
         ttook = _time.time() - time0
         tsleep = tplanned - ttook

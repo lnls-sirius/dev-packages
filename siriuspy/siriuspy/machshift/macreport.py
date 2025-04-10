@@ -5,7 +5,10 @@ import time as _time
 import logging as _log
 
 import numpy as _np
-from matplotlib import pyplot as _plt
+try:
+    from matplotlib import pyplot as _plt
+except:
+    _plt = None
 
 from ..search import PSSearch as _PSSearch
 from ..clientarch import ClientArchiver as _CltArch, Time as _Time, \

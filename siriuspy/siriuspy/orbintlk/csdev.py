@@ -99,6 +99,13 @@ class Const(_csdev.Const):
     FOUTSFIXED_RXENBL = {
         'CA-RaTim:TI-Fout-2': 0b01000001,
     }
+    # The configurations below are checked and reported in the Status
+    # PVs, and also locked when in critical paths (sectors where the orbit
+    # interlock is enabled). Locking here means immediatly sending a setting
+    # when the PV is not following the expected value, and if it does not
+    # work, killing the stored beam. We do not want to kill the beam when a
+    # timing device or a BPM outside of the critical path fails, and locking
+    # would trigger that, unless we further complicate the locking logic.
     AFCTI_CONFIGS = (
         ('DevEnbl-Sel', 1),
         ('RTMPhasePropGain-SP', 100),
@@ -107,6 +114,7 @@ class Const(_csdev.Const):
         ('RTMFreqIntgGain-SP', 128),
         ('RTMPhaseNavg-SP', 0),
         ('RTMPhaseDiv-SP', 0),
+        ('UpstreamDebugEn-Sel', 0),
     )
     AFCPHYTRIG_CONFIGS = (
         ('Dir-Sel', 0),
