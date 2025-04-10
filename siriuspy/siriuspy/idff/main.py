@@ -26,7 +26,7 @@ class App(_Callback):
             idname,
             enbl_chcorrs, enbl_cvcorrs,
             enbl_qscorrs, enbl_lccorrs,
-            enbl_qncorrs)
+            enbl_qncorrs, enbl_cccorrs)
         self.pvs_prefix = self.const.idffname
         self.pvs_database = self.const.get_propty_database()
 
