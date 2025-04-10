@@ -488,27 +488,27 @@ class SICurrInfoApp(_CurrInfoApp):
         self.run_callbacks(
             'SI-Glob:AP-CurrInfo:InjCharge-Mon', self._injcharge)
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-SP',
+            'SI-Glob:DI-FPMOsc:FPUpdateTime-SP',
             self._fillpat_update_time
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-RB',
+            'SI-Glob:DI-FPMOsc:FPUpdateTime-RB',
             self._fillpat_update_time
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-SP',
+            'SI-Glob:DI-FPMOsc:FPFiducialOffset-SP',
             self._fillpat_fid_offset
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-RB',
+            'SI-Glob:DI-FPMOsc:FPFiducialOffset-RB',
             self._fillpat_fid_offset
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternRef-SP',
+            'SI-Glob:DI-FPMOsc:FPRef-SP',
             self._fillpat_ref
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternRef-RB',
+            'SI-Glob:DI-FPMOsc:FPRef-RB',
             self._fillpat_ref
         )
 
@@ -545,25 +545,25 @@ class SICurrInfoApp(_CurrInfoApp):
                 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts',
                 self._dcctfltcheck_mode)
             return True
-        elif reason == 'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-SP':
+        elif reason == 'SI-Glob:DI-FPMOsc:FPUpdateTime-SP':
             self._fillpat_update_time = min(
                 _Const.FP_MAX_UPDT_TIME, max(0, float(value))
             )
             self.run_callbacks(
-                'SI-Glob:DI-FPMOsc:FillPatternUpdateTime-RB',
+                'SI-Glob:DI-FPMOsc:FPUpdateTime-RB',
                 self._fillpat_update_time
             )
             return True
-        elif reason == 'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-SP':
+        elif reason == 'SI-Glob:DI-FPMOsc:FPFiducialOffset-SP':
             self._fillpat_fid_offset = min(
                 _Const.FP_HARM_NUM, max(-_Const.FP_HARM_NUM, int(value))
             )
             self.run_callbacks(
-                'SI-Glob:DI-FPMOsc:FillPatternFiducialOffset-RB',
+                'SI-Glob:DI-FPMOsc:FPFiducialOffset-RB',
                 self._fillpat_fid_offset
             )
             return True
-        elif reason == 'SI-Glob:DI-FPMOsc:FillPatternRef-SP':
+        elif reason == 'SI-Glob:DI-FPMOsc:FPRef-SP':
             if not isinstance(value, (_np.ndarray, list, tuple)):
                 return False
             value = _np.array(value)
@@ -571,7 +571,7 @@ class SICurrInfoApp(_CurrInfoApp):
                 return False
             self._fillpat_ref = value / value.sum()
             self.run_callbacks(
-                'SI-Glob:DI-FPMOsc:FillPatternRef-RB',
+                'SI-Glob:DI-FPMOsc:FPRef-RB',
                 self._fillpat_ref
             )
             return True
@@ -709,23 +709,23 @@ class SICurrInfoApp(_CurrInfoApp):
 
         # Update PVs:
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternEquivCurrent-Mon', equiv_curr
+            'SI-Glob:DI-FPMOsc:FPUniFillEqCurrent-Mon', equiv_curr
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternErrorStd-Mon', fil_err
+            'SI-Glob:DI-FPMOsc:FPErrorRelStd-Mon', fil_err
         )
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternErrorKLDiv-Mon', fil_kld
+            'SI-Glob:DI-FPMOsc:FPErrorKLDiv-Mon', fil_kld
         )
-        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPattern-Mon', fil2ns)
-        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRef-Mon', filref)
-        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternTime-Mon', tim2ns)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FP-Mon', fil2ns)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FPRef-Mon', filref)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FPTime-Mon', tim2ns)
         self.run_callbacks(
-            'SI-Glob:DI-FPMOsc:FillPatternTimeOffset-Mon', res.x
+            'SI-Glob:DI-FPMOsc:FPTimeOffset-Mon', res.x
         )
-        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRaw-Mon', fill)
-        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRawAmp-Mon', hil)
-        self.run_callbacks('SI-Glob:DI-FPMOsc:FillPatternRawTime-Mon', tim)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FPRaw-Mon', fill)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FPRawAmp-Mon', hil)
+        self.run_callbacks('SI-Glob:DI-FPMOsc:FPRawTime-Mon', tim)
 
         # This thread is triggered by the update of the current, which is
         # faster than the frequency we want to update the filling pattern.
