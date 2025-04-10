@@ -192,6 +192,9 @@ def get_si_currinfo_database():
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'rel'
     }
 
+    pvs_db[dev+'FillPatternEquivCurrent-Mon'] = {
+        'type': 'float', 'value': 0, 'unit': 'mA', 'prec': 2,
+    }
     pvs_db[dev+'FillPatternErrorStd-Mon'] = {
         'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
     }

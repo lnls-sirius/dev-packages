@@ -652,6 +652,9 @@ class SICurrInfoApp(_CurrInfoApp):
         tim *= 1e9  # from [s] to [ns]
         tim -= tim[0]
         fill -= fill.mean()
+        # NOTE: I tried to filter the raw data at the harmonics of the
+        # revolution frequency, around the RF frequency, but it didn't improve
+        # the results. I decided to keep the processing as simple as possible.
         hil = _np.abs(_scysig.hilbert(fill))
 
         if tim[-1] < bun_spacing[-1]:
@@ -691,7 +694,12 @@ class SICurrInfoApp(_CurrInfoApp):
         fill *= fac
         hil *= fac
 
-        avg_curr = fil2ns.mean()
+        # Equivalent current for broad band induced heating. See:
+        # https://accelconf.web.cern.ch/ipac2024/pdf/THPC44.pdf
+        # for details
+        equiv_curr = _np.sqrt(_np.sum(fil2ns**2)*_Const.FP_HARM_NUM)  # [mA]
+
+        avg_curr = current / _Const.FP_HARM_NUM
         filref = self._fillpat_ref * current
         fil_err = _np.std(filref - fil2ns) / avg_curr * 100
         # Compute KL Divergence between distributions:
@@ -700,6 +708,9 @@ class SICurrInfoApp(_CurrInfoApp):
             self._fillpat_ref[idx] * _np.log2(filref[idx]/fil2ns[idx]))
 
         # Update PVs:
+        self.run_callbacks(
+            'SI-Glob:DI-FPMOsc:FillPatternEquivCurrent-Mon', equiv_curr
+        )
         self.run_callbacks(
             'SI-Glob:DI-FPMOsc:FillPatternErrorStd-Mon', fil_err
         )
