@@ -50,7 +50,7 @@ def get_psnames(isadv=False):
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
     # explicitly remove some ID correctors
     to_remove.extend(_PSSearch.get_psnames(
-        {'sec': 'SI', 'sub': '(10SB|17SA)', 'dev': '(CH|CV|QS)'}))
+        {'sec': 'SI', 'sub': '(08SB|10SB|14SB|17SA)', 'dev': '(CH|CV|QS)'}))
     # explicitly remove septa feedforward fast correctors (disconnected)
     to_remove.extend(_PSSearch.get_psnames(
         {'sec': 'SI', 'sub': '(01M1|01M2)', 'dev': '(FCH|FCV)'}))
