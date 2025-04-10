@@ -221,6 +221,46 @@ class FamBPMs(_DeviceSet):
             _log.info(mstr)
         return okall
 
+    def set_tbt_mask(self, mask_begin, mask_end, timeout=TIMEOUT):
+        """."""
+        if isinstance(mask_begin, int):
+            mask_begin = _np.ones(len(self.devices)) * mask_begin
+        if isinstance(mask_end, int):
+            mask_end = _np.ones(len(self.devices)) * mask_end
+
+        for i, bpm in enumerate(self):
+            bpm.tbt_mask_beg = mask_begin[i]
+            bpm.tbt_mask_end = mask_end[i]
+            bpm.tbt_mask_enbl = 1
+
+        mstr = ''
+        okall = True
+        t0 = _time.time()
+
+        for i, bpm in enumerate(self):
+            tout = timeout - (_time.time() - t0)
+
+            props = {
+                'TbTDataMaskSamplesBeg-RB': mask_begin[i],
+                'TbTDataMaskSamplesEnd-RB': mask_end[i],
+                'TbTDataMaskEn-Sel': 1,
+            }
+
+            if not bpm._wait_set(props, timeout=tout):
+                okall = False
+                for prop, sp in props.items():
+                    rb = bpm[prop]
+                    if rb != sp:
+                        mstr += (
+                            f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
+                        )
+
+        stg = ', except:' if mstr else '.'
+        _log.info('TbT Masks confirmed in all BPMs%s', stg)
+        if mstr:
+            _log.info(mstr)
+        return okall
+
     def get_slow_orbit(self):
         """Get slow orbit vectors.
 
