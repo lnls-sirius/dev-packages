@@ -1367,12 +1367,16 @@ class App(_Callback):
                 outnam = f'OUT{out}'
                 devout = devname.substitute(propty_name=outnam)
                 if devout in self._const.intlkr_fouttable:
-                    pair = self._const.intlkr_fouttable[devout]
-                    devpair = _PVName(pair).device_name
-                    if self._fout_devs[devpair]['RxLockedLtc-Mon']:
+                    pair = _PVName(self._const.intlkr_fouttable[devout])
+                    devpair = pair.device_name
+                    # get the correct bit to verify the redundancy out
+                    redunout = int(pair.propty_name[-1])
+                    redunvalue = self._fout_devs[devpair]['RxLockedLtc-Mon']
+                    if _get_bit(redunvalue, redunout):
                         outs_in_failure.remove(out)
+                        self._update_log(f'Redundancy of {outnam} of {devname} is ok')
                     else:
-                        self._update_log(f'WARN:{outnam} of {pair} not locked')
+                        self._update_log(f'FATAL:redundancy {devname} not locked')
             is_failure = bool(outs_in_failure)
 
         if not is_failure:
