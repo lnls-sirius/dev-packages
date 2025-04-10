@@ -18,22 +18,22 @@ class FPMOsc(_Device):
         ALL = (SI, )
 
     PROPERTIES_DEFAULT = (
-        'FPUpdateTime-SP',
-        'FPUpdateTime-RB',
-        'FPFiducialOffset-SP',
-        'FPFiducialOffset-RB',
-        'FPRef-SP',
-        'FPRef-RB',
-        'FPUniFillEqCurrent-Mon',
-        'FPErrorRelStd-Mon',
-        'FPErrorKLDiv-Mon',
-        'FPRef-Mon',
-        'FP-Mon',
-        # 'FPTimeOffset-Mon',
-        # 'FPTime-Mon',
-        # 'FPRaw-Mon',
-        # 'FPRawAmp-Mon',
-        # 'FPRawTime-Mon',
+        'UpdateTime-SP',
+        'UpdateTime-RB',
+        'FiducialOffset-SP',
+        'FiducialOffset-RB',
+        'FillPatternRef-SP',
+        'FillPatternRef-RB',
+        'UniFillEqCurrent-Mon',
+        'ErrorRelStd-Mon',
+        'ErrorKLDiv-Mon',
+        'FillPatternRef-Mon',
+        'FillPattern-Mon',
+        # 'TimeOffset-Mon',
+        # 'Time-Mon',
+        # 'Raw-Mon',
+        # 'RawAmp-Mon',
+        # 'RawTime-Mon',
     )
 
     def __init__(self, devname=None, props2init='all'):
@@ -47,26 +47,26 @@ class FPMOsc(_Device):
     @property
     def update_time(self):
         """."""
-        return self['FPUpdateTime-RB']
+        return self['UpdateTime-RB']
 
     @update_time.setter
     def update_time(self, value):
         """."""
-        self['FPUpdateTime-SP'] = value
+        self['UpdateTime-SP'] = value
 
     @property
     def fiducial_offset(self):
         """."""
-        return self['FPFiducialOffset-RB']
+        return self['FiducialOffset-RB']
 
     @fiducial_offset.setter
     def fiducial_offset(self, value):
-        self['FPFiducialOffset-SP'] = value
+        self['FiducialOffset-SP'] = value
 
     @property
     def fill_pattern_ref(self):
         """."""
-        return self['FPRef-RB']
+        return self['FillPatternRef-RB']
 
     @fill_pattern_ref.setter
     def fill_pattern_ref(self, value):
@@ -76,49 +76,49 @@ class FPMOsc(_Device):
         value = _np.array(value)
         if value.size != _Const.FP_HARM_NUM:
             return
-        self['FPRef-SP'] = value
+        self['FillPatternRef-SP'] = value
 
     @property
     def fill_pattern_ref_mon(self):
         """."""
-        return self['FPRef-Mon']
+        return self['FillPatternRef-Mon']
 
     @property
     def fill_pattern(self):
         """."""
-        return self['FP-Mon']
+        return self['FillPattern-Mon']
 
     @property
     def uniform_fill_equiv_current(self):
         """."""
-        return self['FPUniFillEqCurrent-Mon']
+        return self['UniFillEqCurrent-Mon']
 
     @property
     def error_relative_std(self):
         """."""
-        return self['FPErrorRelStd-Mon']
+        return self['ErrorRelStd-Mon']
 
     @property
     def error_kl_divergence(self):
         """."""
-        return self['FPErrorKLDiv-Mon']
+        return self['ErrorKLDiv-Mon']
 
     @property
     def time_offset(self):
         """."""
-        return self['FPTimeOffset-Mon']
+        return self['TimeOffset-Mon']
 
     @property
     def fill_pattern_time(self):
         """."""
-        return self['FPTime-Mon']
+        return self['Time-Mon']
 
     @property
     def fill_pattern_raw(self):
         """."""
-        return self['FPRaw-Mon']
+        return self['Raw-Mon']
 
     @property
     def fill_pattern_raw_time(self):
         """."""
-        return self['FPRawTime-Mon']
+        return self['RawTime-Mon']

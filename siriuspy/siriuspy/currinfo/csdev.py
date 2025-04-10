@@ -156,72 +156,72 @@ def get_si_currinfo_database():
     pvs_db[dev+'InjCount-Mon'] = {'type': 'int', 'value': 0}
 
     dev = 'SI-Glob:DI-FPMOsc:'
-    pvs_db[dev+'FPUpdateTime-SP'] = {
+    pvs_db[dev+'UpdateTime-SP'] = {
         'type': 'int', 'value': 5, 'unit': 's',
         'low': 0, 'high': _c.FP_MAX_UPDT_TIME,
         'lolo': 0, 'hihi': _c.FP_MAX_UPDT_TIME,
         'lolim': 0, 'hilim': _c.FP_MAX_UPDT_TIME,
     }
-    pvs_db[dev+'FPUpdateTime-RB'] = {
+    pvs_db[dev+'UpdateTime-RB'] = {
         'type': 'int', 'value': 5, 'unit': 's',
         'low': 0, 'high': _c.FP_MAX_UPDT_TIME,
         'lolo': 0, 'hihi': _c.FP_MAX_UPDT_TIME,
         'lolim': 0, 'hilim': _c.FP_MAX_UPDT_TIME,
     }
-    pvs_db[dev+'FPFiducialOffset-SP'] = {
+    pvs_db[dev+'FiducialOffset-SP'] = {
         'type': 'int', 'value': 0, 'unit': 'bunches',
         'low': -_c.FP_HARM_NUM, 'high': _c.FP_HARM_NUM,
         'lolo': -_c.FP_HARM_NUM, 'hihi': _c.FP_HARM_NUM,
         'lolim': -_c.FP_HARM_NUM, 'hilim': _c.FP_HARM_NUM,
     }
-    pvs_db[dev+'FPFiducialOffset-RB'] = {
+    pvs_db[dev+'FiducialOffset-RB'] = {
         'type': 'int', 'value': 0, 'unit': 'bunches',
         'low': -_c.FP_HARM_NUM, 'high': _c.FP_HARM_NUM,
         'lolo': -_c.FP_HARM_NUM, 'hihi': _c.FP_HARM_NUM,
         'lolim': -_c.FP_HARM_NUM, 'hilim': _c.FP_HARM_NUM,
     }
-    pvs_db[dev+'FPTimeOffset-Mon'] = {
+    pvs_db[dev+'TimeOffset-Mon'] = {
         'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'ns'
     }
-    pvs_db[dev+'FPRef-SP'] = {
+    pvs_db[dev+'FillPatternRef-SP'] = {
         'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'rel'
     }
-    pvs_db[dev+'FPRef-RB'] = {
+    pvs_db[dev+'FillPatternRef-RB'] = {
         'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'rel'
     }
 
-    pvs_db[dev+'FPUniFillEqCurrent-Mon'] = {
+    pvs_db[dev+'UniFillEqCurrent-Mon'] = {
         'type': 'float', 'value': 0, 'unit': 'mA', 'prec': 2,
     }
-    pvs_db[dev+'FPErrorRelStd-Mon'] = {
+    pvs_db[dev+'ErrorRelStd-Mon'] = {
         'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
     }
-    pvs_db[dev+'FPErrorKLDiv-Mon'] = {
+    pvs_db[dev+'ErrorKLDiv-Mon'] = {
         'type': 'float', 'value': 0, 'unit': '', 'prec': 5,
     }
-    pvs_db[dev+'FPRef-Mon'] = {
+    pvs_db[dev+'FillPatternRef-Mon'] = {
         'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'mA'
     }
-    pvs_db[dev+'FP-Mon'] = {
+    pvs_db[dev+'FillPattern-Mon'] = {
         'type': 'float', 'prec': 5, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'mA'
     }
-    pvs_db[dev+'FPTime-Mon'] = {
+    pvs_db[dev+'Time-Mon'] = {
         'type': 'float', 'prec': 3, 'count': _c.FP_HARM_NUM,
         'value': [0.0, ] * _c.FP_HARM_NUM, 'unit': 'ns'
     }
-    pvs_db[dev+'FPRaw-Mon'] = {
+    pvs_db[dev+'Raw-Mon'] = {
         'type': 'float', 'prec': 3, 'count': _c.FP_MAX_ARR_SIZE,
         'value': [0.0, ] * _c.FP_MAX_ARR_SIZE, 'unit': 'mA'
     }
-    pvs_db[dev+'FPRawAmp-Mon'] = {
+    pvs_db[dev+'RawAmp-Mon'] = {
         'type': 'float', 'prec': 3, 'count': _c.FP_MAX_ARR_SIZE,
         'value': [0.0, ] * _c.FP_MAX_ARR_SIZE, 'unit': 'mA'
     }
-    pvs_db[dev+'FPRawTime-Mon'] = {
+    pvs_db[dev+'RawTime-Mon'] = {
         'type': 'float', 'prec': 3, 'count': _c.FP_MAX_ARR_SIZE,
         'value': [0.0, ] * _c.FP_MAX_ARR_SIZE, 'unit': 'ns'
     }
