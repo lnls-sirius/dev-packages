@@ -1,25 +1,22 @@
 """Main Module of the IOC Logic."""
 
-import time as _time
-from datetime import datetime as _datetime
 import logging as _log
+import time as _time
 from copy import deepcopy as _dcopy
+from datetime import datetime as _datetime
 from threading import Thread as _Thread
 
 import numpy as _np
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
-from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie, PV as _PV
-from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
+from ..envars import VACA_PREFIX as _vaca_prefix
+from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
-from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
-
-from .csdev import Const as _Const, \
-    get_currinfo_database as _get_database
+from .csdev import Const as _Const, get_currinfo_database as _get_database
 
 
 class _CurrInfoApp(_Callback):
@@ -494,29 +491,26 @@ class SICurrInfoApp(_CurrInfoApp):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
                 else:
-                    _log.warning(
-                        'Current value is too high: {0:.3f}A.'.format(current))
+                    _log.warning(f'Current value is too high: {current:.3f}A.')
                 value = self._charge
             self._time0 = timestamp
         return value
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        status = False
         if reason == 'SI-Glob:AP-CurrInfo:DCCT-Sel':
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
-                done = self._update_dcct_mode(value)
-                if done:
+                if self._update_dcct_mode(value):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:DCCT-Sts', self._dcct_mode)
-                    status = True
+                    return True
         elif reason == 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
             self.run_callbacks(
                 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts',
                 self._dcctfltcheck_mode)
-            status = True
-        return status
+            return True
+        return False
 
     # ----- handle writes -----
     def _update_dcct_mode(self, value):
