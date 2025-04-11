@@ -1,4 +1,4 @@
-"""Define PVs, constants and properties of CurrInfo SoftIOCs."""
+"""Define PVs, constants and properties of Filling Pattern SoftIOCs."""
 
 from .. import csdev as _csdev
 
