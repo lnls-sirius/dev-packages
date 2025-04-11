@@ -40,7 +40,7 @@ class App(_Callback):
         self.polarization = 'none'
 
         # IDFF object with IDFF config
-        idffname_soft = idname + '_SOFT'
+        idffname_soft = self.const.idffname
         self.idff = _IDFF(idffname_soft, with_devctrl=False)
 
         self.config_name = ''  # stored in autosave file
