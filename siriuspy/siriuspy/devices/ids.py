@@ -1792,6 +1792,33 @@ class VPU(IDFullMovCtrl):
             if not key.startswith('_') and value is not None))
 
     @property
+    def center_offset_lims(self):
+        """Return center offset lims [mm]."""
+        if (self.PARAM_PVS.CENTER_OFFSET_MIN_CTE and
+                self.PARAM_PVS.CENTER_OFFSET_MAX_CTE) is None:
+            return None
+        return self[self.PARAM_PVS.CENTER_OFFSET_MIN_CTE,
+                    self.PARAM_PVS.CENTER_OFFSET_MAX_CTE]
+
+    @property
+    def pitch_offset_lims(self):
+        """Return pitch offset lims [mm]."""
+        if (self.PARAM_PVS.PITCH_OFFSET_MIN_CTE and
+                self.PARAM_PVS.PITCH_OFFSET_MAX_CTE) is None:
+            return None
+        return self[self.PARAM_PVS.PITCH_OFFSET_MIN_CTE,
+                    self.PARAM_PVS.PITCH_OFFSET_MAX_CTE]
+
+    @property
+    def taper_lims(self):
+        """Return taper lims [mm]."""
+        if (self.PARAM_PVS.TAPER_MIN_CTE and
+                self.PARAM_PVS.TAPER_MAX_CTE) is None:
+            return None
+        return self[self.PARAM_PVS.TAPER_MIN_CTE,
+                    self.PARAM_PVS.TAPER_MAX_CTE]
+
+    @property
     def center_offset_speed_mon(self):
         """Return center offset speed monitor [mm/s]."""
         if self.PARAM_PVS.CENTER_OFFSET_VELO_MON is None:
@@ -1836,6 +1863,12 @@ class VPU(IDFullMovCtrl):
         """Command to reset undulator."""
         return self._write_sp(
             self.PARAM_PVS.RESET, _CMD_RESET, timeout=timeout)
+
+    # --- cmd_abort
+    def cmd_abort(self, timeout=None):
+        """Command to abort undulator motion."""
+        return self._write_sp(
+            self.PARAM_PVS.MOVE_ABORT, _CMD_MOVE_STOP, timeout=timeout)
 
 
 class ID(IDBase):
