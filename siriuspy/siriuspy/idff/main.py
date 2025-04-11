@@ -41,7 +41,7 @@ class App(_Callback):
         self.polarization = 'none'
 
         # IDFF object with IDFF config
-        idffname_soft = idname + '_SOFT'
+        idffname_soft = self.const.idffname
         self.idff = _IDFF(idffname_soft, with_devctrl=False)
 
         self.config_name = ''  # stored in autosave file
@@ -67,7 +67,7 @@ class App(_Callback):
             'ControlCC-Sel': self.write_control_cc,
         }
 
-        self._quit = False
+        self._thread_quit = False
         self._corr_setpoints = None
         self._thread_ff = _epics.ca.CAThread(
             target=self.feedforward_loop, daemon=True)
@@ -278,20 +278,25 @@ class App(_Callback):
     # ----- feedforward loop methods -----
 
     @property
-    def quit(self):
-        """Quit and shutdown threads."""
-        return self._quit
+    def thread_is_alive(self):
+        """Return if thread is alive."""
+        return self._thread_ff.is_alive()
 
-    @quit.setter
-    def quit(self, value):
+    @property
+    def thread_quit(self):
+        """Quit and shutdown threads."""
+        return self._thread_quit
+
+    @thread_quit.setter
+    def thread_quit(self, value):
         if value:
-            self._quit = value
+            self._thread_quit = value
 
     def feedforward_loop(self):
         """Main IDFF loop."""
         self.idff.wait_for_connection(timeout=2)
 
-        while not self._quit:
+        while not self._thread_quit:
             # updating interval
             tplanned = 1.0/self.loop_freq
 
@@ -321,6 +326,7 @@ class App(_Callback):
 
             # sleep unused time or signal overtime to stdout
             self._do_sleep(_t0, tplanned)
+        self._thread_quit = False
 
     def implement_setpoints(self):
         """."""

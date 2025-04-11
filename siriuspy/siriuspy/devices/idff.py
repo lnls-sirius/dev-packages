@@ -2,6 +2,7 @@
 
 import inspect as _inspect
 import time as _time
+from copy import deepcopy as _dcopy
 
 from ..idff.config import IDFFConfig as _IDFFConfig
 from ..idff.csdev import IDFFConst as _IDFFConst
@@ -235,7 +236,6 @@ class IDFFCtrlBase(_Device):
     def conv_idffdevname_2_iddevname(idffdevname):
         """."""
         iddevname = _SiriusPVName(idffdevname)
-        iddevname = iddevname.replace('_SOFT', '').replace('_HARD', '')
         iddevname = iddevname.substitute(dis='ID', idx='')
         if iddevname.sub in ('08SB', '14SB'):
             iddevname = iddevname.substitute(dev='IVU18')
@@ -265,7 +265,7 @@ class IDFFCtrlSoft(IDFFCtrlBase):
         ALL = tuple()
         # should be added in derived classes
 
-    PARAM_PVS = IDFFCtrlBase.PARAM_PVS
+    PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
     PARAM_PVS.LOG_MON = 'Log-Mon'
     PARAM_PVS.LOOPFREQ_SP = 'LoopFreq-SP'
     PARAM_PVS.LOOPFREQ_RB = 'LoopFreq-RB'
@@ -288,7 +288,7 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     class DEVICES:
         """Device names."""
 
-        DELTA52_10SB_SOFT = 'SI-10SB:ID-DELTA52_SOFT'
+        DELTA52_10SB_SOFT = 'SI-10SB:AP-IDFF'
         ALL = (DELTA52_10SB_SOFT, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlSoft.DEVICES, DEVICES)
@@ -297,7 +297,7 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
     IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
 
-    PARAM_PVS = IDFFCtrlSoft.PARAM_PVS
+    PARAM_PVS = _dcopy(IDFFCtrlSoft.PARAM_PVS)
     PARAM_PVS.CORRCH_1CURRENT_MON = 'CorrCH_1Current-Mon'
     PARAM_PVS.CORRCH_2CURRENT_MON = 'CorrCH_2Current-Mon'
     PARAM_PVS.CORRCV_1CURRENT_MON = 'CorrCV_1Current-Mon'
@@ -329,8 +329,8 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
     class DEVICES:
         """Device names."""
 
-        IVU18_08SB_SOFT = 'SI-08SB:ID-IVU18_SOFT'
-        IVU18_14SB_SOFT = 'SI-14SB:ID-IVU18_SOFT'
+        IVU18_08SB_SOFT = 'SI-08SB:AP-IDFF'
+        IVU18_14SB_SOFT = 'SI-14SB:AP-IDFF'
         ALL = (IVU18_08SB_SOFT, IVU18_14SB_SOFT)
 
     IDFFCtrlBase._add_devices(IDFFCtrlSoft.DEVICES, DEVICES)
@@ -338,7 +338,7 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
     # IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
     IDFF_QN_LABELS = _IDSearch.IDFF_QN_LABELS
 
-    PARAM_PVS = IDFFCtrlSoft.PARAM_PVS
+    PARAM_PVS = _dcopy(IDFFCtrlSoft.PARAM_PVS)
     PARAM_PVS.CORRQD1_1CURRENT_MON = 'CorrQD1_1Current-Mon'
     PARAM_PVS.CORRQF_1CURRENT_MON = 'CorrQF_1Current-Mon'
     PARAM_PVS.CORRQD2_1CURRENT_MON = 'CorrQD2_1Current-Mon'
@@ -407,7 +407,7 @@ class IDFFCtrlHard(IDFFCtrlBase):
         ALL = tuple()
         # should be added in derived classes
 
-    PARAM_PVS = IDFFCtrlBase.PARAM_PVS
+    PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
 
     PROPERTIES_DEFAULT = \
         tuple(set(
@@ -421,8 +421,8 @@ class IDFFCtrlHardIVU(IDFFCtrlHard):
     class DEVICES:
         """Device names."""
 
-        IVU18_08SB_HARD = 'SI-08SB:BS-IDFF-CHCV_HARD'
-        IVU18_14SB_HARD = 'SI-14SB:BS-IDFF-CHCV_HARD'
+        IVU18_08SB_HARD = 'SI-08SB:BS-IDFF-CHCV'
+        IVU18_14SB_HARD = 'SI-14SB:BS-IDFF-CHCV'
         ALL = (IVU18_08SB_HARD, IVU18_14SB_HARD)
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
@@ -619,7 +619,7 @@ class IDFF(_DeviceSet):
     @property
     def polarizations(self):
         """Return list of possible light polarizations for the ID."""
-        return _IDSearch.conv_idname_2_polarizations(self.devname)
+        return _IDSearch.conv_idname_2_polarizations(self.iddevname)
 
     @property
     def polarization_mon(self):
