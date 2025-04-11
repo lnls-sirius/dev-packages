@@ -72,10 +72,10 @@ class FPMOsc(_Device):
     def fill_pattern_ref(self, value):
         """."""
         if not isinstance(value, (_np.ndarray, list, tuple)):
-            return
+            raise TypeError('Value must be list, tuple or numpy.ndarray.')
         value = _np.array(value)
         if value.size != _Const.FP_HARM_NUM:
-            return
+            raise ValueError('Value size must be the harmonic number.')
         self['FillPatternRef-SP'] = value
 
     @property
