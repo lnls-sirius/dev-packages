@@ -41,7 +41,7 @@ class IDFFConst(_csdev.Const):
     def __init__(self, idname,
                  enbl_chcorrs=False, enbl_cvcorrs=False,
                  enbl_qscorrs=False, enbl_lccorrs=False,
-                 enbl_qncorrs=False):
+                 enbl_qncorrs=False, enbl_cccorrs=False):
         """Init."""
         self.idname = _PVName(idname)
         self.idffname = 'SI-' + self.idname.sub + ':AP-IDFF'
@@ -60,6 +60,8 @@ class IDFFConst(_csdev.Const):
         self.enbl_lccorrs = enbl_lccorrs and len(lcnames) > 0
         qnnames = _IDSearch.conv_idname_2_idff_qnnames(idname)
         self.enbl_qncorrs = enbl_qncorrs and len(qnnames) > 0
+        ccnames = _IDSearch.conv_idname_2_idff_cnnames(idname)
+        self.enbl_cccorrs = enbl_cccorrs and len(ccnames) > 0
 
     def get_propty_database(self):
         """Return property database."""
@@ -189,6 +191,29 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
                 'CorrQD1_2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+            })
+        if self.enbl_cccorrs:
+            dbase.update({
+                'ControlCC-Sel': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_cccorrs,
+                    'unit': 'dsbl_enbl'},
+                'ControlCC-Sts': {
+                    'type': 'enum', 'enums': _et.DSBL_ENBL,
+                    'value': self.enbl_cccorrs,
+                    'unit': 'dsbl_enbl'},
+                'CorrCC1_1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrCC2_1Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrCC1_2Current-Mon': {
+                    'type': 'float', 'value': 0,
+                    'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
+                'CorrCC2_2Current-Mon': {
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
