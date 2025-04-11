@@ -6,7 +6,7 @@ from .. import csdev as _csdev
 
 
 class Const(_csdev.Const):
-    """Const class defining CurrInfo constants and Enum types."""
+    """Const class defining Filling Pattern constants."""
 
     FP_MAX_ARR_SIZE = 40000
     FP_HARM_NUM = 864
