@@ -10,7 +10,7 @@ import scipy.optimize as _scyopt
 import scipy.signal as _scysig
 
 from ..callbacks import Callback as _Callback
-from ..envars import VACA_PREFIX as _vaca_prefix
+from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV
 from ..oscilloscope import Keysight as _Keysight, ScopeSignals as _ScopeSignals
 from .csdev import Const as _Const, get_si_fpmosc_database as _get_database
@@ -24,7 +24,7 @@ class FPMOscApp(_Callback):
         """Class constructor."""
         super().__init__()
         self._pvs_database = _get_database()
-        self._prefix = _vaca_prefix + ('-' if _vaca_prefix else '')
+        self._prefix = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
 
         # initialize vars
         self._time0 = _time.time()
