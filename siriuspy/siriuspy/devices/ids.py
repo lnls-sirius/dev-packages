@@ -1882,9 +1882,10 @@ class ID(IDBase):
         DELTA = DELTA.DEVICES
         WIG = WIG.DEVICES
         IVU = IVU.DEVICES
+        VPU = VPU.DEVICES
         ALL = APU.ALL + PAPU.ALL + \
             EPU.ALL + DELTA.ALL + \
-            WIG.ALL + IVU.ALL
+            WIG.ALL + IVU.ALL + VPU.ALL
 
     def __new__(cls, devname, **kwargs):
         """."""
@@ -1909,5 +1910,7 @@ class ID(IDBase):
             return WIG
         elif devname in IVU.DEVICES.ALL:
             return IVU
+        elif devname in VPU.DEVICES.ALL:
+            return VPU
         else:
             return None
