@@ -239,6 +239,8 @@ class IDFFCtrlBase(_Device):
         iddevname = iddevname.substitute(dis='ID', idx='')
         if iddevname.sub in ('08SB', '14SB'):
             iddevname = iddevname.substitute(dev='IVU18')
+        elif iddevname.sub in ('06SB', '07SP'):
+            iddevname = iddevname.substitute(dev='VPU29')
         elif iddevname.sub in ('10SB', ):
             iddevname = iddevname.substitute(dev='DELTA52')
         else:

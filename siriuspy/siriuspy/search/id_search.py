@@ -123,7 +123,7 @@ class IDSearch:
     POL_UNDEF_STR = 'undef'
 
     _idname2pol_sel = {
-        'SI-06SB:ID-APU29': {
+        'SI-06SB:ID-VPU29': {
             0: ('vertical', None),  # [mm]
         },
         'SI-07SP:ID-APU22': {
