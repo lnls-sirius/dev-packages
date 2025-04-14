@@ -23,7 +23,8 @@ class ETypes(_csdev.ETypes):
         'Connected',
         'PosEnblSynced', 'AngEnblSynced', 'MinSumEnblSynced', 'GlobEnblSynced',
         'PosLimsSynced', 'AngLimsSynced', 'MinSumLimsSynced',
-        'AcqConfigured', 'LogTrigConfig')
+        'LogicalTrigConfig')
+    STS_LBLS_BPMACQ = ('Connected', 'AcqConfigured')
     STS_LBLS_TIMING = (
         'EVGConn', 'EVGIntlkEnblSynced', 'EVGConfig',
         'FoutsConn', 'FoutsConfig',
@@ -63,6 +64,8 @@ class Const(_csdev.Const):
 
     DEF_TIME2WAIT_INTLKREARM = 30  # [s]
 
+    LLRF_ORBINTLK_BIT = 5
+
     HLTRIG_2_CONFIG = [
         ('SI-Fam:TI-BPM-OrbIntlk', (
             ('Src-Sel', 4),
@@ -97,7 +100,11 @@ class Const(_csdev.Const):
             ('Log-Sel', 1))),
     ]
     FOUTSFIXED_RXENBL = {
-        'CA-RaTim:TI-Fout-2': 0b01000001,
+        'CA-RaTim:TI-Fout-1': 0b01111111,
+        'CA-RaTim:TI-Fout-2': 0b01110101,
+        'CA-RaTim:TI-Fout-3': 0b11111111,
+        'CA-RaTim:TI-Fout-4': 0b11111111,
+        'CA-RaTim:TI-Fout-5': 0b11111111,
     }
     # The configurations below are checked and reported in the Status
     # PVs, and also locked when in critical paths (sectors where the orbit
@@ -140,6 +147,7 @@ class Const(_csdev.Const):
         ('TRIGGER_PM14RcvInSel-SP', 2),
     )
     REDUNDANCY_TABLE = {
+        'IA-06RaBPM:TI-AMCFPGAEVR': 'IA-06RaBPM:TI-EVR',
         'IA-08RaBPM:TI-AMCFPGAEVR': 'IA-08RaBPM:TI-EVR',
         'IA-10RaBPM:TI-AMCFPGAEVR': 'IA-10RaBPM:TI-EVR',
         'IA-14RaBPM:TI-AMCFPGAEVR': 'IA-14RaDiag03:TI-EVE',
@@ -277,11 +285,15 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'BPMStatus-Mon': {'type': 'int', 'value': 0b111111111},
+            'PsMtmAcqStatus-Mon': {'type': 'int', 'value': 0b11},
             'TimingStatus-Mon': {'type': 'int', 'value': (1 << 19) - 1},
             'LLRFStatus-Mon': {'type': 'int', 'value': 0b1111},
             'BPMStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_BPM),
                 'value': _et.STS_LBLS_BPM},
+            'PsMtmAcqStatusLabels-Cte': {
+                'type': 'string', 'count': len(_et.STS_LBLS_BPMACQ),
+                'value': _et.STS_LBLS_BPMACQ},
             'TimingStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_TIMING),
                 'value': _et.STS_LBLS_TIMING},

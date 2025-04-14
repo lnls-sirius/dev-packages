@@ -567,9 +567,10 @@ class ASLLRF(_Device):
     """AS LLRF."""
 
     PROPERTIES_INTERLOCK = (
-        'FIMOrbitIntlk-Sel', 'FIMOrbitIntlk-Sts', 'IntlkAll-Mon',
+        'FIMLLRF1-Sel', 'FIMLLRF1-Sts', 'IntlkAll-Mon',
         'FIMManual-Sel', 'FIMManual-Sts',
         'IntlkManual-Sel', 'IntlkManual-Sts', 'IntlkReset-Cmd',
+        'Inp1Intlk-Mon', 'Inp2Intlk-Mon',
     )
 
     VoltIncRates = _get_namedtuple('VoltIncRates', (
@@ -895,12 +896,12 @@ class _BaseLLRF(_Device):
     @property
     def fast_interlock_monitor_orbit(self):
         """."""
-        return self['FIMOrbitIntlk-Sts']
+        return self['FIMLLRF1-Sts']
 
     @fast_interlock_monitor_orbit.setter
     def fast_interlock_monitor_orbit(self, value):
         """."""
-        self['FIMOrbitIntlk-Sel'] = value
+        self['FIMLLRF1-Sel'] = value
 
     @property
     def fast_interlock_monitor_manual(self):
@@ -926,6 +927,16 @@ class _BaseLLRF(_Device):
     def interlock_mon(self):
         """."""
         return self['IntlkAll-Mon']
+
+    @property
+    def interlock_input1_mon(self):
+        """."""
+        return self['Inp1Intlk-Mon']
+
+    @property
+    def interlock_input2_mon(self):
+        """."""
+        return self['Inp2Intlk-Mon']
 
     def cmd_reset_interlock(self, wait=1):
         """Reset interlocks."""
