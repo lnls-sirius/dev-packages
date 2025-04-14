@@ -906,7 +906,7 @@ class IDFullMovCtrl(IDBase):
 
     def set_center_offset(self, center_offset, timeout=None):
         """Set ID center offset for movement [mm]."""
-        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset, 
+        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset,
                               timeout)
 
 
@@ -1856,19 +1856,20 @@ class VPU(IDFullMovCtrl):
     def cmd_move_start(self, timeout=None):
         """Command to move undulator."""
         return self._write_sp(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, _CMD_MOVE_START, timeout=timeout)
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, 1,
+            timeout=timeout)
 
     # --- cmd_reset
     def cmd_reset(self, timeout=None):
         """Command to reset undulator."""
         return self._write_sp(
-            self.PARAM_PVS.RESET, _CMD_RESET, timeout=timeout)
+            self.PARAM_PVS.RESET, 1, timeout=timeout)
 
     # --- cmd_abort
     def cmd_abort(self, timeout=None):
         """Command to abort undulator motion."""
         return self._write_sp(
-            self.PARAM_PVS.MOVE_ABORT, _CMD_MOVE_STOP, timeout=timeout)
+            self.PARAM_PVS.MOVE_ABORT, 1, timeout=timeout)
 
 
 class ID(IDBase):
