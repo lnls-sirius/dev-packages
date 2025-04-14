@@ -60,7 +60,7 @@ class IDFFConst(_csdev.Const):
         self.enbl_lccorrs = enbl_lccorrs and len(lcnames) > 0
         qnnames = _IDSearch.conv_idname_2_idff_qnnames(idname)
         self.enbl_qncorrs = enbl_qncorrs and len(qnnames) > 0
-        ccnames = _IDSearch.conv_idname_2_idff_cnnames(idname)
+        ccnames = _IDSearch.conv_idname_2_idff_ccnames(idname)
         self.enbl_cccorrs = enbl_cccorrs and len(ccnames) > 0
 
     def get_propty_database(self):
