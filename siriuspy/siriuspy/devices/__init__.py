@@ -21,7 +21,7 @@ from .fofb_acq import FamFOFBLamp, FamFOFBSysId, FOFBCtrlLamp, FOFBCtrlSysId, \
 from .fpmosc import FPMOsc
 from .ict import ICT, TranspEff
 from .idff import IDFF
-from .ids import APU, DELTA, EPU, ID, IDBase, PAPU, WIG, IVU
+from .ids import APU, DELTA, EPU, ID, IDBase, IVU, PAPU, WIG
 from .injctrl import InjCtrl
 from .injsys import BOPSRampStandbyHandler, BORFRampStandbyHandler, \
     InjSysPUModeHandler, InjSysStandbyHandler, LinacStandbyHandler, \
@@ -31,7 +31,8 @@ from .lienergy import LIEnergy
 from .lillrf import DevLILLRF, LILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
-from .orbit_interlock import BaseOrbitIntlk, BPMOrbitIntlk, OrbitInterlock
+from .orbit_interlock import BaseOrbitIntlk, BPMOrbitIntlk, HLOrbitInterlock, \
+    OrbitInterlock
 from .posang import PosAng
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSApplySOFB, PSCorrSOFB
