@@ -1,6 +1,8 @@
 """Injection Control App."""
 
 from .. import csdev as _csdev
+from ..util import ClassProperty as _classproperty
+from ..search import PSSearch as _PSSearch
 
 # --- Enumeration Types ---
 
@@ -84,6 +86,35 @@ class Const(_csdev.Const):
     BIASFB_MINIMUM_LIFETIME = 1800  # [s]
     BIASFB_PROPTY_PREFIX = 'BiasFB'
     BIASFB_MAX_DATA_SIZE = 1000
+
+    __TOPUP_STANDBY_PUNAMES = None
+    __TOPUP_STANDBY_PUNICKNAMES = None
+
+    @_classproperty
+    def TOPUP_STANDBY_PUNAMES(cls):
+        """Define names of the pulsed magnets controlled in top-up standby."""
+        if cls.__TOPUP_STANDBY_PUNAMES is not None:
+            return cls.__TOPUP_STANDBY_PUNAMES
+
+        names = _PSSearch.get_psnames(
+            {
+                'sec': '(TB|BO|TS|SI)',
+                'dis': 'PU', 'dev': '.*(Kckr|Sept)',
+                'propty_name': '(?!:CCoil).*'
+            })
+        nicknames = [
+            f'{n.sec}{n.dev}{n.idx}' for n in names
+        ]
+        cls.__TOPUP_STANDBY_PUNAMES = names
+        cls.__TOPUP_STANDBY_PUNICKNAMES = nicknames
+
+        return cls.__TOPUP_STANDBY_PUNAMES
+
+    @_classproperty
+    def TOPUP_STANDBY_PUNICKNAMES(cls):
+        """Define nicknames for TOPUP_STANDBY_PUNAMES."""
+        cls.TOPUP_STANDBY_PUNAMES
+        return cls.__TOPUP_STANDBY_PUNICKNAMES
 
 
 _ct = Const
@@ -265,6 +296,7 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 300, 'unit': 'ms',
             'lolim': 0, 'hilim': 1000},
 
+        # accumulation settings
         'AccumState-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off,
             'enums': _et.OFF_ON, 'unit': 'Off_On'},
@@ -278,6 +310,7 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 5, 'unit': 's',
             'lolim': 1, 'hilim': 60*60},
 
+        # topup settings
         'TopUpState-Sel': {
             'type': 'enum', 'value': _ct.OffOn.Off,
             'enums': _et.OFF_ON, 'unit': 'Off_On'},
@@ -296,18 +329,15 @@ def get_injctrl_propty_database():
         'TopUpHeadStartTime-RB': {
             'type': 'float', 'value': 0, 'unit': 's', 'prec': 2,
             'lolim': 0, 'hilim': 2*60},
-        'TopUpPUStandbyEnbl-Sel': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
-            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
-        'TopUpPUStandbyEnbl-Sts': {
-            'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
-            'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
-        'TopUpPUWarmUpTime-SP': {
-            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
-            'lolim': 0, 'hilim': 2*60},
-        'TopUpPUWarmUpTime-RB': {
-            'type': 'float', 'value': 30, 'unit': 's', 'prec': 1,
-            'lolim': 0, 'hilim': 2*60},
+        'TopUpNextInj-Mon': {
+            'type': 'float', 'value': 0.0, 'unit': 's'},
+        'TopUpNrPulses-SP': {
+            'type': 'int', 'value': 1, 'unit': 'pulses',
+            'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
+        'TopUpNrPulses-RB': {
+            'type': 'int', 'value': 1, 'unit': 'pulses',
+            'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
+        # LI standby handler
         'TopUpLIWarmUpEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
@@ -320,6 +350,7 @@ def get_injctrl_propty_database():
         'TopUpLIWarmUpTime-RB': {
             'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
+        # bo standby handlers
         'TopUpBOPSStandbyEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
             'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
@@ -344,14 +375,6 @@ def get_injctrl_propty_database():
         'TopUpBORFWarmUpTime-RB': {
             'type': 'float', 'value': 5, 'unit': 's', 'prec': 1,
             'lolim': 0, 'hilim': 2*60},
-        'TopUpNextInj-Mon': {
-            'type': 'float', 'value': 0.0, 'unit': 's'},
-        'TopUpNrPulses-SP': {
-            'type': 'int', 'value': 1, 'unit': 'pulses',
-            'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
-        'TopUpNrPulses-RB': {
-            'type': 'int', 'value': 1, 'unit': 'pulses',
-            'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
 
         'InjSysTurnOn-Cmd': {'type': 'int', 'value': 0},
         'InjSysTurnOff-Cmd': {'type': 'int', 'value': 0},
@@ -419,6 +442,22 @@ def get_injctrl_propty_database():
             'type': 'char', 'count': 1000,
             'value': '\n'.join(_ct.INJ_STATUS_LABELS)},
     }
+    # PU standby handlers
+    for puid in _ct.TOPUP_STANDBY_PUNICKNAMES:
+        dbase.update({
+            f'TopUp{puid}StandbyEnbl-Sel': {
+                'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+                'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+            f'TopUp{puid}StandbyEnbl-Sts': {
+                'type': 'enum', 'value': _ct.DsblEnbl.Dsbl,
+                'enums': _et.DSBL_ENBL, 'unit': 'Dsbl_Enbl'},
+            f'TopUp{puid}WarmUpTime-SP': {
+                'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+                'lolim': 0, 'hilim': 2*60},
+            f'TopUp{puid}WarmUpTime-RB': {
+                'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
+                'lolim': 0, 'hilim': 2*60},
+        })
     dbase.update(get_biasfb_database())
     dbase = _csdev.add_pvslist_cte(dbase)
     return dbase
