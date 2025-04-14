@@ -39,6 +39,7 @@ class App(_Callback):
         self._llrf_intlk_state = 0b111011 if self._is_dry_run else 0b000000
         self._state = self._const.OffOn.Off
         self._bpm_status = self._pvs_database['BPMStatus-Mon']['value']
+        self._acq_status = self._pvs_database['PsMtmAcqStatus-Mon']['value']
         self._timing_status = self._pvs_database['TimingStatus-Mon']['value']
         self._enable_lists = {
             'pos': _np.zeros(self._const.nr_bpms, dtype=bool),
@@ -140,6 +141,7 @@ class App(_Callback):
                     'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
                     'RTMPhaseNavg-SP', 'RTMPhaseNavg-RB',
                     'RTMPhaseDiv-SP', 'RTMPhaseDiv-RB',
+                    'UpstreamDebugEn-Sel', 'UpstreamDebugEn-Sts',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
@@ -302,7 +304,7 @@ class App(_Callback):
         props_itlk = _ASLLRF.PROPERTIES_INTERLOCK
         devs = [_ASLLRF(devname=name, props2init=props_itlk) for name in names]
         for dev in devs:
-            dev.pv_object('IntlkAll-Mon').auto_monitor = True
+            dev.pv_object('Inp1Intlk-Mon').auto_monitor = True
         return devs
 
     def init_database(self):
@@ -311,6 +313,7 @@ class App(_Callback):
             'Enable-Sel': self._state,
             'Enable-Sts': self._state,
             'BPMStatus-Mon': self._bpm_status,
+            'PsMtmAcqStatus-Mon': self._acq_status,
             'TimingStatus-Mon': self._timing_status,
             'ResetBPMGen-Cmd': 0,
             'ResetBPMPos-Cmd': 0,
@@ -448,12 +451,12 @@ class App(_Callback):
 
     def _handle_lock_llrf(self, dev, init=False):
         dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
-        pvo_beamtrip = dev.pv_object('FIMOrbitIntlk-Sts')
+        pvo_beamtrip = dev.pv_object('FIMLLRF1-Sts')
         pvo_manintlk = dev.pv_object('FIMManual-Sts')
         if init:
             pvo_beamtrip.add_callback(_part(
                 self._callback_lock, dev,
-                'FIMOrbitIntlk-Sel', self._llrf_intlk_state))
+                'FIMLLRF1-Sel', self._llrf_intlk_state))
             pvo_manintlk.add_callback(_part(
                 self._callback_lock, dev,
                 'FIMManual-Sel', self._llrf_intlk_state))
@@ -1154,6 +1157,22 @@ class App(_Callback):
             # MinSumLimsSynced
             oks = _np.array_equal(dev.minsum_thres, self._limits['minsum'])
             value = _updt_bit(value, 7, not oks)
+            # LogicalTrigConfigured
+            okl = True
+            for bpm in self._fambpm_dev.devices:
+                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    okl &= bpm[prp_rb] == val
+            value = _updt_bit(value, 8, not okl)
+        else:
+            value = 0b111111111
+
+        self._bpm_status = value
+        self.run_callbacks('BPMStatus-Mon', self._bpm_status)
+
+        # PsMtm Acq. status
+        value = 0
+        if self._fambpm_dev.connected:
             # AcqConfigured
             bpms = self._fambpm_dev.devices
             okb = all(d.acq_channel == self._acq_chan for d in bpms)
@@ -1165,19 +1184,12 @@ class App(_Callback):
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
             okb &= all(
                 d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
-            value = _updt_bit(value, 8, not okb)
-            # LogTrigConfigured
-            okl = True
-            for bpm in self._fambpm_dev.devices:
-                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
-                    prp_rb = _PVName.from_sp2rb(prp)
-                    okl &= bpm[prp_rb] == val
-            value = _updt_bit(value, 9, not okl)
+            value = _updt_bit(value, 1, not okb)
         else:
-            value = 0b11111111111
+            value = 0b11
 
-        self._bpm_status = value
-        self.run_callbacks('BPMStatus-Mon', self._bpm_status)
+        self._acq_status = value
+        self.run_callbacks('PsMtmAcqStatus-Mon', self._acq_status)
 
         # Timing Status
         value = 0
@@ -1355,12 +1367,16 @@ class App(_Callback):
                 outnam = f'OUT{out}'
                 devout = devname.substitute(propty_name=outnam)
                 if devout in self._const.intlkr_fouttable:
-                    pair = self._const.intlkr_fouttable[devout]
-                    devpair = _PVName(pair).device_name
-                    if self._fout_devs[devpair]['RxLockedLtc-Mon']:
+                    pair = _PVName(self._const.intlkr_fouttable[devout])
+                    devpair = pair.device_name
+                    # get the correct bit to verify the redundancy out
+                    redunout = int(pair.propty_name[-1])
+                    redunvalue = self._fout_devs[devpair]['RxLockedLtc-Mon']
+                    if _get_bit(redunvalue, redunout):
                         outs_in_failure.remove(out)
+                        self._update_log(f'Redundancy of {outnam} of {devname} is ok')
                     else:
-                        self._update_log(f'WARN:{outnam} of {pair} not locked')
+                        self._update_log(f'FATAL:redundancy {devname} not locked')
             is_failure = bool(outs_in_failure)
 
         if not is_failure:
@@ -1439,8 +1455,11 @@ class App(_Callback):
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
 
+        llrfbit = self._const.LLRF_ORBINTLK_BIT
         for llrf in self._llrfs:
-            if not llrf.interlock_mon & (1 << 12):
+            # orbit interlock for LLRF A and B were moved to interlock
+            # input 1, bit 5
+            if not llrf.interlock_input1_mon & (1 << llrfbit):
                 name = llrf.system_nickname
                 self._update_log(
                     f'ERR:LLRF-{name} did not receive RFKill event')
@@ -1519,10 +1538,10 @@ class App(_Callback):
             _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
             # sending interlock reset for all LLRFs systems, then wait
             for llrf in self._llrfs:
-                llrf.interlock_reset = 1
+                llrf['IntlkReset-Cmd'] = 1
             _time.sleep(1)
             for llrf in self._llrfs:
-                llrf.interlock_reset = 0
+                llrf['IntlkReset-Cmd'] = 0
 
     # --- device lock methods ---
 

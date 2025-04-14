@@ -1,27 +1,26 @@
 """Main module of Machine Shift Application."""
-import time as _time
 import logging as _log
+import time as _time
+
 import epics as _epics
 import numpy as _np
 from functools import partial as _part
 
-from ..util import update_bit as _updt_bit, get_bit as _get_bit
-from ..namesys import SiriusPVName as _PVName
-from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..clientarch import Time as _Time
-
-from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
+from ..devices import CurrInfoSI, EGun, EVG, HLTiming, InjSysPUModeHandler, \
+    InjSysStandbyHandler, RFKillBeam
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, HLTiming, \
-    RFKillBeam, InjSysPUModeHandler
-
+from ..epics import PV as _PV
+from ..namesys import SiriusPVName as _PVName
+from ..search import HLTimeSearch as _HLTimeSearch, PSSearch as _PSSearch
+from ..util import get_bit as _get_bit, update_bit as _updt_bit
+from .bias_feedback import BiasFeedback as _BiasFeedback
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
     get_status_labels as _get_sts_lbls
-from .bias_feedback import BiasFeedback as _BiasFeedback
 
 
 _PU_STBY_NICKS = _Const.TOPUP_STANDBY_PUNICKNAMES
@@ -295,7 +294,6 @@ class App(_Callback):
 
         # Create object to make bias feedback:
         self._bias_feedback = _BiasFeedback(self)
-        self._pvs_database.update(self._bias_feedback.database)
         for prop, write in self._bias_feedback.map_pv2write.items():
             pvname = _Const.BIASFB_PROPTY_PREFIX + prop
             self.map_pv2write[pvname] = write
@@ -1266,7 +1264,7 @@ class App(_Callback):
         self._update_log('InjectionEvt is on!')
         return True
 
-    def _wait_injection(self):
+    def _wait_injection(self, wait_time=None):
         # wait for injectionevt to be off (done)
         _t0 = _time.time()
         while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
@@ -1276,6 +1274,8 @@ class App(_Callback):
             if not self._evg_dev.injection_state:
                 break
             _time.sleep(0.02)
+        if wait_time is not None:
+            _time.sleep(wait_time)
         return True
 
     def _stop_injection(self):
@@ -1498,7 +1498,7 @@ class App(_Callback):
 
                 self._update_topupsts(_Const.TopUpSts.Injecting)
                 self._update_log('Injecting...')
-                if not self._wait_injection():
+                if not self._wait_injection(wait_time=0.5):
                     break
 
                 self._update_bucket_list()

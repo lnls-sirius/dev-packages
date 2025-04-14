@@ -4,8 +4,8 @@ from .. import csdev as _csdev
 from ..util import ClassProperty as _classproperty
 from ..search import PSSearch as _PSSearch
 
-
 # --- Enumeration Types ---
+
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
@@ -151,6 +151,8 @@ def get_injctrl_propty_database():
 
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'TimestampBoot-Cte': {'type': 'float', 'value': 0,
+                              'prec': 7, 'unit': 'timestamp'},
         'Log-Mon': {'type': 'str', 'value': 'Starting...'},
 
         'Mode-Sel': {
@@ -456,6 +458,7 @@ def get_injctrl_propty_database():
                 'type': 'float', 'value': 10, 'unit': 's', 'prec': 1,
                 'lolim': 0, 'hilim': 2*60},
         })
+    dbase.update(get_biasfb_database())
     dbase = _csdev.add_pvslist_cte(dbase)
     return dbase
 

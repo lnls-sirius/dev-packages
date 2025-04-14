@@ -103,9 +103,9 @@ class BiasFeedback:
         self,
         per=1,
         nrpul=1,
-        curr_avg=100,
-        curr_now=99.5,
-        ltime=17 * 3600,
+        curr_avg=200,
+        curr_now=199.5,
+        ltime=9 * 3600,
         ahead_tim=10,
     ):
         """."""
