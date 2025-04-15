@@ -1492,7 +1492,12 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
         Raises:
             ValueError: In case inputs don't match the description above.
             TypeError: In case inputs don't match the description above.
+            RunTimeError: In case interlock is enabled.
         """
+        if self.enable:
+            raise RuntimeError(
+                'Cannot set limits, orbit interlock is enabled.'
+            )
         if refx is None or refy is None:
             clt = ConfigDBClient(config_type='si_orbit')
             refo = clt.get_config_value('bba_orb')
