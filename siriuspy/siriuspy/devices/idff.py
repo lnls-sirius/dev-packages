@@ -479,7 +479,7 @@ class IDFFCtrl(IDFFCtrlBase):
         return None
 
 
-class IDFF(_DeviceSet):
+class IDFF(_DeviceSet, IDFFCtrlBase):
     """ID Feedforward System Device."""
 
     class DEVICES:
@@ -524,7 +524,9 @@ class IDFF(_DeviceSet):
         devices += self._devslc
         devices += self._devsqn
         devices += self._devscc
-        super().__init__(devices, devname=devname)
+        # super().__init__(devices, devname=devname)
+        _DeviceSet.__init__(self, devices, devname=devname)
+        IDFFCtrlBase.__init__(self, devname=devname)
 
     @property
     def idffclass(self):

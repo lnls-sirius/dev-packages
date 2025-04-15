@@ -787,8 +787,7 @@ class IDFullMovCtrl(IDBase):
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+
 
     PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
     PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
@@ -1631,6 +1630,8 @@ class IVU(IDFullMovCtrl):
 
     # --- PARAM_PVS ---
     PARAM_PVS = IDFullMovCtrl.PARAM_PVS
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
     PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
     PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
     PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
