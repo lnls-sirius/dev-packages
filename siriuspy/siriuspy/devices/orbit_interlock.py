@@ -1484,11 +1484,10 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
                 limits and values are dictionaries with keys:
                     'agx', 'agy', 'psx', 'psy'
                 defining the values of the interlock limits around the
-                reference orbit. This dictionary must also have a 'default'
-                key with the definition of the threshold values for the rest
-                of the ring. Defaults to None. If None, then the standard
-                definition from the control-system-constants table will be
-                used.
+                reference orbit. The rest of the ring will have its limits set
+                to 1.2 times the largest respective limit. Defaults to None.
+                If None, then the standard definition from the
+                control-system-constants table will be used.
 
         Raises:
             ValueError: In case inputs don't match the description above.
@@ -1504,12 +1503,10 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
         if limits is None:
             limits = self.get_standard_interlock_limits_definitions()
 
-        if not {len(refx), len(refy)} - {len(self.BPM_NAMES)}:
+        if {len(refx), len(refy)} - {len(self.BPM_NAMES)}:
             raise ValueError('Length of reference orbit must match BPMs.')
-        if not isinstance(limits, dict()):
+        if not isinstance(limits, dict):
             raise TypeError('Limits must be a dictionary')
-        if 'default' not in limits:
-            raise ValueError("Limits must contain 'default' key.")
 
         entries = {'psx', 'psy', 'agx', 'agy'}
         for k, v in limits.items():
@@ -1524,20 +1521,21 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
                 )
 
         limits = limits.copy()
-        def_val = limits.pop('default')
 
         flag = _np.zeros(refx.size, dtype=bool)
         zer = refx*0.0
         agx, agy = zer.copy(), zer.copy()
         psx, psy = zer.copy(), zer.copy()
+        mxp, myp, mxa, mya = 0.0, 0.0, 0.0, 0.0
         for ssec, idd in limits.items():
             # Position
             ids = idd.copy()
             [ids.pop(k) for k in ('agx', 'agy')]
             bpx, bpy = _si_calculate_bump(zer, zer, subsec=ssec, **ids)
             flg = bpx != 0.0
-            psx[flg] = bpx
-            psy[flg] = bpy
+            psx[flg] = bpx.max()
+            psy[flg] = bpy.max()
+            mxp, myp = max(mxp, bpx.max()), max(myp, bpy.max())
 
             # Angle
             ids = idd.copy()
@@ -1545,27 +1543,28 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
             bpx, bpy = _si_calculate_bump(zer, zer, subsec=ssec, **ids)
             agx[flg] = bpx.max()*2  # NOTE: not valid for BC, C1, C2. Needs
             agy[flg] = bpy.max()*2  # generalization of BPM firmware.
+            mxa, mya = max(mxa, bpx.max()), max(mya, bpy.max())
 
             flag |= flg
 
-        agx[~flag] = def_val['agx']
-        agy[~flag] = def_val['agy']
-        psx[~flag] = def_val['psx']
-        psy[~flag] = def_val['psy']
+        psx[~flag] = mxp * 1.2
+        psy[~flag] = myp * 1.2
+        agx[~flag] = mxa * 1.2
+        agy[~flag] = mya * 1.2
 
         # set limits
         refx_pos = self.calc_intlk_metric(refx, metric='pos')
-        refx_ang = self.calc_intlk_metric(refx, metric='ang')
         refy_pos = self.calc_intlk_metric(refy, metric='pos')
+        refx_ang = self.calc_intlk_metric(refx, metric='ang')
         refy_ang = self.calc_intlk_metric(refy, metric='ang')
 
         # needs convertion from [um] to [nm]:
         self.pos_x_max_thres = _np.round((refx_pos + psx) * 1e3)
         self.pos_x_min_thres = _np.round((refx_pos - psx) * 1e3)
-        self.ang_x_max_thres = _np.round((refx_ang + agx) * 1e3)
-        self.ang_x_min_thres = _np.round((refx_ang - agx) * 1e3)
         self.pos_y_max_thres = _np.round((refy_pos + psy) * 1e3)
         self.pos_y_min_thres = _np.round((refy_pos - psy) * 1e3)
+        self.ang_x_max_thres = _np.round((refx_ang + agx) * 1e3)
+        self.ang_x_min_thres = _np.round((refx_ang - agx) * 1e3)
         self.ang_y_max_thres = _np.round((refy_ang + agy) * 1e3)
         self.ang_y_min_thres = _np.round((refy_ang - agy) * 1e3)
 
