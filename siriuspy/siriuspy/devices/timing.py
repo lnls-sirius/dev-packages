@@ -599,7 +599,8 @@ class HLTiming(_DeviceSet):
         return map_table2evt
 
     def change_triggers_source(
-            self, trigs, new_src='Linac', printlog=True, timeout=None) -> list:
+        self, trigs, new_src='Linac', printlog=True, timeout=5
+    ) -> list:
         """."""
         notchanged = list()
         for tn in trigs:
@@ -638,13 +639,20 @@ class HLTiming(_DeviceSet):
                 continue
 
             tr.delay_raw = dly
-            if timeout is None:
-                tr.source = new_src
-            else:
-                tr.cmd_set_source(new_src, timeout=timeout)
+            tr.source = new_src
             if printlog:
                 print(f'{tn:25s} -> Change OK: .')
-        return notchanged
+
+        boo = True
+        timeout = 0 if timeout is None else timeout
+        for tn in trigs:
+            t0_ = _time.time()
+            tr = self.triggers.get(tn)
+            boo &= tr._wait('Src-Sts', new_src, timeout=timeout)
+            timeout = max(timeout - (_time.time() - t0_), 0)
+            if not boo:
+                break
+        return notchanged, boo
 
     def change_event_delay(self, new_dly, event='Linac', printlog=True):
         """."""
