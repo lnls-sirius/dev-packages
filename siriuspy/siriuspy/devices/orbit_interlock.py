@@ -1548,7 +1548,7 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
             bpx, bpy = _si_calculate_bump(zer, zer, subsec=ssec, **ids)
             agx[flg] = bpx.max()*2  # NOTE: not valid for BC, C1, C2. Needs
             agy[flg] = bpy.max()*2  # generalization of BPM firmware.
-            mxa, mya = max(mxa, bpx.max()), max(mya, bpy.max())
+            mxa, mya = max(mxa, bpx.max()*2), max(mya, bpy.max()*2)
 
             flag |= flg
 
