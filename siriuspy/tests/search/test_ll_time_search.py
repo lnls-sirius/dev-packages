@@ -30,6 +30,7 @@ class TestLLTimeSearch(TestCase):
 
     public_interface = (
         'LLRegExp',
+        'TrigSrcDevs',
         'In2OutMap',
         'Out2InMap',
         'get_channel_input',
