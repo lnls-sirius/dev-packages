@@ -221,17 +221,34 @@ class FamBPMs(_DeviceSet):
             _log.info(mstr)
         return okall
 
-    def set_tbt_mask(self, mask_begin, mask_end, timeout=TIMEOUT):
+    def set_tbt_mask(
+        self, enable=True, mask_begin=None, mask_end=None, timeout=TIMEOUT
+    ):
         """."""
-        if isinstance(mask_begin, int):
-            mask_begin = _np.ones(len(self.devices)) * mask_begin
-        if isinstance(mask_end, int):
-            mask_end = _np.ones(len(self.devices)) * mask_end
+        ndev = len(self.devices)
+
+        def _to_array(val, name):
+            if val is None:
+                return None
+            if not hasattr(val, "__iter__"):
+                return _np.full(ndev, val, dtype=int)
+            arr = _np.asarray(val, dtype=int)
+
+            if arr.size != ndev:
+                raise ValueError(
+                    f'{name} must have length {ndev}, got {arr.size}'
+                )
+            return arr
+
+        mask_begin = _to_array(mask_begin, "mask_begin")
+        mask_end = _to_array(mask_end, "mask_end")
 
         for i, bpm in enumerate(self):
-            bpm.tbt_mask_beg = mask_begin[i]
-            bpm.tbt_mask_end = mask_end[i]
-            bpm.tbt_mask_enbl = 1
+            if mask_begin is not None:
+                bpm.tbt_mask_beg = mask_begin[i]
+            if mask_end is not None:
+                bpm.tbt_mask_end = mask_end[i]
+            bpm.tbt_mask_enbl = int(enable)
 
         mstr = ''
         okall = True
@@ -240,11 +257,12 @@ class FamBPMs(_DeviceSet):
         for i, bpm in enumerate(self):
             tout = timeout - (_time.time() - t0)
 
-            props = {
-                'TbTDataMaskSamplesBeg-RB': mask_begin[i],
-                'TbTDataMaskSamplesEnd-RB': mask_end[i],
-                'TbTDataMaskEn-Sel': 1,
-            }
+            props = {'TbTDataMaskEn-Sel': int(enable)}
+
+            if mask_begin is not None:
+                props['TbTDataMaskSamplesBeg-RB'] = mask_begin[i]
+            if mask_end is not None:
+                props['TbTDataMaskSamplesEnd-RB'] = mask_end[i]
 
             if not bpm._wait_set(props, timeout=tout):
                 okall = False
@@ -254,9 +272,11 @@ class FamBPMs(_DeviceSet):
                         mstr += (
                             f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
                         )
-
+        was_set = mask_begin is not None or mask_end is not None
+        status = 'enabled' if enable else 'disabled'
+        status += ' & set' if was_set else ''
         stg = ', except:' if mstr else '.'
-        _log.info('TbT Masks confirmed in all BPMs%s', stg)
+        _log.info('TbT Masks %s in all BPMs%s', status, stg)
         if mstr:
             _log.info(mstr)
         return okall
