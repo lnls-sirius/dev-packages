@@ -18,9 +18,10 @@ from .fofb import BPMDCC, FamFastCorrs, FamFOFBControllers, FOFBCtrlDCC, \
     FOFBCtrlRef, HLFOFB
 from .fofb_acq import FamFOFBLamp, FamFOFBSysId, FOFBCtrlLamp, FOFBCtrlSysId, \
     FOFBPSLamp, FOFBPSSysId
+from .fpmosc import FPMOsc
 from .ict import ICT, TranspEff
 from .idff import IDFF
-from .ids import APU, DELTA, EPU, ID, IDBase, PAPU, WIG, IVU
+from .ids import APU, DELTA, EPU, ID, IDBase, PAPU, WIG, IVU, VPU
 from .injctrl import InjCtrl
 from .injsys import BOPSRampStandbyHandler, BORFRampStandbyHandler, \
     InjSysPUModeHandler, InjSysStandbyHandler, LinacStandbyHandler, \

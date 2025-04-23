@@ -2,7 +2,11 @@
 
 import re as _re
 from threading import Lock as _Lock
-import yaml as _yaml
+
+try:
+    import yaml as _yaml
+except:
+    _yaml = None
 
 from .. import clientweb as _web
 

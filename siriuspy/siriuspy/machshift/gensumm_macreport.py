@@ -1,6 +1,10 @@
 """Test."""
 
-from matplotlib import pyplot as plt
+try:
+    from matplotlib import pyplot as plt
+except:
+    plt = None
+
 import numpy as np
 from siriuspy.clientarch.time import Time
 from siriuspy.machshift.macreport import MacReport

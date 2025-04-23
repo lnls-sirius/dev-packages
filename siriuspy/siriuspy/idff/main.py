@@ -19,14 +19,14 @@ class App(_Callback):
     def __init__(self, idname,
                  enbl_chcorrs, enbl_cvcorrs,
                  enbl_qscorrs, enbl_lccorrs,
-                 enbl_qncorrs):
+                 enbl_qncorrs, enbl_cccorrs):
         """Class constructor."""
         super().__init__()
         self.const = _Const(
             idname,
             enbl_chcorrs, enbl_cvcorrs,
             enbl_qscorrs, enbl_lccorrs,
-            enbl_qncorrs)
+            enbl_qncorrs, enbl_cccorrs)
         self.pvs_prefix = self.const.idffname
         self.pvs_database = self.const.get_propty_database()
 
@@ -37,10 +37,12 @@ class App(_Callback):
         self.control_qs = self.const.enbl_qscorrs
         self.control_lc = self.const.enbl_lccorrs
         self.control_qn = self.const.enbl_qncorrs
+        self.control_cc = self.const.enbl_cccorrs
         self.polarization = 'none'
 
         # IDFF object with IDFF config
-        self.idff = _IDFF(idname, with_devctrl=False)
+        idffname_soft = self.const.idffname
+        self.idff = _IDFF(idffname_soft, with_devctrl=False)
 
         self.config_name = ''  # stored in autosave file
         self.read_autosave_file()
@@ -62,9 +64,10 @@ class App(_Callback):
             'ControlQS-Sel': self.write_control_qs,
             'ControlLC-Sel': self.write_control_lc,
             'ControlQN-Sel': self.write_control_qn,
+            'ControlCC-Sel': self.write_control_cc,
         }
 
-        self._quit = False
+        self._thread_quit = False
         self._corr_setpoints = None
         self._thread_ff = _epics.ca.CAThread(
             target=self.feedforward_loop, daemon=True)
@@ -107,6 +110,11 @@ class App(_Callback):
             pvn2vals.update({
                 'ControlQN-Sel': self.control_qn,
                 'ControlQN-Sts': self.control_qn,
+                })
+        if self.const.enbl_cccorrs:
+            pvn2vals.update({
+                'ControlCC-Sel': self.control_cc,
+                'ControlCC-Sts': self.control_cc,
                 })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
@@ -207,13 +215,23 @@ class App(_Callback):
         return True
 
     def write_control_qn(self, value):
-        """Set whether to include QD or not in feedforward."""
+        """Set whether to include QN or not in feedforward."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
         self.control_qn = value
         act = ('En' if value else 'Dis')
-        self.update_log(f'{act}abled QD control.')
+        self.update_log(f'{act}abled QN control.')
         self.run_callbacks('ControlQN-Sts', value)
+        return True
+
+    def write_control_cc(self, value):
+        """Set whether to include CC or not in feedforward."""
+        if not 0 <= value < len(_ETypes.DSBL_ENBL):
+            return False
+        self.control_cc = value
+        act = ('En' if value else 'Dis')
+        self.update_log(f'{act}abled CC control.')
+        self.run_callbacks('ControlCC-Sts', value)
         return True
 
     def write_config_name(self, value, save_autoconfig=True):
@@ -249,7 +267,7 @@ class App(_Callback):
 
         return True
 
-    def write_cmd_offsets(self, _):
+    def write_cmd_save_offsets(self, _):
         """Save current values of correctors' currents to si_idff configdb."""
         if self.loop_state == self.const.LoopState.Closed:
             self.update_log('ERR:Open loop before saving correctors offsets.')
@@ -260,20 +278,25 @@ class App(_Callback):
     # ----- feedforward loop methods -----
 
     @property
-    def quit(self):
-        """Quit and shutdown threads."""
-        return self._quit
+    def thread_is_alive(self):
+        """Return if thread is alive."""
+        return self._thread_ff.is_alive()
 
-    @quit.setter
-    def quit(self, value):
+    @property
+    def thread_quit(self):
+        """Quit and shutdown threads."""
+        return self._thread_quit
+
+    @thread_quit.setter
+    def thread_quit(self, value):
         if value:
-            self._quit = value
+            self._thread_quit = value
 
     def feedforward_loop(self):
         """Main IDFF loop."""
         self.idff.wait_for_connection(timeout=2)
 
-        while not self._quit:
+        while not self._thread_quit:
             # updating interval
             tplanned = 1.0/self.loop_freq
 
@@ -303,6 +326,7 @@ class App(_Callback):
 
             # sleep unused time or signal overtime to stdout
             self._do_sleep(_t0, tplanned)
+        self._thread_quit = False
 
     def implement_setpoints(self):
         """."""
@@ -421,11 +445,14 @@ class App(_Callback):
         setpoints, *_ = self._corr_setpoints
         idff = self.idff
         corrnames = idff.chnames + idff.cvnames + \
-            idff.qsnames + idff.lcnames + idff.qnnames
+            idff.qsnames + idff.lcnames + idff.qnnames + \
+            idff.ccnames
         corrlabels = (
-            'CH1', 'CH2', 'CV1', 'CV2',
-            'QS1', 'QS2', 'LCH',
-            'QA1', 'QA2', 'QB1', 'QB2', 'QC1', 'QC2')
+            'CH_1', 'CH_2', 'CV_1', 'CV_2',
+            'QS_1', 'QS_2', 'LCH', 'LCV',
+            'QD1_1', 'QF_1', 'QD2_1', 'QD2_2', 'QF_2', 'QD1_2',
+            'CC1_1', 'CC2_1', 'CC2_2', 'CC1_2',
+            )
         for corrlabel, corrname in zip(corrlabels, corrnames):
             for corr_pvname in setpoints:
                 if corrname in corr_pvname:
@@ -461,7 +488,11 @@ class App(_Callback):
             corrdevs.extend(self.idff.lcdevs)
         if self.control_qn == self.const.DsblEnbl.Enbl:
             corrdevs.extend(self.idff.qndevs)
+        if self.control_cc == self.const.DsblEnbl.Enbl:
+            corrdevs.extend(self.idff.ccdevs)
         return corrdevs
+
+    # ----- update pvs methods -----
 
     def _do_sleep(self, time0, tplanned):
         ttook = _time.time() - time0

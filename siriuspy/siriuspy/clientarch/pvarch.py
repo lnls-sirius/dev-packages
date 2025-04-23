@@ -443,6 +443,22 @@ class PVDataSet(_Base):
         return True
 
     @property
+    def not_archived(self):
+        """PVs not being archived."""
+        self.connect()
+        not_archived = list()
+        for pvn in self._pvnames:
+            if self.connector.getPVDetails(pvn) is None:
+                not_archived.append(pvn)
+        return not_archived
+
+    @property
+    def archived(self):
+        """PVs being archived."""
+        archived = set(self._pvnames) - set(self.not_archived)
+        return list(archived)
+
+    @property
     def timestamp_start(self):
         """Timestamp start."""
         if not self._time_start:
