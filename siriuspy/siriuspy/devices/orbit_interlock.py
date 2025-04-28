@@ -2,7 +2,9 @@
 
 import numpy as _np
 
-from ..search import BPMSearch as _BPMSearch
+from ..clientconfigdb import ConfigDBClient
+from ..search import BPMSearch as _BPMSearch, OrbIntlkSearch as _OrbIntlkSearch
+from ..sofb.utils import si_calculate_bump as _si_calculate_bump
 from ..util import ClassProperty as _classproperty
 from .device import Device as _Device, DeviceSet as _DeviceSet
 
@@ -1168,10 +1170,411 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         return angx, angy
 
     def _handle_thres_input(self, value):
-        if isinstance(value, (int, float, _np.int_, _np.float_)):
+        typs = (bool, int, float, _np.bool_, _np.int64, _np.float64)
+        if isinstance(value, typs):
             return [value, ] * len(self.BPM_NAMES)
-        if len(value) != len(self.devices):
+        if len(value) != len(self.BPM_NAMES):
             raise ValueError(
-                'the expected length is {0}, not {1}'.format(
-                    len(self.devices), len(value)))
+                f'Expected length is {len(self.BPM_NAMES)}, not {len(value)}'
+            )
         return value
+
+
+class HLOrbitInterlock(BaseOrbitIntlk, _Device):
+    """."""
+
+    TIMEOUT = 10
+
+    class DEVICES:
+        """."""
+        SI = 'SI-Glob:AP-OrbIntlk'
+        ALL = (SI, )
+
+    PROPERTIES_DEFAULT = (
+        'Enable-Sel', 'Enable-Sts', 'Reset-Cmd',
+        'BPMStatus-Mon', 'TimingStatus-Mon', 'LLRFStatus-Mon',
+        'PosXMaxLim-SP', 'PosXMaxLim-RB',
+        'PosXMinLim-SP', 'PosXMinLim-RB',
+        'AngXMaxLim-SP', 'AngXMaxLim-RB',
+        'AngXMinLim-SP', 'AngXMinLim-RB',
+        'PosYMaxLim-SP', 'PosYMaxLim-RB',
+        'PosYMinLim-SP', 'PosYMinLim-RB',
+        'AngYMaxLim-SP', 'AngYMaxLim-RB',
+        'AngYMinLim-SP', 'AngYMinLim-RB',
+        'MinSumLim-SP', 'MinSumLim-RB',
+        'PosEnblList-SP', 'PosEnblList-RB',
+        'AngEnblList-SP', 'AngEnblList-RB',
+        'MinSumEnblList-SP', 'MinSumEnblList-RB',
+    )
+
+    def __init__(self, props2init='all'):
+        """."""
+        _Device.__init__(self, devname=self.DEVICES.SI, props2init=props2init)
+        BaseOrbitIntlk.__init__(self)
+
+    @property
+    def enable(self):
+        """General interlock enable.
+
+        Returns:
+            enbl (numpy.ndarray, 160): enable state for each BPM.
+        """
+        return self['Enable-Sts']
+
+    def set_enable(self, value, timeout=TIMEOUT):
+        """Set enable state for BPM general interlock."""
+        self['Enable-Sel'] = bool(value)
+        return self._wait('Enable-Sts', bool(value), timeout=timeout)
+
+    def cmd_enable(self, timeout=TIMEOUT):
+        """Enable all BPM general interlock."""
+        return self.set_enable(True, timeout=timeout)
+
+    def cmd_disable(self, timeout=TIMEOUT):
+        """Disable all BPM general interlock."""
+        return self.set_enable(False, timeout=timeout)
+
+    def cmd_reset(self, timeout=TIMEOUT):
+        """Enable all BPM general interlock."""
+        val = self['Reset-Cmd']
+        self['Reset-Cmd'] = True
+        return self._wait('Reset-Cmd', val+1, timeout=timeout)
+
+    @property
+    def pos_x_min_thres(self):
+        """Minimum x position thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. x position threshold for each BPM.
+        """
+        return self['PosXMinLim-RB']
+
+    @pos_x_min_thres.setter
+    def pos_x_min_thres(self, value):
+        """Set minimum x position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum x position.
+        """
+        self['PosXMinLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def pos_x_max_thres(self):
+        """Maximum x position thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. x position threshold for each BPM.
+        """
+        return self['PosXMaxLim-RB']
+
+    @pos_x_max_thres.setter
+    def pos_x_max_thres(self, value):
+        """Set maximum x position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for maximum x position.
+        """
+        self['PosXMaxLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def pos_y_min_thres(self):
+        """Minimum y position thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. y position threshold for each BPM.
+        """
+        return self['PosYMinLim-RB']
+
+    @pos_y_min_thres.setter
+    def pos_y_min_thres(self, value):
+        """Set minimum y position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum y position.
+        """
+        self['PosYMinLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def pos_y_max_thres(self):
+        """Maximum y position thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. y position threshold for each BPM.
+        """
+        return self['PosYMaxLim-RB']
+
+    @pos_y_max_thres.setter
+    def pos_y_max_thres(self, value):
+        """Set maximum y position thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for maximum y position.
+        """
+        self['PosYMaxLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def ang_x_min_thres(self):
+        """Minimum x angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. x angulation threshold for each BPM.
+        """
+        return self['AngXMinLim-RB']
+
+    @ang_x_min_thres.setter
+    def ang_x_min_thres(self, value):
+        """Set minimum x angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum x angle.
+        """
+        self['AngXMinLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def ang_x_max_thres(self):
+        """Maximum x angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. x angulation threshold for each BPM.
+        """
+        return self['AngXMaxLim-RB']
+
+    @ang_x_max_thres.setter
+    def ang_x_max_thres(self, value):
+        """Set maximum x angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for maximum x angle.
+        """
+        self['AngXMaxLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def ang_y_min_thres(self):
+        """Minimum y angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min. y angulation threshold for each BPM.
+        """
+        return self['AngYMinLim-RB']
+
+    @ang_y_min_thres.setter
+    def ang_y_min_thres(self, value):
+        """Set minimum y angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for minimum y angle.
+        """
+        self['AngYMinLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def ang_y_max_thres(self):
+        """Maximum y angulation thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                max. y angulation threshold for each BPM.
+        """
+        return self['AngYMaxLim-RB']
+
+    @ang_y_max_thres.setter
+    def ang_y_max_thres(self, value):
+        """Set maximum y angle thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for maximum y angle.
+        """
+        self['AngYMaxLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def minsum_thres(self):
+        """Min sum thresholds.
+
+        Returns:
+            thres (numpy.ndarray, 160):
+                min sum threshold for each BPM.
+        """
+        return self['MinSumLim-RB']
+
+    @minsum_thres.setter
+    def minsum_thres(self, value):
+        """Set min sum thresholds.
+
+        Args:
+            value (numpy.ndarray|float): Values for min sum.
+        """
+        self['MinSumLim-SP'] = self._handle_thres_input(value)
+
+    @property
+    def pos_enbl_list(self):
+        """Position enable list.
+
+        Returns:
+            enbl_list (numpy.ndarray, 160): position enable list for each BPM.
+        """
+        return self['PosEnblList-RB']
+
+    @pos_enbl_list.setter
+    def pos_enbl_list(self, value):
+        """Set position enable list.
+
+        Args:
+            value (numpy.ndarray|bool): Values for enable list.
+        """
+        self['PosEnblList-SP'] = self._handle_thres_input(value)
+
+    @property
+    def ang_enbl_list(self):
+        """Angle enable list.
+
+        Returns:
+            enbl_list (numpy.ndarray, 160): angle enable list for each BPM.
+        """
+        return self['AngEnblList-RB']
+
+    @ang_enbl_list.setter
+    def ang_enbl_list(self, value):
+        """Set angle enable list.
+
+        Args:
+            value (numpy.ndarray|bool): Values for enable list.
+        """
+        self['AngEnblList-SP'] = self._handle_thres_input(value)
+
+    @property
+    def minsum_enbl_list(self):
+        """Min sum enable list.
+
+        Returns:
+            enbl_list (numpy.ndarray, 160): min sum enable list for each BPM.
+        """
+        return self['MinSumEnblList-RB']
+
+    @minsum_enbl_list.setter
+    def minsum_enbl_list(self, value):
+        """Set min sum enable list.
+
+        Args:
+            value (numpy.ndarray|bool): Values for enable list.
+        """
+        self['MinSumEnblList-SP'] = self._handle_thres_input(value)
+
+    def get_standard_interlock_limits_definitions(self):
+        """Get default interlock limits from control-system-constants table."""
+        return _OrbIntlkSearch.get_limits()
+
+    def set_interlock_limits(self, refx=None, refy=None, limits=None):
+        """Set interlock limits based on input config or default values.
+
+        Args:
+            refx (numpy.ndarray, optional): Horizontal reference orbit around
+                which limits will be calculated. Defaults to None. If None,
+                then the current 'bba_orb' will be used.
+            refy (numpy.ndarray, optional): Vertical reference orbit around
+                which limits will be calculated. Defaults to None.If None,
+                then the current 'bba_orb' will be used.
+            limits (dict, optional): Dictionary whose keys are the name of the
+                subsection (ex. '01SA', '04BC') where to apply the interlock
+                limits and values are dictionaries with keys:
+                    'agx', 'agy', 'psx', 'psy'
+                defining the values of the interlock limits around the
+                reference orbit. The rest of the ring will have its limits set
+                to 1.2 times the largest respective limit. Defaults to None.
+                If None, then the standard definition from the
+                control-system-constants table will be used.
+
+        Raises:
+            ValueError: In case inputs don't match the description above.
+            TypeError: In case inputs don't match the description above.
+            RunTimeError: In case interlock is enabled.
+        """
+        if self.enable:
+            raise RuntimeError(
+                'Cannot set limits, orbit interlock is enabled.'
+            )
+        if refx is None or refy is None:
+            clt = ConfigDBClient(config_type='si_orbit')
+            refo = clt.get_config_value('bba_orb')
+            if refx is None:
+                refx = _np.array(refo['x'])
+            if refy is None:
+                refy = _np.array(refo['y'])
+        if limits is None:
+            limits = self.get_standard_interlock_limits_definitions()
+
+        if {len(refx), len(refy)} - {len(self.BPM_NAMES)}:
+            raise ValueError('Length of reference orbit must match BPMs.')
+        if not isinstance(limits, dict):
+            raise TypeError('Limits must be a dictionary')
+
+        entries = {'psx', 'psy', 'agx', 'agy'}
+        for k, v in limits.items():
+            if not isinstance(k, str):
+                raise ValueError('Every key of limits must be a str.')
+            if not isinstance(v, dict):
+                raise TypeError('Every entry of limits must be dictionary.')
+            if not v.keys() == entries:
+                raise ValueError(
+                    'Every entry of limits must have keys: ' +
+                    ', '.join(entries)
+                )
+
+        limits = limits.copy()
+
+        flag = _np.zeros(refx.size, dtype=bool)
+        zer = refx*0.0
+        agx, agy = zer.copy(), zer.copy()
+        psx, psy = zer.copy(), zer.copy()
+        mxp, myp, mxa, mya = 0.0, 0.0, 0.0, 0.0
+        for ssec, idd in limits.items():
+            # Position
+            ids = idd.copy()
+            [ids.pop(k) for k in ('agx', 'agy')]
+            bpx, bpy = _si_calculate_bump(zer, zer, subsec=ssec, **ids)
+            flg = bpx != 0.0
+            psx[flg] = bpx.max()
+            psy[flg] = bpy.max()
+            mxp, myp = max(mxp, bpx.max()), max(myp, bpy.max())
+
+            # Angle
+            ids = idd.copy()
+            [ids.pop(k) for k in ('psx', 'psy')]
+            bpx, bpy = _si_calculate_bump(zer, zer, subsec=ssec, **ids)
+            agx[flg] = bpx.max()*2  # NOTE: not valid for BC, C1, C2. Needs
+            agy[flg] = bpy.max()*2  # generalization of BPM firmware.
+            mxa, mya = max(mxa, bpx.max()*2), max(mya, bpy.max()*2)
+
+            flag |= flg
+
+        psx[~flag] = mxp * 1.2
+        psy[~flag] = myp * 1.2
+        agx[~flag] = mxa * 1.2
+        agy[~flag] = mya * 1.2
+
+        # set limits
+        refx_pos = self.calc_intlk_metric(refx, metric='pos')
+        refy_pos = self.calc_intlk_metric(refy, metric='pos')
+        refx_ang = self.calc_intlk_metric(refx, metric='ang')
+        refy_ang = self.calc_intlk_metric(refy, metric='ang')
+
+        # needs convertion from [um] to [nm]:
+        self.pos_x_max_thres = _np.round((refx_pos + psx) * 1e3)
+        self.pos_x_min_thres = _np.round((refx_pos - psx) * 1e3)
+        self.pos_y_max_thres = _np.round((refy_pos + psy) * 1e3)
+        self.pos_y_min_thres = _np.round((refy_pos - psy) * 1e3)
+        self.ang_x_max_thres = _np.round((refx_ang + agx) * 1e3)
+        self.ang_x_min_thres = _np.round((refx_ang - agx) * 1e3)
+        self.ang_y_max_thres = _np.round((refy_ang + agy) * 1e3)
+        self.ang_y_min_thres = _np.round((refy_ang - agy) * 1e3)
+
+        self.pos_enbl_list = flag
+        self.ang_enbl_list = flag
+
+    def _handle_thres_input(self, value):
+        return OrbitInterlock._handle_thres_input(self, value)

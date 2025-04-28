@@ -8,6 +8,7 @@ from .. import envars as _envars
 _TIMEOUT = 5.0  # [seconds]
 _EXCDAT_FOLDER = '/magnet/excitation-data/'
 _MAGNET_FOLDER = '/magnet/'
+_ORBINTLK_FOLDER = '/orbintlk/'
 _PS_FOLDER = '/pwrsupply/'
 _BBB_FOLDER = '/beaglebone/'
 _PSTYPES_DATA_FOLDER = '/pwrsupply/pstypes-data/'
@@ -62,6 +63,12 @@ def magnets_excitation_data_read(filename, timeout=_TIMEOUT):
 def magnets_excitation_ps_read(timeout=_TIMEOUT):
     """Return the power supply excitation data."""
     url = _MAGNET_FOLDER + 'magnet-excitation-ps.txt'
+    return read_url(url, timeout=timeout)
+
+
+def orb_intlk_limits_read(timeout=_TIMEOUT):
+    """Return the data defining the orbit interlock limits."""
+    url = _ORBINTLK_FOLDER + 'orb_intlk_limits.py'
     return read_url(url, timeout=timeout)
 
 
