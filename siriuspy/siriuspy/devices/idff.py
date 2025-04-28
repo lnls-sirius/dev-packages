@@ -526,7 +526,6 @@ class IDFF(_DeviceSet):
         devices += self._devscc
         super().__init__(devices, devname=devname)
 
-
     @property
     def idffclass(self):
         """Return IDFFCtrl class."""
