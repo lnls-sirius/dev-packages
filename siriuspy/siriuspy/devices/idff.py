@@ -486,7 +486,7 @@ class IDFF(_DeviceSet, IDFFCtrlBase):
         """Device names."""
         ALL = tuple()
 
-    IDFFCtrlBase._add_devices(DEVICES, IDFFCtrl.DEVICES)
+    IDFFCtrlBase._add_devices(DEVICES)
 
     def __init__(self, devname, with_devctrl=True):
         """."""
