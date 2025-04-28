@@ -13,7 +13,7 @@ from time import sleep as _sleep, time as _time
 from ...bsmp import SerialError as _SerialError
 from ...util import get_timestamp as _get_timestamp
 from ..bsmp.constants import __version__ as _firmware_version_siriuspy, \
-    _const_bsmp
+    _const_bsmp, ConstPSBSMP as _const_psbsmp
 from .psdevstate import PSDevState as _PSDevState
 from .udc import UDC as _UDC
 
@@ -709,8 +709,10 @@ class PRUController:
                 resp = self._udc[dev_id].execute_function(function_id, args)
                 ack[dev_id], data[dev_id] = resp
                 # check anomalous response
-                if ack[dev_id] != _const_bsmp.ACK_OK:
-                    print('PRUController: anomalous response !')
+                # to avoid unnecessary logging we skip error interception for
+                # F_CFG_WFMREF since UDC firmware is returning error code erroneously
+                is_cfg_wfmref = function_id == _const_psbsmp.F_CFG_WFMREF
+                if ack[dev_id] != _const_bsmp.ACK_OK and not is_cfg_wfmref:
                     datum = data[dev_id]
                     if isinstance(datum, str):
                         datum = ord(datum)
