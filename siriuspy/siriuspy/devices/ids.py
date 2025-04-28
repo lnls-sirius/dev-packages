@@ -787,8 +787,7 @@ class IDFullMovCtrl(IDBase):
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+
 
     PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
     PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
@@ -1631,6 +1630,8 @@ class IVU(IDFullMovCtrl):
 
     # --- PARAM_PVS ---
     PARAM_PVS = IDFullMovCtrl.PARAM_PVS
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
     PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
     PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
     PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
@@ -1756,29 +1757,27 @@ class VPU(IDFullMovCtrl):
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
     PARAM_PVS.KPARAM_VELO_SP = 'MoveVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-RB'
     PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
-    PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-SP'  # Can we read from CPL?
+    PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-RB'  # Can we read from CPL?
 
     # --- KPARAM ---
-    PARAM_PVS.KPARAM_RB = 'KParam-SP'  # Can we read from CPL?
     PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
 
     # --- OFFSET --
-    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-SP'
     PARAM_PVS.CENTER_OFFSET_VELO_MON = 'CenterOffsetVelo-Mon'
-    PARAM_PVS.CENTER_OFFSET_MIN_CTE = 'CenterOffMinPos-Cte'
-    PARAM_PVS.CENTER_OFFSET_MAX_CTE = 'CenterOffMaxPos-Cte'
+    PARAM_PVS.CENTER_OFFSET_MIN_CTE = 'CenterOffsetMinPos-Cte'
+    PARAM_PVS.CENTER_OFFSET_MAX_CTE = 'CenterOffsetMaxPos-Cte'
 
     # --- PITCH --
     PARAM_PVS.PITCH_OFFSET_VELO_MON = 'PitchOffsetVelo-Mon'
-    PARAM_PVS.PITCH_OFFSET_MIN_CTE = 'PitchOffMinPos-Cte'
-    PARAM_PVS.PITCH_OFFSET_MAX_CTE = 'PitchOffMaxPos-Cte'
+    PARAM_PVS.PITCH_OFFSET_MIN_CTE = 'PitchOffsetMinPos-Cte'
+    PARAM_PVS.PITCH_OFFSET_MAX_CTE = 'PitchOffsetMaxPos-Cte'
 
     # --- TAPER --
     PARAM_PVS.KPARAM_TAPER_SP = 'Taper-SP'
-    PARAM_PVS.KPARAM_TAPER_RB = 'Taper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'Taper-RB'
     PARAM_PVS.KPARAM_TAPER_MON = 'Taper-Mon'
     PARAM_PVS.TAPER_VELO_MON = 'TaperVelo-Mon'
     PARAM_PVS.TAPER_MIN_CTE = 'TaperMinPos-Cte'
@@ -1797,8 +1796,8 @@ class VPU(IDFullMovCtrl):
         if (self.PARAM_PVS.CENTER_OFFSET_MIN_CTE and
                 self.PARAM_PVS.CENTER_OFFSET_MAX_CTE) is None:
             return None
-        return self[self.PARAM_PVS.CENTER_OFFSET_MIN_CTE,
-                    self.PARAM_PVS.CENTER_OFFSET_MAX_CTE]
+        return [self[self.PARAM_PVS.CENTER_OFFSET_MIN_CTE],
+                self[self.PARAM_PVS.CENTER_OFFSET_MAX_CTE]]
 
     @property
     def pitch_offset_lims(self):
@@ -1806,8 +1805,8 @@ class VPU(IDFullMovCtrl):
         if (self.PARAM_PVS.PITCH_OFFSET_MIN_CTE and
                 self.PARAM_PVS.PITCH_OFFSET_MAX_CTE) is None:
             return None
-        return self[self.PARAM_PVS.PITCH_OFFSET_MIN_CTE,
-                    self.PARAM_PVS.PITCH_OFFSET_MAX_CTE]
+        return [self[self.PARAM_PVS.PITCH_OFFSET_MIN_CTE],
+                self[self.PARAM_PVS.PITCH_OFFSET_MAX_CTE]]
 
     @property
     def taper_lims(self):
@@ -1815,8 +1814,8 @@ class VPU(IDFullMovCtrl):
         if (self.PARAM_PVS.TAPER_MIN_CTE and
                 self.PARAM_PVS.TAPER_MAX_CTE) is None:
             return None
-        return self[self.PARAM_PVS.TAPER_MIN_CTE,
-                    self.PARAM_PVS.TAPER_MAX_CTE]
+        return [self[self.PARAM_PVS.TAPER_MIN_CTE],
+                self[self.PARAM_PVS.TAPER_MAX_CTE]]
 
     @property
     def center_offset_speed_mon(self):
@@ -1855,8 +1854,8 @@ class VPU(IDFullMovCtrl):
     # --- cmd move
     def cmd_move_start(self, timeout=None):
         """Command to move undulator."""
-        return self._write_sp(
-            self.PARAM_PVS.KPARAM_CHANGE_CMD, 1,
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD,
             timeout=timeout)
 
     # --- cmd_reset

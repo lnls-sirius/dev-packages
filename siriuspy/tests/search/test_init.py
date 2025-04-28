@@ -4,18 +4,18 @@
 
 from unittest import TestCase
 
-from siriuspy import util
-from siriuspy import search
+from siriuspy import search, util
 
 public_interface = (
-    'PSSearch',
-    'MASearch',
+    'BLMSearch',
     'BPMSearch',
     'HLTimeSearch',
-    'LLTimeSearch',
     'IDSearch',
     'IOCSearch',
-    'BLMSearch',
+    'LLTimeSearch',
+    'MASearch',
+    'OrbIntlkSearch',
+    'PSSearch',
 )
 
 
