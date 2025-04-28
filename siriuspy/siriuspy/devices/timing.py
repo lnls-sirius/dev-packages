@@ -646,9 +646,12 @@ class HLTiming(_DeviceSet):
         boo = True
         timeout = 0 if timeout is None else timeout
         for tn in trigs:
+            if tn in notchanged:
+                continue
             t0_ = _time.time()
             tr = self.triggers.get(tn)
-            boo &= tr._wait('Src-Sts', new_src, timeout=timeout)
+            new_src_idx = tr.source_options.index(new_src)
+            boo &= tr._wait('Src-Sts', new_src_idx, timeout=timeout)
             timeout = max(timeout - (_time.time() - t0_), 0)
             if not boo:
                 break
