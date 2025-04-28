@@ -479,14 +479,14 @@ class IDFFCtrl(IDFFCtrlBase):
         return None
 
 
-class IDFF(_DeviceSet, IDFFCtrlBase):
+class IDFF(_DeviceSet):
     """ID Feedforward System Device."""
 
     class DEVICES:
         """Device names."""
         ALL = tuple()
 
-    IDFFCtrlBase._add_devices(DEVICES)
+    IDFFCtrlBase._add_devices(DEVICES, IDFFCtrl.DEVICES)
 
     def __init__(self, devname, with_devctrl=True):
         """."""
