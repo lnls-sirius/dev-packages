@@ -982,6 +982,8 @@ class App(_Callback):
             for item in ret[2]:
                 self._update_log('ERR:'+item)
         else:
+            if ret[1]:
+                self._update_log('WARN:'+ret[1])
             msg = 'Turned '+cmd+' Inj.System.'
             self._update_log(msg)
 
@@ -1640,9 +1642,11 @@ class App(_Callback):
 
         lirf = self._injsys_dev.handlers['li_rf']
         if state == _Const.StandbyInject.Inject:
-            lirf.change_trigs_to_rmpbo_evt()
+            if not lirf.change_trigs_to_rmpbo_evt()[1]:
+                self._update_log('WARN:Some trigger sources did not change.')
         else:
-            lirf.change_trigs_to_linac_evt()
+            if not lirf.change_trigs_to_linac_evt()[1]:
+                self._update_log('WARN:Some trigger sources did not change.')
         self._update_log('LI timing configured.')
 
     def _handle_bops_standby_state(self, state):
