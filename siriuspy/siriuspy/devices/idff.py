@@ -368,8 +368,8 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
     class DEVICES:
         """Device names."""
 
-        VPU29_06SB_SOFT = 'SI-06SB:ID-VPU29_SOFT'
-        VPU29_07SP_SOFT = 'SI-07SP:ID-VPU29_SOFT'
+        VPU29_06SB_SOFT = 'SI-06SB:AP-IDFF'
+        VPU29_07SP_SOFT = 'SI-07SP:AP-IDFF'
         ALL = (VPU29_06SB_SOFT, VPU29_07SP_SOFT)
 
     IDFFCtrlBase._add_devices(IDFFCtrlSoft.DEVICES, DEVICES)
