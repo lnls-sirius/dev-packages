@@ -395,37 +395,6 @@ class CfgWfm(Function):
             self._cfg.execute(value)
 
 
-class SOFBCurrent(Function):
-    """."""
-
-    def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Create command to set SOFBCurrent."""
-        self.device_ids = device_ids
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_current_set(value)
-
-
-class SOFBMode(Function):
-    """."""
-
-    def __init__(self, pru_controller, setpoints=None):
-        """Create command to set SOFBMode."""
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_mode_set(value)
-
-
 class IDFFMode(Function):
     """."""
 
@@ -439,21 +408,6 @@ class IDFFMode(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             self.pru_controller.idff_mode_set(value)
-
-
-class SOFBUpdate(Function):
-    """."""
-
-    def __init__(self, pru_controller, setpoints=None):
-        """Create command to set SOFBMode."""
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_update_variables_state()
 
 
 class ParamUpdate(Function):
