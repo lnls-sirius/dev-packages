@@ -220,7 +220,7 @@ class PRUController:
             return _dcopy(values)
 
     def exec_functions(self, device_ids, function_id, args=None):
-        """Append BSMP function executions to opertations queue.
+        """Append BSMP function executions to operations queue.
 
         Parameters
         ----------
@@ -236,6 +236,10 @@ class PRUController:
         status : bool
             True if operation was queued.
         """
+        # if in IDFFMode, do not accept exec functions
+        if self._idff_mode:
+            return False
+
         # prepare arguments
         if isinstance(device_ids, int):
             device_ids = (device_ids, )
