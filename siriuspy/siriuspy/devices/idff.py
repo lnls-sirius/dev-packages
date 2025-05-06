@@ -828,7 +828,7 @@ class IDFF(_DeviceSet):
                 if dry_run:
                     print(f'{psname:<20s}: {curr:+.6f}')
                 else:
-                    devcorr.current = curr
+                    devcorr.set_current(curr, wait_mon=True)
             if dry_run:
                 print()
             _time.sleep(time_interval / (nrpts - 1))
