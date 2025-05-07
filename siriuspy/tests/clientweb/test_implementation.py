@@ -63,6 +63,7 @@ class TestClientWeb(TestCase):
         'magnets_model_data',
         'magnets_excitation_data_read',
         'magnets_excitation_ps_read',
+        'orb_intlk_limits_read',
         'ps_pstypes_names_read',
         'ps_pstype_data_read',
         'ps_pstype_setpoint_limits',
