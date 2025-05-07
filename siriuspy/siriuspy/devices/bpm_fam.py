@@ -232,6 +232,7 @@ class FamBPMs(_DeviceSet):
                 return None
             if not hasattr(val, "__iter__"):
                 return _np.full(ndev, val, dtype=int)
+
             arr = _np.asarray(val, dtype=int)
 
             if arr.size != ndev:
@@ -242,6 +243,13 @@ class FamBPMs(_DeviceSet):
 
         mask_begin = _to_array(mask_begin, "mask_begin")
         mask_end = _to_array(mask_end, "mask_end")
+
+        total_samples = mask_begin if mask_begin is not None else 0
+        total_samples += mask_end if mask_end is not None else 0
+        if _np.any(total_samples >= 382):
+            msg = "either mask_begin, mask_eind or "
+            msg += "mask_begin + mask_end equals/exceeds 382"
+            raise ValueError(msg)
 
         for i, bpm in enumerate(self):
             if mask_begin is not None:
