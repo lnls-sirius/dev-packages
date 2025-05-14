@@ -55,6 +55,8 @@ _pvs_bo_llrf = [
     ['RA-RaBO01:RF-LLRF:FIMRFIn14-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:FIMRFIn15-Sel', 0, 0.0],
     ['RA-RaBO01:RF-LLRF:FIMOrbitIntlk-Sel', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FIMQuenchCond1-Sel', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FIMEQuench-Sel', 0, 0.0],
     # End switches logic
     ['RA-RaBO01:RF-LLRF:EndSwLogicInv-Sel', 0, 0.0],
     # Beam trip logic
@@ -310,6 +312,7 @@ _pvs_sia_llrf = [
     ['RA-RaSIA01:RF-LLRF:FIMRFIn15-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF:FIMOrbitIntlk-Sel', 0, 0.0],
     ['RA-RaSIA01:RF-LLRF:FIMQuenchCond1-Sts', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:FIMEQuench-Sts', 0, 0.0],
     # End switches logic
     ['RA-RaSIA01:RF-LLRF:EndSwLogicInv-Sel', 0, 0.0],
     # Beam trip logic
@@ -430,13 +433,18 @@ _pvs_sia_llrf = [
     # Quench Condition
     ['RA-RaSIA01:RF-LLRF:QuenchCond1RvRatio-SP',0, 0.0],
     ['RA-RaSIA01:RF-LLRF:QuenchCond1Dly-SP',0, 0.0],
+    # EQuench
+    ['RA-RaSIA01:RF-LLRF:EQuenchFwRatio-SP',0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:EQuenchDly-SP',0, 0.0],
     # Dynamic Interlock setpoints
     ['RA-RaSIA01:RF-LLRF:CurrentDelta-SP', 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimRevCavCoeff-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimFwdCavCoeff-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:EQuenchFwRatioCoeff-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioCoeff-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimRevCavOffset-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimFwdCavOffset-SP", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:EQuenchFwRatioOffset-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimRevCavEn-Sel", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimFwdCavEn-Sel", 0, 0.0],
@@ -634,6 +642,7 @@ _pvs_sib_llrf = [
     ['RA-RaSIB01:RF-LLRF:FIMRFIn15-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:FIMOrbitIntlk-Sel', 0, 0.0],
     ['RA-RaSIB01:RF-LLRF:FIMQuenchCond1-Sts', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:FIMEQuench-Sts', 0, 0.0],
     # End switches logic
     ['RA-RaSIB01:RF-LLRF:EndSwLogicInv-Sel', 0, 0.0],
     # Beam trip logic
@@ -755,13 +764,18 @@ _pvs_sib_llrf = [
     # Quench Condition
     ['RA-RaSIB01:RF-LLRF:QuenchCond1RvRatio-SP',0, 0.0],
     ['RA-RaSIB01:RF-LLRF:QuenchCond1Dly-SP',0, 0.0],
+    # EQuench
+    ['RA-RaSIB01:RF-LLRF:EQuenchFwRatio-SP',0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:EQuenchDly-SP',0, 0.0],
     # Dynamic Interlock setpoints
     ['RA-RaSIB01:RF-LLRF:CurrentDelta-SP', 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimRevCavCoeff-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimFwdCavCoeff-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:EQuenchFwRatioCoeff-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioCoeff-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimRevCavOffset-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimFwdCavOffset-SP", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:EQuenchFwRatioOffset-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimRevCavEn-Sel", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimFwdCavEn-Sel", 0, 0.0],
