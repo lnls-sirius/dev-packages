@@ -221,6 +221,74 @@ class FamBPMs(_DeviceSet):
             _log.info(mstr)
         return okall
 
+    def set_tbt_mask(
+        self, enable=True, mask_begin=None, mask_end=None, timeout=TIMEOUT
+    ):
+        """."""
+        ndev = len(self.devices)
+
+        def _to_array(val, name):
+            if val is None:
+                return None
+            if not hasattr(val, "__iter__"):
+                return _np.full(ndev, val, dtype=int)
+
+            arr = _np.asarray(val, dtype=int)
+
+            if arr.size != ndev:
+                raise ValueError(
+                    f'{name} must have length {ndev}, got {arr.size}'
+                )
+            return arr
+
+        mask_begin = _to_array(mask_begin, "mask_begin")
+        mask_end = _to_array(mask_end, "mask_end")
+
+        total_samples = mask_begin.copy() if mask_begin is not None else 0
+        total_samples += mask_end if mask_end is not None else 0
+        if _np.any(total_samples >= 382):
+            msg = "either mask_begin, mask_eind or "
+            msg += "mask_begin + mask_end equals/exceeds 382"
+            raise ValueError(msg)
+
+        for i, bpm in enumerate(self):
+            if mask_begin is not None:
+                bpm.tbt_mask_beg = mask_begin[i]
+            if mask_end is not None:
+                bpm.tbt_mask_end = mask_end[i]
+            bpm.tbt_mask_enbl = int(enable)
+
+        mstr = ''
+        okall = True
+        t0 = _time.time()
+
+        for i, bpm in enumerate(self):
+            tout = timeout - (_time.time() - t0)
+
+            props = {'TbTDataMaskEn-Sel': int(enable)}
+
+            if mask_begin is not None:
+                props['TbTDataMaskSamplesBeg-RB'] = mask_begin[i]
+            if mask_end is not None:
+                props['TbTDataMaskSamplesEnd-RB'] = mask_end[i]
+
+            if not bpm._wait_set(props, timeout=tout):
+                okall = False
+                for prop, sp in props.items():
+                    rb = bpm[prop]
+                    if rb != sp:
+                        mstr += (
+                            f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
+                        )
+        was_set = mask_begin is not None or mask_end is not None
+        status = 'enabled' if enable else 'disabled'
+        status += ' & set' if was_set else ''
+        stg = ', except:' if mstr else '.'
+        _log.info('TbT Masks %s in all BPMs%s', status, stg)
+        if mstr:
+            _log.info(mstr)
+        return okall
+
     def get_slow_orbit(self):
         """Get slow orbit vectors.
 
