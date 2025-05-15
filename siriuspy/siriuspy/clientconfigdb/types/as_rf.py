@@ -448,6 +448,7 @@ _pvs_sia_llrf = [
     ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimRevCavEn-Sel", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:LimFwdCavEn-Sel", 0, 0.0],
+    ["RA-RaSIA01:RF-LLRF:EQuenchFwRatioEn-Sel", 0, 0.0],
     ["RA-RaSIA01:RF-LLRF:QuenchCond1RvRatioEn-Sel", 0, 0.0],
 ]
 
@@ -779,6 +780,7 @@ _pvs_sib_llrf = [
     ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioOffset-SP", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimRevCavEn-Sel", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:LimFwdCavEn-Sel", 0, 0.0],
+    ["RA-RaSIB01:RF-LLRF:EQuenchFwRatioEn-Sel", 0, 0.0],
     ["RA-RaSIB01:RF-LLRF:QuenchCond1RvRatioEn-Sel", 0, 0.0],
 ]
 
