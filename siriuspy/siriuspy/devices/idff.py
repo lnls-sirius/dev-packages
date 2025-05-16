@@ -437,8 +437,8 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     class DEVICES:
         """Device names."""
 
-        VPU29_06SB_HARD = 'SI-06SB:BS-IDFF-CC_HARD'
-        VPU29_07SP_HARD = 'SI-07SP:BS-IDFF-CC_HARD'
+        VPU29_06SB_HARD = 'SI-06SB:BS-IDFF-CC'
+        VPU29_07SP_HARD = 'SI-07SP:BS-IDFF-CC'
         ALL = (VPU29_06SB_HARD, VPU29_07SP_HARD)
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
@@ -828,7 +828,7 @@ class IDFF(_DeviceSet):
                 if dry_run:
                     print(f'{psname:<20s}: {curr:+.6f}')
                 else:
-                    devcorr.current = curr
+                    devcorr.set_current(curr, wait_mon=True)
             if dry_run:
                 print()
             _time.sleep(time_interval / (nrpts - 1))
