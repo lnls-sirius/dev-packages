@@ -256,12 +256,16 @@ class MacReport:
         'Users',
     ]
 
+    # The following failures are counted as beam dump failures
     FAILURES_MANUAL = [
         # hydraulic failure, wrong machine shift for recovery
         [_Time(2023, 3, 3, 22, 56, 0, 0), _Time(2023, 3, 3, 23, 0, 0, 0)],
-        # power grid failure, archiver was down
+        # power grid failure, beam was dumped and archiver was down
         [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
         [_Time(2024, 1, 18, 14, 0, 0, 0), _Time(2024, 1, 18, 19, 45, 0, 0)],
+        # beam dump during archiver failure
+        [_Time(2025, 1, 19, 23, 39, 0, 0), _Time(2025, 1, 20, 8, 0, 0, 0)],
+        [_Time(2025, 1, 27, 1, 29, 0, 0), _Time(2025, 1, 27, 3, 48, 0, 0)],
     ]
 
     def __init__(self, connector=None, logger=None):
