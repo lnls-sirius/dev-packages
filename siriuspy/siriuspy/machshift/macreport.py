@@ -1632,15 +1632,15 @@ class MacReport:
             self._usershift_current_end_stddev = 0
 
         # # # ----- failures -----
-        beam_dump_values = 1 * _np.logical_and(
-            _np.logical_not(
-                self._raw_data['Failures']['WrongShift']
-            ), _np.logical_or(
-                self._raw_data['Failures']['ManualAnnotated'],
+        self._beam_dump_values = 1 * _np.logical_or(
+            self._raw_data['Failures']['ManualAnnotated'],
+            _np.logical_and(
+                _np.logical_not(self._raw_data['Failures']['WrongShift']),
                 self._raw_data['Failures']['NoEBeam']
-            ))
+            )
+        )
         self._usershift_beam_dump_count = _np.sum(
-            _np.diff(beam_dump_values) > 0)
+            _np.diff(self._beam_dump_values) > 0)
 
         ave, std, count = self._calc_interval_stats(
             self._failures_users, dtimes_failures_users)
