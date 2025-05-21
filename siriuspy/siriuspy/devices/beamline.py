@@ -63,6 +63,118 @@ class _ParamPVs:
     Y3_PARAM_STOP = None
 
 
+class Slit(_Device):
+    """Slit device."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SLIT1 = "CAX:A:PP02" # WBS1
+        SLIT2 = "CAX:B:PP01" # WBS2
+
+        ALL = (
+            SLIT1, SLIT2,
+        )
+
+    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    PARAM_PVS.TOP_PARAM_SP = "A.VAL"
+    PARAM_PVS.TOP_PARAM_RB = "A.VAL" # That doesn't have a RB PV
+    PARAM_PVS.TOP_PARAM_MON = "A.RBV" # RBV is not the pv of readback
+    PARAM_PVS.TOP_PARAM_STOP = "A.STOP"
+
+    PARAM_PVS.BOTTOM_PARAM_SP = "B.VAL"
+    PARAM_PVS.BOTTOM_PARAM_RB = "B.VAL" # That doesn't have a RB PV
+    PARAM_PVS.BOTTOM_PARAM_MON = "B.RBV" # RBV is not the pv of readback
+    PARAM_PVS.BOTTOM_PARAM_STOP = "B.STOP"
+
+    PARAM_PVS.LEFT_PARAM_SP = "C.VAL"
+    PARAM_PVS.LEFT_PARAM_RB = "C.VAL" # That doesn't have a RB PV
+    PARAM_PVS.LEFT_PARAM_MON = "C.RBV" # RBV is not the pv of readback
+    PARAM_PVS.LEFT_PARAM_STOP = "C.STOP"
+
+    PARAM_PVS.RIGHT_PARAM_SP = "D.VAL"
+    PARAM_PVS.RIGHT_PARAM_RB = "D.VAL" # That doesn't have a RB PV
+    PARAM_PVS.RIGHT_PARAM_MON = "D.RBV" # RBV is not the pv of readback
+    PARAM_PVS.RIGHT_PARAM_STOP = "D.STOP"
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname=None, props2init='all', **kwargs):
+        """Init."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init, **kwargs)
+    
+    @property
+    def top_pos(self):
+        """Return slit top position [mm]."""
+        return self[self.PARAM_PVS.TOP_PARAM_MON]
+
+    @top_pos.setter
+    def top_pos(self, value):
+        """Set slit top position [mm]."""
+        self[self.PARAM_PVS.TOP_PARAM_SP] = value
+
+    @property
+    def bottom_pos(self):
+        """Return slit bottom position [mm]."""
+        return self[self.PARAM_PVS.BOTTOM_PARAM_MON]
+
+    @bottom_pos.setter
+    def bottom_pos(self, value):
+        """Set slit bottom position [mm]."""
+        self[self.PARAM_PVS.BOTTOM_PARAM_SP] = value
+    
+    @property
+    def left_pos(self):
+        """Return slit left position [mm]."""
+        return self[self.PARAM_PVS.LEFT_PARAM_MON]
+
+    @left_pos.setter
+    def left_pos(self, value):
+        """Set slit left position [mm]."""
+        self[self.PARAM_PVS.LEFT_PARAM_SP] = value
+    
+    @property
+    def right_pos(self):
+        """Return slit right position [mm]."""
+        return self[self.PARAM_PVS.RIGHT_PARAM_MON]
+
+    @right_pos.setter
+    def right_pos(self, value):
+        """Set slit right position [mm]."""
+        self[self.PARAM_PVS.RIGHT_PARAM_SP] = value
+
+    def _cmd_motor_stop(self, propty, timeout):
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        self[propty] = 1
+        return self._wait(propty, 0, timeout=timeout)
+    
+    def cmd_top_stop(self, timeout=None):
+        """Stop Slit top motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.TOP_PARAM_STOP, timeout)
+
+    def cmd_bottom_stop(self, timeout=None):
+        """Stop Slit bottom motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.BOTTOM_PARAM_STOP, timeout)
+
+    def cmd_left_stop(self, timeout=None):
+        """Stop Slit left motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.LEFT_PARAM_STOP, timeout)
+
+    def cmd_right_stop(self, timeout=None):
+        """Stop Slit right motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.RIGHT_PARAM_STOP, timeout)
+
+
 class Mirror(_Device):
     """Mirror device.
     
@@ -252,118 +364,6 @@ class Mirror(_Device):
     def cmd_y3_stop(self, timeout=None):
         """Stop linear actuator Y3."""
         return self._cmd_motor_stop(self.PARAM_PVS.Y3_PARAM_STOP, timeout)
-
-
-class Slit(_Device):
-    """Slit device."""
-
-    class DEVICES:
-        """Devices names."""
-
-        SLIT1 = "CAX:A:PP02" # WBS1
-        SLIT2 = "CAX:B:PP01" # WBS2
-
-        ALL = (
-            SLIT1, SLIT2,
-        )
-
-    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
-
-    # --- PARAM_PVS ---
-    PARAM_PVS = _ParamPVs()
-
-    PARAM_PVS.TOP_PARAM_SP = "A.VAL"
-    PARAM_PVS.TOP_PARAM_RB = "A.VAL" # That doesn't have a RB PV
-    PARAM_PVS.TOP_PARAM_MON = "A.RBV" # RBV is not the pv of readback
-    PARAM_PVS.TOP_PARAM_STOP = "A.STOP"
-
-    PARAM_PVS.BOTTOM_PARAM_SP = "B.VAL"
-    PARAM_PVS.BOTTOM_PARAM_RB = "B.VAL" # That doesn't have a RB PV
-    PARAM_PVS.BOTTOM_PARAM_MON = "B.RBV" # RBV is not the pv of readback
-    PARAM_PVS.BOTTOM_PARAM_STOP = "B.STOP"
-
-    PARAM_PVS.LEFT_PARAM_SP = "C.VAL"
-    PARAM_PVS.LEFT_PARAM_RB = "C.VAL" # That doesn't have a RB PV
-    PARAM_PVS.LEFT_PARAM_MON = "C.RBV" # RBV is not the pv of readback
-    PARAM_PVS.LEFT_PARAM_STOP = "C.STOP"
-
-    PARAM_PVS.RIGHT_PARAM_SP = "D.VAL"
-    PARAM_PVS.RIGHT_PARAM_RB = "D.VAL" # That doesn't have a RB PV
-    PARAM_PVS.RIGHT_PARAM_MON = "D.RBV" # RBV is not the pv of readback
-    PARAM_PVS.RIGHT_PARAM_STOP = "D.STOP"
-
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
-
-    def __init__(self, devname=None, props2init='all', **kwargs):
-        """Init."""
-        # check if device exists
-        if devname not in self.DEVICES.ALL:
-            raise NotImplementedError(devname)
-        super().__init__(devname, props2init=props2init, **kwargs)
-    
-    @property
-    def top_pos(self):
-        """Return slit top position [mm]."""
-        return self[self.PARAM_PVS.TOP_PARAM_MON]
-
-    @top_pos.setter
-    def top_pos(self, value):
-        """Set slit top position [mm]."""
-        self[self.PARAM_PVS.TOP_PARAM_SP] = value
-
-    @property
-    def bottom_pos(self):
-        """Return slit bottom position [mm]."""
-        return self[self.PARAM_PVS.BOTTOM_PARAM_MON]
-
-    @bottom_pos.setter
-    def bottom_pos(self, value):
-        """Set slit bottom position [mm]."""
-        self[self.PARAM_PVS.BOTTOM_PARAM_SP] = value
-    
-    @property
-    def left_pos(self):
-        """Return slit left position [mm]."""
-        return self[self.PARAM_PVS.LEFT_PARAM_MON]
-
-    @left_pos.setter
-    def left_pos(self, value):
-        """Set slit left position [mm]."""
-        self[self.PARAM_PVS.LEFT_PARAM_SP] = value
-    
-    @property
-    def right_pos(self):
-        """Return slit right position [mm]."""
-        return self[self.PARAM_PVS.RIGHT_PARAM_MON]
-
-    @right_pos.setter
-    def right_pos(self, value):
-        """Set slit right position [mm]."""
-        self[self.PARAM_PVS.RIGHT_PARAM_SP] = value
-
-    def _cmd_motor_stop(self, propty, timeout):
-        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
-        self[propty] = 1
-        return self._wait(propty, 0, timeout=timeout)
-    
-    def cmd_top_stop(self, timeout=None):
-        """Stop Slit top motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.TOP_PARAM_STOP, timeout)
-
-    def cmd_bottom_stop(self, timeout=None):
-        """Stop Slit bottom motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.BOTTOM_PARAM_STOP, timeout)
-
-    def cmd_left_stop(self, timeout=None):
-        """Stop Slit left motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.LEFT_PARAM_STOP, timeout)
-
-    def cmd_right_stop(self, timeout=None):
-        """Stop Slit right motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.RIGHT_PARAM_STOP, timeout)
 
 
 class CAXCtrl(_Device):
