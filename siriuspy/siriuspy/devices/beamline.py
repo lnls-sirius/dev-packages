@@ -72,6 +72,12 @@ class Slit(_Device):
             value for key, value in _inspect.getmembers(PARAM_PVS)
             if not key.startswith('_') and value is not None))
 
+    def __init__(self, devname=None, props2init='all', **kwargs):
+        """Init."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init, **kwargs)
 
 class CAXCtrl(_Device):
     """Carcara beamline control.
