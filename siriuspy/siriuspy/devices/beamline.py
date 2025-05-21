@@ -44,6 +44,8 @@ class Slit(_Device):
             SLIT1, SLIT2,
         )
 
+    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
 
@@ -118,6 +120,28 @@ class Slit(_Device):
     def right_pos(self, value):
         """Set slit right position [mm]."""
         self[self.PARAM_PVS.RIGHT_PARAM_SP] = value
+
+    def _cmd_motor_stop(self, propty, timeout):
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        self[propty] = 1
+        return self._wait(propty, 0, timeout=timeout)
+    
+    def cmd_top_stop(self, timeout=None):
+        """Stop Slit top motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.TOP_PARAM_STOP, timeout)
+
+    def cmd_bottom_stop(self, timeout=None):
+        """Stop Slit bottom motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.BOTTOM_PARAM_STOP, timeout)
+
+    def cmd_left_stop(self, timeout=None):
+        """Stop Slit left motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.LEFT_PARAM_STOP, timeout)
+
+    def cmd_right_stop(self, timeout=None):
+        """Stop Slit right motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.RIGHT_PARAM_STOP, timeout)
+
 
 class CAXCtrl(_Device):
     """Carcara beamline control.
