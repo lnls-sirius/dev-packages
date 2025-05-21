@@ -1,5 +1,7 @@
 """Beamline devices."""
 
+import inspect as _inspect
+
 from .device import Device as _Device
 
 class _ParamPVs:
@@ -27,6 +29,48 @@ class _ParamPVs:
     RIGHT_PARAM_RB = None
     RIGHT_PARAM_MON = None
     RIGHT_PARAM_STOP = None
+
+
+class Slit(_Device):
+    """Slit device."""
+
+    class DEVICES:
+        """Devices names."""
+
+        SLIT1 = "CAX:A:PP02" # WBS1
+        SLIT2 = "CAX:B:PP01" # WBS2
+
+        ALL = (
+            SLIT1, SLIT2,
+        )
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    PARAM_PVS.TOP_PARAM_SP = "A.VAL"
+    PARAM_PVS.TOP_PARAM_RB = "A.VAL" # That doesn't have a RB PV
+    PARAM_PVS.TOP_PARAM_MON = "A.RBV" # RBV is not the pv of readback
+    PARAM_PVS.TOP_PARAM_STOP = "A.STOP"
+
+    PARAM_PVS.BOTTOM_PARAM_SP = "B.VAL"
+    PARAM_PVS.BOTTOM_PARAM_RB = "B.VAL" # That doesn't have a RB PV
+    PARAM_PVS.BOTTOM_PARAM_MON = "B.RBV" # RBV is not the pv of readback
+    PARAM_PVS.BOTTOM_PARAM_STOP = "B.STOP"
+
+    PARAM_PVS.LEFT_PARAM_SP = "C.VAL"
+    PARAM_PVS.LEFT_PARAM_RB = "C.VAL" # That doesn't have a RB PV
+    PARAM_PVS.LEFT_PARAM_MON = "C.RBV" # RBV is not the pv of readback
+    PARAM_PVS.LEFT_PARAM_STOP = "C.STOP"
+
+    PARAM_PVS.RIGHT_PARAM_SP = "D.VAL"
+    PARAM_PVS.RIGHT_PARAM_RB = "D.VAL" # That doesn't have a RB PV
+    PARAM_PVS.RIGHT_PARAM_MON = "D.RBV" # RBV is not the pv of readback
+    PARAM_PVS.RIGHT_PARAM_STOP = "D.STOP"
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
 
 
 class CAXCtrl(_Device):
