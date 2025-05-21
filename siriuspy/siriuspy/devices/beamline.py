@@ -447,6 +447,39 @@ class MirrorSensors(_Device):
         self[self.PARAM_PVS.TEMP_SP] = value
 
 
+class DVFCtrl(_Device):
+    """ DVF motors:
+
+    DVF:
+    https://cnpemcamp.sharepoint.com/:p:/s/lnls/groups/opt/EfXWP0gm-URPt1mzEZEWxbABzJxfJg3kt86jOJrV3KQoMg?e=eaT4T1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIxNDE1LzI0MDYyNzI0ODE0In0%3D
+    """
+
+    class DEVICES:
+        """Devices names."""
+
+        # DVF motors
+        MOTOR = 'B:PP01'
+
+        ALL = (
+            MOTOR,
+        )
+
+    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+    
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    PARAM_PVS.DVF_Z_SP = 'E.VAL'
+    PARAM_PVS.DVF_Z_RB = 'E.VAL'
+    PARAM_PVS.DVF_Z_MON = 'E.RBV'
+    PARAM_PVS.DVF_Z_STOP = 'E.STOP'
+
+    PARAM_PVS.DVF_Z_SP = 'F.VAL'
+    PARAM_PVS.DVF_Z_RB = 'F.VAL'
+    PARAM_PVS.DVF_Z_MON = 'F.RBV'
+    PARAM_PVS.DVF_Z_STOP = 'F.STOP'
+
+
 class CAXCtrl(_Device):
     """ DVF:
     https://cnpemcamp.sharepoint.com/:p:/s/lnls/groups/opt/EfXWP0gm-URPt1mzEZEWxbABzJxfJg3kt86jOJrV3KQoMg?e=eaT4T1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIxNDE1LzI0MDYyNzI0ODE0In0%3D
