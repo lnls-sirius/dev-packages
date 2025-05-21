@@ -1,4 +1,8 @@
-"""Beamline devices."""
+"""Carcara beamline control.
+
+    * Beamline commissionning:
+    https://cnpemcamp.sharepoint.com/:p:/s/lnls/groups/opt/EZB-ePPBFvRPqi5IM1fjTsoB7uwtUhUrw3inlGnRfDm1KA?e=4lP3Bi&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIxNDE1LzI0MDYyNzI0ODE0In0%3D
+"""
 
 import inspect as _inspect
 
@@ -432,28 +436,13 @@ class MirrorSensors(_Device):
 
 
 class CAXCtrl(_Device):
-    """Carcara beamline control.
-
-    * Beamline commissionning:
-    https://cnpemcamp.sharepoint.com/:p:/s/lnls/groups/opt/EZB-ePPBFvRPqi5IM1fjTsoB7uwtUhUrw3inlGnRfDm1KA?e=4lP3Bi&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIxNDE1LzI0MDYyNzI0ODE0In0%3D
-
-    * DVF:
+    """ DVF:
     https://cnpemcamp.sharepoint.com/:p:/s/lnls/groups/opt/EfXWP0gm-URPt1mzEZEWxbABzJxfJg3kt86jOJrV3KQoMg?e=eaT4T1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIxNDE1LzI0MDYyNzI0ODE0In0%3D
-
-    * M1 online autodesk drawing:
-    https://drive.autodesk.com/de29ccb7d/shares/SH9285eQTcf875d3c5396deb53e725438482
     """
 
     _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
 
     PROPERTIES_DEFAULT = (
-        # mirror photocollector
-        'A:RIO01:9215A:ai0',
-        # mirror temperatures
-        'A:RIO01:M1_CtrltempSp',
-        'A:RIO01:9226B:temp0', 'A:RIO01:9226B:temp1',
-        'A:RIO01:9226B:temp2', 'A:RIO01:9226B:temp3',
-        'A:RIO01:9226B:temp4',
         # dvf motors
         'B:PP01:E', 'B:PP01:E.RBV', 'B:PP01:E.STOP',  # z pos
         'B:PP01:F', 'B:PP01:F.RBV', 'B:PP01:F.STOP',  # lens
@@ -463,11 +452,6 @@ class CAXCtrl(_Device):
         """Init."""
         devname = 'CAX' if devname is None else devname
         super().__init__(devname, props2init=props2init, **kwargs)
-
-    @property
-    def m1_photocurrent_signal(self):
-        """Return induced voltage in the mirror photocollector [V]."""
-        return self['A:RIO01:9215A:ai0']
 
     @property
     def dvf2_z_pos(self):
@@ -488,41 +472,6 @@ class CAXCtrl(_Device):
     def dvf2_lens_pos(self, value):
         """Set DVF2 lens motor position [mm]."""
         self['B:PP01:F'] = value
-
-    @property
-    def m1_temperature_ref(self):
-        """Return M1 temperature reference setpoint [°C]."""
-        return self['A:RIO01:M1_CtrltempSp']
-
-    @m1_temperature_ref.setter
-    def m1_temperature_ref(self, value):
-        """Set M1 temperature reference [°C]."""
-        self['A:RIO01:M1_CtrltempSp'] = value
-
-    @property
-    def m1_temperature_0(self):
-        """Return M1 temperature at cold finger [°C]."""
-        return self['A:RIO01:9226B:temp0']
-
-    @property
-    def m1_temperature_1(self):
-        """Return M1 temperature at braid mirror [°C]."""
-        return self['A:RIO01:9226B:temp1']
-
-    @property
-    def m1_temperature_2(self):
-        """Return M1 temperature at bar braid cold finger [°C]."""
-        return self['A:RIO01:9226B:temp2']
-
-    @property
-    def m1_temperature_3(self):
-        """Return M1 temperature at peltier cold side [°C]."""
-        return self['A:RIO01:9226B:temp3']
-
-    @property
-    def m1_temperature_4(self):
-        """Return M1 temperature at peltier hot side [°C]."""
-        return self['A:RIO01:9226B:temp4']
 
     def cmd_dvf2_z_stop(self, timeout=None):
         """Stop DVF2 base motor."""
