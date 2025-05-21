@@ -78,6 +78,46 @@ class Slit(_Device):
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
         super().__init__(devname, props2init=props2init, **kwargs)
+    
+    @property
+    def top_pos(self):
+        """Return slit top position [mm]."""
+        return self[self.PARAM_PVS.TOP_PARAM_MON]
+
+    @top_pos.setter
+    def top_pos(self, value):
+        """Set slit top position [mm]."""
+        self[self.PARAM_PVS.TOP_PARAM_SP] = value
+
+    @property
+    def bottom_pos(self):
+        """Return slit bottom position [mm]."""
+        return self[self.PARAM_PVS.BOTTOM_PARAM_MON]
+
+    @bottom_pos.setter
+    def bottom_pos(self, value):
+        """Set slit bottom position [mm]."""
+        self[self.PARAM_PVS.BOTTOM_PARAM_SP] = value
+    
+    @property
+    def left_pos(self):
+        """Return slit left position [mm]."""
+        return self[self.PARAM_PVS.LEFT_PARAM_MON]
+
+    @left_pos.setter
+    def left_pos(self, value):
+        """Set slit left position [mm]."""
+        self[self.PARAM_PVS.LEFT_PARAM_SP] = value
+    
+    @property
+    def right_pos(self):
+        """Return slit right position [mm]."""
+        return self[self.PARAM_PVS.RIGHT_PARAM_MON]
+
+    @right_pos.setter
+    def right_pos(self, value):
+        """Set slit right position [mm]."""
+        self[self.PARAM_PVS.RIGHT_PARAM_SP] = value
 
 class CAXCtrl(_Device):
     """Carcara beamline control.
