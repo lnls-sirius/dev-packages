@@ -479,6 +479,13 @@ class DVFCtrl(_Device):
     PARAM_PVS.DVF_Z_MON = 'F.RBV'
     PARAM_PVS.DVF_Z_STOP = 'F.STOP'
 
+    def __init__(self, devname=None, props2init='all', **kwargs):
+        """Init."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+        super().__init__(devname, props2init=props2init, **kwargs)
+
 
 class CAXCtrl(_Device):
     """ DVF:
