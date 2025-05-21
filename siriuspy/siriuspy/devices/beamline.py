@@ -227,6 +227,31 @@ class Mirror(_Device):
         the other side, in opposite horizontal ends.
         """
         self[self.PARAM_PVS.Y3_PARAM_SP] = value
+    
+    def _cmd_motor_stop(self, propty, timeout):
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        self[propty] = 1
+        return self._wait(propty, 0, timeout=timeout)
+
+    def cmd_roty_stop(self, timeout=None):
+        """Stop linear actuator for RotY rotation."""
+        return self._cmd_motor_stop(self.PARAM_PVS.ROTY_PARAM_STOP, timeout)
+
+    def cmd_tx_stop(self, timeout=None):
+        """Stop linear actuator for Tx translation."""
+        return self._cmd_motor_stop(self.PARAM_PVS.TX_PARAM_STOP, timeout)
+
+    def cmd_y1_stop(self, timeout=None):
+        """Stop linear actuator Y1."""
+        return self._cmd_motor_stop(self.PARAM_PVS.Y1_PARAM_STOP, timeout)
+
+    def cmd_y2_stop(self, timeout=None):
+        """Stop linear actuator Y2."""
+        return self._cmd_motor_stop(self.PARAM_PVS.Y2_PARAM_STOP, timeout)
+
+    def cmd_y3_stop(self, timeout=None):
+        """Stop linear actuator Y3."""
+        return self._cmd_motor_stop(self.PARAM_PVS.Y3_PARAM_STOP, timeout)
 
 
 class Slit(_Device):
