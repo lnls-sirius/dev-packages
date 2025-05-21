@@ -62,6 +62,19 @@ class _ParamPVs:
     Y3_PARAM_MON = None
     Y3_PARAM_STOP = None
 
+    # MIRROR SENSORS
+    # --- PHOTOCOLLECTOR ---
+    PHOTOCOLLECTOR = None
+
+    # --- TEMPERATURES ---
+    TEMP_SP = None
+    TEMP_RB = None
+    TEMP0_MON = None
+    TEMP1_MON = None
+    TEMP2_MON = None
+    TEMP3_MON = None
+    TEMP4_MON = None
+
 
 class Slit(_Device):
     """Slit device."""
