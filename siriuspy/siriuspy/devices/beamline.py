@@ -485,7 +485,29 @@ class DVFCtrl(_Device):
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
         super().__init__(devname, props2init=props2init, **kwargs)
+    
+    @property
+    def dvf2_z_pos(self):
+        """Return DVF2 base motor longitudinal position [mm]."""
+        return self[self.PARAM_PVS.DVF_Z_MON]
 
+    @dvf2_z_pos.setter
+    def dvf2_z_pos(self, value):
+        """Set DVF2 base motor longitudinal position [mm]."""
+        self[self.PARAM_PVS.DVF_Z_SP] = value
+
+    def _cmd_motor_stop(self, propty, timeout):
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        self[propty] = 1
+        return self._wait(propty, 0, timeout=timeout)
+
+    def cmd_dvf2_z_stop(self, timeout=None):
+        """Stop DVF2 base motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.DVF_Z_STOP, timeout)
+
+    def cmd_dvf2_lens_stop(self, timeout=None):
+        """Stop DVF2 lens motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.DVF_LENS_STOP, timeout)
 
 class CAXCtrl(_Device):
     """ DVF:
