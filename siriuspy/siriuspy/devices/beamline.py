@@ -415,6 +415,21 @@ class MirrorSensors(_Device):
             raise NotImplementedError(devname)
         super().__init__(devname, props2init=props2init, **kwargs)
 
+    @property
+    def photocurrent_signal(self):
+        """Return induced voltage in the mirror photocollector [V]."""
+        return self[self.PARAM_PVS.PHOTOCOLLECTOR]
+
+    @property
+    def temperature_ref(self):
+        """Return M1 temperature reference setpoint [°C]."""
+        return self[self.PARAM_PVS.TEMP_RB]
+
+    @temperature_ref.setter
+    def temperature_ref(self, value):
+        """Set M1 temperature reference [°C]."""
+        self[self.PARAM_PVS.TEMP_SP] = value
+
 
 class CAXCtrl(_Device):
     """Carcara beamline control.
