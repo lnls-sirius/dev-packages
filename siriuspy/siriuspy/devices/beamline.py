@@ -80,6 +80,19 @@ class _ParamPVs:
     TEMP3_MON = None
     TEMP4_MON = None
 
+    # DVF
+    # --- DVF Z POSITION ---
+    DVF_Z_SP = None
+    DVF_Z_RB = None
+    DVF_Z_MON = None
+    DVF_Z_STOP = None
+
+    # --- DVF LENS POSITION ---
+    DVF_LENS_SP = None
+    DVF_LENS_RB = None
+    DVF_LENS_MON = None
+    DVF_LENS_STOP = None
+
 
 class Slit(_Device):
     """Slit device."""
@@ -214,7 +227,6 @@ class Mirror(_Device):
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
 
-    # --- mirror motors suffix initialization --- 
     PARAM_PVS.ROTY_PARAM_SP = "A.VAL"
     PARAM_PVS.ROTY_PARAM_RB = "A.VAL" # That doesn't have a RB PV
     PARAM_PVS.ROTY_PARAM_MON = "A.RBV" # RBV is not the pv of readback
