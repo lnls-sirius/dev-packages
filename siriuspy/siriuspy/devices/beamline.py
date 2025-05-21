@@ -2,6 +2,32 @@
 
 from .device import Device as _Device
 
+class _ParamPVs:
+    
+    # --- TOP ---
+    TOP_PARAM_SP = None
+    TOP_PARAM_RB = None
+    TOP_PARAM_MON = None
+    TOP_PARAM_STOP = None
+
+    # --- BOTTOM ---
+    BOTTOM_PARAM_SP = None
+    BOTTOM_PARAM_RB = None
+    BOTTOM_PARAM_MON = None
+    BOTTOM_PARAM_STOP = None
+
+    # --- LEFT ---
+    LEFT_PARAM_SP = None
+    LEFT_PARAM_RB = None
+    LEFT_PARAM_MON = None
+    LEFT_PARAM_STOP = None
+
+    # --- RIGHT ---
+    RIGHT_PARAM_SP = None
+    RIGHT_PARAM_RB = None
+    RIGHT_PARAM_MON = None
+    RIGHT_PARAM_STOP = None
+
 
 class CAXCtrl(_Device):
     """Carcara beamline control.
