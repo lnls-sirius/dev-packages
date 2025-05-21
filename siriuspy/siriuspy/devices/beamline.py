@@ -63,6 +63,59 @@ class _ParamPVs:
     Y3_PARAM_STOP = None
 
 
+class Mirror(_Device):
+    """Mirror device.
+    
+    * M1 online autodesk drawing:
+    https://drive.autodesk.com/de29ccb7d/shares/SH9285eQTcf875d3c5396deb53e725438482
+    """
+
+    class DEVICES:
+        """Devices names."""
+
+        MIRROR1 = "CAX:A:PP01"
+
+        ALL = (
+            MIRROR1,
+        )
+    
+    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    # --- mirror motors suffix initialization --- 
+    PARAM_PVS.ROTY_PARAM_SP = "A.VAL"
+    PARAM_PVS.ROTY_PARAM_RB = "A.VAL" # That doesn't have a RB PV
+    PARAM_PVS.ROTY_PARAM_MON = "A.RBV" # RBV is not the pv of readback
+    PARAM_PVS.ROTY_PARAM_STOP = "A.STOP"
+
+    PARAM_PVS.TX_PARAM_SP = "B.VAL"
+    PARAM_PVS.TX_PARAM_RB = "B.VAL" # That doesn't have a RB PV
+    PARAM_PVS.TX_PARAM_MON = "B.RBV" # RBV is not the pv of readback
+    PARAM_PVS.TX_PARAM_STOP = "B.STOP"
+
+    PARAM_PVS.Y1_PARAM_SP = "C.VAL"
+    PARAM_PVS.Y1_PARAM_RB = "C.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y1_PARAM_MON = "C.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y1_PARAM_STOP = "C.STOP"
+
+    PARAM_PVS.Y2_PARAM_SP = "D.VAL"
+    PARAM_PVS.Y2_PARAM_RB = "D.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y2_PARAM_MON = "D.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y2_PARAM_STOP = "D.STOP"
+
+    PARAM_PVS.Y3_PARAM_SP = "E.VAL"
+    PARAM_PVS.Y3_PARAM_RB = "E.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y3_PARAM_MON = "E.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y3_PARAM_STOP = "E.STOP"
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+
 class Slit(_Device):
     """Slit device."""
 
