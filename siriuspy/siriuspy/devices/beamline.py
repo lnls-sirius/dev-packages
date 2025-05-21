@@ -4,6 +4,7 @@ import inspect as _inspect
 
 from .device import Device as _Device
 
+
 class _ParamPVs:
     
     # SLITS
@@ -377,6 +378,35 @@ class Mirror(_Device):
     def cmd_y3_stop(self, timeout=None):
         """Stop linear actuator Y3."""
         return self._cmd_motor_stop(self.PARAM_PVS.Y3_PARAM_STOP, timeout)
+
+
+class MirrorSensors(_Device):
+    """Mirror sensors."""
+
+    class DEVICES:
+        """Device names."""
+
+        SENSORS = 'CAX:A:RIO01'
+
+        ALL = (
+            SENSORS,
+        )
+    
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    PARAM_PVS.TEMP_SP = 'M1_CtrltempSp'
+    PARAM_PVS.TEMP_RB = 'M1_CtrltempSp' # That doesn't have a RB PV
+    PARAM_PVS.TEMP0_MON = '9226B:temp0'
+    PARAM_PVS.TEMP1_MON = '9226B:temp1'
+    PARAM_PVS.TEMP2_MON = '9226B:temp2'
+    PARAM_PVS.TEMP3_MON = '9226B:temp3'
+    PARAM_PVS.TEMP4_MON = '9226B:temp4'
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
 
 
 class CAXCtrl(_Device):
