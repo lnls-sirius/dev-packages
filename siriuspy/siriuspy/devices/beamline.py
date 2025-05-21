@@ -175,16 +175,6 @@ class CAXCtrl(_Device):
         # dvf motors
         'B:PP01:E', 'B:PP01:E.RBV', 'B:PP01:E.STOP',  # z pos
         'B:PP01:F', 'B:PP01:F.RBV', 'B:PP01:F.STOP',  # lens
-        # slit 1 controls
-        'A:PP02:A', 'A:PP02:A.RBV', 'A:PP02:A.STOP',  # Top slit
-        'A:PP02:B', 'A:PP02:B.RBV', 'A:PP02:B.STOP',  # Bottom slit
-        'A:PP02:C', 'A:PP02:C.RBV', 'A:PP02:C.STOP',  # Left slit
-        'A:PP02:D', 'A:PP02:D.RBV', 'A:PP02:D.STOP',  # Right slit
-        # slit 2 controls
-        'B:PP01:A', 'B:PP01:A.RBV', 'B:PP01:A.STOP',  # Top slit
-        'B:PP01:B', 'B:PP01:B.RBV', 'B:PP01:B.STOP',  # Bottom slit
-        'B:PP01:C', 'B:PP01:C.RBV', 'B:PP01:C.STOP',  # Left slit
-        'B:PP01:D', 'B:PP01:D.RBV', 'B:PP01:D.STOP',  # Right slit
         )
 
     def __init__(self, devname=None, props2init='all', **kwargs):
@@ -324,86 +314,6 @@ class CAXCtrl(_Device):
         self['B:PP01:F'] = value
 
     @property
-    def slit1_top_pos(self):
-        """Return slit1 top position [mm]."""
-        return self['A:PP02:A.RBV']
-
-    @slit1_top_pos.setter
-    def slit1_top_pos(self, value):
-        """Set slit1 top position [mm]."""
-        self['A:PP02:A'] = value
-
-    @property
-    def slit1_bottom_pos(self):
-        """Return slit1 bottom position [mm]."""
-        return self['A:PP02:B.RBV']
-
-    @slit1_bottom_pos.setter
-    def slit1_bottom_pos(self, value):
-        """Set slit1 bottom position [mm]."""
-        self['A:PP02:B'] = value
-
-    @property
-    def slit1_left_pos(self):
-        """Return slit1 left position [mm]."""
-        return self['A:PP02:C.RBV']
-
-    @slit1_left_pos.setter
-    def slit1_left_pos(self, value):
-        """Set slit1 left position [mm]."""
-        self['A:PP02:C'] = value
-
-    @property
-    def slit1_right_pos(self):
-        """Return slit1 right position [mm]."""
-        return self['A:PP02:D.RBV']
-
-    @slit1_right_pos.setter
-    def slit1_right_pos(self, value):
-        """Set slit1 right position [mm]."""
-        self['A:PP02:D'] = value
-
-    @property
-    def slit2_top_pos(self):
-        """Return slit2 top position [mm]."""
-        return self['B:PP01:A.RBV']
-
-    @slit2_top_pos.setter
-    def slit2_top_pos(self, value):
-        """Set slit2 top position [mm]."""
-        self['B:PP01:A'] = value
-
-    @property
-    def slit2_bottom_pos(self):
-        """Return slit2 bottom position [mm]."""
-        return self['B:PP01:B.RBV']
-
-    @slit2_bottom_pos.setter
-    def slit2_bottom_pos(self, value):
-        """Set slit2 bottom position [mm]."""
-        self['B:PP01:B'] = value
-
-    @property
-    def slit2_left_pos(self):
-        """Return slit2 left position [mm]."""
-        return self['B:PP01:C.RBV']
-
-    @slit2_left_pos.setter
-    def slit2_left_pos(self, value):
-        """Set slit2 left position [mm]."""
-        self['B:PP01:C'] = value
-
-    @property
-    def slit2_right_pos(self):
-        """Return slit2 right position [mm]."""
-        return self['B:PP01:D.RBV']
-
-    @slit2_right_pos.setter
-    def slit2_right_pos(self, value):
-        """Set slit2 right position [mm]."""
-        self['B:PP01:D'] = value
-
-    @property
     def m1_temperature_ref(self):
         """Return M1 temperature reference setpoint [°C]."""
         return self['A:RIO01:M1_CtrltempSp']
@@ -465,38 +375,6 @@ class CAXCtrl(_Device):
     def cmd_dvf2_lens_stop(self, timeout=None):
         """Stop DVF2 lens motor."""
         return self._cmd_motor_stop('B:PP01:F.STOP', timeout)
-
-    def cmd_slit1_top_stop(self, timeout=None):
-        """Stop Slit1 top motor."""
-        return self._cmd_motor_stop('A:PP02:A.STOP', timeout)
-
-    def cmd_slit1_bottom_stop(self, timeout=None):
-        """Stop Slit1 bottom motor."""
-        return self._cmd_motor_stop('A:PP02:B.STOP', timeout)
-
-    def cmd_slit1_left_stop(self, timeout=None):
-        """Stop Slit1 left motor."""
-        return self._cmd_motor_stop('A:PP02:C.STOP', timeout)
-
-    def cmd_slit1_right_stop(self, timeout=None):
-        """Stop Slit1 right motor."""
-        return self._cmd_motor_stop('A:PP02:D.STOP', timeout)
-
-    def cmd_slit2_top_stop(self, timeout=None):
-        """Stop Slit2 top motor."""
-        return self._cmd_motor_stop('B:PP01:A.STOP', timeout)
-
-    def cmd_slit2_bottom_stop(self, timeout=None):
-        """Stop Slit2 bottom motor."""
-        return self._cmd_motor_stop('B:PP01:B.STOP', timeout)
-
-    def cmd_slit2_left_stop(self, timeout=None):
-        """Stop Slit2 left motor."""
-        return self._cmd_motor_stop('B:PP01:C.STOP', timeout)
-
-    def cmd_slit2_right_stop(self, timeout=None):
-        """Stop Slit2 right motor."""
-        return self._cmd_motor_stop('B:PP01:D.STOP', timeout)
 
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
