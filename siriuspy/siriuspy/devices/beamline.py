@@ -6,6 +6,7 @@ from .device import Device as _Device
 
 class _ParamPVs:
     
+    # SLITS
     # --- TOP ---
     TOP_PARAM_SP = None
     TOP_PARAM_RB = None
@@ -29,6 +30,37 @@ class _ParamPVs:
     RIGHT_PARAM_RB = None
     RIGHT_PARAM_MON = None
     RIGHT_PARAM_STOP = None
+
+    # MIRROR
+    # --- ROTY ---
+    ROTY_PARAM_SP = None
+    ROTY_PARAM_RB = None
+    ROTY_PARAM_MON = None
+    ROTY_PARAM_STOP = None
+
+    # --- Tx ---
+    TX_PARAM_SP = None
+    TX_PARAM_RB = None
+    TX_PARAM_MON = None
+    TX_PARAM_STOP = None
+
+    # --- Y1 ---
+    Y1_PARAM_SP = None
+    Y1_PARAM_RB = None
+    Y1_PARAM_MON = None
+    Y1_PARAM_STOP = None
+
+    # --- Y2 ---
+    Y2_PARAM_SP = None
+    Y2_PARAM_RB = None
+    Y2_PARAM_MON = None
+    Y2_PARAM_STOP = None
+
+    # --- Y3 ---
+    Y3_PARAM_SP = None
+    Y3_PARAM_RB = None
+    Y3_PARAM_MON = None
+    Y3_PARAM_STOP = None
 
 
 class Slit(_Device):
