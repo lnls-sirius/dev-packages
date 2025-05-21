@@ -382,12 +382,6 @@ class CAXCtrl(_Device):
     _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
 
     PROPERTIES_DEFAULT = (
-        # mirror controls
-        'A:PP01:A', 'A:PP01:A.RBV', 'A:PP01:A.STOP',  # RotY
-        'A:PP01:B', 'A:PP01:B.RBV', 'A:PP01:B.STOP',  # Tx
-        'A:PP01:C', 'A:PP01:C.RBV', 'A:PP01:C.STOP',  # Y1
-        'A:PP01:D', 'A:PP01:D.RBV', 'A:PP01:D.STOP',  # Y2
-        'A:PP01:E', 'A:PP01:E.RBV', 'A:PP01:E.STOP',  # Y3
         # mirror photocollector
         'A:RIO01:9215A:ai0',
         # mirror temperatures
@@ -404,112 +398,6 @@ class CAXCtrl(_Device):
         """Init."""
         devname = 'CAX' if devname is None else devname
         super().__init__(devname, props2init=props2init, **kwargs)
-
-    @property
-    def m1_roty_pos(self):
-        """Return the linear actuator pos related to RotY rotation [mm].
-
-        RotY is performed by a linear actuator in one of
-        longitudinal ends of the mirror. The mirror is pivoted
-        at its longitudinal center and the linear actuator induces
-        a rotation around the Y axis.
-        """
-        return self['A:PP01:A.RBV']
-
-    @m1_roty_pos.setter
-    def m1_roty_pos(self, value):
-        """Set the linear actuator pos related to RotY rotation [mm].
-
-        RotY is performed by a linear actuator in one of
-        longitudinal ends of the mirror. The mirror is pivoted
-        at its longitudinal center and the linear actuator induces
-        a rotation around the Y axis.
-        """
-        self['A:PP01:A'] = value
-
-    @property
-    def m1_tx_pos(self):
-        """Return the linear actuator pos related to Tx translation [mm].
-
-        This linear actuator translates directly to the horizontal
-        transverse position of the mirror.
-        """
-        return self['A:PP01:B.RBV']
-
-    @m1_tx_pos.setter
-    def m1_tx_pos(self, value):
-        """Set the linear actuator pos related to Tx translation [mm].
-
-        This linear actuator is directly related to the horizontal
-        transverse position of the mirror.
-        """
-        self['A:PP01:B'] = value
-
-    @property
-    def m1_y1_pos(self):
-        """Return the first linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in oposite horizontal ends.
-        """
-        return self['A:PP01:C.RBV']
-
-    @m1_y1_pos.setter
-    def m1_y1_pos(self, value):
-        """Set the first linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self['A:PP01:C'] = value
-
-    @property
-    def m1_y2_pos(self):
-        """Return the second linear vertical actuator pos Y2 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        return self['A:PP01:D.RBV']
-
-    @m1_y2_pos.setter
-    def m1_y2_pos(self, value):
-        """Set the second linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self['A:PP01:D'] = value
-
-    @property
-    def m1_y3_pos(self):
-        """Return the third linear actuator pos Y2 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        return self['A:PP01:E.RBV']
-
-    @m1_y3_pos.setter
-    def m1_y3_pos(self, value):
-        """Set the third linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self['A:PP01:E'] = value
 
     @property
     def m1_photocurrent_signal(self):
@@ -570,26 +458,6 @@ class CAXCtrl(_Device):
     def m1_temperature_4(self):
         """Return M1 temperature at peltier hot side [°C]."""
         return self['A:RIO01:9226B:temp4']
-
-    def cmd_m1_roty_stop(self, timeout=None):
-        """Stop linear actuator for RotY rotation."""
-        return self._cmd_motor_stop('A:PP01:A.STOP', timeout)
-
-    def cmd_m1_tx_stop(self, timeout=None):
-        """Stop linear actuator for Tx translation."""
-        return self._cmd_motor_stop('A:PP01:B.STOP', timeout)
-
-    def cmd_m1_y1_stop(self, timeout=None):
-        """Stop linear actuator Y1."""
-        return self._cmd_motor_stop('A:PP01:C.STOP', timeout)
-
-    def cmd_m1_y2_stop(self, timeout=None):
-        """Stop linear actuator Y2."""
-        return self._cmd_motor_stop('A:PP01:D.STOP', timeout)
-
-    def cmd_m1_y3_stop(self, timeout=None):
-        """Stop linear actuator Y3."""
-        return self._cmd_motor_stop('A:PP01:E.STOP', timeout)
 
     def cmd_dvf2_z_stop(self, timeout=None):
         """Stop DVF2 base motor."""
