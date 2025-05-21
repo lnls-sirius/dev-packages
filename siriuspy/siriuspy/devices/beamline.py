@@ -122,6 +122,112 @@ class Mirror(_Device):
             raise NotImplementedError(devname)
         super().__init__(devname, props2init=props2init, **kwargs)
 
+    @property
+    def roty_pos(self):
+        """Return the linear actuator pos related to RotY rotation [mm].
+
+        RotY is performed by a linear actuator in one of
+        longitudinal ends of the mirror. The mirror is pivoted
+        at its longitudinal center and the linear actuator induces
+        a rotation around the Y axis.
+        """
+        return self[self.PARAM_PVS.ROTY_PARAM_MON]
+
+    @roty_pos.setter
+    def roty_pos(self, value):
+        """Set the linear actuator pos related to RotY rotation [mm].
+
+        RotY is performed by a linear actuator in one of
+        longitudinal ends of the mirror. The mirror is pivoted
+        at its longitudinal center and the linear actuator induces
+        a rotation around the Y axis.
+        """
+        self[self.PARAM_PVS.ROTY_PARAM_SP] = value
+    
+    @property
+    def tx_pos(self):
+        """Return the linear actuator pos related to Tx translation [mm].
+
+        This linear actuator translates directly to the horizontal
+        transverse position of the mirror.
+        """
+        return self[self.PARAM_PVS.TX_PARAM_MON]
+
+    @tx_pos.setter
+    def tx_pos(self, value):
+        """Set the linear actuator pos related to Tx translation [mm].
+
+        This linear actuator is directly related to the horizontal
+        transverse position of the mirror.
+        """
+        self[self.PARAM_PVS.TX_PARAM_SP] = value
+    
+    @property
+    def y1_pos(self):
+        """Return the first linear vertical actuator pos Y1 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in oposite horizontal ends.
+        """
+        return self[self.PARAM_PVS.Y1_PARAM_MON]
+
+    @y1_pos.setter
+    def y1_pos(self, value):
+        """Set the first linear vertical actuator pos Y1 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        self[self.PARAM_PVS.Y1_PARAM_SP] = value
+
+    @property
+    def y2_pos(self):
+        """Return the second linear vertical actuator pos Y2 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        return self[self.PARAM_PVS.Y2_PARAM_MON]
+
+    @y2_pos.setter
+    def y2_pos(self, value):
+        """Set the second linear vertical actuator pos Y1 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        self[self.PARAM_PVS.Y2_PARAM_SP] = value
+
+    @property
+    def y3_pos(self):
+        """Return the third linear actuator pos Y2 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        return self[self.PARAM_PVS.Y3_PARAM_MON]
+
+    @y3_pos.setter
+    def y3_pos(self, value):
+        """Set the third linear vertical actuator pos Y1 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        self[self.PARAM_PVS.Y3_PARAM_SP] = value
+
 
 class Slit(_Device):
     """Slit device."""
