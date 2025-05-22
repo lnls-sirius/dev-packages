@@ -474,10 +474,10 @@ class DVFCtrl(_Device):
     PARAM_PVS.DVF_Z_MON = 'E.RBV'
     PARAM_PVS.DVF_Z_STOP = 'E.STOP'
 
-    PARAM_PVS.DVF_Z_SP = 'F.VAL'
-    PARAM_PVS.DVF_Z_RB = 'F.VAL'
-    PARAM_PVS.DVF_Z_MON = 'F.RBV'
-    PARAM_PVS.DVF_Z_STOP = 'F.STOP'
+    PARAM_PVS.DVF_LENS_SP = 'F.VAL'
+    PARAM_PVS.DVF_LENS_RB = 'F.VAL'
+    PARAM_PVS.DVF_LENS_MON = 'F.RBV'
+    PARAM_PVS.DVF_LENS_STOP = 'F.STOP'
 
     def __init__(self, devname=None, props2init='all', **kwargs):
         """Init."""
@@ -495,6 +495,16 @@ class DVFCtrl(_Device):
     def dvf2_z_pos(self, value):
         """Set DVF2 base motor longitudinal position [mm]."""
         self[self.PARAM_PVS.DVF_Z_SP] = value
+
+    @property
+    def dvf2_lens_pos(self):
+        """Return DVF2 lens position [mm]."""
+        return self[self.PARAM_PVS.DVF_LENS_MON]
+
+    @dvf2_lens_pos.setter
+    def dvf2_lens_pos(self, value):
+        """Set DVF2 lens position [mm]."""
+        self[self.PARAM_PVS.DVF_LENS_SP] = value
 
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
