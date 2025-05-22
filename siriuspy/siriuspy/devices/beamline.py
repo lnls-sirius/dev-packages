@@ -7,6 +7,7 @@
 import inspect as _inspect
 
 from .device import Device as _Device
+from .dvf import DVFImgProc
 
 
 class _ParamPVs:
@@ -518,3 +519,18 @@ class DVFCtrl(_Device):
     def cmd_dvf2_lens_stop(self, timeout=None):
         """Stop DVF2 lens motor."""
         return self._cmd_motor_stop(self.PARAM_PVS.DVF_LENS_STOP, timeout)
+
+
+class DVFImg(DVFImgProc):
+    """."""
+
+    class DEVICES:
+        """Devices names."""
+
+        CAX_DVF1 = 'CAX:A:BASLER01'
+        CAX_DVF2 = 'CAX:B:BASLER01'
+        ALL = (CAX_DVF1, CAX_DVF2)
+
+    def __init__(self, devname, props2init='all', **kwargs):
+        """."""
+        super().__init__(devname=devname, props2init=props2init, **kwargs)
