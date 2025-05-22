@@ -534,3 +534,10 @@ class DVFImg(DVFImgProc):
     def __init__(self, devname, props2init='all', **kwargs):
         """."""
         super().__init__(devname=devname, props2init=props2init, **kwargs)
+
+
+class DVF2Manager():
+    """Initialize DVF2 and motion"""
+
+    IMG = DVFImg(devname=DVFImg.DEVICES.CAX_DVF2)
+    CTRL = DVFCtrl(devname=DVFCtrl.DEVICES.MOTOR)
