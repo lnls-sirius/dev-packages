@@ -2,7 +2,7 @@
 
 from .afc_acq_core import AFCACQLogicalTrigger, AFCPhysicalTrigger
 from .bbb import BunchbyBunch
-from .beamline import CAXCtrl
+from .beamline import Mirror, MirrorSensors, Slit, DVFCtrl
 from .blm import BLM
 from .bpm import BPM
 from .bpm_eq import EqualizeBPMs
