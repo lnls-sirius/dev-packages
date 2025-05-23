@@ -261,23 +261,23 @@ class Slit(_Device):
         print('Done!', end='\r')
         return True
     
-    def move_bottom_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
+    def move_left_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
         try:
-            self.bottom_pos = value
+            self.left_pos = value
         except Exception as err:
-            raise IOError(f' PUT error: pv, pos = ({self.bottom_pos} \n {err}') 
+            raise IOError(f' PUT error: pv, pos = ({self.left_pos} \n {err}') 
 
         # Check for acknowledgement. Avoid endless loop if command is not properly received.
         icount = 0
-        current_value = self.bottom_pos
+        current_value = self.left_pos
         while abs(current_value - value) > threshold:
             _time.sleep(delay)
-            current_value = self.bottom_pos
+            current_value = self.left_pos
             print('Dif: {:} \t New pos: {:} \t Curr: {:}'.format(abs(current_value - value), value, current_value))
             print('Slit is Moving {:.2f}'.format(current_value), end='\r')
 
             if icount >= max_count:
-                print(f'\n WARNING: the bottom slit did not move.'
+                print(f'\n WARNING: the left slit did not move.'
                         f'\n Current position: {current_value}')
                 return False
 
