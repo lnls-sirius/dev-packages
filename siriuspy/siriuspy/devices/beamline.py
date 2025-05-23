@@ -295,7 +295,7 @@ class Slit(_Device):
     def move_right(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
         return self._move_slit(side='right', value=value, threshold=threshold, max_count=max_count, delay=delay)
 
-    def move_robust_(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
+    def move_robust_top(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
         return self._move_robust_slit(side='top', value=value, threshold=threshold, max_count=max_count, delay=delay, trials=trials)
 
     def move_robust_bottom(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
