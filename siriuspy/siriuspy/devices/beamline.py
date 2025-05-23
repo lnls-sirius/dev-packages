@@ -194,7 +194,37 @@ class Slit(_Device):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
         self[propty] = 1
         return self._wait(propty, 0, timeout=timeout)
-    
+
+    def _move_slit(self, side, value, threshold, max_count, delay):
+        """ Moves the slit indicated by 'side' ('left', 'right', 'top', 'bottom')
+            to the given value, returning True if reached, False on timeout.
+        """
+
+        if side not in ('left', 'right', 'top', 'bottom'):
+            raise ValueError(f"Invalid dide: {side}")
+
+        attr_name = "{}_pos".format(side)
+
+        try:
+            setattr(self, attr_name, value)
+        except Exception as err:
+            current = getattr(self, attr_name)
+            raise IOError("PUT error: pv, pos = ({})\n{}".format(current, err))
+
+        # Check for acknowledgement. Avoid endless loop if command is not properly received.
+        icount = 0
+        current_value = getattr(self, attr_name)
+        while abs(current_value - value) > threshold:
+            _time.sleep(delay)
+            current_value = getattr(self, attr_name)
+            print("Slit is Moving... | New pos: {:} | Curr: {:.2f} | Dif: {:}".format(value, current_value, abs(current_value - value)), end='\r')
+            if icount >= max_count:
+                print("\nWARNING: a lâmina '{:}' não se moveu.\nPosição atual: {:.4f}".format(side, current_value))
+                return False
+            icount += 1
+
+        return True
+
     def cmd_top_stop(self, timeout=None):
         """Stop Slit top motor."""
         return self._cmd_motor_stop(self.PARAM_PVS.TOP_PARAM_STOP, timeout)
@@ -212,104 +242,16 @@ class Slit(_Device):
         return self._cmd_motor_stop(self.PARAM_PVS.RIGHT_PARAM_STOP, timeout)
 
     def move_top_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
-        try:
-            self.top_pos = value
-        except Exception as err:
-            raise IOError(f' PUT error: pv, pos = ({self.top_pos} \n {err}') 
-        
-        # Check for acknowledgement. Avoid endless loop if command is not properly received.
-        icount = 0
-        current_value = self.top_pos
-        while abs(current_value - value) > threshold:
-            _time.sleep(delay)
-            current_value = self.top_pos
-            print('Dif: {:} \t New pos: {:} \t Curr: {:}'.format(abs(current_value - value), value, current_value))
-            print('Slit is Moving {:.2f}'.format(current_value), end='\r')
-
-            if icount >= max_count:
-                print(f'\n WARNING: the top slit did not move.'
-                        f'\n Current position: {current_value}')
-                return False
-
-            icount += 1
-
-        print('Done!', end='\r')
-        return True
+        return self._move_slit(side='top', value=value, threshold=threshold, max_count=max_count, delay=delay)
 
     def move_bottom_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
-        try:
-            self.bottom_pos = value
-        except Exception as err:
-            raise IOError(f' PUT error: pv, pos = ({self.bottom_pos} \n {err}') 
-
-        # Check for acknowledgement. Avoid endless loop if command is not properly received.
-        icount = 0
-        current_value = self.bottom_pos
-        while abs(current_value - value) > threshold:
-            _time.sleep(delay)
-            current_value = self.bottom_pos
-            print('Dif: {:} \t New pos: {:} \t Curr: {:}'.format(abs(current_value - value), value, current_value))
-            print('Slit is Moving {:.2f}'.format(current_value), end='\r')
-
-            if icount >= max_count:
-                print(f'\n WARNING: the bottom slit did not move.'
-                        f'\n Current position: {current_value}')
-                return False
-
-            icount += 1
-
-        print('Done!', end='\r')
-        return True
+        return self._move_slit(side='bottom', value=value, threshold=threshold, max_count=max_count, delay=delay)
     
     def move_left_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
-        try:
-            self.left_pos = value
-        except Exception as err:
-            raise IOError(f' PUT error: pv, pos = ({self.left_pos} \n {err}') 
-
-        # Check for acknowledgement. Avoid endless loop if command is not properly received.
-        icount = 0
-        current_value = self.left_pos
-        while abs(current_value - value) > threshold:
-            _time.sleep(delay)
-            current_value = self.left_pos
-            print('Dif: {:} \t New pos: {:} \t Curr: {:}'.format(abs(current_value - value), value, current_value))
-            print('Slit is Moving {:.2f}'.format(current_value), end='\r')
-
-            if icount >= max_count:
-                print(f'\n WARNING: the left slit did not move.'
-                        f'\n Current position: {current_value}')
-                return False
-
-            icount += 1
-
-        print('Done!', end='\r')
-        return True
+        return self._move_slit(side='left', value=value, threshold=threshold, max_count=max_count, delay=delay)
     
     def move_right_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
-        try:
-            self.right_pos = value
-        except Exception as err:
-            raise IOError(f' PUT error: pv, pos = ({self.right_pos} \n {err}') 
-
-        # Check for acknowledgement. Avoid endless loop if command is not properly received.
-        icount = 0
-        current_value = self.right_pos
-        while abs(current_value - value) > threshold:
-            _time.sleep(delay)
-            current_value = self.right_pos
-            print('Dif: {:} \t New pos: {:} \t Curr: {:}'.format(abs(current_value - value), value, current_value))
-            print('Slit is Moving {:.2f}'.format(current_value), end='\r')
-
-            if icount >= max_count:
-                print(f'\n WARNING: the right slit did not move.'
-                        f'\n Current position: {current_value}')
-                return False
-
-            icount += 1
-
-        print('Done!', end='\r')
-        return True
+        return self._move_slit(side='right', value=value, threshold=threshold, max_count=max_count, delay=delay)
 
 
 class Mirror(_Device):
