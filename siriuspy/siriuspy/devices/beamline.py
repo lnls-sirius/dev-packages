@@ -225,6 +225,48 @@ class Slit(_Device):
 
         return True
 
+    def _move_robust_slit(self, side, value, threshold, max_count, delay, trials):
+        """
+            Tries to move the blade indicated by `side` up to `value`, repeating
+            up to `trials` times if it fails, and returns True on success.
+        
+        Args:
+            side : 'top', 'bottom', 'left' or 'right'
+            value : target position
+            threshold, max_count, delay : parameters for move_*_slit
+            trials : how many times to restart the movement if it fails
+        
+        Return: 
+            bool : True or False
+        """
+        if side not in ('top', 'bottom', 'left', 'right'):
+            raise ValueError("Invalid side: {}".format(side))
+
+        method_name = "move_{}".format(side)
+        move_method = getattr(self, method_name)
+        if not callable(move_method):
+            raise AttributeError("Method {} not exist.".format(method_name))
+        
+        ctrials = 0
+        status = False
+        try:
+            while ctrials < trials and not status:
+                status = move_method(
+                    value=value,
+                    threshold=threshold,
+                    max_count=max_count,
+                    delay=delay,
+                )
+                ctrials += 1
+            current_value = getattr(self, "{}_pos".format(side))
+            if not status:
+                raise Exception('WARNING: maximum number of trials to move {} slit reached.\nCurrent position:'.format(side, current_value))
+            print('Done!')
+            return True
+        except Exception:
+            print('Not moved!')
+            return False
+
     def cmd_top_stop(self, timeout=None):
         """Stop Slit top motor."""
         return self._cmd_motor_stop(self.PARAM_PVS.TOP_PARAM_STOP, timeout)
@@ -241,17 +283,29 @@ class Slit(_Device):
         """Stop Slit right motor."""
         return self._cmd_motor_stop(self.PARAM_PVS.RIGHT_PARAM_STOP, timeout)
 
-    def move_top_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
+    def move_top(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
         return self._move_slit(side='top', value=value, threshold=threshold, max_count=max_count, delay=delay)
 
-    def move_bottom_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
+    def move_bottom(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
         return self._move_slit(side='bottom', value=value, threshold=threshold, max_count=max_count, delay=delay)
-    
-    def move_left_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
+
+    def move_left(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
         return self._move_slit(side='left', value=value, threshold=threshold, max_count=max_count, delay=delay)
-    
-    def move_right_slit(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
+
+    def move_right(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY):
         return self._move_slit(side='right', value=value, threshold=threshold, max_count=max_count, delay=delay)
+
+    def move_robust_(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
+        return self._move_robust_slit(side='top', value=value, threshold=threshold, max_count=max_count, delay=delay, trials=trials)
+
+    def move_robust_bottom(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
+        return self._move_robust_slit(side='bottom', value=value, threshold=threshold, max_count=max_count, delay=delay, trials=trials)
+
+    def move_robust_left(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
+        return self._move_robust_slit(side='left', value=value, threshold=threshold, max_count=max_count, delay=delay, trials=trials)
+
+    def move_robust_right(self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY, trials=_TRIALS):
+        return self._move_robust_slit(side='right', value=value, threshold=threshold, max_count=max_count, delay=delay, trials=trials)
 
 
 class Mirror(_Device):
