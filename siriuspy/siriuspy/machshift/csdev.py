@@ -12,7 +12,7 @@ class ETypes(_csdev.ETypes):
         'Users', 'Commissioning', 'Conditioning',
         'Injection', 'MachineStudy', 'Maintenance',
         'Standby', 'Shutdown', 'MachineStartup',
-        'BeamlineCommissioning')
+        'BeamlineCommissioning', 'Unattended')
     PROGMD_USERS_SHIFT = ('No', 'Yes')
 
 
