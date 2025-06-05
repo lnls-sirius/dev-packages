@@ -23,7 +23,8 @@ class FamBPMs(_DeviceSet):
     PROPERTIES_ACQ = BPM.PROPERTIES_ACQ
     PROPERTIES_DEFAULT = BPM.PROPERTIES_DEFAULT
     ALL_MTURN_SIGNALS2ACQ = ('A', 'B', 'C', 'D', 'X', 'Y', 'Q', 'S')
-    TBT2ADC_MULTIPLIER = 382
+    TBT2ADC_SI_MULTIPLIER = 382
+    TBT2ADC_BO_MULTIPLIER = 362
 
     ID_BPMS = (
         'SI-06SB:DI-BPM-1', 'SI-06SB:DI-BPM-2',
@@ -247,10 +248,17 @@ class FamBPMs(_DeviceSet):
 
         total_samples = mask_begin.copy() if mask_begin is not None else 0
         total_samples += mask_end if mask_end is not None else 0
-        if _np.any(total_samples >= self.TBT2ADC_MULTIPLIER):
+
+        if "SI" in self.devname:
+            tbt2adc_multiplier = self.TBT2ADC_SI_MULTIPLIER
+        elif "BO" in self.devname:
+            tbt2adc_multiplier = self.TBT2ADC_BO_MULTIPLIER
+
+        if _np.any(total_samples >= tbt2adc_multiplier):
             msg = "either mask_begin, mask_end or "
             msg += "mask_begin + mask_end equals/exceeds "
-            msg += f"{self.TBT2ADC_MULTIPLIER}"
+            msg += f"{tbt2adc_multiplier}"
+            msg += ", the maximum number of ADC samples for this device."
             raise ValueError(msg)
 
         for i, bpm in enumerate(self):
