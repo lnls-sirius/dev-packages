@@ -21,7 +21,8 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    def __new__(cls, devname, props2init='all'):
+    def __new__(cls, devname, props2init='all',
+                auto_monitor=True, auto_monitor_mon=False):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
@@ -31,10 +32,16 @@ class SOFB(_Device):
         data = SOFBFactory.create(devname[:2])
 
         if data.acc == 'SI':
-            return SISOFB(devname, data, props2init=props2init)
+            return SISOFB(devname, data, props2init=props2init,
+                          auto_monitor=auto_monitor,
+                          auto_monitor_mon=auto_monitor_mon)
         elif data.isring:
-            return BOSOFB(devname, data, props2init=props2init)
-        return TLSOFB(devname, data, props2init=props2init)
+            return BOSOFB(devname, data, props2init=props2init,
+                          auto_monitor=auto_monitor,
+                          auto_monitor_mon=auto_monitor_mon)
+        return TLSOFB(devname, data, props2init=props2init,
+                      auto_monitor=auto_monitor,
+                      auto_monitor_mon=auto_monitor_mon)
 
 
 class TLSOFB(_Device):
@@ -78,7 +85,8 @@ class TLSOFB(_Device):
     _default_timeout_respm = 2 * 60 * 60  # [s]
     _default_timeout_kick_apply = 2  # [s]
 
-    def __init__(self, devname, data=None, props2init='all'):
+    def __init__(self, devname, data=None, props2init='all',
+                 auto_monitor=True, auto_monitor_mon=False):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
@@ -87,7 +95,9 @@ class TLSOFB(_Device):
         # SOFB object
         self._data = data or SOFBFactory.create(devname[:2])
         # call base class constructor
-        super().__init__(devname, props2init=props2init)
+        super().__init__(devname, props2init=props2init,
+                         auto_monitor=auto_monitor,
+                         auto_monitor_mon=auto_monitor_mon)
 
     @property
     def data(self):
