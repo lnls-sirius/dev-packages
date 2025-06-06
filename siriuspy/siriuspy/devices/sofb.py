@@ -37,9 +37,13 @@ class SOFB(_Device):
         data = SOFBFactory.create(devname[:2])
 
         if data.acc == 'SI':
-            return SISOFB(devname, data, props2init=props2init,
-                          auto_monitor=auto_monitor,
-                          auto_monitor_mon=auto_monitor_mon)
+            return SISOFB(
+                devname,
+                data,
+                props2init=props2init,
+                auto_monitor=auto_monitor,
+                auto_monitor_mon=auto_monitor_mon
+            )
         elif data.isring:
             return BOSOFB(devname, data, props2init=props2init,
                           auto_monitor=auto_monitor,
