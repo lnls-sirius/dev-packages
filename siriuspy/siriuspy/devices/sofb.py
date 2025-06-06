@@ -21,8 +21,13 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    def __new__(cls, devname, props2init='all',
-                auto_monitor=True, auto_monitor_mon=False):
+    def __new__(
+        cls,
+        devname,
+        props2init='all',
+        auto_monitor=True,
+        auto_monitor_mon=False
+    ):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
