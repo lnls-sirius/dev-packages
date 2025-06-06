@@ -9,7 +9,7 @@ maintainers = [
   {name = "Ana Oliveira", email = "ana.clara@lnls.br"},
   {name = "Ximenes Resende", email = "xresende@gmail.com"},
   {name = "Fernando H. de Sá", email = "fernandohds564@gmail.com"},
-  {name = "Murilo Barbosa Alves", email= "murilo.alves@lnls.br"}
+  {name = "Murilo Barbosa Alves", email= "alvesb.murilo@gmail.com"}
 ]
 description = "Development packages for Sirius"
 readme = "README.md"
