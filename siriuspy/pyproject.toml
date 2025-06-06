@@ -1,57 +1,48 @@
-# [build-system]
-# requires = ["setuptools >= 61.0"]
-# build-backend = "setuptools.build_meta"
+[build-system]
+requires = ["setuptools>=44"]
+build-backend = "setuptools.build_meta"
 
-# [project]
-# name = "siriuspy"
-# version = "2.85.0"
-# dependencies = [
-#     "aiohttp>=3.7.4",
-#     "bottleneck>=1.3.2",
-#     "mathphys",
-#     "numpy>=1.18",
-#     "pyepics>=3.4.0",
-#     "python-dateutil>=2.8.1",
-#     "requests>=2.22.0",
-#     "six>=1.13.0",
-#     "pyyaml",
-# ]
-# requires-python = ">=3.6"
-# authors = [
-#   {name = "lnls-sirius"},
-# ]
-# maintainers = [
-#   {name = "Ana Oliveira", email = "ana.clara@lnls.br"},
-#   {name = "Ximenes Resende", email = "xresende@gmail.com"},
-#   {name = "Fernando H. de Sá", email = "fernandohds564@gmail.com"},
-#   {name = "Murilo Barbosa Alves", email= "murilo.alves@lnls.br"}
-# ]
-# description = "Development packages for SIRIUS"
-# readme = "README.md"
-# license = {file = "LICENSE.txt"}
-# keywords = ["SIRIUS", "python", "EPICS"]
-# classifiers = [
-#     "Intended Audience :: Science/Research",
-#     "Programming Language :: Python",
-#     "Topic :: Scientific/Engineering",
-# ]
+[project]
+name = "siriuspy"
+authors = [{ name = "lnls-sirius" } ]
+maintainers = [
+  {name = "Ana Oliveira", email = "ana.clara@lnls.br"},
+  {name = "Ximenes Resende", email = "xresende@gmail.com"},
+  {name = "Fernando H. de Sá", email = "fernandohds564@gmail.com"},
+  {name = "Murilo Barbosa Alves", email= "murilo.alves@lnls.br"}
+]
+description = "Development packages for Sirius"
+readme = "README.md"
+dynamic = ["version", "dependencies"]
+requires-python = ">=3.6"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering",
+]
+keywords = ["SIRIUS", "python", "EPICS"]
 
-# [project.urls]
-# # Homepage = ""
-# # Documentation = ""
-# Repository = "https://github.com/lnls-sirius/dev-packages"
-# "Bug Tracker" = "https://github.com/lnls-sirius/dev-packages/issues"
-# # Changelog = ""
+license = "GPL-3.0"
+license-files= [ "LICENSE", ]
 
-# # [project.optional-dependencies]
-# # gui = []
-# # cli = []
+[project.urls]
+Homepage = "https://github.com/lnls-sirius/dev-packages"
+Download = "https://github.com/lnls-sirius/dev-packages"
+Repository = "https://github.com/lnls-sirius/dev-packages"
+"Bug Tracker" = "https://github.com/lnls-sirius/dev-packages/issues"
 
-# # [project.scripts]
+# --- Setuptools specific configurations ---
+[tool.setuptools]
+include-package-data = true
 
-# # [project.gui-scripts]
+[tool.setuptools.dynamic]
+version = { file = "VERSION" }
+dependencies = { file = "requirements.txt" }
 
+[tool.setuptools.package-data]
+siriuspy = ["VERSION"]
 
+# --- linter and formatter configurations ---
 [tool.ruff]
 select = [
     "W", "E", "A", "B", "C90", "D", "I002", "N", "F", "G", "ARG", "S", "NPY"]
