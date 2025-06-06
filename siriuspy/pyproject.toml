@@ -28,8 +28,8 @@ license-files= [ "LICENSE", ]
 [project.urls]
 Homepage = "https://github.com/lnls-sirius/dev-packages"
 Download = "https://github.com/lnls-sirius/dev-packages"
-Repository = "https://github.com/lnls-sirius/dev-packages"
-"Bug Tracker" = "https://github.com/lnls-sirius/dev-packages/issues"
+Repository = "https://github.com/lnls-sirius/dev-packages.git"
+Issues = "https://github.com/lnls-sirius/dev-packages/issues"
 
 # --- Setuptools specific configurations ---
 [tool.setuptools]
