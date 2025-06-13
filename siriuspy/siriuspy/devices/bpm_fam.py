@@ -256,10 +256,8 @@ class FamBPMs(_DeviceSet):
             tbt2adc_multiplier = self.TBT2ADC_BO_MULTIPLIER
 
         if _np.any(total_samples >= tbt2adc_multiplier):
-            msg = "either mask_begin, mask_end or "
-            msg += "mask_begin + mask_end equals/exceeds "
-            msg += f"{tbt2adc_multiplier}"
-            msg += ", the maximum number of ADC samples for this device."
+            msg = f"mask_begin + mask_end >= {tbt2adc_multiplier}"
+            msg += ", the number of ADC samples in TbT rate."
             raise ValueError(msg)
 
         for i, bpm in enumerate(self):
