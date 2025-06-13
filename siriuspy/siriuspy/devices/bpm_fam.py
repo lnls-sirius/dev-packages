@@ -246,8 +246,9 @@ class FamBPMs(_DeviceSet):
         mask_begin = _to_array(mask_begin, "mask_begin")
         mask_end = _to_array(mask_end, "mask_end")
 
-        total_samples = mask_begin.copy() if mask_begin is not None else 0
-        total_samples += mask_end if mask_end is not None else 0
+        total_samples = np.zeros(ndev, dtype=int)
+        total_samples += 0 if mask_begin is None else mask_begin
+        total_samples += 0 if mask_end is None else mask_end
 
         if "SI" in self.devname:
             tbt2adc_multiplier = self.TBT2ADC_SI_MULTIPLIER
