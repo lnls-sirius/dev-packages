@@ -224,7 +224,7 @@ class FamBPMs(_DeviceSet):
         return okall
 
     def set_tbt_mask(
-        self, enable=True, mask_begin=None, mask_end=None, timeout=TIMEOUT
+        self, enable=True, mask_beg=None, mask_end=None, timeout=TIMEOUT
     ):
         """."""
         ndev = len(self.devices)
@@ -243,11 +243,11 @@ class FamBPMs(_DeviceSet):
                 )
             return arr
 
-        mask_begin = _to_array(mask_begin, "mask_begin")
+        mask_beg = _to_array(mask_beg, "mask_beg")
         mask_end = _to_array(mask_end, "mask_end")
 
         total_samples = _np.zeros(ndev, dtype=int)
-        total_samples += 0 if mask_begin is None else mask_begin
+        total_samples += 0 if mask_beg is None else mask_beg
         total_samples += 0 if mask_end is None else mask_end
 
         if "SI" in self.devname:
@@ -256,13 +256,13 @@ class FamBPMs(_DeviceSet):
             tbt2adc_multiplier = self.TBT2ADC_BO_MULTIPLIER
 
         if _np.any(total_samples >= tbt2adc_multiplier):
-            msg = f"mask_begin + mask_end >= {tbt2adc_multiplier}"
+            msg = f"mask_beg + mask_end >= {tbt2adc_multiplier}"
             msg += ", the number of ADC samples in TbT rate."
             raise ValueError(msg)
 
         for i, bpm in enumerate(self):
-            if mask_begin is not None:
-                bpm.tbt_mask_beg = mask_begin[i]
+            if mask_beg is not None:
+                bpm.tbt_mask_beg = mask_beg[i]
             if mask_end is not None:
                 bpm.tbt_mask_end = mask_end[i]
             bpm.tbt_mask_enbl = int(enable)
@@ -276,8 +276,8 @@ class FamBPMs(_DeviceSet):
 
             props = {'TbTDataMaskEn-Sel': int(enable)}
 
-            if mask_begin is not None:
-                props['TbTDataMaskSamplesBeg-RB'] = mask_begin[i]
+            if mask_beg is not None:
+                props['TbTDataMaskSamplesBeg-RB'] = mask_beg[i]
             if mask_end is not None:
                 props['TbTDataMaskSamplesEnd-RB'] = mask_end[i]
 
@@ -289,7 +289,7 @@ class FamBPMs(_DeviceSet):
                         mstr += (
                             f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
                         )
-        was_set = mask_begin is not None or mask_end is not None
+        was_set = mask_beg is not None or mask_end is not None
         status = 'enabled' if enable else 'disabled'
         status += ' & set' if was_set else ''
         stg = ', except:' if mstr else '.'
