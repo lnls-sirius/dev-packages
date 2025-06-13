@@ -246,7 +246,7 @@ class FamBPMs(_DeviceSet):
         mask_begin = _to_array(mask_begin, "mask_begin")
         mask_end = _to_array(mask_end, "mask_end")
 
-        total_samples = np.zeros(ndev, dtype=int)
+        total_samples = _np.zeros(ndev, dtype=int)
         total_samples += 0 if mask_begin is None else mask_begin
         total_samples += 0 if mask_end is None else mask_end
 
