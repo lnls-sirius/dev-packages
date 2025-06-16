@@ -272,7 +272,7 @@ class FamBPMs(_DeviceSet):
         t0 = _time.time()
 
         for i, bpm in enumerate(self):
-            tout = timeout - (_time.time() - t0)
+            tout = max(0, timeout - (_time.time() - t0))
 
             props = {'TbTDataMaskEn-Sel': int(enable)}
 
@@ -285,10 +285,11 @@ class FamBPMs(_DeviceSet):
                 okall = False
                 for prop, sp in props.items():
                     rb = bpm[prop]
-                    if rb != sp:
-                        mstr += (
-                            f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
-                        )
+                    if rb == sp:
+                        continue
+                    mstr += (
+                        f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
+                    )
         was_set = mask_beg is not None or mask_end is not None
         status = 'enabled' if enable else 'disabled'
         status += ' & set' if was_set else ''
