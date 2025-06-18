@@ -171,35 +171,35 @@ class Slit(_Device):
         """Return slit top position [mm]."""
         return self[self.PARAM_PVS.TOP_PARAM_MON]
 
-    @top_pos.setter
-    def top_pos(self, value):
-        """Set slit top position [mm]."""
-        self[self.PARAM_PVS.TOP_PARAM_SP] = value
-
     @property
     def bottom_pos(self):
         """Return slit bottom position [mm]."""
         return self[self.PARAM_PVS.BOTTOM_PARAM_MON]
 
-    @bottom_pos.setter
-    def bottom_pos(self, value):
-        """Set slit bottom position [mm]."""
-        self[self.PARAM_PVS.BOTTOM_PARAM_SP] = value
-    
     @property
     def left_pos(self):
         """Return slit left position [mm]."""
         return self[self.PARAM_PVS.LEFT_PARAM_MON]
 
-    @left_pos.setter
-    def left_pos(self, value):
-        """Set slit left position [mm]."""
-        self[self.PARAM_PVS.LEFT_PARAM_SP] = value
-    
     @property
     def right_pos(self):
         """Return slit right position [mm]."""
         return self[self.PARAM_PVS.RIGHT_PARAM_MON]
+
+    @top_pos.setter
+    def top_pos(self, value):
+        """Set slit top position [mm]."""
+        self[self.PARAM_PVS.TOP_PARAM_SP] = value
+
+    @bottom_pos.setter
+    def bottom_pos(self, value):
+        """Set slit bottom position [mm]."""
+        self[self.PARAM_PVS.BOTTOM_PARAM_SP] = value
+
+    @left_pos.setter
+    def left_pos(self, value):
+        """Set slit left position [mm]."""
+        self[self.PARAM_PVS.LEFT_PARAM_SP] = value
 
     @right_pos.setter
     def right_pos(self, value):
@@ -595,21 +595,21 @@ class DVF(DVFImgProc):
         
         if devname in self._DVF_WITH_CONTROLS:
             self._set_motors_ctrl()
-    
+
     @property
     def dvf_z_pos(self):
         """Return DVF base motor longitudinal position [mm]."""
         return self[self.PARAM_PVS.DVF_Z_MON]
 
-    @dvf_z_pos.setter
-    def dvf_z_pos(self, value):
-        """Set DVF base motor longitudinal position [mm]."""
-        self[self.PARAM_PVS.DVF_Z_SP] = value
-
     @property
     def dvf_lens_pos(self):
         """Return DVF lens position [mm]."""
         return self[self.PARAM_PVS.DVF_LENS_MON]
+
+    @dvf_z_pos.setter
+    def dvf_z_pos(self, value):
+        """Set DVF base motor longitudinal position [mm]."""
+        self[self.PARAM_PVS.DVF_Z_SP] = value
 
     @dvf_lens_pos.setter
     def dvf_lens_pos(self, value):
