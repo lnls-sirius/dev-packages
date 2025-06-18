@@ -10,6 +10,22 @@ import time as _time
 from .device import Device as _Device
 from .dvf import DVFImgProc
 
+class _Suffix:
+    """Class to change pv dynamically."""
+
+    def __init__(self, add_suffix, remove_suffix):
+        self.suffix = add_suffix
+        self.target = remove_suffix
+
+    def __radd__(self, other: str) -> str:
+        """Function will be called when the normal sum fails."""
+        cleaned = other.replace(f':{self.target}', '')
+        return cleaned + self.suffix
+
+    def __repr__(self):
+        """Representation function."""
+        return self.suffix
+    
 
 class _ParamPVs:
     
@@ -318,7 +334,7 @@ class Mirror(_Device):
     class DEVICES:
         """Devices names."""
 
-        MIRROR1 = "CAX:A:PP01"
+        MIRROR1 = "CAX:A"
 
         ALL = (
             MIRROR1,
@@ -329,30 +345,42 @@ class Mirror(_Device):
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
 
-    PARAM_PVS.ROTY_PARAM_SP = "A.VAL"
-    PARAM_PVS.ROTY_PARAM_RB = "A.VAL" # That doesn't have a RB PV
-    PARAM_PVS.ROTY_PARAM_MON = "A.RBV" # RBV is not the pv of readback
-    PARAM_PVS.ROTY_PARAM_STOP = "A.STOP"
+    # MIRROR CONTROL
+    PARAM_PVS.ROTY_PARAM_SP = "PP01:A.VAL"
+    PARAM_PVS.ROTY_PARAM_RB = "PP01:A.VAL" # That doesn't have a RB PV
+    PARAM_PVS.ROTY_PARAM_MON = "PP01:A.RBV" # RBV is not the pv of readback
+    PARAM_PVS.ROTY_PARAM_STOP = "PP01:A.STOP"
 
-    PARAM_PVS.TX_PARAM_SP = "B.VAL"
-    PARAM_PVS.TX_PARAM_RB = "B.VAL" # That doesn't have a RB PV
-    PARAM_PVS.TX_PARAM_MON = "B.RBV" # RBV is not the pv of readback
-    PARAM_PVS.TX_PARAM_STOP = "B.STOP"
+    PARAM_PVS.TX_PARAM_SP = "PP01:B.VAL"
+    PARAM_PVS.TX_PARAM_RB = "PP01:B.VAL" # That doesn't have a RB PV
+    PARAM_PVS.TX_PARAM_MON = "PP01:B.RBV" # RBV is not the pv of readback
+    PARAM_PVS.TX_PARAM_STOP = "PP01:B.STOP"
 
-    PARAM_PVS.Y1_PARAM_SP = "C.VAL"
-    PARAM_PVS.Y1_PARAM_RB = "C.VAL" # That doesn't have a RB PV
-    PARAM_PVS.Y1_PARAM_MON = "C.RBV" # RBV is not the pv of readback
-    PARAM_PVS.Y1_PARAM_STOP = "C.STOP"
+    PARAM_PVS.Y1_PARAM_SP = "PP01:C.VAL"
+    PARAM_PVS.Y1_PARAM_RB = "PP01:C.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y1_PARAM_MON = "PP01:C.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y1_PARAM_STOP = "PP01:C.STOP"
 
-    PARAM_PVS.Y2_PARAM_SP = "D.VAL"
-    PARAM_PVS.Y2_PARAM_RB = "D.VAL" # That doesn't have a RB PV
-    PARAM_PVS.Y2_PARAM_MON = "D.RBV" # RBV is not the pv of readback
-    PARAM_PVS.Y2_PARAM_STOP = "D.STOP"
+    PARAM_PVS.Y2_PARAM_SP = "PP01:D.VAL"
+    PARAM_PVS.Y2_PARAM_RB = "PP01:D.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y2_PARAM_MON = "PP01:D.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y2_PARAM_STOP = "PP01:D.STOP"
 
-    PARAM_PVS.Y3_PARAM_SP = "E.VAL"
-    PARAM_PVS.Y3_PARAM_RB = "E.VAL" # That doesn't have a RB PV
-    PARAM_PVS.Y3_PARAM_MON = "E.RBV" # RBV is not the pv of readback
-    PARAM_PVS.Y3_PARAM_STOP = "E.STOP"
+    PARAM_PVS.Y3_PARAM_SP = "PP01:E.VAL"
+    PARAM_PVS.Y3_PARAM_RB = "PP01:E.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y3_PARAM_MON = "PP01:E.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y3_PARAM_STOP = "PP01:E.STOP"
+
+    # SENSORS
+    PARAM_PVS.PHOTOCOLLECTOR = 'RIO01:9215A:ai0'
+
+    PARAM_PVS.TEMP0_MON = 'RIO01:9226B:temp0'
+    PARAM_PVS.TEMP1_MON = 'RIO01:9226B:temp1'
+    PARAM_PVS.TEMP2_MON = 'RIO01:9226B:temp2'
+    PARAM_PVS.TEMP3_MON = 'RIO01:9226B:temp3'
+    PARAM_PVS.TEMP4_MON = 'RIO01:9226B:temp4'
+    PARAM_PVS.TEMP_SP = 'RIO01:M1_CtrltempSp'
+    PARAM_PVS.TEMP_RB = 'RIO01:M1_CtrltempSp' # That doesn't have a RB PV
 
     PROPERTIES_DEFAULT = \
         tuple(set(
@@ -377,17 +405,6 @@ class Mirror(_Device):
         """
         return self[self.PARAM_PVS.ROTY_PARAM_MON]
 
-    @roty_pos.setter
-    def roty_pos(self, value):
-        """Set the linear actuator pos related to RotY rotation [mm].
-
-        RotY is performed by a linear actuator in one of
-        longitudinal ends of the mirror. The mirror is pivoted
-        at its longitudinal center and the linear actuator induces
-        a rotation around the Y axis.
-        """
-        self[self.PARAM_PVS.ROTY_PARAM_SP] = value
-    
     @property
     def tx_pos(self):
         """Return the linear actuator pos related to Tx translation [mm].
@@ -397,15 +414,6 @@ class Mirror(_Device):
         """
         return self[self.PARAM_PVS.TX_PARAM_MON]
 
-    @tx_pos.setter
-    def tx_pos(self, value):
-        """Set the linear actuator pos related to Tx translation [mm].
-
-        This linear actuator is directly related to the horizontal
-        transverse position of the mirror.
-        """
-        self[self.PARAM_PVS.TX_PARAM_SP] = value
-    
     @property
     def y1_pos(self):
         """Return the first linear vertical actuator pos Y1 [mm].
@@ -416,17 +424,6 @@ class Mirror(_Device):
         the other side, in oposite horizontal ends.
         """
         return self[self.PARAM_PVS.Y1_PARAM_MON]
-
-    @y1_pos.setter
-    def y1_pos(self, value):
-        """Set the first linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self[self.PARAM_PVS.Y1_PARAM_SP] = value
 
     @property
     def y2_pos(self):
@@ -439,17 +436,6 @@ class Mirror(_Device):
         """
         return self[self.PARAM_PVS.Y2_PARAM_MON]
 
-    @y2_pos.setter
-    def y2_pos(self, value):
-        """Set the second linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self[self.PARAM_PVS.Y2_PARAM_SP] = value
-
     @property
     def y3_pos(self):
         """Return the third linear actuator pos Y2 [mm].
@@ -461,6 +447,88 @@ class Mirror(_Device):
         """
         return self[self.PARAM_PVS.Y3_PARAM_MON]
 
+    @property
+    def photocurrent_signal(self):
+        """Return induced voltage in the mirror photocollector [V]."""
+        return self[self.PARAM_PVS.PHOTOCOLLECTOR]
+
+    @property
+    def temperature_0(self):
+        """Return M1 temperature sensor 0 [°C]."""
+        return self[self.PARAM_PVS.TEMP0_MON]
+
+    @property
+    def temperature_1(self):
+        """Return M1 temperature sensor 1 [°C]."""
+        return self[self.PARAM_PVS.TEMP1_MON]
+
+    @property
+    def temperature_2(self):
+        """Return M1 temperature sensor 2 [°C]."""
+        return self[self.PARAM_PVS.TEMP2_MON]
+
+    @property
+    def temperature_3(self):
+        """Return M1 temperature sensor 3 [°C]."""
+        return self[self.PARAM_PVS.TEMP3_MON]
+
+    @property
+    def temperature_4(self):
+        """Return M1 temperature sensor 4 [°C]."""
+        return self[self.PARAM_PVS.TEMP4_MON]
+
+    @property
+    def temperature_ref(self):
+        """Return M1 temperature reference setpoint [°C]."""
+        return self[self.PARAM_PVS.TEMP_RB]
+
+    @roty_pos.setter
+    def roty_pos(self, value):
+        """Set the linear actuator pos related to RotY rotation [mm].
+
+        RotY is performed by a linear actuator in one of
+        longitudinal ends of the mirror. The mirror is pivoted
+        at its longitudinal center and the linear actuator induces
+        a rotation around the Y axis.
+        """
+        self[self.PARAM_PVS.ROTY_PARAM_SP] = value
+
+    @tx_pos.setter
+    def tx_pos(self, value):
+        """Set the linear actuator pos related to Tx translation [mm].
+
+        This linear actuator is directly related to the horizontal
+        transverse position of the mirror.
+        """
+        self[self.PARAM_PVS.TX_PARAM_SP] = value
+    
+    @y1_pos.setter
+    def y1_pos(self, value):
+        """Set the first linear vertical actuator pos Y1 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        self[self.PARAM_PVS.Y1_PARAM_SP] = value
+
+    @y2_pos.setter
+    def y2_pos(self, value):
+        """Set the second linear vertical actuator pos Y1 [mm].
+
+        Rotations RotX, RotZ and translation Ty are implemented as combinations
+        of three vertical independent actuators. Y1 actuator is located in one
+        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
+        the other side, in opposite horizontal ends.
+        """
+        self[self.PARAM_PVS.Y2_PARAM_SP] = value
+
+    @temperature_ref.setter
+    def temperature_ref(self, value):
+        """Set M1 temperature reference [°C]."""
+        self[self.PARAM_PVS.TEMP_SP] = value
+
     @y3_pos.setter
     def y3_pos(self, value):
         """Set the third linear vertical actuator pos Y1 [mm].
@@ -471,7 +539,7 @@ class Mirror(_Device):
         the other side, in opposite horizontal ends.
         """
         self[self.PARAM_PVS.Y3_PARAM_SP] = value
-    
+
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
         self[propty] = 1
@@ -498,131 +566,7 @@ class Mirror(_Device):
         return self._cmd_motor_stop(self.PARAM_PVS.Y3_PARAM_STOP, timeout)
 
 
-class MirrorSensors(_Device):
-    """Mirror sensors."""
-
-    class DEVICES:
-        """Device names."""
-
-        SENSORS = 'CAX:A:RIO01'
-
-        ALL = (
-            SENSORS,
-        )
-    
-    # --- PARAM_PVS ---
-    PARAM_PVS = _ParamPVs()
-
-    PARAM_PVS.TEMP_SP = 'M1_CtrltempSp'
-    PARAM_PVS.TEMP_RB = 'M1_CtrltempSp' # That doesn't have a RB PV
-    PARAM_PVS.TEMP0_MON = '9226B:temp0'
-    PARAM_PVS.TEMP1_MON = '9226B:temp1'
-    PARAM_PVS.TEMP2_MON = '9226B:temp2'
-    PARAM_PVS.TEMP3_MON = '9226B:temp3'
-    PARAM_PVS.TEMP4_MON = '9226B:temp4'
-
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
-
-    def __init__(self, devname=None, props2init='all', **kwargs):
-        """Init."""
-        # check if device exists
-        if devname not in self.DEVICES.ALL:
-            raise NotImplementedError(devname)
-        super().__init__(devname, props2init=props2init, **kwargs)
-
-    @property
-    def photocurrent_signal(self):
-        """Return induced voltage in the mirror photocollector [V]."""
-        return self[self.PARAM_PVS.PHOTOCOLLECTOR]
-
-    @property
-    def temperature_ref(self):
-        """Return M1 temperature reference setpoint [°C]."""
-        return self[self.PARAM_PVS.TEMP_RB]
-
-    @temperature_ref.setter
-    def temperature_ref(self, value):
-        """Set M1 temperature reference [°C]."""
-        self[self.PARAM_PVS.TEMP_SP] = value
-
-
-class DVFCtrl(_Device):
-    """ DVF motors:
-
-    DVF:
-    https://cnpemcamp.sharepoint.com/:p:/s/lnls/groups/opt/EfXWP0gm-URPt1mzEZEWxbABzJxfJg3kt86jOJrV3KQoMg?e=eaT4T1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIxNDE1LzI0MDYyNzI0ODE0In0%3D
-    """
-
-    class DEVICES:
-        """Devices names."""
-
-        # DVF motors
-        MOTOR = 'B:PP01'
-
-        ALL = (
-            MOTOR,
-        )
-
-    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
-    
-    # --- PARAM_PVS ---
-    PARAM_PVS = _ParamPVs()
-
-    PARAM_PVS.DVF_Z_SP = 'E.VAL'
-    PARAM_PVS.DVF_Z_RB = 'E.VAL'
-    PARAM_PVS.DVF_Z_MON = 'E.RBV'
-    PARAM_PVS.DVF_Z_STOP = 'E.STOP'
-
-    PARAM_PVS.DVF_LENS_SP = 'F.VAL'
-    PARAM_PVS.DVF_LENS_RB = 'F.VAL'
-    PARAM_PVS.DVF_LENS_MON = 'F.RBV'
-    PARAM_PVS.DVF_LENS_STOP = 'F.STOP'
-
-    def __init__(self, devname=None, props2init='all', **kwargs):
-        """Init."""
-        # check if device exists
-        if devname not in self.DEVICES.ALL:
-            raise NotImplementedError(devname)
-        super().__init__(devname, props2init=props2init, **kwargs)
-    
-    @property
-    def dvf2_z_pos(self):
-        """Return DVF2 base motor longitudinal position [mm]."""
-        return self[self.PARAM_PVS.DVF_Z_MON]
-
-    @dvf2_z_pos.setter
-    def dvf2_z_pos(self, value):
-        """Set DVF2 base motor longitudinal position [mm]."""
-        self[self.PARAM_PVS.DVF_Z_SP] = value
-
-    @property
-    def dvf2_lens_pos(self):
-        """Return DVF2 lens position [mm]."""
-        return self[self.PARAM_PVS.DVF_LENS_MON]
-
-    @dvf2_lens_pos.setter
-    def dvf2_lens_pos(self, value):
-        """Set DVF2 lens position [mm]."""
-        self[self.PARAM_PVS.DVF_LENS_SP] = value
-
-    def _cmd_motor_stop(self, propty, timeout):
-        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
-        self[propty] = 1
-        return self._wait(propty, 0, timeout=timeout)
-
-    def cmd_dvf2_z_stop(self, timeout=None):
-        """Stop DVF2 base motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.DVF_Z_STOP, timeout)
-
-    def cmd_dvf2_lens_stop(self, timeout=None):
-        """Stop DVF2 lens motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.DVF_LENS_STOP, timeout)
-
-
-class DVFImg(DVFImgProc):
+class DVF(DVFImgProc):
     """."""
 
     class DEVICES:
@@ -632,13 +576,71 @@ class DVFImg(DVFImgProc):
         CAX_DVF2 = 'CAX:B:BASLER01'
         ALL = (CAX_DVF1, CAX_DVF2)
 
+    _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+
+    _DVF_WITH_CONTROLS = (DEVICES.CAX_DVF2,)
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
     def __init__(self, devname, props2init='all', **kwargs):
         """."""
-        super().__init__(devname=devname, props2init=props2init, **kwargs)
+        super().__init__(
+            devname=devname,
+            props2init=props2init,
+            **kwargs
+        )
+        
+        if devname in self._DVF_WITH_CONTROLS:
+            self._set_motors_ctrl()
+    
+    @property
+    def dvf_z_pos(self):
+        """Return DVF base motor longitudinal position [mm]."""
+        return self[self.PARAM_PVS.DVF_Z_MON]
 
+    @dvf_z_pos.setter
+    def dvf_z_pos(self, value):
+        """Set DVF base motor longitudinal position [mm]."""
+        self[self.PARAM_PVS.DVF_Z_SP] = value
 
-class DVF2Manager():
-    """Initialize DVF2 and motion"""
+    @property
+    def dvf_lens_pos(self):
+        """Return DVF lens position [mm]."""
+        return self[self.PARAM_PVS.DVF_LENS_MON]
 
-    IMG = DVFImg(devname=DVFImg.DEVICES.CAX_DVF2)
-    CTRL = DVFCtrl(devname=DVFCtrl.DEVICES.MOTOR)
+    @dvf_lens_pos.setter
+    def dvf_lens_pos(self, value):
+        """Set DVF lens position [mm]."""
+        self[self.PARAM_PVS.DVF_LENS_SP] = value
+
+    def _set_motors_ctrl(self):
+        remove_suffix='BASLER01'
+
+        self.PARAM_PVS.DVF_Z_SP = _Suffix(add_suffix='PP01:E.VAL', remove_suffix=remove_suffix)
+        self.PARAM_PVS.DVF_Z_RB = _Suffix(add_suffix='PP01:E.VAL', remove_suffix=remove_suffix)
+        self.PARAM_PVS.DVF_Z_MON = _Suffix(add_suffix='PP01:E.RBV', remove_suffix=remove_suffix)
+        self.PARAM_PVS.DVF_Z_STOP = _Suffix(add_suffix='PP01:E.STOP', remove_suffix=remove_suffix)
+
+        self.PARAM_PVS.DVF_LENS_SP = _Suffix(add_suffix='PP01:F.VAL', remove_suffix=remove_suffix)
+        self.PARAM_PVS.DVF_LENS_RB = _Suffix(add_suffix='PP01:F.VAL', remove_suffix=remove_suffix)
+        self.PARAM_PVS.DVF_LENS_MON = _Suffix(add_suffix='PP01:F.RBV', remove_suffix=remove_suffix)
+        self.PARAM_PVS.DVF_LENS_STOP = _Suffix(add_suffix='PP01:F.STOP', remove_suffix=remove_suffix)
+
+        self.PROPERTIES_DEFAULT += \
+        tuple(set(
+            value for key, value in _inspect.getmembers(self.PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    def _cmd_motor_stop(self, propty, timeout):
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        self[propty] = 1
+        return self._wait(propty, 0, timeout=timeout)
+
+    def cmd_dvf_z_stop(self, timeout=None):
+        """Stop DVF base motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.DVF_Z_STOP, timeout)
+
+    def cmd_dvf_lens_stop(self, timeout=None):
+        """Stop DVF lens motor."""
+        return self._cmd_motor_stop(self.PARAM_PVS.DVF_LENS_STOP, timeout)
