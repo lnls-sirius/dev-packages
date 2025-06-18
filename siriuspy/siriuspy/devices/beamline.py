@@ -334,7 +334,7 @@ class Mirror(_Device):
     class DEVICES:
         """Devices names."""
 
-        MIRROR1 = "CAX:A"
+        MIRROR1 = "CAX:A:PP01"
 
         ALL = (
             MIRROR1,
@@ -372,15 +372,17 @@ class Mirror(_Device):
     PARAM_PVS.Y3_PARAM_STOP = "PP01:E.STOP"
 
     # SENSORS
-    PARAM_PVS.PHOTOCOLLECTOR = 'RIO01:9215A:ai0'
+    remove_suffix='PP01'
 
-    PARAM_PVS.TEMP0_MON = 'RIO01:9226B:temp0'
-    PARAM_PVS.TEMP1_MON = 'RIO01:9226B:temp1'
-    PARAM_PVS.TEMP2_MON = 'RIO01:9226B:temp2'
-    PARAM_PVS.TEMP3_MON = 'RIO01:9226B:temp3'
-    PARAM_PVS.TEMP4_MON = 'RIO01:9226B:temp4'
-    PARAM_PVS.TEMP_SP = 'RIO01:M1_CtrltempSp'
-    PARAM_PVS.TEMP_RB = 'RIO01:M1_CtrltempSp' # That doesn't have a RB PV
+    PARAM_PVS.PHOTOCOLLECTOR = _Suffix(add_suffix='RIO01:9215A:ai0', remove_suffix=remove_suffix)
+
+    PARAM_PVS.TEMP0_MON = _Suffix('RIO01:9226B:temp0', remove_suffix=remove_suffix)
+    PARAM_PVS.TEMP1_MON = _Suffix('RIO01:9226B:temp1', remove_suffix=remove_suffix)
+    PARAM_PVS.TEMP2_MON = _Suffix('RIO01:9226B:temp2', remove_suffix=remove_suffix)
+    PARAM_PVS.TEMP3_MON = _Suffix('RIO01:9226B:temp3', remove_suffix=remove_suffix)
+    PARAM_PVS.TEMP4_MON = _Suffix('RIO01:9226B:temp4', remove_suffix=remove_suffix)
+    PARAM_PVS.TEMP_SP = _Suffix('RIO01:M1_CtrltempSp', remove_suffix=remove_suffix)
+    PARAM_PVS.TEMP_RB = _Suffix('RIO01:M1_CtrltempSp', remove_suffix=remove_suffix) # That doesn't have a RB PV
 
     PROPERTIES_DEFAULT = \
         tuple(set(
