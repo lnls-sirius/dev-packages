@@ -10,6 +10,7 @@ import time as _time
 from .device import Device as _Device
 from .dvf import DVFImgProc
 
+
 class _Suffix:
     """Class to change pv dynamically."""
 
