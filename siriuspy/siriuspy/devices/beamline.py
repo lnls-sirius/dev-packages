@@ -25,7 +25,7 @@ class _Suffix:
 
     def __repr__(self):
         """Representation function."""
-        return self.suffix
+        return repr(self.suffix)
     
 
 class _ParamPVs:
