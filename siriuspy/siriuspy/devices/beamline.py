@@ -347,30 +347,30 @@ class Mirror(_Device):
     PARAM_PVS = _ParamPVs()
 
     # MIRROR CONTROL
-    PARAM_PVS.ROTY_PARAM_SP = "PP01:A.VAL"
-    PARAM_PVS.ROTY_PARAM_RB = "PP01:A.VAL" # That doesn't have a RB PV
-    PARAM_PVS.ROTY_PARAM_MON = "PP01:A.RBV" # RBV is not the pv of readback
-    PARAM_PVS.ROTY_PARAM_STOP = "PP01:A.STOP"
+    PARAM_PVS.ROTY_PARAM_SP = "A.VAL"
+    PARAM_PVS.ROTY_PARAM_RB = "A.VAL" # That doesn't have a RB PV
+    PARAM_PVS.ROTY_PARAM_MON = "A.RBV" # RBV is not the pv of readback
+    PARAM_PVS.ROTY_PARAM_STOP = "A.STOP"
 
-    PARAM_PVS.TX_PARAM_SP = "PP01:B.VAL"
-    PARAM_PVS.TX_PARAM_RB = "PP01:B.VAL" # That doesn't have a RB PV
-    PARAM_PVS.TX_PARAM_MON = "PP01:B.RBV" # RBV is not the pv of readback
-    PARAM_PVS.TX_PARAM_STOP = "PP01:B.STOP"
+    PARAM_PVS.TX_PARAM_SP = "B.VAL"
+    PARAM_PVS.TX_PARAM_RB = "B.VAL" # That doesn't have a RB PV
+    PARAM_PVS.TX_PARAM_MON = "B.RBV" # RBV is not the pv of readback
+    PARAM_PVS.TX_PARAM_STOP = "B.STOP"
 
-    PARAM_PVS.Y1_PARAM_SP = "PP01:C.VAL"
-    PARAM_PVS.Y1_PARAM_RB = "PP01:C.VAL" # That doesn't have a RB PV
-    PARAM_PVS.Y1_PARAM_MON = "PP01:C.RBV" # RBV is not the pv of readback
-    PARAM_PVS.Y1_PARAM_STOP = "PP01:C.STOP"
+    PARAM_PVS.Y1_PARAM_SP = "C.VAL"
+    PARAM_PVS.Y1_PARAM_RB = "C.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y1_PARAM_MON = "C.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y1_PARAM_STOP = "C.STOP"
 
-    PARAM_PVS.Y2_PARAM_SP = "PP01:D.VAL"
-    PARAM_PVS.Y2_PARAM_RB = "PP01:D.VAL" # That doesn't have a RB PV
-    PARAM_PVS.Y2_PARAM_MON = "PP01:D.RBV" # RBV is not the pv of readback
-    PARAM_PVS.Y2_PARAM_STOP = "PP01:D.STOP"
+    PARAM_PVS.Y2_PARAM_SP = "D.VAL"
+    PARAM_PVS.Y2_PARAM_RB = "D.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y2_PARAM_MON = "D.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y2_PARAM_STOP = "D.STOP"
 
-    PARAM_PVS.Y3_PARAM_SP = "PP01:E.VAL"
-    PARAM_PVS.Y3_PARAM_RB = "PP01:E.VAL" # That doesn't have a RB PV
-    PARAM_PVS.Y3_PARAM_MON = "PP01:E.RBV" # RBV is not the pv of readback
-    PARAM_PVS.Y3_PARAM_STOP = "PP01:E.STOP"
+    PARAM_PVS.Y3_PARAM_SP = "E.VAL"
+    PARAM_PVS.Y3_PARAM_RB = "E.VAL" # That doesn't have a RB PV
+    PARAM_PVS.Y3_PARAM_MON = "E.RBV" # RBV is not the pv of readback
+    PARAM_PVS.Y3_PARAM_STOP = "E.STOP"
 
     # SENSORS
     remove_suffix='PP01'
