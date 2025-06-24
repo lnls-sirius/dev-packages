@@ -542,7 +542,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     FOFBCTRL_CLASS = FOFBCtrlSysId
     FOFBPS_CLASS = FOFBPSSysId
-    DEF_ATOL_FOFBACC = 1e-6
+    DEF_ATOL_FOFBACC = 1e-4
 
     def __init__(self, **kws):
         """."""
