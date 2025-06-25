@@ -32,8 +32,6 @@ class SimPSTypeModel(_Simulator):
         'Current-SP', 'Current-RB',
         'CurrentRef-Mon', 'Current-Mon',
         # FBP-specific (added only if PS is of FBP pstype!)
-        'SOFBCurrent-SP', 'SOFBCurrent-RB',
-        'SOFBCurrentRef-Mon', 'SOFBCurrent-Mon',
         )
 
     # regexp used to determine setpoint PVs
