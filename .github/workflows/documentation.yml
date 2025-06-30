@@ -1,0 +1,38 @@
+name: Documentation
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+
+      - name: Install siriuspy dependencies
+        run: pip install -r siriuspy/requirements.txt
+
+      - name: Install siriuspy
+        run: pip install siriuspy/
+
+      - name: Install docs dependencies
+        run: pip install -r siriuspy/docs/doc_requirements.txt
+
+      - name: Build HTML
+        run: sphinx-build -b html siriuspy/docs/source/ ./public
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          force_orphan: true
