@@ -1,3 +1,5 @@
+"""Beamlines subpackage."""
+
 from .mirror import Mirror
 from .slit import Slit
 
