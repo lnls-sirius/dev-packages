@@ -1,6 +1,7 @@
 """Mirror Control."""
 
 import inspect as _inspect
+import time as _time
 
 from ..device import Device as _Device
 
