@@ -186,6 +186,8 @@ class Device:
 
     def __getitem__(self, propty):
         """Return value of property."""
+        if propty is None:
+            return
         pvobj = self.pv_object(propty)
         try:
             value = pvobj.get(timeout=Device.GET_TIMEOUT)
