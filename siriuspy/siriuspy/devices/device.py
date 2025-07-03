@@ -281,14 +281,11 @@ class Device:
         if isinstance(dev, _SiriusPVName) and dev.is_standard(
             name_type="devname"
         ):
-            print("here1")
             ppt = dev.propty
             pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
         elif dev:
-            print("here2")
             pvname = pref + dev + self.PROPERTY_SEP + propty
         else:
-            print("here3")
             pvname = pref + propty
         return pvname
 
