@@ -1,6 +1,7 @@
 """Beamlines subpackage."""
 
-from .mirror import Mirror
-from .slit import Slit
+from .mirror import MirrorBase, CAXMirror
+from .slit import SlitBase, CAXSlit
+from .beamlines import CAXCtrl, PNRCtrl, EMACtrl
 
-del mirror, slit
+del mirror, slit, beamlines
