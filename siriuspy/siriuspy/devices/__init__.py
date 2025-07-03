@@ -2,45 +2,94 @@
 
 from .afc_acq_core import AFCACQLogicalTrigger, AFCPhysicalTrigger
 from .bbb import BunchbyBunch
-from .beamlines import Mirror, Slit
+from .beamlines import (
+    MirrorBase,
+    CAXMirror,
+    SlitBase,
+    CAXSlit,
+    CAXCtrl,
+    PNRCtrl,
+    EMACtrl,
+)
 from .blm import BLM
 from .bpm import BPM
 from .bpm_eq import EqualizeBPMs
 from .bpm_fam import FamBPMs
-from .currinfo import CurrInfoAS, CurrInfoBO, CurrInfoLinear, CurrInfoSI, \
-    CurrInfoTranspEff
+from .currinfo import (
+    CurrInfoAS,
+    CurrInfoBO,
+    CurrInfoLinear,
+    CurrInfoSI,
+    CurrInfoTranspEff,
+)
 from .dcct import DCCT
 from .device import Device, DeviceSet
-from .dvf import DVF, DVFImgProc
+from .dvf import DVF, DVFImgProc, CAXDtc
 from .egun import EGBias, EGFilament, EGHVPS, EGPulsePS, EGTriggerPS, EGun
 from .energy import Energy
-from .fofb import BPMDCC, FamFastCorrs, FamFOFBControllers, FOFBCtrlDCC, \
-    FOFBCtrlRef, HLFOFB
-from .fofb_acq import FamFOFBLamp, FamFOFBSysId, FOFBCtrlLamp, FOFBCtrlSysId, \
-    FOFBPSLamp, FOFBPSSysId
+from .fofb import (
+    BPMDCC,
+    FamFastCorrs,
+    FamFOFBControllers,
+    FOFBCtrlDCC,
+    FOFBCtrlRef,
+    HLFOFB,
+)
+from .fofb_acq import (
+    FamFOFBLamp,
+    FamFOFBSysId,
+    FOFBCtrlLamp,
+    FOFBCtrlSysId,
+    FOFBPSLamp,
+    FOFBPSSysId,
+)
 from .fpmosc import FPMOsc
 from .ict import ICT, TranspEff
 from .idff import IDFF
 from .ids import APU, DELTA, EPU, ID, IDBase, IVU, PAPU, VPU, WIG
 from .injctrl import InjCtrl
-from .injsys import BOPSRampStandbyHandler, BORFRampStandbyHandler, \
-    InjSysPUModeHandler, InjSysStandbyHandler, LinacStandbyHandler, \
-    PUMagsStandbyHandler
+from .injsys import (
+    BOPSRampStandbyHandler,
+    BORFRampStandbyHandler,
+    InjSysPUModeHandler,
+    InjSysStandbyHandler,
+    LinacStandbyHandler,
+    PUMagsStandbyHandler,
+)
 from .intlkctrl import ASMPSCtrl, ASPPSCtrl, BLInterlockCtrl
 from .lienergy import LIEnergy
 from .lillrf import DevLILLRF, LILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
-from .orbit_interlock import BaseOrbitIntlk, BPMOrbitIntlk, HLOrbitInterlock, \
-    OrbitInterlock
+from .orbit_interlock import (
+    BaseOrbitIntlk,
+    BPMOrbitIntlk,
+    HLOrbitInterlock,
+    OrbitInterlock,
+)
 from .posang import PosAng
 from .psconv import PSProperty, StrengthConv
 from .pssofb import PSApplySOFB, PSCorrSOFB
-from .pwrsupply import PowerSupply, PowerSupplyFBP, PowerSupplyFC, \
-    PowerSupplyPU
-from .rf import ASLLRF, BOLLRFPreAmp, BORF300VDCAmp, BORFCavMonitor, \
-    BORFDCAmp, RFCav, RFGen, RFKillBeam, SILLRFPreAmp, SIRFACAmp, \
-    SIRFCavMonitor, SIRFDCAmp
+from .pwrsupply import (
+    PowerSupply,
+    PowerSupplyFBP,
+    PowerSupplyFC,
+    PowerSupplyPU,
+)
+from .rf import (
+    ASLLRF,
+    BOLLRFPreAmp,
+    BORF300VDCAmp,
+    BORFCavMonitor,
+    BORFDCAmp,
+    RFCav,
+    RFGen,
+    RFKillBeam,
+    SILLRFPreAmp,
+    SIRFACAmp,
+    SIRFCavMonitor,
+    SIRFDCAmp,
+)
 from .scraper import ScraperH, ScraperV
 from .screen import Screen
 from .sofb import SOFB
