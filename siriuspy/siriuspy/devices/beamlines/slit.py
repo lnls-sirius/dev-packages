@@ -2,47 +2,19 @@
 
 import inspect as _inspect
 import time as _time
+from types import SimpleNamespace as _SimpleNamespace
 
 from ..device import Device as _Device
 
 
-class _PVs:
-    # SLITS
-    # --- TOP ---
-    TOP_SP = None
-    TOP_RB = None
-    TOP_MON = None
-    TOP_STOP = None
-
-    # --- BOTTOM ---
-    BOTTOM_SP = None
-    BOTTOM_RB = None
-    BOTTOM_MON = None
-    BOTTOM_STOP = None
-
-    # --- LEFT ---
-    LEFT_SP = None
-    LEFT_RB = None
-    LEFT_MON = None
-    LEFT_STOP = None
-
-    # --- RIGHT ---
-    RIGHT_SP = None
-    RIGHT_RB = None
-    RIGHT_MON = None
-    RIGHT_STOP = None
+class _PVNames(_SimpleNamespace):
+    def __getattr__(self, name):
+        """."""
+        return None
 
 
-class Slit(_Device):
-    """Slit device."""
-
-    class DEVICES:
-        """Devices names."""
-
-        SLIT1 = "CAX:A:PP02"  # WBS1
-        SLIT2 = "CAX:B:PP01"  # WBS2
-
-        ALL = (SLIT1, SLIT2)
+class SlitBase(_Device):
+    """Base Slit device."""
 
     _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
     _THRESHOLD = 0.01  # [mm]
@@ -50,36 +22,10 @@ class Slit(_Device):
     _DELAY = 4  # [s]
     _TRIALS = 3
 
-    # --- PARAM_PVS ---
-    PARAM_PVS = _PVs()
+    # --- PVS ---
+    PVS = _PVNames()
 
-    PARAM_PVS.TOP_SP = "A.VAL"
-    PARAM_PVS.TOP_RB = "A.VAL"  # That doesn't have a RB PV
-    PARAM_PVS.TOP_MON = "A.RBV"  # RBV is not the pv of readback
-    PARAM_PVS.TOP_STOP = "A.STOP"
-
-    PARAM_PVS.BOTTOM_SP = "B.VAL"
-    PARAM_PVS.BOTTOM_RB = "B.VAL"  # That doesn't have a RB PV
-    PARAM_PVS.BOTTOM_MON = "B.RBV"  # RBV is not the pv of readback
-    PARAM_PVS.BOTTOM_STOP = "B.STOP"
-
-    PARAM_PVS.LEFT_SP = "C.VAL"
-    PARAM_PVS.LEFT_RB = "C.VAL"  # That doesn't have a RB PV
-    PARAM_PVS.LEFT_MON = "C.RBV"  # RBV is not the pv of readback
-    PARAM_PVS.LEFT_STOP = "C.STOP"
-
-    PARAM_PVS.RIGHT_SP = "D.VAL"
-    PARAM_PVS.RIGHT_RB = "D.VAL"  # That doesn't have a RB PV
-    PARAM_PVS.RIGHT_MON = "D.RBV"  # RBV is not the pv of readback
-    PARAM_PVS.RIGHT_STOP = "D.STOP"
-
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith("_") and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = tuple(set(value for key, value in vars(PVS).items()))
 
     def __init__(self, devname=None, props2init="all", **kwargs):
         """Init."""
@@ -91,42 +37,42 @@ class Slit(_Device):
     @property
     def top_pos(self):
         """Return slit top position [mm]."""
-        return self[self.PARAM_PVS.TOP_MON]
+        return self[self.PVS.TOP_MON]
 
     @property
     def bottom_pos(self):
         """Return slit bottom position [mm]."""
-        return self[self.PARAM_PVS.BOTTOM_MON]
+        return self[self.PVS.BOTTOM_MON]
 
     @property
     def left_pos(self):
         """Return slit left position [mm]."""
-        return self[self.PARAM_PVS.LEFT_MON]
+        return self[self.PVS.LEFT_MON]
 
     @property
     def right_pos(self):
         """Return slit right position [mm]."""
-        return self[self.PARAM_PVS.RIGHT_MON]
+        return self[self.PVS.RIGHT_MON]
 
     @top_pos.setter
     def top_pos(self, value):
         """Set slit top position [mm]."""
-        self[self.PARAM_PVS.TOP_SP] = value
+        self[self.PVS.TOP_SP] = value
 
     @bottom_pos.setter
     def bottom_pos(self, value):
         """Set slit bottom position [mm]."""
-        self[self.PARAM_PVS.BOTTOM_SP] = value
+        self[self.PVS.BOTTOM_SP] = value
 
     @left_pos.setter
     def left_pos(self, value):
         """Set slit left position [mm]."""
-        self[self.PARAM_PVS.LEFT_SP] = value
+        self[self.PVS.LEFT_SP] = value
 
     @right_pos.setter
     def right_pos(self, value):
         """Set slit right position [mm]."""
-        self[self.PARAM_PVS.RIGHT_SP] = value
+        self[self.PVS.RIGHT_SP] = value
 
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
@@ -175,18 +121,18 @@ class Slit(_Device):
     def _move_robust_slit(
         self, side, value, threshold, max_count, delay, trials
     ):
-        """
-            Tries to move the blade indicated by `side` up to `value`, repeating
-            up to `trials` times if it fails, and returns True on success.
+        """Tries to move the blade indicated by `side` up to `value`, repeating up to `trials` times if it fails, and returns True on success.
 
         Args:
             side : 'top', 'bottom', 'left' or 'right'
-            value : target position
-            threshold, max_count, delay : parameters for move_*_slit
+            value : target position.
+            threshold: parameters for move_*_slit
+            max_count: parameters for move_*_slit
+            delay : parameters for move_*_slit
             trials : how many times to restart the movement if it fails
 
-        Return:
-            bool : True or False
+        Returns:
+            bool : True or False.
         """
         if side not in ("top", "bottom", "left", "right"):
             raise ValueError("Invalid side: {}".format(side))
@@ -222,19 +168,19 @@ class Slit(_Device):
 
     def cmd_top_stop(self, timeout=None):
         """Stop Slit top motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.TOP_STOP, timeout)
+        return self._cmd_motor_stop(self.PVS.TOP_STOP, timeout)
 
     def cmd_bottom_stop(self, timeout=None):
         """Stop Slit bottom motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.BOTTOM_STOP, timeout)
+        return self._cmd_motor_stop(self.PVS.BOTTOM_STOP, timeout)
 
     def cmd_left_stop(self, timeout=None):
         """Stop Slit left motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.LEFT_STOP, timeout)
+        return self._cmd_motor_stop(self.PVS.LEFT_STOP, timeout)
 
     def cmd_right_stop(self, timeout=None):
         """Stop Slit right motor."""
-        return self._cmd_motor_stop(self.PARAM_PVS.RIGHT_STOP, timeout)
+        return self._cmd_motor_stop(self.PVS.RIGHT_STOP, timeout)
 
     def move_top(
         self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY
@@ -346,4 +292,47 @@ class Slit(_Device):
             max_count=max_count,
             delay=delay,
             trials=trials,
+        )
+
+
+class CAXSlit(SlitBase):
+    """."""
+
+    class DEVICES:
+        """Devices names."""
+
+        CAX_A1 = "CAX:A:PP02"  # WBS1
+        CAX_B1 = "CAX:B:PP01"  # WBS2
+
+        ALL = (CAX_A1, CAX_B1)
+
+    def __init__(self, devname=None, props2init="all", **kwargs):
+        """Init."""
+        if devname not in self.DEVICES.ALL:
+            raise ValueError("Wrong value for devname")
+
+        super().__init__(devname, props2init, **kwargs)
+
+        self.PVS.TOP_SP = "A.VAL"
+        self.PVS.TOP_RB = "A.VAL"  # That doesn't have a RB PV
+        self.PVS.TOP_MON = "A.RBV"  # RBV is not the pv of readback
+        self.PVS.TOP_STOP = "A.STOP"
+
+        self.PVS.BOTTOM_SP = "B.VAL"
+        self.PVS.BOTTOM_RB = "B.VAL"  # That doesn't have a RB PV
+        self.PVS.BOTTOM_MON = "B.RBV"  # RBV is not the pv of readback
+        self.PVS.BOTTOM_STOP = "B.STOP"
+
+        self.PVS.LEFT_SP = "C.VAL"
+        self.PVS.LEFT_RB = "C.VAL"  # That doesn't have a RB PV
+        self.PVS.LEFT_MON = "C.RBV"  # RBV is not the pv of readback
+        self.PVS.LEFT_STOP = "C.STOP"
+
+        self.PVS.RIGHT_SP = "D.VAL"
+        self.PVS.RIGHT_RB = "D.VAL"  # That doesn't have a RB PV
+        self.PVS.RIGHT_MON = "D.RBV"  # RBV is not the pv of readback
+        self.PVS.RIGHT_STOP = "D.STOP"
+
+        self.PROPERTIES_DEFAULT = tuple(
+            set(value for key, value in vars(self.PVS).items())
         )
