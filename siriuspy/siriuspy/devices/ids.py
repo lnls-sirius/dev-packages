@@ -1750,8 +1750,8 @@ class VPU(IDFullMovCtrl):
         """Device names."""
 
         VPU29_06SB = 'SI-06SB:ID-VPU29'
-        # VPU29_07SP = 'SI-07SP:ID-VPU29'
-        ALL = (VPU29_06SB, )  # VPU29_07SP, )
+        VPU29_07SP = 'SI-07SP:ID-VPU29'
+        ALL = (VPU29_06SB, VPU29_07SP)
 
     # DevCtrl PV
     _CMD_MOVE_STOP, _CMD_MOVE_START = 300, 320
