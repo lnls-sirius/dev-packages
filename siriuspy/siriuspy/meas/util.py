@@ -176,7 +176,10 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Image is not a numpy array')
             return
-        self._process_image(val)
+        try:
+            self._process_image(val)
+        except Exception as err:
+            _log.error(str(err))
 
     @property
     def imagewidth(self):
