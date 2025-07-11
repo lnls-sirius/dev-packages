@@ -687,29 +687,27 @@ class ProcessImage(BaseClass):
         image = self._image
         axis_x = _np.arange(image.shape[self.Plane.X])
         axis_y = _np.arange(image.shape[self.Plane.Y])
+        roi_sx = self._roi_size[self.Plane.X]
+        roi_sy = self._roi_size[self.Plane.Y]
 
         if self._conv_autocenter:
             self.px2mmcenterx = image.shape[self.Plane.X]//2
             self.px2mmcentery = image.shape[self.Plane.Y]//2
 
         if self._roi_autocenter:
-            proj_x = image.sum(axis=0)
-            proj_y = image.sum(axis=1)
-            parx = self._calc_moments(axis_x, proj_x)
-            pary = self._calc_moments(axis_y, proj_y)
-            if not any(_np.isnan(parx+pary)):
-                self.roicenterx = int(parx[self.FitParams.Cen])
-                self.roicentery = int(pary[self.FitParams.Cen])
-            else:
-                _log.error('Some fitted params are NaN.')
-
-        strtx = self._roi_cen[self.Plane.X] - self._roi_size[self.Plane.X]
-        endx = self._roi_cen[self.Plane.X] + self._roi_size[self.Plane.X]
-        strty = self._roi_cen[self.Plane.Y] - self._roi_size[self.Plane.Y]
-        endy = self._roi_cen[self.Plane.Y] + self._roi_size[self.Plane.Y]
-        strtx, strty = max(strtx, 0), max(strty, 0)
-        endx = min(endx, image.shape[self.Plane.X])
-        endy = min(endy, image.shape[self.Plane.Y])
+            cnx, cny, strtx, strty, endx, endy = self._iterate_find_center_roi(
+                image, roi_sx, roi_sy, nr_iters=1
+            )
+            self.roicenterx = cnx
+            self.roicentery = cny
+        else:
+            strtx = self._roi_cen[self.Plane.X] - roi_sx
+            endx = self._roi_cen[self.Plane.X] + roi_sx
+            strty = self._roi_cen[self.Plane.Y] - roi_sy
+            endy = self._roi_cen[self.Plane.Y] + roi_sy
+            strtx, strty = max(strtx, 0), max(strty, 0)
+            endx = min(endx, image.shape[self.Plane.X])
+            endy = min(endy, image.shape[self.Plane.Y])
 
         image = image[strty:endy, strtx:endx]
         self._roi_proj[self.Plane.X] = image.sum(axis=self.Plane.Y)
@@ -728,6 +726,37 @@ class ProcessImage(BaseClass):
         self.run_callbacks('ROIStartY-Mon', self._roi_start[self.Plane.Y])
         self.run_callbacks('ROIEndX-Mon', self._roi_end[self.Plane.X])
         self.run_callbacks('ROIEndY-Mon', self._roi_end[self.Plane.Y])
+
+    def _iterate_find_center_roi(self, image, roi_sx, roi_sy, nr_iters=1):
+        axis_x = _np.arange(image.shape[self.Plane.X])
+        axis_y = _np.arange(image.shape[self.Plane.Y])
+
+        ax_x = axis_x
+        ax_y = axis_y
+        img = image
+        for _ in range(max(nr_iters, 0) + 1):
+            proj_x = img.sum(axis=self.Plane.Y)
+            proj_y = img.sum(axis=self.Plane.X)
+            parx = self._calc_moments(ax_x, proj_x)
+            pary = self._calc_moments(ax_y, proj_y)
+            if any(_np.isnan(parx+pary)):
+                msg = 'Some NaNs were found in statistics'
+                _log.error(msg)
+                raise ValueError(msg)
+            cenx = ax_x[int(parx[self.FitParams.Cen])]
+            ceny = ax_y[int(pary[self.FitParams.Cen])]
+            strtx = cenx - roi_sx
+            strty = ceny - roi_sy
+            strtx, strty = max(strtx, 0), max(strty, 0)
+            endx = cenx + roi_sx
+            endy = ceny + roi_sy
+            endx = min(endx, image.shape[self.Plane.X])
+            endy = min(endy, image.shape[self.Plane.Y])
+
+            img = image[strty:endy, strtx:endx]
+            ax_x = axis_x[strtx:endx]
+            ax_y = axis_y[strty:endy]
+        return cenx, ceny, strtx, strty, endx, endy
 
     @classmethod
     def _calc_moments(cls, axis, proj):
