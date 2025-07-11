@@ -646,10 +646,8 @@ class ProcessImage(BaseClass):
             parx = self._calc_moments(axisx, projx)
             pary = self._calc_moments(axisy, projy)
         else:
-            parx = self._fit_gaussian(
-                axisx, projx, self._beam_params[self.Plane.X])
-            pary = self._fit_gaussian(
-                axisy, projy, self._beam_params[self.Plane.Y])
+            parx = self._fit_gaussian(axisx, projx, par=None)
+            pary = self._fit_gaussian(axisy, projy, par=None)
         self._roi_gauss[self.Plane.X] = self._gaussian(axisx, *parx)
         self._roi_gauss[self.Plane.Y] = self._gaussian(axisy, *pary)
         self._beam_params[self.Plane.X] = parx
