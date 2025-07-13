@@ -19,8 +19,6 @@ def get_dict():
 # delay [s] the client should wait before setting the next PV.
 
 _pvs_ids = [
-    ['SI-06SB:ID-APU22:MaxPhaseSpeed-SP', 0.0, 0.0],  # [mm/s]
-    ['SI-07SP:ID-APU22:MaxPhaseSpeed-SP', 0.0, 0.0],  # [mm/s]
     ['SI-08SB:ID-APU22:MaxPhaseSpeed-SP', 0.0, 0.0],  # [mm/s]
     ['SI-09SA:ID-APU22:MaxPhaseSpeed-SP', 0.0, 0.0],  # [mm/s]
     ['SI-11SP:ID-APU58:MaxPhaseSpeed-SP', 0.0, 0.0],  # [mm/s]
