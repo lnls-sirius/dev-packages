@@ -16,12 +16,10 @@ TIMEOUT = 0.05
 class BPM(_BaseTimingConfig):
     """."""
 
-    MAX_UPT_CNT = 20  # equivalent of 10s of orbit update after Acq. PV update
-
     def __init__(self, name, callback=None):
         """."""
         super().__init__(name[:2], callback)
-        self.needs_update_cnt = self.MAX_UPT_CNT
+        self.has_news = True
 
         self._name = name
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
@@ -105,6 +103,7 @@ class BPM(_BaseTimingConfig):
             "ACQSamplesPre": "GENSamplesPre-RB",
             "ACQSamplesPost": "GENSamplesPost-RB",
             "ACQTriggerEvent": "GENTriggerEvent-Cmd",
+            "ACQCount": "GENCount-Mon",
             "ACQStatus": "GENStatus-Mon",
             "ACQTrigger": "GENTrigger-Sts",
             "ACQTriggerRep": "GENTriggerRep-Sts",
@@ -124,9 +123,9 @@ class BPM(_BaseTimingConfig):
         self._config_pvs_rb = {
             k: _PV(pvpref + v, **opt) for k, v in pvs.items()
         }
-        self._config_pvs_rb["ACQStatus"].auto_monitor = True
-        self._config_pvs_rb["ACQStatus"].add_callback(
-            self._reset_needs_update_cnt
+        self._config_pvs_rb["ACQCount"].auto_monitor = True
+        self._config_pvs_rb["ACQCount"].add_callback(
+            self._reset_has_news
         )
 
     @property
@@ -745,9 +744,9 @@ class BPM(_BaseTimingConfig):
             + th9 * pol[14]
         )
 
-    def _reset_needs_update_cnt(self, *args, **kwargs):
+    def _reset_has_news(self, *args, **kwargs):
         _ = args, kwargs
-        self.needs_update_cnt = self.MAX_UPT_CNT
+        self.has_news = True
 
 
 class TimingConfig(_BaseTimingConfig):

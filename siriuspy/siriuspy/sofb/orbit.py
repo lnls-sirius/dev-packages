@@ -24,6 +24,8 @@ class BaseOrbit(_BaseClass):
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
+    TIMEOUT_TRIG_ACQ = 1 / 2  # [s] time between injections
+
     def __init__(self, acc, prefix="", callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
@@ -64,10 +66,11 @@ class EpicsOrbit(BaseOrbit):
                 auto_monitor=True,
             )
         self._orbit_thread = _Repeat(
-            1 / self._csorb.ACQRATE_SLOWORB, self._update_orbits, niter=0
+            1 / self._csorb.ORBIT_UPDATE_RATE, self._update_orbits, niter=0
         )
         self._orbit_thread.start()
         self._thread_sync = None
+        self._timestamp_last_update = 0  # [s] timestamp in epoch
         self._update_time_vector()
 
     @property
@@ -205,9 +208,6 @@ class EpicsOrbit(BaseOrbit):
             self._update_log(msg)
             _log.error(msg[5:])
             orbx, orby = refx.copy(), refy.copy()
-        # # for tests:
-        # orbx -= _time.time()
-        # orby -= _time.time()
         return _np.hstack([orbx - refx, orby - refy])
 
     def _get_orbit_online(self, orbs):
@@ -328,13 +328,8 @@ class EpicsOrbit(BaseOrbit):
     def set_orbit_mode(self, value):
         """."""
         omode = self._mode
-        acqrate = self._csorb.ACQRATE_SLOWORB
-        if self.is_trigmode(value):
-            acqrate = self._csorb.ACQRATE_TRIGMODE
-
         with self._lock_raw_orbs:
             self._mode = value
-            self._orbit_thread.interval = 1 / acqrate
             self._reset_orbs()
         self.run_callbacks("SOFBMode-Sts", value)
         self._prepare_mode(oldmode=omode)
@@ -733,8 +728,17 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_multiturn_orbits(self, force_update=True):
         """."""
+        if not force_update and not self.update_raws:
+            return
+
+        hasnews = all([bpm.has_news for bpm in self.bpms])
+        dtime = _time.time() - self._timestamp_last_update
+        timeout = dtime >= self.TIMEOUT_TRIG_ACQ
+        if not hasnews and not timeout and len(self.raw_mtorbs["X"]):
+            return
+
         orbs = {"X": [], "Y": [], "Sum": []}
-        with self._lock_raw_orbs:  # I need the lock here to ensure consistency
+        with self._lock_raw_orbs:  # Lock needed here to ensure consistency
             leng = len(self.raw_mtorbs["X"])
             samp = self.acqtrignrsamples
             down = self._mturndownsample
@@ -747,11 +751,9 @@ class EpicsOrbit(BaseOrbit):
             samp *= self._acqtrignrshots
             orbsz = self._csorb.nr_bpms
             nr_pts = self._smooth_npts
-            do_update = force_update
+            isdiff = False  # only update orbit if some BPM updated
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update_cnt > 0:
-                    bpm.needs_update_cnt -= 1
-                    do_update = True
+                if not leng or bpm.has_news:
                     posx = self._get_pos(
                         bpm.mtposx, self.ref_orbs["X"][i], samp
                     )
@@ -759,6 +761,13 @@ class EpicsOrbit(BaseOrbit):
                         bpm.mtposy, self.ref_orbs["Y"][i], samp
                     )
                     psum = self._get_pos(bpm.mtsum, 0, samp)
+                    isdiff |= not leng or _np.array_equal(
+                        posx, self.raw_mtorbs["X"][-1][:, i]
+                    )
+                    # if it got here, then for sure the new data will be used
+                    # and we can reset the flag:
+                    if isdiff:
+                        bpm.has_news = False
                 else:
                     posx = self.raw_mtorbs["X"][-1][:, i].copy()
                     posy = self.raw_mtorbs["Y"][-1][:, i].copy()
@@ -767,15 +776,13 @@ class EpicsOrbit(BaseOrbit):
                 orbs["Y"].append(posy)
                 orbs["Sum"].append(psum)
 
-            # NOTE: Only update orbit when at least one BPM has news
-            if not do_update:
+            if not isdiff:
                 return
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
                 norb = norb.T.reshape(-1, orbsz)  # turns/rz x rz*bpms
-                if self.update_raws:
-                    raw.append(norb)
+                raw.append(norb)
                 del raw[:-nr_pts]
                 if not raw:
                     return
@@ -819,9 +826,18 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_singlepass_orbits(self):
         """."""
+        if not self.update_raws:
+            return
+
+        hasnews = all([bpm.has_news for bpm in self.bpms])
+        dtime = _time.time() - self._timestamp_last_update
+        timeout = dtime >= self.TIMEOUT_TRIG_ACQ
+        if not hasnews and not timeout and len(self.raw_sporbs["X"]):
+            return
+
         orbs = {"X": [], "Y": [], "Sum": []}
         down = self._spass_average
-        with self._lock_raw_orbs:  # I need the lock here to assure consistency
+        with self._lock_raw_orbs:  # Lock needed here to ensure consistency
             leng = len(self.raw_sporbs["X"])
             dic = {
                 "maskbeg": self._spass_mask[0],
@@ -829,11 +845,9 @@ class EpicsOrbit(BaseOrbit):
                 "nturns": down,
             }
             nr_pts = self._smooth_npts
-            do_update = False
+            isdiff = False  # only update orbit if some BPM updated
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update_cnt > 0:
-                    bpm.needs_update_cnt -= 1
-                    do_update = True
+                if not leng or bpm.has_news:
                     dic.update(
                         {
                             "refx": self.ref_orbs["X"][i],
@@ -841,6 +855,13 @@ class EpicsOrbit(BaseOrbit):
                         }
                     )
                     orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
+                    isdiff |= not leng or _np.array_equal(
+                        orbx, self.raw_sporbs["X"][-1][i]
+                    )
+                    # if it got here, then for sure the new data will be used
+                    # and we can reset the flag:
+                    if isdiff:
+                        bpm.has_news = False
                 else:
                     orbx = self.raw_sporbs["X"][-1][i].copy()
                     orby = self.raw_sporbs["Y"][-1][i].copy()
@@ -849,15 +870,13 @@ class EpicsOrbit(BaseOrbit):
                 orbs["Y"].append(orby)
                 orbs["Sum"].append(summ)
 
-            # NOTE: only update orbits when there are news from BPMs.
-            if not do_update:
+            if not isdiff:
                 return
 
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
                 norb = norb.reshape(-1)
-                if self.update_raws:
-                    raw.append(norb)
+                raw.append(norb)
                 del raw[:-nr_pts]
                 if not raw:
                     return
