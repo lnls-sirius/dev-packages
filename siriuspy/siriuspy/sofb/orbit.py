@@ -24,7 +24,7 @@ class BaseOrbit(_BaseClass):
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
-    TIMEOUT_TRIG_ACQ = 1 / 2  # [s] time between injections
+    TIMEOUT_TRIG_ACQ = 1 / 2 - 0.05  # [s] a little faster than injection freq.
 
     def __init__(self, acc, prefix="", callback=None):
         """Initialize the instance."""
