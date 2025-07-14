@@ -25,21 +25,21 @@ class BPM(_BaseTimingConfig):
         self._orb_conv_unit = self._csorb.ORBIT_CONVERSION_UNIT
         pvpref = LL_PREF + ("-" if LL_PREF else "") + self._name + ":"
         opt = {"connection_timeout": TIMEOUT, "auto_monitor": False}
-        self._poskx = _PV(pvpref + "PosKx-RB", **opt)
-        self._posky = _PV(pvpref + "PosKy-RB", **opt)
-        self._ksum = _PV(pvpref + "PosKsum-RB", **opt)
-        self._polyx = _PV(pvpref + "GEN_PolyXArrayCoeff-RB", **opt)
-        self._polyy = _PV(pvpref + "GEN_PolyYArrayCoeff-RB", **opt)
-        self._arraya = _PV(pvpref + "GENAmplAData", **opt)
-        self._arrayb = _PV(pvpref + "GENAmplBData", **opt)
-        self._arrayc = _PV(pvpref + "GENAmplCData", **opt)
-        self._arrayd = _PV(pvpref + "GENAmplDData", **opt)
-        self._arrayx = _PV(pvpref + "GENPosXData", **opt)
-        self._arrayy = _PV(pvpref + "GENPosYData", **opt)
-        self._arrays = _PV(pvpref + "GENSumData", **opt)
+        self._pvs['poskx'] = _PV(pvpref + "PosKx-RB", **opt)
+        self._pvs['posky'] = _PV(pvpref + "PosKy-RB", **opt)
+        self._pvs['ksum'] = _PV(pvpref + "PosKsum-RB", **opt)
+        self._pvs['polyx'] = _PV(pvpref + "GEN_PolyXArrayCoeff-RB", **opt)
+        self._pvs['polyy'] = _PV(pvpref + "GEN_PolyYArrayCoeff-RB", **opt)
+        self._pvs['arraya'] = _PV(pvpref + "GENAmplAData", **opt)
+        self._pvs['arrayb'] = _PV(pvpref + "GENAmplBData", **opt)
+        self._pvs['arrayc'] = _PV(pvpref + "GENAmplCData", **opt)
+        self._pvs['arrayd'] = _PV(pvpref + "GENAmplDData", **opt)
+        self._pvs['arrayx'] = _PV(pvpref + "GENPosXData", **opt)
+        self._pvs['arrayy'] = _PV(pvpref + "GENPosYData", **opt)
+        self._pvs['arrays'] = _PV(pvpref + "GENSumData", **opt)
         opt.pop("auto_monitor")
-        self._offsetx = _PV(pvpref + "PosXOffset-RB", **opt)
-        self._offsety = _PV(pvpref + "PosYOffset-RB", **opt)
+        self._pvs['offsetx'] = _PV(pvpref + "PosXOffset-RB", **opt)
+        self._pvs['offsety'] = _PV(pvpref + "PosYOffset-RB", **opt)
         self._config_ok_vals = {
             "SwMode": _CSBPM.SwModes.switching,
             "ACQChannel": _CSBPM.AcqChan.ADC,
@@ -132,32 +132,6 @@ class BPM(_BaseTimingConfig):
     def name(self):
         """."""
         return self._name
-
-    @property
-    def connected(self):
-        """."""
-        conn = super().connected
-        pvs = (
-            self._arrayx,
-            self._arrayy,
-            self._arrays,
-            self._offsetx,
-            self._offsety,
-            self._polyx,
-            self._polyy,
-            self._arraya,
-            self._arrayb,
-            self._arrayc,
-            self._arrayd,
-            self._poskx,
-            self._posky,
-            self._ksum,
-        )
-        for pvobj in pvs:
-            if not pvobj.connected:
-                _log.debug("NOT CONN: " + pvobj.pvname)
-            conn &= pvobj.connected
-        return conn
 
     @property
     def is_ok(self):
@@ -272,7 +246,7 @@ class BPM(_BaseTimingConfig):
     def poskx(self):
         """."""
         defv = 1
-        pvobj = self._poskx
+        pvobj = self._pvs['poskx']
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
@@ -280,14 +254,14 @@ class BPM(_BaseTimingConfig):
     def posky(self):
         """."""
         defv = 1
-        pvobj = self._posky
+        pvobj = self._pvs['posky']
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
     @property
     def polyx(self):
         """."""
-        pvobj = self._polyx
+        pvobj = self._pvs['polyx']
         if pvobj.connected:
             val = pvobj.value
             if val is not None:
@@ -299,7 +273,7 @@ class BPM(_BaseTimingConfig):
     @property
     def polyy(self):
         """."""
-        pvobj = self._polyy
+        pvobj = self._pvs['polyy']
         if pvobj.connected:
             val = pvobj.value
             if val is not None:
@@ -312,38 +286,38 @@ class BPM(_BaseTimingConfig):
     def ksum(self):
         """."""
         defv = 1
-        pvobj = self._ksum
+        pvobj = self._pvs['ksum']
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
 
     @property
     def arraya(self):
         """."""
-        pvobj = self._arraya
+        pvobj = self._pvs['arraya']
         return pvobj.get() if pvobj.connected else None
 
     @property
     def arrayb(self):
         """."""
-        pvobj = self._arrayb
+        pvobj = self._pvs['arrayb']
         return pvobj.get() if pvobj.connected else None
 
     @property
     def arrayc(self):
         """."""
-        pvobj = self._arrayc
+        pvobj = self._pvs['arrayc']
         return pvobj.get() if pvobj.connected else None
 
     @property
     def arrayd(self):
         """."""
-        pvobj = self._arrayd
+        pvobj = self._pvs['arrayd']
         return pvobj.get() if pvobj.connected else None
 
     @property
     def mtposx(self):
         """."""
-        pvobj = self._arrayx
+        pvobj = self._pvs['arrayx']
         val = pvobj.get() if pvobj.connected else None
         if val is not None:
             return self._orb_conv_unit * val
@@ -351,7 +325,7 @@ class BPM(_BaseTimingConfig):
     @property
     def mtposy(self):
         """."""
-        pvobj = self._arrayy
+        pvobj = self._pvs['arrayy']
         val = pvobj.get() if pvobj.connected else None
         if val is not None:
             return self._orb_conv_unit * val
@@ -359,7 +333,7 @@ class BPM(_BaseTimingConfig):
     @property
     def mtsum(self):
         """."""
-        pvobj = self._arrays
+        pvobj = self._pvs['arrays']
         val = pvobj.get() if pvobj.connected else None
         if val is not None:
             return val
@@ -367,7 +341,7 @@ class BPM(_BaseTimingConfig):
     @property
     def offsetx(self):
         """."""
-        pvobj = self._offsetx
+        pvobj = self._pvs['offsetx']
         val = pvobj.value if pvobj.connected else None
         if val is not None:
             return self._orb_conv_unit * val
@@ -375,7 +349,7 @@ class BPM(_BaseTimingConfig):
     @property
     def offsety(self):
         """."""
-        pvobj = self._offsety
+        pvobj = self._pvs['offsety']
         val = pvobj.value if pvobj.connected else None
         if val is not None:
             return self._orb_conv_unit * val

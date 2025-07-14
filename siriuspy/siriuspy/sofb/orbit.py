@@ -60,7 +60,7 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit = _Event()
         self._new_orbraw_flag = _Event()
         if self.acc == "SI":
-            self._sloworb_raw_pv = _PV(
+            self._sorbraw_pv = _PV(
                 "SI-Glob:AP-SOFB:SlowOrbRaw-Mon",
                 callback=self._update_sloworb_raw,
                 auto_monitor=True,
@@ -74,6 +74,18 @@ class EpicsOrbit(BaseOrbit):
         self._update_time_vector()
 
     @property
+    def connected(self):
+        """."""
+        if self.acc == 'SI' and not self._sorbraw_pv.connected:
+            return False
+        for bpm in self.bpms:
+            if not bpm.connected:
+                return False
+        if not self.timing.connected:
+            return False
+        return True
+
+    @property
     def sofb(self):
         """."""
         return self._sofb
@@ -81,6 +93,21 @@ class EpicsOrbit(BaseOrbit):
     @sofb.setter
     def sofb(self, sofb):
         self._sofb = sofb
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time.time()
+        tout = timeout
+        if self.acc == 'SI' and not self._sorbraw_pv.wait_for_connection(tout):
+            return False
+        for bpm in self.bpms:
+            tout = timeout - (_time.time() - t0_)
+            if tout <= 0 or not bpm.wait_for_connection(tout):
+                return False
+        tout = timeout - (_time.time() - t0_)
+        if tout <= 0 or not self.timing.wait_for_connection(tout):
+            return False
+        return True
 
     def shutdown(self):
         """Shutdown threads."""
@@ -689,7 +716,7 @@ class EpicsOrbit(BaseOrbit):
         else:
             self._new_orbraw_flag.clear()
 
-        orb = self._sloworb_raw_pv.value
+        orb = self._sorbraw_pv.value
         posx, posy = orb[: self._csorb.nr_bpms], orb[self._csorb.nr_bpms :]
         nanx = _np.isnan(posx)
         nany = _np.isnan(posy)
@@ -934,7 +961,7 @@ class EpicsOrbit(BaseOrbit):
         )
         status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
 
-        orb_conn = self._sloworb_raw_pv.connected if self.acc == "SI" else True
+        orb_conn = self._sorbraw_pv.connected if self.acc == "SI" else True
         status = _util.update_bit(v=status, bit_pos=6, bit_val=not orb_conn)
 
         self._status = status
