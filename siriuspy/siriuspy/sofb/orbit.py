@@ -65,7 +65,8 @@ class EpicsOrbit(BaseOrbit):
                 callback=self._update_sloworb_raw,
                 auto_monitor=True,
             )
-        self._timestamp_last_update = 0  # [s] timestamp in epoch
+        self._timestamp_last_news = 0  # [s] timestamp in epoch
+        self._last_num_news = 0
         self._orbit_thread = _Repeat(
             1 / self._csorb.ORBIT_UPDATE_RATE, self._update_orbits, niter=0
         )
@@ -759,8 +760,13 @@ class EpicsOrbit(BaseOrbit):
         if not force_update and not self.update_raws:
             return
 
-        hasnews = all([bpm.has_news for bpm in self.bpms])
-        dtime = _time.time() - self._timestamp_last_update
+        news = sum([bpm.has_news for bpm in self.bpms])
+        if news > self._last_num_news:
+            self._last_num_news = news
+            self._timestamp_last_news = _time.time()
+
+        hasnews = news == len(self.bpms)
+        dtime = _time.time() - self._timestamp_last_news
         timeout = dtime >= self.TIMEOUT_TRIG_ACQ
         if not hasnews and not timeout and len(self.raw_mtorbs["X"]):
             return
@@ -807,7 +813,8 @@ class EpicsOrbit(BaseOrbit):
 
             if not isdiff:
                 return
-            self._timestamp_last_update = _time.time()
+            self._timestamp_last_news = _time.time()
+            self._last_num_news = 0
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
@@ -859,8 +866,13 @@ class EpicsOrbit(BaseOrbit):
         if not self.update_raws:
             return
 
-        hasnews = all([bpm.has_news for bpm in self.bpms])
-        dtime = _time.time() - self._timestamp_last_update
+        news = sum([bpm.has_news for bpm in self.bpms])
+        if news > self._last_num_news:
+            self._last_num_news = news
+            self._timestamp_last_news = _time.time()
+
+        hasnews = news == len(self.bpms)
+        dtime = _time.time() - self._timestamp_last_news
         timeout = dtime >= self.TIMEOUT_TRIG_ACQ
         if not hasnews and not timeout and len(self.raw_sporbs["X"]):
             return
@@ -903,8 +915,8 @@ class EpicsOrbit(BaseOrbit):
 
             if not isdiff:
                 return
-            self._timestamp_last_update = _time.time()
-
+            self._timestamp_last_news = _time.time()
+            self._last_num_news = 0
 
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
