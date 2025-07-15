@@ -789,7 +789,7 @@ class EpicsOrbit(BaseOrbit):
                         bpm.mtposy, self.ref_orbs["Y"][i], samp
                     )
                     psum = self._get_pos(bpm.mtsum, 0, samp)
-                    thisdiff = not leng or _np.array_equal(
+                    thisdiff = not leng or not _np.array_equal(
                         posx, self.raw_mtorbs["X"][-1][:, i]
                     )
                     # if it got here, then for sure the new data will be used
@@ -885,7 +885,7 @@ class EpicsOrbit(BaseOrbit):
                         }
                     )
                     orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
-                    thisdiff = not leng or _np.array_equal(
+                    thisdiff = not leng or not _np.array_equal(
                         orbx, self.raw_sporbs["X"][-1][i]
                     )
                     # if it got here, then for sure the new data will be used
