@@ -358,7 +358,8 @@ class EpicsOrbit(BaseOrbit):
         with self._lock_raw_orbs:
             self._mode = value
             self._reset_orbs()
-        self.run_callbacks("SOFBMode-Sts", value)
+        if self.acc == 'SI':
+            self.run_callbacks("SOFBMode-Sts", value)
         self._prepare_mode(oldmode=omode)
         return True
 
