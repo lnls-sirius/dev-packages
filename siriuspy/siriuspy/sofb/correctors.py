@@ -479,7 +479,7 @@ class EpicsCorrectors(BaseCorrectors):
         for cor in self._corrs:
             if not cor.connected:
                 return False
-        if not self.timing.connected:
+        if self.acc == 'SI' and not self.timing.connected:
             return False
         return True
 
@@ -504,6 +504,8 @@ class EpicsCorrectors(BaseCorrectors):
             tout = timeout - (_time.time() - t0_)
             if tout <= 0 or not cor.wait_for_connection(tout):
                 return False
+        if self.acc != 'SI':
+            return True
         tout = timeout - (_time.time() - t0_)
         if tout <= 0 or not self.timing.wait_for_connection(tout):
             return False
