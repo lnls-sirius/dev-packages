@@ -65,12 +65,12 @@ class EpicsOrbit(BaseOrbit):
                 callback=self._update_sloworb_raw,
                 auto_monitor=True,
             )
+        self._timestamp_last_update = 0  # [s] timestamp in epoch
         self._orbit_thread = _Repeat(
             1 / self._csorb.ORBIT_UPDATE_RATE, self._update_orbits, niter=0
         )
         self._orbit_thread.start()
         self._thread_sync = None
-        self._timestamp_last_update = 0  # [s] timestamp in epoch
         self._update_time_vector()
 
     @property
