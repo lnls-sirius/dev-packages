@@ -24,7 +24,7 @@ class BaseOrbit(_BaseClass):
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
-    TIMEOUT_TRIG_ACQ = 1 / 2 - 0.05  # [s] a little faster than injection freq.
+    TIMEOUT_TRIG_ACQ_NEWS = 2 / 5 # [s]
 
     def __init__(self, acc, prefix="", callback=None):
         """Initialize the instance."""
@@ -767,7 +767,7 @@ class EpicsOrbit(BaseOrbit):
 
         hasnews = news == len(self.bpms)
         dtime = _time.time() - self._timestamp_last_news
-        timeout = dtime >= self.TIMEOUT_TRIG_ACQ
+        timeout = dtime >= self.TIMEOUT_TRIG_ACQ_NEWS
         if not hasnews and not timeout and len(self.raw_mtorbs["X"]):
             return
 
@@ -873,7 +873,7 @@ class EpicsOrbit(BaseOrbit):
 
         hasnews = news == len(self.bpms)
         dtime = _time.time() - self._timestamp_last_news
-        timeout = dtime >= self.TIMEOUT_TRIG_ACQ
+        timeout = dtime >= self.TIMEOUT_TRIG_ACQ_NEWS
         if not hasnews and not timeout and len(self.raw_sporbs["X"]):
             return
 
