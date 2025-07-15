@@ -789,13 +789,14 @@ class EpicsOrbit(BaseOrbit):
                         bpm.mtposy, self.ref_orbs["Y"][i], samp
                     )
                     psum = self._get_pos(bpm.mtsum, 0, samp)
-                    isdiff |= not leng or _np.array_equal(
+                    thisdiff = not leng or _np.array_equal(
                         posx, self.raw_mtorbs["X"][-1][:, i]
                     )
                     # if it got here, then for sure the new data will be used
                     # and we can reset the flag:
-                    if isdiff:
+                    if thisdiff:
                         bpm.has_news = False
+                    isdiff |= thisdiff
                 else:
                     posx = self.raw_mtorbs["X"][-1][:, i].copy()
                     posy = self.raw_mtorbs["Y"][-1][:, i].copy()
@@ -806,6 +807,7 @@ class EpicsOrbit(BaseOrbit):
 
             if not isdiff:
                 return
+            self._timestamp_last_update = _time.time()
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
@@ -883,13 +885,14 @@ class EpicsOrbit(BaseOrbit):
                         }
                     )
                     orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
-                    isdiff |= not leng or _np.array_equal(
+                    thisdiff = not leng or _np.array_equal(
                         orbx, self.raw_sporbs["X"][-1][i]
                     )
                     # if it got here, then for sure the new data will be used
                     # and we can reset the flag:
-                    if isdiff:
+                    if thisdiff:
                         bpm.has_news = False
+                    isdiff |= thisdiff
                 else:
                     orbx = self.raw_sporbs["X"][-1][i].copy()
                     orby = self.raw_sporbs["Y"][-1][i].copy()
@@ -900,6 +903,8 @@ class EpicsOrbit(BaseOrbit):
 
             if not isdiff:
                 return
+            self._timestamp_last_update = _time.time()
+
 
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
