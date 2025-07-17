@@ -11,23 +11,43 @@ from siriuspy.machshift.macreport import MacReport
 
 # failure statistics per month
 intervals = [
-    [Time(2023, 1, 1, 0, 0), Time(2023, 1, 31, 23, 59, 59)],
-    [Time(2023, 2, 1, 0, 0), Time(2023, 2, 28, 23, 59, 59)],
-    [Time(2023, 3, 1, 0, 0), Time(2023, 3, 31, 23, 59, 59)],
-    [Time(2023, 4, 1, 0, 0), Time(2023, 4, 30, 23, 59, 59)],
-    [Time(2023, 5, 1, 0, 0), Time(2023, 5, 31, 23, 59, 59)],
-    [Time(2023, 6, 1, 0, 0), Time(2023, 6, 30, 23, 59, 59)],
-    [Time(2023, 7, 1, 0, 0), Time(2023, 7, 31, 23, 59, 59)],
-    [Time(2023, 8, 1, 0, 0), Time(2023, 8, 31, 23, 59, 59)],
-    [Time(2023, 9, 1, 0, 0), Time(2023, 9, 30, 23, 59, 59)],
-    [Time(2023, 10, 1, 0, 0), Time(2023, 10, 31, 23, 59, 59)],
-    [Time(2023, 11, 1, 0, 0), Time(2023, 11, 30, 23, 59, 59)],
-    [Time(2023, 12, 1, 0, 0), Time(2023, 12, 31, 23, 59, 59)],
+    # [Time(2023, 1, 1, 0, 0), Time(2023, 1, 31, 23, 59, 59)],
+    # [Time(2023, 2, 1, 0, 0), Time(2023, 2, 28, 23, 59, 59)],
+    # [Time(2023, 3, 1, 0, 0), Time(2023, 3, 31, 23, 59, 59)],
+    # [Time(2023, 4, 1, 0, 0), Time(2023, 4, 30, 23, 59, 59)],
+    # [Time(2023, 5, 1, 0, 0), Time(2023, 5, 31, 23, 59, 59)],
+    # [Time(2023, 6, 1, 0, 0), Time(2023, 6, 30, 23, 59, 59)],
+    # [Time(2023, 7, 1, 0, 0), Time(2023, 7, 31, 23, 59, 59)],
+    # [Time(2023, 8, 1, 0, 0), Time(2023, 8, 31, 23, 59, 59)],
+    # [Time(2023, 9, 1, 0, 0), Time(2023, 9, 30, 23, 59, 59)],
+    # [Time(2023, 10, 1, 0, 0), Time(2023, 10, 31, 23, 59, 59)],
+    # [Time(2023, 11, 1, 0, 0), Time(2023, 11, 30, 23, 59, 59)],
+    # [Time(2023, 12, 1, 0, 0), Time(2023, 12, 31, 23, 59, 59)],
+
+    # [Time(2024, 1, 1, 0, 0), Time(2024, 1, 31, 23, 59, 59)],
+    # [Time(2024, 2, 1, 0, 0), Time(2024, 2, 29, 23, 59, 59)],
+    # [Time(2024, 3, 1, 0, 0), Time(2024, 3, 31, 23, 59, 59)],
+    # [Time(2024, 4, 1, 0, 0), Time(2024, 4, 30, 23, 59, 59)],
+    # [Time(2024, 5, 1, 0, 0), Time(2024, 5, 31, 23, 59, 59)],
+    # [Time(2024, 6, 1, 0, 0), Time(2024, 6, 30, 23, 59, 59)],
+    # [Time(2024, 7, 1, 0, 0), Time(2024, 7, 31, 23, 59, 59)],
+    # [Time(2024, 8, 1, 0, 0), Time(2024, 8, 31, 23, 59, 59)],
+    # [Time(2024, 9, 1, 0, 0), Time(2024, 9, 30, 23, 59, 59)],
+    # [Time(2024, 10, 1, 0, 0), Time(2024, 10, 31, 23, 59, 59)],
+    # [Time(2024, 11, 1, 0, 0), Time(2024, 11, 30, 23, 59, 59)],
+    # [Time(2024, 12, 1, 0, 0), Time(2024, 12, 31, 23, 59, 59)],
+
+    [Time(2025, 1, 1, 0, 0), Time(2025, 1, 31, 23, 59, 59)],
+    [Time(2025, 2, 1, 0, 0), Time(2025, 2, 28, 23, 59, 59)],
+    [Time(2025, 3, 1, 0, 0), Time(2025, 3, 31, 23, 59, 59)],
+    [Time(2025, 4, 1, 0, 0), Time(2025, 4, 30, 23, 59, 59)],
+    [Time(2025, 5, 1, 0, 0), Time(2025, 5, 31, 23, 59, 59)],
 ]
 
 macreports = dict()
 for intvl in intervals:
     macreports[intvl[0]] = MacReport()
+    # macreports[intvl[0]].connector.server_url = 'https://archiver-temp.cnpem.br'   # necessary for 2024 and early
     macreports[intvl[0]].connector.timeout = 30
     macreports[intvl[0]].time_start = intvl[0]
     macreports[intvl[0]].time_stop = intvl[1]
@@ -52,6 +72,7 @@ for date, macr in macreports.items():
     relstable[date] = macr.usershift_relative_stable_beam_time
     nrbeamdump[date] = macr.usershift_beam_dump_count
 
+# create table to help visualization
 str_ = '{:<10s}' + '{:>16s}'*10 + '{:>20s}'
 print(str_.format(
     'Y-M', 'MTBF', 'MTTR',
@@ -95,11 +116,24 @@ axs[2].set_title('Reliability')
 axs[2].grid()
 fig.show()
 
+# plots to help diagnostics
+report = macreports[Time(2025, 5, 1, 0, 0)]
+
+# - verify beam dump
+datetimes = np.array([Time(t) for t in report._raw_data['Timestamp']])
+beam_dump_values = report._beam_dump_values
+plt.plot(datetimes, beam_dump_values)
+plt.show()
+
+# - plot any month data
+report.plot_raw_data().show()
+
+
 # programmed vs. delivered hours
 macr = MacReport()
 macr.connector.timeout = 300
-macr.time_start = Time(2023, 1, 1, 0, 0)
-macr.time_stop = Time(2023, 12, 31, 23, 59, 59)
+macr.time_start = Time(2024, 1, 1, 0, 0)
+macr.time_stop = Time(2024, 12, 31, 23, 59, 59)
 macr.update()
 
 str_ = '{:<10s}' + '{:>16s}'*10 + '{:>20s}'
