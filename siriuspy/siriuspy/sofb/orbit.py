@@ -24,7 +24,7 @@ class BaseOrbit(_BaseClass):
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
-    TIMEOUT_TRIG_ACQ_NEWS = 2 / 5 # [s]
+    TIMEOUT_TRIG_ACQ_NEWS = 2 / 5  # [s]
 
     def __init__(self, acc, prefix="", callback=None):
         """Initialize the instance."""

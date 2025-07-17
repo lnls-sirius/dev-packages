@@ -42,7 +42,7 @@ class BPM(_BaseTimingConfig):
         self._pvs['offsety'] = _PV(pvpref + "PosYOffset-RB", **opt)
         self._config_ok_vals = {
             "SwMode": _CSBPM.SwModes.switching,
-            "ACQChannel": _CSBPM.AcqChan.ADC,
+            "ACQChannel": _CSBPM.AcqChan.ADCSwap,
             "ACQShots": 1,
             "ACQUpdateTime": 0.001,
             "ACQSamplesPre": 0,
@@ -63,6 +63,8 @@ class BPM(_BaseTimingConfig):
             "SwPhaseSyncEn": _CSBPM.DsblEnbl.enabled,  # Enable Switching sync
             "TestDataEn": _CSBPM.DsblEnbl.disabled,
         }
+        if self._name.sec in {'SI', 'BO'}:
+            self._config_ok_vals["ACQChannel"] = _CSBPM.AcqChan.TbT
         pvs = {
             "SwMode": "SwMode-Sel",
             "ACQChannel": "GENChannel-Sel",
