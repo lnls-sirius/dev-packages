@@ -563,6 +563,8 @@ class ProcessImage(BaseClass):
     @property
     def beamcentermmx(self):
         """."""
+        if self.beamcenterx is None:
+            return
         val = self.beamcenterx - self._conv_cen[self.Plane.X]
         val *= self._conv_scale[self.Plane.X]
         return val
@@ -570,6 +572,8 @@ class ProcessImage(BaseClass):
     @property
     def beamcentermmy(self):
         """."""
+        if self.beamcentery is None:
+            return
         # Inverted due image origin in Pxls:
         val = self._conv_cen[self.Plane.Y] - self.beamcentery
         val *= self._conv_scale[self.Plane.Y]
@@ -578,11 +582,15 @@ class ProcessImage(BaseClass):
     @property
     def beamsizemmx(self):
         """."""
+        if self.beamsizex is None:
+            return
         return self.beamsizex * self._conv_scale[self.Plane.X]
 
     @property
     def beamsizemmy(self):
         """."""
+        if self.beamsizey is None:
+            return
         return self.beamsizey * self._conv_scale[self.Plane.Y]
 
     def cmd_reset_buffer(self, *args):
