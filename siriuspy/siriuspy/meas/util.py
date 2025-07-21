@@ -759,8 +759,8 @@ class ProcessImage(BaseClass):
                 msg = 'Some NaNs were found in statistics'
                 _log.error(msg)
                 raise ValueError(msg)
-            cenx = ax_x[int(parx[self.FitParams.Cen])]
-            ceny = ax_y[int(pary[self.FitParams.Cen])]
+            cenx = int(parx[self.FitParams.Cen])
+            ceny = int(pary[self.FitParams.Cen])
             strtx = cenx - roi_sx
             strty = ceny - roi_sy
             strtx, strty = max(strtx, 0), max(strty, 0)
