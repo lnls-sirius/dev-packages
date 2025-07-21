@@ -1,8 +1,8 @@
 """RF devices."""
 
 import time as _time
-import numpy as _np
 
+import numpy as _np
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
@@ -25,6 +25,7 @@ class RFGen(_Device):
     RF_DELTA_MIN = 0.01  # [Hz]
     RF_DELTA_MAX = 15000.0  # [Hz]
     RF_DELTA_RMP = 200  # [Hz]
+    RF_DELTA_INTVL = 1  # [s]
 
     PHASE_CONTINUOUS = _get_namedtuple('PhaseContinuous', ('OFF', 'ON'))
     FREQ_OPMODE = _get_namedtuple(
@@ -112,19 +113,19 @@ class RFGen(_Device):
 
     @frequency.setter
     def frequency(self, value):
-        delta_max = RFGen.RF_DELTA_RMP  # [Hz]
+        delta_max = self.RF_DELTA_RMP  # [Hz]
         freq0 = self.frequency
         if freq0 is None or value is None:
             return
         delta = abs(value-freq0)
-        if delta < RFGen.RF_DELTA_MIN or delta > RFGen.RF_DELTA_MAX:
+        if delta < self.RF_DELTA_MIN or delta > self.RF_DELTA_MAX:
             return
         npoints = int(delta/delta_max) + 2
         freq_span = _np.linspace(freq0, value, npoints)[1:]
         pvo = self.pv_object('GeneralFreq-SP')
         pvo.put(freq_span[0], wait=False)
         for freq in freq_span[1:]:
-            _time.sleep(1.0)
+            _time.sleep(self.RF_DELTA_INTVL)
             pvo.put(freq, wait=False)
         self['GeneralFreq-SP'] = value
 
