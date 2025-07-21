@@ -100,6 +100,7 @@ class RFCtrl(Corrector):
     TINY_VAR = 0.01  # [Hz]
     LARGE_VAR = 10000  # [Hz]
     MAX_DELTA = 200  # [Hz]
+    INTVL = 1  # [Hz]
 
     def __init__(self, acc):
         """Init method."""
@@ -133,7 +134,7 @@ class RFCtrl(Corrector):
         for i, freq in enumerate(freq_span, 1):
             self._sp.put(freq, wait=False)
             if i != freq_span.size:
-                _time.sleep(1)
+                _time.sleep(self.INTVL)
 
     @property
     def state(self):
