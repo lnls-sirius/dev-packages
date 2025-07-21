@@ -85,7 +85,8 @@ class ProcessImage(BaseClass):
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
         self._flip = [False, False]
-        self._beam_params = [None, None]
+        siz = len(self.FitParams)
+        self._beam_params = [[None,] * siz, [None,] * siz]
 
     def get_map2write(self):
         """."""
@@ -432,7 +433,7 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Could not set background')
             return
-        img = self._adjust_image_dimensions(np.array(val, dtype=float))
+        img = self._adjust_image_dimensions(_np.array(val, dtype=float))
         if img is None:
             _log.error('Could not set background')
             return
