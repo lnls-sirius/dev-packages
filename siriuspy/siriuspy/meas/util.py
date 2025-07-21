@@ -464,12 +464,18 @@ class ProcessImage(BaseClass):
     @property
     def beamsizex(self):
         """."""
-        return abs(self._beam_params[self.Plane.X][self.FitParams.Sig])
+        val = self._beam_params[self.Plane.X][self.FitParams.Sig]
+        if val is None:
+            return
+        return abs(val)
 
     @property
     def beamsizey(self):
         """."""
-        return abs(self._beam_params[self.Plane.Y][self.FitParams.Sig])
+        val = self._beam_params[self.Plane.Y][self.FitParams.Sig]
+        if val is None:
+            return
+        return abs(val)
 
     @property
     def beamamplx(self):
