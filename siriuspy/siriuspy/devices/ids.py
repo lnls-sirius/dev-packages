@@ -780,24 +780,6 @@ class IDFullMovCtrl(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
-    PARAM_PVS.RESET = 'Reset-Cmd'
-    PARAM_PVS.KPARAM_SP = 'KParam-SP'
-    PARAM_PVS.KPARAM_RB = 'KParam-RB'
-    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
-    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
-
-
-    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
-    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
-    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
-    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
-    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
-    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
-    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
-
-    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
 
     PROPERTIES_DEFAULT = \
         tuple(set(
@@ -915,12 +897,11 @@ class APU(IDBase):
     class DEVICES:
         """Device names."""
 
-        APU22_07SP = 'SI-07SP:ID-APU22'
         APU22_08SB = 'SI-08SB:ID-APU22'
         APU22_09SA = 'SI-09SA:ID-APU22'
         APU58_11SP = 'SI-11SP:ID-APU58'
         ALL = (
-            APU22_07SP, APU22_08SB, APU22_09SA, APU58_11SP, )
+            APU22_08SB, APU22_09SA, APU58_11SP, )
 
     _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
     _CMD_MOVE = 3
@@ -1629,15 +1610,40 @@ class IVU(IDFullMovCtrl):
         ALL = (IVU18_08SB, IVU18_14SB)
 
     # --- PARAM_PVS ---
-    PARAM_PVS = IDFullMovCtrl.PARAM_PVS
+    PARAM_PVS = _ParamPVs()
+
+    # --- GENERAL ---
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+
+    # --- KPARAM ---
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
+    # --- OFFSET --
+    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
     PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
     PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
-    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
-    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
+
+    # --- PITCH --
     PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
     PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
+    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
+
+    # --- TAPER --
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
 
     PROPERTIES_DEFAULT = tuple(set(
         value for key, value in _inspect.getmembers(PARAM_PVS)
@@ -1743,39 +1749,53 @@ class VPU(IDFullMovCtrl):
         """Device names."""
 
         VPU29_06SB = 'SI-06SB:ID-VPU29'
-        # VPU29_07SP = 'SI-07SP:ID-VPU29'
-        ALL = (VPU29_06SB, )  # VPU29_07SP, )
+        VPU29_07SP = 'SI-07SP:ID-VPU29'
+        ALL = (VPU29_06SB, VPU29_07SP)
 
     # DevCtrl PV
     _CMD_MOVE_STOP, _CMD_MOVE_START = 300, 320
     _CMD_RESET, _CMD_SCAN_START = 310, 340
     _CMD_SCAN_MODE = 330
 
-    PARAM_PVS = IDFullMovCtrl.PARAM_PVS
+    PARAM_PVS = _ParamPVs()
 
     # --- GENERAL ---
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
-    PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
     PARAM_PVS.KPARAM_VELO_SP = 'MoveVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-RB'
     PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
     PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-RB'  # Can we read from CPL?
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
 
     # --- KPARAM ---
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
 
     # --- OFFSET --
+    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
     PARAM_PVS.CENTER_OFFSET_VELO_MON = 'CenterOffsetVelo-Mon'
     PARAM_PVS.CENTER_OFFSET_MIN_CTE = 'CenterOffsetMinPos-Cte'
     PARAM_PVS.CENTER_OFFSET_MAX_CTE = 'CenterOffsetMaxPos-Cte'
 
     # --- PITCH --
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
     PARAM_PVS.PITCH_OFFSET_VELO_MON = 'PitchOffsetVelo-Mon'
     PARAM_PVS.PITCH_OFFSET_MIN_CTE = 'PitchOffsetMinPos-Cte'
     PARAM_PVS.PITCH_OFFSET_MAX_CTE = 'PitchOffsetMaxPos-Cte'
 
     # --- TAPER --
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
     PARAM_PVS.KPARAM_TAPER_SP = 'Taper-SP'
     PARAM_PVS.KPARAM_TAPER_RB = 'Taper-RB'
     PARAM_PVS.KPARAM_TAPER_MON = 'Taper-Mon'

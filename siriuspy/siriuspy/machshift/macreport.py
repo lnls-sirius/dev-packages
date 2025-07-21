@@ -256,12 +256,16 @@ class MacReport:
         'Users',
     ]
 
+    # The following failures are counted as beam dump failures
     FAILURES_MANUAL = [
         # hydraulic failure, wrong machine shift for recovery
         [_Time(2023, 3, 3, 22, 56, 0, 0), _Time(2023, 3, 3, 23, 0, 0, 0)],
-        # power grid failure, archiver was down
+        # power grid failure, beam was dumped and archiver was down
         [_Time(2023, 5, 18, 5, 55, 0, 0), _Time(2023, 5, 18, 9, 8, 0, 0)],
         [_Time(2024, 1, 18, 14, 0, 0, 0), _Time(2024, 1, 18, 19, 45, 0, 0)],
+        # beam dump during archiver failure
+        [_Time(2025, 1, 19, 23, 39, 0, 0), _Time(2025, 1, 20, 8, 0, 0, 0)],
+        [_Time(2025, 1, 27, 1, 29, 0, 0), _Time(2025, 1, 27, 3, 48, 0, 0)],
     ]
 
     def __init__(self, connector=None, logger=None):
@@ -1628,15 +1632,15 @@ class MacReport:
             self._usershift_current_end_stddev = 0
 
         # # # ----- failures -----
-        beam_dump_values = 1 * _np.logical_and(
-            _np.logical_not(
-                self._raw_data['Failures']['WrongShift']
-            ), _np.logical_or(
-                self._raw_data['Failures']['ManualAnnotated'],
+        self._beam_dump_values = 1 * _np.logical_or(
+            self._raw_data['Failures']['ManualAnnotated'],
+            _np.logical_and(
+                _np.logical_not(self._raw_data['Failures']['WrongShift']),
                 self._raw_data['Failures']['NoEBeam']
-            ))
+            )
+        )
         self._usershift_beam_dump_count = _np.sum(
-            _np.diff(beam_dump_values) > 0)
+            _np.diff(self._beam_dump_values) > 0)
 
         ave, std, count = self._calc_interval_stats(
             self._failures_users, dtimes_failures_users)
