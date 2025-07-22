@@ -24,6 +24,8 @@ class BaseOrbit(_BaseClass):
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
+    TIMEOUT_TRIG_ACQ_NEWS = 2 / 5  # [s]
+
     def __init__(self, acc, prefix="", callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
@@ -58,17 +60,31 @@ class EpicsOrbit(BaseOrbit):
         self.new_orbit = _Event()
         self._new_orbraw_flag = _Event()
         if self.acc == "SI":
-            self._sloworb_raw_pv = _PV(
+            self._sorbraw_pv = _PV(
                 "SI-Glob:AP-SOFB:SlowOrbRaw-Mon",
                 callback=self._update_sloworb_raw,
                 auto_monitor=True,
             )
+        self._timestamp_last_news = 0  # [s] timestamp in epoch
+        self._last_num_news = 0
         self._orbit_thread = _Repeat(
-            1 / self._csorb.ACQRATE_SLOWORB, self._update_orbits, niter=0
+            1 / self._csorb.ORBIT_UPDATE_RATE, self._update_orbits, niter=0
         )
         self._orbit_thread.start()
         self._thread_sync = None
         self._update_time_vector()
+
+    @property
+    def connected(self):
+        """."""
+        if self.acc == 'SI' and not self._sorbraw_pv.connected:
+            return False
+        for bpm in self.bpms:
+            if not bpm.connected:
+                return False
+        if not self.timing.connected:
+            return False
+        return True
 
     @property
     def sofb(self):
@@ -78,6 +94,21 @@ class EpicsOrbit(BaseOrbit):
     @sofb.setter
     def sofb(self, sofb):
         self._sofb = sofb
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time.time()
+        tout = timeout
+        if self.acc == 'SI' and not self._sorbraw_pv.wait_for_connection(tout):
+            return False
+        for bpm in self.bpms:
+            tout = timeout - (_time.time() - t0_)
+            if tout <= 0 or not bpm.wait_for_connection(tout):
+                return False
+        tout = timeout - (_time.time() - t0_)
+        if tout <= 0 or not self.timing.wait_for_connection(tout):
+            return False
+        return True
 
     def shutdown(self):
         """Shutdown threads."""
@@ -205,9 +236,6 @@ class EpicsOrbit(BaseOrbit):
             self._update_log(msg)
             _log.error(msg[5:])
             orbx, orby = refx.copy(), refy.copy()
-        # # for tests:
-        # orbx -= _time.time()
-        # orby -= _time.time()
         return _np.hstack([orbx - refx, orby - refy])
 
     def _get_orbit_online(self, orbs):
@@ -328,15 +356,11 @@ class EpicsOrbit(BaseOrbit):
     def set_orbit_mode(self, value):
         """."""
         omode = self._mode
-        acqrate = self._csorb.ACQRATE_SLOWORB
-        if self.is_trigmode(value):
-            acqrate = self._csorb.ACQRATE_TRIGMODE
-
         with self._lock_raw_orbs:
             self._mode = value
-            self._orbit_thread.interval = 1 / acqrate
             self._reset_orbs()
-        self.run_callbacks("SOFBMode-Sts", value)
+        if self.acc == 'SI':
+            self.run_callbacks("SOFBMode-Sts", value)
         self._prepare_mode(oldmode=omode)
         return True
 
@@ -694,7 +718,7 @@ class EpicsOrbit(BaseOrbit):
         else:
             self._new_orbraw_flag.clear()
 
-        orb = self._sloworb_raw_pv.value
+        orb = self._sorbraw_pv.value
         posx, posy = orb[: self._csorb.nr_bpms], orb[self._csorb.nr_bpms :]
         nanx = _np.isnan(posx)
         nany = _np.isnan(posy)
@@ -733,8 +757,22 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_multiturn_orbits(self, force_update=True):
         """."""
+        if not force_update and not self.update_raws:
+            return
+
+        news = sum([bpm.has_news for bpm in self.bpms])
+        if news > self._last_num_news:
+            self._last_num_news = news
+            self._timestamp_last_news = _time.time()
+
+        hasnews = news == len(self.bpms)
+        dtime = _time.time() - self._timestamp_last_news
+        timeout = dtime >= self.TIMEOUT_TRIG_ACQ_NEWS
+        if not hasnews and not timeout and len(self.raw_mtorbs["X"]):
+            return
+
         orbs = {"X": [], "Y": [], "Sum": []}
-        with self._lock_raw_orbs:  # I need the lock here to ensure consistency
+        with self._lock_raw_orbs:  # Lock needed here to ensure consistency
             leng = len(self.raw_mtorbs["X"])
             samp = self.acqtrignrsamples
             down = self._mturndownsample
@@ -747,11 +785,9 @@ class EpicsOrbit(BaseOrbit):
             samp *= self._acqtrignrshots
             orbsz = self._csorb.nr_bpms
             nr_pts = self._smooth_npts
-            do_update = force_update
+            isdiff = False  # only update orbit if some BPM updated
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update_cnt > 0:
-                    bpm.needs_update_cnt -= 1
-                    do_update = True
+                if not leng or bpm.has_news:
                     posx = self._get_pos(
                         bpm.mtposx, self.ref_orbs["X"][i], samp
                     )
@@ -759,6 +795,14 @@ class EpicsOrbit(BaseOrbit):
                         bpm.mtposy, self.ref_orbs["Y"][i], samp
                     )
                     psum = self._get_pos(bpm.mtsum, 0, samp)
+                    thisdiff = not leng or not _np.array_equal(
+                        posx, self.raw_mtorbs["X"][-1][:, i]
+                    )
+                    # if it got here, then for sure the new data will be used
+                    # and we can reset the flag:
+                    if thisdiff:
+                        bpm.has_news = False
+                    isdiff |= thisdiff
                 else:
                     posx = self.raw_mtorbs["X"][-1][:, i].copy()
                     posy = self.raw_mtorbs["Y"][-1][:, i].copy()
@@ -767,15 +811,15 @@ class EpicsOrbit(BaseOrbit):
                 orbs["Y"].append(posy)
                 orbs["Sum"].append(psum)
 
-            # NOTE: Only update orbit when at least one BPM has news
-            if not do_update:
+            if not isdiff:
                 return
+            self._timestamp_last_news = _time.time()
+            self._last_num_news = 0
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
                 norb = norb.T.reshape(-1, orbsz)  # turns/rz x rz*bpms
-                if self.update_raws:
-                    raw.append(norb)
+                raw.append(norb)
                 del raw[:-nr_pts]
                 if not raw:
                     return
@@ -819,9 +863,23 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_singlepass_orbits(self):
         """."""
+        if not self.update_raws:
+            return
+
+        news = sum([bpm.has_news for bpm in self.bpms])
+        if news > self._last_num_news:
+            self._last_num_news = news
+            self._timestamp_last_news = _time.time()
+
+        hasnews = news == len(self.bpms)
+        dtime = _time.time() - self._timestamp_last_news
+        timeout = dtime >= self.TIMEOUT_TRIG_ACQ_NEWS
+        if not hasnews and not timeout and len(self.raw_sporbs["X"]):
+            return
+
         orbs = {"X": [], "Y": [], "Sum": []}
         down = self._spass_average
-        with self._lock_raw_orbs:  # I need the lock here to assure consistency
+        with self._lock_raw_orbs:  # Lock needed here to ensure consistency
             leng = len(self.raw_sporbs["X"])
             dic = {
                 "maskbeg": self._spass_mask[0],
@@ -829,11 +887,9 @@ class EpicsOrbit(BaseOrbit):
                 "nturns": down,
             }
             nr_pts = self._smooth_npts
-            do_update = False
+            isdiff = False  # only update orbit if some BPM updated
             for i, bpm in enumerate(self.bpms):
-                if not leng or bpm.needs_update_cnt > 0:
-                    bpm.needs_update_cnt -= 1
-                    do_update = True
+                if not leng or bpm.has_news:
                     dic.update(
                         {
                             "refx": self.ref_orbs["X"][i],
@@ -841,6 +897,14 @@ class EpicsOrbit(BaseOrbit):
                         }
                     )
                     orbx, orby, summ = bpm.calc_sp_multiturn_pos(**dic)
+                    thisdiff = not leng or not _np.array_equal(
+                        orbx, self.raw_sporbs["X"][-1][i]
+                    )
+                    # if it got here, then for sure the new data will be used
+                    # and we can reset the flag:
+                    if thisdiff:
+                        bpm.has_news = False
+                    isdiff |= thisdiff
                 else:
                     orbx = self.raw_sporbs["X"][-1][i].copy()
                     orby = self.raw_sporbs["Y"][-1][i].copy()
@@ -849,15 +913,15 @@ class EpicsOrbit(BaseOrbit):
                 orbs["Y"].append(orby)
                 orbs["Sum"].append(summ)
 
-            # NOTE: only update orbits when there are news from BPMs.
-            if not do_update:
+            if not isdiff:
                 return
+            self._timestamp_last_news = _time.time()
+            self._last_num_news = 0
 
             for pln, raw in self.raw_sporbs.items():
                 norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
                 norb = norb.reshape(-1)
-                if self.update_raws:
-                    raw.append(norb)
+                raw.append(norb)
                 del raw[:-nr_pts]
                 if not raw:
                     return
@@ -915,7 +979,7 @@ class EpicsOrbit(BaseOrbit):
         )
         status = _util.update_bit(v=status, bit_pos=5, bit_val=not isok)
 
-        orb_conn = self._sloworb_raw_pv.connected if self.acc == "SI" else True
+        orb_conn = self._sorbraw_pv.connected if self.acc == "SI" else True
         status = _util.update_bit(v=status, bit_pos=6, bit_val=not orb_conn)
 
         self._status = status

@@ -87,6 +87,43 @@ class SOFB(_BaseClass):
             for i in range(1, 21)
         ]
 
+    @property
+    def connected(self):
+        """."""
+        if self.acc == 'SI' and not self.fofb.connected:
+            return False
+        for acm in self._acms:
+            if not acm.connected:
+                return False
+        if not self._havebeam_pv.connected:
+            return False
+        if self._orbit is not None and not self._orbit.connected:
+            return False
+        if self._correctors is not None and not self._correctors.connected:
+            return False
+        return True
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time()
+        tout = timeout
+        if self.acc == 'SI' and not self.fofb.wait_for_connection(tout):
+            return False
+        for amc in self._amcs:
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not amc.wait_for_connection(tout):
+                return False
+        tout = timeout - (_time() - t0_)
+        if tout <= 0 or not self._havebeam_pv.wait_for_connection(tout):
+            return False
+        for dev in [self._orbit, self._correctors]:
+            if dev is None:
+                continue
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not dev.wait_for_connection(tout):
+                return False
+        return True
+
     def get_map2write(self):
         """Get the database of the class."""
         dbase = {
