@@ -21,7 +21,13 @@ class SOFB(_Device):
         SI = 'SI-Glob:AP-SOFB'
         ALL = (TB, BO, TS, SI)
 
-    def __new__(cls, devname, props2init='all'):
+    def __new__(
+        cls,
+        devname,
+        props2init='all',
+        auto_monitor=True,
+        auto_monitor_mon=False,
+    ):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
@@ -31,54 +37,110 @@ class SOFB(_Device):
         data = SOFBFactory.create(devname[:2])
 
         if data.acc == 'SI':
-            return SISOFB(devname, data, props2init=props2init)
+            return SISOFB(
+                devname,
+                data,
+                props2init=props2init,
+                auto_monitor=auto_monitor,
+                auto_monitor_mon=auto_monitor_mon,
+            )
         elif data.isring:
-            return BOSOFB(devname, data, props2init=props2init)
-        return TLSOFB(devname, data, props2init=props2init)
+            return BOSOFB(
+                devname,
+                data,
+                props2init=props2init,
+                auto_monitor=auto_monitor,
+                auto_monitor_mon=auto_monitor_mon,
+            )
+        return TLSOFB(
+            devname,
+            data,
+            props2init=props2init,
+            auto_monitor=auto_monitor,
+            auto_monitor_mon=auto_monitor_mon,
+        )
 
 
 class TLSOFB(_Device):
     """SOFB Device."""
 
     PROPERTIES_DEFAULT = (
-        'TrigAcqChan-Sel', 'TrigAcqChan-Sts', 'OrbStatus-Mon',
-        'RespMat-SP', 'RespMat-RB', 'RespMat-Mon', 'InvRespMat-Mon',
-        'KickCH-Mon', 'KickCV-Mon',
-        'DeltaKickCH-Mon', 'DeltaKickCV-Mon',
-        'DeltaKickCH-SP', 'DeltaKickCV-SP',
-        'MaxDeltaKickCH-RB', 'MaxDeltaKickCV-RB',
-        'MaxDeltaKickCH-SP', 'MaxDeltaKickCV-SP',
-        'ManCorrGainCH-SP', 'ManCorrGainCV-SP',
-        'ManCorrGainCH-RB', 'ManCorrGainCV-RB',
-        'RefOrbX-SP', 'RefOrbY-SP',
-        'RefOrbX-RB', 'RefOrbY-RB',
-        'BPMXEnblList-SP', 'BPMYEnblList-SP',
-        'BPMXEnblList-RB', 'BPMYEnblList-RB',
-        'CHEnblList-SP', 'CVEnblList-SP',
-        'CHEnblList-RB', 'CVEnblList-RB',
-        'CalcDelta-Cmd', 'ApplyDelta-Cmd', 'SmoothReset-Cmd',
+        'TrigAcqChan-Sel',
+        'TrigAcqChan-Sts',
+        'OrbStatus-Mon',
+        'RespMat-SP',
+        'RespMat-RB',
+        'RespMat-Mon',
+        'InvRespMat-Mon',
+        'KickCH-Mon',
+        'KickCV-Mon',
+        'DeltaKickCH-Mon',
+        'DeltaKickCV-Mon',
+        'DeltaKickCH-SP',
+        'DeltaKickCV-SP',
+        'MaxDeltaKickCH-RB',
+        'MaxDeltaKickCV-RB',
+        'MaxDeltaKickCH-SP',
+        'MaxDeltaKickCV-SP',
+        'ManCorrGainCH-SP',
+        'ManCorrGainCV-SP',
+        'ManCorrGainCH-RB',
+        'ManCorrGainCV-RB',
+        'RefOrbX-SP',
+        'RefOrbY-SP',
+        'RefOrbX-RB',
+        'RefOrbY-RB',
+        'BPMXEnblList-SP',
+        'BPMYEnblList-SP',
+        'BPMXEnblList-RB',
+        'BPMYEnblList-RB',
+        'CHEnblList-SP',
+        'CVEnblList-SP',
+        'CHEnblList-RB',
+        'CVEnblList-RB',
+        'CalcDelta-Cmd',
+        'ApplyDelta-Cmd',
+        'SmoothReset-Cmd',
         'ApplyDelta-Mon',
-        'SmoothNrPts-SP', 'SmoothNrPts-RB',
+        'SmoothNrPts-SP',
+        'SmoothNrPts-RB',
         'BufferCount-Mon',
         'TrigNrSamplesPre-SP',
         'TrigNrSamplesPre-RB',
         'TrigNrSamplesPost-SP',
         'TrigNrSamplesPost-RB',
-        'SPassSum-Mon', 'SPassOrbX-Mon', 'SPassOrbY-Mon',
-        'MeasRespMat-Cmd', 'MeasRespMat-Mon',
-        'MeasRespMatKickCH-SP', 'MeasRespMatKickCH-RB',
-        'MeasRespMatKickCV-SP', 'MeasRespMatKickCV-RB',
-        'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
-        'NrSingValues-Mon', 'MinSingValue-SP', 'MinSingValue-RB',
-        'TrigAcqCtrl-Sel', 'TrigAcqCtrl-Sts', 'TrigAcqConfig-Cmd',
+        'SPassSum-Mon',
+        'SPassOrbX-Mon',
+        'SPassOrbY-Mon',
+        'MeasRespMat-Cmd',
+        'MeasRespMat-Mon',
+        'MeasRespMatKickCH-SP',
+        'MeasRespMatKickCH-RB',
+        'MeasRespMatKickCV-SP',
+        'MeasRespMatKickCV-RB',
+        'MeasRespMatWait-SP',
+        'MeasRespMatWait-RB',
+        'NrSingValues-Mon',
+        'MinSingValue-SP',
+        'MinSingValue-RB',
+        'TrigAcqCtrl-Sel',
+        'TrigAcqCtrl-Sts',
+        'TrigAcqConfig-Cmd',
         'SyncBPMs-Cmd',
-        )
+    )
 
     _default_timeout = 10  # [s]
     _default_timeout_respm = 2 * 60 * 60  # [s]
     _default_timeout_kick_apply = 2  # [s]
 
-    def __init__(self, devname, data=None, props2init='all'):
+    def __init__(
+        self,
+        devname,
+        data=None,
+        props2init='all',
+        auto_monitor=True,
+        auto_monitor_mon=False,
+    ):
         """."""
         # check if device exists
         if devname not in SOFB.DEVICES.ALL:
@@ -87,7 +149,12 @@ class TLSOFB(_Device):
         # SOFB object
         self._data = data or SOFBFactory.create(devname[:2])
         # call base class constructor
-        super().__init__(devname, props2init=props2init)
+        super().__init__(
+            devname,
+            props2init=props2init,
+            auto_monitor=auto_monitor,
+            auto_monitor_mon=auto_monitor_mon,
+        )
 
     @property
     def data(self):
@@ -101,13 +168,12 @@ class TLSOFB(_Device):
 
     @trigchannel.setter
     def trigchannel(self, value):
-        self._enum_setter(
-            'TrigAcqChan-Sel', value, self._data.TrigAcqChan)
+        self._enum_setter('TrigAcqChan-Sel', value, self._data.TrigAcqChan)
 
     @property
     def respmat(self):
         """Raw response matrix."""
-        return self['RespMat-RB'].reshape(self._data.nr_bpms*2, -1)
+        return self['RespMat-RB'].reshape(self._data.nr_bpms * 2, -1)
 
     @respmat.setter
     def respmat(self, mat):
@@ -116,12 +182,12 @@ class TLSOFB(_Device):
     @property
     def respmat_mon(self):
         """Applied response matrix."""
-        return self['RespMat-Mon'].reshape(self._data.nr_bpms*2, -1)
+        return self['RespMat-Mon'].reshape(self._data.nr_bpms * 2, -1)
 
     @property
     def invrespmat(self):
         """Inverse response matrix."""
-        return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms*2)
+        return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms * 2)
 
     @property
     def trigchannel_str(self):
@@ -348,69 +414,70 @@ class TLSOFB(_Device):
         prop = 'SmoothReset-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_calccorr(self):
         """."""
         prop = 'CalcDelta-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_applycorr_ch(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.CH
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_applycorr_cv(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.CV
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_applycorr_rf(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.RF
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_applycorr_all(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.All
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_measrespmat_start(self):
         """."""
         prop = 'MeasRespMat-Cmd'
         val = self[prop]
         self[prop] = 0
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_measrespmat_stop(self):
         """."""
         prop = 'MeasRespMat-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_measrespmat_reset(self):
         """."""
         prop = 'MeasRespMat-Cmd'
         val = self[prop]
         self[prop] = 2
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
     def cmd_trigacq_start(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Start'
         ret = self._wait(
-            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Start, timeout=timeout)
+            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Start, timeout=timeout
+        )
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -420,7 +487,8 @@ class TLSOFB(_Device):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Stop'
         ret = self._wait(
-            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Stop, timeout=timeout)
+            'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Stop, timeout=timeout
+        )
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -476,8 +544,8 @@ class TLSOFB(_Device):
             resy = self.orby - self.refy
             resx = resx[self.bpmxenbl.nonzero()[0]]
             resy = resy[self.bpmyenbl.nonzero()[0]]
-            resx = _np.sqrt(_np.sum(resx*resx)/resx.size)
-            resy = _np.sqrt(_np.sum(resy*resy)/resy.size)
+            resx = _np.sqrt(_np.sum(resx * resx) / resx.size)
+            resy = _np.sqrt(_np.sum(resy * resy) / resy.size)
             if resx < residue and resy < residue:
                 break
             self.wait_buffer()
@@ -491,23 +559,30 @@ class TLSOFB(_Device):
         """."""
         timeout = timeout or self._default_timeout
         return self._wait(
-            'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge')
+            'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge'
+        )
 
     def wait_apply_delta_kick(self, timeout=None):
         """."""
-        def_timeout = min(1.05*self.deltakickrf, self.maxdeltakickrf) // 20
+        def_timeout = min(1.05 * self.deltakickrf, self.maxdeltakickrf) // 20
         def_timeout = max(self._default_timeout_kick_apply, def_timeout)
         timeout = timeout or def_timeout
         return self._wait(
-            'ApplyDelta-Mon', self._data.ApplyDeltaMon.Applying,
-            timeout=timeout, comp='ne')
+            'ApplyDelta-Mon',
+            self._data.ApplyDeltaMon.Applying,
+            timeout=timeout,
+            comp='ne',
+        )
 
     def wait_respm_meas(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout_respm
         return self._wait(
-            'MeasRespMat-Mon', self._data.MeasRespMatMon.Measuring,
-            timeout=timeout, comp='ne')
+            'MeasRespMat-Mon',
+            self._data.MeasRespMatMon.Measuring,
+            timeout=timeout,
+            comp='ne',
+        )
 
     def wait_orb_status_ok(self, timeout=10):
         """."""
@@ -518,7 +593,7 @@ class TLSOFB(_Device):
         prop = 'SyncBPMs-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
 
 class BOSOFB(TLSOFB):
@@ -526,15 +601,25 @@ class BOSOFB(TLSOFB):
 
     PROPERTIES_DEFAULT = TLSOFB.PROPERTIES_DEFAULT + (
         'MTurnAcquire-Cmd',
-        'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon',
-        'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
+        'MTurnSum-Mon',
+        'MTurnOrbX-Mon',
+        'MTurnOrbY-Mon',
+        'MTurnIdxOrbX-Mon',
+        'MTurnIdxOrbY-Mon',
+        'MTurnIdxSum-Mon',
         'MTurnTime-Mon',
-        'MTurnDownSample-SP', 'MTurnDownSample-RB',
-        'MTurnIdx-SP', 'MTurnIdx-RB', 'MTurnIdxTime-Mon',
-        'MTurnUseMask-Sel', 'MTurnUseMask-Sts',
-        'MTurnMaskSplBeg-SP', 'MTurnMaskSplBeg-RB',
-        'MTurnMaskSplEnd-SP', 'MTurnMaskSplEnd-RB',
-        )
+        'MTurnDownSample-SP',
+        'MTurnDownSample-RB',
+        'MTurnIdx-SP',
+        'MTurnIdx-RB',
+        'MTurnIdxTime-Mon',
+        'MTurnUseMask-Sel',
+        'MTurnUseMask-Sts',
+        'MTurnMaskSplBeg-SP',
+        'MTurnMaskSplBeg-RB',
+        'MTurnMaskSplEnd-SP',
+        'MTurnMaskSplEnd-RB',
+    )
 
     @property
     def mt_trajx(self):
@@ -646,39 +731,70 @@ class BOSOFB(TLSOFB):
         prop = 'MTurnAcquire-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val+1)
+        return self._wait(prop, val + 1)
 
 
 class SISOFB(BOSOFB):
     """SOFB Device."""
 
     PROPERTIES_DEFAULT = BOSOFB.PROPERTIES_DEFAULT + (
-        'SOFBMode-Sel', 'SOFBMode-Sts',
+        'SOFBMode-Sel',
+        'SOFBMode-Sts',
         'KickRF-Mon',
-        'DeltaKickRF-Mon', 'DeltaKickRF-SP',
-        'MaxDeltaKickRF-RB', 'MaxDeltaKickRF-SP',
-        'ManCorrGainRF-SP', 'ManCorrGainRF-RB',
-        'MeasRespMatKickRF-SP', 'MeasRespMatKickRF-RB',
-        'RFEnbl-Sel', 'RFEnbl-Sts',
-        'SlowOrbX-Mon', 'SlowOrbY-Mon',
-        'LoopState-Sts', 'LoopState-Sel',
-        'CorrSync-Sts', 'CorrSync-Sel',
-        'LoopPIDKpCH-SP', 'LoopPIDKiCH-SP', 'LoopPIDKdCH-SP',
-        'LoopPIDKpCH-RB', 'LoopPIDKiCH-RB', 'LoopPIDKdCH-RB',
-        'LoopPIDKpCV-SP', 'LoopPIDKiCV-SP', 'LoopPIDKdCV-SP',
-        'LoopPIDKpCV-RB', 'LoopPIDKiCV-RB', 'LoopPIDKdCV-RB',
-        'LoopPIDKpRF-SP', 'LoopPIDKiRF-SP', 'LoopPIDKdRF-SP',
-        'LoopPIDKpRF-RB', 'LoopPIDKiRF-RB', 'LoopPIDKdRF-RB',
-        'DriveFreqDivisor-SP', 'DriveFreqDivisor-RB', 'DriveFrequency-Mon',
-        'DriveNrCycles-SP', 'DriveNrCycles-RB', 'DriveDuration-Mon',
-        'DriveAmplitude-SP', 'DriveAmplitude-RB',
-        'DrivePhase-SP', 'DrivePhase-RB',
-        'DriveCorrIndex-SP', 'DriveCorrIndex-RB',
-        'DriveBPMIndex-SP', 'DriveBPMIndex-RB',
-        'DriveType-Sel', 'DriveType-Sts',
-        'DriveState-Sel', 'DriveState-Sts',
+        'DeltaKickRF-Mon',
+        'DeltaKickRF-SP',
+        'MaxDeltaKickRF-RB',
+        'MaxDeltaKickRF-SP',
+        'ManCorrGainRF-SP',
+        'ManCorrGainRF-RB',
+        'MeasRespMatKickRF-SP',
+        'MeasRespMatKickRF-RB',
+        'RFEnbl-Sel',
+        'RFEnbl-Sts',
+        'SlowOrbX-Mon',
+        'SlowOrbY-Mon',
+        'LoopState-Sts',
+        'LoopState-Sel',
+        'CorrSync-Sts',
+        'CorrSync-Sel',
+        'LoopPIDKpCH-SP',
+        'LoopPIDKiCH-SP',
+        'LoopPIDKdCH-SP',
+        'LoopPIDKpCH-RB',
+        'LoopPIDKiCH-RB',
+        'LoopPIDKdCH-RB',
+        'LoopPIDKpCV-SP',
+        'LoopPIDKiCV-SP',
+        'LoopPIDKdCV-SP',
+        'LoopPIDKpCV-RB',
+        'LoopPIDKiCV-RB',
+        'LoopPIDKdCV-RB',
+        'LoopPIDKpRF-SP',
+        'LoopPIDKiRF-SP',
+        'LoopPIDKdRF-SP',
+        'LoopPIDKpRF-RB',
+        'LoopPIDKiRF-RB',
+        'LoopPIDKdRF-RB',
+        'DriveFreqDivisor-SP',
+        'DriveFreqDivisor-RB',
+        'DriveFrequency-Mon',
+        'DriveNrCycles-SP',
+        'DriveNrCycles-RB',
+        'DriveDuration-Mon',
+        'DriveAmplitude-SP',
+        'DriveAmplitude-RB',
+        'DrivePhase-SP',
+        'DrivePhase-RB',
+        'DriveCorrIndex-SP',
+        'DriveCorrIndex-RB',
+        'DriveBPMIndex-SP',
+        'DriveBPMIndex-RB',
+        'DriveType-Sel',
+        'DriveType-Sts',
+        'DriveState-Sel',
+        'DriveState-Sts',
         'DriveData-Mon',
-        )
+    )
 
     @property
     def opmode(self):
@@ -687,8 +803,7 @@ class SISOFB(BOSOFB):
 
     @opmode.setter
     def opmode(self, value):
-        self._enum_setter(
-            'SOFBMode-Sel', value, self._data.SOFBMode)
+        self._enum_setter('SOFBMode-Sel', value, self._data.SOFBMode)
 
     @property
     def opmode_str(self):
@@ -808,8 +923,7 @@ class SISOFB(BOSOFB):
 
     @drivetype.setter
     def drivetype(self, value):
-        self._enum_setter(
-            'DriveType-Sel', value, self._data.DriveType)
+        self._enum_setter('DriveType-Sel', value, self._data.DriveType)
 
     @property
     def drivetype_str(self):
@@ -979,7 +1093,8 @@ class SISOFB(BOSOFB):
             return True
         self['LoopState-Sel'] = self._data.LoopState.Closed
         return self._wait(
-            'LoopState-Sts', self._data.LoopState.Closed, timeout=timeout)
+            'LoopState-Sts', self._data.LoopState.Closed, timeout=timeout
+        )
 
     def cmd_turn_off_autocorr(self, timeout=None):
         """."""
@@ -988,7 +1103,8 @@ class SISOFB(BOSOFB):
             return True
         self['LoopState-Sel'] = self._data.LoopState.Open
         return self._wait(
-            'LoopState-Sts', self._data.LoopState.Open, timeout=timeout)
+            'LoopState-Sts', self._data.LoopState.Open, timeout=timeout
+        )
 
     @property
     def synckicksts(self):
@@ -1011,7 +1127,8 @@ class SISOFB(BOSOFB):
             return True
         self['CorrSync-Sel'] = self._data.CorrSync.Off
         return self._wait(
-            'CorrSync-Sts', self._data.CorrSync.Off, timeout=timeout)
+            'CorrSync-Sts', self._data.CorrSync.Off, timeout=timeout
+        )
 
     def cmd_turn_on_drive(self, timeout=None):
         """."""
@@ -1020,7 +1137,8 @@ class SISOFB(BOSOFB):
             return True
         self['DriveState-Sel'] = self._data.DriveState.Closed
         return self._wait(
-            'DriveState-Sts', self._data.DriveState.Closed, timeout=timeout)
+            'DriveState-Sts', self._data.DriveState.Closed, timeout=timeout
+        )
 
     def cmd_turn_off_drive(self, timeout=None):
         """."""
@@ -1034,13 +1152,15 @@ class SISOFB(BOSOFB):
         """."""
         timeout = timeout or self._default_timeout_respm
         return self._wait(
-            'DriveState-Sts', self._data.DriveState.Open, timeout=timeout)
+            'DriveState-Sts', self._data.DriveState.Open, timeout=timeout
+        )
 
     @staticmethod
     def si_calculate_bumps(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
         """."""
         return _si_calculate_bump(
-            orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy)
+            orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy
+        )
 
     @property
     def trajx(self):
