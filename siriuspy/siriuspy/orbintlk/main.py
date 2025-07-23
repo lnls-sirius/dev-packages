@@ -1366,13 +1366,20 @@ class App(_Callback):
             for out in aux_var_loop:
                 outnam = f'OUT{out}'
                 devout = devname.substitute(propty_name=outnam)
+                # the redundancy table is a dict with strings as keys and
+                # lists as values
                 if devout in self._const.intlkr_fouttable:
-                    pair = _PVName(self._const.intlkr_fouttable[devout])
-                    devpair = pair.device_name
-                    # get the correct bit to verify the redundancy out
-                    redunout = int(pair.propty_name[-1])
-                    redunvalue = self._fout_devs[devpair]['RxLockedLtc-Mon']
-                    if _get_bit(redunvalue, redunout):
+                    pairlist = self._const.intlkr_fouttable[devout]
+                    # for each redundancy pair, check respective fout rxlocked
+                    redunvalmap = list()
+                    for pair in pairlist:
+                        pairname = _PVName(pair)
+                        devpair = pairname.device_name
+                        # get the correct bit to verify the redundancy out
+                        redunout = int(pairname.propty_name[-1])
+                        redunvalue = self._fout_devs[devpair]['RxLockedLtc-Mon']
+                        redunvalmap.append((redunvalue, redunout))
+                    if all([_get_bit(v, b) for v, b in redunvalmap]):
                         outs_in_failure.remove(out)
                         self._update_log(f'Redundancy of {outnam} of {devname} is ok')
                     else:
