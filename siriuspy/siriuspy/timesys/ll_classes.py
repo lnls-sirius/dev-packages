@@ -439,7 +439,6 @@ class _BASETRIG(_BaseLL):
             'NrPulses': self._set_nrpulses,
             'Delay': _partial(self._set_delay, raw=False),
             'DelayRaw': _partial(self._set_delay, raw=True),
-            'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
             'Direction': _partial(self._set_simple, 'Dir'),
@@ -877,7 +876,7 @@ class _AMCFPGAEVRFMC(_AMCFPGAEVRAMC):
 
 def get_ll_trigger(channel, source_enums):
     """Get Low Level trigger objects."""
-    LL_TRIGGER_CLASSES = {
+    ll_trigger_classes = {
         ('EVR', 'OUT'): _EVROUT,
         ('EVR', 'OTP'): _EVROTP,
         ('EVR', 'DIN'): _EVRDIN,
@@ -889,7 +888,7 @@ def get_ll_trigger(channel, source_enums):
     }
     chan = _PVName(channel)
     key = (chan.dev, chan.propty[:3])
-    cls_ = LL_TRIGGER_CLASSES.get(key)
+    cls_ = ll_trigger_classes.get(key)
     if not cls_:
         raise Exception(
             'Low Level Trigger Class not defined for device '
