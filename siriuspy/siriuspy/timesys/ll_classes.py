@@ -1,23 +1,21 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 
+import logging as _log
 import re as _re
 from functools import partial as _partial
-import logging as _log
 from threading import Thread as _ThreadBase
 
 from epics.ca import CASeverityException as _CASeverityException
 
-from ..util import update_bit as _update_bit, get_bit as _get_bit
-from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
-from ..envars import VACA_PREFIX as LL_PREFIX
-from ..namesys import SiriusPVName as _PVName
-from ..search import LLTimeSearch as _LLSearch, HLTimeSearch as _HLSearch
 from ..callbacks import Callback as _Callback
 from ..devices import Event as _Event
+from ..envars import VACA_PREFIX as LL_PREFIX
+from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, PV as _PV
+from ..namesys import SiriusPVName as _PVName
+from ..search import HLTimeSearch as _HLSearch, LLTimeSearch as _LLSearch
 from ..thread import RepeaterThread as _Timer
-
+from ..util import get_bit as _get_bit, update_bit as _update_bit
 from .csdev import Const as _TIConst
-
 
 _RFFREQ = _TIConst.RF_FREQUENCY
 _RFDIV = _TIConst.RF_DIVISION
@@ -27,7 +25,6 @@ _FDEL = _TIConst.FINE_DELAY / _US2SEC
 
 
 class _Thread(_ThreadBase):
-
     def __init__(self, **kwargs):
         if 'daemon' not in kwargs:
             kwargs['daemon'] = True
@@ -35,7 +32,6 @@ class _Thread(_ThreadBase):
 
 
 class _BaseLL(_Callback):
-
     def __init__(self, channel, prefix):
         """Initialize the Low Level object.
 
@@ -51,7 +47,8 @@ class _BaseLL(_Callback):
         self._dict_functs_for_read = self._define_dict_for_read()
         self._dict_convert_prop2pv = self._define_convertion_prop2pv()
         self._dict_convert_pv2prop = {
-            val: key for key, val in self._dict_convert_prop2pv.items()}
+            val: key for key, val in self._dict_convert_prop2pv.items()
+        }
         self._config_ok_values = dict()
         self._base_freq = _RFFREQ / _RFDIV
         self.base_del = 1 / self._base_freq / _US2SEC
@@ -67,7 +64,8 @@ class _BaseLL(_Callback):
 
         evg_name = _PVName(_LLSearch.get_evg_name())
         self._base_freq_pv = _PV(
-            evg_name.substitute(prefix=LL_PREFIX, propty='FPGAClk-Cte'))
+            evg_name.substitute(prefix=LL_PREFIX, propty='FPGAClk-Cte')
+        )
         self._update_base_freq()
         self._base_freq_pv.add_callback(self._update_base_freq)
 
@@ -96,7 +94,7 @@ class _BaseLL(_Callback):
     def connected(self):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
-        pvs += [self._base_freq_pv, ]
+        pvs += [self._base_freq_pv]
         for evt in self._events.values():
             pvs += [evt.pv_object(p) for p in evt.properties_in_use]
         conn = True
@@ -109,7 +107,7 @@ class _BaseLL(_Callback):
     def wait_for_connection(self, timeout=None):
         """."""
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
-        pvs += [self._base_freq_pv, ]
+        pvs += [self._base_freq_pv]
         for evt in self._events.values():
             pvs += [evt.pv_object(p) for p in evt.properties_in_use]
         for pv in pvs:
@@ -184,8 +182,9 @@ class _BaseLL(_Callback):
             self.write_ll(prop, val)
 
     def _update_base_freq(self, **kwargs):
-        self._base_freq = self._base_freq_pv.get(
-            timeout=_CONN_TIMEOUT) or self._base_freq
+        self._base_freq = (
+            self._base_freq_pv.get(timeout=_CONN_TIMEOUT) or self._base_freq
+        )
         self.base_del = 1 / self._base_freq / _US2SEC
         self._rf_del = self.base_del / 5
 
@@ -245,8 +244,7 @@ class _BaseLL(_Callback):
         interv = 1 / 10  # I wait a little bit to reduce CPU load
         timer = self._lock_threads_dict.get(pvname)
         if timer is None or not timer.is_alive():
-            timer = _Timer(
-                interv, self._do_lock, args=(pvname, ), niter=maxatt)
+            timer = _Timer(interv, self._do_lock, args=(pvname,), niter=maxatt)
             self._lock_threads_dict[pvname] = timer
             timer.start()
         else:
@@ -269,13 +267,14 @@ class _BaseLL(_Callback):
             timer.stop()
         self._put_on_pv(pvo, my_val)
 
-        if timer.cur_iter == timer.niters-1:
+        if timer.cur_iter == timer.niters - 1:
             _log.error(
                 f'Could not set PV: {pvo.pvname:s} --> '
                 f'my_val: {str(my_val):s} val: {str(value):s} '
                 f'put_comp: {str(pvo.put_complete):s} '
                 f'initia: {str(pvo.initialized):s} '
-                f'conn: {str(pvo.connected):s}')
+                f'conn: {str(pvo.connected):s}'
+            )
 
     def _put_on_pv(self, pvo, value, wait=False):
         if pvo.connected and pvo.put_complete is not False:
@@ -421,7 +420,7 @@ class _BASETRIG(_BaseLL):
             'FoutLos': _fout_prefix + 'Los-Mon',
             'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
-            }
+        }
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -444,7 +443,7 @@ class _BASETRIG(_BaseLL):
             'RFDelayType': self._set_rfdelaytype,
             'LowLvlLock': self._set_locked,
             'Direction': _partial(self._set_simple, 'Dir'),
-            }
+        }
         return map_
 
     def _define_dict_for_update(self):
@@ -471,7 +470,7 @@ class _BASETRIG(_BaseLL):
             'FoutLos': _partial(self._get_status, 'FoutLos'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
-            }
+        }
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -494,8 +493,9 @@ class _BASETRIG(_BaseLL):
             'InInjTable': _partial(self._get_status, ''),
             'LowLvlLock': lambda is_sp: {'LowLvlLock': self.locked},
             'Direction': _partial(
-                self._get_simple, 'Dir', hl_prop='Direction'),
-            }
+                self._get_simple, 'Dir', hl_prop='Direction'
+            ),
+        }
         return map_
 
     def _get_status(self, prop, is_sp, value=None):
@@ -503,7 +503,8 @@ class _BASETRIG(_BaseLL):
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl', def_val=0)
         dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl', def_val=0)
         dic_['FoutDevEnbl'] = self._get_from_pvs(
-            is_sp, 'FoutDevEnbl', def_val=0)
+            is_sp, 'FoutDevEnbl', def_val=0
+        )
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
@@ -516,12 +517,13 @@ class _BASETRIG(_BaseLL):
         dic_['Los'] = 0b00000000
         if 'Los' not in self._REMOVE_PROPS:
             prt_num = int(self.channel[-1])  # get OUT number for EVR
-            dic_['Los'] = self._get_from_pvs(
-                False, 'Los', def_val=0b11111111)
+            dic_['Los'] = self._get_from_pvs(False, 'Los', def_val=0b11111111)
         dic_['EVGLos'] = self._get_from_pvs(
-            False, 'EVGLos', def_val=0b11111111)
+            False, 'EVGLos', def_val=0b11111111
+        )
         dic_['FoutLos'] = self._get_from_pvs(
-            False, 'FoutLos', def_val=0b11111111)
+            False, 'FoutLos', def_val=0b11111111
+        )
 
         if value is not None:
             dic_[prop] = value
@@ -531,16 +533,16 @@ class _BASETRIG(_BaseLL):
         dic_['FoutLos'] = _get_bit(dic_['FoutLos'], self._fout_out)
 
         prob, bit = 0, 0
-        prob, bit = _update_bit(prob, bit, not dic_['PVsConn']), bit+1
-        prob, bit = _update_bit(prob, bit, not dic_['DevEnbl']), bit+1
-        prob, bit = _update_bit(prob, bit, not dic_['FoutDevEnbl']), bit+1
-        prob, bit = _update_bit(prob, bit, not dic_['EVGDevEnbl']), bit+1
-        prob, bit = _update_bit(prob, bit, not dic_['Network']), bit+1
-        prob, bit = _update_bit(prob, bit, not dic_['Link']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['Los']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit+1
+        prob, bit = _update_bit(prob, bit, not dic_['PVsConn']), bit + 1
+        prob, bit = _update_bit(prob, bit, not dic_['DevEnbl']), bit + 1
+        prob, bit = _update_bit(prob, bit, not dic_['FoutDevEnbl']), bit + 1
+        prob, bit = _update_bit(prob, bit, not dic_['EVGDevEnbl']), bit + 1
+        prob, bit = _update_bit(prob, bit, not dic_['Network']), bit + 1
+        prob, bit = _update_bit(prob, bit, not dic_['Link']), bit + 1
+        prob, bit = _update_bit(prob, bit, dic_['Los']), bit + 1
+        prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit + 1
+        prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit + 1
+        prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit + 1
 
         dic = {'Status': prob}
         dic.update(self._get_in_inj_table())
@@ -563,14 +565,15 @@ class _BASETRIG(_BaseLL):
         dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay', def_val=0)
         dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay', def_val=0)
         dic_['RFDelayType'] = self._get_from_pvs(
-            is_sp, 'RFDelayType', def_val=0)
+            is_sp, 'RFDelayType', def_val=0
+        )
         if value is not None:
             dic_[prop] = value
         if dic_['Delay'] is None:
             return dict()
-        delay = dic_['Delay']*self.base_del + dic_['FineDelay']*_FDEL
+        delay = dic_['Delay'] * self.base_del + dic_['FineDelay'] * _FDEL
         if not dic_['RFDelayType']:
-            delay += dic_['RFDelay']*self._rf_del
+            delay += dic_['RFDelay'] * self._rf_del
         dic = {'Delay': delay, 'DelayRaw': dic_['Delay']}
         if not is_sp:
             dic = self._get_total_delay(dic)
@@ -587,7 +590,7 @@ class _BASETRIG(_BaseLL):
             evt_del = evt.delay_raw if evt.is_in_inj_table else 0
         evt_del = evt_del or 0  # in case event PV is disconnected
         dic['TotalDelayRaw'] = dic['DelayRaw'] + evt_del
-        dic['TotalDelay'] = dic['Delay'] + evt_del*self.base_del
+        dic['TotalDelay'] = dic['Delay'] + evt_del * self.base_del
         return dic
 
     def _set_delay(self, value, raw=False):
@@ -623,26 +626,28 @@ class _BASETRIG(_BaseLL):
         return self._process_evt(dic_['Evt'], is_sp)
 
     def _process_evt(self, evt, _):
-        invalid = len(self._source_enums)-1  # Invalid option
+        invalid = len(self._source_enums) - 1  # Invalid option
         if evt not in _TIConst.EvtLL:
             return {'Src': invalid}
         evt_st = _TIConst.EvtLL._fields[_TIConst.EvtLL.index(evt)]
-        if evt_st not in _TIConst.EvtLL2HLMap or \
-                _TIConst.EvtLL2HLMap[evt_st] not in self._source_enums:
+        if (
+            evt_st not in _TIConst.EvtLL2HLMap
+            or _TIConst.EvtLL2HLMap[evt_st] not in self._source_enums
+        ):
             return {'Src': invalid}
         else:
             ev_num = self._source_enums.index(_TIConst.EvtLL2HLMap[evt_st])
             return {'Src': ev_num}
 
     def _process_src_trig(self, src_trig, _):
-        invalid = len(self._source_enums)-1  # Invalid option
+        invalid = len(self._source_enums) - 1  # Invalid option
         intrg = _LLSearch.get_channel_internal_trigger_pvname(self.channel)
         intrg = int(intrg.propty[-2:])  # get internal trigger number for EVR
         if src_trig != intrg:
             return {'Src': invalid}
 
     def _process_src(self, src, _):
-        invalid = len(self._source_enums)-1  # Invalid option
+        invalid = len(self._source_enums) - 1  # Invalid option
         if src is None:
             return {'Src': invalid}
 
@@ -653,7 +658,7 @@ class _BASETRIG(_BaseLL):
         if self.channel.dev.startswith('AMCFPGAEVR'):
             offset = 1
         try:
-            source = _TIConst.TrigSrcLL._fields[src+offset]
+            source = _TIConst.TrigSrcLL._fields[src + offset]
         except IndexError:
             source = ''
         if not source:
@@ -671,7 +676,7 @@ class _BASETRIG(_BaseLL):
         # list. So I have to create this offset to fix this...
         offset = int(self.channel.dev.startswith('AMCFPGAEVR'))
 
-        if value >= (len(self._source_enums)-1):
+        if value >= (len(self._source_enums) - 1):
             return dict()
         pname = self._source_enums[value]
         n = _TIConst.TrigSrcLL._fields.index('Trigger')
@@ -686,8 +691,7 @@ class _BASETRIG(_BaseLL):
             evt = int(_TIConst.EvtHL2LLMap[pname].strip('Evt'))
             dic_ = {'Src': n, 'Evt': evt}
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
-            intrg = _LLSearch.get_channel_internal_trigger_pvname(
-                self.channel)
+            intrg = _LLSearch.get_channel_internal_trigger_pvname(self.channel)
             intrg = int(intrg[-2:])  # get internal trigger number for EVR
             dic_['SrcTrig'] = intrg
         return dic_
@@ -705,9 +709,9 @@ class _BASETRIG(_BaseLL):
             return dict()
         return {
             'WidthRaw': dic_['Width'],
-            'Duration': 2*dic_['Width']*dic_['NrPulses']*self.base_del,
+            'Duration': 2 * dic_['Width'] * dic_['NrPulses'] * self.base_del,
             'NrPulses': dic_['NrPulses'],
-            }
+        }
 
     def _set_duration(self, wid, pul=None, raw=False):
         if wid is None:
@@ -751,12 +755,19 @@ class _BASETRIG(_BaseLL):
 
 
 class _EVROUT(_BASETRIG):
-    _REMOVE_PROPS = {'Dir', }
+    _REMOVE_PROPS = {'Dir'}
 
 
 class _EVROTP(_BASETRIG):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los', 'Dir'}
+        'RFDelay',
+        'FineDelay',
+        'Src',
+        'SrcTrig',
+        'RFDelayType',
+        'Los',
+        'Dir',
+    }
 
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
@@ -784,7 +795,7 @@ class _EVROTP(_BASETRIG):
         return dict()
 
     def _set_source(self, value):
-        if value >= (len(self._source_enums)-1):
+        if value >= (len(self._source_enums) - 1):
             return dict()
         pname = self._source_enums[value]
         dic_ = dict()
@@ -807,8 +818,17 @@ class _EVEOUT(_BASETRIG):
 
 class _EVRDIN(_EVROTP):
     _REMOVE_PROPS = {
-        'Width', 'NrPulses', 'Delay', 'Dir', 'Src', 'SrcTrig', 'RFDelay',
-        'FineDelay', 'RFDelayType', 'Los'}
+        'Width',
+        'NrPulses',
+        'Delay',
+        'Dir',
+        'Src',
+        'SrcTrig',
+        'RFDelay',
+        'FineDelay',
+        'RFDelayType',
+        'Los',
+    }
 
 
 class _EVEDIN(_EVRDIN):
@@ -817,8 +837,14 @@ class _EVEDIN(_EVRDIN):
 
 class _AMCFPGAEVRAMC(_BASETRIG):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Intlk', 'Los',
-        'Log'}
+        'RFDelay',
+        'FineDelay',
+        'SrcTrig',
+        'RFDelayType',
+        'Intlk',
+        'Los',
+        'Log',
+    }
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)
@@ -860,12 +886,17 @@ def get_ll_trigger(channel, source_enums):
         ('EVE', 'DIN'): _EVEDIN,
         ('AMCFPGAEVR', 'CRT'): _AMCFPGAEVRAMC,
         ('AMCFPGAEVR', 'FMC'): _AMCFPGAEVRFMC,
-        }
+    }
     chan = _PVName(channel)
     key = (chan.dev, chan.propty[:3])
     cls_ = LL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception(
-            'Low Level Trigger Class not defined for device ' +
-            'type '+key[0]+' and connection type '+key[1]+'.')
+            'Low Level Trigger Class not defined for device '
+            + 'type '
+            + key[0]
+            + ' and connection type '
+            + key[1]
+            + '.'
+        )
     return cls_(channel, source_enums)
