@@ -1,315 +1,1936 @@
-"""Define Insertion Devices."""
+"""Insertion Devices."""
 
+import inspect as _inspect
 import time as _time
+
 import numpy as _np
 
-from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import IDSearch as _IDSearch
-from ..magnet.idffwd import APUFFWDCalc as _APUFFWDCalc
-
 from .device import Device as _Device
-from .device import Devices as _Devices
-from .device import DeviceApp as _DeviceApp
-from .psconv import StrengthConv as _StrengthConv
 
 
-class APU(_Device):
-    """Insertion Device APU."""
+class _ParamPVs:
+    """."""
 
-    class DEVICES:
+    # --- GENERAL ---
+    PERIOD_LEN_CTE = None
+    START_PARKING_CMD = None
+    IS_MOVING = 'Moving-Mon'
+    BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
+    MOVE_ABORT = None
+    RESET = None
+
+    # --- PPARAM ---
+    PPARAM_SP = None
+    PPARAM_RB = None
+    PPARAM_MON = None
+    PPARAM_PARKED_CTE = None
+    PPARAM_MAXACC_SP = None
+    PPARAM_MAXACC_RB = None
+    PPARAM_MAXVELO_SP = None
+    PPARAM_MAXVELO_RB = None
+    PPARAM_VELO_SP = None
+    PPARAM_VELO_RB = None
+    PPARAM_VELO_MON = None
+    PPARAM_ACC_SP = None
+    PPARAM_ACC_RB = None
+    PPARAM_TOL_SP = None
+    PPARAM_TOL_RB = None
+    PPARAM_CHANGE_CMD = None
+
+    # --- KPARAM ---
+    KPARAM_SP = None
+    KPARAM_RB = None
+    KPARAM_MON = None
+    KPARAM_PARKED_CTE = None
+    KPARAM_MAXACC_SP = None
+    KPARAM_MAXACC_RB = None
+    KPARAM_MAXVELO_SP = None
+    KPARAM_MAXVELO_RB = None
+    KPARAM_VELO_SP = None
+    KPARAM_VELO_RB = None
+    KPARAM_VELO_MON = None
+    KPARAM_ACC_SP = None
+    KPARAM_ACC_RB = None
+    KPARAM_TOL_SP = None
+    KPARAM_TOL_RB = None
+    KPARAM_CHANGE_CMD = None
+
+    # --- POL ---
+    POL_SEL = None
+    POL_STS = None
+    POL_MON = None
+    POL_CHANGE_CMD = None
+
+    # --- POSITION ADJUSTS ---
+    CENTER_MODE_SEL = None
+    CENTER_MODE_STS = None
+    CENTER_OFFSET_SP = None
+    CENTER_OFFSET_RB = None
+    CENTER_OFFSET_MON = None
+    PITCH_MODE_SEL = None
+    PITCH_MODE_STS = None
+    PITCH_OFFSET_SP = None
+    PITCH_OFFSET_RB = None
+    PITCH_OFFSET_MON = None
+    KPARAM_TAPER_SP = None
+    KPARAM_TAPER_RB = None
+    KPARAM_TAPER_MON = None
+    TAPER_VELO_MON = None
+    TAPER_MIN_CTE = None
+    TAPER_MAX_CTE = None
+    CENTER_OFFSET_VELO_MON = None
+    CENTER_OFFSET_MIN_CTE = None
+    CENTER_OFFSET_MAX_CTE = None
+    PITCH_OFFSET_VELO_MON = None
+    PITCH_OFFSET_MIN_CTE = None
+    PITCH_OFFSET_MAX_CTE = None
+
+    def __str__(self):
+        """Print parameters."""
+        str_ = ''
+        strf = '{}: {}'
+        for key, value in _inspect.getmembers(self):
+            if not key.startswith('_') and value is not None:
+                lstr = strf.format(key, value)
+                str_ += lstr if str_ == '' else '\n' + lstr
+        return str_
+
+
+class IDBase(_Device):
+    """Base Insertion Device."""
+
+    _SHORT_SHUT_EYE = 0.1  # [s]
+    _DEF_TIMEOUT = 8  # [s]
+
+    PARAM_PVS = _ParamPVs()
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
-
-        APU22_06SB = 'SI-06SB:ID-APU22'
-        APU22_07SP = 'SI-07SP:ID-APU22'
-        APU22_08SB = 'SI-08SB:ID-APU22'
-        APU22_09SA = 'SI-09SA:ID-APU22'
-        APU58_11SP = 'SI-11SP:ID-APU58'
-        ALL = (APU22_06SB, APU22_07SP, APU22_08SB, APU22_09SA,
-               APU58_11SP, )
-
-    _properties = (
-        'DevCtrl-Cmd', 'Moving-Mon',
-        'PhaseSpeed-SP', 'PhaseSpeed-Mon',
-        'Phase-SP', 'Phase-Mon',
-        'Kx-SP', 'Kx-Mon',
-    )
-
-    _DEF_TIMEOUT = 10  # [s]
-    _CMD_MOVE = 3
-    _MOVECHECK_SLEEP = 0.1  # [s]
-
-    def __init__(self, devname):
-        """."""
-        devname = _SiriusPVName(devname)
-
-        # check if device exists
-        if devname not in APU.DEVICES.ALL:
-            raise NotImplementedError(devname)
-
         # call base class constructor
-        super().__init__(devname, properties=APU._properties, auto_mon=True)
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+        self._pols_sel_str = \
+            _IDSearch.conv_idname_2_polarizations(self.devname)
+        self._pols_sts_str = \
+            _IDSearch.conv_idname_2_polarizations_sts(self.devname)
+
+    # --- general ---
 
     @property
-    def phase(self):
-        """Return APU phase [mm]."""
-        return self['Phase-Mon']
-
-    @phase.setter
-    def phase(self, value):
-        """Set APU phase [mm]."""
-        self['Phase-SP'] = value
+    def parameters(self):
+        """Return ID parameters."""
+        return _IDSearch.conv_idname_2_parameters(self.devname)
 
     @property
-    def phase_sp(self):
-        """Return APU phase SP [mm]."""
-        return self['Phase-SP']
+    def period_length(self):
+        """Return ID period length [mm]."""
+        if self.PARAM_PVS.PERIOD_LEN_CTE in self.properties_all:
+            return self[self.PARAM_PVS.PERIOD_LEN_CTE]
+        else:
+            return self.parameters.PERIOD_LENGTH
+
+    # --- polarization ---
 
     @property
-    def phase_speed(self):
-        """Return APU phase speed [mm/s]."""
-        return self['PhaseSpeed-Mon']
-
-    @phase_speed.setter
-    def phase_speed(self, value):
-        """Set APU phase_speed [mm/s]."""
-        self['PhaseSpeed-SP'] = value
-
-    @property
-    def phase_speed_sp(self):
-        """Return APU phase speed SP [mm/s]."""
-        return self['PhaseSpeed-SP']
+    def polarization(self):
+        """Return ID polarization."""
+        if self.PARAM_PVS.POL_STS in self.properties_all:
+            return self[self.PARAM_PVS.POL_STS]
+        else:
+            if _IDSearch.POL_UNDEF_STR in self._pols_sts_str:
+                return self._pols_sts_str.index(_IDSearch.POL_UNDEF_STR)
+            else:
+                return None
 
     @property
-    def idkx(self):
-        """Return APU Kx."""
-        return self['Kx-SP']
+    def polarization_str(self):
+        """Return ID polarization string."""
+        pol_idx = self.polarization
+        if pol_idx is None:
+            return None
+        else:
+            return self._pols_sts_str[pol_idx]
 
-    @idkx.setter
-    def idkx(self, value):
-        """Set APU Kx."""
-        self['Kx-SP'] = value
+    @polarization.setter
+    def polarization(self, value):
+        """Set ID polarization."""
+        if self.PARAM_PVS.POL_SEL in self.properties_all:
+            if isinstance(value, str):
+                value = self._pols_sel_str.index(value)
+            self[self.PARAM_PVS.POL_SEL] = value
+
+    @property
+    def polarization_mon(self):
+        """Return ID polarization monitor."""
+        if self.PARAM_PVS.POL_MON in self.properties_all:
+            return self[self.PARAM_PVS.POL_MON]
+        else:
+            return None
+
+    @property
+    def polarization_mon_str(self):
+        """Return ID polarization string."""
+        pol_idx = self.polarization_mon
+        if pol_idx is None:
+            return None
+        else:
+            return self._pols_sts_str[pol_idx]
+
+    # --- pparameter ---
+
+    @property
+    def pparameter_tol(self):
+        """PParameter position tolerance [mm]."""
+        if self.PARAM_PVS.PPARAM_TOL_RB is None:
+            return self.parameters.PPARAM_TOL
+        else:
+            return self[self.PARAM_PVS.PPARAM_TOL_RB]
+
+    @property
+    def pparameter_parked(self):
+        """Return ID parked pparameter value [mm]."""
+        if self.PARAM_PVS.PPARAM_PARKED_CTE in self.properties_all:
+            return self[self.PARAM_PVS.PPARAM_PARKED_CTE]
+        else:
+            return self.parameters.PPARAM_PARKED
+
+    @property
+    def pparameter_speed_max(self):
+        """Return max pparameter speed readback [mm/s]."""
+        if self.PARAM_PVS.PPARAM_MAXVELO_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_MAXVELO_RB]
+
+    @property
+    def pparameter_speed_max_lims(self):
+        """Return max pparameter speed limits."""
+        if self.PARAM_PVS.PPARAM_MAXVELO_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_MAXVELO_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def pparameter_speed(self):
+        """Return pparameter speed readback [mm/s]."""
+        if self.PARAM_PVS.PPARAM_VELO_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_VELO_SP]
+
+    @property
+    def pparameter_speed_mon(self):
+        """Return pparameter speed monitor [mm/s]."""
+        if self.PARAM_PVS.PPARAM_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_VELO_MON]
+
+    @property
+    def pparameter_accel_max(self):
+        """Return maximum pparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_MAXACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_MAXACC_RB]
+
+    @property
+    def pparameter_accel_max_lims(self):
+        """Return max pparameter accel limits."""
+        if self.PARAM_PVS.PPARAM_MAXACC_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_MAXACC_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def pparameter_accel(self):
+        """Return pparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_ACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_ACC_RB]
+
+    @property
+    def pparameter_lims(self):
+        """Return ID pparameter lower control limit [mm]."""
+        if self.PARAM_PVS.PPARAM_VELO_SP is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.PPARAM_SP)
+            return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+
+    @property
+    def pparameter(self):
+        """Return ID pparameter readback [mm]."""
+        if self.PARAM_PVS.PPARAM_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_RB]
+
+    @property
+    def pparameter_mon(self):
+        """Return ID pparameter monitor [mm]."""
+        if self.PARAM_PVS.PPARAM_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PPARAM_MON]
+
+    @property
+    def pparameter_move_eta(self):
+        """Return estimated moving time to reach pparameter RB position."""
+        # NOTE: the IOC may provide this as PV in the future
+        pparam_eta, _ = self.calc_move_eta(self.pparameter, None)
+        return pparam_eta
+
+    def set_pparameter(self, pparam, timeout=None):
+        """Set ID target pparameter for movement [mm]."""
+        if self.PARAM_PVS.PPARAM_SP is None:
+            return True
+        else:
+            return self._write_sp(self.PARAM_PVS.PPARAM_SP, pparam, timeout)
+
+    def set_pparameter_speed(self, pparam_speed, timeout=None):
+        """Command to set ID cruise pparameterspeed for movement [mm/s]."""
+        if self.PARAM_PVS.PPARAM_VELO_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_VELO_SP, pparam_speed, timeout)
+
+    def set_pparameter_speed_max(self, pparam_speed_max, timeout=None):
+        """Command to set ID max cruise pparam speed for movement [mm/s]."""
+        if self.PARAM_PVS.PPARAM_MAXVELO_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_MAXVELO_SP, pparam_speed_max, timeout)
+
+    def set_pparameter_accel(self, pparam_accel, timeout=None):
+        """Command to set ID pparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_ACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_ACC_SP, pparam_accel, timeout)
+
+    def set_pparameter_accel_max(self, pparam_accel_max, timeout=None):
+        """Command to set ID max cruise pparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.PPARAM_MAXACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.PPARAM_MAXACC_SP, pparam_accel_max, timeout)
+
+    # --- kparameter ---
+
+    @property
+    def kparameter_tol(self):
+        """KParameter position tolerance [mm]."""
+        if self.PARAM_PVS.KPARAM_TOL_RB is None:
+            return self.parameters.KPARAM_TOL
+        else:
+            return self[self.PARAM_PVS.KPARAM_TOL_RB]
+
+    @property
+    def kparameter_parked(self):
+        """Return ID parked kparameter value [mm]."""
+        if self.PARAM_PVS.KPARAM_PARKED_CTE in self.properties_all:
+            return self[self.PARAM_PVS.KPARAM_PARKED_CTE]
+        else:
+            return self.parameters.KPARAM_PARKED
+
+    @property
+    def kparameter_speed_max(self):
+        """Return max kparameter speed readback [mm/s]."""
+        return self[self.PARAM_PVS.KPARAM_MAXVELO_RB]
+
+    @property
+    def kparameter_speed_max_lims(self):
+        """Return max kparameter speed limits."""
+        ctrl = self.pv_ctrlvars(self.PARAM_PVS.KPARAM_MAXVELO_SP)
+        lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+        return lims
+
+    @property
+    def kparameter_speed(self):
+        """Return kparameter speed readback [mm/s]."""
+        return self[self.PARAM_PVS.KPARAM_VELO_RB]
+
+    @property
+    def kparameter_speed_mon(self):
+        """Return kparameter speed monitor [mm/s]."""
+        if self.PARAM_PVS.KPARAM_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.KPARAM_VELO_MON]
+
+    @property
+    def kparameter_accel_max(self):
+        """Return maximum kparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_MAXACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.KPARAM_MAXACC_RB]
+
+    @property
+    def kparameter_accel_max_lims(self):
+        """Return max kparameter accel limits."""
+        if self.PARAM_PVS.KPARAM_MAXACC_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.KPARAM_MAXACC_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def kparameter_accel(self):
+        """Return kparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_ACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.KPARAM_ACC_RB]
+
+    @property
+    def kparameter_lims(self):
+        """Return ID kparameter control limits [mm]."""
+        ctrl = self.pv_ctrlvars(self.PARAM_PVS.KPARAM_SP)
+        return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+
+    @property
+    def kparameter(self):
+        """Return ID kparameter readback [mm]."""
+        return self[self.PARAM_PVS.KPARAM_RB]
+
+    @property
+    def kparameter_mon(self):
+        """Return ID kparameter monitor [mm]."""
+        return self[self.PARAM_PVS.KPARAM_MON]
+
+    @property
+    def kparameter_move_eta(self):
+        """Return estimated moving time to reach kparameter RB position."""
+        # NOTE: the IOC may provide this as PV in the future
+        _, kparam_eta = self.calc_move_eta(None, self.kparameter)
+        return kparam_eta
+
+    def set_kparameter(self, kparam, timeout=None):
+        """Set ID target kparameter for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.KPARAM_SP, kparam, timeout)
+
+    def set_kparameter_speed(self, kparam_speed, timeout=None):
+        """Command to set ID cruise kparam speed for movement [mm/s]."""
+        return self._write_sp(
+            self.PARAM_PVS.KPARAM_VELO_SP, kparam_speed, timeout)
+
+    def set_kparameter_speed_max(self, kparam_speed_max, timeout=None):
+        """Command to set ID max cruise kparam speed for movement [mm/s]."""
+        return self._write_sp(
+            self.PARAM_PVS.KPARAM_MAXVELO_SP, kparam_speed_max, timeout)
+
+    def set_kparameter_accel(self, kparam_accel, timeout=None):
+        """Command to set ID kparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_ACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.KPARAM_ACC_SP, kparam_accel, timeout)
+
+    def set_kparameter_accel_max(self, kparam_accel_max, timeout=None):
+        """Command to set ID max cruise kparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.KPARAM_MAXACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.KPARAM_MAXACC_SP, kparam_accel_max, timeout)
+
+    # --- checks ---
 
     @property
     def is_moving(self):
         """Return True if phase is changing."""
         return round(self['Moving-Mon']) == 1
 
-    def cmd_move(self, timeout=_DEF_TIMEOUT):
-        """."""
-        self['DevCtrl-Cmd'] = APU._CMD_MOVE
+    @property
+    def is_beamline_ctrl_enabled(self):
+        """Return beamline control enabled state (True|False)."""
+        return self['BeamLineCtrlEnbl-Sts'] != 0
+
+    # --- cmd_beamline and cmd_drive
+
+    def cmd_beamline_ctrl_enable(self, timeout=None):
+        """Command enable bealine ID control."""
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 1, timeout)
+
+    def cmd_beamline_ctrl_disable(self, timeout=None):
+        """Command disable bealine ID control."""
+        return self._write_sp('BeamLineCtrlEnbl-Sel', 0, timeout)
+
+    # --- wait
+
+    def wait_while_busy(self, timeout=None):
+        """Command wait within timeout while ID control is busy."""
+        _ = timeout
         return True
 
-    def wait_move(self):
-        """Wait for phase movement to complete."""
-        _time.sleep(APU._MOVECHECK_SLEEP)
-        while self.is_moving:
-            _time.sleep(APU._MOVECHECK_SLEEP)
+    def wait_move_start(self, timeout=None):
+        """Wait for movement to start."""
+        return self._wait('Moving-Mon', 1, timeout)
 
+    def wait_move_finish(self, timeout=None):
+        """Wait for movement to finish."""
+        return self._wait('Moving-Mon', 0, timeout)
 
-class IDCorrectors(_DeviceApp):
-    """."""
-
-    DEVICES = APU.DEVICES
-
-    def __init__(self, devname):
+    def wait_move_config(self, pparam, kparam, timeout):
         """."""
-        devname = _SiriusPVName(devname)
+        tol_kparam, tol_pparam = self.kparameter_tol, self.pparameter_tol
+        # wait for movement within reasonable time
+        time_init = _time.time()
+        while True:
+            k_pos_ok = True if kparam is None else \
+                abs(abs(self.kparameter_mon) - abs(kparam)) <= tol_kparam
+            p_pos_ok = True if pparam is None else \
+                abs(self.pparameter_mon - pparam) <= tol_pparam
+            if p_pos_ok and k_pos_ok and not self.is_moving:
+                return True
+            if _time.time() - time_init > timeout:
+                print(f'tol_total: {timeout:.3f} s')
+                print(f'wait_time: {_time.time() - time_init:.3f} s')
+                print()
+                return False
+            _time.sleep(self._SHORT_SHUT_EYE)
 
-        # check if device exists
-        if devname not in IDCorrectors.DEVICES.ALL:
-            raise NotImplementedError(devname)
+    # --- cmd_move ---
 
-        # get correctors names
-        self._psnames_orb = _IDSearch.conv_idname_2_orbitcorr(devname)
+    def cmd_move_disable(self):
+        """Command to disable and break ID movements."""
+        return True
 
-        # get deviceapp properties
-        properties, \
-            self._orb_sp, self._orb_rb, self._orb_refmon, self._orb_mon = \
-            self._get_properties()
+    def cmd_move_enable(self):
+        """Command to enable ID movements."""
+        return True
 
-        # call base class constructor
-        super().__init__(properties=properties, devname=devname)
-
-    @property
-    def orbitcorr_psnames(self):
-        """Return orbit corrector names."""
-        return self._psnames_orb
-
-    @property
-    def orbitcorr_current(self):
-        """Return orbit SOFBCurrent Mon."""
-        return self[self._orb_mon]
-
-    @orbitcorr_current.setter
-    def orbitcorr_current(self, value):
-        """Set orbit SOFBCurrent SP."""
-        self[self._orb_sp] = value
-
-    @property
-    def orbitcorr_current_sp(self):
-        """Return orbit SOFBCurrent setpoint."""
-        return self[self._orb_sp]
-
-    @property
-    def orbitcorr_current_rb(self):
-        """Return orbit SOFBCurrent readback."""
-        return self[self._orb_rb]
-
-    @property
-    def orbitcorr_current_mon(self):
-        """Return orbit SOFBCurrent monitor."""
-        return self[self._orb_mon]
-
-    def _get_properties(self):
-        corrname = self._psnames_orb[0]
-        orb_sp = corrname + ':SOFBCurrent-SP'
-        orb_rb = corrname + ':SOFBCurrent-RB'
-        orb_refmon = corrname + ':SOFBCurrentRef-Mon'
-        orb_mon = corrname + ':SOFBCurrent-Mon'
-        properties = (
-            orb_sp, orb_rb, orb_refmon, orb_mon
-        )
-        return properties, orb_sp, orb_rb, orb_refmon, orb_mon
-
-
-class APUFeedForward(_Devices):
-    """Insertion Device APU FeedForward."""
-
-    DEVICES = APU.DEVICES
-
-    def __init__(self, devname):
+    def cmd_move_abort(self):
         """."""
-        # create APU device
-        self._apu = APU(devname)
+        if self.PARAM_PVS.MOVE_ABORT is not None:
+            self[self.PARAM_PVS.MOVE_ABORT] = 1
 
-        # create IDCorrectors
-        self._idcorrs = IDCorrectors(devname)
+    def cmd_move_stop(self, timeout=None):
+        """Command to interrupt and then enable phase movements."""
+        timeout = timeout or self._DEF_TIMEOUT
 
-        # create FFWDCalc
-        self._ffwdcalc = _APUFFWDCalc(devname)
+        # wait for not busy state
+        if not self.wait_while_busy(timeout=timeout):
+            return False
 
-        # create normalizers
-        self._strenconv_chs, self._strenconv_cvs = self._create_strenconv()
+        # send abort command
+        self.cmd_move_abort()
 
-        # call base class constructor
-        devices = (
-            self._apu, self._idcorrs,
-            self._strenconv_chs, self._strenconv_cvs)
-        super().__init__(devname, devices)
+        # send disable command
+        self.cmd_move_disable()
 
-        # bumps
-        self._posx, self._angx, self._posy, self._angy = \
-            self._init_posang()
+        # check for successful stop
+        if not self.wait_while_busy(timeout=timeout):
+            return False
+        if not self.wait_move_finish(timeout=timeout):
+            return False
 
-    @property
-    def apu(self):
-        """Return APU device."""
-        return self._apu
+        # enable movement again
+        if not self.cmd_move_enable():
+            return False
 
-    @property
-    def correctors(self):
-        """Return IDCorrectors device."""
-        return self._idcorrs
+        return True
 
-    @property
-    def ffwdcalc(self):
+    def cmd_move_start(self, timeout=None):
+        """Command to start movement."""
+        success = True
+        success &= self.cmd_move_pparameter_start(timeout=timeout)
+        success &= self.cmd_move_kparameter_start(timeout=timeout)
+        return success
+
+    def cmd_move_pparameter_start(self, timeout=None):
+        """Command to start Pparameter movement."""
+        return self._move_start(
+            self.PARAM_PVS.PPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_kparameter_start(self, timeout=None):
+        """Command to start Kparameter movement."""
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_change_polarization_start(self, timeout=None):
+        """Change polarization."""
+        return self._move_start(
+            self.PARAM_PVS.POL_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_park(self, timeout=None):
+        """Move ID to parked config."""
+        pparam, kparam = self.pparameter_parked, self.kparameter_parked
+        if self.PARAM_PVS.START_PARKING_CMD is None:
+            # composed pparam and kparam movement by this class
+            return self.cmd_move(pparam, kparam, timeout)
+        else:
+            # composed pparam and kparam movement by IOC
+            # first set param RBs for ETA computation and PVs consistency
+            if not self.set_pparameter(pparam):
+                return False
+            if not self.set_kparameter(kparam):
+                return False
+            timeout = self.calc_move_timeout(None, None, timeout)
+            self[self.PARAM_PVS.START_PARKING_CMD] = 1
+            return self.wait_move_config(pparam, kparam, timeout)
+
+    def cmd_move_pparameter(self, pparam=None, timeout=None):
+        """Command to set and start pparam movement."""
+        pparam = self.pparameter if pparam is None else pparam
+        return self.cmd_move(pparam, None, timeout)
+
+    def cmd_move_kparameter(self, kparam=None, timeout=None):
+        """Command to set and start kparam movement."""
+        kparam = self.kparameter if kparam is None else kparam
+        return self.cmd_move(None, kparam, timeout)
+
+    def cmd_move(self, pparam=None, kparam=None, timeout=None):
+        """Command to set and start pparam and kparam movements.
+
+        Args
+            pparam : target pparameter value
+            kparam : target kparameter value
+            timeout : additional timeout beyond movement ETA. [s]
+        """
+        if self.PARAM_PVS.PPARAM_SP is None:
+            pparam = None
+
+        # set target pparam and kparam
+        t0_ = _time.time()
+        if pparam is not None and \
+                not self.set_pparameter(pparam, timeout=timeout):
+            return False
+        if kparam is not None and \
+                not self.set_kparameter(kparam, timeout=timeout):
+            return False
+        t1_ = _time.time()
+        if timeout is not None:
+            timeout = max(timeout - (t1_ - t0_), 0)
+
+        # command move start
+        t0_ = _time.time()
+        if pparam is not None and \
+                not self.cmd_move_pparameter_start(timeout=timeout):
+            return False
+        if kparam is not None and \
+                not self.cmd_move_kparameter_start(timeout=timeout):
+            return False
+        t1_ = _time.time()
+        if timeout is not None:
+            timeout = max(timeout - (t1_ - t0_), 0)
+
+        # calc timeout
+        timeout = self.calc_move_timeout(pparam, kparam, timeout)
+
+        # wait for movement within timeout based on movement ETA
+        return self.wait_move_config(pparam, kparam, timeout)
+
+    def cmd_change_polarization(self, polarization, timeout=None):
         """."""
-        return self._ffwdcalc
+        if self.PARAM_PVS.POL_SEL not in self.properties_all:
+            return True
+        if self.PARAM_PVS.POL_MON not in self.properties_all:
+            return True
 
-    @property
-    def posx(self):
-        """Return posx bump value."""
-        return self._posx
+        t0_ = _time.time()
 
-    @posx.setter
-    def posx(self, value):
-        """Return posx bump value."""
-        self._posx = value
+        # set desired polarization
+        if not self._write_sp(
+                self.PARAM_PVS.POL_SEL, polarization, timeout=timeout):
+            return False
+        t1_ = _time.time()
+        timeout = max(0, timeout - (t1_ - t0_))
 
-    @property
-    def angx(self):
-        """Return angx bump value."""
-        return self._angx
+        # send change polarization command
+        if not self.cmd_change_polarization_start(timeout=timeout):
+            return False
+        t2_ = _time.time()
+        timeout = max(0, timeout - (t2_ - t0_))
 
-    @angx.setter
-    def angx(self, value):
-        """Return angx bump value."""
-        self._angx = value
+        # wait for polarization value within timeout
+        return self._wait(
+            self.PARAM_PVS.POL_MON, polarization, timeout=timeout, comp='eq')
 
-    @property
-    def posy(self):
-        """Return posy bump value."""
-        return self._posy
+    def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
+        """Estimate moving time for each parameter separately."""
+        # pparameter
+        param_goal, param_val = pparam_goal, self.pparameter_mon
+        param_tol = self.pparameter_tol
+        param_vel, param_acc = self.pparameter_speed, self.pparameter_accel
+        if None not in (param_goal, param_val):
+            dparam = abs(param_goal - param_val)
+            dparam = 0 if dparam < param_tol else dparam
+            pparam_eta = IDBase._calc_move_eta_model(
+                dparam, param_vel, param_acc)
+        else:
+            pparam_eta = 0.0
 
-    @posy.setter
-    def posy(self, value):
-        """Return posy bump value."""
-        self._posy = value
+        # kparameter
+        param_goal, param_val = kparam_goal, self.kparameter_mon
+        param_tol = self.kparameter_tol
+        param_vel, param_acc = self.kparameter_speed, self.kparameter_accel
+        if None not in (param_goal, param_val):
+            dparam = abs(abs(param_goal) - abs(param_val))  # abs for DELTA
+            dparam = 0 if dparam < param_tol else dparam
+            kparam_eta = IDBase._calc_move_eta_model(
+                dparam, param_vel, param_acc)
+        else:
+            kparam_eta = 0.0
 
-    @property
-    def angy(self):
-        """Return angy bump value."""
-        return self._angy
+        return pparam_eta, kparam_eta
 
-    @angy.setter
-    def angy(self, value):
-        """Return angy bump value."""
-        self._angy = value
-
-    def conv_orbitcorr_kick2curr(self, kicks):
+    def calc_move_eta_composed(self, pparam_eta, kparam_eta):
         """."""
-        # 127 µs ± 1.01 µs per loop
-        kickx = kicks[:self.ffwdcalc.nr_chs]
-        kicky = kicks[self.ffwdcalc.nr_chs:]
-        curr_chs = self._strenconv_chs.conv_strength_2_current(kickx)
-        curr_cvs = self._strenconv_cvs.conv_strength_2_current(kicky)
-        currs = _np.hstack((curr_chs, curr_cvs))
-        return currs
+        # model: here pparam and kparam as serial in time
+        eta = pparam_eta + kparam_eta
+        return eta
 
-    def bump_get_orbitcorr_current(self):
-        """Return bump orbit correctors currents."""
-        kicks = self.ffwdcalc.conv_posang2kick(
-            self.posx, self.angx, self.posy, self.angy)
-        currents = self.conv_orbitcorr_kick2curr(kicks)
-        return currents
-
-    def ffwd_get_orbitcorr_current(self, phase=None):
-        """Return feedforward orbitcorr currents for a given ID phase."""
-        # 157 µs ± 3.93 µs per loop [if phase is passed]
-        if phase is None:
-            phase = self.apu.phase
-        currents = self.ffwdcalc.conv_phase_2_orbcorr_currents(phase)
-        return currents
-
-    def ffwd_update_orbitcorr(self, phase=None):
-        """Update orbit feedforward."""
-        currents_ffwd = self.ffwd_get_orbitcorr_current(phase)
-        currents_bump = self.bump_get_orbitcorr_current()
-        self.correctors.orbitcorr_current = currents_ffwd + currents_bump
-
-    def ffwd_update(self, phase=None):
-        """Update feedforward with bump."""
-        # 305 µs ± 45.5 µs per loop
-        self.ffwd_update_orbitcorr(phase)
+    def calc_move_timeout(
+            self, pparam_goal=None, kparam_goal=None, timeout=None):
+        """."""
+        # calc timeout
+        pparam_eta, kparam_eta = self.calc_move_eta(pparam_goal, kparam_goal)
+        eta = self.calc_move_eta_composed(pparam_eta, kparam_eta)
+        eta = 1.1 * eta + 0.5  # add safety margins
+        timeout = eta if timeout is None else eta + timeout
+        return timeout
 
     # --- private methods ---
 
-    def _init_posang(self):
-        _ = self  # throaway arguments (temporary)
-        posx, angx = 0.0, 0.0
-        posy, angy = 0.0, 0.0
-        # NOTE: we could initialize posang with corrector values.
-        return posx, angx, posy, angy
+    def _move_start(self, cmd_propty, timeout=None, cmd_value=1):
+        timeout = timeout or self._DEF_TIMEOUT
 
-    def _create_strenconv(self):
+        # wait for not busy state
+        if not self.wait_while_busy(timeout=timeout):
+            return False
+
+        if cmd_propty in self.properties_all:
+            # send move command
+            self[cmd_propty] = cmd_value
+
+        return True
+
+    def _write_sp(self, propties_sp, values, timeout=None, pvs_sp_rb=None):
+        timeout = timeout or self._DEF_TIMEOUT
+        if isinstance(propties_sp, str):
+            propties_sp = (propties_sp, )
+            values = (values, )
+        success = True
+        for propty_sp, value in zip(propties_sp, values):
+            if pvs_sp_rb is not None and propty_sp in pvs_sp_rb:
+                # pv is unique for SP and RB variables.
+                propty_rb = propty_sp
+            else:
+                propty_rb = \
+                    propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
+            self[propty_sp] = value
+            if isinstance(value, float):
+                success &= super()._wait_float(
+                    propty_rb, value, timeout=timeout)
+            else:
+                success &= super()._wait(
+                    propty_rb, value, timeout=timeout, comp='eq')
+        return success
+
+    def _wait_propty(self, propty, value, timeout=None):
         """."""
-        psnames = self.correctors.orbitcorr_psnames
+        t0_ = _time.time()
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
+        while self[propty] != value:
+            _time.sleep(self._SHORT_SHUT_EYE)
+            if _time.time() - t0_ > timeout:
+                return False
+        return True
 
-        maname = psnames[0].replace(':PS-', ':MA-')
-        strenconv_chs = _StrengthConv(
-            maname, proptype='Ref-Mon', auto_mon=True)
-        maname = psnames[self.ffwdcalc.nr_chs].replace(':PS-', ':MA-')
-        strenconv_cvs = _StrengthConv(
-            maname, proptype='Ref-Mon', auto_mon=True)
+    @staticmethod
+    def _calc_move_eta_model(dparam, param_vel, param_acc=None):
+        """Moving time model."""
+        # constant acceleration model:
+        #   linear ramp up + cruise velocity + linear ramp down
+        #   assume param_acc = 1 mm/s² if no acceleration is provided
+        param_acc = 1 if param_acc is None else param_acc
+        maxvel_ramp = _np.sqrt(param_acc * dparam)
+        maxvel_ramp = min(maxvel_ramp, param_vel)
+        dtime_ramp = 2 * maxvel_ramp / param_acc
+        dparam_ramp = maxvel_ramp**2 / param_acc
+        dparam_plateau = dparam - dparam_ramp
+        dtime_plateau = dparam_plateau / param_vel
+        dtime_total = dtime_ramp + dtime_plateau
+        return dtime_total
 
-        return strenconv_chs, strenconv_cvs
+
+class IDFullMovCtrl(IDBase):
+    """Base class for IDs with taper, pitch and offset control."""
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+        # --- gap speeds ----
+
+    @property
+    def gap_speed(self):
+        """Return gap speed readback [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def gap_speed_mon(self):
+        """Return gap speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
+    @property
+    def gap_speed_max(self):
+        """Return max gap speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def gap_speed_max_lims(self):
+        """Return max gap speed limits."""
+        return self.kparameter_speed_max_lims
+
+    # --- gap ---
+
+    @property
+    def gap_parked(self):
+        """Return ID parked gap value [mm]."""
+        return self.kparameter_parked
+
+    @property
+    def gap(self):
+        """Return ID gap readback [mm]."""
+        return self.kparameter
+
+    @property
+    def gap_lims(self):
+        """Return ID gap control limits [mm]."""
+        return self.kparameter_lims
+
+    @property
+    def gap_mon(self):
+        """Return ID gap monitor [mm]."""
+        return self.kparameter_mon
+
+    # --- taper ---
+
+    @property
+    def taper(self):
+        """Return ID taper readback [mm]."""
+        return self[self.PARAM_PVS.KPARAM_TAPER_RB]
+
+    @property
+    def taper_mon(self):
+        """Return ID taper monitor [mm]."""
+        return self[self.PARAM_PVS.KPARAM_TAPER_MON]
+
+    # --- pitch ---
+
+    @property
+    def pitch_mon(self):
+        """Return ID pitch monitor [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_MON]
+
+    # --- center ---
+
+    @property
+    def center_offset(self):
+        """Return ID center offset readback [mm]."""
+        return self[self.PARAM_PVS.CENTER_OFFSET_RB]
+
+    @property
+    def center_offset_mon(self):
+        """Return ID center offset monitor [mm]."""
+        return self[self.PARAM_PVS.CENTER_OFFSET_MON]
+
+    # --- set methods ---
+
+    def set_gap(self, gap, timeout=None):
+        """Set ID target gap for movement [mm]."""
+        return self.set_kparameter(gap, timeout)
+
+    def set_gap_speed(self, gap_speed, timeout=None):
+        """Set ID cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed(gap_speed, timeout)
+
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
+        """Set ID max cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed_max(gap_speed_max, timeout)
+
+    def set_taper(self, taper, timeout=None):
+        """Set ID target taper for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.KPARAM_TAPER_SP, taper, timeout)
+
+    def set_center_offset(self, center_offset, timeout=None):
+        """Set ID center offset for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.CENTER_OFFSET_SP, center_offset,
+                              timeout)
+
+
+class APU(IDBase):
+    """APU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        APU22_08SB = 'SI-08SB:ID-APU22'
+        APU22_09SA = 'SI-09SA:ID-APU22'
+        APU58_11SP = 'SI-11SP:ID-APU58'
+        ALL = (
+            APU22_08SB, APU22_09SA, APU58_11SP, )
+
+    _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
+    _CMD_MOVE = 3
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    PARAM_PVS.KPARAM_SP = 'Phase-SP'
+    PARAM_PVS.KPARAM_RB = 'Phase-SP'  # There is no Phase-RB!
+    PARAM_PVS.KPARAM_MON = 'Phase-Mon'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxPhaseSpeed-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxPhaseSpeed-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'PhaseSpeed-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'PhaseSpeed-SP'
+    PARAM_PVS.KPARAM_VELO_MON = 'PhaseSpeed-Mon'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'DevCtrl-Cmd'
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname not in APU.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- phase speeds ----
+
+    @property
+    def phase_speed_max(self):
+        """Return max phase speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def phase_speed_max_lims(self):
+        """Return max phase speed limits."""
+        return self.kparameter_speed_max_lims
+
+    @property
+    def phase_speed(self):
+        """Return phase speed [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def phase_speed_mon(self):
+        """Return phase speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
+    # --- phase ---
+
+    @property
+    def phase_parked(self):
+        """Return ID parked phase value [mm]."""
+        return self.kparameter_parked
+
+    @property
+    def phase_lims(self):
+        """Return ID phase lower control limit [mm]."""
+        return self.kparameter_lims
+
+    @property
+    def phase(self):
+        """Return APU phase [mm]."""
+        return self.kparameter
+
+    @property
+    def phase_mon(self):
+        """Return APU phase [mm]."""
+        return self.kparameter_mon
+
+    # --- set methods ---
+
+    def set_phase(self, phase, timeout=None):
+        """Command to set ID target phase for movement [mm]."""
+        return self.set_kparameter(phase, timeout)
+
+    def set_phase_speed(self, phase_speed, timeout=None):
+        """Command to set ID cruise phase speed for movement [mm/s]."""
+        return self.set_kparameter_speed(phase_speed, timeout)
+
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
+        """Command to set ID max cruise phase speed for movement [mm/s]."""
+        return self._write_sp('MaxPhaseSpeed-SP', phase_speed_max, timeout)
+
+    # -- cmd_move
+
+    def cmd_move_stop(self, timeout=None):
+        """Send command to stop ID movement."""
+        _ = timeout
+        self['DevCtrl-Cmd'] = self._CMD_MOVE_STOP
+        return True
+
+    # --- private methods ---
+
+    def _write_sp(self, propties_sp, values, timeout=None):
+        pvs_sp_rb = ('Phase-SP', 'PhaseSpeed-SP')
+        return super()._write_sp(
+            propties_sp, values, timeout=timeout, pvs_sp_rb=pvs_sp_rb)
+
+    def _move_start(
+            self, cmd_propty, timeout=None, cmd_value=_CMD_MOVE_START):
+        return super()._move_start(cmd_propty, timeout, cmd_value)
+
+
+class PAPU(IDBase):
+    """PAPU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        PAPU50_17SA = 'SI-17SA:ID-PAPU50'
+        ALL = (PAPU50_17SA, )
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    PARAM_PVS.KPARAM_SP = 'Phase-SP'
+    PARAM_PVS.KPARAM_RB = 'Phase-RB'
+    PARAM_PVS.KPARAM_MON = 'Phase-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'ParkedPhase-Cte'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxPhaseSpeed-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxPhaseSpeed-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'PhaseSpeed-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'PhaseSpeed-RB'
+    PARAM_PVS.KPARAM_VELO_MON = 'PhaseSpeed-Mon'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'ChangePhase-Cmd'
+
+    _properties = (
+        'PwrPhase-Mon',
+        'EnblAndReleasePhase-Sel', 'EnblAndReleasePhase-Sts',
+        'AllowedToChangePhase-Mon',
+        'StopPhase-Cmd', 'Log-Mon',
+    )
+    _properties_papu = (
+        'Home-Cmd', 'EnblPwrPhase-Cmd', 'ClearErr-Cmd',
+        'BeamLineCtrl-Mon',
+    )
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None)) + \
+        _properties + _properties_papu
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.PAPU50_17SA
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    @property
+    def log_mon(self):
+        """Return ID Log."""
+        return self['Log-Mon']
+
+    # --- phase speeds ----
+
+    @property
+    def phase_speed_max(self):
+        """Return max phase speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def phase_speed_max_lims(self):
+        """Return max phase speed limits."""
+        return self.kparameter_speed_max_lims
+
+    @property
+    def phase_speed(self):
+        """Return phase speed readback [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def phase_speed_mon(self):
+        """Return phase speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
+    # --- phase ---
+
+    @property
+    def phase_parked(self):
+        """Return ID parked phase value [mm]."""
+        return self.kparameter_parked
+
+    @property
+    def phase_lims(self):
+        """Return ID phase limits [mm]."""
+        return self.kparameter_lims
+
+    @property
+    def phase(self):
+        """Return ID phase readback [mm]."""
+        return self.kparameter
+
+    @property
+    def phase_mon(self):
+        """Return ID phase monitor [mm]."""
+        return self.kparameter_mon
+
+    # --- drive checks ---
+
+    @property
+    def is_phase_drive_powered(self):
+        """Return phase driver power state on (True|False)."""
+        return self['PwrPhase-Mon'] != 0
+
+    # --- movement checks ---
+
+    @property
+    def is_move_phase_enabled(self):
+        """Return phase movement enabled state (True|False)."""
+        return self['AllowedToChangePhase-Mon'] != 0
+
+    @property
+    def is_moving(self):
+        """Return is moving state (True|False)."""
+        return self[self.PARAM_PVS.IS_MOVING] != 0
+
+    @property
+    def is_homing(self):
+        """Return whether ID is in homing procedure (True|False)."""
+        return self['Home-Mon'] != 0
+
+    # --- cmd_drive
+
+    def cmd_drive_turn_power_on(self, timeout=None):
+        """Command turn phase drive on."""
+        if self.is_phase_drive_powered:
+            return True
+        self['EnblPwrPhase-Cmd'] = 1
+        props_values = {'PwrPhase-Mon': 1}
+        return self._wait_propty_values(props_values, timeout=timeout)
+
+    # --- set methods ---
+
+    def set_phase(self, phase, timeout=None):
+        """Command to set ID target phase for movement [mm]."""
+        return self.set_kparameter(phase, timeout)
+
+    def set_phase_speed(self, phase_speed, timeout=None):
+        """Command to set ID cruise phase speed for movement [mm/s]."""
+        return self.set_kparameter_speed(phase_speed, timeout)
+
+    def set_phase_speed_max(self, phase_speed_max, timeout=None):
+        """Command to set ID max cruise phase speed for movement [mm/s]."""
+        return self.set_kparameter_speed_max(phase_speed_max, timeout)
+
+    # --- cmd_move disable/enable ---
+
+    def cmd_move_phase_enable(self, timeout=None):
+        """Command to release and enable ID phase movement."""
+        self['EnblAndReleasePhase-Sel'] = 1
+        return super()._wait(
+            'AllowedToChangePhase-Mon',
+            1, timeout=timeout, comp='eq')
+
+    def cmd_move_phase_disable(self, timeout=None):
+        """Command to disable and break ID phase movement."""
+        self['EnblAndReleasePhase-Sel'] = 0
+        return super()._wait(
+            'AllowedToChangePhase-Mon',
+            0, timeout=timeout, comp='eq')
+
+    def cmd_move_enable(self, timeout=None):
+        """Command to release and enable ID phase and gap movements."""
+        return self.cmd_move_phase_enable(timeout=timeout)
+
+    def cmd_move_disable(self, timeout=None):
+        """Command to disable and break ID phase and gap movements."""
+        return self.cmd_move_phase_disable(timeout=timeout)
+
+    # -- cmd_move
+
+    def cmd_move_phase_start(self, timeout=None):
+        """Command to start phase movement."""
+        return self.cmd_move_kparameter_start(timeout=timeout)
+
+    # --- cmd_enable
+
+    def cmd_enable_movement(self, timeout=None):
+        """Command to reset ID to a standard movement state."""
+        success = True
+        success &= self.cmd_beamline_ctrl_disable(timeout=timeout)
+        success &= self.cmd_drive_turn_power_on(timeout=timeout)
+        success &= self.cmd_move_enable(timeout=timeout)
+        return success
+
+    # --- other cmds ---
+
+    def cmd_clear_error(self):
+        """Command to clear errors."""
+        self['ClearErr-Cmd'] = 1
+
+
+class EPU(PAPU):
+    """EPU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        EPU50_10SB = 'SI-10SB:ID-EPU50'
+        ALL = (EPU50_10SB, )
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    PARAM_PVS.IS_MOVING = 'IsMoving-Mon'
+    PARAM_PVS.PPARAM_SP = 'Phase-SP'
+    PARAM_PVS.PPARAM_RB = 'Phase-RB'
+    PARAM_PVS.PPARAM_MON = 'Phase-Mon'
+    PARAM_PVS.PPARAM_PARKED_CTE = 'ParkedPhase-Cte'
+    PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxPhaseSpeed-SP'
+    PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxPhaseSpeed-RB'
+    PARAM_PVS.PPARAM_VELO_SP = 'PhaseSpeed-SP'
+    PARAM_PVS.PPARAM_VELO_RB = 'PhaseSpeed-RB'
+    PARAM_PVS.PPARAM_VELO_MON = 'PhaseSpeed-Mon'
+    PARAM_PVS.PPARAM_CHANGE_CMD = 'ChangePhase-Cmd'
+    PARAM_PVS.KPARAM_SP = 'Gap-SP'
+    PARAM_PVS.KPARAM_RB = 'Gap-RB'
+    PARAM_PVS.KPARAM_MON = 'Gap-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'ParkedGap-Cte'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxGapSpeed-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxGapSpeed-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'GapSpeed-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'GapSpeed-RB'
+    PARAM_PVS.KPARAM_VELO_MON = 'GapSpeed-Mon'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'ChangeGap-Cmd'
+    PARAM_PVS.POL_SEL = 'Polarization-Sel'
+    PARAM_PVS.POL_STS = 'Polarization-Sts'
+    PARAM_PVS.POL_MON = 'Polarization-Mon'
+    PARAM_PVS.POL_CHANGE_CMD = 'ChangePolarization-Cmd'
+
+    PROPERTIES_DEFAULT = PAPU._properties + \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None)) + \
+        ('EnblPwrAll-Cmd', 'PwrGap-Mon', 'Status-Mon',
+         'EnblAndReleaseGap-Sel', 'EnblAndReleaseGap-Sts',
+         'AllowedToChangeGap-Mon',
+         'IsBusy-Mon', 'Stop-Cmd',)
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.EPU50_10SB
+        if devname not in EPU.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    @property
+    def status(self):
+        """ID status."""
+        return self['Status-Mon']
+
+    # --- gap speeds ----
+
+    @property
+    def gap_speed(self):
+        """Return gap speed readback [mm/s]."""
+        return self.kparameter_speed
+
+    @property
+    def gap_speed_mon(self):
+        """Return gap speed monitor [mm/s]."""
+        return self.kparameter_speed_mon
+
+    @property
+    def gap_speed_max(self):
+        """Return max gap speed readback [mm/s]."""
+        return self.kparameter_speed_max
+
+    @property
+    def gap_speed_max_lims(self):
+        """Return max gap speed limits."""
+        return self.kparameter_speed_max_lims
+
+    # --- gap ---
+
+    @property
+    def gap_parked(self):
+        """Return ID parked gap value [mm]."""
+        return self.kparameter_parked
+
+    @property
+    def gap(self):
+        """Return ID gap readback [mm]."""
+        return self.kparameter
+
+    @property
+    def gap_lims(self):
+        """Return ID gap control limits [mm]."""
+        return self.kparameter_lims
+
+    @property
+    def gap_mon(self):
+        """Return ID gap monitor [mm]."""
+        return self.kparameter_mon
+
+    # --- drive checks ---
+
+    @property
+    def is_gap_drive_powered(self):
+        """Return gap driver power state on (True|False)."""
+        return self['PwrGap-Mon'] != 0
+
+    @property
+    def is_drives_powered(self):
+        """Return phase & gap drives powered state on (True|False)."""
+        return self.is_phase_drive_powered and self.is_gap_drive_powered
+
+    # --- movement checks ---
+
+    @property
+    def is_move_gap_enabled(self):
+        """Return gap movement enabled state (True|False)."""
+        return self['AllowedToChangeGap-Mon'] != 0
+
+    @property
+    def is_move_enabled(self):
+        """Return phase and gap movements enabled state (True|False)."""
+        return self.is_move_phase_enabled and self.is_move_gap_enabled
+
+    @property
+    def is_homing(self):
+        """Return whether ID is in homing procedure."""
+        return False
+
+    # --- other checks ---
+
+    @property
+    def is_busy(self):
+        """Return is busy state (True|False)."""
+        return self['IsBusy-Mon'] != 0
+
+    # --- cmd_beamline and cmd_drive
+
+    def cmd_drive_turn_power_on(self, timeout=None):
+        """Command turn phase and gap drives on."""
+        if self.is_phase_drive_powered and self.is_gap_drive_powered:
+            return True
+        self['EnblPwrAll-Cmd'] = 1
+        props_values = {'PwrPhase-Mon': 1, 'PwrGap-Mon': 1}
+        return self._wait_set(props_values, timeout=timeout)
+
+    # --- set methods ---
+
+    def set_gap(self, gap, timeout=None):
+        """Set ID target gap for movement [mm]."""
+        return self.set_kparameter(gap, timeout)
+
+    def set_gap_speed(self, gap_speed, timeout=None):
+        """Set ID cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed(gap_speed, timeout)
+
+    def set_gap_speed_max(self, gap_speed_max, timeout=None):
+        """Set ID max cruise gap speed for movement [mm/s]."""
+        return self.set_kparameter_speed_max(gap_speed_max, timeout)
+
+    # --- cmd_move disable/enable ---
+
+    def cmd_move_gap_enable(self, timeout=None):
+        """Command to release and enable ID gap movement."""
+        self['EnblAndReleaseGap-Sel'] = 1
+        return super()._wait(
+            'AllowedToChangeGap-Mon',
+            1, timeout=timeout, comp='eq')
+
+    def cmd_move_gap_disable(self, timeout=None):
+        """Command to disable and break ID gap movement."""
+        self['EnblAndReleaseGap-Sel'] = 0
+        return super()._wait(
+            'AllowedToChangeGap-Mon',
+            0, timeout=timeout, comp='eq')
+
+    def cmd_move_enable(self, timeout=None):
+        """Command to release and enable ID phase and gap movements."""
+        success = True
+        success &= self.cmd_move_phase_enable(timeout=timeout)
+        success &= self.cmd_move_gap_enable(timeout=timeout)
+        return success
+
+    def cmd_move_disable(self, timeout=None):
+        """Command to disable and break ID phase and gap movements."""
+        success = True
+        success &= self.cmd_move_phase_disable(timeout=timeout)
+        success &= self.cmd_move_gap_disable(timeout=timeout)
+        return success
+
+    # --- cmd_wait
+
+    def wait_while_busy(self, timeout=None):
+        """Command wait within timeout while ID control is busy."""
+        timeout = timeout or self._DEF_TIMEOUT
+        time_init = _time.time()
+        while self.is_busy:
+            _time.sleep(min(self._SHORT_SHUT_EYE, timeout))
+            if _time.time() - time_init > timeout:
+                return False
+        return True
+
+    # -- cmd_move
+
+    def cmd_move_gap_start(self, timeout=None):
+        """Command to start gap movement."""
+        return self.cmd_move_kparameter_start(timeout)
+
+    def calc_move_eta_composed(self, pparam_eta, kparam_eta):
+        """."""
+        # model: here pparam and kparam as parallel in time
+        eta = max(pparam_eta, kparam_eta)
+        return eta
+
+    # --- other cmds ---
+
+    def cmd_clear_error(self):
+        """Command to clear errors."""
+        pass
+
+
+class DELTA(IDBase):
+    """DELTA Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        DELTA52_10SB = 'SI-10SB:ID-DELTA52'
+        ALL = (DELTA52_10SB, )
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.PPARAM_SP = 'PParam-SP'
+    PARAM_PVS.PPARAM_RB = 'PParam-RB'
+    PARAM_PVS.PPARAM_MON = 'PParam-Mon'
+    PARAM_PVS.PPARAM_PARKED_CTE = 'PParamParked-Cte'
+    PARAM_PVS.PPARAM_MAXACC_SP = 'MaxAcc-SP'
+    PARAM_PVS.PPARAM_MAXACC_RB = 'MaxAcc-RB'
+    PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
+    PARAM_PVS.PPARAM_VELO_RB = 'PParamVelo-RB'
+    PARAM_PVS.PPARAM_ACC_SP = 'PParamAcc-SP'
+    PARAM_PVS.PPARAM_ACC_RB = 'PParamAcc-RB'
+    PARAM_PVS.PPARAM_TOL_SP = 'PolTol-SP'
+    PARAM_PVS.PPARAM_TOL_RB = 'PolTol-RB'
+    PARAM_PVS.PPARAM_CHANGE_CMD = 'PParamChange-Cmd'
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    PARAM_PVS.KPARAM_MAXACC_SP = 'MaxAcc-SP'
+    PARAM_PVS.KPARAM_MAXACC_RB = 'MaxAcc-RB'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_ACC_SP = 'KParamAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'KParamAcc-RB'
+    PARAM_PVS.KPARAM_TOL_SP = 'PosTol-SP'
+    PARAM_PVS.KPARAM_TOL_RB = 'PosTol-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+    PARAM_PVS.POL_SEL = 'Pol-Sel'
+    PARAM_PVS.POL_STS = 'Pol-Sts'
+    PARAM_PVS.POL_MON = 'Pol-Mon'
+    PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
+
+    PROPERTIES_DEFAULT = tuple(set(
+        value for key, value in _inspect.getmembers(PARAM_PVS)
+        if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = PROPERTIES_DEFAULT + (
+        'CSDVirtPos-Mon', 'CSEVirtPos-Mon',
+        'CIEVirtPos-Mon', 'CIDVirtPos-Mon',
+        'IsOperational-Mon', 'MotorsEnbld-Mon',
+        'Alarm-Mon', 'Intlk-Mon', 'IntlkBits-Mon', 'IntlkLabels-Cte',
+        'ConsistentSetPoints-Mon', 'PLCState-Mon',
+        'Energy-SP', 'Energy-RB', 'Energy-Mon',
+        'KValue-SP', 'KValue-RB', 'KValue-Mon',
+    )
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.DELTA52_10SB
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    @property
+    def is_operational(self):
+        """Return True if ID is operational."""
+        return self['IsOperational-Mon'] == 0  # 0 : 'OK'
+
+    # --- cassette positions ---
+
+    @property
+    def pos_csd_mon(self):
+        """Return longitudinal position of CSD [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CSDVirtPos-Mon']
+
+    @property
+    def pos_cse_mon(self):
+        """Return longitudinal position of CSE [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CSEVirtPos-Mon']
+
+    @property
+    def pos_cie_mon(self):
+        """Return longitudinal position of CIE [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CIEVirtPos-Mon']
+
+    @property
+    def pos_cid_mon(self):
+        """Return longitudinal position of CID [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CIDVirtPos-Mon']
+
+    def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
+        """Estimate moving time for each parameter separately."""
+        pol_mon_str = self.polarization_mon_str
+        if kparam_goal is not None and pol_mon_str == 'circularp':
+            kparam_goal = -kparam_goal
+        return super().calc_move_eta(pparam_goal, kparam_goal)
+
+
+class WIG(IDBase):
+    """Wiggler Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        WIG180_14SB = 'SI-14SB:ID-WIG180'
+        ALL = (WIG180_14SB, )
+
+    # NOTE: IOC yet to be written!
+    PROPERTIES_DEFAULT = ('Gap-SP', 'Gap-RB', 'Gap-Mon')
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.WIG180_14SB
+        if devname not in WIG.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+
+class IVU(IDFullMovCtrl):
+    """IVU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        IVU18_08SB = 'SI-08SB:ID-IVU18'
+        IVU18_14SB = 'SI-14SB:ID-IVU18'
+        ALL = (IVU18_08SB, IVU18_14SB)
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+
+    # --- GENERAL ---
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+
+    # --- KPARAM ---
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
+    # --- OFFSET --
+    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
+    PARAM_PVS.CENTER_MODE_STS = 'CenterMode-Sts'
+    PARAM_PVS.CENTER_MODE_SEL = 'CenterMode-Sel'
+
+    # --- PITCH --
+    PARAM_PVS.PITCH_OFFSET_SP = 'PitchOffset-SP'
+    PARAM_PVS.PITCH_OFFSET_RB = 'PitchOffset-RB'
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+    PARAM_PVS.PITCH_MODE_STS = 'PitchMode-Sts'
+    PARAM_PVS.PITCH_MODE_SEL = 'PitchMode-Sel'
+
+    # --- TAPER --
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
+
+    PROPERTIES_DEFAULT = tuple(set(
+        value for key, value in _inspect.getmembers(PARAM_PVS)
+        if not key.startswith('_') and value is not None))
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- center offset ---
+    @property
+    def center_mode_status(self):
+        """Return ID center mode status."""
+        return self[self.PARAM_PVS.CENTER_MODE_STS]
+
+    # --- pitch ---
+    @property
+    def pitch_mode_status(self):
+        """Return ID pitch mode status."""
+        return self[self.PARAM_PVS.PITCH_MODE_STS]
+
+    @property
+    def pitch(self):
+        """Return ID pitch readback [mm]."""
+        return self[self.PARAM_PVS.PITCH_OFFSET_RB]
+
+    # Set methods
+    def set_pitch(self, pitch, timeout=None):
+        """Set ID pitch for movement [mm]."""
+        return self._write_sp(self.PARAM_PVS.PITCH_OFFSET_SP, pitch, timeout)
+
+    def set_center_mode(self, mode, timeout=None):
+        """Set ID center mode True or False."""
+        if type(mode) is not bool:
+            raise ValueError('Center mode must be boolean.')
+        if not mode:
+            self.set_taper(0, timeout)
+        return self._write_sp(self.PARAM_PVS.CENTER_MODE_SEL, mode, timeout)
+
+    def set_pitch_mode(self, mode, timeout=None):
+        """Set ID pitch mode True or False."""
+        if type(mode) is not bool:
+            raise ValueError('Pitch mode must be boolean.')
+        if not mode:
+            self.set_center_offset(0, timeout)
+        return self._write_sp(self.PARAM_PVS.PITCH_MODE_SEL, mode, timeout)
+
+    # --- cmd_move
+    def cmd_move_gap_start(self, timeout=None):
+        """Command to start gap movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self.cmd_move_kparameter_start(timeout)
+
+    def cmd_move_taper_start(self, timeout=None):
+        """Command to start taper movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_pitch_start(self, timeout=None):
+        """Command to start pitch movement."""
+        if self.center_mode_status:
+            raise ValueError('Center offset mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    def cmd_move_center_start(self, timeout=None):
+        """Command to start center movement."""
+        if self.pitch_mode_status:
+            raise ValueError('Pitch mode must be disabled.')
+        if not _np.isclose(self.taper_mon, 0, atol=1e-3):
+            raise ValueError('Taper must be zero.')
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout)
+
+    # --- cmd_reset
+    def cmd_reset(self, timeout=None):
+        """Command to reset undulator."""
+        return self._write_sp(
+            self.PARAM_PVS.RESET, True, timeout=timeout)
+
+
+class VPU(IDFullMovCtrl):
+    """VPU Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        VPU29_06SB = 'SI-06SB:ID-VPU29'
+        VPU29_07SP = 'SI-07SP:ID-VPU29'
+        ALL = (VPU29_06SB, VPU29_07SP)
+
+    # DevCtrl PV
+    _CMD_MOVE_STOP, _CMD_MOVE_START = 300, 320
+    _CMD_RESET, _CMD_SCAN_START = 310, 340
+    _CMD_SCAN_MODE = 330
+
+    PARAM_PVS = _ParamPVs()
+
+    # --- GENERAL ---
+    PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    PARAM_PVS.KPARAM_VELO_SP = 'MoveVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'MoveVelo-RB'
+    PARAM_PVS.KPARAM_ACC_SP = 'MoveAcc-SP'
+    PARAM_PVS.KPARAM_ACC_RB = 'MoveAcc-RB'  # Can we read from CPL?
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.RESET = 'Reset-Cmd'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+
+    # --- KPARAM ---
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
+    # --- OFFSET --
+    PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
+    PARAM_PVS.CENTER_OFFSET_RB = 'CenterOffset-RB'
+    PARAM_PVS.CENTER_OFFSET_MON = 'CenterOffset-Mon'
+    PARAM_PVS.CENTER_OFFSET_VELO_MON = 'CenterOffsetVelo-Mon'
+    PARAM_PVS.CENTER_OFFSET_MIN_CTE = 'CenterOffsetMinPos-Cte'
+    PARAM_PVS.CENTER_OFFSET_MAX_CTE = 'CenterOffsetMaxPos-Cte'
+
+    # --- PITCH --
+    PARAM_PVS.PITCH_OFFSET_MON = 'PitchOffset-Mon'
+    PARAM_PVS.PITCH_OFFSET_VELO_MON = 'PitchOffsetVelo-Mon'
+    PARAM_PVS.PITCH_OFFSET_MIN_CTE = 'PitchOffsetMinPos-Cte'
+    PARAM_PVS.PITCH_OFFSET_MAX_CTE = 'PitchOffsetMaxPos-Cte'
+
+    # --- TAPER --
+    PARAM_PVS.KPARAM_TAPER_SP = 'KParamTaper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'KParamTaper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'KParamTaper-Mon'
+    PARAM_PVS.KPARAM_TAPER_SP = 'Taper-SP'
+    PARAM_PVS.KPARAM_TAPER_RB = 'Taper-RB'
+    PARAM_PVS.KPARAM_TAPER_MON = 'Taper-Mon'
+    PARAM_PVS.TAPER_VELO_MON = 'TaperVelo-Mon'
+    PARAM_PVS.TAPER_MIN_CTE = 'TaperMinPos-Cte'
+    PARAM_PVS.TAPER_MAX_CTE = 'TaperMaxPos-Cte'
+
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'MoveStart-Cmd'
+
+    PROPERTIES_DEFAULT = \
+        tuple(set(
+            value for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None))
+
+    @property
+    def center_offset_lims(self):
+        """Return center offset lims [mm]."""
+        if (self.PARAM_PVS.CENTER_OFFSET_MIN_CTE and
+                self.PARAM_PVS.CENTER_OFFSET_MAX_CTE) is None:
+            return None
+        return [self[self.PARAM_PVS.CENTER_OFFSET_MIN_CTE],
+                self[self.PARAM_PVS.CENTER_OFFSET_MAX_CTE]]
+
+    @property
+    def pitch_offset_lims(self):
+        """Return pitch offset lims [mm]."""
+        if (self.PARAM_PVS.PITCH_OFFSET_MIN_CTE and
+                self.PARAM_PVS.PITCH_OFFSET_MAX_CTE) is None:
+            return None
+        return [self[self.PARAM_PVS.PITCH_OFFSET_MIN_CTE],
+                self[self.PARAM_PVS.PITCH_OFFSET_MAX_CTE]]
+
+    @property
+    def taper_lims(self):
+        """Return taper lims [mm]."""
+        if (self.PARAM_PVS.TAPER_MIN_CTE and
+                self.PARAM_PVS.TAPER_MAX_CTE) is None:
+            return None
+        return [self[self.PARAM_PVS.TAPER_MIN_CTE],
+                self[self.PARAM_PVS.TAPER_MAX_CTE]]
+
+    @property
+    def center_offset_speed_mon(self):
+        """Return center offset speed monitor [mm/s]."""
+        if self.PARAM_PVS.CENTER_OFFSET_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CENTER_OFFSET_VELO_MON]
+
+    @property
+    def pitch_speed_mon(self):
+        """Return pitch speed monitor [mm/s]."""
+        if self.PARAM_PVS.PITCH_OFFSET_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.PITCH_OFFSET_VELO_MON]
+
+    @property
+    def taper_speed_mon(self):
+        """Return taper speed monitor [mm/s]."""
+        if self.PARAM_PVS.TAPER_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.TAPER_VELO_MON]
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+
+    # --- cmd move
+    def cmd_move_start(self, timeout=None):
+        """Command to move undulator."""
+        return self._move_start(
+            self.PARAM_PVS.KPARAM_CHANGE_CMD,
+            timeout=timeout)
+
+    # --- cmd_reset
+    def cmd_reset(self, timeout=None):
+        """Command to reset undulator."""
+        return self._write_sp(
+            self.PARAM_PVS.RESET, 1, timeout=timeout)
+
+    # --- cmd_abort
+    def cmd_abort(self, timeout=None):
+        """Command to abort undulator motion."""
+        return self._write_sp(
+            self.PARAM_PVS.MOVE_ABORT, 1, timeout=timeout)
+
+
+class ID(IDBase):
+    """Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+        APU = APU.DEVICES
+        PAPU = PAPU.DEVICES
+        EPU = EPU.DEVICES
+        DELTA = DELTA.DEVICES
+        WIG = WIG.DEVICES
+        IVU = IVU.DEVICES
+        VPU = VPU.DEVICES
+        ALL = APU.ALL + PAPU.ALL + \
+            EPU.ALL + DELTA.ALL + \
+            WIG.ALL + IVU.ALL + VPU.ALL
+
+    def __new__(cls, devname, **kwargs):
+        """."""
+        idclass = ID.get_idclass(devname)
+        if idclass:
+            return idclass(devname, **kwargs)
+        else:
+            raise NotImplementedError(devname)
+
+    @staticmethod
+    def get_idclass(devname):
+        """."""
+        if devname in APU.DEVICES.ALL:
+            return APU
+        elif devname in PAPU.DEVICES.ALL:
+            return PAPU
+        elif devname in EPU.DEVICES.ALL:
+            return EPU
+        elif devname in DELTA.DEVICES.ALL:
+            return DELTA
+        elif devname in WIG.DEVICES.ALL:
+            return WIG
+        elif devname in IVU.DEVICES.ALL:
+            return IVU
+        elif devname in VPU.DEVICES.ALL:
+            return VPU
+        else:
+            return None

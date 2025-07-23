@@ -66,11 +66,6 @@ class ConnTI(_EpicsPropsList):
         'EvtInjBO': Const.EVG + ':InjBO',
         'EvtInjSI': Const.EVG + ':InjSI',
         'EvtRmpBO': Const.EVG + ':RmpBO',
-        'EvtDigLI': Const.EVG + ':DigLI',
-        'EvtDigTB': Const.EVG + ':DigTB',
-        'EvtDigBO': Const.EVG + ':DigBO',
-        'EvtDigTS': Const.EVG + ':DigTS',
-        'EvtDigSI': Const.EVG + ':DigSI',
         'EvtStudy': Const.EVG + ':Study'}
 
     evt_propties = ('Mode-Sel', 'DelayType-Sel', 'Delay-SP')
@@ -339,11 +334,6 @@ class ConnTI(_EpicsPropsList):
             c.EvtInjBO_Delay: None,          # [us]
             c.EvtRmpBO_Delay: None,          # [us]
             c.EvtInjSI_Delay: None,          # [us]
-            c.EvtDigLI_Delay: None,          # [us]
-            c.EvtDigTB_Delay: None,          # [us]
-            c.EvtDigBO_Delay: None,          # [us]
-            c.EvtDigTS_Delay: None,          # [us]
-            c.EvtDigSI_Delay: None,          # [us]
             c.EvtStudy_Delay: None,          # [us]
             c.TrgInjKckr_Delay: None,        # [us]
             # Mags trigger
@@ -573,7 +563,7 @@ class ConnRF(_EpicsPropsList):
         """Properties names."""
 
         KV_2_V = 1e3
-        DevName = 'BR-RF-DLLRF-01'
+        DevName = 'RA-RaBO01:RF-LLRF'
         Rmp_Enbl = DevName + ':RmpEnbl-Sel'
         Rmp_Ts1 = DevName + ':RmpTs1-SP'
         Rmp_Ts2 = DevName + ':RmpTs2-SP'

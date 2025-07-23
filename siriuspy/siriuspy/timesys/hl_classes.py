@@ -4,6 +4,8 @@ import time as _time
 from functools import partial as _partial, reduce as _reduce
 from operator import or_ as _or_, and_ as _and_
 import logging as _log
+from threading import Lock as _Lock
+
 import numpy as _np
 
 from ..util import mode as _mode
@@ -63,6 +65,10 @@ class _BaseHL(_Callback):
     def connected(self):
         """."""
         return all(map(lambda x: x.connected, self._ll_objs))
+
+    def process(self):
+        """."""
+        return
 
     def wait_for_connection(self, timeout=None):
         """."""
@@ -224,14 +230,23 @@ class HLTrigger(_BaseHL):
         src_enums = src_enums['Src-Sel']['enums']
         ll_obj_names = _HLSearch.get_ll_trigger_names(hl_trigger)
 
-        self._hldelay = 0.0
-        self._hldeltadelay = _np.zeros(len(ll_obj_names))
+        self._hldelay_lock = _Lock()
+        self._hldelay = 0
+        self._hldeltadelay = _np.zeros(len(ll_obj_names), dtype=int)
 
         ll_objs = list()
         for name in ll_obj_names:
             ll_objs.append(_get_ll_trigger(
                 channel=name, source_enums=src_enums))
         super().__init__(hl_trigger + ':', ll_objs, callback=callback)
+
+    def process(self):
+        """."""
+        value = self.read('InInjTable')
+        if value is None:
+            return
+        self.run_callbacks(self._get_pv_name('InInjTable'), **value)
+        return
 
     def write(self, prop_name, value):
         """Call to set high level properties.
@@ -242,22 +257,28 @@ class HLTrigger(_BaseHL):
         if value is None:
             return False
         if prop_name.startswith('DelayRaw'):
-            self._update_delay(value * self._ll_objs[0].base_del)
-            value = (self._hldelay + self._hldeltadelay) / \
-                self._ll_objs[0].base_del
+            with self._hldelay_lock:
+                self._hldelay = int(value)
+                value = self._hldelay + self._hldeltadelay
         elif prop_name.startswith('Delay'):
-            self._update_delay(value)
-            value = self._hldelay + self._hldeltadelay
-        elif prop_name.startswith('DeltaDelay'):
-            prop_name = prop_name.replace('DeltaDelay', 'Delay')
-            self._update_deltadelay(value)
-            value = self._hldelay + self._hldeltadelay
+            prop_name = prop_name.replace('Delay', 'DelayRaw')
+            with self._hldelay_lock:
+                self._hldelay = int(round(value / self._ll_objs[0].base_del))
+                value = self._hldelay + self._hldeltadelay
         elif prop_name.startswith('DeltaDelayRaw'):
             prop_name = prop_name.replace('DeltaDelayRaw', 'DelayRaw')
-            value *= self._ll_objs[0].base_del
-            self._update_deltadelay(value)
-            value = (self._hldelay + self._hldeltadelay)
-            value /= self._ll_objs[0].base_del
+            with self._hldelay_lock:
+                value = _np.array(value, dtype=int, ndmin=1)
+                self._update_deltadelay(value)
+                value = self._hldelay + self._hldeltadelay
+        elif prop_name.startswith('DeltaDelay'):
+            prop_name = prop_name.replace('DeltaDelay', 'DelayRaw')
+            with self._hldelay_lock:
+                value = _np.array(value, ndmin=1)
+                value = _np.round(value / self._ll_objs[0].base_del)
+                value = _np.array(value, dtype=int)
+                self._update_deltadelay(value)
+                value = self._hldelay + self._hldeltadelay
         else:
             value = len(self._ll_objs) * [value, ]
 
@@ -297,20 +318,12 @@ class HLTrigger(_BaseHL):
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
     def _update_deltadelay(self, value):
-        if not hasattr(value, '__len__'):
-            value = _np.array([value, ], dtype=float)
-        if len(value) <= len(self._hldeltadelay):
-            self._hldeltadelay[:len(value)] = value
-        elif len(value) > len(self._hldeltadelay):
-            self._hldeltadelay = value[:len(self._hldelay)]
-        mini = min(self._hldeltadelay)
+        siz = min(value.size, self._hldeltadelay.size)
+        self._hldeltadelay[:siz] = value[:siz]
+        mini = self._hldeltadelay.min()
         self._hldelay += mini
         self._hldeltadelay -= mini
         self._hldelay = 0 if self._hldelay <= 0 else self._hldelay
-        self.run_callbacks(self._get_pv_name('Delay'), value=self._hldelay)
-
-    def _update_delay(self, value):
-        self._hldelay = float(value)
 
     def _combine_status(self, values):
         status_or = _reduce(_or_, values)

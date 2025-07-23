@@ -6,7 +6,7 @@ from threading import Thread as _Thread
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..callbacks import Callback as _Callback
-from ..thread import QueueThread as _QueueThread
+from ..thread import LoopQueueThread as _LoopQueueThread
 
 
 class App(_Callback):
@@ -18,7 +18,8 @@ class App(_Callback):
         """Create Computed PVs."""
         super().__init__()
         self._prefix = _VACA_PREFIX
-        self._queue = _QueueThread()
+        self._queue = _LoopQueueThread()
+        self._queue.start()
         self.pvs = list()
         self.scanning = False
         self.quit = False

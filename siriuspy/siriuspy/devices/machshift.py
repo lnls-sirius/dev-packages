@@ -9,13 +9,12 @@ class MachShift(_Device):
 
     MODES = _ETypes.MACHSHIFT
 
-    _properties = ('Mode-Sel', 'Mode-Sts')
+    PROPERTIES_DEFAULT = ('Mode-Sel', 'Mode-Sts')
 
-    def __init__(self):
+    def __init__(self, props2init='all'):
         """Init."""
         # call base class constructor
-        super().__init__(
-            'AS-Glob:AP-MachShift', properties=MachShift._properties)
+        super().__init__('AS-Glob:AP-MachShift', props2init=props2init)
 
     @property
     def mode(self):
@@ -32,7 +31,13 @@ class MachShift(_Device):
         return MachShift.MODES[self['Mode-Sts']]
 
     def check_mode(self, value):
-        """Check if mode is Users."""
+        """Check if Mode-Sts is in desired value."""
         if isinstance(value, int):
             return self.mode == value
         return self.mode == MachShift.MODES.index(value)
+
+    def wait_mode(self, mode, timeout=None):
+        """Wait Mode-Sts to reach `mode` value."""
+        if isinstance(mode, str):
+            mode = MachShift.MODES.index(mode)
+        return self._wait('Mode-Sts', mode, timeout=timeout)

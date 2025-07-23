@@ -20,8 +20,6 @@ if not _BETA_APPROXIMATION:
     _GAMMA_2_GEV = _mp.constants.electron_rest_energy * _mp.units.joule_2_GeV
 
 _MAGFUNCS = _mutil.get_magfunc_2_multipole_dict()
-_IS_DIPOLE = _re.compile(".*:[A-Z]{2}-B.*:.+$")
-_IS_FAM = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 _KCOEFF = _mp.constants.elementary_charge / \
           _mp.constants.light_speed / \
           _mp.constants.electron_mass / \
@@ -31,18 +29,32 @@ _KCOEFF = _mp.constants.elementary_charge / \
 class _MagnetNormalizer:
     """Base class for converting magnet properties: current and strength."""
 
-    def __init__(self, maname, magnet_conv_sign=-1):
+    def __init__(
+            self, maname, magnet_conv_sign=-1, default_strengths_dipole=None):
         """Class constructor."""
-        self._maname = _SiriusPVName(maname) if type(maname) == str else maname
+        self._default_strengths_dipole = None
+        self._brho = None
+        self.default_strengths_dipole = default_strengths_dipole  # [GeV]
+        self._maname = _SiriusPVName(maname)
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
-        self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
-        self._pstype = _PSSearch.conv_psname_2_pstype(self._psnames[0])
+        self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[-1])
+        self._pstype = _PSSearch.conv_psname_2_pstype(self._psnames[-1])
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
-        self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[0])
+        self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[-1])
         self._magnet_conv_sign = magnet_conv_sign
         self._mfmult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
+
+    @property
+    def default_strengths_dipole(self):
+        return self._default_strengths_dipole
+
+    @default_strengths_dipole.setter
+    def default_strengths_dipole(self, value):
+        self._default_strengths_dipole = value
+        if value is not None:
+            self._brho = self._get_brho(value)
 
     @property
     def magfunc(self):
@@ -82,6 +94,19 @@ class _MagnetNormalizer:
         return currents
 
     # --- normalizer aux. methods ---
+
+    def _get_brho(self, strengths_dipole=None, **kwargs):
+        """Calculate appropriate brho."""
+        _ = kwargs
+        if strengths_dipole is None and self._brho is not None:
+            return self._brho
+        elif strengths_dipole is None:
+            raise ValueError(
+                "Missing input 'strengths_dipole' and no default value is "
+                "set in attribute 'default_strengths_dipole'.")
+
+        brho, *_ = _util.beam_rigidity(strengths_dipole)
+        return brho
 
     def _conv_current_2_intfield(self, currents):
         mpoles = self._conv_current_2_multipoles(
@@ -295,14 +320,16 @@ class MagnetNormalizer(_MagnetNormalizer):
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         intfields = self._magnet_conv_sign * brho * strengths
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, list):
             intfields = _np.array(intfields)
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         if isinstance(brho, _np.ndarray):
             with _np.errstate(divide='ignore', invalid='ignore'):
                 strengths = self._magnet_conv_sign * intfields / brho
@@ -355,8 +382,7 @@ class TrimNormalizer(_MagnetNormalizer):
 
     TYPE = 'TrimNormalizer'
 
-    def __init__(self, maname, magnet_conv_sign=-1.0,
-                 **kwargs):
+    def __init__(self, maname, **kwargs):
         """Call super and initializes a dipole and the family magnet."""
         super(TrimNormalizer, self).__init__(maname, **kwargs)
 
@@ -364,14 +390,16 @@ class TrimNormalizer(_MagnetNormalizer):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
         strengths_fam = kwargs['strengths_family']
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         intfields = self._magnet_conv_sign * brho * (strengths - strengths_fam)
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, (list, tuple)):
             intfields = _np.array(intfields)
-        brho, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
+
+        brho = self._get_brho(**kwargs)
         if brho == 0:
             return 0 * intfields
         strengths_trim = self._magnet_conv_sign * intfields / brho

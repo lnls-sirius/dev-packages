@@ -15,6 +15,7 @@ class HLTimeSearch:
 
     _hl_triggers = dict()
     _hl_events = dict()
+    COMMOM_EVTS = ('Dsbld', 'RmpBO', 'Linac', 'Study')
 
     _lock = _Lock()
 
@@ -25,6 +26,12 @@ class HLTimeSearch:
         return _dcopy(cls._hl_events)
 
     @classmethod
+    def get_configurable_hl_events(cls):
+        """Return a dictionary with configurable high level events."""
+        cls._init()
+        return {e: c for e, c in cls._hl_events.items() if 0 < int(c[3:]) < 64}
+
+    @classmethod
     def get_hl_triggers(cls, filters=None, sorting=None):
         """Return a dictionary with high level triggers."""
         cls._init()
@@ -33,12 +40,13 @@ class HLTimeSearch:
             all_devs, filters=filters, sorting=sorting)
 
     @classmethod
-    def get_hl_trigger_predef_db(cls, hl_trigger):
+    def get_hl_trigger_predef_db(cls, hl_trigger, has_commom_evts=True):
         """Return the default database of the high level trigger."""
         cls._init()
         dic_ = _dcopy(cls._hl_triggers[hl_trigger]['database'])
-        dic_['Src']['enums'] = ('Dsbl', ) + dic_['Src']['enums']
-        dic_['Src']['value'] += 1
+        src = dic_['Src']
+        if has_commom_evts:
+            src['enums'] = cls.COMMOM_EVTS + src['enums']
         return dic_
 
     @classmethod
@@ -76,6 +84,7 @@ class HLTimeSearch:
 
     @classmethod
     def get_hl_from_ll_triggers(cls, channel):
+        cls._init()
         # channel = _LLSearch.get_channel_output_port_pvname(channel)
         prpt = channel.propty
         if prpt.startswith('OTP'):
@@ -92,6 +101,13 @@ class HLTimeSearch:
         return sorted(chans)
 
     @classmethod
+    def is_digital_input(cls, hl_trigger):
+        """Return True if hl_trigger is of type Digital Input."""
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        return any([_LLSearch.is_digital_input(name) for name in ll_chans])
+
+    @classmethod
     def has_delay_type(cls, hl_trigger):
         """Return True if hl_trigger has property delayType."""
         cls._init()
@@ -99,11 +115,25 @@ class HLTimeSearch:
         return all([_LLSearch.has_delay_type(name) for name in ll_chans])
 
     @classmethod
+    def has_direction(cls, hl_trigger):
+        """Return True if hl_trigger has property direction."""
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        return all([_LLSearch.has_direction(name) for name in ll_chans])
+
+    @classmethod
     def has_clock(cls, hl_trigger):
         """Return True if hl_trigger can listen to Clocks from EVG."""
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
         return all([_LLSearch.has_clock(name) for name in ll_chans])
+
+    @classmethod
+    def has_log(cls, hl_trigger):
+        """Return True if hl_trigger can listen to Clocks from EVG."""
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        return all([_LLSearch.has_log(name) for name in ll_chans])
 
     @classmethod
     def check_hl_triggers_consistency(cls):

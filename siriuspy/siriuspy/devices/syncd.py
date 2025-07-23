@@ -1,16 +1,17 @@
 """Synchronized Devices."""
 
-from .device import DeviceApp as _DeviceApp
+from ..namesys import SiriusPVName as _SiriusPVName
+from .device import Device as _Device
 
 
-class DevicesSync(_DeviceApp):
+class DevicesSync(_Device):
     """Synchronized devices."""
 
     def __init__(
             self, devnames, propty_sync, propty_async=None,
-            devname=None, auto_mon=False):
+            devname=None, auto_monitor_mon=False):
         """."""
-        self._devnames = devnames
+        self._devnames = [_SiriusPVName(dev) for dev in devnames]
         self._props_sync = list(propty_sync)
         self._props_async = [] if propty_async is None else propty_async
 
@@ -18,7 +19,8 @@ class DevicesSync(_DeviceApp):
         properties, self._prop2prop = self._get_properties()
 
         # call base class constructor
-        super().__init__(properties, devname, auto_mon)
+        super().__init__(
+            devname, auto_monitor_mon=auto_monitor_mon, props2init=properties)
 
     @property
     def devnames(self):
@@ -45,7 +47,7 @@ class DevicesSync(_DeviceApp):
                 return False
         return True
 
-    def value_get(self, propty):
+    def get_value(self, propty):
         """Return property value."""
         if not self.connected:
             return
@@ -59,7 +61,7 @@ class DevicesSync(_DeviceApp):
             return
         return sum(values) / len(values)
 
-    def value_set(self, propty, value):
+    def set_value(self, propty, value):
         """Set property."""
         if not self.connected:
             return
@@ -72,7 +74,7 @@ class DevicesSync(_DeviceApp):
         prop2prop = dict()
         for devname in self._devnames:
             for propty in self._props_sync + self._props_async:
-                pvname = devname + ':' + propty
+                pvname = devname.substitute(propty=devname.propty_name+propty)
                 if propty not in prop2prop:
                     prop2prop[propty] = [pvname]
                 else:

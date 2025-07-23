@@ -18,6 +18,16 @@ class Callback:
         else:
             self.add_callback(callback)
 
+    @property
+    def has_callbacks(self):
+        """Return a flag indicating whether object has a callback attached.
+
+        Returns:
+            bool: whether or not there is a registered callback.
+
+        """
+        return bool(self._callbacks)
+
     def add_callback(self, callback, index=None, **kw):
         """Add a callback to a PV.
 

@@ -7,14 +7,12 @@
 # This file maps the aliases of the events used in Sirius
 # operation system with their code name.
 {
-    'Dsbl':  'Evt00',
     'Linac': 'Evt01', 'InjBO': 'Evt02',
     'InjSI': 'Evt03', 'RmpBO': 'Evt04',
-    'MigSI': 'Evt05', 'DigLI': 'Evt06',
-    'DigTB': 'Evt07', 'DigBO': 'Evt08',
-    'DigTS': 'Evt09', 'DigSI': 'Evt10',
-    'OrbSI': 'Evt11', 'CplSI': 'Evt12',
-    'TunSI': 'Evt13', 'Study': 'Evt14',
-    'OrbBO': 'Evt15', 'Cycle': 'Evt16',
-    'PsMtn': 'Evt124'
+    'Cycle': 'Evt05', 'Study': 'Evt06',
+    'OrbSI': 'Evt07', 'CplSI': 'Evt08',
+    'TunSI': 'Evt09', 'FOFBS': 'Evt10',
+
+    'Dsbld':  'Evt00',
+    'Intlk': 'Evt117', 'PsMtn': 'Evt124',
 }

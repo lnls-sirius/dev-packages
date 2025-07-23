@@ -9,13 +9,12 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _PVName
 
-from .device import Device as _Device, Devices as _Devices, \
-    ProptyDevice as _ProptyDevice
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .dcct import DCCT
 from .rf import RFCav
 
 
-class BunchbyBunch(_Devices):
+class BunchbyBunch(_DeviceSet):
     """BunchbyBunch Device."""
 
     _devices = {
@@ -23,41 +22,58 @@ class BunchbyBunch(_Devices):
         'V': 'SI-Glob:DI-BbBProc-V',
         'L': 'SI-Glob:DI-BbBProc-L'}
     DEVICES = _get_namedtuple('Devices', *zip(*_devices.items()))
+    FBEDEV_PLANE = 'V'
 
-    def __init__(self, devname):
-        """."""
+    def __init__(self, devname, props2init='all'):
+        """BunchbyBunch DeviceSet.
+
+        Args:
+            devname (str): choose one of the BbB planes in BunchbyBunch.DEVICES
+            props2init (str, optional): 'all' to connect with all PVs or
+                bool(props2init) == False to initialize without any
+                connection. Defaults to 'all'.
+
+        """
         devname = BunchbyBunch.process_device_name(devname)
-        self.dcct = DCCT(DCCT.DEVICES.SI_13C4)
-        self.rfcav = RFCav(RFCav.DEVICES.SI)
-        self.info = SystemInfo(devname)
-        self.timing = Timing(devname)
-        self.sram = Acquisition(devname, acqtype='SRAM')
-        self.bram = Acquisition(devname, acqtype='BRAM')
-        self.single_bunch = SingleBunch(devname)
-        self.phase_track = PhaseTracking(devname)
-        self.coeffs = Coefficients(devname)
-        self.feedback = Feedback(devname)
-        self.drive0 = Drive(devname, drive_num=0)
-        self.drive1 = Drive(devname, drive_num=1)
-        self.drive2 = Drive(devname, drive_num=2)
-        self.bunch_clean = BunchClean(devname)
-        self.fbe = FrontBackEnd()
+
+        _isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not _isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False")
+
+        self.dcct = DCCT(DCCT.DEVICES.SI_13C4, props2init=props2init)
+        self.rfcav_a = RFCav(RFCav.DEVICES.SIA, props2init=props2init)
+        self.rfcav_b = RFCav(RFCav.DEVICES.SIB, props2init=props2init)
+        self.info = SystemInfo(devname, props2init=props2init)
+        self.timing = Timing(devname, props2init=props2init)
+        self.sram = Acquisition(devname, acqtype='SRAM', props2init=props2init)
+        self.bram = Acquisition(devname, acqtype='BRAM', props2init=props2init)
+        self.single_bunch = SingleBunch(devname, props2init=props2init)
+        self.phase_track = PhaseTracking(devname, props2init=props2init)
+        self.coeffs = Coefficients(devname, props2init=props2init)
+        self.feedback = Feedback(devname, props2init=props2init)
+        self.drive0 = Drive(devname, drive_num=0, props2init=props2init)
+        self.drive1 = Drive(devname, drive_num=1, props2init=props2init)
+        self.drive2 = Drive(devname, drive_num=2, props2init=props2init)
+        self.bunch_clean = BunchClean(devname, props2init=props2init)
+        fbe_dev = devname.substitute(idx=self.FBEDEV_PLANE)
+        self.fbe = FrontBackEnd(fbe_dev, props2init=props2init)
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive0, self.drive1, self.drive2,
             self.bunch_clean, self.fbe, self.dcct,
-            self.rfcav, self.single_bunch, self.phase_track]
+            self.rfcav_a, self.rfcav_b, self.single_bunch, self.phase_track]
 
         if devname.endswith('-L'):
-            self.pwr_amp1 = PwrAmpL(devname, num=0)
-            self.pwr_amp2 = PwrAmpL(devname, num=1)
+            self.pwr_amp1 = PwrAmpL(devname, num=0, props2init=props2init)
+            self.pwr_amp2 = PwrAmpL(devname, num=1, props2init=props2init)
             devs.append(self.pwr_amp1)
             devs.append(self.pwr_amp2)
         else:
-            self.pwr_amp = PwrAmpT(devname)
+            self.pwr_amp = PwrAmpT(devname, props2init=props2init)
             devs.append(self.pwr_amp)
 
-        super().__init__(devname, devices=devs)
+        super().__init__(devices=devs, devname=devname)
 
     @staticmethod
     def process_device_name(devname):
@@ -179,24 +195,26 @@ class BunchbyBunch(_Devices):
         self.coeffs.cmd_edit_apply()
         return _np.array(mon_values)
 
-    def sweep_rf_phase(self, values, wait=2, mon_type='mean'):
-        """Sweep RF Phase for each `value` in `values`."""
+    def sweep_rf_phase(self, delta_phases, wait=2, mon_type='mean'):
+        """Sweep RF Phase for each dphase in `delta_phases`."""
         mon_values = []
         ctrl, mon = 'RF Phase', 'SRAM Mean'
         print(f'Idx: {ctrl:15s} {mon:15s}')
 
-        llrf = self.rfcav.dev_llrf
-        init_val = llrf.phase
-        for i, val in enumerate(values):
-            self.rfcav.set_phase(val)
+        rfcavs = [self.rfcav_a, self.rfcav_b]
+        init_phases = [rfcav.dev_llrf.phase for rfcav in rfcavs]
+        for i, dphase in enumerate(delta_phases):
+            for phase0, rfcav in zip(init_phases, rfcavs):
+                rfcav.set_phase(phase0 + dphase)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
             else:
                 mon_val = self.sram.spec_marker1_mag
             mon_values.append(mon_val)
-            print(f'{i:03d}: {val:15.6f} {_np.mean(mon_val):15.6f}')
-        llrf.value = init_val
+            print(f'{i:03d}: {dphase:15.6f} {_np.mean(mon_val):15.6f}')
+        for phase0, rfcav in zip(init_phases, rfcavs):
+            rfcav.set_phase(phase0)
         return _np.array(mon_values)
 
 
@@ -205,19 +223,17 @@ class SystemInfo(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
         'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'DCM_UNLOCK_COUNT', 'ADC_OVR',
         'ADC_OVR_COUNT', 'SAT', 'SAT_COUNT', 'FID_ERR', 'FID_ERR_COUNT',
         'RST_COUNT', 'CNTRST', 'RF_FREQ', 'FREV', 'HARM_NUM', 'REVISION',
         'GW_TYPE', 'IP_ADDR')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=SystemInfo._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def status(self):
@@ -334,7 +350,7 @@ class Timing(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'TADC', 'TDAC', 'DELAY', 'OFF_FIDS', 'FID_DELAY', 'CLKRST',
         'FREQ_CNT_CH0', 'FREQ_CNT_CH1', 'FREQ_CNT_CH2', 'FREQ_CNT_CH3',
         'FREQ_CNT_CH4',
@@ -342,12 +358,10 @@ class Timing(_Device):
         'ECLDEL0_SUBWR', 'ECLDEL1_SUBWR', 'ECLDEL2_SUBWR', 'ECLDEL3_SUBWR',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=Timing._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def adc_delay(self):
@@ -488,7 +502,7 @@ class Timing(_Device):
 class Coefficients(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'CSET0', 'CSET1', 'CSET2', 'CSET3', 'COEFF',
         'DESC_CSET0', 'DESC_CSET1', 'DESC_CSET2', 'DESC_CSET3', 'DESC_COEFF',
         'CVERIFY.C', 'CVERIFY.D', 'CVERIFY.G', 'CVERIFY.H',
@@ -502,12 +516,10 @@ class Coefficients(_Device):
     OFF, ON = 0, 1
     FPGA_BITS = 2**15
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=Coefficients._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def set0(self):
@@ -696,12 +708,12 @@ class Coefficients(_Device):
         return self._wait('BO_CVERIFY', 1, timeout)
 
 
-class Acquisition(_ProptyDevice):
+class Acquisition(_Device):
     """."""
 
     ACQTYPE = _get_namedtuple('Devices', ('SRAM', 'BRAM'))
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'GDTIME', 'HOLDTIME', 'POSTTIME', 'ACQTIME',
         'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE', 'SP_AVG',
         'HWTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
@@ -720,18 +732,15 @@ class Acquisition(_ProptyDevice):
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname, acqtype='BRAM'):
+    def __init__(self, devname, acqtype='BRAM', props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         acqtype = Acquisition.process_acquisition_type(acqtype)
-
-        # call base class constructor
-        super().__init__(
-            devname, propty_prefix=acqtype+'_',
-            properties=Acquisition._properties)
+        super().__init__(devname+':'+acqtype+'_', props2init=props2init)
 
         pvo = self.pv_object('RAW')
         self._update_data_evt = _Event()
+        pvo.auto_monitor = True
         pvo.add_callback(self._update_evt)
 
     # ########### Acquisition Config Properties ###########
@@ -1177,10 +1186,10 @@ class Acquisition(_ProptyDevice):
         self._update_data_evt.set()
 
 
-class SingleBunch(_ProptyDevice):
+class SingleBunch(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'ACQTIME', 'ACQ_SAMPLES', 'ACQ_EN', 'ACQ_SINGLE',
         'BUNCH_ID', 'RAW_BUNCH_ID',
         'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
@@ -1193,13 +1202,10 @@ class SingleBunch(_ProptyDevice):
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(
-            devname, propty_prefix='SB_', properties=SingleBunch._properties)
+        super().__init__(devname+':'+'SB_', props2init=props2init)
 
     @property
     def acqtime(self):
@@ -1442,7 +1448,7 @@ class SingleBunch(_ProptyDevice):
 class PhaseTracking(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PHTRK_GAIN', 'PHTRK_SETPT', 'PHTRK_RANGE', 'PHTRK_DECIM',
         'PHTRK_RATE', 'PHTRK_BANDWIDTH', 'PHTRK_LOOPCTRL',
         'PHTRK_MAG', 'PHTRK_TFGAIN', 'PHTRK_SHIFT', 'PHTRK_PHASE',
@@ -1451,13 +1457,10 @@ class PhaseTracking(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(
-            devname, properties=PhaseTracking._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def gain(self):
@@ -1571,7 +1574,7 @@ class PhaseTracking(_Device):
 class FrontBackEnd(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'FBE_Z_ATT', 'FBE_Z_PHASE', 'FBELT_SERVO_SETPT',
         'FBE_BE_ATT', 'FBE_BE_PHASE',
         'FBE_X_ATT', 'FBE_X_PHASE', 'FBELT_X_PHASE_SETPT',
@@ -1580,11 +1583,10 @@ class FrontBackEnd(_Device):
 
     FPGA_BITS = 2**15
 
-    def __init__(self):
+    def __init__(self, devname, props2init='all'):
         """."""
-        # call base class constructor
-        super().__init__(
-            BunchbyBunch.DEVICES.L, properties=FrontBackEnd._properties)
+        devname = BunchbyBunch.process_device_name(devname)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def z_att(self):
@@ -1670,18 +1672,16 @@ class FrontBackEnd(_Device):
 class Feedback(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'PROC_DS', 'FBCTRL', 'SHIFTGAIN', 'SETSEL', 'SAT_THRESHOLD',
         'FB_MASK', 'FB_PATTERN', 'CF_MASK', 'CF_PATTERN',
         'CF_PATTERN_SUB.VALB', 'GDEN',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=Feedback._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def downsample(self):
@@ -1784,23 +1784,22 @@ class Feedback(_Device):
         self['GDEN'] = int(value)
 
 
-class Drive(_ProptyDevice):
+class Drive(_Device):
     """."""
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'MOD', 'AMPL', 'WAVEFORM', 'FREQ', 'FREQ_ACT', 'SPAN', 'SPAN_ACT',
         'PERIOD', 'PERIOD_ACT', 'MASK', 'PATTERN', 'BITS',
         )
 
-    def __init__(self, devname, drive_num=None):
+    def __init__(self, devname, drive_num=None, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         propty = 'DRIVE'
         if drive_num is not None:
             propty += str(drive_num)
         propty += '_'
-        super().__init__(
-            devname, propty_prefix=propty, properties=Drive._properties)
+        super().__init__(devname+':'+propty, props2init=props2init)
 
     @property
     def number_of_bits(self):
@@ -1880,18 +1879,16 @@ class Drive(_ProptyDevice):
         self['PATTERN'] = str(value)
 
 
-class BunchClean(_ProptyDevice):
+class BunchClean(_Device):
     """."""
 
-    _properties = (
-        'ENABLE', 'AMPL', 'TUNE', 'PATTERN', 'PERIOD', 'SPAN',
-        )
+    PROPERTIES_DEFAULT = (
+        'ENABLE', 'AMPL', 'TUNE', 'PATTERN', 'PERIOD', 'SPAN')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        super().__init__(
-            devname, propty_prefix='CLEAN_', properties=BunchClean._properties)
+        super().__init__(devname+':CLEAN_', props2init=props2init)
 
     @property
     def state(self):
@@ -1948,21 +1945,17 @@ class BunchClean(_ProptyDevice):
         self['PATTERN'] = str(value)
 
 
-class PwrAmpL(_ProptyDevice):
+class PwrAmpL(_Device):
     """."""
 
-    _properties = ('FAULT', 'TEMP', 'FWDLOSS', 'REVLOSS', 'FWD', 'REV')
+    PROPERTIES_DEFAULT = ('FAULT', 'TEMP', 'FWDLOSS', 'REVLOSS', 'FWD', 'REV')
 
     DEF_TIMEOUT = 10  # [s]
 
-    def __init__(self, devname, num=0):
+    def __init__(self, devname, num=0, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-
-        # call base class constructor
-        super().__init__(
-            devname, propty_prefix=f'MCLRAW_{num:d}_',
-            properties=PwrAmpL._properties)
+        super().__init__(devname+f':MCLRAW_{num:d}_', props2init=props2init)
 
     @property
     def status(self):
@@ -2008,18 +2001,16 @@ class PwrAmpT(_Device):
 
     DEF_TIMEOUT = 10  # [s]
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Rst-Cmd', 'Enbl-Sts', 'Enbl-Sel', 'GainAuto-Sts', 'GainAuto-Sel',
         'Gain-SP', 'Gain-RB', 'GainStep-SP', 'GainStep-RB',
         )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         devname = devname.substitute(dev='BbBAmp'+devname.idx, idx='')
-
-        # call base class constructor
-        super().__init__(devname, properties=PwrAmpT._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def enable(self):

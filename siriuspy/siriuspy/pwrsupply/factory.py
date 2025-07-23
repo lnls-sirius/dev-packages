@@ -5,7 +5,7 @@ import re as _re
 from copy import deepcopy as _deepcopy
 
 from ..search import PSSearch as _PSSearch
-from ..thread import DequeThread as _DequeThread
+from ..thread import LoopQueueThread as _LoopQueueThread
 from ..bsmp.serial import Channel as _Channel
 
 from .csdev import get_ps_propty_database as _get_ps_propty_database
@@ -37,19 +37,19 @@ class BBBFactory:
         # create PRU used for low-level communication
         pru = _PRU(ethbridgeclnt_class, bbbname=bbbname)
 
-        # create DequeThread that queue all serial operations
-        prucqueue = _DequeThread()
+        # create LoopQueueThread that queue all serial operations
+        prucqueue = _LoopQueueThread()
 
         # build dicts for grouped udc.
         psmodels, devices, freqs = \
             BBBFactory._build_udcgrouped(bbbname)
 
         if len(psmodels) > 1:
-            # more than one psmodel under the same beagle. there will be two 
-            # PRUController objects pushing operation requests into the common 
-            # DequeThread. we have to use to lock mechanism in bsmp.Channel in 
-            # order to avoid one PRUController process thread interpreting the
-            # operation request of the other PRUController scan thread.
+            # more than one psmodel under the same beagle. there will be two
+            # PRUController objects pushing operation requests into the common
+            # LoopQueueThread. we have to use to lock mechanism in bsmp.Channel
+            # in order to avoid one PRUController process thread interpreting
+            # the operation request of the other PRUController scan thread.
             _Channel.create_lock()
 
         # power supply controllers and databases
@@ -132,7 +132,7 @@ class BBBFactory:
 
         # get names of all udcs under a beaglebone
         udcs = _PSSearch.conv_bbbname_2_udc(bbbname)
-        
+
         psmodels, devices, freqs = dict(), dict(), dict()
         for udc in udcs:
 

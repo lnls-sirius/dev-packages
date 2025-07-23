@@ -97,15 +97,17 @@ class ConfigDBDocument():
         info = self._configdbclient.find_configs(name=self._name)
         return len(info) > 0
 
-    def load(self):
+    def load(self, discarded=False):
         """Load configuration from ConfigServer."""
-        self._info = self._configdbclient.get_config_info(name=self._name)
-        self._value = self._configdbclient.get_config_value(name=self._name)
+        self._info = self._configdbclient.get_config_info(
+            name=self._name, discarded=discarded)
+        self._value = self._configdbclient.get_config_value(
+            name=self._name, discarded=discarded)
         self._synchronized = True
 
     def save(self, new_name=None):
         """Save configuration to ConfigServer."""
-        # if config is syncronyzed, it is not necessary to save an identical
+        # if config is syncronized, it is not necessary to save an identical
         # one in server
         if self.exist() and self._synchronized and not new_name:
             return
