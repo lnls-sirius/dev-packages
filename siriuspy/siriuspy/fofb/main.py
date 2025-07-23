@@ -12,7 +12,7 @@ from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _PVName
-from ..devices import FamFOFBControllers as _FamFOFBCtrls, \
+from ..devices import FamFOFBControllers as _FamFOFBCtrls, Device as _Device, \
     FamFastCorrs as _FamFastCorrs, SOFB as _SOFB, RFGen as _RFGen
 
 from .csdev import HLFOFBConst as _Const, ETypes as _ETypes
@@ -32,44 +32,30 @@ class App(_Callback):
         self._init = False
 
         # internal states
+        pvdb = self._pvs_database
         self._loop_state = self._const.LoopState.Open
         self._loop_state_lastsp = self._const.LoopState.Open
-        self._loop_gain_h = 0.1
+        self._loop_gain_h = pvdb['LoopGainH-RB']['value']
         self._loop_gain_mon_h = 0
-        self._loop_gain_v = 0.1
+        self._loop_gain_v = pvdb['LoopGainV-RB']['value']
         self._loop_gain_mon_v = 0
         self._thread_loopstate = None
         self._abort_thread = False
         self._loop_max_orb_dist = self._const.DEF_MAX_ORB_DISTORTION
         self._loop_max_orb_dist_enbl = self._const.DsblEnbl.Dsbl
         self._loop_packloss_detec_enbl = self._const.DsblEnbl.Dsbl
-        self._corr_status = self._pvs_database['CorrStatus-Mon']['value']
-        self._corr_confall_count = 0
-        self._corr_setpwrstateon_count = 0
-        self._corr_setopmodemanual_count = 0
-        self._corr_setaccfreezeenbl_count = 0
-        self._corr_setaccfreezedsbl_count = 0
-        self._corr_setaccclear_count = 0
-        self._corr_setcurrzero_count = 0
-        self._corr_setcurrzero_dur = 0
+        self._corr_status = pvdb['CorrStatus-Mon']['value']
+        self._corr_setcurrzero_dur = 5
         self._thread_currzero = None
         self._abort_thread_currzero = False
-        self._ch_maxacccurr = self._pvs_database['CHAccSatMax-RB']['value']
-        self._cv_maxacccurr = self._pvs_database['CVAccSatMax-RB']['value']
-        self._time_frame_len = self._pvs_database['TimeFrameLen-RB']['value']
-        self._fofbctrl_status = self._pvs_database['CtrlrStatus-Mon']['value']
-        self._fofbctrl_confbpmid_count = 0
-        self._fofbctrl_syncnet_count = 0
+        self._ch_maxacccurr = pvdb['CHAccSatMax-RB']['value']
+        self._cv_maxacccurr = pvdb['CVAccSatMax-RB']['value']
+        self._time_frame_len = pvdb['TimeFrameLen-RB']['value']
+        self._fofbctrl_status = pvdb['CtrlrStatus-Mon']['value']
         self._thread_syncnet = None
-        self._fofbctrl_syncref_count = 0
-        self._fofbctrl_synctframelen_count = 0
-        self._fofbctrl_confbpmlogtrg_count = 0
-        self._fofbctrl_syncmaxorbdist_count = 0
-        self._fofbctrl_syncpackloss_count = 0
-        self._fofbctrl_reset_count = 0
         self._thread_reset = None
         self._fofbctrl_syncenbllist = _np.ones(self._const.nr_bpms, dtype=bool)
-        self._fofbctrl_syncuseenbllist = 0
+        self._fofbctrl_syncuseenbllist = self._const.DsblEnbl.Enbl
         self._reforb_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforbhw_x = _np.zeros(self._const.nr_bpms, dtype=float)
         self._reforb_y = _np.zeros(self._const.nr_bpms, dtype=float)
@@ -85,6 +71,22 @@ class App(_Callback):
             'cv': _np.ones(self._const.nr_cv, dtype=bool),
             'rf': _np.ones(1, dtype=bool),
         }
+        self._corr_accdec_val = pvdb['FOFBAccDecimation-RB']['value']
+        self._corr_accdec_enm = pvdb['FOFBAccDecimation-Sts']['value']
+        self._corr_accfilter_val = _np.zeros(
+            (self._const.nr_chcv, self._const.psconfig_nr_coeffs_columns),
+            dtype=float
+        )
+        self._corr_accfilter_gain = _np.ones(
+            self._const.nr_chcv,
+            dtype=float
+        )
+        self._corr_currloop_kp = _np.ones(self._const.nr_chcv, dtype=float)
+        self._corr_currloop_ki = _np.ones(self._const.nr_chcv, dtype=float)
+        self._psconfig_mat = _np.zeros(
+            (self._const.nr_chcv, self._const.psconfig_nr_coeffs_columns + 3),
+            dtype=float
+        )
         self._thread_enbllist = None
         self._abort_thread_enbllist = False
         self._min_sing_val = self._const.MIN_SING_VAL
@@ -92,41 +94,20 @@ class App(_Callback):
         self._invrespmat_normmode = self._const.GlobIndiv.Global
         self._pscoeffs = self._invrespmatconv[:-1].copy()
         self._psgains = _np.ones(self._const.nr_chcv, dtype=float)
-        self._meas_respmat_count = 0
         self._meas_respmat_kick = {
             'ch': 15,  # [urad]
-            'cv': 15,  # [urad]
-            'rf': 80,  # [Hz]
+            'cv': 22.5,  # [urad]
+            'rf': 75,  # [Hz]
         }
         self._meas_respmat_wait = 1  # [s]
         self._meas_respmat_thread = None
         self._measuring_respmat = False
 
-        # use pyepics recommendations for threading
-        _epics.ca.use_initial_context()
-
         # devices and connections
         self._sisofb_dev = _SOFB(_SOFB.DEVICES.SI)
-        ppties_automon_off = [
-            'MTurnSum-Mon', 'MTurnOrbX-Mon', 'MTurnOrbY-Mon', 'MTurnTime-Mon',
-            'MTurnIdxOrbX-Mon', 'MTurnIdxOrbY-Mon', 'MTurnIdxSum-Mon',
-            'SlowOrbX-Mon', 'SlowOrbY-Mon',
-            'KickCH-Mon', 'KickCV-Mon', 'KickRF-Mon',
-            'DeltaKickCH-Mon', 'DeltaKickCV-Mon', 'DeltaKickRF-Mon',
-        ]
-        for ppty in ppties_automon_off:
-            self._sisofb_dev.set_auto_monitor(ppty, False)
 
         corrnames = self._const.ch_names + self._const.cv_names
         self._corrs_dev = _FamFastCorrs(corrnames)
-
-        self._kick_buffer = []
-        self._kick_buffer_size = self._const.DEF_KICK_BUFFER_SIZE
-        for idx, pso in enumerate(self._corrs_dev.psdevs):
-            pvo = pso.pv_object('CurrentRef-Mon')
-            pvo.auto_monitor = True
-            self._kick_buffer.append([])
-            pvo.add_callback(_part(self._update_kick_buffer, ps_index=idx))
 
         self._rf_dev = _RFGen()
 
@@ -137,11 +118,15 @@ class App(_Callback):
         for dev in self._llfofb_dev.ctrlrefdevs.values():
             pvo = dev.pv_object('LoopIntlk-Mon')
             self._intlk_values[pvo.pvname] = 0
-            pvo.auto_monitor = True
-            pvo.add_callback(self._callback_loopintlk)
+            pvo.add_callback(
+                self._callback_loopintlk, with_ctrlvars=False)
             self._intlk_pvs.append(pvo)
 
         self._corrs_dev.wait_for_connection(self._const.DEF_TIMEWAIT)
+
+        self._auxbpm = _Device(
+            'SI-01M1:DI-BPM',
+            props2init=('INFOFOFBRate-RB', 'INFOMONITRate-RB'))
 
         havebeam_pvname = _PVName(
             'SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
@@ -160,6 +145,7 @@ class App(_Callback):
             'LoopPacketLossDetecEnbl-Sel': self.set_loop_packloss_detec_enbl,
             'CorrConfig-Cmd': self.cmd_corr_configure,
             'CorrSetPwrStateOn-Cmd': self.cmd_corr_pwrstate_on,
+            'CorrSetPwrStateOff-Cmd': self.cmd_corr_pwrstate_off,
             'CorrSetOpModeManual-Cmd': self.cmd_corr_opmode_manual,
             'CorrSetAccFreezeDsbl-Cmd': self.cmd_corr_accfreeze_dsbl,
             'CorrSetAccFreezeEnbl-Cmd': self.cmd_corr_accfreeze_enbl,
@@ -178,7 +164,10 @@ class App(_Callback):
             'CtrlrSyncMaxOrbDist-Cmd': self.cmd_fofbctrl_syncmaxorbdist,
             'CtrlrSyncPacketLossDetec-Cmd': self.cmd_fofbctrl_syncpacklossdet,
             'CtrlrReset-Cmd': self.cmd_fofbctrl_reset,
-            'KickBufferSize-SP': self.set_kicker_buffer_size,
+            'CtrlrDsblSYSIDExc-Cmd': self.cmd_fofbctrl_dsblsysid,
+            'FOFBAccDecimation-Sel': _part(self.set_corr_accdec, 'enum'),
+            'FOFBAccDecimation-SP': _part(self.set_corr_accdec, 'value'),
+            'PSConfigMat-SP': self.set_psconfig_mat,
             'RefOrbX-SP': _part(self.set_reforbit, 'x'),
             'RefOrbY-SP': _part(self.set_reforbit, 'y'),
             'RespMat-SP': self.set_respmat,
@@ -200,125 +189,115 @@ class App(_Callback):
         # configuration scanning
         self.quit = False
         self.scanning = False
-        self.thread_check_configs = _epics.ca.CAThread(
-            target=self._check_configs, daemon=True)
-        self.thread_check_configs.start()
+        self.thread_check_corrs_configs = _epics.ca.CAThread(
+            target=self._check_corrs_configs, daemon=True)
+        self.thread_check_corrs_configs.start()
+        self.thread_check_ctrls_configs = _epics.ca.CAThread(
+            target=self._check_ctrls_configs, daemon=True)
+        self.thread_check_ctrls_configs.start()
 
     def init_database(self):
         """Set initial PV values."""
-        self.run_callbacks('LoopState-Sel', self._loop_state)
-        self.run_callbacks('LoopState-Sts', self._loop_state)
-        self.run_callbacks('LoopGainH-SP', self._loop_gain_h)
-        self.run_callbacks('LoopGainH-RB', self._loop_gain_h)
-        self.run_callbacks('LoopGainH-Mon', self._loop_gain_mon_h)
-        self.run_callbacks('LoopGainV-SP', self._loop_gain_v)
-        self.run_callbacks('LoopGainV-RB', self._loop_gain_v)
-        self.run_callbacks('LoopGainV-Mon', self._loop_gain_mon_v)
-        self.run_callbacks('LoopMaxOrbDistortion-SP', self._loop_max_orb_dist)
-        self.run_callbacks('LoopMaxOrbDistortion-RB', self._loop_max_orb_dist)
-        self.run_callbacks(
-            'LoopMaxOrbDistortionEnbl-Sel', self._loop_max_orb_dist_enbl)
-        self.run_callbacks(
-            'LoopMaxOrbDistortionEnbl-Sts', self._loop_max_orb_dist_enbl)
-        self.run_callbacks(
-            'LoopPacketLossDetecEnbl-Sel', self._loop_packloss_detec_enbl)
-        self.run_callbacks(
-            'LoopPacketLossDetecEnbl-Sts', self._loop_packloss_detec_enbl)
-        self.run_callbacks('CorrStatus-Mon', self._corr_status)
-        self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
-        self.run_callbacks(
-            'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
-        self.run_callbacks(
-            'CorrSetOpModeManual-Cmd', self._corr_setopmodemanual_count)
-        self.run_callbacks(
-            'CorrSetAccFreezeDsbl-Cmd', self._corr_setaccfreezedsbl_count)
-        self.run_callbacks(
-            'CorrSetAccFreezeEnbl-Cmd', self._corr_setaccfreezeenbl_count)
-        self.run_callbacks(
-            'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
-        self.run_callbacks(
-            'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
-        self.run_callbacks(
-            'CorrSetCurrZeroDuration-SP', self._corr_setcurrzero_dur)
-        self.run_callbacks(
-            'CorrSetCurrZeroDuration-RB', self._corr_setcurrzero_dur)
-        self.run_callbacks('CHAccSatMax-SP', self._ch_maxacccurr)
-        self.run_callbacks('CHAccSatMax-RB', self._ch_maxacccurr)
-        self.run_callbacks('CVAccSatMax-SP', self._cv_maxacccurr)
-        self.run_callbacks('CVAccSatMax-RB', self._cv_maxacccurr)
-        self.run_callbacks('TimeFrameLen-SP', self._time_frame_len)
-        self.run_callbacks('TimeFrameLen-RB', self._time_frame_len)
-        self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)
-        self.run_callbacks(
-            'CtrlrConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
-        self.run_callbacks(
-            'CtrlrSyncNet-Cmd', self._fofbctrl_syncnet_count)
-        self.run_callbacks(
-            'CtrlrSyncUseEnblList-Sel', self._fofbctrl_syncuseenbllist)
-        self.run_callbacks(
-            'CtrlrSyncUseEnblList-Sts', self._fofbctrl_syncuseenbllist)
-        self.run_callbacks(
-            'CtrlrSyncEnblList-Mon', self._fofbctrl_syncenbllist)
-        self.run_callbacks(
-            'CtrlrSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
-        self.run_callbacks(
-            'CtrlrSyncTFrameLen-Cmd', self._fofbctrl_synctframelen_count)
-        self.run_callbacks(
-            'CtrlrConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
-        self.run_callbacks(
-            'CtrlrSyncMaxOrbDist-Cmd', self._fofbctrl_syncmaxorbdist_count)
-        self.run_callbacks(
-            'CtrlrSyncPacketLossDetec-Cmd', self._fofbctrl_syncpackloss_count)
-        self.run_callbacks('CtrlrReset-Cmd', self._fofbctrl_reset_count)
-        self.run_callbacks('KickBufferSize-SP', self._kick_buffer_size)
-        self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
-        self.run_callbacks('KickBufferSize-Mon', self._kick_buffer_size)
-        self.run_callbacks(
-            'KickCH-Mon', _np.zeros(self._const.nr_ch, dtype=float))
-        self.run_callbacks(
-            'KickCV-Mon', _np.zeros(self._const.nr_cv, dtype=float))
-        self.run_callbacks('RefOrbX-SP', self._reforb_x)
-        self.run_callbacks('RefOrbX-RB', self._reforb_x)
-        self.run_callbacks('RefOrbY-SP', self._reforb_y)
-        self.run_callbacks('RefOrbY-RB', self._reforb_y)
-        self.run_callbacks('RefOrbHwX-Mon', self._reforbhw_x)
-        self.run_callbacks('RefOrbHwY-Mon', self._reforbhw_y)
-        self.run_callbacks('BPMXEnblList-SP', self._enable_lists['bpmx'])
-        self.run_callbacks('BPMXEnblList-RB', self._enable_lists['bpmx'])
-        self.run_callbacks('BPMYEnblList-SP', self._enable_lists['bpmy'])
-        self.run_callbacks('BPMYEnblList-RB', self._enable_lists['bpmy'])
-        self.run_callbacks('CHEnblList-SP', self._enable_lists['ch'])
-        self.run_callbacks('CHEnblList-RB', self._enable_lists['ch'])
-        self.run_callbacks('CVEnblList-SP', self._enable_lists['cv'])
-        self.run_callbacks('CVEnblList-RB', self._enable_lists['cv'])
-        self.run_callbacks(
-            'UseRF-Sel', bool(self._enable_lists['rf']))
-        self.run_callbacks(
-            'UseRF-Sts', bool(self._enable_lists['rf']))
-        self.run_callbacks('MinSingValue-SP', self._min_sing_val)
-        self.run_callbacks('MinSingValue-RB', self._min_sing_val)
-        self.run_callbacks('TikhonovRegConst-SP', self._tikhonov_reg_const)
-        self.run_callbacks('TikhonovRegConst-RB', self._tikhonov_reg_const)
-        self.run_callbacks('InvRespMatNormMode-Sel', self._invrespmat_normmode)
-        self.run_callbacks('InvRespMatNormMode-Sts', self._invrespmat_normmode)
-        self._load_respmat()
+        pvn2vals = {
+            'LoopState-Sel': self._loop_state,
+            'LoopState-Sts': self._loop_state,
+            'LoopGainH-SP': self._loop_gain_h,
+            'LoopGainH-RB': self._loop_gain_h,
+            'LoopGainH-Mon': self._loop_gain_mon_h,
+            'LoopGainV-SP': self._loop_gain_v,
+            'LoopGainV-RB': self._loop_gain_v,
+            'LoopGainV-Mon': self._loop_gain_mon_v,
+            'LoopMaxOrbDistortion-SP': self._loop_max_orb_dist,
+            'LoopMaxOrbDistortion-RB': self._loop_max_orb_dist,
+            'LoopMaxOrbDistortionEnbl-Sel': self._loop_max_orb_dist_enbl,
+            'LoopMaxOrbDistortionEnbl-Sts': self._loop_max_orb_dist_enbl,
+            'LoopPacketLossDetecEnbl-Sel': self._loop_packloss_detec_enbl,
+            'LoopPacketLossDetecEnbl-Sts': self._loop_packloss_detec_enbl,
+            'CorrStatus-Mon': self._corr_status,
+            'CorrConfig-Cmd': 0,
+            'CorrSetPwrStateOn-Cmd': 0,
+            'CorrSetOpModeManual-Cmd': 0,
+            'CorrSetAccFreezeDsbl-Cmd': 0,
+            'CorrSetAccFreezeEnbl-Cmd': 0,
+            'CorrSetAccClear-Cmd': 0,
+            'CorrSetCurrZero-Cmd': 0,
+            'CorrSetCurrZeroDuration-SP': self._corr_setcurrzero_dur,
+            'CorrSetCurrZeroDuration-RB': self._corr_setcurrzero_dur,
+            'CHAccSatMax-SP': self._ch_maxacccurr,
+            'CHAccSatMax-RB': self._ch_maxacccurr,
+            'CVAccSatMax-SP': self._cv_maxacccurr,
+            'CVAccSatMax-RB': self._cv_maxacccurr,
+            'TimeFrameLen-SP': self._time_frame_len,
+            'TimeFrameLen-RB': self._time_frame_len,
+            'CtrlrStatus-Mon': self._fofbctrl_status,
+            'CtrlrConfBPMId-Cmd': 0,
+            'CtrlrSyncNet-Cmd': 0,
+            'CtrlrSyncUseEnblList-Sel': self._fofbctrl_syncuseenbllist,
+            'CtrlrSyncUseEnblList-Sts': self._fofbctrl_syncuseenbllist,
+            'CtrlrSyncEnblList-Mon': self._fofbctrl_syncenbllist,
+            'CtrlrSyncRefOrb-Cmd': 0,
+            'CtrlrSyncTFrameLen-Cmd': 0,
+            'CtrlrConfBPMLogTrg-Cmd': 0,
+            'CtrlrSyncMaxOrbDist-Cmd': 0,
+            'CtrlrSyncPacketLossDetec-Cmd': 0,
+            'CtrlrReset-Cmd': 0,
+            'CtrlrDsblSYSIDExc-Cmd': 0,
+            'FOFBAccDecimation-Sel': self._corr_accdec_enm,
+            'FOFBAccDecimation-Sts': self._corr_accdec_enm,
+            'FOFBAccDecimation-SP': self._corr_accdec_val,
+            'FOFBAccDecimation-RB': self._corr_accdec_val,
+            'MinSingValue-SP': self._min_sing_val,
+            'MinSingValue-RB': self._min_sing_val,
+            'TikhonovRegConst-SP': self._tikhonov_reg_const,
+            'TikhonovRegConst-RB': self._tikhonov_reg_const,
+            'InvRespMatNormMode-Sel': self._invrespmat_normmode,
+            'InvRespMatNormMode-Sts': self._invrespmat_normmode,
+            'MeasRespMat-Cmd': 0,
+            'MeasRespMat-Mon': self._const.MeasRespMatMon.Idle,
+            'MeasRespMatKickCH-SP': self._meas_respmat_kick['ch'],
+            'MeasRespMatKickCH-RB': self._meas_respmat_kick['ch'],
+            'MeasRespMatKickCV-SP': self._meas_respmat_kick['cv'],
+            'MeasRespMatKickCV-RB': self._meas_respmat_kick['cv'],
+            'MeasRespMatKickRF-SP': self._meas_respmat_kick['rf'],
+            'MeasRespMatKickRF-RB': self._meas_respmat_kick['rf'],
+            'MeasRespMatWait-SP': self._meas_respmat_wait,
+            'MeasRespMatWait-RB': self._meas_respmat_wait,
+        }
+        for pvn, val in pvn2vals.items():
+            self.run_callbacks(pvn, val)
+
+        # load autosave data
+        # enable lists
+        for dev in ['bpmx', 'bpmy', 'ch', 'cv', 'rf']:
+            okl = self._load_enbllist(dev)
+            pvn = f'{dev.upper()}EnblList-SP' if dev != 'rf' else 'UseRF-Sel'
+            enb = self._enable_lists[dev]
+            pvv = enb if dev != 'rf' else bool(enb)
+            self.run_callbacks(pvn, pvv)
+            if not okl:
+                self.run_callbacks(
+                    pvn.replace('SP', 'RB').replace('Sel', 'Sts'), pvv)
+        self._update_fofbctrl_sync_enbllist()
+        # matrix
+        okm = self._load_mat(self._const.respmat_fname)
         self.run_callbacks('RespMat-SP', list(self._respmat.ravel()))
-        self.run_callbacks('MeasRespMat-Cmd', self._meas_respmat_count)
-        self.run_callbacks('MeasRespMat-Mon', self._const.MeasRespMatMon.Idle)
-        self.run_callbacks(
-            'MeasRespMatKickCH-SP', self._meas_respmat_kick['ch'])
-        self.run_callbacks(
-            'MeasRespMatKickCH-RB', self._meas_respmat_kick['ch'])
-        self.run_callbacks(
-            'MeasRespMatKickCV-SP', self._meas_respmat_kick['cv'])
-        self.run_callbacks(
-            'MeasRespMatKickCV-RB', self._meas_respmat_kick['cv'])
-        self.run_callbacks(
-            'MeasRespMatKickRF-SP', self._meas_respmat_kick['rf'])
-        self.run_callbacks(
-            'MeasRespMatKickRF-RB', self._meas_respmat_kick['rf'])
-        self.run_callbacks('MeasRespMatWait-SP', self._meas_respmat_wait)
-        self.run_callbacks('MeasRespMatWait-RB', self._meas_respmat_wait)
+        if not okm:
+            self.run_callbacks('RespMat-RB', list(self._respmat.ravel()))
+        # ref orbits
+        okr = self._load_reforbit()
+        for plan in ['x', 'y']:
+            pvn = f'RefOrb{plan.upper()}-SP'
+            pvv = getattr(self, f'_reforb_{plan}')
+            self.run_callbacks(pvn, pvv)
+            if not okr:
+                self.run_callbacks(pvn.replace('SP', 'RB'), pvv)
+        # ps configuration matrix
+        psc = self._load_mat(self._const.psconfig_fname)
+        self.run_callbacks('PSConfigMat-SP', list(self._psconfig_mat.ravel()))
+        if not psc:
+            self.run_callbacks(
+                'PSConfigMat-RB', list(self._psconfig_mat.ravel())
+            )
         self._update_log('Started.')
         self._init = True
 
@@ -329,12 +308,7 @@ class App(_Callback):
 
     def process(self, interval):
         """Sleep."""
-        t0_ = _time.time()
-        self._update_kicks()
-
-        dtime = interval - (_time.time()-t0_)
-        if dtime > 0:
-            _time.sleep(dtime)
+        _time.sleep(interval)
 
     def read(self, reason):
         """Read from IOC database."""
@@ -376,7 +350,7 @@ class App(_Callback):
 
     # --- loop control ---
 
-    def set_loop_state(self, value, reset=False, abort=False):
+    def set_loop_state(self, value, abort=False):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
             return False
@@ -399,11 +373,11 @@ class App(_Callback):
 
         self._thread_loopstate = _epics.ca.CAThread(
             target=self._thread_set_loop_state,
-            args=[value, reset, abort], daemon=True)
+            args=[value, abort], daemon=True)
         self._thread_loopstate.start()
         return True
 
-    def _thread_set_loop_state(self, value, reset, abort):
+    def _thread_set_loop_state(self, value, abort):
         if value:  # closing the loop
             # set gains to zero, recalculate gains and coeffs
             self._update_log('Setting Loop Gain to zero...')
@@ -450,9 +424,6 @@ class App(_Callback):
             self._loop_state = value
             self._check_set_corrs_opmode()
             self.run_callbacks('LoopState-Sts', self._loop_state)
-
-        if reset:
-            self._do_fofbctrl_reset()
 
     def _do_loop_gain_ramp(self, ramp='up', abort=False):
         xdata = _np.linspace(0, 1, self._const.LOOPGAIN_RMP_NPTS)
@@ -505,6 +476,8 @@ class App(_Callback):
             if self._corrs_dev.check_invrespmat_row(self._pscoeffs) and \
                     self._corrs_dev.check_fofbacc_gain(self._psgains):
                 return True
+            if self._check_abort_thread():
+                return False
         self._update_log('ERR:Timed out waiting for correctors to')
         self._update_log('ERR:implement gains and coefficients.')
         return False
@@ -601,18 +574,37 @@ class App(_Callback):
         if not self._check_corr_connection():
             return False
 
+        # saturation limits
+        self._update_log('Setting corrector saturation limits...')
+        chn, chl = self._const.ch_names, self._ch_maxacccurr
+        cvn, cvl = self._const.cv_names, self._cv_maxacccurr
+        self._corrs_dev.set_fofbacc_satmax(chl, psnames=chn)
+        self._corrs_dev.set_fofbacc_satmin(-chl, psnames=chn)
+        self._corrs_dev.set_fofbacc_satmax(cvl, psnames=cvn)
+        self._corrs_dev.set_fofbacc_satmin(-cvl, psnames=cvn)
+        self._update_log('...done!')
+        # pwrstate
+        self._check_set_corrs_pwrstate()
         # opmode
         self._check_set_corrs_opmode()
         # fofbacc_freeze
         self._set_corrs_fofbacc_freeze()
         # matrix coefficients
         self._set_corrs_coeffs()
+        # filter and control parameters
+        self._set_corr_control_config()
 
         self._update_log('Correctors configuration done!')
+        return True
 
-        self._corr_confall_count += 1
-        self.run_callbacks('CorrConfig-Cmd', self._corr_confall_count)
-        return False
+    def _set_corr_control_config(self):
+        """Fast correctors matrix control parameters and filter."""
+        self._update_log('Setting corrector parameters...')
+        self._corrs_dev.set_fofbacc_filter(self._corr_accfilter_val)
+        self._corrs_dev.set_fofbacc_filter_gain(self._corr_accfilter_gain)
+        self._corrs_dev.set_currloop_kp(self._corr_currloop_kp)
+        self._corrs_dev.set_currloop_ki(self._corr_currloop_ki)
+        self._update_log('...done!')
 
     def cmd_corr_pwrstate_on(self, _):
         """Set all corrector pwrstate to on."""
@@ -623,11 +615,18 @@ class App(_Callback):
         self._update_log('Setting all corrector pwrstate to on...')
         self._corrs_dev.set_pwrstate(self._const.OffOn.On)
         self._update_log('...done!')
+        return True
 
-        self._corr_setpwrstateon_count += 1
-        self.run_callbacks(
-            'CorrSetPwrStateOn-Cmd', self._corr_setpwrstateon_count)
-        return False
+    def cmd_corr_pwrstate_off(self, _):
+        """Set all corrector pwrstate to off."""
+        self._update_log('Received set corrector pwrstate to off...')
+        if not self._check_corr_connection():
+            return False
+
+        self._update_log('Setting all corrector pwrstate to off...')
+        self._corrs_dev.set_pwrstate(self._const.OffOn.Off)
+        self._update_log('...done!')
+        return True
 
     def cmd_corr_opmode_manual(self, _):
         """Set all corrector opmode to manual."""
@@ -638,11 +637,7 @@ class App(_Callback):
         self._update_log('Setting all corrector opmode to manual...')
         self._corrs_dev.set_opmode(self._corrs_dev.OPMODE_STS.manual)
         self._update_log('...done!')
-
-        self._corr_setopmodemanual_count += 1
-        self.run_callbacks(
-            'CorrSetOpModeManual-Cmd', self._corr_setopmodemanual_count)
-        return False
+        return True
 
     def cmd_corr_accfreeze_dsbl(self, _):
         """Set all corrector accumulator freeze state to Dsbl."""
@@ -653,11 +648,7 @@ class App(_Callback):
         self._update_log('Setting AccFreeze to Dsbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Dsbl)
         self._update_log('...done!')
-
-        self._corr_setaccfreezedsbl_count += 1
-        self.run_callbacks(
-            'CorrSetAccFreezeDsbl-Cmd', self._corr_setaccfreezedsbl_count)
-        return False
+        return True
 
     def cmd_corr_accfreeze_enbl(self, _):
         """Set all corrector accumulator freeze state to Enbl."""
@@ -668,11 +659,7 @@ class App(_Callback):
         self._update_log('Setting AccFreeze to Enbl...')
         self._corrs_dev.set_fofbacc_freeze(self._const.DsblEnbl.Enbl)
         self._update_log('...done!')
-
-        self._corr_setaccfreezeenbl_count += 1
-        self.run_callbacks(
-            'CorrSetAccFreezeEnbl-Cmd', self._corr_setaccfreezeenbl_count)
-        return False
+        return True
 
     def cmd_corr_accclear(self, _):
         """Clear all corrector accumulator."""
@@ -683,11 +670,7 @@ class App(_Callback):
         self._update_log('Sending clear accumulator command...')
         self._corrs_dev.cmd_fofbacc_clear()
         self._update_log('...done!')
-
-        self._corr_setaccclear_count += 1
-        self.run_callbacks(
-            'CorrSetAccClear-Cmd', self._corr_setaccclear_count)
-        return False
+        return True
 
     def cmd_corr_currzero(self, _):
         """Set all corrector current to zero."""
@@ -702,11 +685,7 @@ class App(_Callback):
         self._thread_currzero = _epics.ca.CAThread(
             target=self._thread_corr_currzero, daemon=True)
         self._thread_currzero.start()
-
-        self._corr_setcurrzero_count += 1
-        self.run_callbacks(
-            'CorrSetCurrZero-Cmd', self._corr_setcurrzero_count)
-        return False
+        return True
 
     def set_corr_currzero_duration(self, value):
         """Set corrector ramp down current duration."""
@@ -725,6 +704,40 @@ class App(_Callback):
         self.run_callbacks('CorrSetCurrZeroDuration-RB', value)
         return True
 
+    def set_corr_accdec(self, option, value):
+        """Set corrector accumulator decimation."""
+        if self._corr_accdec_enm != self._const.DecOpt.Custom and \
+                option == 'value':
+            return False
+
+        if option == 'enum':
+            if value == self._const.DecOpt.FOFB:
+                dec = 1
+            elif value == self._const.DecOpt.Monit:
+                if self._auxbpm.connected:
+                    monit = self._auxbpm['INFOMONITRate-RB']
+                    fofb = self._auxbpm['INFOFOFBRate-RB']
+                    dec = monit // fofb
+                else:
+                    dec = self._const.DEF_ACC_DECIMATION
+                    self._update_log('WARN:Could not read decimation from BPM')
+                    self._update_log(f'WARN:rates. Using value {dec}.')
+            else:
+                dec = self._corr_accdec_val
+            self._corr_accdec_enm = value
+            self.run_callbacks('FOFBAccDecimation-Sts', value)
+            self.run_callbacks('FOFBAccDecimation-SP', dec)
+        else:
+            dec = value
+        self._corr_accdec_val = dec
+        self.run_callbacks('FOFBAccDecimation-RB', dec)
+
+        self._update_log('Setting FOFB Acc decimation...')
+        self._corrs_dev.set_fofbacc_decimation(dec)
+        self._update_log('...done!')
+
+        return True
+
     def _thread_corr_currzero(self):
         if self._corrs_dev.check_current(0):
             self._update_log('Current of all correctors already zeroed.')
@@ -736,11 +749,13 @@ class App(_Callback):
         npts = int(self._corr_setcurrzero_dur*self._const.CURRZERO_RMP_FREQ)
         if npts != 0:
             xdata = _np.linspace(1, 0, npts)
-            for step in xdata:
+            for idx, step in enumerate(xdata):
                 curr = init_curr * step
                 if self._check_thread_currzero_abort():
                     self._update_log('...aborted.')
                     return
+                self._update_log(
+                    f'{idx+1:02d}/{len(xdata):02d} -> Current={100*step:.1f}%')
                 self._corrs_dev.set_current(curr)
                 _time.sleep(1/self._const.CURRZERO_RMP_FREQ)
 
@@ -802,11 +817,7 @@ class App(_Callback):
                 self._update_log('ERR:Failed to configure DCCs.')
         else:
             self._update_log('FOFB DCC BPMIds already configured.')
-
-        self._fofbctrl_confbpmid_count += 1
-        self.run_callbacks(
-            'CtrlrConfBPMId-Cmd', self._fofbctrl_confbpmid_count)
-        return False
+        return True
 
     def cmd_fofbctrl_syncnet(self, _):
         """Sync FOFB net command."""
@@ -823,11 +834,7 @@ class App(_Callback):
         self._thread_syncnet = _epics.ca.CAThread(
             target=self._thread_fofbctrl_syncnet, daemon=True)
         self._thread_syncnet.start()
-
-        self._fofbctrl_syncnet_count += 1
-        self.run_callbacks(
-            'CtrlrSyncNet-Cmd', self._fofbctrl_syncnet_count)
-        return False
+        return True
 
     def _thread_fofbctrl_syncnet(self):
         steps = [
@@ -846,18 +853,15 @@ class App(_Callback):
         if not self._check_fofbctrl_connection():
             return False
         self._update_log('Checking...')
-        reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
-        if not self._llfofb_dev.check_reforb(reforb):
+        if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not \
+                self._llfofb_dev.check_reforby(self._reforbhw_y):
             self._update_log('Syncing FOFB RefOrb...')
-            self._llfofb_dev.set_reforb(reforb)
+            self._llfofb_dev.set_reforbx(self._reforbhw_x)
+            self._llfofb_dev.set_reforby(self._reforbhw_y)
             self._update_log('...done!')
         else:
             self._update_log('FOFB RefOrb already synced.')
-
-        self._fofbctrl_syncref_count += 1
-        self.run_callbacks(
-            'CtrlrSyncRefOrb-Cmd', self._fofbctrl_syncref_count)
-        return False
+        return True
 
     def cmd_fofbctrl_synctframelen(self, _):
         """Sync FOFB controllers TimeFrameLen command."""
@@ -874,11 +878,7 @@ class App(_Callback):
                 self._update_log('ERR:Failed to configure TimeFrameLen.')
         else:
             self._update_log('TimeFrameLen PVs already configured.')
-
-        self._fofbctrl_synctframelen_count += 1
-        self.run_callbacks(
-            'CtrlrSyncTFrameLen-Cmd', self._fofbctrl_synctframelen_count)
-        return False
+        return True
 
     def cmd_fofbctrl_confbpmlogtrg(self, _):
         """Configure BPM logical triggers command."""
@@ -894,11 +894,7 @@ class App(_Callback):
                 self._update_log('ERR:Failed to configure BPM log.trigs.')
         else:
             self._update_log('BPM logical triggers already configured.')
-
-        self._fofbctrl_confbpmlogtrg_count += 1
-        self.run_callbacks(
-            'CtrlrConfBPMLogTrg-Cmd', self._fofbctrl_confbpmlogtrg_count)
-        return False
+        return True
 
     def set_fofbctrl_syncuseenablelist(self, value):
         """Set whether to use or not BPMEnblList in sync."""
@@ -946,11 +942,7 @@ class App(_Callback):
                 self._update_log('ERR:Failed to sync enable status.')
         else:
             self._update_log('MaxOrbDistortionEnbl PVs already configured.')
-
-        self._fofbctrl_syncmaxorbdist_count += 1
-        self.run_callbacks(
-            'CtrlrSyncMaxOrbDist-Cmd', self._fofbctrl_syncmaxorbdist_count)
-        return False
+        return True
 
     def cmd_fofbctrl_syncpacklossdet(self, _):
         """Sync FOFB controllers packet loss detection command."""
@@ -958,72 +950,66 @@ class App(_Callback):
         self._update_log('loss detection command...Checking...')
         if not self._check_fofbctrl_connection():
             return False
-
         self._conf_fofbctrl_packetlossdetec()
-
-        self._fofbctrl_syncpackloss_count += 1
-        self.run_callbacks(
-            'CtrlrSyncPacketLossDetec-Cmd', self._fofbctrl_syncpackloss_count)
-        return False
+        return True
 
     def cmd_fofbctrl_reset(self, _):
         """Reset FOFB controllers interlock command."""
         self._update_log('Received reset FOFB controllers command...')
         if not self._check_fofbctrl_connection():
             return False
-
         self._do_fofbctrl_reset()
-
-        self._fofbctrl_reset_count += 1
-        self.run_callbacks('CtrlrReset-Cmd', self._fofbctrl_reset_count)
-        return False
-
-    # --- kicks buffer and kicks update ---
-
-    def set_kicker_buffer_size(self, value: int):
-        """Set size of the kick buffer.
-
-        Args:
-            value (int): New value for the buffer size.
-
-        Returns:
-            bool: Whether property was properly set.
-
-        """
-        self._kick_buffer_size = max(1, int(value))
-        self.run_callbacks('KickBufferSize-RB', self._kick_buffer_size)
         return True
 
-    def _update_kick_buffer(self, pvname, value, ps_index, **kwargs):
-        _ = kwargs, pvname
-        if value is None:
-            return
-        val = self._corrs_dev.psconvs[ps_index].conv_current_2_strength(value)
-        if val is None:
-            return
-        self._kick_buffer[ps_index].append(val)
-        del self._kick_buffer[ps_index][:-self._kick_buffer_size]
+    def cmd_fofbctrl_dsblsysid(self, _):
+        """Disable FOFB controllers system identification excitation."""
+        self._update_log('Received disable FOFB controllers SYSID...')
+        if not self._check_fofbctrl_connection():
+            return False
+        self._update_log('Disabling SYSID excitation...')
+        self._llfofb_dev.cmd_dsbl_sysid_exc()
+        self._update_log('...done!')
+        return True
 
-    def _update_kicks(self):
-        kickch, kickcv = [], []
-        lenb = self._kick_buffer_size if self._loop_state else 1
+    # --- PS configuration matrix ---
+    def set_psconfig_mat(self, value):
+        """Set PSconfig matrix."""
+        self._update_log('Setting New PSConfigMat...')
 
-        rlenb = 0
-        for i in range(self._const.nr_ch):
-            buff = self._kick_buffer[i][-lenb:]
-            rlenb = max(rlenb, len(buff))
-            val = _np.mean(buff) if buff else 0.0
-            kickch.append(val)
+        # check size
+        mat = _np.array(value, dtype=float)
+        matb = mat
+        if mat.size != self._const.psconfig_size:
+            self._update_log(
+                f'ERR: Wrong PSConfig Size ({mat.size}, '
+                f'expected {self._const.psconfig_size}).'
+            )
+            return False
 
-        for i in range(self._const.nr_ch, self._const.nr_chcv):
-            buff = self._kick_buffer[i][-lenb:]
-            rlenb = max(rlenb, len(buff))
-            val = _np.mean(buff) if buff else 0.0
-            kickcv.append(val)
+        # reshape
+        nr_rows = self._const.nr_chcv
+        mat = _np.reshape(mat, [nr_rows, -1])
 
-        self.run_callbacks('KickCH-Mon', kickch)
-        self.run_callbacks('KickCV-Mon', kickcv)
-        self.run_callbacks('KickBufferSize-Mon', rlenb)
+        # select attributes
+        kpcol = self._const.PSCONFIG_KP_COL
+        kicol = self._const.PSCONFIG_KI_COL
+        gaincol = self._const.PSCONFIG_FILTER_GAIN_COL
+        coeffcol = self._const.PSCONFIG_COEFF_FIRST_COL
+
+        self._psconfig_mat = mat
+        self._corr_currloop_kp = self._psconfig_mat[:, kpcol]
+        self._corr_currloop_ki = self._psconfig_mat[:, kicol]
+        self._corr_accfilter_gain = self._psconfig_mat[:, gaincol]
+        self._corr_accfilter_val = self._psconfig_mat[:, coeffcol:]
+
+        if self._init:
+            self._set_corr_control_config()
+            self._save_mat(matb, self._const.psconfig_fname)
+
+        # update readback pv
+        self.run_callbacks('PSConfigMat-RB', list(self._psconfig_mat.ravel()))
+
+        return True
 
     # --- reference orbit ---
 
@@ -1046,11 +1032,46 @@ class App(_Callback):
         refhw = _np.roll(refhw, 1)  # make BPM 01M1 the first element
         setattr(self, '_reforbhw_' + plane.lower(), refhw)
 
+        # do not set reforb to controllers and save to file in initialization
+        if self._init:
+            # set reforb to FOFB controllers
+            func = getattr(self._llfofb_dev, 'set_reforb' + plane.lower())
+            func(refhw)
+
+            # save to autosave file
+            self._save_reforbit()
+
         # update readback PV
         self.run_callbacks(f'RefOrb{plane.upper()}-RB', list(ref.ravel()))
         self.run_callbacks(f'RefOrbHw{plane.upper()}-Mon', refhw)
         self._update_log('...done!')
         return True
+
+    def _load_reforbit(self):
+        filename = self._const.reforb_fname
+        if not _os.path.isfile(filename):
+            return False
+        self._update_log('Loading RefOrbits from file...')
+        refx, refy = _np.loadtxt(filename, unpack=True)
+        okx = self.set_reforbit('x', refx)
+        oky = self.set_reforbit('y', refy)
+        if all([okx, oky]):
+            msg = 'Loaded RefOrbits!'
+        else:
+            msg = 'ERR:Problem loading RefOrbits from file.'
+        self._update_log(msg)
+        return 'ERR' not in msg
+
+    def _save_reforbit(self):
+        filename = self._const.reforb_fname
+        refx, refy = self._reforb_x, self._reforb_y
+        orbs = _np.array([refx, refy]).T
+        try:
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, orbs)
+        except FileNotFoundError:
+            self._update_log('WARN:Could not save ref.orbit to file.')
 
     # --- matrix manipulation ---
 
@@ -1079,27 +1100,13 @@ class App(_Callback):
             return False
 
         # if ok, save matrix
-        self._save_respmat(matb)
+        if self._init:
+            self._save_mat(matb, self._const.respmat_fname)
 
         # update readback pv
         self.run_callbacks('RespMat-RB', list(self._respmat.ravel()))
 
         return True
-
-    def _load_respmat(self):
-        filename = self._const.respmat_fname
-        if _os.path.isfile(filename):
-            self._update_log('Loading RespMat from file...')
-            if self.set_respmat(_np.loadtxt(filename)):
-                msg = 'Loaded RespMat!'
-            else:
-                msg = 'ERR:Problem loading RespMat from file.'
-            self._update_log(msg)
-
-    def _save_respmat(self, mat):
-        path = _os.path.split(self._const.respmat_fname)[0]
-        _os.makedirs(path, exist_ok=True)
-        _np.savetxt(self._const.respmat_fname, mat)
 
     def set_enbllist(self, device, value):
         """Set enable list for device."""
@@ -1120,17 +1127,23 @@ class App(_Callback):
                 'ERR: Wrong {0:s} EnblList size.'.format(device.upper()))
             return False
 
-        # check if matrix is invertible
         self._enable_lists[device] = new
-        if not self._calc_matrices():
-            self._enable_lists[device] = bkup
-            return False
 
-        # handle devices enable configuration
-        self._thread_enbllist = _epics.ca.CAThread(
-            target=self._handle_devices_enblconfig, args=[device, ],
-            daemon=True)
-        self._thread_enbllist.start()
+        # do not set enable lists and save to file in initialization
+        if self._init:
+            # check if matrix is invertible
+            if not self._calc_matrices():
+                self._enable_lists[device] = bkup
+                return False
+
+            # handle devices enable configuration
+            self._thread_enbllist = _epics.ca.CAThread(
+                target=self._handle_devices_enblconfig, args=[device, ],
+                daemon=True)
+            self._thread_enbllist.start()
+
+            # save to autosave files
+            self._save_enbllist(device, _np.array([value], dtype=bool))
 
         # update readback pv
         if device == 'rf':
@@ -1177,6 +1190,28 @@ class App(_Callback):
         """Corrector enable list."""
         enbl = self._enable_lists
         return _np.hstack([enbl['ch'], enbl['cv'], enbl['rf']])
+
+    def _load_enbllist(self, device):
+        filename = getattr(self._const, device+'enbl_fname')
+        if not _os.path.isfile(filename):
+            return
+        okl = self.set_enbllist(device, _np.loadtxt(filename))
+        if okl:
+            msg = f'Loaded {device} enable list!'
+        else:
+            msg = f'ERR:Problem loading {device} enable list from file.'
+        self._update_log(msg)
+        return okl
+
+    def _save_enbllist(self, device, value):
+        try:
+            filename = getattr(self._const, device+'enbl_fname')
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, value)
+        except FileNotFoundError:
+            self._update_log(
+                f'WARN:Could not save {device} enable list to file.')
 
     def set_min_sing_value(self, value):
         """Set minimum singular values."""
@@ -1343,8 +1378,6 @@ class App(_Callback):
             return self._stop_meas_respmat()
         if value == self._const.MeasRespMatCmd.Reset:
             return self._reset_meas_respmat()
-        self._meas_respmat_count += 1
-        self.run_callbacks('MeasRespMat-Cmd', self._meas_respmat_count)
         return True
 
     def set_respmat_meas_kick(self, plane, value):
@@ -1425,6 +1458,7 @@ class App(_Callback):
 
             if i < self._const.nr_ch + self._const.nr_cv:
                 dev = self._corrs_dev[i]
+                conv = self._corrs_dev.psconvs[i]
                 self._update_log('{0:d}/{1:d} -> {2:s}'.format(
                     i+1, sum_enbld, dev.devname))
 
@@ -1432,16 +1466,19 @@ class App(_Callback):
                 delta = self._meas_respmat_kick[corrtype]
 
                 orig_kick = dev.strength
+                orig_curr = dev.current
 
-                dev.strength = orig_kick + delta/2
+                kickp = orig_kick + delta/2
+                dev.current = conv.conv_strength_2_current(kickp)
                 _time.sleep(self._meas_respmat_wait)
                 orbp = self._sofb_get_orbit()
 
-                dev.strength = orig_kick - delta/2
+                kickn = orig_kick - delta/2
+                dev.current = conv.conv_strength_2_current(kickn)
                 _time.sleep(self._meas_respmat_wait)
                 orbn = self._sofb_get_orbit()
 
-                dev.strength = orig_kick
+                dev.current = orig_curr
             elif i < self._const.nr_corrs:
                 dev = self.rf_dev
                 self._update_log('{0:d}/{1:d} -> {2:s}'.format(
@@ -1492,8 +1529,8 @@ class App(_Callback):
 
     def _callback_havebeam(self, value, **kws):
         if not value and self._loop_state == self._const.LoopState.Closed:
-            self._update_log('FATAL: We do not have stored beam!')
-            self._update_log('FATAL: Opening FOFB loop...')
+            self._update_log('FATAL:We do not have stored beam!')
+            self._update_log('FATAL:Opening FOFB loop...')
             self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     def _callback_loopintlk(self, pvname, value, **kws):
@@ -1519,11 +1556,10 @@ class App(_Callback):
                     (self._thread_loopstate is not None and
                      self._thread_loopstate.is_alive() and
                      self._loop_state_lastsp != self._const.LoopState.Open):
-                self._update_log('FATAL: Opening FOFB loop...')
+                self._update_log('FATAL:Opening FOFB loop...')
                 self.run_callbacks('LoopState-Sel', self._const.LoopState.Open)
                 self.run_callbacks('LoopState-Sts', self._const.LoopState.Open)
-                self.set_loop_state(
-                    self._const.LoopState.Open, reset=True, abort=True)
+                self.set_loop_state(self._const.LoopState.Open, abort=True)
 
     # --- auxiliary corrector and fofbcontroller methods ---
 
@@ -1532,6 +1568,27 @@ class App(_Callback):
             return True
         self._update_log('ERR:Correctors not connected... aborted.')
         return False
+
+    def _check_set_corrs_pwrstate(self):
+        """Check and configure pwrstate.
+
+        Control only correctors that are in the enable list.
+        """
+        self._update_log('Checking corrector pwrstate...')
+        pwrstate = _Const.OffOn.On
+        is_ok = 1 * (self._corrs_dev.pwrstate == pwrstate)
+        idcs = _np.where((1 * self.corr_enbllist[:-1] - is_ok) > 0)[0]
+        if idcs.size:
+            self._update_log('Configuring corrector pwrstate...')
+            self._corrs_dev.set_pwrstate(pwrstate, psindices=idcs)
+            if self._corrs_dev.check_pwrstate(
+                    pwrstate, psindices=idcs, timeout=5):
+                self._update_log('...done!')
+                return True
+            self._update_log('ERR:Failed to set corrector pwrstate.')
+            return False
+        self._update_log('All ok.')
+        return True
 
     def _check_set_corrs_opmode(self):
         """Check and configure opmode.
@@ -1661,7 +1718,8 @@ class App(_Callback):
         if self._fofbctrl_syncuseenbllist:
             bpmx = self._enable_lists['bpmx']
             bpmy = self._enable_lists['bpmy']
-            dccenbl = _np.logical_or(bpmx, bpmy)
+            mini = self._const.dccenbl_min
+            dccenbl = _np.logical_or.reduce([bpmx, bpmy, mini])
             bpms = self._llfofb_dev.get_dccfmc_visible_bpms([
                 self._const.bpm_names[i] for i, s in enumerate(dccenbl) if s])
             dccenbl = _np.array([b in bpms for b in self._const.bpm_names])
@@ -1780,7 +1838,7 @@ class App(_Callback):
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
 
-    def _check_configs(self):
+    def _check_corrs_configs(self):
         tplanned = 1.0/App.SCAN_FREQUENCY
         while not self.quit:
             if not self.scanning:
@@ -1825,11 +1883,50 @@ class App(_Callback):
                 isok &= self._corrs_dev.check_fofbacc_satmin(-cvl, psnames=cvn)
                 if not isok:
                     value = _updt_bit(value, 6, 1)
+                # AccDecimationSynced
+                dec = self._corr_accdec_val
+                if not self._corrs_dev.check_fofbacc_decimation(dec):
+                    value = _updt_bit(value, 7, 1)
+                # AccFilterSynced
+                filter = self._corr_accfilter_val
+                if not self._corrs_dev.check_fofbacc_filter(filter):
+                    value = _updt_bit(value, 8, 1)
+                # AccFilterGainSynced
+                gain = self._corr_accfilter_gain
+                if not self._corrs_dev.check_fofbacc_filter_gain(gain):
+                    value = _updt_bit(value, 9, 1)
+                # CurrLoopKpSynced
+                kp = self._corr_currloop_kp
+                if not self._corrs_dev.check_currloop_kp(kp):
+                    value = _updt_bit(value, 10, 1)
+                # CurrLoopKiSynced
+                ki = self._corr_currloop_ki
+                if not self._corrs_dev.check_currloop_ki(ki):
+                    value = _updt_bit(value, 11, 1)
+
             else:
-                value = 0b1111111
+                value = 0b111111111111
 
             self._corr_status = value
             self.run_callbacks('CorrStatus-Mon', self._corr_status)
+
+            ttook = _time.time() - _t0
+            tsleep = tplanned - ttook
+            if tsleep > 0:
+                _time.sleep(tsleep)
+            else:
+                _log.warning(
+                    'Corrector configuration check took more than planned... '
+                    '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+
+    def _check_ctrls_configs(self):
+        tplanned = 1.0/App.SCAN_FREQUENCY
+        while not self.quit:
+            if not self.scanning:
+                _time.sleep(tplanned)
+                continue
+
+            _t0 = _time.time()
 
             # FOFB controllers status
             value = 0
@@ -1845,8 +1942,8 @@ class App(_Callback):
                 if not self._llfofb_dev.linkpartners_connected:
                     value = _updt_bit(value, 3, 1)
                 # RefOrbSynced
-                reforb = _np.hstack([self._reforbhw_x, self._reforbhw_y])
-                if not self._llfofb_dev.check_reforb(reforb):
+                if not self._llfofb_dev.check_reforbx(self._reforbhw_x) or not\
+                        self._llfofb_dev.check_reforby(self._reforbhw_y):
                     value = _updt_bit(value, 4, 1)
                 # TimeFrameLenSynced
                 tframelen = self._time_frame_len
@@ -1872,8 +1969,11 @@ class App(_Callback):
                 # LoopInterlockOk
                 if not self._llfofb_dev.interlock_ok:
                     value = _updt_bit(value, 9, 1)
+                # SYSIDExcitationDisabled
+                if not self._llfofb_dev.check_sysid_exc_disabled():
+                    value = _updt_bit(value, 10, 1)
             else:
-                value = 0b1111111111
+                value = 0b11111111111
 
             self._fofbctrl_status = value
             self.run_callbacks('CtrlrStatus-Mon', self._fofbctrl_status)
@@ -1884,5 +1984,24 @@ class App(_Callback):
                 _time.sleep(tsleep)
             else:
                 _log.warning(
-                    'Configuration check took more than planned... '
+                    'Controllers configuration check took more than planned... '
                     '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+
+    def _save_mat(self, mat, filename):
+        try:
+            path = _os.path.split(filename)[0]
+            _os.makedirs(path, exist_ok=True)
+            _np.savetxt(filename, mat)
+        except FileNotFoundError:
+            self._update_log('WARN:Could not save matrix to file.')
+
+    def _load_mat(self, filename):
+        if not _os.path.isfile(filename):
+            return False
+        self._update_log('Loading matrix from file...')
+        if self.set_respmat(_np.loadtxt(filename)):
+            msg = 'Loaded Matrix!'
+        else:
+            msg = 'ERR:Problem loading matrix from file.'
+        self._update_log(msg)
+        return 'ERR' not in msg

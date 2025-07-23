@@ -228,8 +228,8 @@ class CycleController:
         return 3
 
     @property
-    def prepare_ps_sofbmode_size(self):
-        """Prepare PS SOFBMode task size."""
+    def prepare_ps_idffmode_size(self):
+        """Prepare PS IDFFMode task size."""
         prepare_ps_size = 2*(len(self.psnames)+1)
         if self._include_sitrims:
             prepare_ps_size += 2*len(self.trimnames)
@@ -306,8 +306,8 @@ class CycleController:
         return 10
 
     @property
-    def prepare_ps_sofbmode_max_duration(self):
-        """Prepare PS SOFBMode task maximum duration."""
+    def prepare_ps_idffmode_max_duration(self):
+        """Prepare PS IDFFMode task maximum duration."""
         prepare_ps_max_duration = 5 + TIMEOUT_CHECK
         if self._include_sitrims:
             prepare_ps_max_duration += TIMEOUT_CHECK
@@ -666,32 +666,32 @@ class CycleController:
                 all_ok = False
         return all_ok
 
-    def set_pwrsupplies_sofbmode(self, psnames):
-        """Set power supplies SOFBMode."""
+    def set_pwrsupplies_idffmode(self, psnames):
+        """Set power supplies IDFFMode."""
         psnames = {
             p for p in psnames if _PSSearch.conv_psname_2_psmodel(p) == 'FBP'}
         if not psnames:
             return
 
-        self._update_log('Turning off power supplies SOFBMode...')
+        self._update_log('Turning off power supplies IDFFMode...')
         for idx, psname in enumerate(psnames):
             cycler = self._get_cycler(psname)
-            cycler.set_sofbmode('off')
+            cycler.set_idffmode('off')
             if idx % 5 == 4 or idx == len(psnames)-1:
                 self._update_log(
-                    'Sent SOFBMode preparation to {0}/{1}'.format(
+                    'Sent IDFFMode preparation to {0}/{1}'.format(
                         str(idx+1), str(len(psnames))))
 
-    def check_pwrsupplies_sofbmode(self, psnames, timeout=TIMEOUT_CHECK):
-        """Check power supplies SOFBMode."""
+    def check_pwrsupplies_idffmode(self, psnames, timeout=TIMEOUT_CHECK):
+        """Check power supplies IDFFMode."""
         psnames = {
             p for p in psnames if _PSSearch.conv_psname_2_psmodel(p) == 'FBP'}
         if not psnames:
             return True
 
-        self._update_log('Checking power supplies SOFBMode...')
+        self._update_log('Checking power supplies IDFFMode...')
         self._checks_result = {psn: False for psn in psnames}
-        msg = 'Successfully checked SOFBMode preparation for {}/' + \
+        msg = 'Successfully checked IDFFMode preparation for {}/' + \
             str(len(psnames))
         checked = 0
         time = _time.time()
@@ -700,7 +700,7 @@ class CycleController:
                 if self._checks_result[psname]:
                     continue
                 cycler = self._get_cycler(psname)
-                if cycler.check_sofbmode('off', 0.05):
+                if cycler.check_idffmode('off', 0.05):
                     self._checks_result[psname] = True
                     checked = sum(self._checks_result.values())
                     if not checked % 5:
@@ -716,7 +716,7 @@ class CycleController:
         for psname, sts in self._checks_result.items():
             if sts:
                 continue
-            self._update_log(psname+' is in SOFBMode.', error=True)
+            self._update_log(psname+' is in IDFFMode.', error=True)
             status &= False
         return status
 
@@ -851,8 +851,8 @@ class CycleController:
             return
         self._update_log('Timing preparation finished!')
 
-    def prepare_pwrsupplies_sofbmode(self):
-        """Prepare SOFBMode."""
+    def prepare_pwrsupplies_idffmode(self):
+        """Prepare IDFFMode."""
         psnames = self.psnames
         timeout = TIMEOUT_CHECK
         if self._include_sitrims:
@@ -860,12 +860,12 @@ class CycleController:
             psnames.extend(self.trimnames)
             timeout += TIMEOUT_CHECK
 
-        self.set_pwrsupplies_sofbmode(psnames)
-        if not self.check_pwrsupplies_sofbmode(psnames, timeout):
+        self.set_pwrsupplies_idffmode(psnames)
+        if not self.check_pwrsupplies_idffmode(psnames, timeout):
             self._update_log(
-                'There are power supplies in SOFBMode.', error=True)
+                'There are power supplies in IDFFMode.', error=True)
             return
-        self._update_log('Power supplies SOFBMode preparation finished!')
+        self._update_log('Power supplies IDFFMode preparation finished!')
 
     def prepare_pwrsupplies_opmode_slowref(self):
         """Prepare OpMode to slowref."""

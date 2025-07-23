@@ -22,6 +22,7 @@ def generate_model_static_table():
         "#\n"\
         "# If any model change, please, run the script\n"\
         "# again and copy the generated file to replace this one.\n"
+
     filename = 'magnets-model-data.txt'
 
     with open(filename, 'w') as f:
@@ -31,37 +32,87 @@ def generate_model_static_table():
 
     model = pymodels.si
     acc = model.create_accelerator()
-    _append_mag_data(filename, model, acc, 'Storage Ring (SR)', 'SI')
+    _append_mag_data(filename, model, acc, 'Storage Ring (SI)', 'SI')
 
     model = pymodels.bo
     acc = model.create_accelerator()
     ind = pyaccel.lattice.find_indices(acc, 'fam_name', 'InjSept')
     acc = pyaccel.lattice.shift(acc, ind[0])
-    _append_mag_data(filename, model, acc, 'Booster', 'BO')
+    _append_mag_data(filename, model, acc, 'Booster (BO)', 'BO')
 
     model = pymodels.tb
-    acc, *_ = model.create_accelerator()
-    _append_mag_data(filename, model, acc, 'Booster Transport Line', 'TB')
+    acc, *_ = model.create_accelerator(add_from_li_triplets=False)
+    _append_mag_data(
+        filename, model, acc, 'Booster Transport Line (TB)', 'TB')
 
     model = pymodels.ts
     acc, *_ = model.create_accelerator()
-    _append_mag_data(filename, model, acc, 'SR Transport Line', 'TS')
+    _append_mag_data(filename, model, acc, 'SR Transport Line (TS)', 'TS')
+
+
+def _conv_dev_inst(section, sub, mag_tp, inst):
+    inst_conv = {
+        # additional correctors were added in TS
+        'TS-01': {
+            'CV': {'2': ('CV', '1E2'), '3': ('CV', '2')},
+            },
+        'TS-02': {
+            'CV': {'1': ('CV', '0'), '2': ('CV', '')},
+            },
+        'TS-04': {
+            'CV': {
+                '1': ('CV', '0'), '2': ('CV', '1'),
+                '3': ('CV', '1E2'), '4': ('CV', '2')},
+            },
+        # TB skew quad in the model converted to ch
+        'TB-04': {
+            'CH': {'1': ('CH', '')},
+            'CH': {'2': ('QS', '')},
+            },
+        'TB-04': {
+            'CH': {'': ('CH', '1')},
+            'QS': {'': ('CH', '2')},
+            },
+        }
+    secsub = section + '-' + sub
+    inst_conv_ = inst_conv
+    if secsub in inst_conv_:
+        inst_conv_ = inst_conv_[secsub]
+        if mag_tp in inst_conv_:
+            inst_conv_ = inst_conv_[mag_tp]
+            if inst in inst_conv_:
+                return inst_conv_[inst]
+    return mag_tp, inst
+
+
+def _conv_id_correctors(mag_tp):
+    if mag_tp in ('IDCH', 'IDCV', 'IDQS'):
+        # NOTE: this would issue wrong instances if there were
+        # other CH or CV magnets in insertion device straights, which
+        # is not the case.
+        mag_tp = mag_tp[2:]
+    return mag_tp
+
+
+def _conv_pulsed_magnets(mag_tp, dis):
+    if 'Inj' in mag_tp or 'Eje' in mag_tp or 'Ping' in mag_tp:
+        dis = 'PM'
+    return dis
 
 
 def _append_mag_data(filename, model, acc, label, section):
     fam_data = model.get_family_data(acc)
     pos = pyaccel.lattice.find_spos(acc)
 
+    args = (acc, ) if model == pymodels.tb else ()
     mag_tps = []
-    mag_tps.extend(model.families.families_dipoles())
-    mag_tps.extend(model.families.families_pulsed_magnets())
-    mag_tps.extend(model.families.families_quadrupoles())
-    mag_tps.extend(model.families.families_horizontal_correctors())
-    mag_tps.extend(model.families.families_vertical_correctors())
-    mag_tps.extend(model.families.families_sextupoles())
-    mag_tps.extend(model.families.families_skew_correctors())
-    if section.lower().startswith('si'):
-        mag_tps.extend(model.families.families_id_correctors())
+    mag_tps.extend(model.families.families_dipoles(*args))
+    mag_tps.extend(model.families.families_pulsed_magnets(*args))
+    mag_tps.extend(model.families.families_quadrupoles(*args))
+    mag_tps.extend(model.families.families_horizontal_correctors(*args))
+    mag_tps.extend(model.families.families_vertical_correctors(*args))
+    mag_tps.extend(model.families.families_sextupoles(*args))
+    mag_tps.extend(model.families.families_skew_correctors(*args))
 
     mag_data = dict()
     for mag_tp in mag_tps:
@@ -69,21 +120,29 @@ def _append_mag_data(filename, model, acc, label, section):
         subs = fam_data[mag_tp]['subsection']
         insts = fam_data[mag_tp]['instance']
         for ind, inst, sub in zip(inds, insts, subs):
+            val = (pos[ind[-1]+1] + pos[ind[0]]) / 2  # elem position
+            # special conversions
+            mag_tp_, inst_, dis_ = mag_tp, inst, 'MA'
+            mag_tp_ = _conv_id_correctors(mag_tp_)
+            dis_ = _conv_pulsed_magnets(mag_tp_, dis_)
+            mag_tp_, inst_ = _conv_dev_inst(section, sub, mag_tp_, inst_)
             name = _join_name(
-                sec=section, dis='MA', dev=mag_tp, sub=sub, idx=inst)
-            val = (pos[ind[-1]+1] + pos[ind[0]]) / 2
-            mag_data[name] = {'pos': val}
+                sec=section, dis=dis_, dev=mag_tp_, sub=sub, idx=inst_)
+            mag_data[name] = val
 
-    mags = sorted(mag_data.keys())
+    # order by spos
+    mags = list(mag_data.keys())
+    mpos = list(mag_data.values())
+    mpos, mags = zip(*sorted(zip(mpos, mags)))
+
     with open(filename, 'a') as f:
         f.write('\n\n\n# '+label+'\n')
         f.write('#'+57*'-' + '\n')
         f.write("#{mag:20s} {pos:^20s}\n".format(
             mag='Name', pos='Position @ center [m]'))
         f.write('#'+57*'-' + '\n')
-        for mag in mags:
-            f.write("{mag:20s} {pos:^20.4f}\n".format(
-                mag=mag, **mag_data[mag]))
+        for mag, pos in zip(mags, mpos):
+            f.write(f'{mag:20s} {pos:>20.4f}\n')
 
 
 def generate_bpm_static_table():
@@ -144,6 +203,7 @@ def _append_bpm_data(filename, model, acc, label, section, fam='BPM'):
         bpos.append(pos[ind])
     _write_to_file(filename, bpms, bpos, label)
 
+
 def _append_bpm_data_bl(filename, acc, all_bpms, label):
     pos = pyaccel.lattice.find_spos(acc)
 
@@ -177,7 +237,7 @@ def _get_all_bpms():
         line = line.strip()
         if not line or line[0] == '#':
             continue  # empty line
-        _, dev, *_ = line.split()
+        dev, *_ = line.split()
         dev = _PVName(dev)
         if dev.dev in ('BPM', 'PBPM'):
             bpms.add(dev)

@@ -1,6 +1,7 @@
 """Define PVs, contants and properties of High Level FOFB."""
 
 import os as _os
+import numpy as _np
 
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch, MASearch as _MASearch, \
@@ -24,12 +25,16 @@ class ETypes(_csdev.ETypes):
 
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
-        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced')
+        'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
+        'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced',
+        'CurrLoopKpSynced', 'CurrLoopKiSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
         'OrbDistortionDetectionSynced', 'PacketLossDetectionSynced',
-        'LoopInterlockOk')
+        'LoopInterlockOk', 'SYSIDExcitationDisabled')
+
+    DEC_OPT = ('FOFB', 'Monit', 'Custom')
 
 
 _et = ETypes  # syntactic sugar
@@ -40,11 +45,11 @@ _et = ETypes  # syntactic sugar
 class HLFOFBConst(_csdev.Const):
     """Const class defining High Level FOFB constants."""
 
-    MIN_SING_VAL = 0.2
+    MIN_SING_VAL = 0.1
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
-    DEF_KICK_BUFFER_SIZE = 1
-    DEF_MAX_ORB_DISTORTION = 60  # [um]
+    DEF_MAX_ORB_DISTORTION = 200  # [um]
+    DEF_ACC_DECIMATION = 4600
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -58,11 +63,33 @@ class HLFOFBConst(_csdev.Const):
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
     CURRZERO_RMP_FREQ = 2  # [steps/s]
 
+    # PS Config Matrix
+    PSCONFIG_KP_COL = 0
+    PSCONFIG_KI_COL = 1
+    PSCONFIG_FILTER_GAIN_COL = 2
+    PSCONFIG_COEFF_FIRST_COL = 3
+    PSCONFIG_BIQUAD_NR_COEFFS = 5
+    PSCONFIG_DEF_NR_BIQUADS = 4
+
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
     UseRF = _csdev.Const.register('UseRF', _et.DSBL_ENBL)
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
+    DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
+    # FOFB Switching filter coefficientes
+    _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01]  # freq FOFB/4
+    _a4 = [-1.11484423e-16, 8.20678791e-01]  # freq FOFB/4
+    _b2 = [
+        0.83408931895964943947774372645654,
+        0.83408931895964943947774372645654,
+        0.0
+    ]  # freq FOFB/2
+    _a2 = [0.66817863791929887895548745291308, 0.0]  # freq FOFB/2
+
+    FILTER_UNIT = [1.0, 0.0, 0.0, 0.0, 0.0]
+    FILTER_SW_4 = _b4 + _a4
+    FILTER_SW_2 = _b2 + _a2
 
     def __init__(self):
         """Class constructor."""
@@ -97,6 +124,12 @@ class HLFOFBConst(_csdev.Const):
             '/home', 'sirius', 'iocs-log', 'si-ap-fofb', 'data')
         self.reforb_fname = _os.path.join(ioc_fol, 'reforbit.orb')
         self.respmat_fname = _os.path.join(ioc_fol, 'respmat.respmat')
+        self.bpmxenbl_fname = _os.path.join(ioc_fol, 'bpmxenbllist.bpmenbl')
+        self.bpmyenbl_fname = _os.path.join(ioc_fol, 'bpmyenbllist.bpmenbl')
+        self.chenbl_fname = _os.path.join(ioc_fol, 'chenbllist.correnbl')
+        self.cvenbl_fname = _os.path.join(ioc_fol, 'cvenbllist.correnbl')
+        self.rfenbl_fname = _os.path.join(ioc_fol, 'rfenbllist.rfenbl')
+        self.psconfig_fname = _os.path.join(ioc_fol, 'psconfig.psconfig')
 
         # reforb and matrix parameters
         self.reforb_size = self.nr_bpms
@@ -104,6 +137,16 @@ class HLFOFBConst(_csdev.Const):
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
         self.corrcoeffs_size = self.nr_chcv * (2 * self.nr_bpms)
         self.corrgains_size = self.nr_chcv
+
+        # dcc minimum enable configuration
+        self.dccenbl_min = _np.array([
+            bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
+
+        # psconfig
+        self.psconfig_nr_coeffs_columns = \
+            self.PSCONFIG_BIQUAD_NR_COEFFS * self.PSCONFIG_DEF_NR_BIQUADS
+        self.psconfig_size = self.nr_chcv * (
+            self.psconfig_nr_coeffs_columns + self.PSCONFIG_COEFF_FIRST_COL)
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -119,22 +162,22 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.1200, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.1200, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.1660, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 0.1, 'prec': 4,
+                'type': 'float', 'value': 0.1660, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
@@ -147,16 +190,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': self.DEF_MAX_ORB_DISTORTION,
                 'prec': 3, 'unit': 'um', 'lolim': 0, 'hilim': 10000},
             'LoopMaxOrbDistortionEnbl-Sel': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopMaxOrbDistortionEnbl-Sts': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopPacketLossDetecEnbl-Sel': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
             'LoopPacketLossDetecEnbl-Sts': {
-                'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+                'type': 'enum', 'enums': _et.DSBL_ENBL,
                 'value': self.DsblEnbl.Dsbl},
 
             # Correctors
@@ -172,42 +215,43 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b111111111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
             'CorrSetPwrStateOn-Cmd': {'type': 'int', 'value': 0},
+            'CorrSetPwrStateOff-Cmd': {'type': 'int', 'value': 0},
             'CorrSetOpModeManual-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccFreezeDsbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccFreezeEnbl-Cmd': {'type': 'int', 'value': 0},
             'CorrSetAccClear-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZero-Cmd': {'type': 'int', 'value': 0},
             'CorrSetCurrZeroDuration-SP': {
-                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'type': 'float', 'prec': 0, 'value': 5, 'unit': 's',
                 'lolim': 0.0, 'hilim': 1000.0},
             'CorrSetCurrZeroDuration-RB': {
-                'type': 'float', 'prec': 0, 'value': 0, 'unit': 's',
+                'type': 'float', 'prec': 0, 'value': 5, 'unit': 's',
                 'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CHAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.95, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
             'TimeFrameLen-SP': {
-                'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
+                'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
             'TimeFrameLen-RB': {
-                'type': 'int', 'value': 5000, 'lolim': 500, 'hilim': 10000},
-            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b111111111},
+                'type': 'int', 'value': 2100, 'lolim': 500, 'hilim': 10000},
+            'CtrlrStatus-Mon': {'type': 'int', 'value': 0b11111111111},
             'CtrlrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_FOFBCTRL),
                 'value': _et.STS_LBLS_FOFBCTRL},
@@ -215,10 +259,10 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncNet-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncUseEnblList-Sel': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Dsbl},
+                'value': self.DsblEnbl.Enbl},
             'CtrlrSyncUseEnblList-Sts': {
                 'type': 'enum', 'enums': _et.DSBL_ENBL,
-                'value': self.DsblEnbl.Dsbl},
+                'value': self.DsblEnbl.Enbl},
             'CtrlrSyncEnblList-Mon': {
                 'type': 'int', 'count': self.nr_bpms,
                 'value': self.nr_bpms*[1], 'unit': 'DCCs used in loop'},
@@ -228,26 +272,31 @@ class HLFOFBConst(_csdev.Const):
             'CtrlrSyncMaxOrbDist-Cmd': {'type': 'int', 'value': 0},
             'CtrlrSyncPacketLossDetec-Cmd': {'type': 'int', 'value': 0},
             'CtrlrReset-Cmd': {'type': 'int', 'value': 0},
+            'CtrlrDsblSYSIDExc-Cmd': {'type': 'int', 'value': 0},
 
-            # Kicks and Kick buffer configuration
-            'KickBufferSize-SP': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Size of the buffer to calculate kicks average.'},
-            'KickBufferSize-RB': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Size of the buffer to calculate kicks average.'},
-            'KickBufferSize-Mon': {
-                'type': 'float', 'value': self.DEF_KICK_BUFFER_SIZE, 'prec': 0,
-                'lolim': 1, 'hilim': 1000,
-                'unit': 'Actual buffer size used to calculate kicks average.'},
-            'KickCH-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_ch,
-                'value': self.nr_ch*[0]},
-            'KickCV-Mon': {
-                'type': 'float', 'unit': 'urad', 'count': self.nr_cv,
-                'value': self.nr_cv*[0]},
+            # decimation configuration
+            'FOFBAccDecimation-Sel': {
+                'type': 'enum', 'enums': _et.DEC_OPT,
+                'value': self.DecOpt.Monit, 'unit': 'FOFB_Monit_Custom'},
+            'FOFBAccDecimation-Sts': {
+                'type': 'enum', 'enums': _et.DEC_OPT,
+                'value': self.DecOpt.Monit, 'unit': 'FOFB_Monit_Custom'},
+            'FOFBAccDecimation-SP': {
+                'type': 'float', 'value': self.DEF_ACC_DECIMATION, 'prec': 0,
+                'lolim': 1, 'hilim': 8600, 'unit': 'count'},
+            'FOFBAccDecimation-RB': {
+                'type': 'float', 'value': self.DEF_ACC_DECIMATION, 'prec': 0,
+                'lolim': 1, 'hilim': 8600, 'unit': 'count'},
+
+            # filter configuration
+            'PSConfigMat-SP': {
+                'type': 'float', 'value': _np.zeros(self.psconfig_size),
+                'prec': 5, 'count': self.psconfig_size,
+                'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
+            'PSConfigMat-RB': {
+                'type': 'float', 'value': _np.zeros(self.psconfig_size),
+                'prec': 5, 'count': self.psconfig_size,
+                'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {
@@ -387,16 +436,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 30},
             'MeasRespMatKickCV-SP': {
-                'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 22.5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 30},
             'MeasRespMatKickCV-RB': {
-                'type': 'float', 'value': 15, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 22.5, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 30},
             'MeasRespMatKickRF-SP': {
-                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
+                'type': 'float', 'value': 75, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'MeasRespMatKickRF-RB': {
-                'type': 'float', 'value': 80, 'unit': 'Hz', 'prec': 2,
+                'type': 'float', 'value': 75, 'unit': 'Hz', 'prec': 2,
                 'lolim': 1, 'hilim': 1000},
             'MeasRespMatWait-SP': {
                 'type': 'float', 'value': 1, 'unit': 's', 'prec': 3,

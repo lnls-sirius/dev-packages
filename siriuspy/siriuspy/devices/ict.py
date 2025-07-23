@@ -17,18 +17,18 @@ class ICT(_Device):
         TS_04 = 'TS-04:DI-ICT'
         ALL = (LI_1, LI_2, TB_02, TB_04, TS_01, TS_04, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMax-Mon',
         'ChargeMin-Mon', 'ChargeStd-Mon', 'PulseCount-Mon')
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in ICT.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
-        super().__init__(devname, properties=ICT._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def charge(self):
@@ -70,19 +70,14 @@ class TranspEff(_Device):
         LI = 'LI-Glob:AP-TranspEff'
         ALL = (LI, )
 
-    _properties_li = ('Eff-Mon', 'EffAvg-Mon', )
+    PROPERTIES_DEFAULT = ('Eff-Mon', 'EffAvg-Mon', )
 
-    _properties = {
-        DEVICES.LI: _properties_li}
-
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """."""
         # check if device exists
         if devname not in TranspEff.DEVICES.ALL:
             raise NotImplementedError(devname)
-
-        # call base class constructor
-        super().__init__(devname, properties=TranspEff._properties[devname])
+        super().__init__(devname, props2init=props2init)
 
     @property
     def efficiency(self):

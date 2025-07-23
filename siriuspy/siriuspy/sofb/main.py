@@ -1,19 +1,18 @@
 """Main Module of the program."""
 
-from time import time as _time, sleep as _sleep
 import logging as _log
 from functools import partial as _part
-from threading import Thread as _Thread
+from time import sleep as _sleep, time as _time
+
 import numpy as _np
 
-from ..epics import PV as _PV
 from ..devices import HLFOFB
-
-from .matrix import BaseMatrix as _BaseMatrix
-from .orbit import BaseOrbit as _BaseOrbit
-from .correctors import BaseCorrectors as _BaseCorrectors
+from ..epics import CAThread as _Thread, PV as _PV
 from .base_class import BaseClass as _BaseClass, \
     compare_kicks as _compare_kicks
+from .correctors import BaseCorrectors as _BaseCorrectors
+from .matrix import BaseMatrix as _BaseMatrix
+from .orbit import BaseOrbit as _BaseOrbit
 
 INTERVAL = 1
 
@@ -22,38 +21,46 @@ class SOFB(_BaseClass):
     """Main Class of the IOC."""
 
     def __init__(
-            self, acc, prefix='', callback=None, orbit=None, matrix=None,
-            correctors=None, tests=False):
+        self,
+        acc,
+        prefix="",
+        callback=None,
+        orbit=None,
+        matrix=None,
+        correctors=None,
+        tests=False,
+    ):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
-        _log.info('Starting SOFB...')
+        _log.info("Starting SOFB...")
+
         self._tests = tests
         self._orbit = self._correctors = self._matrix = None
         self._loop_state = self._csorb.LoopState.Open
-        self._loop_freq = self._csorb.BPMsFreq
-        self._loop_print_every_num_iter = 1000
+        self._loop_freq = self._csorb.BPMsFreq / 10
+        self._loop_print_every_num_iter = 200
         self._loop_max_orb_distortion = self._csorb.DEF_MAX_ORB_DISTORTION
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
         self._pid_gains = dict(
-            ch=dict(kp=0.0, ki=0.5, kd=0.0),
-            cv=dict(kp=0.0, ki=0.5, kd=0.0),
-            rf=dict(kp=0.0, ki=0.5, kd=0.0))
+            ch=dict(kp=0.0, ki=0.2, kd=0.0),
+            cv=dict(kp=0.0, ki=0.2, kd=0.0),
+            rf=dict(kp=0.0, ki=0.2, kd=0.0),
+        )
         self._measuring_respmat = False
-        self._ring_extension = 1
-        self._mancorr_gain = {'ch': 1.00, 'cv': 1.00}
-        self._max_kick = {'ch': 300, 'cv': 300}
-        self._max_delta_kick = {'ch': 5, 'cv': 5}
-        self._meas_respmat_kick = {'ch': 15, 'cv': 15}
+        self._mancorr_gain = {"ch": 1.00, "cv": 1.00}
+        self._max_kick = {"ch": 300, "cv": 300}
+        self._max_delta_kick = {"ch": 5, "cv": 5}
+        self._meas_respmat_kick = {"ch": 15, "cv": 22.5}
         if self.isring:
-            self._mancorr_gain['rf'] = 1.00
-            self._max_kick['rf'] = 1e12  # a very large value
-            self._max_delta_kick['rf'] = 10
-            self._meas_respmat_kick['rf'] = 80
-        if self.acc == 'SI':
+            self._mancorr_gain["rf"] = 1.00
+            self._max_kick["rf"] = 1e12  # a very large value
+            self._max_delta_kick["rf"] = 10
+            self._meas_respmat_kick["rf"] = 75
+        if self.acc == "SI":
             self.fofb = HLFOFB()
-            self._download_fofb_kicks = False
-            self._download_fofb_kicks_perc = 0.01
+            self._download_fofb_kicks = True
+            self._download_fofb_kicks_perc = 0.40
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0
             self._donot_affect_fofb_bpms = False
@@ -68,44 +75,87 @@ class SOFB(_BaseClass):
             self._drive_state = self._csorb.DriveState.Open
         self._meas_respmat_wait = 1  # seconds
         self._dtheta = None
-        self._ref_corr_kicks = None
+        self._ref_corr_kicks = zer.copy()
         self._thread = None
-        self._havebeam_pv = _PV('SI-Glob:AP-CurrInfo:StoredEBeam-Mon')
+        self._havebeam_pv = _PV("SI-Glob:AP-CurrInfo:StoredEBeam-Mon")
 
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
+        self._amcs = [
+            _PV(f"IA-{i:02d}RaBPM:TI-AMCFPGAEVR:RefClkLocked-Mon")
+            for i in range(1, 21)
+        ]
+
+    @property
+    def connected(self):
+        """."""
+        if self.acc == 'SI' and not self.fofb.connected:
+            return False
+        for acm in self._acms:
+            if not acm.connected:
+                return False
+        if not self._havebeam_pv.connected:
+            return False
+        if self._orbit is not None and not self._orbit.connected:
+            return False
+        if self._correctors is not None and not self._correctors.connected:
+            return False
+        return True
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time()
+        tout = timeout
+        if self.acc == 'SI' and not self.fofb.wait_for_connection(tout):
+            return False
+        for amc in self._amcs:
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not amc.wait_for_connection(tout):
+                return False
+        tout = timeout - (_time() - t0_)
+        if tout <= 0 or not self._havebeam_pv.wait_for_connection(tout):
+            return False
+        for dev in [self._orbit, self._correctors]:
+            if dev is None:
+                continue
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not dev.wait_for_connection(tout):
+                return False
+        return True
 
     def get_map2write(self):
         """Get the database of the class."""
         dbase = {
-            'LoopState-Sel': self.set_auto_corr,
-            'LoopFreq-SP': self.set_auto_corr_frequency,
-            'LoopPrintEveryNumIters-SP': self.set_print_every_num_iters,
-            'LoopPIDKpCH-SP': _part(self.set_pid_gain, 'kp', 'ch'),
-            'LoopPIDKpCV-SP': _part(self.set_pid_gain, 'kp', 'cv'),
-            'LoopPIDKiCH-SP': _part(self.set_pid_gain, 'ki', 'ch'),
-            'LoopPIDKiCV-SP': _part(self.set_pid_gain, 'ki', 'cv'),
-            'LoopPIDKdCH-SP': _part(self.set_pid_gain, 'kd', 'ch'),
-            'LoopPIDKdCV-SP': _part(self.set_pid_gain, 'kd', 'cv'),
-            'LoopMaxOrbDistortion-SP': self.set_max_orbit_dist,
-            'MeasRespMat-Cmd': self.set_respmat_meas_state,
-            'CalcDelta-Cmd': self.calc_correction,
-            'ManCorrGainCH-SP': _part(self.set_mancorr_gain, 'ch'),
-            'ManCorrGainCV-SP': _part(self.set_mancorr_gain, 'cv'),
-            'MaxKickCH-SP': _part(self.set_max_kick, 'ch'),
-            'MaxKickCV-SP': _part(self.set_max_kick, 'cv'),
-            'MaxDeltaKickCH-SP': _part(self.set_max_delta_kick, 'ch'),
-            'MaxDeltaKickCV-SP': _part(self.set_max_delta_kick, 'cv'),
-            'DeltaKickCH-SP': _part(
-                self.set_delta_kick, self._csorb.ApplyDelta.CH),
-            'DeltaKickCV-SP': _part(
-                self.set_delta_kick, self._csorb.ApplyDelta.CV),
-            'MeasRespMatKickCH-SP': _part(self.set_respmat_kick, 'ch'),
-            'MeasRespMatKickCV-SP': _part(self.set_respmat_kick, 'cv'),
-            'MeasRespMatWait-SP': self.set_respmat_wait_time,
-            'ApplyDelta-Cmd': self.apply_corr,
-            }
+            "LoopState-Sel": self.set_auto_corr,
+            "LoopFreq-SP": self.set_auto_corr_frequency,
+            "LoopPrintEveryNumIters-SP": self.set_print_every_num_iters,
+            "LoopPIDKpCH-SP": _part(self.set_pid_gain, "kp", "ch"),
+            "LoopPIDKpCV-SP": _part(self.set_pid_gain, "kp", "cv"),
+            "LoopPIDKiCH-SP": _part(self.set_pid_gain, "ki", "ch"),
+            "LoopPIDKiCV-SP": _part(self.set_pid_gain, "ki", "cv"),
+            "LoopPIDKdCH-SP": _part(self.set_pid_gain, "kd", "ch"),
+            "LoopPIDKdCV-SP": _part(self.set_pid_gain, "kd", "cv"),
+            "LoopMaxOrbDistortion-SP": self.set_max_orbit_dist,
+            "MeasRespMat-Cmd": self.set_respmat_meas_state,
+            "CalcDelta-Cmd": self.calc_correction,
+            "ManCorrGainCH-SP": _part(self.set_mancorr_gain, "ch"),
+            "ManCorrGainCV-SP": _part(self.set_mancorr_gain, "cv"),
+            "MaxKickCH-SP": _part(self.set_max_kick, "ch"),
+            "MaxKickCV-SP": _part(self.set_max_kick, "cv"),
+            "MaxDeltaKickCH-SP": _part(self.set_max_delta_kick, "ch"),
+            "MaxDeltaKickCV-SP": _part(self.set_max_delta_kick, "cv"),
+            "DeltaKickCH-SP": _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.CH
+            ),
+            "DeltaKickCV-SP": _part(
+                self.set_delta_kick, self._csorb.ApplyDelta.CV
+            ),
+            "MeasRespMatKickCH-SP": _part(self.set_respmat_kick, "ch"),
+            "MeasRespMatKickCV-SP": _part(self.set_respmat_kick, "cv"),
+            "MeasRespMatWait-SP": self.set_respmat_wait_time,
+            "ApplyDelta-Cmd": self.apply_corr,
+        }
         if self.isring:
             dbase['LoopPIDKpRF-SP'] = _part(self.set_pid_gain, 'kp', 'rf')
             dbase['LoopPIDKiRF-SP'] = _part(self.set_pid_gain, 'ki', 'rf')
@@ -115,7 +165,6 @@ class SOFB(_BaseClass):
             dbase['DeltaKickRF-SP'] = _part(
                 self.set_delta_kick, self._csorb.ApplyDelta.RF)
             dbase['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
-            dbase['RingSize-SP'] = self.set_ring_extension
         if self.acc == 'SI':
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
@@ -179,20 +228,36 @@ class SOFB(_BaseClass):
     @property
     def havebeam(self):
         """."""
-        if self._tests or self.acc != 'SI':
+        if self._tests or self.acc != "SI":
             return True
         return self._havebeam_pv.connected and self._havebeam_pv.value
+
+    @property
+    def is_amc_connected(self):
+        """."""
+        for amc in self._amcs:
+            if not amc.connected:
+                return False
+        return True
+
+    @property
+    def is_amc_locked(self):
+        """."""
+        for amc in self._amcs:
+            if not amc.connected or not amc.value:
+                return False
+        return True
 
     def process(self):
         """Run continuously in the main thread."""
         time0 = _time()
-        self.status
+        _ = self.status
         tfin = _time()
-        dtime = INTERVAL - (tfin-time0)
+        dtime = INTERVAL - (tfin - time0)
         if dtime > 0:
             _sleep(dtime)
         else:
-            _log.debug('process took {0:f}ms.'.format((tfin-time0)*1000))
+            _log.debug(f"process took {(tfin - time0) * 1000:f}ms.")
 
     def set_print_every_num_iters(self, value: float) -> bool:
         """Define number of iterations between loop statistics calculation.
@@ -205,7 +270,7 @@ class SOFB(_BaseClass):
 
         """
         self._loop_print_every_num_iter = int(value)
-        self.run_callbacks('LoopPrintEveryNumIters-RB', int(value))
+        self.run_callbacks("LoopPrintEveryNumIters-RB", int(value))
         return True
 
     def set_fofb_interaction_props(self, prop: str, value: int):
@@ -220,18 +285,18 @@ class SOFB(_BaseClass):
 
         """
         value = bool(value)
-        if prop.lower().startswith('download'):
+        if prop.lower().startswith("download"):
             self._download_fofb_kicks = value
-            self.run_callbacks('FOFBDownloadKicks-Sts', value)
-        elif prop.lower().startswith('update'):
+            self.run_callbacks("FOFBDownloadKicks-Sts", value)
+        elif prop.lower().startswith("update"):
             self._update_fofb_reforb = value
-            self.run_callbacks('FOFBUpdateRefOrb-Sts', value)
-        elif prop.lower().startswith('null'):
+            self.run_callbacks("FOFBUpdateRefOrb-Sts", value)
+        elif prop.lower().startswith("null"):
             self._project_onto_fofb_nullspace = value
-            self.run_callbacks('FOFBNullSpaceProj-Sts', value)
-        elif prop.lower().startswith('zero'):
+            self.run_callbacks("FOFBNullSpaceProj-Sts", value)
+        elif prop.lower().startswith("zero"):
             self._donot_affect_fofb_bpms = value
-            self.run_callbacks('FOFBZeroDistortionAtBPMs-Sts', value)
+            self.run_callbacks("FOFBZeroDistortionAtBPMs-Sts", value)
         else:
             return False
         return True
@@ -246,9 +311,9 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value/100, 0), 1)
+        value = min(max(value / 100, 0), 1)
         self._download_fofb_kicks_perc = value
-        self.run_callbacks('FOFBDownloadKicksPerc-RB', value*100)
+        self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True
 
     def set_fofb_updatereforb_perc(self, value: float):
@@ -262,80 +327,52 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value/100, -1), 1)
+        value = min(max(value / 100, -1), 1)
         self._update_fofb_reforb_perc = value
-        self.run_callbacks('FOFBUpdateRefOrbPerc-RB', value*100)
-        return True
-
-    def set_ring_extension(self, val):
-        """."""
-        val = 1 if val < 1 else int(val)
-        val = self._csorb.MAX_RINGSZ if val > self._csorb.MAX_RINGSZ else val
-        if val == self._ring_extension:
-            return True
-        okay = self.orbit.set_ring_extension(val)
-        if not okay:
-            return False
-        okay &= self.matrix.set_ring_extension(val)
-        if not okay:
-            return False
-        self._ring_extension = val
-        self.run_callbacks('RingSize-RB', val)
-        bpms = _np.array(self._csorb.bpm_pos)
-        bpm_pos = [bpms + i*self._csorb.circum for i in range(val)]
-        bpm_pos = _np.hstack(bpm_pos)
-        self.run_callbacks('BPMPosS-Mon', bpm_pos)
+        self.run_callbacks("FOFBUpdateRefOrbPerc-RB", value * 100)
         return True
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
-        if self.acc == 'BO':
-            msg = 'ERR: Cannot correct orbit for this accelerator.'
+        if self.acc == "BO":
+            msg = "ERR: Cannot correct orbit for this accelerator."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
 
-        if self.orbit.mode == self._csorb.SOFBMode.Offline:
-            msg = 'ERR: Offline, cannot apply kicks.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: Loop is Closed or MeasRespMat is On.'
+            msg = "ERR: Loop is Closed or MeasRespMat is On."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
         if self._dtheta is None:
-            msg = 'ERR: Cannot Apply Kick. Calc Corr first.'
+            msg = "ERR: Cannot Apply Kick. Calc Corr first."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        _Thread(
-            target=self._apply_corr, kwargs={'code': code},
-            daemon=True).start()
+        self._apply_corr(code=code)
         return True
 
-    def calc_correction(self, _):
+    def calc_correction(self, val):
         """Calculate correction."""
-        self.run_callbacks('ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Idle)
+        _ = val
+        self.run_callbacks("ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Idle)
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: Loop is Closed or MeasRespMat is On.'
+            msg = "ERR: Loop is Closed or MeasRespMat is On."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        _Thread(target=self._calc_correction, daemon=True).start()
+        self._calc_correction()
         return True
 
     def set_delta_kick(self, code, dkicks):
         """Calculate correction."""
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: Loop is Closed or MeasRespMat is On.'
+            msg = "ERR: Loop is Closed or MeasRespMat is On."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        _Thread(
-            target=self._set_delta_kick,
-            kwargs={'code': code, 'dkicks': dkicks}, daemon=True).start()
+        self._set_delta_kick(code=code, dkicks=dkicks)
         return True
 
     def set_respmat_meas_state(self, value):
@@ -350,37 +387,36 @@ class SOFB(_BaseClass):
 
     def set_auto_corr(self, value):
         """."""
-        if self.acc != 'SI':
-            msg = 'ERR: Cannot close loop for this accelerator.'
+        if self.acc != "SI":
+            msg = "ERR: Cannot close loop for this accelerator."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
 
         if value == self._csorb.LoopState.Closed:
             if self._loop_state == self._csorb.LoopState.Closed:
-                msg = 'ERR: Loop is Already closed.'
+                msg = "ERR: Loop is Already closed."
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
             if self._thread and self._thread.is_alive():
-                msg = 'ERR: Measuring RespMat or Drive is closed. Stopping!'
+                msg = "ERR: Measuring RespMat or Drive is closed. Stopping!"
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
             if not self.havebeam:
-                msg = 'ERR: Cannot Correct, We do not have stored beam!'
+                msg = "ERR: Cannot Correct, We do not have stored beam!"
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
-            msg = 'Closing the Loop.'
+            msg = "Closing the Loop."
             self._update_log(msg)
             _log.info(msg)
             self._loop_state = value
-            self._thread = _Thread(
-                target=self._do_auto_corr, daemon=True)
+            self._thread = _Thread(target=self._do_auto_corr, daemon=True)
             self._thread.start()
         elif value == self._csorb.LoopState.Open:
-            msg = 'Opening the Loop.'
+            msg = "Opening the Loop."
             self._update_log(msg)
             _log.info(msg)
             self._loop_state = value
@@ -390,86 +426,87 @@ class SOFB(_BaseClass):
         """."""
         val = abs(int(value))
         self._drive_divisor = min(
-            val, self._csorb.MAX_DRIVE_DATA // (3*self._drive_nrcycles))
+            val, self._csorb.MAX_DRIVE_DATA // (3 * self._drive_nrcycles)
+        )
 
-        self.run_callbacks('DriveFreqDivisor-RB', self._drive_divisor)
-        freq = self._csorb.BPMsFreq/self._drive_divisor
-        self.run_callbacks('DriveFrequency-Mon', freq)
-        self.run_callbacks('DriveDuration-Mon', self._drive_nrcycles/freq)
+        self.run_callbacks("DriveFreqDivisor-RB", self._drive_divisor)
+        freq = self._csorb.BPMsFreq / self._drive_divisor
+        self.run_callbacks("DriveFrequency-Mon", freq)
+        self.run_callbacks("DriveDuration-Mon", self._drive_nrcycles / freq)
         return True
 
     def set_drive_nrcycles(self, value):
         """."""
         val = max(abs(int(value)), 1)
         self._drive_nrcycles = min(
-            val, self._csorb.MAX_DRIVE_DATA // (3*self._drive_divisor))
+            val, self._csorb.MAX_DRIVE_DATA // (3 * self._drive_divisor)
+        )
 
-        self.run_callbacks('DriveNrCycles-RB', self._drive_nrcycles)
-        freq = self._csorb.BPMsFreq/self._drive_divisor
-        self.run_callbacks('DriveDuration-Mon', self._drive_nrcycles/freq)
+        self.run_callbacks("DriveNrCycles-RB", self._drive_nrcycles)
+        freq = self._csorb.BPMsFreq / self._drive_divisor
+        self.run_callbacks("DriveDuration-Mon", self._drive_nrcycles / freq)
         return True
 
     def set_drive_amplitude(self, value):
         """."""
         self._drive_amplitude = value
-        self.run_callbacks('DriveAmplitude-RB', value)
+        self.run_callbacks("DriveAmplitude-RB", value)
         return True
 
     def set_drive_phase(self, value):
         """."""
         self._drive_phase = value
-        self.run_callbacks('DrivePhase-RB', value)
+        self.run_callbacks("DrivePhase-RB", value)
         return True
 
     def set_drive_corr_index(self, value):
         """."""
         if -self._csorb.nr_corrs < value < self._csorb.nr_corrs:
             self._drive_corr_index = int(value)
-            self.run_callbacks('DriveCorrIndex-RB', int(value))
+            self.run_callbacks("DriveCorrIndex-RB", int(value))
             return True
         return False
 
     def set_drive_bpm_index(self, value):
         """."""
-        if -self._csorb.nr_bpms*2 < value < self._csorb.nr_bpms*2:
+        if -self._csorb.nr_bpms * 2 < value < self._csorb.nr_bpms * 2:
             self._drive_bpm_index = int(value)
-            self.run_callbacks('DriveBPMIndex-RB', int(value))
+            self.run_callbacks("DriveBPMIndex-RB", int(value))
             return True
         return False
 
     def set_drive_type(self, value):
         """."""
         self._drive_type = int(value)
-        self.run_callbacks('DriveType-Sts', int(value))
+        self.run_callbacks("DriveType-Sts", int(value))
         return True
 
     def set_drive_state(self, value):
         """."""
         if value == self._csorb.DriveState.Closed:
             if self._drive_state == self._csorb.DriveState.Closed:
-                msg = 'ERR: Loop is Already closed.'
+                msg = "ERR: Loop is Already closed."
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
             if self._thread and self._thread.is_alive():
-                msg = 'ERR: Measuring RespMat or Loop is Closed. Stopping!'
+                msg = "ERR: Measuring RespMat or Loop is Closed. Stopping!"
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
             if not self.havebeam:
-                msg = 'ERR: Cannot Drive, We do not have stored beam!'
+                msg = "ERR: Cannot Drive, We do not have stored beam!"
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
-            msg = 'Closing the Drive Loop.'
+            msg = "Closing the Drive Loop."
             self._update_log(msg)
             _log.info(msg)
             self._drive_state = value
-            self._thread = _Thread(
-                target=self._do_drive, daemon=True)
+            self._thread = _Thread(target=self._do_drive, daemon=True)
             self._thread.start()
         elif value == self._csorb.LoopState.Open:
-            msg = 'Opening the Drive Loop.'
+            msg = "Opening the Drive Loop."
             self._update_log(msg)
             _log.info(msg)
             self._drive_state = value
@@ -478,9 +515,9 @@ class SOFB(_BaseClass):
     def set_auto_corr_frequency(self, value):
         """."""
         bpmfreq = self._csorb.BPMsFreq
-        value = bpmfreq / max(int(bpmfreq/value), 1)
+        value = bpmfreq / max(int(bpmfreq / value), 1)
         self._loop_freq = value
-        self.run_callbacks('LoopFreq-RB', value)
+        self.run_callbacks("LoopFreq-RB", value)
         return True
 
     def set_pid_gain(self, ctrlr, plane, value):
@@ -489,54 +526,58 @@ class SOFB(_BaseClass):
         plane = plane.lower()
         self._pid_gains[plane][ctrlr] = float(value)
         self.run_callbacks(
-            'LoopPID'+ctrlr.title()+plane.upper()+'-RB', float(value))
+            "LoopPID" + ctrlr.title() + plane.upper() + "-RB", float(value)
+        )
         return True
 
     def set_max_kick(self, plane, value):
         """."""
         self._max_kick[plane] = float(value)
-        self.run_callbacks('MaxKick'+plane.upper()+'-RB', float(value))
+        self.run_callbacks("MaxKick" + plane.upper() + "-RB", float(value))
         return True
 
     def set_max_delta_kick(self, plane, value):
         """."""
         self._max_delta_kick[plane] = float(value)
-        self.run_callbacks('MaxDeltaKick'+plane.upper()+'-RB', float(value))
+        self.run_callbacks(
+            "MaxDeltaKick" + plane.upper() + "-RB", float(value)
+        )
         return True
 
     def set_mancorr_gain(self, plane, value):
         """."""
-        self._mancorr_gain[plane] = value/100
-        msg = 'ManCorrGain{0:s} set to {1:6.2f}'.format(plane.upper(), value)
+        self._mancorr_gain[plane] = value / 100
+        msg = "ManCorrGain{0:s} set to {1:6.2f}".format(plane.upper(), value)
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('ManCorrGain'+plane.upper()+'-RB', value)
+        self.run_callbacks("ManCorrGain" + plane.upper() + "-RB", value)
         return True
 
     def set_respmat_kick(self, plane, value):
         """."""
         self._meas_respmat_kick[plane] = value
-        self.run_callbacks('MeasRespMatKick'+plane.upper()+'-RB', value)
+        self.run_callbacks("MeasRespMatKick" + plane.upper() + "-RB", value)
         return True
 
     def set_respmat_wait_time(self, value):
         """."""
         self._meas_respmat_wait = value
-        self.run_callbacks('MeasRespMatWait-RB', value)
+        self.run_callbacks("MeasRespMatWait-RB", value)
         return True
 
     def set_max_orbit_dist(self, value):
         """."""
         self._loop_max_orb_distortion = value
-        self.run_callbacks('LoopMaxOrbDistortion-RB', value)
+        self.run_callbacks("LoopMaxOrbDistortion-RB", value)
         return True
 
     def _update_status(self):
         self._status = bool(
-            self._correctors.status | self._matrix.status | self._orbit.status)
-        self.run_callbacks('Status-Mon', self._status)
+            self._correctors.status | self._matrix.status | self._orbit.status
+        )
+        self.run_callbacks("Status-Mon", self._status)
 
-        if self.acc != 'SI':
+        if self.acc != "SI":
             return
         # Update PVs related to interaction with FOFB:
         fofb_state = self.fofb.connected and self.fofb.loop_state
@@ -544,40 +585,42 @@ class SOFB(_BaseClass):
         update = self._update_fofb_reforb and fofb_state
         project = self._project_onto_fofb_nullspace and fofb_state
         donot = self._donot_affect_fofb_bpms and fofb_state
-        self.run_callbacks('FOFBDownloadKicks-Mon', download)
-        self.run_callbacks('FOFBUpdateRefOrb-Mon', update)
-        self.run_callbacks('FOFBNullSpaceProj-Mon', project)
-        self.run_callbacks('FOFBZeroDistortionAtBPMs-Mon', donot)
+        self.run_callbacks("FOFBDownloadKicks-Mon", download)
+        self.run_callbacks("FOFBUpdateRefOrb-Mon", update)
+        self.run_callbacks("FOFBNullSpaceProj-Mon", project)
+        self.run_callbacks("FOFBZeroDistortionAtBPMs-Mon", donot)
 
     def _set_delta_kick(self, code, dkicks):
         nr_ch = self._csorb.nr_ch
         nr_chcv = self._csorb.nr_chcv
-        self._ref_corr_kicks = self.correctors.get_strength()
+        self._update_ref_corr_kicks(self.correctors.get_strength())
         if self._dtheta is None:
             self._dtheta = _np.zeros(self._ref_corr_kicks.size, dtype=float)
         if code == self._csorb.ApplyDelta.CH:
             self._dtheta[:nr_ch] = dkicks
-            self.run_callbacks('DeltaKickCH-RB', list(dkicks))
-            self.run_callbacks('DeltaKickCH-Mon', list(dkicks))
+            self.run_callbacks("DeltaKickCH-RB", list(dkicks))
+            self.run_callbacks("DeltaKickCH-Mon", list(dkicks))
         elif code == self._csorb.ApplyDelta.CV:
             self._dtheta[nr_ch:nr_chcv] = dkicks
-            self.run_callbacks('DeltaKickCV-RB', list(dkicks))
-            self.run_callbacks('DeltaKickCV-Mon', list(dkicks))
+            self.run_callbacks("DeltaKickCV-RB", list(dkicks))
+            self.run_callbacks("DeltaKickCV-Mon", list(dkicks))
         elif self.isring and code == self._csorb.ApplyDelta.RF:
             self._dtheta[-1] = dkicks
-            self.run_callbacks('DeltaKickRF-RB', float(dkicks))
-            self.run_callbacks('DeltaKickRF-Mon', float(dkicks))
+            self.run_callbacks("DeltaKickRF-RB", float(dkicks))
+            self.run_callbacks("DeltaKickRF-Mon", float(dkicks))
 
     def _apply_corr(self, code):
         self.run_callbacks(
-            'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Applying)
+            "ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Applying
+        )
         nr_ch = self._csorb.nr_ch
         if self._dtheta is None:
-            msg = 'Err: All kicks are zero.'
+            msg = "Err: All kicks are zero."
             self._update_log(msg)
             _log.warning(msg[6:])
             self.run_callbacks(
-                'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
+                "ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Error
+            )
             return
         dkicks = self._dtheta.copy()
         if code == self._csorb.ApplyDelta.CH:
@@ -588,52 +631,55 @@ class SOFB(_BaseClass):
                 dkicks[-1] = 0
         elif self.isring and code == self._csorb.ApplyDelta.RF:
             dkicks[:-1] = 0
-        msg = f'Applying {self._csorb.ApplyDelta._fields[code]:s} kicks.'
+        msg = f"Applying {self._csorb.ApplyDelta._fields[code]:s} kicks."
         self._update_log(msg)
         _log.info(msg)
 
         kicks, dkicks = self._process_kicks(self._ref_corr_kicks, dkicks)
         if kicks is None:
             self.run_callbacks(
-                'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
+                "ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Error
+            )
             return
 
-        if self.acc == 'SI':
+        if self.acc == "SI":
             kicks = self._interact_with_fofb_in_apply_kicks(kicks, dkicks)
             if kicks is None:
                 self.run_callbacks(
-                    'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
+                    "ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Error
+                )
                 return
 
         ret = self.correctors.apply_kicks(kicks)
         if ret is None:
-            msg = 'ERR: There is some problem with a corrector!'
+            msg = "ERR: There is some problem with a corrector!"
             self._update_log(msg)
             _log.error(msg[:5])
             self.run_callbacks(
-                'ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Error)
+                "ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Error
+            )
             return
         elif ret == -1:
-            msg = 'WARN: Last was not applied yet'
+            msg = "WARN: Last was not applied yet"
             self._update_log(msg)
             _log.error(msg[:5])
         elif ret == 0:
-            msg = 'kicks applied!'
+            msg = "kicks applied!"
             self._update_log(msg)
             _log.info(msg)
         else:
-            msg = f'WARN: {ret:03d} kicks were not applied previously!'
+            msg = f"WARN: {ret:03d} kicks were not applied previously!"
             self._update_log(msg)
             _log.warning(msg[:6])
-        self.run_callbacks('ApplyDelta-Mon', self._csorb.ApplyDeltaMon.Done)
+        self.run_callbacks("ApplyDelta-Mon", self._csorb.ApplyDeltaMon.Done)
 
     def _stop_meas_respmat(self):
         if not self._measuring_respmat:
-            msg = 'ERR: No Measurement ocurring.'
+            msg = "ERR: No Measurement ocurring."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        msg = 'Aborting measurement. Wait...'
+        msg = "Aborting measurement. Wait..."
         self._update_log(msg)
         _log.info(msg)
         self._measuring_respmat = False
@@ -641,38 +687,33 @@ class SOFB(_BaseClass):
 
     def _reset_meas_respmat(self):
         if self._measuring_respmat:
-            msg = 'Cannot Reset, Measurement in process.'
+            msg = "Cannot Reset, Measurement in process."
             self._update_log(msg)
             _log.info(msg)
             return False
-        msg = 'Reseting measurement status.'
+        msg = "Reseting measurement status."
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('MeasRespMat-Mon', self._csorb.MeasRespMatMon.Idle)
+        self.run_callbacks("MeasRespMat-Mon", self._csorb.MeasRespMatMon.Idle)
         return True
 
     def _start_meas_respmat(self):
-        if self.orbit.mode == self._csorb.SOFBMode.Offline:
-            msg = 'ERR: Cannot Meas Respmat in Offline Mode'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         if self._measuring_respmat:
-            msg = 'ERR: Measurement already in process.'
+            msg = "ERR: Measurement already in process."
             self._update_log(msg)
             _log.error(msg[5:])
             return False
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: Loop is Closed or Drive is Running. Stopping!'
+            msg = "ERR: Loop is Closed or Drive is Running. Stopping!"
             self._update_log(msg)
             _log.error(msg[5:])
             return False
         if not self.havebeam:
-            msg = 'ERR: Cannot Measure, We do not have stored beam!'
+            msg = "ERR: Cannot Measure, We do not have stored beam!"
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        msg = 'Starting RespMat measurement.'
+        msg = "Starting RespMat measurement."
         self._update_log(msg)
         _log.info(msg)
         self._measuring_respmat = True
@@ -682,7 +723,8 @@ class SOFB(_BaseClass):
 
     def _do_meas_respmat(self):
         self.run_callbacks(
-            'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Measuring)
+            "MeasRespMat-Mon", self._csorb.MeasRespMatMon.Measuring
+        )
         mat = list()
         orig_kicks = self.correctors.get_strength()
         enbllist = self.matrix.corrs_enbllist
@@ -693,8 +735,9 @@ class SOFB(_BaseClass):
         for i in range(nr_corrs):
             if not self._measuring_respmat:
                 self.run_callbacks(
-                    'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
-                msg = 'Measurement stopped.'
+                    "MeasRespMat-Mon", self._csorb.MeasRespMatMon.Aborted
+                )
+                msg = "Measurement stopped."
                 self._update_log(msg)
                 _log.info(msg)
                 for _ in range(i, nr_corrs):
@@ -702,8 +745,9 @@ class SOFB(_BaseClass):
                 break
             if not self.havebeam:
                 self.run_callbacks(
-                    'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
-                msg = 'ERR: Cannot Measure, We do not have stored beam!'
+                    "MeasRespMat-Mon", self._csorb.MeasRespMatMon.Aborted
+                )
+                msg = "ERR: Cannot Measure, We do not have stored beam!"
                 self._update_log(msg)
                 _log.info(msg)
                 for _ in range(i, nr_corrs):
@@ -712,30 +756,31 @@ class SOFB(_BaseClass):
             if not enbllist[i]:
                 mat.append(orbzero)
                 continue
-            msg = '{0:d}/{1:d} -> {2:s}'.format(
-                j, sum_enbld, self.correctors.corrs[i].name)
+            msg = "{0:d}/{1:d} -> {2:s}".format(
+                j, sum_enbld, self.correctors.corrs[i].name
+            )
             self._update_log(msg)
             _log.info(msg)
             j += 1
 
             if i < self._csorb.nr_ch:
-                delta = self._meas_respmat_kick['ch']
+                delta = self._meas_respmat_kick["ch"]
             elif i < self._csorb.nr_ch + self._csorb.nr_cv:
-                delta = self._meas_respmat_kick['cv']
+                delta = self._meas_respmat_kick["cv"]
             elif i < self._csorb.nr_corrs:
-                delta = self._meas_respmat_kick['rf']
+                delta = self._meas_respmat_kick["rf"]
 
-            kicks = _np.array([None, ] * nr_corrs, dtype=float)
-            kicks[i] = orig_kicks[i] + delta/2
+            kicks = _np.array([None] * nr_corrs, dtype=float)
+            kicks[i] = orig_kicks[i] + delta / 2
             self.correctors.apply_kicks(kicks)
             _sleep(self._meas_respmat_wait)
             orbp = self.orbit.get_orbit(reset=True)
 
-            kicks[i] = orig_kicks[i] - delta/2
+            kicks[i] = orig_kicks[i] - delta / 2
             self.correctors.apply_kicks(kicks)
             _sleep(self._meas_respmat_wait)
             orbn = self.orbit.get_orbit(reset=True)
-            mat.append((orbp-orbn)/delta)
+            mat.append((orbp - orbn) / delta)
 
             kicks[i] = orig_kicks[i]
             self.correctors.apply_kicks(kicks)
@@ -743,14 +788,15 @@ class SOFB(_BaseClass):
         mat = _np.array(mat).T
         self.matrix.set_respmat(list(mat.ravel()))
         self.run_callbacks(
-            'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Completed)
+            "MeasRespMat-Mon", self._csorb.MeasRespMatMon.Completed
+        )
         self._measuring_respmat = False
-        msg = 'RespMat Measurement Completed!'
+        msg = "RespMat Measurement Completed!"
         self._update_log(msg)
         _log.info(msg)
 
     def _do_drive(self):
-        self.run_callbacks('DriveState-Sts', 1)
+        self.run_callbacks("DriveState-Sts", self._csorb.DriveState.Closed)
 
         freqdiv = self._drive_divisor
         nrcycles = self._drive_nrcycles
@@ -762,13 +808,13 @@ class SOFB(_BaseClass):
 
         x = _np.arange(freqdiv * nrcycles)
         if dr_type == self._csorb.DriveType.Sine:
-            wfm = ampl*_np.sin(2*_np.pi/freqdiv * x + phase)
+            wfm = ampl * _np.sin(2 * _np.pi / freqdiv * x + phase)
         elif dr_type == self._csorb.DriveType.Square:
             wfm = _np.zeros(x.size, dtype=float)
-            wfm[wfm.size//2:-1] += ampl
+            wfm[wfm.size // 2 : -1] += ampl
         elif dr_type == self._csorb.DriveType.Impulse:
             wfm = _np.zeros(x.size, dtype=float)
-            wfm[wfm.size//2] += ampl
+            wfm[wfm.size // 2] += ampl
 
         refkicks = self.correctors.get_strength()
         orb = self.orbit.get_orbit(synced=True)
@@ -778,7 +824,7 @@ class SOFB(_BaseClass):
             if self._drive_state != self._csorb.DriveState.Closed:
                 break
             if not self.havebeam:
-                msg = 'ERR: Cannot Drive, We do not have stored beam!'
+                msg = "ERR: Cannot Drive, We do not have stored beam!"
                 self._update_log(msg)
                 _log.info(msg)
                 break
@@ -793,7 +839,8 @@ class SOFB(_BaseClass):
             if ret == -2:
                 self._drive_state = self._csorb.DriveState.Open
                 self.run_callbacks(
-                    'DriveState-Sel', self._csorb.DriveState.Open)
+                    "DriveState-Sel", self._csorb.DriveState.Open
+                )
                 break
             elif ret == -1:
                 # means that correctors are not ready yet
@@ -801,64 +848,76 @@ class SOFB(_BaseClass):
                 continue
         else:
             self._drive_state = self._csorb.DriveState.Open
-            self.run_callbacks(
-                'DriveState-Sel', self._csorb.DriveState.Open)
+            self.run_callbacks("DriveState-Sel", self._csorb.DriveState.Open)
 
         ret = self.correctors.apply_kicks(refkicks)
         if len(data) < 6:
-            data.extend((6-len(data)) * [0.0])
-        self.run_callbacks('DriveData-Mon', data)
-        msg = 'Drive Loop opened!'
+            data.extend((6 - len(data)) * [0.0])
+        self.run_callbacks("DriveData-Mon", data)
+        msg = "Drive Loop opened!"
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('DriveState-Sts', 0)
+        self.run_callbacks("DriveState-Sts", self._csorb.DriveState.Open)
 
     def _do_auto_corr(self):
-        self.run_callbacks('LoopState-Sts', 1)
+        self.run_callbacks("LoopState-Sts", self._csorb.LoopState.Closed)
         times, rets = [], []
         tim0 = _time()
         bpmsfreq = self._csorb.BPMsFreq
         zer = _np.zeros(self._csorb.nr_corrs, dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
+        self._update_ref_corr_kicks(self.correctors.get_strength())
         fofb = self.fofb
         refx0 = refy0 = None
         if fofb.connected:
             refx0 = fofb.refx
             refy0 = fofb.refy
 
+        if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+            msg = 'Setting Trigger to listen to RmpBO event...'
+            self._update_log(msg)
+            _log.info(msg)
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.RmpBO)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.RmpBO)
+            msg = 'Trigger ready!'
+            self._update_log(msg)
+            _log.info(msg)
+
         tims = []
         while self._loop_state == self._csorb.LoopState.Closed:
             if not self.havebeam:
-                msg = 'ERR: Cannot Correct, We do not have stored beam!'
+                msg = "ERR: We do not have stored beam!"
                 self._update_log(msg)
-                _log.info(msg)
+                _log.error(msg[5:])
+                break
+            if not self.is_amc_connected:
+                msg = "ERR: At least one AMC is not connected!"
+                self._update_log(msg)
+                _log.error(msg[5:])
+                break
+            if not self.is_amc_locked:
+                msg = "ERR: At least one AMC is not locked!"
+                self._update_log(msg)
+                _log.error(msg[5:])
                 break
             itern = len(times)
-            self.run_callbacks('LoopNumIters-Mon', itern)
+            self.run_callbacks("LoopNumIters-Mon", itern)
             if itern >= self._loop_print_every_num_iter:
-                _Thread(
-                    target=self._print_auto_corr_info,
-                    args=(times, rets, _time()-tim0), daemon=True).start()
+                self._LQTHREAD.put(
+                    (self._print_auto_corr_info, (times, rets, _time() - tim0))
+                )
                 times, rets = [], []
                 tim0 = _time()
 
             interval = 1/self._loop_freq
-            use_pssofb = self.correctors.use_pssofb
-            norbs = 1
-            if use_pssofb:
-                norbs = max(int(bpmsfreq*interval), 1)
-            elif tims:
-                # if not pssofb wait for interval to be satisfied
-                dtime = tims[0] - tims[-1]
-                dtime += interval
-                _sleep(max(dtime, 0))
+            norbs = max(int(bpmsfreq*interval), 1)
 
             tims = []
             tims.append(_time())
             orb = self.orbit.get_orbit(synced=True)
             for i in range(1, norbs):
-                interval = 1/self._loop_freq
-                norbs_up = max(int(bpmsfreq*interval), 1)
+                interval = 1 / self._loop_freq
+                norbs_up = max(int(bpmsfreq * interval), 1)
                 if i >= norbs_up:
                     break
                 orb = self.orbit.get_orbit(synced=True)
@@ -870,58 +929,73 @@ class SOFB(_BaseClass):
                 orb *= 2 * 3  # Maximum orbit distortion of 3 um
 
             tims.append(_time())
-
-            self._ref_corr_kicks = self.correctors.get_strength()
-            tims.append(_time())
-
             orb = self._interact_with_fofb_in_calc_kicks(orb)
-
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
             if not self._check_valid_orbit(orb):
-                self._loop_state = self._csorb.LoopState.Open
-                if fofb.connected and fofb.loop_state:
-                    fofb.loop_state = 0
-                self.run_callbacks('LoopState-Sel', 0)
                 break
 
             dkicks = self._process_pid(dkicks, interval)
 
             kicks, dkicks = self._process_kicks(
-                self._ref_corr_kicks, dkicks, apply_gain=False)
+                self._ref_corr_kicks, dkicks, apply_gain=False
+            )
             if kicks is None:
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
 
-            kicks = self._interact_with_fofb_in_apply_kicks(
-                kicks, dkicks, refx0, refy0)
+            kicks = self._interact_with_fofb_in_apply_kicks(kicks, dkicks)
             if kicks is None:
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             tims.append(_time())
 
             ret = self.correctors.apply_kicks(kicks)
+            self._update_ref_corr_kicks(kicks)
             rets.append(ret)
             tims.append(_time())
             tims.append(tims[1])  # to compute total time - get_orbit
             times.append(tims)
             # if ret == -2:
             if ret < 0:  # change here for debug
-                self._loop_state = self._csorb.LoopState.Open
-                self.run_callbacks('LoopState-Sel', 0)
                 break
             elif ret == -1:
                 # means that correctors are not ready yet
                 # skip this iteration
                 continue
 
-        msg = 'Loop opened!'
+        if self.correctors.sync_kicks != self._csorb.CorrSync.Off:
+            msg = 'Setting Trigger to listen to Event...'
+            self._update_log(msg)
+            _log.info(msg)
+            self.run_callbacks('CorrSync-Sts', self._csorb.CorrSync.Event)
+            self.correctors.set_corrs_mode(self._csorb.CorrSync.Event)
+            msg = 'Trigger ready!'
+            self._update_log(msg)
+            _log.info(msg)
+
+        if self._loop_state == self._csorb.LoopState.Closed:
+            self._loop_state = self._csorb.LoopState.Open
+            self.run_callbacks("LoopState-Sel", self._csorb.LoopState.Open)
+
+        msg = "Loop opened!"
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('LoopState-Sts', 0)
+        self.run_callbacks("LoopState-Sts", self._csorb.LoopState.Open)
+
+    def _update_ref_corr_kicks(self, kicks):
+        notnan = ~_np.isnan(kicks)
+        self._ref_corr_kicks[notnan] = kicks[notnan]
+        self._LQTHREAD.put(
+            self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), )
+        )
+
+    def _update_ref_corr_kicks_pvs(self, kicks):
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
+        self.run_callbacks('RefKickCH-Mon', kicks[:nr_ch])
+        self.run_callbacks('RefKickCV-Mon', kicks[nr_ch:nr_chcv])
+        if self.isring:
+            self.run_callbacks('RefKickRF-Mon', kicks[-1])
 
     def _process_pid(self, dkicks, interval):
         """Velocity algorithm of PID."""
@@ -934,44 +1008,44 @@ class SOFB(_BaseClass):
         gains = self._pid_gains
         errs = self._pid_errs
         nr_ch = self._csorb.nr_ch
-        slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
+        slcs = {"ch": slice(None, nr_ch), "cv": slice(nr_ch, None)}
         if self.isring:
             slcs = {
-                'ch': slice(None, nr_ch),
-                'cv': slice(nr_ch, -1),
-                'rf': slice(-1, None)}
+                "ch": slice(None, nr_ch),
+                "cv": slice(nr_ch, -1),
+                "rf": slice(-1, None),
+            }
         for pln in sorted(slcs.keys()):
             slc = slcs[pln]
             gin = gains[pln]
-            kpt = gin['kp']
-            kdt = gin['kd']/interval
-            kit = gin['ki']*interval
+            kpt = gin["kp"]
+            kdt = gin["kd"] / interval
+            kit = gin["ki"] * interval
 
             if self._tests:
                 # Do not use integrators when testing without beam:
                 kit = 0
-                if pln == 'rf':
+                if pln == "rf":
                     # Do not use RF when testing without beam:
                     kpt = kdt = 0
 
             qq0 = kpt + kdt + kit
-            qq1 = -kpt - 2*kdt
+            qq1 = -kpt - 2 * kdt
             qq2 = kdt
             dkicks[slc] *= qq0
-            dkicks[slc] += qq1*errs[-2][slc]  # previous error
-            dkicks[slc] += qq2*errs[-3][slc]  # pre-previous error
+            dkicks[slc] += qq1 * errs[-2][slc]  # previous error
+            dkicks[slc] += qq2 * errs[-3][slc]  # pre-previous error
         return dkicks
 
     def _print_auto_corr_info(self, times, rets, dtim):
         """."""
-        self.run_callbacks('LoopEffectiveRate-Mon', len(times)/dtim)
+        self.run_callbacks("LoopEffectiveRate-Mon", len(times) / dtim)
 
         rets = _np.array(rets)
         ok_ = _np.sum(rets == 0) / rets.size * 100
         tout = _np.sum(rets == -1) / rets.size * 100
         bo_diff = rets > 0
         diff = _np.sum(bo_diff) / rets.size * 100
-        _log.info('PERFORMANCE:')
         self.run_callbacks('LoopPerfItersOk-Mon', ok_)
         self.run_callbacks('LoopPerfItersTOut-Mon', tout)
         self.run_callbacks('LoopPerfItersDiff-Mon', diff)
@@ -981,9 +1055,9 @@ class SOFB(_BaseClass):
             psmax = drets.max()
             psavg = drets.mean()
             psstd = drets.std()
-        self.run_callbacks('LoopPerfDiffNrPSMax-Mon', psmax)
-        self.run_callbacks('LoopPerfDiffNrPSAvg-Mon', psavg)
-        self.run_callbacks('LoopPerfDiffNrPSStd-Mon', psstd)
+        self.run_callbacks("LoopPerfDiffNrPSMax-Mon", psmax)
+        self.run_callbacks("LoopPerfDiffNrPSAvg-Mon", psavg)
+        self.run_callbacks("LoopPerfDiffNrPSStd-Mon", psstd)
 
         dtimes = _np.diff(times, axis=1).T * 1000
         dtimes[-1] *= -1
@@ -991,16 +1065,16 @@ class SOFB(_BaseClass):
         min_ = dtimes.min(axis=1)
         avg_ = dtimes.mean(axis=1)
         std_ = dtimes.std(axis=1)
-        labs = ['GetO', 'GetK', 'Calc', 'Proc', 'App', 'Tot']
+        labs = ['GetO', 'Calc', 'Proc', 'App', 'Tot']
         for i, lab in enumerate(labs):
-            self.run_callbacks(f'LoopPerfTim{lab:s}Max-Mon', max_[i])
-            self.run_callbacks(f'LoopPerfTim{lab:s}Min-Mon', min_[i])
-            self.run_callbacks(f'LoopPerfTim{lab:s}Avg-Mon', avg_[i])
-            self.run_callbacks(f'LoopPerfTim{lab:s}Std-Mon', std_[i])
+            self.run_callbacks(f"LoopPerfTim{lab:s}Max-Mon", max_[i])
+            self.run_callbacks(f"LoopPerfTim{lab:s}Min-Mon", min_[i])
+            self.run_callbacks(f"LoopPerfTim{lab:s}Avg-Mon", avg_[i])
+            self.run_callbacks(f"LoopPerfTim{lab:s}Std-Mon", std_[i])
 
     def _check_valid_orbit(self, orbit):
         conn = _np.array([bpm.connected for bpm in self._orbit.bpms])
-        conn = _np.tile(conn, [2, ])
+        conn = _np.tile(conn, [2])
         enbl = self._matrix.bpm_enbllist
         nconn = ~conn & enbl
         if _np.any(nconn):
@@ -1008,14 +1082,14 @@ class SOFB(_BaseClass):
             leng = len(names)
             for i, nco in enumerate(nconn):
                 if nco:
-                    msg = f'ERR: {names[i%leng]} not connected!'
+                    msg = f"ERR: {names[i % leng]} not connected!"
                     self._update_log(msg)
                     _log.error(msg[5:])
             return False
 
         maxo = _np.abs(orbit[enbl]).max()
         if maxo > self._loop_max_orb_distortion:
-            msg = 'ERR: Orbit distortion above threshold!'
+            msg = "ERR: Orbit distortion above threshold!"
             self._update_log(msg)
             _log.error(msg[5:])
             return False
@@ -1036,10 +1110,11 @@ class SOFB(_BaseClass):
             orb -= _np.dot(fofb.respmat, _np.dot(imat_fofb, orb))
         return orb
 
-    def _interact_with_fofb_in_apply_kicks(
-            self, kicks, dkicks, refx=None, refy=None):
+    # def _interact_with_fofb_in_apply_kicks(
+    #     self, kicks, dkicks, refx=None, refy=None
+    # ):
+    def _interact_with_fofb_in_apply_kicks(self, kicks, dkicks):
         fofb = self.fofb
-
         # if refx is None or refy is None:
         #     refx = fofb.refx
         #     refy = fofb.refy
@@ -1052,17 +1127,18 @@ class SOFB(_BaseClass):
             # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
             # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
             # this is what they do there:
-            fofb.refx -= dorb[:dorb.size//2]
-            fofb.refy -= dorb[dorb.size//2:]
+            fofb.refx -= dorb[: dorb.size // 2]
+            fofb.refy -= dorb[dorb.size // 2 :]
             # But it seems this may also be a possibility:
             # fofb.refx = refx - dorb[:dorb.size//2]
             # fofb.refy = refy - dorb[dorb.size//2:]
             fofb.cmd_fofbctrl_syncreforb()
+            self._LQTHREAD.put(self. _update_fofb_dorb, (dorb, ))
 
         if self._download_fofb_kicks and fofb.loop_state:
             # NOTE: Do not download kicks from correctors not in the loop:
-            kickch = fofb.kickch.copy()
-            kickcv = fofb.kickcv.copy()
+            kickch = fofb.kickch_acc.copy()
+            kickcv = fofb.kickcv_acc.copy()
             kickch[~fofb.chenbl] = 0
             kickcv[~fofb.cvenbl] = 0
 
@@ -1071,30 +1147,46 @@ class SOFB(_BaseClass):
             # NOTE: calc_kicks return the kicks to correct dorb, which means
             # that a minus sign is already applied by this method. To negate
             # this correction, we need an extra minus sign here:
-            dkicks2 = self.matrix.calc_kicks(dorb)
+            dkicks2 = self.matrix.calc_kicks(dorb, update_dkicks=False)
             dkicks2 *= -self._download_fofb_kicks_perc
 
+            self._LQTHREAD.put(
+                self._update_fofb_download_kicks, (dkicks2.copy())
+            )
             kicks, dkicks2 = self._process_kicks(
-                self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False)
+                self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False
+            )
         return kicks
 
+    def _update_fofb_download_kicks(self, kicks):
+        nr_ch = self._csorb.nr_ch
+        nr_chcv = self._csorb.nr_chcv
+        self.run_callbacks('FOFBDownloadKicksCH-Mon', kicks[:nr_ch])
+        self.run_callbacks('FOFBDownloadKicksCV-Mon', kicks[nr_ch:nr_chcv])
+        self.run_callbacks('FOFBDownloadKicksRF-Mon', kicks[-1])
+
+    def _update_fofb_dorb(self, dorb):
+        nr_bpms = self._csorb.nr_bpms
+        self.run_callbacks('FOFBDeltaRefOrbX-Mon', dorb[:nr_bpms])
+        self.run_callbacks('FOFBDeltaRefOrbY-Mon', dorb[nr_bpms:])
+
     def _calc_correction(self):
-        msg = 'Getting the orbit.'
+        msg = "Getting the orbit."
         self._update_log(msg)
         _log.info(msg)
         orb = self.orbit.get_orbit()
 
-        if self.acc == 'SI':
+        if self.acc == "SI":
             orb = self._interact_with_fofb_in_calc_kicks(orb)
 
-        msg = 'Calculating kicks.'
+        msg = "Calculating kicks."
         self._update_log(msg)
         _log.info(msg)
-        self._ref_corr_kicks = self.correctors.get_strength()
+        self._update_ref_corr_kicks(self.correctors.get_strength())
         dkicks = self.matrix.calc_kicks(orb)
         if dkicks is not None:
             self._dtheta = dkicks
-        msg = 'Kicks calculated!'
+        msg = "Kicks calculated!"
         self._update_log(msg)
         _log.info(msg)
 
@@ -1109,12 +1201,13 @@ class SOFB(_BaseClass):
             return newkicks, dkicks
 
         nr_ch = self._csorb.nr_ch
-        slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
+        slcs = {"ch": slice(None, nr_ch), "cv": slice(nr_ch, None)}
         if self.isring:
             slcs = {
-                'ch': slice(None, nr_ch),
-                'cv': slice(nr_ch, -1),
-                'rf': slice(-1, None)}
+                "ch": slice(None, nr_ch),
+                "cv": slice(nr_ch, -1),
+                "rf": slice(-1, None),
+            }
         for pln in sorted(slcs.keys()):
             slc = slcs[pln]
             idcs_pln = apply_idcs[slc]
@@ -1128,7 +1221,7 @@ class SOFB(_BaseClass):
             # Check if any kick is larger than the maximum allowed:
             ind = (_np.abs(k_slc) >= self._max_kick[pln]).nonzero()[0]
             if ind.size:
-                msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
+                msg = "ERR: Kicks above MaxKick{0:s}.".format(pln.upper())
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return None, dkicks
@@ -1137,11 +1230,12 @@ class SOFB(_BaseClass):
             max_delta_kick = _np.max(_np.abs(dk_slc))
             fac2 = 1.0
             if max_delta_kick > self._max_delta_kick[pln]:
-                fac2 = self._max_delta_kick[pln]/max_delta_kick
+                fac2 = self._max_delta_kick[pln] / max_delta_kick
                 dk_slc *= fac2
                 percent = fac1 * fac2 * 100
-                msg = 'WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%'.format(
-                    pln.upper(), percent)
+                msg = "WARN: reach MaxDeltaKick{0:s}. Using {1:5.2f}%".format(
+                    pln.upper(), percent
+                )
                 self._update_log(msg)
                 _log.warning(msg[6:])
 
@@ -1161,14 +1255,15 @@ class SOFB(_BaseClass):
                 que = _np.max(que, axis=0)
                 fac3 = min(_np.min(que), 1.0)
                 if fac3 < 1e-4:
-                    msg = f'ERR: Some {pln.upper():s} Corr is saturated.'
+                    msg = f"ERR: Some {pln.upper():s} Corr is saturated."
                     self._update_log(msg)
                     _log.error(msg[5:])
                     return None, dkicks
                 dk_slc *= fac3
                 percent = fac1 * fac2 * fac3 * 100
-                msg = 'WARN: reach MaxKick{0:s}. Using {1:5.2f}%'.format(
-                    pln.upper(), percent)
+                msg = "WARN: reach MaxKick{0:s}. Using {1:5.2f}%".format(
+                    pln.upper(), percent
+                )
                 self._update_log(msg)
                 _log.warning(msg[6:])
 

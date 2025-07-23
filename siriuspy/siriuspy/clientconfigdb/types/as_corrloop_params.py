@@ -209,7 +209,6 @@ _si_sofb = [
     ['SI-Glob:AP-SOFB:RefOrbX-SP', [0.0, ]*800, 0.0],
     ['SI-Glob:AP-SOFB:RefOrbY-SP', [0.0, ]*800, 0.0],
     ['SI-Glob:AP-SOFB:SmoothNrPts-SP', 0, 0.0],
-    ['SI-Glob:AP-SOFB:OrbAcqRate-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:SmoothMethod-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:LoopFreq-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:LoopMaxOrbDistortion-SP', 0.0, 0.0],
@@ -228,7 +227,6 @@ _si_sofb = [
     ['SI-Glob:AP-SOFB:MaxDeltaKickCV-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:MaxDeltaKickRF-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:CorrSync-Sel', 0, 0.0],
-    ['SI-Glob:AP-SOFB:CorrPSSOFBWait-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:CorrPSSOFBEnbl-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBDownloadKicks-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBUpdateRefOrb-Sel', 0, 0.0],
@@ -274,6 +272,29 @@ _si_fofb = [
 ]
 
 
+_si_injbiasfb = [
+    ['AS-Glob:AP-InjCtrl:BiasFBLoopState-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBMinVoltage-SP', -44.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBMaxVoltage-SP', -37.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelType-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelMaxNrPts-SP', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelAutoFitParams-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelAutoFitEveryNrPts-SP', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelUpdateData-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelDataBias-SP', [0]*1000, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBModelDataInjCurr-SP', [0]*1000, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBLinModAngCoeff-SP', 10.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBLinModOffCoeff-SP', -44.0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModNoiseStd-SP', 0.05, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernStd-SP', 0.4, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenScl-SP', 4, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModNoiseStdFit-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernStdFit-Sel', 0, 0.0],
+    ['AS-Glob:AP-InjCtrl:BiasFBGPModKernLenSclFit-Sel', 0, 0.0],
+]
+
+
 pvs = _si_sofb + _si_fofb
 pvs += _si_bbb_frontbackend + _si_bbb_l + _si_bbb_h + _si_bbb_v
+pvs += _si_injbiasfb
 _template_dict = {'pvs': pvs}

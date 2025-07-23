@@ -17,6 +17,10 @@ PUB_INTERFACE = (
     'MAX_WFMSIZE_OTHERS',
     'DEF_WFMSIZE_OTHERS',
     'DEFAULT_WFM_OTHERS',
+    'DEFAULT_WFM_SELECTED',
+    'DEFAULT_WFM_FREQUENCY',
+    'DEFAULT_WFM_GAIN',
+    'DEFAULT_WFM_OFFSET',
     'DEFAULT_WFM',
     'PSSOFB_MAX_NR_UDC',
     'DEFAULT_SIGGEN_CONFIG',
@@ -31,6 +35,7 @@ PUB_INTERFACE = (
     'get_conv_propty_database',
     'get_ps_interlocks',
     'get_ps_modules',
+    'get_ps_scopesourcemap',
 )
 
 

@@ -1,5 +1,6 @@
 """FOFB devices."""
 
+import time as _time
 import numpy as _np
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -8,15 +9,15 @@ from ..namesys import SiriusPVName as _PVName
 from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
 from ..fofb.csdev import HLFOFBConst as _Const, NR_BPM
 
-from .device import Device as _Device, ProptyDevice as _ProptyDevice, \
-    Devices as _Devices
-from .bpm import BPMLogicalTrigger
+from .device import Device as _Device, DeviceSet as _DeviceSet
+from .afc_acq_core import AFCACQLogicalTrigger
+from .bpm_fam import FamBPMs
 from .timing import Event
 from .pwrsupply import PowerSupplyFC
 from .psconv import StrengthConv
 
 
-class _FOFBCtrlBase:
+class FOFBCtrlBase:
     """FOFB Ctrl base."""
 
     _devices = {
@@ -24,99 +25,57 @@ class _FOFBCtrlBase:
     DEVICES = _get_namedtuple('DEVICES', *zip(*_devices.items()))
 
 
-class FOFBCtrlRef(_Device, _FOFBCtrlBase):
+# ---------------- ref device  ----------------
+
+class FOFBCtrlRef(_Device, FOFBCtrlBase):
     """FOFB reference orbit controller device."""
 
-    _properties = (
-        'RefOrb-SP', 'RefOrb-RB',
+    PROPERTIES_DEFAULT = (
+        'RefOrbX-SP', 'RefOrbX-RB',
+        'RefOrbY-SP', 'RefOrbY-RB',
         'MaxOrbDistortion-SP', 'MaxOrbDistortion-RB',
         'MaxOrbDistortionEnbl-Sel', 'MaxOrbDistortionEnbl-Sts',
         'MinBPMCnt-SP', 'MinBPMCnt-RB',
         'MinBPMCntEnbl-Sel', 'MinBPMCntEnbl-Sts',
         'LoopIntlk-Mon', 'LoopIntlkReset-Cmd',
-    )
+        'SYSIDPRBSFOFBAccEn-Sel', 'SYSIDPRBSFOFBAccEn-Sts',
+        'SYSIDPRBSBPMPosEn-Sel', 'SYSIDPRBSBPMPosEn-Sts',
+        'FOFBAccFilterNumBiquads-Cte',
+        )
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        # check if device exists
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
-
         # call base class constructor
-        super().__init__(devname, properties=FOFBCtrlRef._properties)
-
-    @property
-    def ref(self):
-        """Reference orbit, first half reference for X, second, for Y."""
-        ref = self['RefOrb-RB']
-        if ref is None:
-            return None
-        ref = ref.copy()
-        # handle initial state of RefOrb PVs
-        if len(ref) < 2*NR_BPM:
-            value = _np.zeros(2*NR_BPM, dtype=int)
-            value[:len(ref)] = ref
-            ref = value
-        return ref
-
-    @ref.setter
-    def ref(self, value):
-        self['RefOrb-SP'] = _np.array(value, dtype=int)
+        _Device.__init__(
+            self, devname, props2init=props2init, auto_monitor_mon=True)
 
     @property
     def refx(self):
         """Reference orbit X."""
-        return self.ref[:NR_BPM]
+        return self['RefOrbX-RB']
 
     @refx.setter
     def refx(self, value):
-        var = self.ref
-        var[:NR_BPM] = _np.array(value, dtype=int)
-        self.ref = var
+        self['RefOrbX-SP'] = _np.array(value, dtype=int)
 
     @property
     def refy(self):
         """Reference orbit Y."""
-        return self.ref[NR_BPM:]
+        return self['RefOrbY-RB']
 
     @refy.setter
     def refy(self, value):
-        var = self.ref
-        var[NR_BPM:] = _np.array(value, dtype=int)
-        self.ref = var
+        self['RefOrbY-SP'] = _np.array(value, dtype=int)
 
-    def set_ref(self, value):
-        """Set RefOrb."""
-        self.ref = value
-        return True
-
-    def set_refx(self, value):
-        """Set RefOrb X."""
-        self.refx = value
-        return True
-
-    def set_refy(self, value):
-        """Set RefOrb Y."""
-        self.refy = value
-        return True
-
-    def check_ref(self, value):
-        """Check whether RefOrb is equal to value."""
-        if not _np.all(self.ref == value):
+    def check_refx(self, value):
+        """Check whether RefOrbX is equal to value."""
+        if not _np.all(self.refx == value):
             return False
         return True
 
-    def check_refx(self, value):
-        """Check whether first half of RefOrb is equal to value."""
-        return self._check_reforbit('x', value)
-
     def check_refy(self, value):
-        """Check whether second half of RefOrb is equal to value."""
-        return self._check_reforbit('y', value)
-
-    def _check_reforbit(self, plane, value):
-        refval = getattr(self, 'ref'+plane.lower())
-        if not _np.all(refval == value):
+        """Check whether RefOrbY is equal to value."""
+        if not _np.all(self.refy == value):
             return False
         return True
 
@@ -157,6 +116,24 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         self['MinBPMCntEnbl-Sel'] = value
 
     @property
+    def sysid_fofbacc_exc_state(self):
+        """SYSID core PRBS excitation enable state for correctors."""
+        return self['SYSIDPRBSFOFBAccEn-Sts']
+
+    @sysid_fofbacc_exc_state.setter
+    def sysid_fofbacc_exc_state(self, value):
+        self['SYSIDPRBSFOFBAccEn-Sel'] = value
+
+    @property
+    def sysid_bpm_exc_state(self):
+        """SYSID core PRBS excitation enable state for BPMs."""
+        return self['SYSIDPRBSBPMPosEn-Sts']
+
+    @sysid_bpm_exc_state.setter
+    def sysid_bpm_exc_state(self, value):
+        self['SYSIDPRBSBPMPosEn-Sel'] = value
+
+    @property
     def interlock(self):
         """Interlock status."""
         return self['LoopIntlk-Mon']
@@ -166,38 +143,43 @@ class FOFBCtrlRef(_Device, _FOFBCtrlBase):
         self['LoopIntlkReset-Cmd'] = 1
         return True
 
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        return self['FOFBAccFilterNumBiquads-Cte']
 
-class _DCCDevice(_ProptyDevice):
+# ---------------- DCC devices ----------------
+
+
+class _DCCDevice(_Device):
     """FOFB Diamond communication controller device."""
 
     DEF_TIMEOUT = 1
     DEF_FMC_BPMCNT = NR_BPM
     DEF_P2P_BPMCNT = 8
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'BPMId-SP', 'BPMId-RB', 'BPMCnt-Mon',
-        'CCEnable-SP', 'CCEnable-RB',
+        'CCEnable-Sel', 'CCEnable-Sts',
         'TimeFrameLen-SP', 'TimeFrameLen-RB',
-    )
+        )
     _properties_fmc = (
         'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
         'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon',
-    )
+        )
 
-    def __init__(self, devname, dccname):
+    def __init__(self, devname, dccname, props2init='all'):
         """Init."""
         self.dccname = dccname
 
-        properties = _DCCDevice._properties
-        if 'FMC' in self.dccname:
-            properties += _DCCDevice._properties_fmc
+        if props2init == 'all':
+            props2init = list(_DCCDevice.PROPERTIES_DEFAULT)
+            if 'FMC' in self.dccname:
+                props2init += _DCCDevice._properties_fmc
 
-        super().__init__(devname, dccname, properties=properties)
-        prop2automon = [
-            'BPMCnt-Mon', 'LinkPartnerCH0-Mon', 'LinkPartnerCH1-Mon',
-            'LinkPartnerCH2-Mon', 'LinkPartnerCH3-Mon']
-        for prop in prop2automon:
-            self.set_auto_monitor(prop, True)
+        super().__init__(
+            devname + ':' + dccname, props2init=props2init,
+            auto_monitor_mon=True)
 
     @property
     def bpm_id(self):
@@ -216,11 +198,11 @@ class _DCCDevice(_ProptyDevice):
     @property
     def cc_enable(self):
         """Communication enable."""
-        return self['CCEnable-RB']
+        return self['CCEnable-Sts']
 
     @cc_enable.setter
     def cc_enable(self, value):
-        self['CCEnable-SP'] = value
+        self['CCEnable-Sel'] = value
 
     @property
     def time_frame_len(self):
@@ -241,7 +223,7 @@ class _DCCDevice(_ProptyDevice):
         return self['BPMCnt-Mon'] == cnt
 
 
-class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
+class FOFBCtrlDCC(_DCCDevice, FOFBCtrlBase):
     """FOFBCtrl DCC device."""
 
     class PROPDEVICES:
@@ -251,13 +233,11 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
         P2P = 'DCCP2P'
         ALL = (FMC, P2P)
 
-    def __init__(self, devname, dccname):
+    def __init__(self, devname, dccname, props2init='all'):
         """Init."""
-        if devname not in self.DEVICES:
-            raise NotImplementedError(devname)
         if dccname not in self.PROPDEVICES.ALL:
             raise NotImplementedError(dccname)
-        super().__init__(devname, dccname)
+        _DCCDevice.__init__(self, devname, dccname, props2init=props2init)
 
     @property
     def linkpartners(self):
@@ -271,22 +251,21 @@ class FOFBCtrlDCC(_DCCDevice, _FOFBCtrlBase):
 class BPMDCC(_DCCDevice):
     """BPM DCC device."""
 
-    def __init__(self, devname):
+    def __init__(self, devname, props2init='all'):
         """Init."""
-        # Temporarily remove this check to control new 10SB BPMs
-        # if not _BPMSearch.is_valid_devname(devname):
-        #     raise NotImplementedError(devname)
-        super().__init__(devname, 'DCCP2P')
+        super().__init__(devname, 'DCCP2P', props2init=props2init)
 
 
-class FamFOFBControllers(_Devices):
+# ---------------- Fam devices ----------------
+
+class FamFOFBControllers(_DeviceSet):
     """Family of FOFBCtrl and related BPM devices."""
 
     DEF_TIMEOUT = 10  # [s]
     DEF_DCC_TIMEFRAMELEN = 5000
     DEF_BPMTRIG_RCVSRC = 0
     DEF_BPMTRIG_RCVIN = 5
-    BPM_TRIGS_IDS = [1, 2, 20]
+    BPM_TRIGS_ID = 20
     FOFBCTRL_BPMID_OFFSET = 480
     BPM_DCC_PAIRS = {
         'M1': 'M2',
@@ -305,7 +284,7 @@ class FamFOFBControllers(_Devices):
         lpaw = _np.roll(bpmids, -1)
         self._ctl_ids, self._ctl_part = dict(), dict()
         self._ctl_refs, self._ctl_dccs = dict(), dict()
-        for idx, ctl in enumerate(_FOFBCtrlBase.DEVICES):
+        for idx, ctl in enumerate(FOFBCtrlBase.DEVICES):
             self._ctl_ids[ctl] = bpmids[idx]
             self._ctl_part[ctl] = {lpcw[idx], lpaw[idx]}
             self._ctl_refs[ctl] = FOFBCtrlRef(ctl)
@@ -318,12 +297,10 @@ class FamFOFBControllers(_Devices):
         for idx, bpm in enumerate(self._bpmnames):
             self._bpm_ids[bpm] = bpmids[idx]
             self._bpm_dccs[bpm] = BPMDCC(bpm)
-            for trig in self.BPM_TRIGS_IDS:
-                trigname = bpm + ':TRIGGER' + str(trig)
-                self._bpm_trgs[trigname] = BPMLogicalTrigger(bpm, trig)
-        bpm2dsbl = ['SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2']
+            self._bpm_trgs[bpm] = AFCACQLogicalTrigger(bpm, self.BPM_TRIGS_ID)
+        # # DCCs to disable (ID BPMs)
         self._bpmdcc2dsbl = dict()
-        for bpm in bpm2dsbl:
+        for bpm in FamBPMs.ID_BPMS:
             self._bpmdcc2dsbl[bpm] = BPMDCC(bpm)
         # fofb event
         self._evt_fofb = Event('FOFBS')
@@ -335,7 +312,7 @@ class FamFOFBControllers(_Devices):
         devices.extend(self._bpm_trgs.values())
         devices.append(self._evt_fofb)
 
-        super().__init__('SI-Glob:BS-FOFB', devices)
+        super().__init__(devices, devname='SI-Glob:BS-FOFB')
 
     @property
     def ctrlrefdevs(self):
@@ -354,7 +331,7 @@ class FamFOFBControllers(_Devices):
 
     @property
     def bpmtrigdevs(self):
-        """BPMLogicalTrigger device list."""
+        """AFCACQLogicalTrigger device list."""
         return self._bpm_trgs
 
     @property
@@ -362,49 +339,33 @@ class FamFOFBControllers(_Devices):
         """FOFBS Event device."""
         return self._evt_fofb
 
-    def set_reforb(self, value):
-        """Set RefOrb for all FOFB controllers."""
-        for ctrl in self._ctl_refs.values():
-            ctrl.set_ref(value)
-        return True
-
     def set_reforbx(self, value):
         """Set RefOrbX for all FOFB controllers."""
-        return self._set_reforb('x', value)
+        for ctrl in self._ctl_refs.values():
+            ctrl.refx = value
+        return True
 
     def set_reforby(self, value):
         """Set RefOrbY for all FOFB controllers."""
-        return self._set_reforb('y', value)
-
-    def _set_reforb(self, plane, value):
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'set_ref' + plane.lower())
-            fun(value)
-        return True
-
-    def check_reforb(self, value):
-        """Check whether RefOrb is equal to value."""
-        if not self.connected:
-            return False
-        for ctrl in self._ctl_refs.values():
-            if not ctrl.check_ref(value):
-                return False
+            ctrl.refy = value
         return True
 
     def check_reforbx(self, value):
         """Check whether RefOrbX is equal to value."""
-        return self._check_reforb('x', value)
-
-    def check_reforby(self, value):
-        """Check whether RefOrbY is equal to value."""
-        return self._check_reforb('y', value)
-
-    def _check_reforb(self, plane, value):
         if not self.connected:
             return False
         for ctrl in self._ctl_refs.values():
-            fun = getattr(ctrl, 'check_ref' + plane.lower())
-            if not fun(value):
+            if not ctrl.check_refx(value):
+                return False
+        return True
+
+    def check_reforby(self, value):
+        """Check whether RefOrbY is equal to value."""
+        if not self.connected:
+            return False
+        for ctrl in self._ctl_refs.values():
+            if not ctrl.check_refy(value):
                 return False
         return True
 
@@ -601,18 +562,18 @@ class FamFOFBControllers(_Devices):
 
         # temporary solution: disable BPM DCCs that are not in FOFB network
         dcc2dsbl = list(self._bpmdcc2dsbl.values())
-        self._set_devices_propty(dcc2dsbl, 'CCEnable-SP', 0)
+        self._set_devices_propty(dcc2dsbl, 'CCEnable-Sel', 0)
         if not self._wait_devices_propty(
-                dcc2dsbl, 'CCEnable-RB', 0, timeout=timeout/2):
+                dcc2dsbl, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
 
-        self._set_devices_propty(alldccs, 'CCEnable-SP', 0)
+        self._set_devices_propty(alldccs, 'CCEnable-Sel', 0)
         if not self._wait_devices_propty(
-                alldccs, 'CCEnable-RB', 0, timeout=timeout/2):
+                alldccs, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
-        self._set_devices_propty(enbdccs, 'CCEnable-SP', 1)
+        self._set_devices_propty(enbdccs, 'CCEnable-Sel', 1)
         if not self._wait_devices_propty(
-                enbdccs, 'CCEnable-RB', 1, timeout=timeout/2):
+                enbdccs, 'CCEnable-Sts', 1, timeout=timeout/2):
             return False
         self._evt_fofb.cmd_external_trigger()
         return True
@@ -709,8 +670,37 @@ class FamFOFBControllers(_Devices):
             return False
         return True
 
+    def check_sysid_exc_disabled(self):
+        """Check whether SYSID excitation is disabled."""
+        if not self.connected:
+            return False
+        for ctl in self._ctl_refs.values():
+            if ctl.sysid_fofbacc_exc_state or ctl.sysid_bpm_exc_state:
+                return False
+        return True
 
-class FamFastCorrs(_Devices):
+    def cmd_dsbl_sysid_exc(self, timeout=DEF_TIMEOUT):
+        """Command to disable SYSID excitation."""
+        devs = list(self._ctl_refs.values())
+        self._set_devices_propty(devs, 'SYSIDPRBSFOFBAccEn-Sel', 0)
+        if not self._wait_devices_propty(
+                devs, 'SYSIDPRBSFOFBAccEn-Sts', 0, timeout=timeout/2):
+            return False
+        self._set_devices_propty(devs, 'SYSIDPRBSBPMPosEn-Sel', 0)
+        if not self._wait_devices_propty(
+                devs, 'SYSIDPRBSBPMPosEn-Sts', 0, timeout=timeout/2):
+            return False
+        self._evt_fofb.cmd_external_trigger()
+        return True
+
+    @property
+    def fofbacc_filter_num_biquads(self):
+        """FOFB accumulator filter number of biquads."""
+        ctl = self._ctl_refs[FOFBCtrlBase.DEVICES.SI01]
+        return ctl.fofbacc_filter_num_biquads
+
+
+class FamFastCorrs(_DeviceSet):
     """Family of FOFB fast correctors."""
 
     DEF_TIMEOUT = 10  # [s]
@@ -721,6 +711,8 @@ class FamFastCorrs(_Devices):
     DEF_ATOL_FOFBACCSAT = 2e-2
     DEF_ATOL_CURRENT_RB = 1e-6
     DEF_ATOL_CURRENT_MON = 2e-2
+    DEF_ATOL_ACCFILTER = 2**-12
+    DEF_ATOL_ACCFILTERGAIN = 2**-12
 
     def __init__(self, psnames=None):
         """Init."""
@@ -730,9 +722,11 @@ class FamFastCorrs(_Devices):
             psnames = chn + cvn
         self._psnames = psnames
         self._psdevs = [PowerSupplyFC(psn) for psn in self._psnames]
-        self._psconv = [StrengthConv(psn, 'Ref-Mon', auto_mon=True)
-                        for psn in self._psnames]
-        super().__init__('SI-Glob:PS-FCHV', self._psdevs + self._psconv)
+        self._psconv = [
+            StrengthConv(psn, 'Ref-Mon', auto_monitor_mon=True)
+            for psn in self._psnames]
+        super().__init__(
+            self._psdevs + self._psconv, devname='SI-Glob:PS-FCHV')
 
     @property
     def psnames(self):
@@ -832,6 +826,16 @@ class FamFastCorrs(_Devices):
         return _np.array([p.fofbacc_satmin for p in self._psdevs])
 
     @property
+    def fofbacc_decimation(self):
+        """FOFB pre-accumulator decimation.
+
+        Returns:
+            counts (numpy.ndarray, 160):
+                FOFB pre-accumulator decimation for each power supply.
+        """
+        return _np.array([p.fofbacc_decimation for p in self._psdevs])
+
+    @property
     def curr_gain(self):
         """Current gain.
 
@@ -840,6 +844,36 @@ class FamFastCorrs(_Devices):
                 current gain for each power supply.
         """
         return _np.array([p.curr_gain for p in self._psdevs])
+
+    @property
+    def currloop_kp(self):
+        """Current loop Kp.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                CurrLoopKp for each power supply.
+        """
+        return _np.array([p.currloop_kp for p in self._psdevs])
+
+    @property
+    def currloop_ki(self):
+        """Current loop Ki.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                CurrLoopKi for each power supply.
+        """
+        return _np.array([p.currloop_ki for p in self._psdevs])
+
+    @property
+    def fofbacc_filter_gain(self):
+        """Acc filter gain.
+
+        Returns:
+            state (numpy.ndarray, 160):
+                Filter gain for each power supply.
+        """
+        return _np.array([p.fofbacc_filter_gain for p in self._psdevs])
 
     @property
     def strength_2_current_factor(self):
@@ -929,10 +963,13 @@ class FamFastCorrs(_Devices):
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
         devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError('Values and indices must have the same size.')
         if any([len(v) != 2*NR_BPM for v in values]):
             raise ValueError(f'Value must have size {2*NR_BPM}.')
         for i, dev in enumerate(devs):
-            dev.invrespmat_row = values[i]
+            dev.invrespmat_row_x = values[i][:NR_BPM]
+            dev.invrespmat_row_y = values[i][NR_BPM:]
         return True
 
     def check_invrespmat_row(
@@ -943,14 +980,16 @@ class FamFastCorrs(_Devices):
             return False
         if not isinstance(values, (list, tuple, _np.ndarray)):
             raise ValueError('Value must be iterable.')
-        values = _np.asarray(values)
         devs = self._get_devices(psnames, psindices)
-        if not values.shape[0] == len(devs):
+        if not len(values) == len(devs):
             raise ValueError('Values and indices must have the same size.')
-        impltd = _np.asarray([d.invrespmat_row for d in devs])
-        if _np.allclose(values, impltd, atol=atol):
-            return True
-        return False
+        for i, dev in enumerate(devs):
+            impltd = _np.hstack([dev.invrespmat_row_x, dev.invrespmat_row_y])
+            if len(values[i]) != len(impltd):
+                return False
+            if not _np.allclose(values[i], impltd, atol=atol):
+                return False
+        return True
 
     def set_fofbacc_gain(self, values, psnames=None, psindices=None):
         """Command to set power supply correction gain."""
@@ -1044,11 +1083,156 @@ class FamFastCorrs(_Devices):
             return True
         return False
 
+    def set_fofbacc_decimation(self, values, psnames=None, psindices=None):
+        """Set power supply pre-accumulator decimation."""
+        devs = self._get_devices(psnames, psindices)
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        for i, dev in enumerate(devs):
+            dev.fofbacc_decimation = values[i]
+        return True
+
+    def check_fofbacc_decimation(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_CURRENT_MON):
+        """Check whether power supplies have desired decimation value."""
+        if not self.connected:
+            return False
+        devs = self._get_devices(psnames, psindices)
+        impltd = _np.asarray([d.fofbacc_decimation for d in devs])
+        if isinstance(values, (int, float, bool)):
+            values = len(devs) * [values]
+        if _np.allclose(values, impltd, atol=atol):
+            return True
+        return False
+
     def cmd_fofbacc_clear(self, psnames=None, psindices=None):
         """Send clear power supplies pre-accumulator."""
         for dev in self._get_devices(psnames, psindices):
             dev.cmd_fofbacc_clear()
         return True
+
+    def set_fofbacc_filter(self, values, psnames=None, psindices=None):
+        """Command to set power supply filter coefficients values."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter = values[i]
+        return True
+
+    def check_fofbacc_filter(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTER):
+        """Check power supplies filter coefficients."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            if len(values[i]) != len(dev.fofbacc_filter):
+                return False
+            if not _np.allclose(values[i], dev.fofbacc_filter, atol=atol):
+                return False
+        return True
+
+    def set_fofbacc_filter_gain(self, values, psnames=None, psindices=None):
+        """Command to set accumulator filter gain."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.fofbacc_filter_gain = values[i]
+        return True
+
+    def check_fofbacc_filter_gain(
+            self, values, psnames=None, psindices=None,
+            atol=DEF_ATOL_ACCFILTERGAIN):
+        """Check accumulator filter gain."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        impltd = _np.asarray([d.fofbacc_filter_gain for d in devs])
+        return _np.allclose(values, impltd, atol=atol)
+
+    def set_currloop_kp(self, values, psnames=None, psindices=None):
+        """Command to set power supply Kp."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.currloop_kp = values[i]
+        return True
+
+    def set_currloop_ki(self, values, psnames=None, psindices=None):
+        """Command to set power supply Ki."""
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        for i, dev in enumerate(devs):
+            dev.currloop_ki = values[i]
+        return True
+
+    def check_currloop_kp(
+            self, values, psnames=None, psindices=None):
+        """Check current loop Kp."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        impltd = _np.asarray([d.currloop_kp for d in devs])
+        if _np.allclose(values, impltd, atol=0):
+            return True
+        return False
+
+    def check_currloop_ki(
+            self, values, psnames=None, psindices=None):
+        """Check current loop Ki."""
+        if not self.connected:
+            return False
+        if not isinstance(values, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        devs = self._get_devices(psnames, psindices)
+        if not len(values) == len(devs):
+            raise ValueError(
+                'Values must be the same size as psnames or psindices.'
+            )
+        impltd = _np.asarray([d.currloop_ki for d in devs])
+        if _np.allclose(values, impltd, atol=0):
+            return True
+        return False
 
     # ----- private methods -----
 
@@ -1063,6 +1247,8 @@ class FamFastCorrs(_Devices):
         return [self._psdevs[i] for i in indices]
 
 
+# ----------------  HL device  ----------------
+
 class HLFOFB(_Device):
     """Control high level FOFB IOC."""
 
@@ -1072,7 +1258,7 @@ class HLFOFB(_Device):
         SI = 'SI-Glob:AP-FOFB'
         ALL = (SI, )
 
-    _properties = (
+    PROPERTIES_DEFAULT = (
         'LoopState-Sel', 'LoopState-Sts',
         'LoopGainH-SP', 'LoopGainH-RB', 'LoopGainH-Mon',
         'LoopGainV-SP', 'LoopGainV-RB', 'LoopGainV-Mon',
@@ -1080,9 +1266,11 @@ class HLFOFB(_Device):
         'LoopMaxOrbDistortionEnbl-Sel', 'LoopMaxOrbDistortionEnbl-Sts',
         'LoopPacketLossDetecEnbl-Sel', 'LoopPacketLossDetecEnbl-Sts',
         'CorrStatus-Mon', 'CorrConfig-Cmd',
-        'CorrSetPwrStateOn-Cmd', 'CorrSetOpModeManual-Cmd',
+        'CorrSetPwrStateOn-Cmd', 'CorrSetPwrStateOff-Cmd',
+        'CorrSetOpModeManual-Cmd',
         'CorrSetAccFreezeDsbl-Cmd', 'CorrSetAccFreezeEnbl-Cmd',
         'CorrSetAccClear-Cmd', 'CorrSetCurrZero-Cmd',
+        'CorrSetCurrZeroDuration-SP', 'CorrSetCurrZeroDuration-RB',
         'CHAccSatMax-SP', 'CHAccSatMax-RB',
         'CVAccSatMax-SP', 'CVAccSatMax-RB',
         'CtrlrStatus-Mon', 'CtrlrConfBPMId-Cmd',
@@ -1090,7 +1278,11 @@ class HLFOFB(_Device):
         'CtrlrSyncTFrameLen-Cmd', 'CtrlrConfBPMLogTrg-Cmd',
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
-        'KickBufferSize-SP', 'KickBufferSize-RB', 'KickBufferSize-Mon',
+        'FOFBAccDecimation-Sel', 'FOFBAccDecimation-Sts',
+        'FOFBAccDecimation-SP',  'FOFBAccDecimation-RB',
+        'PSConfigMat-SP', 'PSConfigMat-RB',
+        'KickCHAcc-Mon', 'KickCVAcc-Mon',
+        'KickCHRef-Mon', 'KickCVRef-Mon',
         'KickCH-Mon', 'KickCV-Mon',
         'RefOrbX-SP', 'RefOrbX-RB', 'RefOrbY-SP', 'RefOrbY-RB',
         'RefOrbHwX-Mon', 'RefOrbHwY-Mon',
@@ -1113,9 +1305,10 @@ class HLFOFB(_Device):
         'MeasRespMatWait-SP', 'MeasRespMatWait-RB',
     )
 
+    _default_timeout = 10
     _default_timeout_respm = 2 * 60 * 60  # [s]
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         # check if device exists
         if devname is None:
@@ -1126,7 +1319,7 @@ class HLFOFB(_Device):
         self._data = _Const()
 
         # call base class constructor
-        super().__init__(devname, properties=self._properties)
+        super().__init__(devname, props2init=props2init)
 
     @property
     def data(self):
@@ -1141,6 +1334,22 @@ class HLFOFB(_Device):
     @loop_state.setter
     def loop_state(self, value):
         self['LoopState-Sel'] = value
+
+    def cmd_turn_on_loop_state(self, timeout=None):
+        """Turn on loop state."""
+        if self.loop_state == _Const.LoopState.Closed:
+            return True
+        self['LoopState-Sel'] = _Const.LoopState.Closed
+        return self._wait(
+            'LoopState-Sts', _Const.LoopState.Closed, timeout=timeout)
+
+    def cmd_turn_off_loop_state(self, timeout=None):
+        """Turn off loop state."""
+        if self.loop_state == _Const.LoopState.Open:
+            return True
+        self['LoopState-Sel'] = _Const.LoopState.Open
+        return self._wait(
+            'LoopState-Sts', _Const.LoopState.Open, timeout=timeout)
 
     @property
     def loop_gain_h(self):
@@ -1209,7 +1418,12 @@ class HLFOFB(_Device):
 
     def cmd_corr_set_pwrstate_on(self):
         """Command to set all corrector pwrstate to on."""
-        self['CorrSetCurrZero-Cmd'] = 1
+        self['CorrSetPwrStateOn-Cmd'] = 1
+        return True
+
+    def cmd_corr_set_pwrstate_off(self):
+        """Command to set all corrector pwrstate to off."""
+        self['CorrSetPwrStateOff-Cmd'] = 1
         return True
 
     def cmd_corr_set_opmode_manual(self):
@@ -1235,7 +1449,18 @@ class HLFOFB(_Device):
     def cmd_corr_set_current_zero(self):
         """Command to set correctors current to zero."""
         self['CorrSetCurrZero-Cmd'] = 1
+        duration = self['CorrSetCurrZeroDuration-RB'] or self._default_timeout
+        _time.sleep(duration)
         return True
+
+    @property
+    def corr_set_current_zero_duration(self):
+        """Duration of command to set correctors current to zero."""
+        return self['CorrSetCurrZeroDuration-RB']
+
+    @corr_set_current_zero_duration.setter
+    def corr_set_current_zero_duration(self, value):
+        self['CorrSetCurrZeroDuration-SP'] = value
 
     @property
     def ch_accsatmax(self):
@@ -1301,27 +1526,66 @@ class HLFOFB(_Device):
         return True
 
     @property
-    def kick_buffer_size_mon(self):
-        """Return actual kicks buffer size."""
-        return self['KickBufferSize-Mon']
+    def fofbacc_decimation_enumvalue(self):
+        """Accumulator decimation enum value."""
+        return self['FOFBAccDecimation-Sts']
+
+    @fofbacc_decimation_enumvalue.setter
+    def fofbacc_decimation_enumvalue(self, value):
+        self['FOFBAccDecimation-Sel'] = value
 
     @property
-    def kick_buffer_size(self):
-        """Return kicks buffer size."""
-        return self['KickBufferSize-RB']
+    def fofbacc_decimation_value(self):
+        """Accumulator decimation value."""
+        return self['FOFBAccDecimation-RB']
 
-    @kick_buffer_size.setter
-    def kick_buffer_size(self, value):
-        self['KickBufferSize-SP'] = max(1, int(value))
+    @fofbacc_decimation_value.setter
+    def fofbacc_decimation_value(self, value):
+        self['FOFBAccDecimation-SP'] = value
+
+    @property
+    def psconfigmat(self):
+        """Power Supply Configuration matrix."""
+        return self['PSConfigMat-RB']
+
+    @psconfigmat.setter
+    def psconfigmat(self, value):
+        if not isinstance(value, (list, tuple, _np.ndarray)):
+            raise ValueError('Value must be iterable.')
+        if not len(value) == self._data.psconfig_size:
+            raise ValueError(
+                'Setpoint value must have the same shape as the readback.'
+                )
+        self['PSConfigMat-SP'] = value
+
+    @property
+    def kickch_acc(self):
+        """Return CH kicks related to FOFBAcc-Mon PVs."""
+        return self['KickCHAcc-Mon']
+
+    @property
+    def kickcv_acc(self):
+        """Return CV kicks related to FOFBAcc-Mon PVs."""
+        return self['KickCVAcc-Mon']
+
+    @property
+    def kickch_ref(self):
+        """Return CH kicks related to CurrentRef-Mon PVs."""
+        return self['KickCHRef-Mon']
+
+    @property
+    def kickcv_ref(self):
+        """Return CV kicks related to CurrentRef-Mon PVs."""
+        return self['KickCVRef-Mon']
 
     @property
     def kickch(self):
-        """Return average of CH kicks."""
+        """Return CH kicks related to Current-Mon PVs."""
         return self['KickCH-Mon']
 
     @property
     def kickcv(self):
-        """Return average of CV kicks."""
+        """Return CV kicks related to Current-Mon PVs."""
         return self['KickCV-Mon']
 
     @property

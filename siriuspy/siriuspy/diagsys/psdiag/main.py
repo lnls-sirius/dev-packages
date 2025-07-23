@@ -19,9 +19,13 @@ class PSDiagApp(_App):
             devname = SiriusPVName(psname).substitute(prefix=self._prefix)
 
             # DiagCurrentDiff-Mon
-            pvs = [None, None]
+            nrpvs = 4 if devname.sec != 'LI' else 2
+            pvs = [None]*nrpvs
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
             pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
+            if devname.sec != 'LI':
+                pvs[_PSDiffPV.CURRT_REF] = devname + ':CurrentRef-Mon'
+                pvs[_PSDiffPV.OPMODESTS] = devname + ':OpMode-Sts'
             pvo = _ComputedPV(
                 psname + ':DiagCurrentDiff-Mon', _PSDiffPV(), self._queue,
                 pvs, monitor=False)
@@ -31,8 +35,12 @@ class PSDiagApp(_App):
             computer = _PSStatusPV()
             if devname.sec != 'LI':
                 intlks = _get_ps_interlocks(psname=psname)
-                intlk_list = [':' + ppt for ppt in intlks if 'Intlk' in ppt]
-                alarm_list = [':' + ppt for ppt in intlks if 'Alarm' in ppt]
+                if psname.dev in ['FCH', 'FCV']:
+                    intlk_list = [':' + p for p in intlks if 'Ltc' not in p]
+                    alarm_list = [':' + p for p in intlks if 'Ltc' in p]
+                else:
+                    intlk_list = [':' + p for p in intlks if 'Intlk' in p]
+                    alarm_list = [':' + p for p in intlks if 'Alarm' in p]
 
                 if psname in ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']:
                     for aux in ['a', 'b', 'c']:
@@ -42,7 +50,7 @@ class PSDiagApp(_App):
                         alarm_list.extend(
                             [aux+':'+alm for alm in intlks if 'Alarm' in alm])
 
-                nbpvs = 4 if psname.dev in ['FCH', 'FCV'] else 5
+                nbpvs = 5
                 pvs = [None]*(nbpvs+len(intlk_list)+len(alarm_list))
                 pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
                 pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
@@ -50,6 +58,8 @@ class PSDiagApp(_App):
                 pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
                 if psname.dev not in ['FCH', 'FCV']:
                     pvs[_PSStatusPV.WAVFRM_MON] = devname + ':Wfm-Mon'
+                else:
+                    pvs[_PSStatusPV.TRIGEN_STS] = devname + ':TrigEn-Sts'
 
                 computer.INTLK_PVS = list()
                 for idx, intlk in enumerate(intlk_list):

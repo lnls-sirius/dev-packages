@@ -57,6 +57,7 @@ class MacScheduleData:
             begin, end, dtype='macsched_byday')
         return _np.sum(tags) if begin != end else 0
 
+
     @staticmethod
     def is_user_shift_programmed(
             timestamp=None, datetime=None,
@@ -117,6 +118,7 @@ class MacScheduleData:
         databyshift = list()
         databyday = list()
         datainicurr = list()
+        flag_bit, inicurr = 0, 0.0
         for datum in data:
             if len(datum) < 2:
                 raise Exception(
@@ -126,23 +128,24 @@ class MacScheduleData:
             month, day = int(datum[0]), int(datum[1])
             if len(datum) == 2:
                 timestamp = _Time(year, month, day, 0, 0).timestamp()
-                databyshift.append((timestamp, 0))
-                databyday.append((timestamp, 0))
-                datainicurr.append((timestamp, 0.0))
+                databyshift.append((timestamp, flag_bit))
+                databyday.append((timestamp, flag_bit))
+                datainicurr.append((timestamp, inicurr))
             else:
                 timestamp = _Time(year, month, day, 0, 0).timestamp()
-                databyday.append((timestamp, 1))
+                if len(datum[2:]) > 1:
+                    # if there more than one annotation, consider this a user shift day
+                    flag_bit = 1
+                else:
+                    # if there is only one annotation and this is a shift end at 8am,
+                    # consider this day is not a dedicated user shift day
+                    tag = datum[2]
+                    hour, _, flag_bit, _ = MacScheduleData._get_tag_data(tag)
+                    flag_bit = 1 if flag_bit or hour > 8 else 0
+                databyday.append((timestamp, flag_bit))
                 for tag in datum[2:]:
-                    if 'B' in tag:
-                        hour, minute, flag, inicurr = _re.findall(
-                            MacScheduleData._TAG_FORMAT_BEG, tag)[0]
-                        inicurr = float(inicurr)
-                    else:
-                        hour, minute, flag = _re.findall(
-                            MacScheduleData._TAG_FORMAT_END, tag)[0]
-                        inicurr = 0.0
-                    flag_bit = 0 if flag == 'E' else 1
-                    hour, minute = int(hour), int(minute)
+                    hour, minute, flag_bit, inicurr = \
+                        MacScheduleData._get_tag_data(tag)
                     timestamp = _Time(
                         year, month, day, hour, minute).timestamp()
                     databyshift.append((timestamp, flag_bit))
@@ -152,6 +155,19 @@ class MacScheduleData:
         MacScheduleData._mac_schedule_ndata_byshift[year] = databyshift
         MacScheduleData._mac_schedule_ndata_byday[year] = databyday
         MacScheduleData._mac_schedule_ndata_inicurr[year] = datainicurr
+
+    @staticmethod
+    def _get_tag_data(tag):
+        if 'B' in tag:
+            hour, minute, flag, inicurr = _re.findall(
+                MacScheduleData._TAG_FORMAT_BEG, tag)[0]
+            inicurr = float(inicurr)
+        else:
+            hour, minute, flag = _re.findall(
+                MacScheduleData._TAG_FORMAT_END, tag)[0]
+            inicurr = 0.0
+        flag_bit = 0 if flag == 'E' else 1
+        return int(hour), int(minute), flag_bit, inicurr
 
     @staticmethod
     def _handle_timestamp_data(

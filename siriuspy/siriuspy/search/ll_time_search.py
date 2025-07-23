@@ -16,6 +16,7 @@ class LLTimeSearch:
     """Get the timing devices connections."""
 
     LLRegExp = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
+    TrigSrcDevs = {'EVR', 'EVE', 'AMCFPGAEVR'}
 
     # defines the relations between input and output of the timing devices.
     In2OutMap = {
@@ -23,8 +24,8 @@ class LLTimeSearch:
             'UPLINK': (
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                ),
-            },
+            ),
+        },
         'EVR': {
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
@@ -33,8 +34,9 @@ class LLTimeSearch:
                 'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                ),
-            },
+                'DIN0', 'DIN1', 'DIN2',
+            ),
+        },
         'EVE': {
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
@@ -43,44 +45,44 @@ class LLTimeSearch:
                 'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                'RFOUT',
-                ),
-            },
+                'RFOUT', 'DIN0', 'DIN1', 'DIN2',
+            ),
+        },
         'AMCFPGAEVR': {
             'SFP8': (
                 'FMC1CH1', 'FMC1CH2', 'FMC1CH3', 'FMC1CH4', 'FMC1CH5',
                 'FMC2CH1', 'FMC2CH2', 'FMC2CH3', 'FMC2CH4', 'FMC2CH5',
                 'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
                 'CRT5', 'CRT6', 'CRT7',
-                ),
-            },
+            ),
+        },
         'OEMultSFP': {
             'OE1': ('OUT1', ),
             'OE2': ('OUT2', ),
             'OE3': ('OUT3', ),
             'OE4': ('OUT4', ),
-            },
+        },
         'OEMultPOF': {
             'IN1': ('OUT1', ),
             'IN2': ('OUT2', ),
             'IN3': ('OUT3', ),
             'IN4': ('OUT4', ),
-            },
+        },
         'OESglPOF': {
             'IN': ('OUT', ),
-            },
+        },
         'OESglSFP': {
             'INRX': ('OUT', 'INTX'),
-            },
+        },
         'Fout': {
             'UPLINK': (
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                ),
-            },
+            ),
+        },
         'UDC': {
             'SYNCIN': ('BCKPLN', 'SYNCOUT'),
-            },
+        },
         'Crate': {
             'CRT0': ('CRT0', ),
             'CRT1': ('CRT1', ),
@@ -90,10 +92,10 @@ class LLTimeSearch:
             'CRT5': ('CRT5', ),
             'CRT6': ('CRT6', ),
             'CRT7': ('CRT7', ),
-            },
+        },
         'OERFRx': {'OPTICALACP': ('SIGNAL', )},
         'OERFTx': {'SIGNAL': ('OPTICALACP', )},
-        }
+    }
     In2OutMap['DIO'] = {
         'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(110)}
     In2OutMap['DIO'].update({
@@ -112,6 +114,7 @@ class LLTimeSearch:
 
     _conn_from_evg = dict()
     _conn_twds_evg = dict()
+    _crates_mapping = dict()
     _top_chain_devs = set()
     _final_receiver_devs = set()
     _all_devices = set()
@@ -278,6 +281,48 @@ class LLTimeSearch:
         return _dcopy(cls._devs_twds_evg)
 
     @classmethod
+    def is_digital_input(self, ll_trigger):
+        """Check whether a low level trigger if of type digital input.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('DIN')
+
+    @classmethod
+    def has_delay_type(cls, ll_trigger):
+        """Check whether a low level trigger has delay type.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
+
+    @classmethod
+    def has_direction(cls, ll_trigger):
+        """Check whether a low level trigger has direction property.
+
+        Args:
+            ll_trigger (SiriusPVName): Trigger name.
+
+        Returns:
+            bool: True or False.
+
+        """
+        name = _PVName(ll_trigger)
+        return 'AMCFPGAEVR' == name.dev
+
+    @classmethod
     def has_clock(cls, ll_trigger):
         """Check whether a low level trigger has access to EVG clocks.
 
@@ -300,8 +345,8 @@ class LLTimeSearch:
             raise Exception('Error: ' + name)
 
     @classmethod
-    def has_delay_type(cls, ll_trigger):
-        """Check whether a low level trigger has delay type.
+    def has_log(cls, ll_trigger):
+        """Check whether a low level trigger has Log PVs.
 
         Args:
             ll_trigger (SiriusPVName): Trigger name.
@@ -311,12 +356,16 @@ class LLTimeSearch:
 
         """
         name = _PVName(ll_trigger)
-        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
+        return 'AMCFPGAEVR' != name.dev
 
     @classmethod
     def get_trigger_name(cls, channel):
         """Get name of the trigger associated with channel."""
-        chan_tree = cls.get_device_tree(channel)
+        # Look for trigger source from EVG down to channel.
+        # This is important to handle cases where 2 trigger sources are on the
+        # same leaf of the tree, such as the redundancy trigger for the orbit
+        # interlock.
+        chan_tree = cls.get_device_tree(channel)[::-1]
         for up_chan in chan_tree:
             if up_chan.device_name in cls._trig_src_devs:
                 return up_chan
@@ -336,6 +385,12 @@ class LLTimeSearch:
         for up_chan in chan_tree:
             if up_chan.device_name in cls._evg_devs:
                 return up_chan
+
+    @classmethod
+    def get_crates_mapping(cls):
+        """Return crates to devices mapping."""
+        cls._get_timedata()
+        return cls._crates_mapping
 
     # --- private methods ---
 
@@ -427,13 +482,14 @@ class LLTimeSearch:
             line = line.strip()
             if not line or line[0] == '#':
                 continue  # empty line
-            crate, dev, *_ = line.split()
+            dev, *_, crate = line.split()
             dev = _PVName(dev)
             if crate not in mapping and dev.dev == 'AMCFPGAEVR':
                 crates[crate] = dev
                 mapping[crates[crate]] = list()
             else:
                 mapping[crates[crate]].append(dev)
+        cls._crates_mapping = mapping
         return mapping
 
     @classmethod
@@ -471,10 +527,9 @@ class LLTimeSearch:
             cls._devs_twds_evg.keys() - cls._devs_from_evg.keys())
         cls._all_devices = (
             cls._devs_from_evg.keys() | cls._devs_twds_evg.keys())
-        cls._trig_src_devs = set(
-                _get_device_names({'dev': 'EVR'}) +
-                _get_device_names({'dev': 'EVE'}) +
-                _get_device_names({'dev': 'AMCFPGAEVR'}))
+        cls._trig_src_devs = set()
+        for dev in cls.TrigSrcDevs:
+            cls._trig_src_devs.update(_get_device_names({'dev': dev}))
         cls._fout_devs = set(_get_device_names({'dev': 'Fout'}))
         cls._evg_devs = set(_get_device_names({'dev': 'EVG'}))
 

@@ -7,14 +7,16 @@ ifeq ($(CONDA_PREFIX),)
 endif
 
 install: uninstall
-	$(PREFIX) $(PIP) install --no-deps ./
+	$(PREFIX) $(PIP) install --no-use-pep517 --no-deps ./
+#	$(PREFIX) $(PIP) install --no-deps ./
 	$(PREFIX) git clean -fdX
 
 uninstall:
 	$(PREFIX) $(PIP) uninstall -y $(PACKAGE)
 
 develop-install: develop-uninstall
-	$(PIP) install --no-deps -e ./
+	$(PIP) install --no-use-pep517 --no-deps -e ./
+#	$(PIP) install --no-deps -e ./
 
 # known issue: It will fail to uninstall scripts
 #  if they were installed in develop mode

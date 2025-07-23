@@ -3,8 +3,11 @@
 import time as _time
 from threading import Thread as _Thread, Event as _Event, \
     Lock as _Lock
-from queue import Queue as _Queue
-from collections import deque as _deque
+from queue import Queue as _Queue, Empty as _Empty, Full as _Full
+
+from epics.ca import use_initial_context as _use_initial_context
+
+from .epics import CAThread as _CAThread
 
 
 class AsyncWorker(_Thread):
@@ -13,9 +16,10 @@ class AsyncWorker(_Thread):
     Performs asynchronous jobs indefinitely.
     """
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, is_cathread=False):
         """."""
         super().__init__(name=name, daemon=True)
+        self.is_cathread = is_cathread
         self._evt_received = _Event()
         self._evt_ready = _Event()
         self._evt_ready.set()
@@ -48,6 +52,8 @@ class AsyncWorker(_Thread):
 
     def run(self):
         """."""
+        if self.is_cathread:
+            _use_initial_context()
         while not self._evt_stop.is_set():
             if self._evt_received.wait(0.5):
                 self._evt_received.clear()
@@ -55,55 +61,12 @@ class AsyncWorker(_Thread):
                 self._evt_ready.set()
 
 
-class QueueThread(_Thread):
-    """Callback queue class.
-
-        Queues threads of this class are used to process callbacks of power
-    supplies (magnets) properties among others.
-    """
-
-    # NOTE: QueueThread was reported as generating unstable behaviour
-    # when used intensively in the SOFB IOC. Currently this class is
-    # used in as-ps-diag IOC classes.
-    # TODO: investigate this issue!
-
-    def __init__(self):
-        """Init method."""
-        super().__init__(daemon=True)
-        self._queue = _Queue()
-        self._running = False
-
-    @property
-    def running(self):
-        """Return whether thread is running."""
-        return self._running
-
-    def add_callback(self, func, *args, **kwargs):
-        """Add callback."""
-        if not hasattr(func, '__call__'):
-            raise TypeError('Argument "func" is not callable.')
-        self._queue.put((func, args, kwargs))
-
-    def run(self):
-        """Run method."""
-        self._running = True
-        while self.running:
-            func_item = self._queue.get()
-            nitems = self._queue.qsize()
-            if nitems and nitems % 500 == 0:
-                print("Warning: Queue size is {}!".format(nitems))
-            function, args, kwargs = func_item
-            function(*args, **kwargs)  # run the show!
-
-    def stop(self):
-        """Stop queue thread."""
-        self._running = False
-
-
 class RepeaterThread(_Thread):
     """Repeat execution of predefined function for a given number of times."""
 
-    def __init__(self, interval, function, args=None, kwargs=None, niter=0):
+    def __init__(
+            self, interval, function, args=None, kwargs=None, niter=0,
+            is_cathread=False):
         """Init method.
 
         Inputs:
@@ -113,12 +76,14 @@ class RepeaterThread(_Thread):
         - kwargs: dictionary with keyword arguments of method.
         - niter: number of times to execute method. If niter is zero or None
             it will be executed indefinetly until stop is called.
+        - whether to use CAThread logic .
         """
         if args is None:
             args = tuple()
         if kwargs is None:
             kwargs = dict()
         super().__init__(daemon=True)
+        self.is_cathread = is_cathread
         self.interval = interval
         if not hasattr(function, '__call__'):
             raise TypeError('Argument "function" is not callable.')
@@ -133,7 +98,12 @@ class RepeaterThread(_Thread):
 
     def run(self):
         """Run method."""
+        if self.is_cathread:
+            _use_initial_context()
+
         self._unpaused.wait()
+        if self._stopped.is_set():
+            return
         self.function(*self.args, **self.kwargs)
         dtime = 0.0
         while ((not self._stopped.wait(self.interval - dtime)) and
@@ -172,26 +142,26 @@ class RepeaterThread(_Thread):
 
     def stop(self):
         """Stop execution."""
-        self._unpaused.set()
         self._stopped.set()
+        self._unpaused.set()
 
 
-class DequeThread(_deque):
-    """DequeThread.
+class _BaseQueueThread(_Queue):
+    """QueueThread.
 
-    This class manages generic operations (actions) using an append-right,
-    pop-left queue. Each operation processing is a method invoked as a separate
-    thread.
+    This class manages generic operations (actions) using a FIFO queue. Each
+    operation processing is a method invoked as a separate thread. It also has
+    process loop methods to continuously process its operation queue in a
+    single thread.
     """
 
-    def __init__(self):
+    def __init__(self, is_cathread=False):
         """Init."""
         super().__init__()
+        self.is_cathread = is_cathread
         self._last_operation = None
-        self._thread = None
-        self._ignore = False
-        self._enabled = True
-        self._lock = _Lock()
+        self._th = None
+        self._changing_queue = _Lock()
 
     @property
     def last_operation(self):
@@ -199,76 +169,114 @@ class DequeThread(_deque):
         return self._last_operation
 
     @property
-    def enabled(self):
-        """Enable process."""
-        return self._enabled
+    def is_running(self):
+        """."""
+        return self._th is not None and self._th.is_alive()
 
-    @enabled.setter
-    def enabled(self, value):
-        self._enabled = value
+    def put(self, operation, block=True, timeout=None):
+        """Put operation to queue."""
+        if not hasattr(operation, '__len__'):
+            operation = (operation, )
+        if not hasattr(operation[0], '__call__'):
+            raise TypeError(
+                'First element of "operation" is not callable.')
 
-    def ignore_set(self):
-        """Turn ignore state on."""
-        self._ignore = True
-
-    def ignore_clear(self):
-        """Turn ignore state on."""
-        self._ignore = False
-
-    def append(self, operation, unique=False):
-        """Append operation to queue."""
-        with self._lock:
-            if self._ignore or (unique and self.count(operation) > 0):
+        with self._changing_queue:
+            try:
+                super().put(operation, block=block, timeout=timeout)
+            except _Full:
                 return False
-
-            if not hasattr(operation, '__len__'):
-                operation = (operation, )
-            if not hasattr(operation[0], '__call__'):
-                raise TypeError(
-                    'First element of "operation" is not callable.')
-            super().append(operation)
             self._last_operation = operation
-            return True
+        return True
 
-    def clear(self):
-        """Clear deque."""
-        with self._lock:
-            super().clear()
+    def get(self, block=True, timeout=None):
+        """Get operation from queue."""
+        with self._changing_queue:
+            try:
+                return super().get(block=block, timeout=timeout)
+            except _Empty:
+                return None
 
-    def pop(self):
-        """Pop operation from queue."""
-        with self._lock:
-            return super().pop()
+    def _get_operation(self, block=True, timeout=None):
+        """Raise queue.Empty exception in case of timeout or empty Queue."""
+        operation = super().get(block=block, timeout=timeout)
+        # process operation taken from queue
+        args, kws = tuple(), dict()
+        if len(operation) == 1:
+            func = operation[0]
+        elif len(operation) == 2:
+            func, args = operation
+        elif len(operation) >= 3:
+            func, args, kws = operation[:3]
+        return func, args, kws
 
-    def popleft(self):
-        """Pop left operation from queue."""
-        with self._lock:
-            return super().popleft()
+    def _run_process(self, func, args, kws):
+        """."""
+        try:
+            func(*args, **kws)
+        except Exception:
+            pass
+        self.task_done()
 
-    def process(self):
+
+class QueueThreads(_BaseQueueThread):
+    """QueueThreads.
+
+    This class manages generic operations (actions) using a FIFO queue. Each
+    operation processing is a method invoked as a separate thread.
+    """
+
+    def process(self, block=True, timeout=None):
         """Process operation from queue."""
-        # first check if a thread is already running
-        with self._lock:
-            donothing = not self._enabled
-            donothing |= self._thread is not None and self._thread.is_alive()
-            if donothing:
+        with self._changing_queue:
+            # first check if a thread is already running
+            if self.is_running:
                 return False
-
             # no thread is running, we can process queue
             try:
-                operation = super().popleft()
-            except IndexError:
-                # there is nothing in the queue
+                func, args, kws = self._get_operation(block, timeout)
+            except _Empty:
                 return False
-            # process operation taken from queue
-            args, kws = tuple(), dict()
-            if len(operation) == 1:
-                func = operation[0]
-            elif len(operation) == 2:
-                func, args = operation
-            elif len(operation) >= 3:
-                func, args, kws = operation[:3]
-            self._thread = _Thread(
-                target=func, args=args, kwargs=kws, daemon=True)
-            self._thread.start()
+            th_cls = _CAThread if self.is_cathread else _Thread
+            self._th = th_cls(
+                target=self._run_process, args=(func, args, kws), daemon=True)
+            self._th.start()
             return True
+
+
+class LoopQueueThread(_BaseQueueThread):
+    """LoopQueueThread.
+
+    This class manages generic operations (actions) using a FIFO queue.
+    It has a process loop to continuously process its operation queue in a
+    single thread.
+    """
+
+    def __init__(self, is_cathread=False):
+        """Init."""
+        super().__init__(is_cathread=is_cathread)
+        self._loop_stop_evt = _Event()
+
+    def start(self):
+        """Run deque process loop."""
+        # check if there is a previously running loop
+        self._loop_stop_evt.clear()
+        if self.is_running:
+            return
+        # start new process loop
+        th_cls = _CAThread if self.is_cathread else _Thread
+        self._th = th_cls(target=self._loop_run_process, daemon=True)
+        self._th.start()
+
+    def stop(self):
+        """Stop deque process loop."""
+        self._loop_stop_evt.set()
+
+    def _loop_run_process(self):
+        while not self._loop_stop_evt.is_set():
+            try:
+                func, args, kws = self._get_operation(True, timeout=1)
+                self._run_process(func, args, kws)
+            except _Empty:
+                continue
+        self._loop_stop_evt.clear()

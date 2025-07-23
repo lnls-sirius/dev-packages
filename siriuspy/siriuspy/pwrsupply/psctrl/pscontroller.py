@@ -15,7 +15,12 @@ class PSController:
         'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
         'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
         'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
-        'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon'}
+        'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
+        'WfmOffsetKick-SP', 'WfmOffsetKick-RB',
+        'WfmOffsetKL-SP', 'WfmOffsetKL-RB',
+        'WfmOffsetSL-SP', 'WfmOffsetSL-RB',
+        'WfmOffsetEnergy-SP', 'WfmOffsetEnergy-RB',
+        }
 
     def __init__(self, readers, writers,
                  pru_controller, devname2devid):
@@ -51,6 +56,16 @@ class PSController:
         """Field of ps controller."""
         return self._fields
 
+    @property
+    def readers(self):
+        """Return controller readers."""
+        return self._readers
+
+    @property
+    def writers(self):
+        """Return controller writers."""
+        return self._writers
+
     def read(self, devname, field):
         """Read pv value."""
         pvname = devname + ':' + field
@@ -82,8 +97,8 @@ class PSController:
         if pvname in self._writers:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if value == 0 and 'SOFBMode-Sel' in field:
+        # update all setpoint properties upon return from IDFFMode
+        if value == 0 and 'IDFFMode-Sel' in field:
             self._update_setpoints(devname)
 
         # return priority pvs
@@ -154,7 +169,7 @@ class PSController:
         """."""
         self.read_all_fields(devname)
         self.init_setpoints(devname)
-        
+
     @staticmethod
     def _get_readback_field(field):
         # NOTE: to be updated
@@ -167,13 +182,20 @@ class StandardPSController(PSController):
     This is used in DCDC-type power supply models.
     """
 
-    _SIGGEN_PARMS = [
+    PARMS_SIGGEN = [
         'CycleType-Sel',
         'CycleNrCycles-SP',
         'CycleFreq-SP',
         'CycleAmpl-SP',
         'CycleOffset-SP',
         'CycleAuxParam-SP',  # start index of auxparams
+    ]
+
+    PARMS_WFM = [
+        'WfmSyncMode-Sel',
+        'WfmFreq-SP',
+        'WfmGain-SP',
+        'WfmOffset-SP',
     ]
 
     def write(self, devname, field, value):
@@ -184,15 +206,17 @@ class StandardPSController(PSController):
         if pvname not in self._writers:
             return priority_pvs
 
-        if field == 'SOFBCurrent-SP':
-            self._set_sofb_current(pvname, value, devname, field, priority_pvs)
-        elif field in StandardPSController._SIGGEN_PARMS:
+        if field == 'IDFFMode-Sel':
+            self._set_idff_mode(pvname, value, devname, field, priority_pvs)
+        elif field in StandardPSController.PARMS_SIGGEN:
             self._set_siggen(pvname, value, devname, field, priority_pvs)
+        elif field in StandardPSController.PARMS_WFM:
+            self._set_wfm(pvname, value, devname, field, priority_pvs)
         else:
             self._writers[pvname].execute(value)
 
-        # update all setpoint properties upon return from SOFBMode
-        if 'SOFBMode-Sel' in field and value == 0:
+        # update all setpoint properties upon return from IDFFMode
+        if 'IDFFMode-Sel' in field and value == 0:
             self._update_setpoints(devname)
 
         # return priority pvs
@@ -202,7 +226,7 @@ class StandardPSController(PSController):
 
     def _set_siggen(self, pvname, value, devname, field, priority_pvs):
         _ = priority_pvs
-        idx = StandardPSController._SIGGEN_PARMS.index(field)
+        idx = StandardPSController.PARMS_SIGGEN.index(field)
         values = self._get_siggen_arg_values(devname)
         if field == 'CycleAuxParam-SP':
             values[idx:] = value
@@ -210,32 +234,33 @@ class StandardPSController(PSController):
             values[idx] = value
         self._writers[pvname].execute(values)
 
-    def _set_sofb_current(self, pvname, value, devname, field, priority_pvs):
-        _ = field
+    def _set_wfm(self, pvname, value, devname, field, priority_pvs):
+        _ = priority_pvs
+        idx = StandardPSController.PARMS_WFM.index(field)
+        values = self._get_wfm_arg_values(devname)
+        values[idx] = value
+        self._writers[pvname].execute(values)
 
-        # set actual SOFBCurrent-SP
-        self._writers[pvname].execute(value)
-
-        # add readback SOFBCurrent PVs (same device)
-        for suffix in ('-RB', 'Ref-Mon', '-Mon'):
-            pvn = pvname.replace('-SP', suffix)
-            reader = self._readers[pvn]
-            priority_pvs[pvn] = reader.read()
-
-        # add priority SOFBCurrent-SP for other
-        # devices in the same UDC.
+    def _set_idff_mode(self, pvname, value, devname, field, priority_pvs):
+        _, _, _ = pvname, field, priority_pvs
+        # loop over all UDC devices
         for udc_devnames in self._udc2dev.values():
             if devname in udc_devnames:
                 # loop over other UDC devices
                 for devname_ in udc_devnames:
-                    if devname_ != devname:
-                        pvn = devname_ + ':SOFBCurrent-SP'
-                        priority_pvs[pvn] = value
+                    pvn = devname_ + ':IDFFMode-Sel'
+                    self._writers[pvn].execute(value)
 
     def _get_siggen_arg_values(self, devname):
         """Get cfg_siggen args."""
         args = [self._readers[devname + ':' + arg].read()
-                for arg in StandardPSController._SIGGEN_PARMS[:-1]]
-        aux = StandardPSController._SIGGEN_PARMS[-1]
+                for arg in StandardPSController.PARMS_SIGGEN[:-1]]
+        aux = StandardPSController.PARMS_SIGGEN[-1]
         args.extend(self._readers[devname + ':' + aux].read())
+        return args
+
+    def _get_wfm_arg_values(self, devname):
+        """Get Wfm args."""
+        args = [self._readers[devname + ':' + arg].read()
+                for arg in StandardPSController.PARMS_WFM]
         return args
