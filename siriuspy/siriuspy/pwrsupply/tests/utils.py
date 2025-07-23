@@ -348,4 +348,4 @@ def update_bbb(bbb):
     for psname in bbb.psnames:
         controller = bbb.controllers[psname]
         pruc = controller.pru_controller
-        pruc._bsmp_update()
+        pruc.bsmp_update()

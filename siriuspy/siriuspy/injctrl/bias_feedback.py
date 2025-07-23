@@ -100,12 +100,19 @@ class BiasFeedback:
         return (-off / ang, 1 / ang)
 
     def get_delta_current_per_pulse(
-        self, per=1, nrpul=1, curr_avg=100, curr_now=99.5, ltime=17 * 3600
+        self,
+        per=1,
+        nrpul=1,
+        curr_avg=200,
+        curr_now=199.5,
+        ltime=9 * 3600,
+        ahead_tim=10,
     ):
         """."""
         ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, ltime)
         curr_tar = curr_avg / (1 - per / 2 / ltime)
-        dcurr = (curr_tar - curr_now) / nrpul
+        curr_end = curr_now / (1 + ahead_tim/ltime)
+        dcurr = (curr_tar - curr_end) / nrpul
         return dcurr
 
     def get_bias_voltage(self, dcurr):

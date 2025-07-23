@@ -1,10 +1,10 @@
 """AS Global configuration."""
 from copy import deepcopy as _dcopy
 
-from siriuspy.pwrsupply.csdev import DEFAULT_WFM_FBP as \
-    _DEFAULT_WFM_FBP
-from siriuspy.pwrsupply.csdev import DEFAULT_WFM_OTHERS as \
-    _DEFAULT_WFM_OTHERS
+from siriuspy.pwrsupply.csdev import \
+    DEFAULT_WFM_FBP as _DEFAULT_WFM_FBP, \
+    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
+    DEFAULT_WFM_OTHERS as _DEFAULT_WFM_OTHERS
 
 from siriuspy.clientconfigdb.types.as_diagnostics import _bpms
 
@@ -1057,42 +1057,51 @@ _pvs_as_rf = [
 
 
 _pvs_bo_llrf = [
-    ['BR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
-    ['BR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
-    ['BR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
-    ['BR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
-    ['BR-RF-DLLRF-01:RmpTs1-SP', 0, 0.0],  # ms
-    ['BR-RF-DLLRF-01:RmpTs2-SP', 0, 0.0],  # ms
-    ['BR-RF-DLLRF-01:RmpTs3-SP', 0, 0.0],  # ms
-    ['BR-RF-DLLRF-01:RmpTs4-SP', 0, 0.0],  # ms
-    ['BR-RF-DLLRF-01:RmpPhsTop-SP', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:RmpPhsBot-SP', 0, 0.0],  # Deg
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:TOP-SP', 0, 0.0],  # mV
-    ['BR-RF-DLLRF-01:mV:RAMP:AMP:BOT-SP', 0, 0.0],  # mV
+    ['RA-RaBO01:RF-LLRF:SLKI-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:SLKP-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:AmpIncRate-SP', 0, 0.0],  # mV
+    ['RA-RaBO01:RF-LLRF:PhsIncRate-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:ALRef-SP', 0, 0.0],  # mV
+    ['RA-RaBO01:RF-LLRF:PLRef-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:TuneMarginLO-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:FFGainCell2-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FFGainCell4-SP', 0, 0.0],
+    ['RA-RaBO01:RF-LLRF:FFDeadBand-SP', 0, 0.0],  # %
+    ['RA-RaBO01:RF-LLRF:RmpTs1-SP', 0, 0.0],  # ms
+    ['RA-RaBO01:RF-LLRF:RmpTs2-SP', 0, 0.0],  # ms
+    ['RA-RaBO01:RF-LLRF:RmpTs3-SP', 0, 0.0],  # ms
+    ['RA-RaBO01:RF-LLRF:RmpTs4-SP', 0, 0.0],  # ms
+    ['RA-RaBO01:RF-LLRF:RmpPhsTop-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:RmpPhsBot-SP', 0, 0.0],  # Deg
+    ['RA-RaBO01:RF-LLRF:RmpAmpTop-SP', 0, 0.0],  # mV
+    ['RA-RaBO01:RF-LLRF:RmpAmpBot-SP', 0, 0.0],  # mV
     ]
 
 
-_pvs_si_llrf = [
-    ['SR-RF-DLLRF-01:SL:KI:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:SL:KP:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:AMPREF:INCRATE:S', 0, 0.0],  # mV
-    ['SR-RF-DLLRF-01:PHSREF:INCRATE:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:mV:AL:REF-SP', 0, 0.0],  # mV
-    ['SR-RF-DLLRF-01:PL:REF:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:TUNE:MARGIN:HI:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:TUNE:MARGIN:LO:S', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:DTune-SP', 0, 0.0],  # Deg
-    ['SR-RF-DLLRF-01:FF:GAIN:CELL2:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:FF:GAIN:CELL4:S', 0, 0.0],
-    ['SR-RF-DLLRF-01:FF:DEADBAND:S', 0, 0.0],  # %
+_pvs_si_llrf_a = [
+    ['RA-RaSIA01:RF-LLRF:SLKI-SP', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:SLKP-SP', 0, 0.0],
+    ['RA-RaSIA01:RF-LLRF:AmpIncRate-SP', 0, 0.0],  # mV
+    ['RA-RaSIA01:RF-LLRF:PhsIncRate-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:ALRef-SP', 0, 0.0],  # mV
+    ['RA-RaSIA01:RF-LLRF:PLRef-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:TuneMarginLO-SP', 0, 0.0],  # Deg
+    ['RA-RaSIA01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
+    ]
+
+_pvs_si_llrf_b = [
+    ['RA-RaSIB01:RF-LLRF:SLKI-SP', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:SLKP-SP', 0, 0.0],
+    ['RA-RaSIB01:RF-LLRF:AmpIncRate-SP', 0, 0.0],  # mV
+    ['RA-RaSIB01:RF-LLRF:PhsIncRate-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:ALRef-SP', 0, 0.0],  # mV
+    ['RA-RaSIB01:RF-LLRF:PLRef-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:TuneMarginHI-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:TuneMarginLO-SP', 0, 0.0],  # Deg
+    ['RA-RaSIB01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
     ]
 
 _bpm_propts = [
@@ -1343,7 +1352,7 @@ _pvs_si_ps_fam = [
 
 
 _pvs_si_ps_ch = [
-    # NOTE: these are SOFB correctors usually used in SlowRefSync/PSSOFB mode.
+    # NOTE: these are SOFB correctors usually used in SlowRefSync/Wfm mode.
     ['SI-01M2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
@@ -1464,11 +1473,132 @@ _pvs_si_ps_ch = [
     ['SI-20C3:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-20C4:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01M1:PS-CH:Current-SP', 0.0, 0.0],  # [A]
+
+    ['SI-01M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20M2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C2:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C3:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C4:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01M1:PS-CH:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
     ]
 
 
 _pvs_si_ps_cv = [
-    # NOTE: these are SOFB correctors usually used in SlowRefSync/PSSOFB mode.
+    # NOTE: these are SOFB correctors usually used in SlowRefSync/Wfm mode.
     ['SI-01M2:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C2:PS-CV-1:Current-SP', 0.0, 0.0],  # [A]
@@ -1629,6 +1759,167 @@ _pvs_si_ps_cv = [
     ['SI-20C3:PS-CV-2:Current-SP', 0.0, 0.0],  # [A]
     ['SI-20C4:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01M1:PS-CV:Current-SP', 0.0, 0.0],  # [A]
+
+    ['SI-01M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-02C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-03C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-04C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-05C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-06C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-07C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-08C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-09C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-10C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-11C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-12C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-13C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-14C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-15C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-16C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-17C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-18C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-19C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20M2:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C2:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C2:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C3:PS-CV-1:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C3:PS-CV-2:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-20C4:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
+    ['SI-01M1:PS-CV:Wfm-SP', _MAX_WFMSIZE_FBP, 0.0],  # [A]
     ]
 
 
@@ -2411,7 +2702,7 @@ _template_dict = {
     _pvs_as_ti +
     _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
     _pvs_as_pu +
-    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf +
+    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
     _bpm_pvs +
     _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
     _pvs_si_ps_fam +

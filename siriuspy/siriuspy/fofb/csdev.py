@@ -26,7 +26,8 @@ class ETypes(_csdev.ETypes):
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured', 'AccFreezeConfigured',
         'InvRespMatRowSynced', 'AccGainSynced', 'AccSatLimsSynced',
-        'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced')
+        'AccDecimationSynced', 'AccFilterSynced', 'AccFilterGainSynced',
+        'CurrLoopKpSynced', 'CurrLoopKiSynced')
     STS_LBLS_FOFBCTRL = (
         'Connected', 'BPMIdsConfigured', 'NetSynced', 'LinkPartnerConnected',
         'RefOrbSynced', 'TimeFrameLenSynced', 'BPMLogTrigsConfigured',
@@ -34,7 +35,6 @@ class ETypes(_csdev.ETypes):
         'LoopInterlockOk', 'SYSIDExcitationDisabled')
 
     DEC_OPT = ('FOFB', 'Monit', 'Custom')
-    FILTER_OPT = ('Unit', 'Switching', 'Custom')
 
 
 _et = ETypes  # syntactic sugar
@@ -49,6 +49,7 @@ class HLFOFBConst(_csdev.Const):
     TIKHONOV_REG_CONST = 0
     SINGVALHW_THRS = 1e-14
     DEF_MAX_ORB_DISTORTION = 200  # [um]
+    DEF_ACC_DECIMATION = 4600
 
     CONV_UM_2_NM = 1e3
     ACCGAIN_RESO = 2**-12
@@ -62,19 +63,29 @@ class HLFOFBConst(_csdev.Const):
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
     CURRZERO_RMP_FREQ = 2  # [steps/s]
 
+    # PS Config Matrix
+    PSCONFIG_KP_COL = 0
+    PSCONFIG_KI_COL = 1
+    PSCONFIG_FILTER_GAIN_COL = 2
+    PSCONFIG_COEFF_FIRST_COL = 3
+    PSCONFIG_BIQUAD_NR_COEFFS = 5
+    PSCONFIG_DEF_NR_BIQUADS = 4
+
     LoopState = _csdev.Const.register('LoopState', _et.OPEN_CLOSED)
     GlobIndiv = _csdev.Const.register('GlobIndiv', _et.GLOB_INDIV)
     UseRF = _csdev.Const.register('UseRF', _et.DSBL_ENBL)
     MeasRespMatCmd = _csdev.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     DecOpt = _csdev.Const.register('DecOpt', _et.DEC_OPT)
-    FilterOpt = _csdev.Const.register('FilterOpt', _et.FILTER_OPT)
-
     # FOFB Switching filter coefficientes
-    _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01] # freq FOFB/4
-    _a4 = [-1.11484423e-16, 8.20678791e-01] # freq FOFB/4
-    _b2 = [0.83408931895964943947774372645654, 0.83408931895964943947774372645654, 0.0] # freq FOFB/2
-    _a2 = [0.66817863791929887895548745291308, 0.0] # freq FOFB/2
+    _b4 = [9.10339395e-01, -1.11484423e-16, 9.10339395e-01]  # freq FOFB/4
+    _a4 = [-1.11484423e-16, 8.20678791e-01]  # freq FOFB/4
+    _b2 = [
+        0.83408931895964943947774372645654,
+        0.83408931895964943947774372645654,
+        0.0
+    ]  # freq FOFB/2
+    _a2 = [0.66817863791929887895548745291308, 0.0]  # freq FOFB/2
 
     FILTER_UNIT = [1.0, 0.0, 0.0, 0.0, 0.0]
     FILTER_SW_4 = _b4 + _a4
@@ -118,6 +129,7 @@ class HLFOFBConst(_csdev.Const):
         self.chenbl_fname = _os.path.join(ioc_fol, 'chenbllist.correnbl')
         self.cvenbl_fname = _os.path.join(ioc_fol, 'cvenbllist.correnbl')
         self.rfenbl_fname = _os.path.join(ioc_fol, 'rfenbllist.rfenbl')
+        self.psconfig_fname = _os.path.join(ioc_fol, 'psconfig.psconfig')
 
         # reforb and matrix parameters
         self.reforb_size = self.nr_bpms
@@ -129,6 +141,12 @@ class HLFOFBConst(_csdev.Const):
         # dcc minimum enable configuration
         self.dccenbl_min = _np.array([
             bpm.sub[2:] in ['M1', 'M2'] for bpm in self.bpm_names])
+
+        # psconfig
+        self.psconfig_nr_coeffs_columns = \
+            self.PSCONFIG_BIQUAD_NR_COEFFS * self.PSCONFIG_DEF_NR_BIQUADS
+        self.psconfig_size = self.nr_chcv * (
+            self.psconfig_nr_coeffs_columns + self.PSCONFIG_COEFF_FIRST_COL)
 
     def get_hlfofb_database(self):
         """Return Soft IOC database."""
@@ -144,22 +162,22 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1200, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1200, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1660, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 0.0520, 'prec': 4,
+                'type': 'float', 'value': 0.1660, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
@@ -197,7 +215,7 @@ class HLFOFBConst(_csdev.Const):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.nr_cv, 'value': self.cv_nicknames},
-            'CorrStatus-Mon': {'type': 'int', 'value': 0b11111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b111111111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(_et.STS_LBLS_CORR),
                 'value': _et.STS_LBLS_CORR},
@@ -216,16 +234,16 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'float', 'prec': 0, 'value': 5, 'unit': 's',
                 'lolim': 0.0, 'hilim': 1000.0},
             'CHAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CHAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-SP': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
             'CVAccSatMax-RB': {
-                'type': 'float', 'prec': 6, 'value': 0.3, 'unit': 'A',
+                'type': 'float', 'prec': 6, 'value': 0.4, 'unit': 'A',
                 'lolim': 0, 'hilim': 0.95},
 
             # FOFB Controllers
@@ -259,36 +277,26 @@ class HLFOFBConst(_csdev.Const):
             # decimation configuration
             'FOFBAccDecimation-Sel': {
                 'type': 'enum', 'enums': _et.DEC_OPT,
-                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+                'value': self.DecOpt.Monit, 'unit': 'FOFB_Monit_Custom'},
             'FOFBAccDecimation-Sts': {
                 'type': 'enum', 'enums': _et.DEC_OPT,
-                'value': self.DecOpt.FOFB, 'unit': 'FOFB_Monit_Custom'},
+                'value': self.DecOpt.Monit, 'unit': 'FOFB_Monit_Custom'},
             'FOFBAccDecimation-SP': {
-                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
-                'hilim': 8600, 'unit': 'count'},
+                'type': 'float', 'value': self.DEF_ACC_DECIMATION, 'prec': 0,
+                'lolim': 1, 'hilim': 8600, 'unit': 'count'},
             'FOFBAccDecimation-RB': {
-                'type': 'float', 'value': 1, 'prec': 0, 'lolim': 1,
-                'hilim': 8600, 'unit': 'count'},
+                'type': 'float', 'value': self.DEF_ACC_DECIMATION, 'prec': 0,
+                'lolim': 1, 'hilim': 8600, 'unit': 'count'},
 
             # filter configuration
-            'FOFBAccFilter-Sel': {
-                'type': 'enum', 'enums': _et.FILTER_OPT,
-                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
-            'FOFBAccFilter-Sts': {
-                'type': 'enum', 'enums': _et.FILTER_OPT,
-                'value': self.FilterOpt.Unit, 'unit': 'Unit_Switching_Custom'},
-            'FOFBAccFilter-SP': {
-                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20,
-                'unit': 'coef'},
-            'FOFBAccFilter-RB': {
-                'type': 'float', 'value': 20*[0], 'prec': 5, 'count': 20,
-                'unit': 'coef'},
-            'FOFBAccFilterGain-SP': {
-                'type': 'float', 'value': 1.0, 'prec': 5,
-                'lolim': 0, 'hilim': 1000,'unit': 'gain'},
-            'FOFBAccFilterGain-RB': {
-                'type': 'float', 'value': 1.0, 'prec': 5,
-                'unit': 'gain'},
+            'PSConfigMat-SP': {
+                'type': 'float', 'value': _np.zeros(self.psconfig_size),
+                'prec': 5, 'count': self.psconfig_size,
+                'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
+            'PSConfigMat-RB': {
+                'type': 'float', 'value': _np.zeros(self.psconfig_size),
+                'prec': 5, 'count': self.psconfig_size,
+                'unit': '(FCorrs)x(Kp, Ki, gain, coeffs)'},
 
             # Reference Orbit (same order of SOFB)
             'RefOrbX-SP': {

@@ -25,26 +25,20 @@ class ETypes(_csdev.ETypes):
     SWMODES = ('rffe_switching', 'direct', 'inverted', 'switching')
     SWTAGENBL = ('disabled', 'enabled')
     FOFBDATAMASKENBL = ('disabled', 'enabled')
-    MONITENBL = ('No', 'Yes')
 
-    OPMODES = ('MultiBunch', 'SinglePass')
     POLARITY = ('Positive', 'Negative')
     ENBLTYP = ('Disable', 'Enable')
     DSBLDENBLD = ('disabled', 'enabled')
     CONNTYP = _csdev.ETypes.DISCONN_CONN
     ACQREPEAT = ('Normal', 'Repetitive')
-    ACQEVENTS = ('Start', 'Stop', 'Abort')
+    ACQEVENTS = ('Start', 'Stop')
     ACQDATATYP = ('A', 'B', 'C', 'D')
-    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'FAcq')
+    ACQCHAN = ('ADC', 'ADCSwp', 'TbT', 'TbTPha', 'FOFB', 'FOFBPha', 'FAcq')
     ACQSTATES = (
         'Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
-        'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
-        'Too Few Samples', 'No Memory', 'Acq Overflow')
+        'Acquiring', 'Error', 'Bad Post Samples', 'Too Many Samples',
+        'No Samples', 'No Memory', 'Overflow')
     ACQTRIGTYP = ('Now', 'External', 'Data', 'Software')
-    FFTWINDOWTYP = ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW')
-    FFTCONVDIRECTION = ('Forward', 'Backward')
-    FFTAVGSUBTRACT = ('No Subtraction', 'Average', 'Linear')
-    FFTWRITABLEPROPS = ('INDX', 'MXIX', 'WIND', 'CDIR', 'ASUB', 'SPAN')
 
 
 _et = ETypes  # syntactic sugar
@@ -64,8 +58,6 @@ class Const(_csdev.Const):
     SwPhaseSyncEnbl = _csdev.Const.register('SwPhaseSyncEnbl', _et.SWTAGENBL)
     FOFBDataMaskEnbl = _csdev.Const.register(
         'FOFBDataMaskEnbl', _et.FOFBDATAMASKENBL)
-    MonitEnbl = _csdev.Const.register('MonitEnbl', _et.MONITENBL)
-    OpModes = _csdev.Const.register('OpModes', _et.OPMODES)
     Polarity = _csdev.Const.register('Polarity', _et.POLARITY)
     EnblTyp = _csdev.Const.register('EnblTyp', _et.ENBLTYP)
     DsblEnbl = _csdev.Const.register('DsblEnbl', _et.DSBLDENBLD)
@@ -76,13 +68,6 @@ class Const(_csdev.Const):
     AcqChan = _csdev.Const.register('AcqChan', _et.ACQCHAN)
     AcqStates = _csdev.Const.register('AcqStates', _et.ACQSTATES)
     AcqTrigTyp = _csdev.Const.register('AcqTrigTyp', _et.ACQTRIGTYP)
-    FFTWindowTyp = _csdev.Const.register('FFTWindowTyp', _et.FFTWINDOWTYP)
-    FFTConvDirection = _csdev.Const.register(
-        'FFTConvDirection', _et.FFTCONVDIRECTION)
-    FFTAvgSubtract = _csdev.Const.register(
-        'FFTAvgSubtract', _et.FFTAVGSUBTRACT)
-    FFTWritableProps = _csdev.Const.register(
-        'FFTWritableProps', _et.FFTWRITABLEPROPS)
 
     @staticmethod
     def get_bpm_database(prefix=''):
@@ -117,42 +102,42 @@ class Const(_csdev.Const):
             dbase.update(Const.get_physical_trigger_database(trig))
 
         # LOGICAL TRIGGERS
-        for trig_tp in ('', '_PM'):
+        for trig_tp in ('_GEN', '_PM'):
             for i in range(24):
                 trig = 'TRIGGER' + trig_tp + '{0:d}'.format(i)
                 dbase.update(Const.get_logical_trigger_database(trig))
 
         # AMPLITUDES AND POSITION CHANNELS
-        for amp_tp in ('', 'SP'):
-            dbase.update(Const.get_amplitudes_database(amp_tp))
+        dbase.update(Const.get_amplitudes_database())
 
         # SETTINGS AND STATUS
         dbase.update(Const.get_offsets_database())
         dbase.update(Const.get_gain_database())
         dbase.update(Const.get_rffe_database())
-        dbase.update(Const.get_asyn_database())
         dbase.update(Const.get_switch_database())
         dbase.update(Const.get_monit_database())
 
         data_names = {
-            'GEN': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
-            'PM': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
-            'SP': ['A', 'B', 'C', 'D'],
+            'GEN': [
+                'AmplA', 'AmplB', 'AmplC', 'AmplD',
+                'PosQ', 'Sum', 'PosX', 'PosY'
+            ],
+            'PM': [
+                'AmplA', 'AmplB', 'AmplC', 'AmplD',
+                'PosQ', 'Sum', 'PosX', 'PosY'
+            ],
             }
         data_db = {
             'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
 
         # ARRAY DATA FROM TRIGGERED ACQUISITIONS
-        for acq_tp in ('GEN', 'SP', 'PM'):
+        for acq_tp in ('GEN', 'PM'):
             for prop in data_names[acq_tp]:
-                nm = acq_tp + '_' + prop
-                dbase[nm + 'ArrayData'] = _dcopy(data_db)
-                dbase.update(Const.get_statistic_database(nm))
-                if acq_tp == 'GEN':
-                    dbase.update(Const.get_fft_database(nm))
+                nm = acq_tp + prop
+                dbase[nm + 'Data'] = _dcopy(data_db)
 
         # TRIGGERED ACQUISITIONS CONFIGURATION
-        for acq_md in ('ACQ', 'ACQ_PM'):
+        for acq_md in ('GEN', 'PM'):
             dbase.update(Const.get_config_database(acq_md))
 
         for _, v in dbase.items():
@@ -284,10 +269,6 @@ class Const(_csdev.Const):
     def get_monit_database(prefix=''):
         """."""
         dbase = {
-            'MonitEnable-Sel': {
-                'type': 'enum', 'enums': Const.MonitEnbl._fields, 'value': 3},
-            'MonitEnable-Sts': {
-                'type': 'enum', 'enums': Const.MonitEnbl._fields, 'value': 3},
             'MONITUpdtTime-SP': {
                 'type': 'float', 'value': 0, 'low': 0.001, 'high': 1.0,
                 'unit': 's'},
@@ -321,7 +302,7 @@ class Const(_csdev.Const):
         return {prefix + k: v for k, v in dbase.items()}
 
     @staticmethod
-    def get_amplitudes_database(prefix=''):
+    def get_amplitudes_database():
         """."""
         data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
         dbase = {
@@ -330,7 +311,7 @@ class Const(_csdev.Const):
             'AmplA-Mon': _dcopy(data_db), 'AmplB-Mon': _dcopy(data_db),
             'AmplC-Mon': _dcopy(data_db), 'AmplD-Mon': _dcopy(data_db),
             }
-        return {prefix + k: v for k, v in dbase.items()}
+        return {k: v for k, v in dbase.items()}
 
     @staticmethod
     def get_physical_trigger_database(prefix=''):
@@ -344,9 +325,9 @@ class Const(_csdev.Const):
                 'type': 'enum', 'enums': Const.TrigDirPol._fields, 'value': 1},
             'DirPol-Sts': {
                 'type': 'enum', 'enums': Const.TrigDirPol._fields, 'value': 1},
-            'RcvCntRst-SP': {
+            'RcvCntRst-Cmd': {
                 'type': 'int', 'value': 0},
-            'TrnCntRst-SP': {
+            'TrnCntRst-Cmd': {
                 'type': 'int', 'value': 0},
             'RcvCnt-Mon': {
                 'type': 'int', 'value': 0},
@@ -390,18 +371,12 @@ class Const(_csdev.Const):
     def get_config_database(prefix=''):
         """Get the configuration PVs database."""
         dbase = {
-            'BPMMode-Sel': {
-                'type': 'enum', 'enums': Const.OpModes._fields, 'value': 0},
-            'BPMMode-Sts': {
-                'type': 'enum', 'enums': Const.OpModes._fields, 'value': 0},
             'Channel-Sel': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
             'Channel-Sts': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
-            # 'NrShots-SP': {
             'Shots-SP': {
                 'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-            # 'NrShots-RB': {
             'Shots-RB': {
                 'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
             'TriggerHwDly-SP': {
@@ -412,49 +387,31 @@ class Const(_csdev.Const):
                 'type': 'float', 'value': 1.0, 'low': 0.001, 'high': 1e9},
             'UpdateTime-RB': {
                 'type': 'float', 'value': 1.0, 'low': 0.001, 'high': 1e9},
-            # 'NrSamplesPre-SP': {
             'SamplesPre-SP': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'NrSamplesPre-RB': {
             'SamplesPre-RB': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'NrSamplesPost-SP': {
             'SamplesPost-SP': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'NrSamplesPost-RB': {
             'SamplesPost-RB': {
                 'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-            # 'Ctrl-Sel': {
-            'TriggerEvent-Sel': {
+            'TriggerEvent-Cmd': {
                 'type': 'enum', 'enums': Const.AcqEvents._fields,
                 'value': Const.AcqEvents.Stop},
-            # 'Ctrl-Sts': {
-            'TriggerEvent-Sts': {
-                'type': 'enum', 'enums': Const.AcqEvents._fields,
-                'value': Const.AcqEvents.Stop},
-            # 'Status-Mon': {
-            'Status-Sel': {
+            'Status-Mon': {
                 'type': 'enum', 'enums': Const.AcqStates._fields, 'value': 0},
-            # 'TriggerType-Sel': {
             'Trigger-Sel': {
                 'type': 'enum', 'enums': Const.AcqTrigTyp._fields, 'value': 1},
-            # 'TriggerType-Sts': {
             'Trigger-Sts': {
                 'type': 'enum', 'enums': Const.AcqTrigTyp._fields, 'value': 1},
             'TriggerRep-Sel': {
                 'type': 'enum', 'enums': Const.AcqRepeat._fields, 'value': 0},
             'TriggerRep-Sts': {
                 'type': 'enum', 'enums': Const.AcqRepeat._fields, 'value': 0},
-            # 'TriggerDataChan-Sel': {
             'DataTrigChan-Sel': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
-            # 'TriggerDataChan-Sts': {
             'DataTrigChan-Sts': {
                 'type': 'enum', 'enums': Const.AcqChan._fields, 'value': 0},
-            # 'TriggerDataSel-Sel': {
-            #     'type': 'enum', 'enums': AcqDataTyp._fields, 'value': 0},
-            # 'TriggerDataSel-Sts': {
-            #     'type': 'enum', 'enums': AcqDataTyp._fields, 'value': 0},
             'TriggerDataSel-SP': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 4},
             'TriggerDataSel-RB': {
@@ -492,41 +449,4 @@ class Const(_csdev.Const):
             'TbTDataMaskSamplesEnd-RB': {
                 'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
             }
-        return {prefix + k: v for k, v in dbase.items()}
-
-    @staticmethod
-    def get_fft_database(prefix=''):
-        """Get the PV database of the FFT plugin."""
-        data_db = {
-            'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
-        acq_int_db = {'type': 'int', 'value': 1, 'low': 0, 'high': 100000}
-        dbase = dict()
-        dbase['FFTFreq-Mon'] = _dcopy(data_db)
-        dbase['FFTData.SPAN'] = _dcopy(acq_int_db)
-        dbase['FFTData.AMP'] = _dcopy(data_db)
-        dbase['FFTData.PHA'] = _dcopy(data_db)
-        dbase['FFTData.SIN'] = _dcopy(data_db)
-        dbase['FFTData.COS'] = _dcopy(data_db)
-        dbase['FFTData.WAVN'] = _dcopy(data_db)
-        dbase['FFTData.INDX'] = _dcopy(acq_int_db)
-        dbase['FFTData.MXIX'] = _dcopy(acq_int_db)
-        dbase['FFTData.WIND'] = {
-            'type': 'enum', 'enums': Const.FFTWindowTyp._fields, 'value': 0}
-        dbase['FFTData.CDIR'] = {
-            'type': 'enum', 'enums': Const.FFTConvDirection._fields,
-            'value': 0}
-        dbase['FFTData.ASUB'] = {
-            'type': 'enum', 'enums': Const.FFTAvgSubtract._fields, 'value': 0}
-        return {prefix + k: v for k, v in dbase.items()}
-
-    @staticmethod
-    def get_statistic_database(prefix=''):
-        """Get the PV database of the STAT plugin."""
-        acq_data_stat_db = {
-            'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
-        dbase = dict()
-        dbase['_STATSMaxValue_RBV'] = _dcopy(acq_data_stat_db)
-        dbase['_STATSMeanValue_RBV'] = _dcopy(acq_data_stat_db)
-        dbase['_STATSMinValue_RBV'] = _dcopy(acq_data_stat_db)
-        dbase['_STATSSigma_RBV'] = _dcopy(acq_data_stat_db)
         return {prefix + k: v for k, v in dbase.items()}

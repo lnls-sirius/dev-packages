@@ -134,7 +134,7 @@ class _FOFBCtrlAcqBase(_Device, _FOFBCtrlBase, _FOFBCtrlAcqConst):
     @property
     def status(self):
         """Acquisition status."""
-        return self['Status-Sts']
+        return self['Status-Mon']
 
     @property
     def count(self):
@@ -148,13 +148,13 @@ class _FOFBCtrlAcqBase(_Device, _FOFBCtrlBase, _FOFBCtrlAcqConst):
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
         return self._wait(
-            'Status-Sts', _FOFBCtrlAcqConst.STATES_FINISHED,
+            'Status-Mon', _FOFBCtrlAcqConst.STATES_FINISHED,
             timeout=timeout, comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
         return self._wait(
-            'Status-Sts', _FOFBCtrlAcqConst.STATES_STARTED,
+            'Status-Mon', _FOFBCtrlAcqConst.STATES_STARTED,
             timeout=timeout, comp=lambda x, y: x in y)
 
 
@@ -480,7 +480,7 @@ class FOFBPSSysId(_Device):
         'SYSIDPRBSFOFBAccLvl0-SP', 'SYSIDPRBSFOFBAccLvl0-RB',
         'SYSIDPRBSFOFBAccLvl1-SP', 'SYSIDPRBSFOFBAccLvl1-RB',
         'CurrLoopKp-SP', 'CurrLoopKp-RB',
-        'CurrLoopTi-SP', 'CurrLoopTi-RB',
+        'CurrLoopKi-SP', 'CurrLoopKi-RB',
     )
 
     def __init__(self, devname, auto_monitor_mon=True, props2init='all'):
@@ -528,13 +528,13 @@ class FOFBPSSysId(_Device):
         self['CurrLoopKp-SP'] = value
 
     @property
-    def currloop_ti(self):
-        """Current control loop Ti parameter."""
-        return self['CurrLoopTi-RB']
+    def currloop_ki(self):
+        """Current control loop Ki parameter."""
+        return self['CurrLoopKi-RB']
 
-    @currloop_ti.setter
-    def currloop_ti(self, value):
-        self['CurrLoopTi-SP'] = value
+    @currloop_ki.setter
+    def currloop_ki(self, value):
+        self['CurrLoopKi-SP'] = value
 
 
 class FamFOFBSysId(_FamFOFBAcqBase):
@@ -542,7 +542,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     FOFBCTRL_CLASS = FOFBCtrlSysId
     FOFBPS_CLASS = FOFBPSSysId
-    DEF_ATOL_FOFBACC = 1e-6
+    DEF_ATOL_FOFBACC = 1e-4
 
     def __init__(self, **kws):
         """."""
@@ -669,15 +669,15 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             [self._psdevs[psn].currloop_kp for psn in self._psnames])
 
     @property
-    def currloop_ti(self):
-        """Current Loop Ti.
+    def currloop_ki(self):
+        """Current Loop Ki.
 
         Returns:
-            ti (numpy.ndarray, 160):
-                current loop Ti for each power supply.
+            ki (numpy.ndarray, 160):
+                current loop Ki for each power supply.
         """
         return _np.array(
-            [self._psdevs[psn].currloop_ti for psn in self._psnames])
+            [self._psdevs[psn].currloop_ki for psn in self._psnames])
 
     @property
     def strength_2_current_factor(self):
@@ -1142,9 +1142,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             ctl.cmd_ctrl(_FOFBCtrlAcqConst.TrigEvt.stop)
 
         if wait:
-            _time.sleep(2)
-            return 0
-            # return self.wait_acquisition_finish(timeout=timeout)
+            return self.wait_acquisition_finish(timeout=timeout)
         return 0
 
     def wait_acquisition_finish(self, timeout=10) -> int:
@@ -1186,9 +1184,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             ctl.cmd_ctrl(_FOFBCtrlAcqConst.TrigEvt.start)
 
         if wait:
-            _time.sleep(2)
-            return 0
-            # return self.wait_acquisition_start(timeout=timeout)
+            return self.wait_acquisition_start(timeout=timeout)
         return 0
 
     def wait_acquisition_start(self, timeout=10) -> bool:
@@ -1339,18 +1335,18 @@ class FamFOFBSysId(_FamFOFBAcqBase):
             dev.currloop_kp = values[i]
         return True
 
-    def set_currloop_ti(self, values):
-        """Set current loop Ti parameter for all correctors.
+    def set_currloop_ki(self, values):
+        """Set current loop Ki parameter for all correctors.
 
         Args:
             values (numpy.ndarray, (160,)):
-                Array with values to be applied to correctors Ti
+                Array with values to be applied to correctors Ki
                 parameter in psnames order.
 
         """
         for i, psn in enumerate(self._psnames):
             dev = self._psdevs[psn]
-            dev.currloop_ti = values[i]
+            dev.currloop_ki = values[i]
         return True
 
 

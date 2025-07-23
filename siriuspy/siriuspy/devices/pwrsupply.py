@@ -44,11 +44,11 @@ class _PSDev(_Device):
         'CycleEnbl-Mon',
     )
     _properties_fbp = _properties_magps + (
-        'SOFBMode-Sel', 'SOFBMode-Sts'
+        'IDFFMode-Sel', 'IDFFMode-Sts',
         )
     _properties_fc = (
         'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
-        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopTi-RB', 'CurrLoopTi-SP',
+        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopKi-RB', 'CurrLoopKi-SP',
         'CurrLoopMode-Sts', 'CurrLoopMode-Sel',
         'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
         'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
@@ -65,7 +65,7 @@ class _PSDev(_Device):
         'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
         'FOFBAcc-Mon',
         'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
-        'FOFBAccFilter-SP', 'FOFBAccFilter-RB', 
+        'FOFBAccFilter-SP', 'FOFBAccFilter-RB',
         'FOFBAccFilterGain-SP', 'FOFBAccFilterGain-RB',
     )
     _properties_pulsed = (
@@ -244,6 +244,12 @@ class _PSDev(_Device):
         self.strength = value
         pv2wait = self._strength_mon_propty if wait_mon \
             else self._strength_rb_propty
+        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+
+    def set_current(self, value, tol=0.2, timeout=10, wait_mon=False):
+        """Set current and wait until it gets there."""
+        self.current = value
+        pv2wait = "Current-Mon" if wait_mon else "Current-RB"
         return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     def cmd_turn_on(self, timeout=_default_timeout):
@@ -926,13 +932,13 @@ class PowerSupplyFC(_PSDev):
         self['CurrLoopKp-SP'] = value
 
     @property
-    def currloop_ti(self):
-        """Current control loop Ti parameter."""
-        return self['CurrLoopTi-RB']
+    def currloop_ki(self):
+        """Current control loop Ki parameter."""
+        return self['CurrLoopKi-RB']
 
-    @currloop_ti.setter
-    def currloop_ti(self, value):
-        self['CurrLoopTi-SP'] = value
+    @currloop_ki.setter
+    def currloop_ki(self, value):
+        self['CurrLoopKi-SP'] = value
 
     @property
     def currloop_mode(self):
@@ -1041,7 +1047,7 @@ class PowerSupplyFC(_PSDev):
     @fofbacc_filter.setter
     def fofbacc_filter(self, value):
         self['FOFBAccFilter-SP'] = value
-  
+
     @property
     def fofbacc_filter_gain(self):
         """FOFB accumulator filter gain."""
@@ -1051,28 +1057,29 @@ class PowerSupplyFC(_PSDev):
     def fofbacc_filter_gain(self, value):
         self['FOFBAccFilterGain-SP'] = value
 
+
 class PowerSupplyFBP(PowerSupply):
     """FBP Power Supply Device."""
 
-    SOFBMODE_SEL = _Const.DsblEnbl
-    SOFBMODE_STS = _Const.DsblEnbl
+    IDFFMODE_SEL = _Const.DsblEnbl
+    IDFFMODE_STS = _Const.DsblEnbl
 
     @property
-    def sofbmode(self):
-        """SOFB mode status."""
-        return self['SOFBMode-Sts']
+    def idffmode(self):
+        """IDFF mode status."""
+        return self['IDFFMode-Sts']
 
-    def cmd_sofbmode_enable(self, timeout=_PSDev._default_timeout):
-        """Command to enable SOFBMode. Send command and wait."""
-        return self._cmd_sofbmode(
-            timeout, self.SOFBMODE_SEL.Enbl, self.SOFBMODE_STS.Enbl)
+    def cmd_idffmode_enable(self, timeout=_PSDev._default_timeout):
+        """Command to enable IDFFMode. Send command and wait."""
+        return self._cmd_idffmode(
+            timeout, self.IDFFMODE_SEL.Enbl, self.IDFFMODE_STS.Enbl)
 
-    def cmd_sofbmode_disable(self, timeout=_PSDev._default_timeout):
-        """Command to disable SOFBMode. Send command and wait."""
-        return self._cmd_sofbmode(
-            timeout, self.SOFBMODE_SEL.Dsbl, self.SOFBMODE_STS.Dsbl)
+    def cmd_idffmode_disable(self, timeout=_PSDev._default_timeout):
+        """Command to disable IDFFMode. Send command and wait."""
+        return self._cmd_idffmode(
+            timeout, self.IDFFMODE_SEL.Dsbl, self.IDFFMODE_STS.Dsbl)
 
-    def _cmd_sofbmode(self, timeout, state_sel, state_sts):
-        self['SOFBMode-Sel'] = state_sel
+    def _cmd_idffmode(self, timeout, state_sel, state_sts):
+        self['IDFFMode-Sel'] = state_sel
         return self._wait(
-            'SOFBMode-Sts', state_sts, timeout=timeout)
+            'IDFFMode-Sts', state_sts, timeout=timeout)

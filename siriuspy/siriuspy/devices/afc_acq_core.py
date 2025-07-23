@@ -13,8 +13,10 @@ class AFCPhysicalTrigger(_Device):
         'DirPol-Sel', 'DirPol-Sts',
         'RcvCnt-Mon',
         'RcvLen-SP', 'RcvLen-RB',
+        'RcvCntRst-Cmd',
         'TrnCnt-Mon',
         'TrnLen-SP', 'TrnLen-RB',
+        'TrnCntRst-Cmd',
     )
 
     def __init__(self, devname, index, props2init='all'):
@@ -22,14 +24,8 @@ class AFCPhysicalTrigger(_Device):
         if not 0 <= int(index) <= 7:
             raise NotImplementedError(index)
 
-        # handle FOFB and BPM IOC differences
-        # TODO: remove when new BPM IOC is updated.
         if props2init == 'all':
             props2init = list(AFCPhysicalTrigger.PROPERTIES_DEFAULT)
-            if SiriusPVName(devname).dev == 'BPM':
-                props2init += ['RcvCntRst-SP', 'TrnCntRst-SP']
-            else:
-                props2init += ['RcvCntRst-Cmd', 'TrnCntRst-Cmd']
 
         super().__init__(devname+':TRIGGER'+str(index), props2init=props2init)
 
@@ -58,12 +54,9 @@ class AFCPhysicalTrigger(_Device):
 
     def cmd_reset_receiver_counter(self):
         """Reset receiver counter."""
-        # handle FOFB and BPM IOC differences
-        # TODO: remove when new BPM IOC is updated.
-        suf = 'SP' if 'BPM' in self.devname else 'Cmd'
-        self[f'RcvCntRst-{suf}'] = 1
+        self[f'RcvCntRst-Cmd'] = 1
         _time.sleep(1)
-        self[f'RcvCntRst-{suf}'] = 0
+        self[f'RcvCntRst-Cmd'] = 0
 
     @property
     def receiver_length(self):
@@ -81,12 +74,9 @@ class AFCPhysicalTrigger(_Device):
 
     def cmd_reset_transmitter_counter(self):
         """Reset transmitter counter."""
-        # handle FOFB and BPM IOC differences
-        # TODO: remove when new BPM IOC is updated.
-        suf = 'SP' if 'BPM' in self.devname else 'Cmd'
-        self[f'TrnCntRst-{suf}'] = 1
+        self[f'TrnCntRst-Cmd'] = 1
         _time.sleep(1)
-        self[f'TrnCntRst-{suf}'] = 0
+        self[f'TrnCntRst-Cmd'] = 0
 
     @property
     def transmitter_length(self):
@@ -108,11 +98,11 @@ class AFCACQLogicalTrigger(_Device):
         'TrnOutSel-SP', 'TrnOutSel-RB',
     )
 
-    def __init__(self, devname, index, acqcore='', props2init='all'):
+    def __init__(self, devname, index, acqcore='GEN', props2init='all'):
         """Init."""
         if not 0 <= int(index) <= 23:
             raise NotImplementedError(index)
-        propty_prefix = ':TRIGGER'+('_'+acqcore if acqcore else '')+str(index)
+        propty_prefix = f':TRIGGER_{acqcore}{str(index)}'
         super().__init__(devname + propty_prefix, props2init=props2init)
 
     @property

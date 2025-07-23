@@ -39,6 +39,7 @@ class App(_Callback):
         self._llrf_intlk_state = 0b111011 if self._is_dry_run else 0b000000
         self._state = self._const.OffOn.Off
         self._bpm_status = self._pvs_database['BPMStatus-Mon']['value']
+        self._acq_status = self._pvs_database['PsMtmAcqStatus-Mon']['value']
         self._timing_status = self._pvs_database['TimingStatus-Mon']['value']
         self._enable_lists = {
             'pos': _np.zeros(self._const.nr_bpms, dtype=bool),
@@ -75,7 +76,7 @@ class App(_Callback):
         # # EVG
         self._evg_dev = _EVG(props2init=[
             'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
-            'IntlkCtrlRst-Sel', 'IntlkCtrlRst-Sts',
+            'IntlkCtrlRst-Cmd',
             'IntlkCtrlRepeat-Sel', 'IntlkCtrlRepeat-Sts',
             'IntlkCtrlRepeatTime-SP', 'IntlkCtrlRepeatTime-RB',
             'IntlkTbl0to15-Sel', 'IntlkTbl0to15-Sts',
@@ -140,6 +141,7 @@ class App(_Callback):
                     'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
                     'RTMPhaseNavg-SP', 'RTMPhaseNavg-RB',
                     'RTMPhaseDiv-SP', 'RTMPhaseDiv-RB',
+                    'UpstreamDebugEn-Sel', 'UpstreamDebugEn-Sts',
                 ], auto_monitor_mon=True)
             for idx in range(20)
         }
@@ -148,16 +150,27 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_timing)
 
         # # RF EVE
-        trgsrc = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtm')
-        pvname = _LLTimeSearch.get_channel_output_port_pvname(trgsrc[0])
-        self._llrf_evtcnt_pvname = f'{pvname.propty}EvtCnt-Mon'
-        self._everf_dev = _Device(
-            pvname.device_name,
-            props2init=[self._llrf_evtcnt_pvname, ],
-            auto_monitor_mon=True)
-        pvo = self._everf_dev.pv_object(self._llrf_evtcnt_pvname)
-        pvo.wait_for_connection()
-        self._everf_evtcnt = pvo.get() or 0
+        trgsrcs = _HLTimeSearch.get_ll_trigger_names('SI-Glob:TI-LLRF-PsMtm')
+        pvnames = {
+            _LLTimeSearch.get_channel_output_port_pvname(src)
+            for src in trgsrcs
+        }
+        self._llrf_evtcnt_pvnames, self._everf_devs = dict(), dict()
+        for pvn in pvnames:
+            devn = pvn.device_name
+            propty = f'{pvn.propty}EvtCnt-Mon'
+
+            self._llrf_evtcnt_pvnames[devn] = propty
+
+            self._everf_devs[devn] = _Device(
+                devn, props2init=[propty, ], auto_monitor_mon=True
+            )
+
+        self._everf_evtcnts = dict()
+        for devn, propty in self._llrf_evtcnt_pvnames.items():
+            pvo = self._everf_devs[devn].pv_object(propty)
+            pvo.wait_for_connection()
+            self._everf_evtcnts[devn] = pvo.get() or 0
 
         # # HL triggers
         self._hltrig_devs = dict()
@@ -185,16 +198,16 @@ class App(_Callback):
         self._fambpm_dev = _FamBPMs(
             devname=_FamBPMs.DEVICES.SI, ispost_mortem=True,
             props2init=[
-                'ACQChannel-Sel', 'ACQChannel-Sts',
-                'ACQSamplesPre-SP', 'ACQSamplesPre-RB',
-                'ACQSamplesPost-SP', 'ACQSamplesPost-RB',
-                'ACQTriggerRep-Sel', 'ACQTriggerRep-Sts',
-                'ACQTrigger-Sel', 'ACQTrigger-Sts',
-                'ACQTriggerEvent-Sel', 'ACQTriggerEvent-Sts',
-                'ACQStatus-Sts',
+                'GENChannel-Sel', 'GENChannel-Sts',
+                'GENSamplesPre-SP', 'GENSamplesPre-RB',
+                'GENSamplesPost-SP', 'GENSamplesPost-RB',
+                'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
+                'GENTrigger-Sel', 'GENTrigger-Sts',
+                'GENTriggerEvent-Cmd',
+                'GENStatus-Mon',
                 'INFOFAcqRate-RB', 'INFOMONITRate-RB',
-                'TRIGGER4TrnSrc-Sel', 'TRIGGER4TrnSrc-Sts',
-                'TRIGGER4TrnOutSel-SP', 'TRIGGER4TrnOutSel-RB',
+                'TRIGGER_GEN4TrnSrc-Sel', 'TRIGGER_GEN4TrnSrc-Sts',
+                'TRIGGER_GEN4TrnOutSel-SP', 'TRIGGER_GEN4TrnOutSel-RB',
                 'TRIGGER_PM0RcvSrc-Sel', 'TRIGGER_PM0RcvSrc-Sts',
                 'TRIGGER_PM0RcvInSel-SP', 'TRIGGER_PM0RcvInSel-RB',
                 'TRIGGER_PM1RcvSrc-Sel', 'TRIGGER_PM1RcvSrc-Sts',
@@ -233,13 +246,8 @@ class App(_Callback):
             pvo.connection_callbacks.append(self._conn_callback_afcphystrigs)
 
         # # RF devices
-        self._llrf = _ASLLRF(
-            devname=_ASLLRF.DEVICES.SI,
-            props2init=[
-                'ILK:BEAM:TRIP:S', 'ILK:BEAM:TRIP', 'FASTINLK-MON',
-                'ILK:MAN:S', 'ILK:MAN', 'IntlkSet-Cmd', 'Reset-Cmd',
-            ])
-        self._llrf.pv_object('FASTINLK-MON').auto_monitor = True
+        names = [_ASLLRF.DEVICES.SIA, _ASLLRF.DEVICES.SIB]
+        self._llrfs = self._create_llrfs(names)
 
         # # auxiliary devices
         self._fofb = _FOFB(
@@ -291,12 +299,21 @@ class App(_Callback):
         self.thread_check_configs.pause()
         self.thread_check_configs.start()
 
+    def _create_llrfs(self, names):
+        """."""
+        props_itlk = _ASLLRF.PROPERTIES_INTERLOCK
+        devs = [_ASLLRF(devname=name, props2init=props_itlk) for name in names]
+        for dev in devs:
+            dev.pv_object('Inp1Intlk-Mon').auto_monitor = True
+        return devs
+
     def init_database(self):
         """Set initial PV values."""
         pvn2vals = {
             'Enable-Sel': self._state,
             'Enable-Sts': self._state,
             'BPMStatus-Mon': self._bpm_status,
+            'PsMtmAcqStatus-Mon': self._acq_status,
             'TimingStatus-Mon': self._timing_status,
             'ResetBPMGen-Cmd': 0,
             'ResetBPMPos-Cmd': 0,
@@ -366,7 +383,8 @@ class App(_Callback):
         self._handle_lock_fouts(init)
         self._handle_lock_afcti(init)
         self._handle_lock_hltriggers(init)
-        self._handle_lock_llrf(init)
+        for dev in self._llrfs:
+            self._handle_lock_llrf(dev, init)
         self._handle_lock_bpm_configs(init)
         self._handle_lock_afcphytrigs(init)
         if init:
@@ -425,21 +443,23 @@ class App(_Callback):
                 pvo = trigdev.pv_object(prop_rb)
                 if init:
                     pvo.add_callback(
-                        _part(self._callback_lock, trigdev, prop_sp, desired_val))
+                        _part(
+                            self._callback_lock,
+                            trigdev, prop_sp, desired_val))
                 else:
                     pvo.run_callbacks()
 
-    def _handle_lock_llrf(self, init=False):
-        self._llrf.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
-        pvo_beamtrip = self._llrf.pv_object('ILK:BEAM:TRIP')
-        pvo_manintlk = self._llrf.pv_object('ILK:MAN')
+    def _handle_lock_llrf(self, dev, init=False):
+        dev.wait_for_connection(timeout=self._const.DEF_TIMEOUT)
+        pvo_beamtrip = dev.pv_object('FIMLLRF1-Sts')
+        pvo_manintlk = dev.pv_object('FIMManual-Sts')
         if init:
             pvo_beamtrip.add_callback(_part(
-                self._callback_lock, self._llrf,
-                'ILK:BEAM:TRIP:S', self._llrf_intlk_state))
+                self._callback_lock, dev,
+                'FIMLLRF1-Sel', self._llrf_intlk_state))
             pvo_manintlk.add_callback(_part(
-                self._callback_lock, self._llrf,
-                'ILK:MAN:S', self._llrf_intlk_state))
+                self._callback_lock, dev,
+                'FIMManual-Sel', self._llrf_intlk_state))
         else:
             pvo_beamtrip.run_callbacks()
             pvo_manintlk.run_callbacks()
@@ -776,7 +796,7 @@ class App(_Callback):
 
         # if it is a global reset, reset EVG
         if state == 'all':
-            self._evg_dev['IntlkCtrlRst-Sel'] = 1
+            self._evg_dev['IntlkCtrlRst-Cmd'] = 1
             self._update_log('Sent reset EVG interlock flag.')
 
         return True
@@ -865,10 +885,10 @@ class App(_Callback):
         return True
 
     def _acq_config(self):
-        self._update_log('Aborting BPM acquisition...')
-        ret = self._fambpm_dev.cmd_abort_mturn_acquisition()
+        self._update_log('Stoping BPM acquisition...')
+        ret = self._fambpm_dev.cmd_stop_mturn_acquisition()
         if ret > 0:
-            self._update_log('ERR:Failed to abort BPM acquisition.')
+            self._update_log('ERR:Failed to stop BPM acquisition.')
             return
         self._update_log('...done. Configuring BPM acquisition...')
         ret = self._fambpm_dev.config_mturn_acquisition(
@@ -879,7 +899,7 @@ class App(_Callback):
             external=True)
         if ret < 0:
             self._update_log(
-                'ERR:Failed to abort acquisition for ' +
+                'ERR:Failed to stop acquisition for ' +
                 f'{self._const.bpm_names[-ret-1]:s}.')
             return
         if ret > 0:
@@ -953,11 +973,13 @@ class App(_Callback):
     def cmd_config_llrf(self, value):
         """Configure LLRF interlock according to lock configurations."""
         _ = value
-        if not self._llrf.connected:
-            self._update_log(f'ERR:LLRF disconnected.')
-            return False
-        self._llrf['ILK:BEAM:TRIP:S'] = self._llrf_intlk_state
-        self._llrf['ILK:MAN:S'] = self._llrf_intlk_state
+        for llrf in self._llrfs:
+            if not llrf.connected:
+                name = llrf.system_nickname
+                self._update_log(f'ERR:LLRF-{name} disconnected.')
+                return False
+            llrf.fast_interlock_monitor_orbit = self._llrf_intlk_state
+            llrf.fast_interlock_monitor_manual = self._llrf_intlk_state
         return True
 
     def cmd_config_bpms(self, value):
@@ -1135,6 +1157,22 @@ class App(_Callback):
             # MinSumLimsSynced
             oks = _np.array_equal(dev.minsum_thres, self._limits['minsum'])
             value = _updt_bit(value, 7, not oks)
+            # LogicalTrigConfigured
+            okl = True
+            for bpm in self._fambpm_dev.devices:
+                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
+                    prp_rb = _PVName.from_sp2rb(prp)
+                    okl &= bpm[prp_rb] == val
+            value = _updt_bit(value, 8, not okl)
+        else:
+            value = 0b111111111
+
+        self._bpm_status = value
+        self.run_callbacks('BPMStatus-Mon', self._bpm_status)
+
+        # PsMtm Acq. status
+        value = 0
+        if self._fambpm_dev.connected:
             # AcqConfigured
             bpms = self._fambpm_dev.devices
             okb = all(d.acq_channel == self._acq_chan for d in bpms)
@@ -1145,18 +1183,13 @@ class App(_Callback):
             okb &= all(
                 d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
             okb &= all(
-                d.acq_status == self._const.AcqStates.External_Trig for d in bpms)
-            value = _updt_bit(value, 8, not okb)
-            # LogTrigConfigured
-            okl = True
-            for bpm in self._fambpm_dev.devices:
-                for prp, val in self._const.SIBPMLOGTRIG_CONFIGS:
-                    prp_rb = _PVName.from_sp2rb(prp)
-                    okl &= bpm[prp_rb] == val
-            value = _updt_bit(value, 9, not okl)
+                d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
+            value = _updt_bit(value, 1, not okb)
+        else:
+            value = 0b11
 
-        self._bpm_status = value
-        self.run_callbacks('BPMStatus-Mon', self._bpm_status)
+        self._acq_status = value
+        self.run_callbacks('PsMtmAcqStatus-Mon', self._acq_status)
 
         # Timing Status
         value = 0
@@ -1223,13 +1256,15 @@ class App(_Callback):
         self.run_callbacks('TimingStatus-Mon', self._timing_status)
 
         # LLRF Status
-        value = (1 << 2) - 1
-        dev = self._llrf
-        if dev.connected:
-            value = _updt_bit(value, 0, 0)
-            okc = dev['ILK:BEAM:TRIP'] == self._llrf_intlk_state
-            okc &= dev['ILK:MAN'] == self._llrf_intlk_state
-            value = _updt_bit(value, 1, not okc)
+        value = (1 << 4) - 1
+        for i, dev in enumerate(self._llrfs):
+            if dev.connected:
+                value = _updt_bit(value, 2*i, 0)
+                fim_orbit = dev.fast_interlock_monitor_orbit
+                fim_manual = dev.fast_interlock_monitor_manual
+                okc = fim_orbit == self._llrf_intlk_state
+                okc &= fim_manual == self._llrf_intlk_state
+                value = _updt_bit(value, 2*i+1, not okc)
         self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
@@ -1332,12 +1367,16 @@ class App(_Callback):
                 outnam = f'OUT{out}'
                 devout = devname.substitute(propty_name=outnam)
                 if devout in self._const.intlkr_fouttable:
-                    pair = self._const.intlkr_fouttable[devout]
-                    devpair = _PVName(pair).device_name
-                    if self._fout_devs[devpair]['RxLockedLtc-Mon']:
+                    pair = _PVName(self._const.intlkr_fouttable[devout])
+                    devpair = pair.device_name
+                    # get the correct bit to verify the redundancy out
+                    redunout = int(pair.propty_name[-1])
+                    redunvalue = self._fout_devs[devpair]['RxLockedLtc-Mon']
+                    if _get_bit(redunvalue, redunout):
                         outs_in_failure.remove(out)
+                        self._update_log(f'Redundancy of {outnam} of {devname} is ok')
                     else:
-                        self._update_log(f'WARN:{outnam} of {pair} not locked')
+                        self._update_log(f'FATAL:redundancy {devname} not locked')
             is_failure = bool(outs_in_failure)
 
         if not is_failure:
@@ -1402,10 +1441,11 @@ class App(_Callback):
         # wait minimum period for RF EVE event count to be updated
         _time.sleep(.1)
         # verify if RF EVE counted the event PsMtm
-        new_evtcnt = self._everf_dev[self._llrf_evtcnt_pvname]
-        if new_evtcnt == self._everf_evtcnt:
-            self._update_log('WARN:RF EVE did not count event PsMtm')
-        self._everf_evtcnt = new_evtcnt
+        for devn, propty in self._llrf_evtcnt_pvnames.items():
+            new_evtcnt = self._everf_devs[devn][propty]
+            if new_evtcnt == self._everf_evtcnts[devn]:
+                self._update_log('WARN:RF EVE did not count event PsMtm')
+            self._everf_evtcnts[devn] = new_evtcnt
         # wait minimum period for BPM to update interlock PVs
         _time.sleep(2)
         # verify if EVG propagated the event Intlk
@@ -1414,8 +1454,15 @@ class App(_Callback):
             self._update_log('ERR:EVG did not propagate event Intlk')
             # reset BPM orbit interlock, once EVG callback was not triggered
             self.cmd_reset('bpm_all')
-        if not self._llrf['FASTINLK-MON'] & (1 << 12):
-            self._update_log('ERR:LLRF did not received RFKill event')
+
+        llrfbit = self._const.LLRF_ORBINTLK_BIT
+        for llrf in self._llrfs:
+            # orbit interlock for LLRF A and B were moved to interlock
+            # input 1, bit 5
+            if not llrf.interlock_input1_mon & (1 << llrfbit):
+                name = llrf.system_nickname
+                self._update_log(
+                    f'ERR:LLRF-{name} did not receive RFKill event')
 
     def _get_bpm_rates_factor(self):
         if self._monitsum2intlksum_factor:
@@ -1479,15 +1526,22 @@ class App(_Callback):
             return
         # send soft interlock to RF
         self._update_log('FATAL:sending soft interlock to LLRF.')
-        self._llrf['IntlkSet-Cmd'] = 1
+        # sending interlock for all LLRFs systems, then wait
+        for llrf in self._llrfs:
+            llrf.interlock_manual = 1
         _time.sleep(1)
-        self._llrf['IntlkSet-Cmd'] = 0
+        for llrf in self._llrfs:
+            llrf.interlock_manual = 0
+
         if self._is_dry_run:
             # wait a little and rearming FDL acquisition
             _time.sleep(self._const.DEF_TIME2WAIT_INTLKREARM)
-            self._llrf['Reset-Cmd'] = 1
+            # sending interlock reset for all LLRFs systems, then wait
+            for llrf in self._llrfs:
+                llrf['IntlkReset-Cmd'] = 1
             _time.sleep(1)
-            self._llrf['Reset-Cmd'] = 0
+            for llrf in self._llrfs:
+                llrf['IntlkReset-Cmd'] = 0
 
     # --- device lock methods ---
 
@@ -1588,10 +1642,7 @@ class App(_Callback):
             return
 
         # else, apply value as desired
-        if device == self._llrf:
-            propty_rb = propty_sp.replace(':S', '')
-        else:
-            propty_rb = _PVName.from_sp2rb(propty_sp)
+        propty_rb = _PVName.from_sp2rb(propty_sp)
         self._update_log(f'WARN:Locking {pvname}')
         device[propty_sp] = desired_value
 

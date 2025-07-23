@@ -16,6 +16,27 @@ def get_dict():
 AFC_ACQCORE_NR_PHY_TRIGGER = 8
 AFC_ACQCORE_NR_LOG_TRIGGER = 24
 
+SI_BPM_POLY_X_COEFF = [
+    8574000.0,   4728000.0,  4036000.0,  2814000.0, 9673000.0,
+    4015000.0,  10560000.0,  9858000.0, 86840000.0, 3947000.0,
+    5277000.0, 228500000.0, -1140000.0, 95490000.0, 24360000.0
+]
+SI_BPM_POLY_Y_COEFF = [
+    8574331.0,   4727847.0,  4035990.0,  2814060.0, 9673411.0,
+    4015438.0,  10564885.0,  9858212.0, 86840956.0, 3946578.0,
+    5276864.0, 228461777.0, -1139796.0, 95491966.0, 24361950.0
+]
+SI_BPM_POLY_SUM_COEFF = [
+    1.0, -1.3977e-05, -0.43378, -1.0575, -1.3979e-05,
+    2.6356, 3.7618, 12.457, -0.43378, 3.7614, 83.478,
+    -584.08, -1.0575, 12.459, -584.05, 6267.9
+]
+SI_BPM_POLY_Q_COEFF = [
+    0.925787421325340, 0.993974314425180, 1.0992213606011,
+    0.068300275370276, 0.046848344301059, 3.3136235284580,
+    0.092273210587639,-1.764922087231000, 2.9203104725574
+]
+
 
 _li_diags = [
     # Screens
@@ -111,8 +132,23 @@ _amcfpgaevrs = [
     'IA-20RaBPM:TI-AMCFPGAEVR:',
     'IA-20RaBPMTL:TI-AMCFPGAEVR:',
     ]
-_amcfpgaevr_amcs = ['AMC3', 'AMC6']
 _amcfpgaevr_propts = [
+    ['DevEnbl-Sel', 1, 0.0],
+    ['RTMFreqPropGain-SP', 1, 0.0],
+    ['RTMFreqIntgGain-SP', 128, 0.0],
+    ['RTMPhasePropGain-SP', 100, 0.0],
+    ['RTMPhaseIntgGain-SP', 1, 0.0],
+    ['RTMPhaseNavg-SP', 0, 0.0],
+    ['RTMPhaseDiv-SP', 0, 0.0],
+    ['AFCFreqPropGain-SP', 1, 0.0],
+    ['AFCFreqIntgGain-SP', 1500, 0.0],
+    ['AFCPhasePropGain-SP', 10, 0.0],
+    ['AFCPhaseIntgGain-SP', 1, 0.0],
+    ['AFCPhaseNavg-SP', 7, 0.0],
+    ['AFCPhaseDiv-SP', 1, 0.0],
+]
+_amcfpgaevr_amcs = ['AMC3', 'AMC6']
+_amcfpgaevr_amcs_propts = [
     ['State-Sel', 1, 0.0],
     ['Src-Sel', 3, 0.0],
     ['Dir-Sel', 0, 0.0],
@@ -124,8 +160,12 @@ _amcfpgaevr_propts = [
     ]
 _amcfpgaevr_pvs = list()
 for dev in _amcfpgaevrs:
+    # for AFC and RTM freq loops
+    for ppt, val, dly in _amcfpgaevr_propts:
+        _amcfpgaevr_pvs.append([dev+ppt, val, dly])
+    # for AMCs
     for amc in _amcfpgaevr_amcs:
-        for ppt, val, dly in _amcfpgaevr_propts:
+        for ppt, val, dly in _amcfpgaevr_amcs_propts:
             _amcfpgaevr_pvs.append([dev+amc+ppt, val, dly])
 
 _bpms = [
@@ -352,14 +392,9 @@ _bpms = [
     'SI-01M1:DI-BPM',
     ]
 _bpm_propts = [
-    [':INFOClkProp-Sel', 0, 0.0],
     [':ADCSi57xOe-Sel', 1, 0.0],
     [':ADCClkSel-Sel', 1, 0.0],
     [':INFOADCRate-SP', 1, 0.0],
-    [':ADCAD9510PllFunc-SP', 1, 0.0],
-    [':ADCAD9510Outputs-SP', 31, 0.0],
-    [':ADCAD9510ClkSel-Sel', 1, 0.0],
-    [':ADCAD9510CpCurrent-Sel', 7, 0.0],
     [':ADCTrigDir-Sel', 0, 0.0],
     [':ADCTrigTerm-Sel', 0, 0.0],
     [':RFFEPidSpAC-SP', 45.0, 0.0],
@@ -373,11 +408,10 @@ _bpm_propts = [
     [':RFFEPidBDTd-SP', 2.0, 0.0],
     [':RFFEHeaterAC-SP', 0.0, 0.0],
     [':RFFEHeaterBD-SP', 0.0, 0.0],
-    [':ADC0RstModes-Sel', 1, 0.0],
-    [':ADC1RstModes-Sel', 1, 0.0],
-    [':ADC2RstModes-Sel', 1, 0.0],
-    [':ADC3RstModes-Sel', 1, 0.0],
-    [':ACQBPMMode-Sel', 1, 0.0],
+    # [':ADC0RstModes-Sel', 1, 0.0],
+    # [':ADC1RstModes-Sel', 1, 0.0],
+    # [':ADC2RstModes-Sel', 1, 0.0],
+    # [':ADC3RstModes-Sel', 1, 0.0],
     [':TbTPhaseSyncDly-SP', 0.0, 0.0],
     [':TbTDataMaskEn-Sel', 1, 0.0],
     [':TbTDataMaskSamplesBeg-SP', 0.0, 0.0],
@@ -386,9 +420,9 @@ _bpm_propts = [
     [':PosXOffset-SP', 0, 0.0],
     [':PosYOffset-SP', 0, 0.0],
     [':PosQOffset-SP', 0, 0.0],
-    [':ACQTriggerHwDly-SP', 0, 0.0],
-    [':ACQ_PMTriggerHwDly-SP', 0, 0.0],
-    [':INFOClkFreq-SP', 220910069.0, 0.0],
+    [':GENTriggerHwDly-SP', 0, 0.0],
+    [':PMTriggerHwDly-SP', 0, 0.0],
+    # [':INFOClkFreq-SP', 220910069.0, 0.0],
     [':INFOHarmonicNumber-SP', 864, 0.0],
     [':INFOTbTRate-SP', 382, 0.0],
     [':INFOFOFBRate-SP', 8786, 0.0],
@@ -399,7 +433,6 @@ _bpm_propts = [
     [':PosKq-SP', 21389980, 0.0],
     [':ADCAD9510ADiv-SP', 0, 0.0],
     [':ADCAD9510BDiv-SP', 382, 0.0],
-    [':ADCAD9510Prescaler-SP', 0, 0.0],
     [':ADCAD9510RDiv-SP', 120, 0.0],
     [':ADCSi57xFreq-SP', 220910069.0, 0.0],
     [':SwDivClk-SP', 8786, 0.0],
@@ -414,6 +447,14 @@ _bpm_propts = [
     [':SwInvGainB-SP', 1.0, 0.0],
     [':SwInvGainC-SP', 1.0, 0.0],
     [':SwInvGainD-SP', 1.0, 0.0],
+    [':GEN_PolyXArrayCoeff-SP', SI_BPM_POLY_X_COEFF, 0.0],
+    [':GEN_PolyYArrayCoeff-SP', SI_BPM_POLY_Y_COEFF, 0.0],
+    [':GEN_PolySUMArrayCoeff-SP', SI_BPM_POLY_SUM_COEFF, 0.0],
+    [':GEN_PolyQArrayCoeff-SP', SI_BPM_POLY_Q_COEFF, 0.0],
+    [':PM_PolyXArrayCoeff-SP', SI_BPM_POLY_X_COEFF, 0.0],
+    [':PM_PolyYArrayCoeff-SP', SI_BPM_POLY_Y_COEFF, 0.0],
+    [':PM_PolySUMArrayCoeff-SP', SI_BPM_POLY_SUM_COEFF, 0.0],
+    [':PM_PolyQArrayCoeff-SP', SI_BPM_POLY_Q_COEFF, 0.0],
 ]
 for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
     _bpm_propts.extend([
@@ -422,7 +463,7 @@ for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
         [f':TRIGGER{phy_trig}RcvLen-SP', 0, 0.0],
         [f':TRIGGER{phy_trig}TrnLen-SP', 0, 0.0],
     ])
-for acq_core in ['', '_PM']:
+for acq_core in ['_GEN', '_PM']:
     for log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
         _bpm_propts.extend([
             [f':TRIGGER{acq_core}{log_trig}RcvInSel-SP', 0, 0.0],

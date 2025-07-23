@@ -3,11 +3,14 @@ import numpy as _np
 
 
 def _get_matrix_ss_section(leng):
-    return _np.array([
-        [1, -leng/2, 0, 0],
-        [1, leng/2, 0, 0],
-        [0, 0, 1, -leng/2],
-        [0, 0, 1, leng/2]])
+    return _np.array(
+        [
+            [1, -leng / 2, 0, 0],
+            [1, leng / 2, 0, 0],
+            [0, 0, 1, -leng / 2],
+            [0, 0, 1, leng / 2],
+        ]
+    )
 
 
 # NOTE: these matrices translate desired angles and positions of
@@ -18,28 +21,37 @@ def _get_matrix_ss_section(leng):
 # these matrices are calculated using the funcntion 'calc_matrices'
 # with corresponding modules in apsuite.orbcorr subpackage.
 BUMP_MATRICES = {
-    'SA': _get_matrix_ss_section(7.0358),
-    'SB': _get_matrix_ss_section(6.1758),
-    'SP': _get_matrix_ss_section(6.1758),
+    "SA": _get_matrix_ss_section(7.0358),
+    "SB": _get_matrix_ss_section(6.1758),
+    "SP": _get_matrix_ss_section(6.1758),
     # The BC matrix was calculated using the storage ring model.
-    'BC': _np.array([
-        [1.11371, -0.61624, 0, 0],
-        [1.25316, 1.54265, 0, 0],
-        [0, 0, 0.90631, -0.57170],
-        [0, 0, 0.69528, 1.80929]]),
+    "BC": _np.array(
+        [
+            [1.11371, -0.61624, 0, 0],
+            [1.25316, 1.54265, 0, 0],
+            [0, 0, 0.90631, -0.57170],
+            [0, 0, 0.69528, 1.80929],
+        ]
+    ),
     # The B2 matrix was calculated using the storage ring model.
-    'C2': _np.array([  # NOTE: first B2 (23.0 mrad) in sector (in subsec C2).
-        [1.23679, -0.43310, 0, 0],
-        [0.75773, 1.19247, 0, 0],
-        [0, 0, 0.90320, -0.50532],
-        [0, 0, -0.68264, 6.16011]]),
+    "C2": _np.array(
+        [  # NOTE: first B2 (23.0 mrad) in sector (in subsec C2).
+            [1.23679, -0.43310, 0, 0],
+            [0.75773, 1.19247, 0, 0],
+            [0, 0, 0.90320, -0.50532],
+            [0, 0, -0.68264, 6.16011],
+        ]
+    ),
     # The B1 matrix was calculated using the storage ring model.
-    'C1': _np.array([  # NOTE: first B1 (3.2 mrad) in sector (in subsec C1).
-        [0.94139, -1.26921, 0, 0],
-        [2.58532, 2.83033, 0, 0],
-        [0, 0, 0.97724, -1.92058],
-        [0, 0, 0.09027, 1.89970]]),
-    }
+    "C1": _np.array(
+        [  # NOTE: first B1 (3.2 mrad) in sector (in subsec C1).
+            [0.94139, -1.26921, 0, 0],
+            [2.58532, 2.83033, 0, 0],
+            [0, 0, 0.97724, -1.92058],
+            [0, 0, 0.09027, 1.89970],
+        ]
+    ),
+}
 
 
 def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
@@ -59,12 +71,12 @@ def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
         orbx, orby - The orbits with the bump applied to them
     """
     # These are the indices of the BPMs inside one section of the ring:
-    bpmidcs = {'BC': 4, 'SA': 0, 'SB': 0, 'SP': 0, 'C2': 3, 'C1': 1}
+    bpmidcs = {"BC": 4, "SA": 0, "SB": 0, "SP": 0, "C2": 3, "C1": 1}
 
     # get section and subsection
     sec = int(subsec[:2])
     if not 1 <= sec <= 20:
-        raise ValueError('Section must be between 01..20.')
+        raise ValueError("Section must be between 01..20.")
     sec -= 1
     subname = subsec[2:]
 

@@ -6,8 +6,8 @@ an `execute` method.
 
 import re as _re
 
-from ..csdev import Const as _const_psdev
 from ..bsmp.constants import ConstPSBSMP as _const_psbsmp
+from ..csdev import Const as _const_psdev
 
 
 class Function:
@@ -177,7 +177,7 @@ class PSPwrState(Function):
                 self.turn_off.execute()
 
 
-class PSPwrStateFBP_DCLink(Function):
+class PSPwrStateFBP_DCLink(Function):  # noqa: N801
     """Adapter to deal with FBP_DCLink turn on/off functions."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
@@ -395,27 +395,11 @@ class CfgWfm(Function):
             self._cfg.execute(value)
 
 
-class SOFBCurrent(Function):
-    """."""
-
-    def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Create command to set SOFBCurrent."""
-        self.device_ids = device_ids
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_current_set(value)
-
-
-class SOFBMode(Function):
+class IDFFMode(Function):
     """."""
 
     def __init__(self, pru_controller, setpoints=None):
-        """Create command to set SOFBMode."""
+        """Create command to set IDFFMode."""
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -423,22 +407,7 @@ class SOFBMode(Function):
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_mode_set(value)
-
-
-class SOFBUpdate(Function):
-    """."""
-
-    def __init__(self, pru_controller, setpoints=None):
-        """Create command to set SOFBMode."""
-        self.pru_controller = pru_controller
-        self.setpoints = setpoints
-
-    def execute(self, value=None):
-        """Execute command."""
-        if not self.setpoints or \
-                (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.sofb_update_variables_state()
+            self.pru_controller.idff_mode_set(value)
 
 
 class ParamUpdate(Function):

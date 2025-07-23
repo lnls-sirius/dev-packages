@@ -181,8 +181,6 @@ _corrs = [
     'SI-20C3:PS-FCV',
     ]
 _corr_propts = [
-    [':CurrLoopKp-SP', 5000000, 0.0],         # current loop Kp parameter
-    [':CurrLoopTi-SP', 300, 0.0],             # current loop Ti parameter
     [':CurrGain-SP', 6.25e-5, 0.0],           # current gain
     [':CurrOffset-SP', 0, 0.0],               # current offset
     [':VoltGain-SP', 1.12916762036e-4, 0.0],  # voltage gain

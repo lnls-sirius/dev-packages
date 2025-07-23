@@ -228,7 +228,7 @@ class CalcEmmitance(_BaseClass):
         R = self._get_trans_mat()
         pseudo_inv = (_np.linalg.inv(_np.transpose(R) @ R) @ _np.transpose(R))
         [s_11, s_12, s_22] = pseudo_inv @ (self._beamsize**2)
-        # s_11, s_12, s_22 = np.linalg.lstsq(R, self._beamsize**2)[0]
+        # s_11, s_12, s_22 = _np.linalg.lstsq(R, self._beamsize**2)[0]
         self._update_twiss(s_11, s_12, s_22)
 
     def _get_trans_mat(self):
@@ -399,9 +399,9 @@ class MeasEmmitance(_BaseClass):
                 sig_tmp.append(abs(sig))
                 self._measuring.wait(0.5)
                 j += 1
-            ind = np.argsort(sig_tmp)
-            I_tmp = np.array(I_tmp)[ind]
-            sig_tmp = np.array(sig_tmp)[ind]
+            ind = _np.argsort(sig_tmp)
+            I_tmp = _np.array(I_tmp)[ind]
+            sig_tmp = _np.array(sig_tmp)[ind]
             I_meas.extend(I_tmp[6:-6])
             sigma.extend(sig_tmp[6:-6])
         self._measuring.set()

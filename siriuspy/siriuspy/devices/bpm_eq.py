@@ -3,7 +3,10 @@ import time as _time
 import logging as _logging
 
 import numpy as _np
-import matplotlib.pyplot as _mplt
+try:
+    import matplotlib.pyplot as _mplt
+except:
+    _mplt = None
 
 from mathphys.functions import save as _save, load as _load, \
     get_namedtuple as _namedtuple
@@ -44,12 +47,12 @@ class EqualizeBPMs(_FamBPMs):
                 'SwInvGainC-RB', 'SwInvGainD-RB', 'SwDirGainA-SP',
                 'SwInvGainA-SP', 'SwDirGainB-SP', 'SwInvGainB-SP',
                 'SwDirGainC-SP', 'SwInvGainC-SP', 'SwDirGainD-SP',
-                'SwInvGainD-SP', 'ACQTriggerEvent-Sel', 'ACQStatus-Sts',
-                'GEN_AArrayData', 'GEN_BArrayData', 'GEN_CArrayData',
-                'GEN_DArrayData', 'ACQTriggerRep-Sel', 'ACQChannel-Sel',
-                'ACQTrigger-Sel', 'ACQSamplesPre-SP', 'ACQSamplesPost-SP',
+                'SwInvGainD-SP', 'GENTriggerEvent-Cmd', 'GENStatus-Mon',
+                'GENAmplAData', 'GENAmplBData', 'GENAmplCData',
+                'GENAmplDData', 'GENTriggerRep-Sel', 'GENChannel-Sel',
+                'GENTrigger-Sel', 'GENSamplesPre-SP', 'GENSamplesPost-SP',
                 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB', 'SwDivClk-RB',
-                'ACQChannel-Sts', 'INFOFOFBRate-RB', 'PosKx-RB', 'PosKy-RB',
+                'GENChannel-Sts', 'INFOFOFBRate-RB', 'PosKx-RB', 'PosKy-RB',
                 'PosXOffset-RB', 'PosYOffset-RB'])
         self.currinfo = _CurrInfoSI(props2init=['Current-Mon', ])
         self.trigger = Trigger(
@@ -252,10 +255,10 @@ class EqualizeBPMs(_FamBPMs):
 
         # acquire antennas data in FOFB rate
         self._log('Preparing BPMs')
-        ret = self.cmd_abort_mturn_acquisition()
+        ret = self.cmd_stop_mturn_acquisition()
         if ret > 0:
             self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
+                f'ERR: BPM {self.bpm_names[ret-1]} did not stop '
                 'previous acquistion.')
             return
 
@@ -330,10 +333,10 @@ class EqualizeBPMs(_FamBPMs):
     def _do_acquire_for_check(self):
         # acquire antennas data in FOFB rate
         self._log('Preparing BPMs')
-        ret = self.cmd_abort_mturn_acquisition()
+        ret = self.cmd_stop_mturn_acquisition()
         if ret > 0:
             self._log(
-                f'ERR: BPM {self.bpm_names[ret-1]} did not abort '
+                f'ERR: BPM {self.bpm_names[ret-1]} did not stop '
                 'previous acquistion.')
             return
 

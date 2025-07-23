@@ -1,13 +1,13 @@
 """Definition module."""
-import math as _math
 import logging as _log
+import math as _math
+import time as _time
 
 import numpy as _np
 
 from ..callbacks import Callback as _Callback
 from ..thread import LoopQueueThread as _LoopQueueThread
-
-from .csdev import SOFBFactory as _SOFBFactory, ConstTLines as _ConstTLines
+from .csdev import ConstTLines as _ConstTLines, SOFBFactory as _SOFBFactory
 
 _CSACCELS = {}
 
@@ -25,7 +25,7 @@ class BaseClass(_Callback):
 
     _LQTHREAD = None
 
-    def __init__(self, acc, prefix='', callback=None):
+    def __init__(self, acc, prefix="", callback=None):
         """Init method."""
         super().__init__(callback)
         if BaseClass._LQTHREAD is None:
@@ -69,21 +69,21 @@ class BaseClass(_Callback):
 
     def write(self, pvname, value):
         """."""
-        pvname = pvname.replace(self.prefix, '')
+        pvname = pvname.replace(self.prefix, "")
         if isinstance(value, (_np.ndarray, list, tuple)):
-            pval = f'{value[0]}...{value[-1]}'
+            pval = f"{value[0]}...{value[-1]}"
         else:
-            pval = f'{value}'
-        _log.info(f'Write received for: {pvname} --> {pval}')
+            pval = f"{value}"
+        _log.info(f"Write received for: {pvname} --> {pval}")
         if pvname in self._map2write:
             ret = self._map2write[pvname](value)
             if ret:
-                _log.info(f'YES Write for: {pvname} --> {pval}')
+                _log.info(f"YES Write for: {pvname} --> {pval}")
             else:
-                _log.info(f'NOT Write for: {pvname} --> {pval}')
+                _log.info(f"NOT Write for: {pvname} --> {pval}")
             return ret
         else:
-            _log.warning('PV %s does not have a set function.', pvname)
+            _log.warning("PV %s does not have a set function.", pvname)
             return False
 
     def run_callbacks(self, pvname, *args, **kwargs):
@@ -95,7 +95,7 @@ class BaseClass(_Callback):
         return dict()
 
     def _update_log(self, value):
-        self.run_callbacks('Log-Mon', value)
+        self.run_callbacks("Log-Mon", value)
 
     def _update_status(self):
         pass
@@ -111,20 +111,19 @@ class BaseTimingConfig(_Callback):
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
         self._config_pvs_sp = {}
+        self._pvs = {}
         self.put_enable = True
 
     @property
     def connected(self):
         """Status connected."""
         conn = True
-        for pv in self._config_pvs_rb.values():
+        pvs = list(self._config_pvs_rb.values())
+        pvs += list(self._config_pvs_rb.values())
+        pvs += list(self._pvs.values())
+        for pv in pvs:
             if not pv.connected:
-                _log.debug('NOT CONN: ' + pv.pvname)
-            conn &= pv.connected
-
-        for pv in self._config_pvs_sp.values():
-            if not pv.connected:
-                _log.debug('NOT CONN: ' + pv.pvname)
+                _log.debug("NOT CONN: " + pv.pvname)
             conn &= pv.connected
         return conn
 
@@ -138,15 +137,15 @@ class BaseTimingConfig(_Callback):
                 pvval = pv.value
             if pvval is None:
                 okay = False
-                pvval = 'None'
+                pvval = "None"
             elif isinstance(val, float):
                 okay = _math.isclose(val, pvval, rel_tol=1e-2)
             else:
                 okay = val == pvval
             if not okay:
-                msg = 'ERR: NOT CONF: {0:s}'.format(pv.pvname)
-                self.run_callbacks('Log-Mon', msg)
-                msg = msg[5:] + ' okv = {0}, v = {1}'.format(val, pvval)
+                msg = "ERR: NOT CONF: {0:s}".format(pv.pvname)
+                self.run_callbacks("Log-Mon", msg)
+                msg = msg[5:] + " okv = {0}, v = {1}".format(val, pvval)
                 _log.warning(msg)
                 return False
         return True
@@ -161,6 +160,18 @@ class BaseTimingConfig(_Callback):
         for k, pvo in self._config_pvs_sp.items():
             if k in self._config_ok_vals:
                 pvo.put(self._config_ok_vals[k], wait=False)
+        return True
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time.time()
+        pvs = list(self._config_pvs_rb.values())
+        pvs += list(self._config_pvs_rb.values())
+        pvs += list(self._pvs.values())
+        for pv in pvs:
+            tout = timeout - (_time.time() - t0_)
+            if tout <= 0 or not pv.wait_for_connection(tout):
+                return False
         return True
 
 
