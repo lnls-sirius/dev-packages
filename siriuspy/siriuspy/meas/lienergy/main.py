@@ -281,4 +281,5 @@ class MeasEnergy(_BaseClass, _Const):
         self.energy_calculator.set_data(
             self.current,
             self.image_processor.beamcentermmx,
-            self.image_processor.beamsizemmx)
+            self.image_processor.beamsizemmx
+        )

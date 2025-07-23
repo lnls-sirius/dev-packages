@@ -26,6 +26,9 @@ class BeagleBone:
     aproppriate device.
     """
 
+    _STRENS_CUR = {'Energy', 'Kick', 'KL', 'SL'}
+    _STRENS_WFM = {'WfmOffset' + stren for stren in _STRENS_CUR}
+
     def __init__(self, controllers, databases):
         """Init object.
 
@@ -115,19 +118,17 @@ class BeagleBone:
         if not self._initialized:
             return None
 
-        if field in {'Energy-SP', 'Kick-SP', 'KL-SP', 'SL-SP'}:
+        fnsp = field.replace('-SP', '')
+        if fnsp in BeagleBone._STRENS_CUR or fnsp in BeagleBone._STRENS_WFM:
             streconv = self._streconvs[devname]
             curr = streconv.conv_strength_2_current(value)
-            priority_pvs = self._controllers[devname].write(
-                devname, 'Current-SP', curr)
+            pv_sp = 'WfmOffset-SP' if 'WfmOffset' in field else 'Current-SP'
+            priority_pvs = \
+                self._controllers[devname].write(devname, pv_sp, curr)
         else:
             priority_pvs = self._controllers[devname].write(
                 devname, field, value)
         return priority_pvs
-
-    def get_strength_limits(self, devname):
-        """Return strength lower and upper limits."""
-        return self._strelims[devname]
 
     def check_connected(self, devname):
         """Check wether device is connected."""
@@ -137,8 +138,8 @@ class BeagleBone:
         """Check connection with PVs for strength calc."""
         return self._streconnected[devname]
 
-    def strength_name(self, devname):
-        """Return strength name."""
+    def strength_names(self, devname):
+        """Return strength names."""
         return self._strenames[devname]
 
     def strength_limits(self, devname):
@@ -149,7 +150,7 @@ class BeagleBone:
         """Return device database."""
         return self._databases[devname]
 
-    def init(self):
+    def init(self, processing=True, scanning=True):
         """Initialize controllers."""
         # return  # allow for IOC initialization without HW comm.
 
@@ -160,8 +161,8 @@ class BeagleBone:
             pruc = controller.pru_controller
             if pruc not in pruc_initialized:
                 pruc.bsmp_init_communication()
-                pruc.processing = True
-                pruc.scanning = True
+                pruc.processing = processing
+                pruc.scanning = scanning
                 pruc_initialized.add(pruc)
             if controller not in psc_initialized:
                 controller.init_setpoints()
@@ -179,13 +180,13 @@ class BeagleBone:
         strenames = dict()
         for psname, dbase in self._databases.items():
             if 'Energy-SP' in dbase:
-                strenames[psname] = 'Energy'
+                strenames[psname] = ('Energy', 'WfmOffsetEnergy')
             elif 'Kick-SP' in dbase:
-                strenames[psname] = 'Kick'
+                strenames[psname] = ('Kick', 'WfmOffsetKick')
             elif 'KL-SP' in dbase:
-                strenames[psname] = 'KL'
+                strenames[psname] = ('KL', 'WfmOffsetKL')
             elif 'SL-SP' in dbase:
-                strenames[psname] = 'SL'
+                strenames[psname] = ('SL', 'WfmOffsetSL')
             else:
                 strenames[psname] = None
         return strenames
@@ -225,27 +226,42 @@ class BeagleBone:
         strelims = self._strelims[psname]
         mirror = self._dev2mirror[psname]
         dbase = self._databases[psname]
-        curr0 = mirror[psname + ':Current-SP']
-        curr1 = mirror[psname + ':Current-RB']
-        curr2 = mirror[psname + ':CurrentRef-Mon']
-        curr3 = mirror[psname + ':Current-Mon']
-        curr4 = dbase['Current-SP']['lolo']
-        curr5 = dbase['Current-SP']['hihi']
-        currs = (curr0, curr1, curr2, curr3, curr4, curr5)
-        strengths = streconv.conv_current_2_strength(currents=currs)
-        if strengths is None or None in strengths:
-            self._streconnected[psname] = False
-        else:
-            self._streconnected[psname] = True
-            propname = psname + ':' + self._strenames[psname]
-            mirror[propname + '-SP'] = strengths[0]
-            mirror[propname + '-RB'] = strengths[1]
-            mirror[propname + 'Ref-Mon'] = strengths[2]
-            mirror[propname + '-Mon'] = strengths[3]
-            # update strength limits
-            if strengths[4] <= strengths[5]:
-                strelims[0], strelims[1] = strengths[4], strengths[5]
-            else:
-                strelims[0], strelims[1] = strengths[5], strengths[4]
+        self._streconnected[psname] = True
+        for strename in self._strenames[psname]:
+            if strename in BeagleBone._STRENS_CUR:
+                curr0 = mirror[psname + ':Current-SP']
+                curr1 = mirror[psname + ':Current-RB']
+                curr2 = mirror[psname + ':CurrentRef-Mon']
+                curr3 = mirror[psname + ':Current-Mon']
+                curr4 = dbase['Current-SP']['lolo']
+                curr5 = dbase['Current-SP']['hihi']
+                currs = (curr0, curr1, curr2, curr3, curr4, curr5)
+                strengths = streconv.conv_current_2_strength(currents=currs)
+                if strengths is None or None in strengths:
+                    self._streconnected[psname] = False
+                else:
+                    propname = psname + ':' + strename
+                    mirror[propname + '-SP'] = strengths[0]
+                    mirror[propname + '-RB'] = strengths[1]
+                    mirror[propname + 'Ref-Mon'] = strengths[2]
+                    mirror[propname + '-Mon'] = strengths[3]
+                    # update strength limits
+                    if strengths[4] <= strengths[5]:
+                        strelims[0], strelims[1] = strengths[4], strengths[5]
+                    else:
+                        strelims[0], strelims[1] = strengths[5], strengths[4]
+            elif strename in BeagleBone._STRENS_WFM:
+                curr0 = mirror[psname + ':WfmOffset-SP']
+                curr1 = mirror[psname + ':WfmOffset-RB']
+                curr2 = dbase['WfmOffset-SP']['lolo']
+                curr3 = dbase['WfmOffset-SP']['hihi']
+                currs = (curr0, curr1, curr2, curr3)
+                strengths = streconv.conv_current_2_strength(currents=currs)
+                if strengths is None or None in strengths:
+                    self._streconnected[psname] = False
+                else:
+                    propname = psname + ':' + strename
+                    mirror[propname + '-SP'] = strengths[0]
+                    mirror[propname + '-RB'] = strengths[1]
         # t1_ = _time.time()
         # print('update_strengths: {:.3f}'.format(1000*(t1_-t0_)))

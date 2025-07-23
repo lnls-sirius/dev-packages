@@ -96,7 +96,9 @@ class LIDiagApp(_App):
             self.pvs.append(pvo)
 
             # DiagStatus-Mon
-            pvs = [None]*17
+            pvs = [None]*19
+            pvs[_LIPUStatusPV.PV.CHARGES] = prefliname + ':CHARGE'
+            pvs[_LIPUStatusPV.PV.TRIGOUT] = prefliname + ':TRIGOUT'
             pvs[_LIPUStatusPV.PV.RUNSTOP] = prefliname + ':Run/Stop'
             pvs[_LIPUStatusPV.PV.PREHEAT] = prefliname + ':PreHeat'
             pvs[_LIPUStatusPV.PV.CHRALLW] = prefliname + ':Charge_Allowed'

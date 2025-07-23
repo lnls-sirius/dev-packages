@@ -1,11 +1,8 @@
 """Power Supply Model classes."""
 
-from . import pscreaders as _readers
-from . import pscwriters as _writers
-from . import pscontroller as _controller
-
-from ..bsmp import constants as _const_psbsmp
-from ..bsmp import entities as _etity_psbsmp
+from ..bsmp import constants as _const_psbsmp, entities as _etity_psbsmp
+from . import pscontroller as _controller, pscreaders as _readers, \
+    pscwriters as _writers
 
 
 class _PSModel:
@@ -31,10 +28,18 @@ class _PSModel:
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
+        # Wfm
+        'WfmSelected-Mon': _c.V_WFMREF_SELECTED,
+        'WfmSyncMode-Sts': _c.V_WFMREF_SYNC_MODE,
+        'WfmFreq-RB': _c.V_WFMREF_FREQUENCY,
+        'WfmGain-RB': _c.V_WFMREF_GAIN,
+        'WfmOffset-RB': _c.V_WFMREF_OFFSET,
         # Scope
         'ScopeSrcAddr-RB': _c.V_SCOPE_SRC_DATA,
         'ScopeFreq-RB': _c.V_SCOPE_FREQUENCY,
         'ScopeDuration-RB': _c.V_SCOPE_DURATION,
+        # Trigger pulse diagnostics
+        'NrCtrlCycBtwLastTrigs-Mon': _c.V_PERIOD_SYNC_PULSE,
         }
     _e2r = {
         # Epics to BSMP variable but with pre/post-processing
@@ -45,7 +50,7 @@ class _PSModel:
         'Version-Cte': (_readers.Version, _c.V_FIRMWARE_VERSION),
         }
     _e2c = {
-        # Epics to PRUCrontroller property
+        # Epics to PRUController property
         'PRUCtrlQueueSize-Mon': 'queue_length',
         }
     _e2o = {
@@ -237,7 +242,8 @@ class _PSModel:
         elif epics_field == 'ScopeFreq-SP':
             return _writers.ScopeFreq(device_ids, pru_controller, setpoints)
         elif epics_field == 'ScopeDuration-SP':
-            return _writers.ScopeDuration(device_ids, pru_controller, setpoints)
+            return _writers.ScopeDuration(
+                device_ids, pru_controller, setpoints)
         elif epics_field == 'ScopeSrcAddr-SP':
             return _writers.ScopeSrcAddr(device_ids, pru_controller, setpoints)
         return None
@@ -252,6 +258,8 @@ class _PSModel:
         if epics_field == 'SyncPulse-Cmd':
             return _writers.Command(
                 device_ids, pru_controller, _c.F_SYNC_PULSE, setpoints)
+        if epics_field == 'ParamUpdate-Cmd':
+            return _writers.ParamUpdate(device_ids, pru_controller, setpoints)
         if epics_field == 'Abort-Cmd':
             return _writers.BSMPFunctionNull()
         return None
@@ -259,20 +267,13 @@ class _PSModel:
     @staticmethod
     def _writer_cfgsiggen(
             device_ids, epics_field, pru_controller, setpoints):
-        p2i = {
-            'CycleType-Sel': 0,
-            'CycleNrCycles-SP': 1,
-            'CycleFreq-SP': 2,
-            'CycleAmpl-SP': 3,
-            'CycleOffset-SP': 4,
-            'CycleAuxParam-SP': 5,
-            }
-        _c = _const_psbsmp.ConstPSBSMP
-        if epics_field in p2i:
-            idx = p2i[epics_field]
+        params_siggen = _controller.StandardPSController.PARMS_SIGGEN
+        if epics_field in params_siggen:
+            idx = params_siggen.index(epics_field)
             return _writers.CfgSiggen(
                 device_ids, pru_controller, idx, setpoints)
         if epics_field == 'CycleDsbl-Cmd':
+            _c = _const_psbsmp.ConstPSBSMP
             return _writers.Command(
                 device_ids, pru_controller, _c.F_DISABLE_SIGGEN, setpoints)
         return None
@@ -292,6 +293,11 @@ class _PSModel:
         if epics_field == 'WfmMonAcq-Sel':
             return _writers.WfmMonAcq(
                 device_ids, pru_controller, setpoints)
+        params_wfm = _controller.StandardPSController.PARMS_WFM
+        if epics_field in params_wfm:
+            idx = params_wfm.index(epics_field)
+            return _writers.CfgWfm(
+                device_ids, pru_controller, idx, setpoints)
         return None
 
 
@@ -304,47 +310,32 @@ class PSModelFBP(_PSModel):
     _e = _etity_psbsmp.EntitiesFBP
 
     _bsmp_variables = {
-        'IntlkSoft-Mon':  _const_psbsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon':  _const_psbsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
-        'WfmSyncPulseCount-Mon': _const_psbsmp.ConstFBP.V_COUNTER_SYNC_PULSE,
-        'Current-RB':  _const_psbsmp.ConstFBP.V_PS_SETPOINT,
-        'CurrentRef-Mon':  _const_psbsmp.ConstFBP.V_PS_REFERENCE,
-        'Current-Mon':  _const_psbsmp.ConstFBP.V_I_LOAD,
-        'LoadVoltage-Mon': _const_psbsmp.ConstFBP.V_V_LOAD,
-        'DCLinkVoltage-Mon': _const_psbsmp.ConstFBP.V_V_DCLINK,
-        'SwitchesTemperature-Mon': _const_psbsmp.ConstFBP.V_TEMP_SWITCHES,
-        'PWMDutyCycle-Mon': _const_psbsmp.ConstFBP.V_DUTY_CYCLE,
+        'IntlkSoft-Mon':  _c.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon':  _c.V_PS_HARD_INTERLOCKS,
+        'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
+        'Current-RB':  _c.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _c.V_PS_REFERENCE,
+        'Current-Mon':  _c.V_I_LOAD,
+        'LoadVoltage-Mon': _c.V_V_LOAD,
+        'DCLinkVoltage-Mon': _c.V_V_DCLINK,
+        'SwitchesTemperature-Mon': _c.V_TEMP_SWITCHES,
+        'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'Alarms-Mon': _c.V_PS_ALARMS,
     }
 
     _pruc_properties = {
-        'SOFBMode-Sts': 'sofb_mode',
-        'SOFBCurrent-RB': 'sofb_current_rb',
-        'SOFBCurrentRef-Mon': 'sofb_current_refmon',
-        'SOFBCurrent-Mon': 'sofb_current_mon',
+        'IDFFMode-Sts': 'idff_mode',
     }
 
     def writer(self, device_ids, epics_field, pru_controller, setpoints):
         """Return writer."""
-        if epics_field == 'SOFBCurrent-SP':
-            return _writers.SOFBCurrent(
-                device_ids, pru_controller, setpoints)
-        if epics_field == 'SOFBMode-Sel':
-            return _writers.SOFBMode(pru_controller, setpoints)
-        if epics_field == 'SOFBUpdate-Cmd':
-            return _writers.SOFBUpdate(pru_controller, setpoints)
+        if epics_field == 'IDFFMode-Sel':
+            return _writers.IDFFMode(pru_controller, setpoints)
         return super().writer(
             device_ids, epics_field, pru_controller, setpoints)
 
 
-class PSModelFBP_FOFB(_PSModel):
-    """FBP_FOFB power supply model."""
-
-    _n = 'FBP_FOFB'
-    _c = _const_psbsmp.ConstFBP
-    _e = _etity_psbsmp.EntitiesFBP
-
-
-class PSModelFAC_DCDC(_PSModel):
+class PSModelFAC_DCDC(_PSModel):  # noqa: N801
     """FAC power supply model."""
 
     _n = 'FAC_DCDC'
@@ -362,6 +353,7 @@ class PSModelFAC_DCDC(_PSModel):
         'Current2-Mon': _c.V_I_LOAD2,
         'CapacitorBankVoltage-Mon': _c.V_V_CAPBANK,
         'PWMDutyCycle-Mon': _c.V_DUTY_CYCLE,
+        'LeakCurrent-Mon': _c.V_I_LEAKAGE,
         'VoltageInputIIB-Mon': _c.V_V_INPUT_IIB,
         'CurrentInputIIB-Mon': _c.V_I_INPUT_IIB,
         'CurrentOutputIIB-Mon': _c.V_I_OUTPUT_IIB,
@@ -372,15 +364,15 @@ class PSModelFAC_DCDC(_PSModel):
         'IGBTDriverVoltageIIB-Mon': _c.V_V_DRIVER_IIB,
         'IGBT1DriverCurrentIIB-Mon': _c.V_I_DRIVER_1_IIB,
         'IGBT2DriverCurrentIIB-Mon': _c.V_I_DRIVER_2_IIB,
-        'LeakCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB,
         'BoardTemperatureIIB-Mon': _c.V_TEMP_BOARD_IIB,
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
     }
 
 
-class PSModelFAC_2S_DCDC(_PSModel):
+class PSModelFAC_2S_DCDC(_PSModel):  # noqa: N801
     """FAC_2S_DCDC power supply model."""
 
     _n = 'FAC_2S_DCDC'
@@ -428,10 +420,11 @@ class PSModelFAC_2S_DCDC(_PSModel):
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
         'AlarmsIIBMod2-Mon': _c.V_IIB_ALARMS_2,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
-class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
+class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):  # noqa: N801
     """FAC_2P4S_DCDC power supply model (BO Dipoles)."""
 
     _n = 'FAC_2P4S_DCDC'
@@ -493,6 +486,7 @@ class PSModelFAC_2P4S_DCDC(PSModelFAC_DCDC):
         'RelativeHumidityIIBModB-Mon': _c.V_RH_IIB_B,
         'IntlkIIBModB-Mon': _c.V_IIB_INTERLOCKS_B,
         'AlarmsIIBModB-Mon': _c.V_IIB_ALARMS_B,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
@@ -534,10 +528,11 @@ class PSModelFAP(_PSModel):
         'RelativeHumidityIIB-Mon': _c.V_RH_IIB,
         'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
         'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
-class PSModelFAP_4P(_PSModel):
+class PSModelFAP_4P(_PSModel):  # noqa: N801, N801
     """FAP_4P power supply model."""
 
     _n = 'FAP_4P'
@@ -575,6 +570,7 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2PWMDutyCycleMod3-Mon': _c.V_DUTY_CYCLE_2_3,
         'IGBT1PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_1_4,
         'IGBT2PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_2_4,
+        'LeakCurrent-Mon': _c.V_I_LEAKAGE,
         'VoltageInputIIBMod1-Mon': _c.V_V_INPUT_IIB_1,
         'VoltageOutputIIBMod1-Mon': _c.V_V_OUTPUT_IIB_1,
         'IGBT1CurrentIIBMod1-Mon': _c.V_I_IGBT_1_IIB_1,
@@ -586,7 +582,6 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2DriverCurrentIIBMod1-Mon': _c.V_I_DRIVER_2_IIB_1,
         'InductorTemperatureIIBMod1-Mon': _c.V_TEMP_INDUCTOR_IIB_1,
         'HeatSinkTemperatureIIBMod1-Mon': _c.V_TEMP_HEATSINK_IIB_1,
-        'LeakageCurrentIIBMod1-Mon': _c.V_I_LEAKAGE_IIB_1,
         'TemperatureIIBMod1-Mon': _c.V_TEMP_BOARD_IIB_1,
         'RelativeHumidityIIBMod1-Mon': _c.V_RH_IIB_1,
         'IntlkIIBMod1-Mon': _c.V_IIB_INTERLOCKS_1,
@@ -602,7 +597,6 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
         'HeatSinkTemperatureIIBMod2-Mon': _c.V_TEMP_HEATSINK_IIB_2,
-        'LeakageCurrentIIBMod2-Mon': _c.V_I_LEAKAGE_IIB_2,
         'TemperatureIIBMod2-Mon': _c.V_TEMP_BOARD_IIB_2,
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
@@ -618,7 +612,6 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2DriverCurrentIIBMod3-Mon': _c.V_I_DRIVER_2_IIB_3,
         'InductorTemperatureIIBMod3-Mon': _c.V_TEMP_INDUCTOR_IIB_3,
         'HeatSinkTemperatureIIBMod3-Mon': _c.V_TEMP_HEATSINK_IIB_3,
-        'LeakageCurrentIIBMod3-Mon': _c.V_I_LEAKAGE_IIB_3,
         'TemperatureIIBMod3-Mon': _c.V_TEMP_BOARD_IIB_3,
         'RelativeHumidityIIBMod3-Mon': _c.V_RH_IIB_3,
         'IntlkIIBMod3-Mon': _c.V_IIB_INTERLOCKS_3,
@@ -634,15 +627,15 @@ class PSModelFAP_4P(_PSModel):
         'IGBT2DriverCurrentIIBMod4-Mon': _c.V_I_DRIVER_2_IIB_4,
         'InductorTemperatureIIBMod4-Mon': _c.V_TEMP_INDUCTOR_IIB_4,
         'HeatSinkTemperatureIIBMod4-Mon': _c.V_TEMP_HEATSINK_IIB_4,
-        'LeakageCurrentIIBMod4-Mon': _c.V_I_LEAKAGE_IIB_4,
         'TemperatureIIBMod4-Mon': _c.V_TEMP_BOARD_IIB_4,
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
 
 
-class PSModelFAP_2P2S(_PSModel):
+class PSModelFAP_2P2S(_PSModel):  # noqa: N801
     """FAP_2P2S power supply model."""
 
     _n = 'FAP_2P2S'
@@ -686,6 +679,7 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2PWMDutyCycleMod3-Mon': _c.V_DUTY_CYCLE_2_3,
         'IGBT1PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_1_4,
         'IGBT2PWMDutyCycleMod4-Mon': _c.V_DUTY_CYCLE_2_4,
+        'LeakCurrent-Mon': _c.V_I_LEAKAGE,
         'VoltageInputIIBMod1-Mon': _c.V_V_INPUT_IIB_1,
         'VoltageOutputIIBMod1-Mon': _c.V_V_OUTPUT_IIB_1,
         'IGBT1CurrentIIBMod1-Mon': _c.V_I_IGBT_1_IIB_1,
@@ -697,7 +691,6 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod1-Mon': _c.V_I_DRIVER_2_IIB_1,
         'InductorTemperatureIIBMod1-Mon': _c.V_TEMP_INDUCTOR_IIB_1,
         'HeatSinkTemperatureIIBMod1-Mon': _c.V_TEMP_HEATSINK_IIB_1,
-        'LeakageCurrentIIBMod1-Mon': _c.V_I_LEAKAGE_IIB_1,
         'TemperatureIIBMod1-Mon': _c.V_TEMP_BOARD_IIB_1,
         'RelativeHumidityIIBMod1-Mon': _c.V_RH_IIB_1,
         'IntlkIIBMod1-Mon': _c.V_IIB_INTERLOCKS_1,
@@ -713,7 +706,6 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod2-Mon': _c.V_I_DRIVER_2_IIB_2,
         'InductorTemperatureIIBMod2-Mon': _c.V_TEMP_INDUCTOR_IIB_2,
         'HeatSinkTemperatureIIBMod2-Mon': _c.V_TEMP_HEATSINK_IIB_2,
-        'LeakageCurrentIIBMod2-Mon': _c.V_I_LEAKAGE_IIB_2,
         'TemperatureIIBMod2-Mon': _c.V_TEMP_BOARD_IIB_2,
         'RelativeHumidityIIBMod2-Mon': _c.V_RH_IIB_2,
         'IntlkIIBMod2-Mon': _c.V_IIB_INTERLOCKS_2,
@@ -729,7 +721,6 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod3-Mon': _c.V_I_DRIVER_2_IIB_3,
         'InductorTemperatureIIBMod3-Mon': _c.V_TEMP_INDUCTOR_IIB_3,
         'HeatSinkTemperatureIIBMod3-Mon': _c.V_TEMP_HEATSINK_IIB_3,
-        'LeakageCurrentIIBMod3-Mon': _c.V_I_LEAKAGE_IIB_3,
         'TemperatureIIBMod3-Mon': _c.V_TEMP_BOARD_IIB_3,
         'RelativeHumidityIIBMod3-Mon': _c.V_RH_IIB_3,
         'IntlkIIBMod3-Mon': _c.V_IIB_INTERLOCKS_3,
@@ -745,22 +736,18 @@ class PSModelFAP_2P2S(_PSModel):
         'IGBT2DriverCurrentIIBMod4-Mon': _c.V_I_DRIVER_2_IIB_4,
         'InductorTemperatureIIBMod4-Mon': _c.V_TEMP_INDUCTOR_IIB_4,
         'HeatSinkTemperatureIIBMod4-Mon': _c.V_TEMP_HEATSINK_IIB_4,
-        'LeakageCurrentIIBMod4-Mon': _c.V_I_LEAKAGE_IIB_4,
         'TemperatureIIBMod4-Mon': _c.V_TEMP_BOARD_IIB_4,
         'RelativeHumidityIIBMod4-Mon': _c.V_RH_IIB_4,
         'IntlkIIBMod4-Mon': _c.V_IIB_INTERLOCKS_4,
         'AlarmsIIBMod4-Mon': _c.V_IIB_ALARMS_4,
+        'Alarms-Mon': _c.V_PS_ALARMS,
         }
-
-
-class PSModelCommercial(PSModelFAC_DCDC):
-    """Commercial power supply model."""
 
 
 # --- ACDC ---
 
 
-class PSModelFBP_DCLink(_PSModel):
+class PSModelFBP_DCLink(_PSModel):  # noqa: N801
     """FBP_DCLink model."""
 
     _n = 'FBP_DCLink'
@@ -811,7 +798,7 @@ class PSModelFBP_DCLink(_PSModel):
             readers, writers, pru_controller, devices)
 
 
-class PSModelFAC_2S_ACDC(_PSModel):
+class PSModelFAC_2S_ACDC(_PSModel):  # noqa: N801
     """FAC_2S_ACDC model."""
 
     _n = 'FAC_2S_ACDC'
@@ -881,7 +868,7 @@ class PSModelFAC_2S_ACDC(_PSModel):
             readers, writers, pru_controller, devices)
 
 
-class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):
+class PSModelFAC_2P4S_ACDC(PSModelFAC_2S_ACDC):  # noqa: N801
     """FAC_2P4S_ACDC model."""
 
     _n = 'FAC_2P4S_ACDC'
@@ -931,7 +918,6 @@ class PSModelFactory:
     _psname_2_factory = {
         'FBP': PSModelFBP,
         'FBP_DCLink': PSModelFBP_DCLink,
-        'FBP_FOFB': PSModelFBP,
         'FAC_DCDC': PSModelFAC_DCDC,
         'FAC_2S_DCDC': PSModelFAC_2S_DCDC,
         'FAC_2S_ACDC': PSModelFAC_2S_ACDC,
@@ -940,7 +926,6 @@ class PSModelFactory:
         'FAP': PSModelFAP,
         'FAP_2P2S': PSModelFAP_2P2S,
         'FAP_4P': PSModelFAP_4P,
-        'Commercial': PSModelCommercial,
         }
 
     @staticmethod

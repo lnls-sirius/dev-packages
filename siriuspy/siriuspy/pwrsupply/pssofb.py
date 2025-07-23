@@ -11,6 +11,7 @@ from socket import timeout as _socket_timeout
 
 from ..thread import AsyncWorker as _AsyncWorker
 from ..search import PSSearch as _PSSearch
+from ..search import IDSearch as _IDSearch
 from ..bsmp import SerialError as _SerialError
 from ..bsmp import constants as _const_bsmp
 from ..devices import StrengthConv as _StrengthConv
@@ -44,7 +45,9 @@ class PSNamesSOFB:
 
     @staticmethod
     def get_psnames_ch(acc):
-        """Return horizontal corrector psnames of a given sector."""
+        """Return horizontal corrector psnames of a given sector/ID."""
+        if 'ID-' in acc:
+            return _IDSearch.conv_idname_2_idff_chnames(acc)
         if PSNamesSOFB._sofb_factory is None:
             from ..sofb.csdev import SOFBFactory
             PSNamesSOFB._sofb_factory = SOFBFactory
@@ -54,13 +57,35 @@ class PSNamesSOFB:
 
     @staticmethod
     def get_psnames_cv(acc):
-        """Return vertical corrector psnames of a given sector."""
+        """Return vertical corrector psnames of a given sector/ID."""
+        if 'ID-' in acc:
+            return _IDSearch.conv_idname_2_idff_cvnames(acc)
         if PSNamesSOFB._sofb_factory is None:
             from ..sofb.csdev import SOFBFactory
             PSNamesSOFB._sofb_factory = SOFBFactory
         if acc not in PSNamesSOFB._sofb:
             PSNamesSOFB._sofb[acc] = PSNamesSOFB._sofb_factory.create(acc)
         return PSNamesSOFB._sofb[acc].cv_names
+
+    @staticmethod
+    def get_psnames_qs(acc):
+        """Return skew corrector psnames of a ID."""
+        if 'ID-' in acc:
+            return _IDSearch.conv_idname_2_idff_qsnames(acc)
+        return []
+
+    @staticmethod
+    def get_bbbnames(acc):
+        """Return bbbnames."""
+        corrnames = \
+            PSNamesSOFB.get_psnames_ch(acc) + \
+            PSNamesSOFB.get_psnames_cv(acc) + \
+            PSNamesSOFB.get_psnames_qs(acc)
+        bbbnames = set()
+        for corrname in corrnames:
+            bbbname = _PSSearch.conv_psname_2_bbbname(corrname)
+            bbbnames.add(bbbname)
+        return list(bbbnames)
 
 
 class UnitConverter:
@@ -88,7 +113,7 @@ class UnitConverter:
             if pstype not in pstype_2_sconv:
                 # sconv = _NormFact.create(psname.replace(':PS', ':MA'))
                 sconv = _StrengthConv(
-                    psname, UnitConverter.DIPOLE_PROPTY, auto_mon=True)
+                    psname, UnitConverter.DIPOLE_PROPTY, auto_monitor_mon=True)
                 pstype_2_sconv[pstype] = sconv
 
         # convert index to numpy array
@@ -145,10 +170,11 @@ class PSConnSOFB:
     PS_PWRSTATE = _PSCStatus.PWRSTATE
     PS_OPMODE = _PSCStatus.OPMODE
     SOCKET_TIMEOUT_ERR = 255
+    SERIAL_ERR = 254
 
     def __init__(
             self, ethbridgeclnt_class, bbbnames=None, mproc=None,
-            sofb_update_iocs=False, dipoleoff=False):
+            sofb_update_iocs=False, dipoleoff=False, acc=None):
         """."""
         # check arguments
         if mproc is not None and \
@@ -157,7 +183,7 @@ class PSConnSOFB:
             raise ValueError('Invalid mproc dictionary!')
 
         self._dipoleoff = dipoleoff
-        self._acc = 'SI'
+        self._acc = acc or 'SI'
         self._pru = None
         self._udc = None
         self.bbbnames = bbbnames or _dcopy(PSSOFB.BBBNAMES)
@@ -168,7 +194,8 @@ class PSConnSOFB:
 
         self._sofb_psnames = \
             PSNamesSOFB.get_psnames_ch(self._acc) + \
-            PSNamesSOFB.get_psnames_cv(self._acc)
+            PSNamesSOFB.get_psnames_cv(self._acc) + \
+            PSNamesSOFB.get_psnames_qs(self._acc)
 
         # snapshot of sofb current values
         ncorrs = len(self._sofb_psnames)
@@ -204,10 +231,12 @@ class PSConnSOFB:
             self.converter = UnitConverter(
                 self._sofb_psnames, dipoleoff=dipoleoff)
 
+    @property
     def pru(self):
         """Return Beagle-name to PRU-object dictionary."""
         return self._pru
 
+    @property
     def udc(self):
         """Return Beagle-name to UDC-object dictionary."""
         return self._udc
@@ -391,19 +420,11 @@ class PSConnSOFB:
         indcs_sofb = self.indcs_sofb[bbbname]
         indcs_bsmp = self.indcs_bsmp[bbbname]
 
-        # get valid current setpoints from sofb array
-        current = curr_sp[indcs_sofb]
-
         # initialize setpoint
-        # read last setpoint already stored in PSBSMP object:
-        readback = udc.sofb_current_rb_get()
-        if readback is None:
-            setpoint = _np.zeros(PSConnSOFB.MAX_NR_DEVS)
-        else:
-            setpoint = _np.asarray(readback)
-
-        # update setpoint
-        setpoint[indcs_bsmp] = current
+        # NOTE: curr_sp may contain NaNs. They will be handled by low level
+        #    classes.
+        setpoint = _np.full(PSConnSOFB.MAX_NR_DEVS, _np.nan)
+        setpoint[indcs_bsmp] = curr_sp[indcs_sofb]
 
         # --- bsmp communication ---
         try:
@@ -414,6 +435,8 @@ class PSConnSOFB:
         except _socket_timeout:
             # update sofb_func_return indicating socket timeout
             self._sofb_func_return[indcs_sofb] = PSConnSOFB.SOCKET_TIMEOUT_ERR
+        except _SerialError:
+            self._sofb_func_return[indcs_sofb] = PSConnSOFB.SERIAL_ERR
 
         # update sofb_current_readback_ref
         current = udc.sofb_current_readback_ref_get()
@@ -424,7 +447,8 @@ class PSConnSOFB:
         # send signal to IOC to update one power supply state
         if self._sofb_update_iocs:
             pvobj = self._pvobjs[bbbname]
-            pvobj.put(1, wait=False)  # send signal to IOC
+            if pvobj.connected and not pvobj.status:
+                pvobj.put(1, wait=False)  # send signal to IOC
 
     def _bsmp_current_setpoint_update(self, bbbname, curr_sp):
         """."""
@@ -895,9 +919,8 @@ class PSSOFB:
         mproc = {
             'rbref': _np.ndarray(shape, dtype=float, buffer=memoryview(rbref)),
             'ref': _np.ndarray(shape, dtype=float, buffer=memoryview(ref)),
-            'fret': _np.ndarray(shape, dtype=_np.int32,
-                                buffer=memoryview(fret)),
-            }
+            'fret': _np.ndarray(
+                shape, dtype=_np.int32, buffer=memoryview(fret))}
         psconnsofb = PSConnSOFB(
             ethbridgeclnt_class, bbbnames, mproc=mproc,
             sofb_update_iocs=sofb_update_iocs, dipoleoff=dipoleoff)

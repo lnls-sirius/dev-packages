@@ -23,19 +23,37 @@ def get_psnames(isadv=False):
     names = _PSSearch.get_psnames({'sec': '(LI|TB|TS)', 'dis': 'PS'})
 
     if not isadv:
+        # family magnets
         names.extend(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': 'Fam', 'dis': 'PS', 'dev': '(B|Q.*|S.*)'}))
+        # vertical correctors in individual magnets
         names.extend(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
              'dev': 'CV', 'idx': '2'}))
+        # skew quadrupoles in individual magnets
         names.extend(_PSSearch.get_psnames(
             {'sec': 'SI', 'sub': '[0-2][0-9]C2', 'dis': 'PS',
              'dev': 'QS'}))
-    else:
+        # ID correctors
         names.extend(_PSSearch.get_psnames(
-            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q.*|S.*|C.*)'}))
+            {'sec': 'SI', 'sub': '[0-2][0-9]S(A|B|P)', 'dis': 'PS',
+             'dev': '(CH|CV|QS)'}))  # do not include VPU correctors (CC)
+        # fast correctors
+        names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'dis': 'PS', 'dev': 'FC.*'}))
+    else:
+        # all magnets
+        names.extend(_PSSearch.get_psnames(
+            {'sec': 'SI', 'dis': 'PS', 'dev': '(B|Q.*|S.*|C.*|FC.*)'}))
 
+    # explicitly remove TS auxiliary correctors (coils in quadrupoles)
     to_remove = _PSSearch.get_psnames({'sec': 'TS', 'idx': '(0|1E2)'})
+    # explicitly remove some ID correctors
+    to_remove.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': '(08SB|10SB|14SB|17SA)', 'dev': '(CH|CV|QS)'}))
+    # explicitly remove septa feedforward fast correctors (disconnected)
+    to_remove.extend(_PSSearch.get_psnames(
+        {'sec': 'SI', 'sub': '(01M1|01M2)', 'dev': '(FCH|FCV)'}))
     for name in to_remove:
         names.remove(name)
     return names

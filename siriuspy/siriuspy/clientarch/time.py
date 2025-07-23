@@ -2,6 +2,7 @@
 
 from . import exceptions as _exceptions
 from datetime import datetime as _datetime, timedelta as _timedelta
+from calendar import timegm as _timegm
 
 
 class Time(_datetime):
@@ -93,6 +94,13 @@ class Time(_datetime):
         else:
             sub = super().__sub__(other)
         return Time(timestamp=sub.timestamp())
+
+    @staticmethod
+    def conv_to_epoch(time, datetime_format):
+        """get epoch from datetime."""
+        utc_time = _datetime.strptime(time, datetime_format)
+        epoch_time = _timegm(utc_time.timetuple())
+        return epoch_time
 
 
 def get_time_intervals(

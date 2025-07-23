@@ -63,6 +63,7 @@ class TestClientWeb(TestCase):
         'magnets_model_data',
         'magnets_excitation_data_read',
         'magnets_excitation_ps_read',
+        'orb_intlk_limits_read',
         'ps_pstypes_names_read',
         'ps_pstype_data_read',
         'ps_pstype_setpoint_limits',
@@ -80,7 +81,8 @@ class TestClientWeb(TestCase):
         'high_level_triggers',
         'high_level_events',
         'bsmp_dclink_mapping',
-        'mac_schedule_read'
+        'mac_schedule_read',
+        'doc_services_read',
     }
 
     def test_public_interface(self, mock_read):

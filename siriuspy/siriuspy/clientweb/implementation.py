@@ -8,12 +8,14 @@ from .. import envars as _envars
 _TIMEOUT = 5.0  # [seconds]
 _EXCDAT_FOLDER = '/magnet/excitation-data/'
 _MAGNET_FOLDER = '/magnet/'
+_ORBINTLK_FOLDER = '/orbintlk/'
 _PS_FOLDER = '/pwrsupply/'
 _BBB_FOLDER = '/beaglebone/'
 _PSTYPES_DATA_FOLDER = '/pwrsupply/pstypes-data/'
 _DIAG_FOLDER = '/diagnostics/'
 _TIMESYS_FOLDER = '/timesys/'
 _MAC_SCHEDULE_FOLDER = '/macschedule/'
+_DOC_SERV_FOLDER = '/documentation/services/'
 
 
 def read_url(url, timeout=_TIMEOUT):
@@ -61,6 +63,12 @@ def magnets_excitation_data_read(filename, timeout=_TIMEOUT):
 def magnets_excitation_ps_read(timeout=_TIMEOUT):
     """Return the power supply excitation data."""
     url = _MAGNET_FOLDER + 'magnet-excitation-ps.txt'
+    return read_url(url, timeout=timeout)
+
+
+def orb_intlk_limits_read(timeout=_TIMEOUT):
+    """Return the data defining the orbit interlock limits."""
+    url = _ORBINTLK_FOLDER + 'orb_intlk_limits.py'
     return read_url(url, timeout=timeout)
 
 
@@ -134,12 +142,12 @@ def crates_mapping(timeout=_TIMEOUT):
     """Return the crates mapping."""
     url = _DIAG_FOLDER + 'microTCA-vs-BPMs-mapping/'
     text = read_url(url, timeout=timeout)
-    pat = _re.compile('>(names.crate[a-zA-Z_0-9]*.cfg)<')
+    pat = _re.compile('"(names_crate[a-zA-Z_0-9]*.cfg)"')
     files = pat.findall(text)
     txt = ''
     for fi in files:
         for time in read_url(url + fi, timeout=timeout).splitlines():
-            txt += '{0:20s}'.format(fi[6:13]) + time + '\n'
+            txt += f'{time:<40s}' + f'{fi[6:13]:>10s}\n'
         txt += '\n\n'
     return txt
 
@@ -178,3 +186,16 @@ def mac_schedule_read(year, timeout=_TIMEOUT):
     """Read machine schedule data."""
     url = _MAC_SCHEDULE_FOLDER + str(year) + '.txt'
     return read_url(url, timeout=timeout)
+
+
+def doc_services_read(timeout=_TIMEOUT):
+    """Read service documentation data."""
+    url = _DOC_SERV_FOLDER
+    text = read_url(url, timeout=timeout)
+    pattern = _re.compile('"([a-zA-Z_0-9]*.yml)"')
+    files = pattern.findall(text)
+    text = ''
+    for file in files:
+        text += read_url(url + file, timeout=timeout)
+        text += '\n\n'
+    return text

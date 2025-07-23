@@ -5,8 +5,8 @@ import numpy as _np
 
 from .. import csdev as _csdev
 
-
 # --- Enumeration Types ---
+
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
@@ -193,16 +193,16 @@ def get_lifetime_database():
         'BuffRst-Cmd': {'type': 'int', 'value': 0},
         'BuffAutoRst-Sel': {
             'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
-            'value': _c.BuffAutoRst.Off},
+            'value': _c.BuffAutoRst.DCurrCheck},
         'BuffAutoRst-Sts': {
             'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
-            'value': _c.BuffAutoRst.Off},
+            'value': _c.BuffAutoRst.DCurrCheck},
         'BuffAutoRstDCurr-SP': {
-            'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
+            'type': 'float', 'value': 0.01, 'prec': 2, 'unit': 'mA',
             'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
         'BuffAutoRstDCurr-RB': {
-            'type': 'float', 'value': 0.1, 'prec': 2, 'unit': 'mA',
+            'type': 'float', 'value': 0.01, 'prec': 2, 'unit': 'mA',
             'lolim': -300.0, 'low': -300.0, 'lolo': -300.0,
             'hilim': 300.0, 'high': 300.0, 'hihi': 300.0},
 
@@ -228,6 +228,8 @@ def get_lifetime_database():
         'Lifetime-Mon': {
             'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
             'scan': 0.5},
+        'LifetimeHour-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'h'},
         'BuffSize-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTot-Mon': {'type': 'int', 'value': 0},
         'BufferValue-Mon': {
@@ -240,6 +242,8 @@ def get_lifetime_database():
         'LifetimeBPM-Mon': {
             'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
             'scan': 0.5},
+        'LifetimeBPMHour-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'h'},
         'BuffSizeBPM-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTotBPM-Mon': {'type': 'int', 'value': 0},
         'BufferValueBPM-Mon': {

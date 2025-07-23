@@ -1,16 +1,17 @@
 """Main Module of the IOC Logic."""
 
-import warnings
 import time as _time
+import warnings
+
 import numpy as _np
 from epics import PV as _PV
 
 from ...callbacks import Callback as _Callback
-from ...epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ...envars import VACA_PREFIX as _vaca_prefix
-from ..csdev import \
-    Const as _Const, get_lifetime_database as _get_database
+from ...epics import SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..csdev import Const as _Const, get_lifetime_database as _get_database
 
+_MIN_BUFFER_SIZE = 100
 _MAX_BUFFER_SIZE = 36000
 
 
@@ -37,9 +38,8 @@ class SILifetimeApp(_Callback):
         self._last_ts_set = 'last'
         self._sampling_interval = 500.0
         self._min_intvl_btw_spl = 0.0
-        self._rstbuff_cmd_count = 0
-        self._buffautorst_mode = _Const.BuffAutoRst.Off
-        self._buffautorst_dcurr = 0.1
+        self._buffautorst_mode = _Const.BuffAutoRst.DCurrCheck
+        self._buffautorst_dcurr = 0.01
         self._is_stored = 0
         self._lifetime = 0
         self._lifetime_bpm = 0
@@ -110,9 +110,7 @@ class SILifetimeApp(_Callback):
             ts_dq, val_dq, ts_abs_dq = self._filter_buffer(
                 ts_dqorg, val_dqorg, ts_abs_dqorg, first_smpl, last_smpl)
 
-            if ts_dq.size == 0:
-                setattr(self, lt_name, 0)
-            else:
+            if ts_dq.size != 0:
                 if first_smpl != ts_abs_dq[0]:
                     setattr(self, first_name, ts_abs_dq[0])
                     self.run_callbacks(
@@ -125,12 +123,12 @@ class SILifetimeApp(_Callback):
                 val_dq -= self._current_offset
 
                 # check min number of points in buffer
-                if len(val_dq) > 100:
+                if len(val_dq) > _MIN_BUFFER_SIZE:
                     fit = 'lin' if self._mode == _Const.Fit.Linear else 'exp'
                     value = self._least_squares_fit(ts_dq, val_dq, fit=fit)
-                else:
-                    value = 0
-                setattr(self, lt_name, value)
+                    setattr(self, lt_name, value)
+                    lt_hour = 'Lifetime' + lt_type + 'Hour-Mon'
+                    self.run_callbacks(lt_hour, value / 3600)
 
             # update pvs
             self.run_callbacks('BufferValue'+lt_type+'-Mon', val_dq)
@@ -167,9 +165,7 @@ class SILifetimeApp(_Callback):
             self.run_callbacks('CurrOffset-RB', value)
             status = True
         elif reason == 'BuffRst-Cmd':
-            self._rstbuff_cmd_count += 1
             self._reset_buff()
-            self.run_callbacks('BuffRst-Cmd', self._rstbuff_cmd_count)
             status = True
         elif reason == 'BuffAutoRst-Sel':
             self._buffautorst_mode = value
@@ -220,8 +216,7 @@ class SILifetimeApp(_Callback):
 
     def _buffautorst_check(self):
         """Check situations to clear internal buffer.
-        If BuffAutoRst == DCurrCheck, check abrupt variation of current by
-        a factor of 20 times the DCCT fluctuation/resolution.
+        If BuffAutoRst == DCurrCheck, check abrupt variation of current.
         """
         if self._buffautorst_mode == _Const.BuffAutoRst.Off:
             return
@@ -249,11 +244,6 @@ class SILifetimeApp(_Callback):
         self.run_callbacks('LastSplTime-RB', self._last_smpl_ts_dcct)
         self.run_callbacks('FrstSplTimeBPM-RB', self._frst_smpl_ts_bpm)
         self.run_callbacks('LastSplTimeBPM-RB', self._last_smpl_ts_bpm)
-
-        self._lifetime_bpm = 0
-        self._lifetime = 0
-        self.run_callbacks('Lifetime-Mon', self._lifetime)
-        self.run_callbacks('LifetimeBPM-Mon', self._lifetime_bpm)
 
     def _filter_buffer(self, timestamp, value, abs_timestamp, first, last):
         ts_arrayorg = _np.asarray(timestamp)

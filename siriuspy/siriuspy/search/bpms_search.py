@@ -15,7 +15,6 @@ class BPMSearch:
     """
 
     _mapping = None
-    _timing_mapping = None
 
     _lock = _Lock()
 
@@ -89,12 +88,6 @@ class BPMSearch:
         return [cls._mapping[k]['position'] for k in names]
 
     @classmethod
-    def get_timing_mapping(cls):
-        """Return a dictionary with the power supply to beaglebone mapping."""
-        cls._get_data()
-        return _dcopy(cls._timing_mapping)
-
-    @classmethod
     def _get_data(cls):
         with cls._lock:
             if cls._mapping is not None:
@@ -103,7 +96,6 @@ class BPMSearch:
                 raise Exception('could not read data from web server!')
             text = _web.bpms_data(timeout=_timeout)
             cls._build_mapping(text)
-            cls._build_timing_to_bpm_mapping()
 
     @classmethod
     def _build_mapping(cls, text):
@@ -113,23 +105,11 @@ class BPMSearch:
             line = line.strip()
             if not line or line[0] == '#':
                 continue  # empty line
-            key, pos, timing, *_ = line.split()
+            key, pos, *_ = line.split()
             key = _PVName(key)
-            timing = _PVName(timing)
             if key in mapping.keys():
                 raise Exception('BPM {0:s} double entry.'.format(key))
             else:
-                mapping[key] = {'position': float(pos), 'timing': timing}
+                mapping[key] = {'position': float(pos)}
         cls._mapping = mapping
         cls._names = sorted(cls._mapping.keys())
-
-    @classmethod
-    def _build_timing_to_bpm_mapping(cls):
-        timing_mapping = dict()
-        for k, v in cls._mapping.items():
-            k2 = v['timing']
-            if k2 in timing_mapping.keys():
-                timing_mapping[k2] += (k, )
-            else:
-                timing_mapping[k2] = (k, )
-        cls._timing_mapping = timing_mapping

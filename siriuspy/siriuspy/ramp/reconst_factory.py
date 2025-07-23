@@ -626,7 +626,7 @@ class BORFRampFactory:
     """Class to rebuild RF ramp parameters from machine state."""
 
     V_2_KV = 1e-3
-    _DevName = 'BR-RF-DLLRF-01'
+    _DevName = 'RA-RaBO01:RF-LLRF'
     _ppties = {
         'bottom_duration': _DevName+':RmpTs1-SP',
         'rampup_duration': _DevName+':RmpTs2-SP',
@@ -685,8 +685,7 @@ class BOTIRampFactory:
     }
     _events = {
         _EVG+':Linac', _EVG+':InjBO', _EVG+':RmpBO', _EVG+':InjSI',
-        _EVG+':DigLI', _EVG+':DigTB', _EVG+':DigBO', _EVG+':DigTS',
-        _EVG+':DigSI', _EVG+':Study',
+        _EVG+':Study',
     }
     _PVs = dict()
 

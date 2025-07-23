@@ -242,8 +242,7 @@ class ConstParameter:
 
     def read(self):
         """Read ps parameter from pru controller."""
-        if self.value is None:
-            self.update()
+        self.update()
         return self.value
 
     def update(self):

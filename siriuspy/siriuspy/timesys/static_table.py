@@ -9,8 +9,11 @@ from ..search import LLTimeSearch
 
 _disclaimer = """
 # This file was generated automatically from the data of the
-# excel file Cabos_e_Fibras_Sirius.xlsx by the function
-# siriuspy.timesys.static_table.create_static_table.
+# excel file Cabos_e_Fibras_Sirius.xlsx, located in:
+#   https://docs.google.com/spreadsheets/d/19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI/edit?usp=sharing
+#
+# The function that created this file can be found in:
+#   siriuspy.timesys.static_table.create_static_table.
 #
 # If the mentioned file change, please, run the script
 # again and copy the generated file to replace this one.
@@ -42,8 +45,10 @@ def create_static_table(fname=None, local=False, logfile=None):
     else:
         data = read_data_from_google()
     _log.info(_disclaimer)
-    chans = _get_channels_from_data(data)
-    chans_used, chans_nused = _sort_connection_table(chans)
+    chans_used = _get_channels_from_data(data)
+    chans_used, chans_nused2 = _filter_connection_table(chans_used)
+    chans_used, chans_nused = _sort_connection_table(chans_used)
+    chans_nused = sorted(set(chans_nused + chans_nused2))
     _print_tables(chans_used, chans_nused)
 
 
@@ -77,7 +82,6 @@ def read_data_from_google():
         spreadsheetId='19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI',
         range='Cabos e Fibras').execute()
     values = result.get('values', [])
-
     if not values:
         raise ValueError('Error loading file from google')
     return values
@@ -129,6 +133,36 @@ def _get_channels_from_data(data):
 def _check_device_and_port(dev, por):
     por = por.upper().translate(str.maketrans('', '', ' _-'))
     return _NAMES2CONVERT.get(dev, dev) + ':' + por
+
+
+def _filter_connection_table(chans):
+    entries = []
+    trsrc = LLTimeSearch.TrigSrcDevs
+    in2ou = LLTimeSearch.In2OutMap
+    ou2in = LLTimeSearch.Out2InMap
+    for k1, k2 in chans:
+        if k1.dev in trsrc and k1.propty in (in2ou[k1.dev] | ou2in[k1.dev]):
+            entries.append(k1)
+        if k2.dev in trsrc and k2.propty in (in2ou[k2.dev] | ou2in[k2.dev]):
+            entries.append(k2)
+
+    chans_used = []
+    for entry in entries:
+        mark = list(range(len(chans)))
+        for i, ks in enumerate(chans):
+            k1, k2 = ks
+            if k1 == entry:
+                entries.extend(LLTimeSearch.get_channel_input(k2))
+                chans_used.append((k1, k2))
+                mark.remove(i)
+            if k2 == entry:
+                entries.extend(LLTimeSearch.get_channel_input(k1))
+                chans_used.append((k1, k2))
+                mark.remove(i)
+        chans = [chans[i] for i in mark]
+    chans_used = sorted(set(chans_used))
+    chans_nused = sorted(chans)
+    return chans_used, chans_nused
 
 
 def _sort_connection_table(chans):

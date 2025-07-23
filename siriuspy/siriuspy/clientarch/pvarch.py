@@ -4,18 +4,23 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 
+from mathphys.functions import save_pickle as _save_pickle, \
+    load_pickle as _load_pickle
+
+from .. import envars as _envars
+
 from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
 from .time import Time as _Time, get_time_intervals as _get_time_intervals
 
-from mathphys.functions import save_pickle as _save_pickle, \
-    load_pickle as _load_pickle
-
 
 class _Base:
 
-    def __init__(self, connector=None):
+    DEF_PARALLEL_QUERY_BIN_INTERVAL = 12*60*60  # 12h
+
+    def __init__(self, connector=None, offline_data=False):
         self._connector = None
+        self._offline_data = offline_data
         self.connector = connector
         self.connect()
 
@@ -28,7 +33,10 @@ class _Base:
     def connect(self):
         """Connect."""
         if self.connector is None:
-            self._connector = _ClientArchiver()
+            url_off = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+            url_on = _envars.SRVURL_ARCHIVER
+            url = url_off if self._offline_data else url_on
+            self._connector = _ClientArchiver(server_url=url)
 
     @property
     def connector(self):
@@ -48,11 +56,36 @@ class _Base:
                 'Variable conn must be a str or ClientArchiver object.')
 
     @property
+    def is_offline_data(self):
+        """."""
+        return self._offline_data
+
+    @property
+    def timeout(self):
+        """Connection timeout."""
+        return self.connector.timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        """Set connection timeout."""
+        self.connector.timeout = float(value)
+
+    @property
     def connected(self):
         """."""
         if not self.connector:
             return False
         return self.connector.connected
+
+    def switch_to_online_data(self):
+        """."""
+        if self.connector:
+            self.connector.switch_to_online_data()
+
+    def switch_to_offline_data(self):
+        """."""
+        if self.connector:
+            self.connector.switch_to_offline_data()
 
 
 class PVDetails(_Base):
@@ -102,9 +135,11 @@ class PVDetails(_Base):
             return False
         return True
 
-    def update(self):
+    def update(self, timeout=None):
         """."""
         self.connect()
+        if timeout is not None:
+            self.timeout = timeout
         data = self.connector.getPVDetails(self.pvname)
         if not data:
             return False
@@ -155,9 +190,9 @@ class PVDetails(_Base):
 class PVData(_Base):
     """Archive PV Data."""
 
-    def __init__(self, pvname, connector=None):
+    def __init__(self, pvname, connector=None, offline_data=False):
         """Initialize."""
-        super().__init__(connector)
+        super().__init__(connector, offline_data=offline_data)
         self._pvname = pvname
         self._time_start = None
         self._time_stop = None
@@ -165,7 +200,7 @@ class PVData(_Base):
         self._value = None
         self._status = None
         self._severity = None
-        self._parallel_query_bin_interval = 12*60*60  # 12h
+        self._parallel_query_bin_interval = _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
 
     @property
     def pvname(self):
@@ -270,9 +305,11 @@ class PVData(_Base):
         """Severity data."""
         return self._severity
 
-    def update(self, mean_sec=None, parallel=True):
+    def update(self, mean_sec=None, parallel=True, timeout=None):
         """Update."""
         self.connect()
+        if timeout is not None:
+            self.timeout = timeout
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
             return
@@ -296,10 +333,12 @@ class PVData(_Base):
 
     def set_data(self, timestamp, value, status, severity):
         """Auxiliary method to set data. Used by PVDataSet."""
-        self._timestamp = _np.asarray(timestamp)
-        self._value = _np.asarray(value)
-        self._status = _np.asarray(status)
-        self._severity = _np.asarray(severity)
+        self._timestamp = self._value = self._status = self._severity = None
+        if timestamp is not None:
+            self._timestamp = _np.asarray(timestamp)
+            self._value = _np.asarray(value)
+            self._status = _np.asarray(status)
+            self._severity = _np.asarray(severity)
 
     def to_dict(self):
         """Return dictionary with PV properties.
@@ -375,19 +414,24 @@ class PVData(_Base):
 class PVDataSet(_Base):
     """A set of PVData objects."""
 
-    def __init__(self, pvnames, connector=None):
+    def __init__(self, pvnames, connector=None, offline_data=False):
         """Initialize."""
-        super().__init__(connector)
+        super().__init__(connector, offline_data=offline_data)
         self._pvnames = pvnames
         self._time_start = None
         self._time_stop = None
-        self._parallel_query_bin_interval = 12*60*60  # 12h
+        self._parallel_query_bin_interval = _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
         self._pvdata = self._init_pvdatas(pvnames, self.connector)
 
     @property
     def pvnames(self):
         """PV names."""
         return _dcopy(self._pvnames)
+
+    @pvnames.setter
+    def pvnames(self, new_pvnames):
+        self._pvnames = new_pvnames
+        self._pvdata = self._init_pvdatas(new_pvnames, self.connector)
 
     @property
     def is_archived(self):
@@ -397,6 +441,22 @@ class PVDataSet(_Base):
             if self.connector.getPVDetails(pvn) is None:
                 return False
         return True
+
+    @property
+    def not_archived(self):
+        """PVs not being archived."""
+        self.connect()
+        not_archived = list()
+        for pvn in self._pvnames:
+            if self.connector.getPVDetails(pvn) is None:
+                not_archived.append(pvn)
+        return not_archived
+
+    @property
+    def archived(self):
+        """PVs being archived."""
+        archived = set(self._pvnames) - set(self.not_archived)
+        return list(archived)
 
     @property
     def timestamp_start(self):
@@ -476,9 +536,11 @@ class PVDataSet(_Base):
             self._pvdata[pvname].parallel_query_bin_interval = \
                 self._parallel_query_bin_interval
 
-    def update(self, mean_sec=None, parallel=True):
+    def update(self, mean_sec=None, parallel=True, timeout=None):
         """Update."""
         self.connect()
+        if timeout is not None:
+            self.timeout = None
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
             return
@@ -496,16 +558,25 @@ class PVDataSet(_Base):
         data = self.connector.getData(
             self._pvnames, timestamp_start, timestamp_stop,
             process_type=process_type, interval=mean_sec)
+
         if not data:
             return
+        if len(self._pvnames) == 1:
+            pvname = self._pvnames[0]
+            data = {pvname: data}
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
-    @staticmethod
-    def _init_pvdatas(pvnames, connector):
+    def _init_pvdatas(self, pvnames, connector):
         pvdata = dict()
         for pvname in pvnames:
             pvdata[pvname] = PVData(pvname, connector)
+            pvdata[pvname].parallel_query_bin_interval = \
+                self._parallel_query_bin_interval
+            if self._time_start is not None:
+                pvdata[pvname].time_start = self._time_start
+            if self._time_stop is not None:
+                pvdata[pvname].time_stop = self._time_stop
         return pvdata
 
     def __getitem__(self, val):

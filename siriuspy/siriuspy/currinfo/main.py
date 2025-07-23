@@ -1,24 +1,22 @@
 """Main Module of the IOC Logic."""
 
-import time as _time
-from datetime import datetime as _datetime
 import logging as _log
+import time as _time
 from copy import deepcopy as _dcopy
+from datetime import datetime as _datetime
 from threading import Thread as _Thread
 
 import numpy as _np
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
-from ..epics import SiriusPVTimeSerie as _SiriusPVTimeSerie, PV as _PV
-from ..envars import VACA_PREFIX as _vaca_prefix
 from ..clientarch import ClientArchiver as _ClientArch
+from ..envars import VACA_PREFIX as _vaca_prefix
+from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
-
-from .csdev import Const as _Const, \
-    get_currinfo_database as _get_database
+from .csdev import Const as _Const, get_currinfo_database as _get_database
 
 
 class _CurrInfoApp(_Callback):
@@ -64,28 +62,26 @@ class _CurrInfoApp(_Callback):
 class _ASCurrInfoApp(_CurrInfoApp):
     """."""
 
-    INDICES = _get_namedtuple(
-        'Indices',
-        ('NAME', 'CURR', 'AVG', 'MIN', 'MAX', 'STD', 'COUNT'))
+    INDICES1 = _get_namedtuple(
+        'Indices1',
+        ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
+    # Some scopes does not return STT.
+    INDICES2 = _get_namedtuple(
+        'Indices2',
+        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
-    OSC_IP = 'scope-dig-linac-ict'
+    OSC = _Scopes.LI_DI_ICTOSC
     ACC = ''
     ICT1 = ''
     ICT2 = ''
     CHARGE_THRESHOLD = 0.05  # [nC]
 
-    def __init__(self, resource_manager):
+    def __init__(self):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
-        self.resource_manager = resource_manager
-        # open communication with Oscilloscope
-        self.osc_socket = resource_manager.open_resource(
-            'TCPIP::'+self.OSC_IP+'::inst0::INSTR')
 
-    def close(self):
-        """."""
-        self.osc_socket.close()
+        self.osc_obj = _Keysight(scope=self.OSC)
 
     def process(self, interval):
         """."""
@@ -96,50 +92,65 @@ class _ASCurrInfoApp(_CurrInfoApp):
         if dtim <= interval:
             _time.sleep(interval - dtim)
         else:
-            _log.warning(
-                'IOC took {0:.3f} ms in update loop.'.format(dtim*1000))
+            _log.warning(f'IOC took {dtim*1000:.3f} ms in update loop.')
 
     def _get_measurement(self):
         try:
-            meas = self.osc_socket.query(":MEASure:RESults?")
+            self.osc_obj.connect()
+            meas = self.osc_obj.send_command(b":MEASure:RESults?\n")
             self._meas = meas.split(',')
         except Exception as err:
-            errst = str(err)
-            _log.error('Problem reading data: {:s}'.format(errst))
-            if 'wrong xid in reply' in errst:
-                # NOTE: this is a workaround suggested in
-                # https://github.com/pyvisa/pyvisa-py/issues/172
-                # for a similar problem.
-                _log.info('Trying to fix error, reseting lastxid...')
-                xid = int(errst.split()[4])
-                rsman = self.resource_manager
-                soc = self.osc_socket
-                rsman.visalib.sessions[soc.session].interface.lastxid = xid
-            self._meas = None
-            return
+            _log.error(str(err))
+        finally:
+            self.osc_obj.close()
 
     def _update_pvs(self, acc, ict1, ict2):
         """."""
         meas = self._meas
-        if meas is None:
+        if not meas:
+            _log.warning('Measurement list is empty.')
             return
+
+        # Check if measurement for each ICT has the length we expect:
+        if not len(meas) % len(self.INDICES1):
+            indcs = self.INDICES1
+        elif not len(meas) % len(self.INDICES2):
+            indcs = self.INDICES2
+        else:
+            _log.warning(
+                'Measurement list size does not match required length.')
+            return
+
         name = acc + '-ICT1'
-        idxict1 = [i for i, val in enumerate(meas) if name in val].pop()
-        chg1 = float(meas[idxict1 + self.INDICES.CURR]) * 1e9
-        ave1 = float(meas[idxict1 + self.INDICES.AVG]) * 1e9
-        min1 = float(meas[idxict1 + self.INDICES.MIN]) * 1e9
-        max1 = float(meas[idxict1 + self.INDICES.MAX]) * 1e9
-        std1 = float(meas[idxict1 + self.INDICES.STD]) * 1e9
-        cnt1 = int(float(meas[idxict1 + self.INDICES.COUNT]))
+        idxict1 = [i for i, val in enumerate(meas) if name in val]
+        if not idxict1:
+            _log.warning(f'Could not find data for {name}.')
+            return
+        idxict1 = idxict1.pop()
 
         name = acc + '-ICT2'
-        idxict2 = [i for i, val in enumerate(meas) if name in val].pop()
-        chg2 = float(meas[idxict2 + self.INDICES.CURR]) * 1e9
-        ave2 = float(meas[idxict2 + self.INDICES.AVG]) * 1e9
-        min2 = float(meas[idxict2 + self.INDICES.MIN]) * 1e9
-        max2 = float(meas[idxict2 + self.INDICES.MAX]) * 1e9
-        std2 = float(meas[idxict2 + self.INDICES.STD]) * 1e9
-        cnt2 = int(float(meas[idxict2 + self.INDICES.COUNT]))
+        idxict2 = [i for i, val in enumerate(meas) if name in val]
+        if not idxict2:
+            _log.warning(f'Could not find data for {name}.')
+            return
+        idxict2 = idxict2.pop()
+
+        try:
+            chg1 = float(meas[idxict1 + indcs.CURR]) * 1e9
+            ave1 = float(meas[idxict1 + indcs.AVG]) * 1e9
+            min1 = float(meas[idxict1 + indcs.MIN]) * 1e9
+            max1 = float(meas[idxict1 + indcs.MAX]) * 1e9
+            std1 = float(meas[idxict1 + indcs.STD]) * 1e9
+            cnt1 = int(float(meas[idxict1 + indcs.COUNT]))
+            chg2 = float(meas[idxict2 + indcs.CURR]) * 1e9
+            ave2 = float(meas[idxict2 + indcs.AVG]) * 1e9
+            min2 = float(meas[idxict2 + indcs.MIN]) * 1e9
+            max2 = float(meas[idxict2 + indcs.MAX]) * 1e9
+            std2 = float(meas[idxict2 + indcs.STD]) * 1e9
+            cnt2 = int(float(meas[idxict2 + indcs.COUNT]))
+        except IndexError:
+            _log.warning('Problem reading data.')
+            return
 
         eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
         effave = 0 if ave1 == 0 else 100 * ave2/ave1
@@ -166,7 +177,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
-    OSC_IP = 'as-di-fctdig'
+    OSC = _Scopes.AS_DI_FCTDIG
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
     ICT2 = 'TS-04:DI-ICT'
@@ -175,7 +186,7 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
 
-    OSC_IP = 'li-di-ictosc'
+    OSC_IP = _Scopes.LI_DI_ICTOSC
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'
@@ -192,7 +203,7 @@ class BOCurrInfoApp(_CurrInfoApp):
 
     HARMNUM = 828
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
-    MAX_CURRENT = 1.0  # [A]
+    MAX_CURRENT = 3.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
         '150MeV': 0.0000,
         '1GeV': 0.0859,
@@ -367,7 +378,7 @@ class SICurrInfoApp(_CurrInfoApp):
 
     HARMNUM = 864
     HARMNUM_RATIO = 864 / 828
-    CURR_THRESHOLD = 0.06  # [mA]
+    CURR_THRESHOLD = 0.02  # [mA]
     MAX_CURRENT = 1.0  # [A]
 
     def __init__(self):
@@ -441,9 +452,9 @@ class SICurrInfoApp(_CurrInfoApp):
             self._prefix+'RF-Gen:GeneralFreq-RB', connection_timeout=0.05)
 
         self._current_13c4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_13c4_pv, time_window=0.4, use_pv_timestamp=False)
+            pv=self._current_13c4_pv, time_window=0.5, use_pv_timestamp=False)
         self._current_14c4_buffer = _SiriusPVTimeSerie(
-            pv=self._current_14c4_pv, time_window=0.4, use_pv_timestamp=False)
+            pv=self._current_14c4_pv, time_window=0.5, use_pv_timestamp=False)
 
         self._current_13c4_pv.add_callback(self._callback_get_dcct_current)
         self._current_14c4_pv.add_callback(self._callback_get_dcct_current)
@@ -480,29 +491,26 @@ class SICurrInfoApp(_CurrInfoApp):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:Charge-Mon', self._charge)
                 else:
-                    _log.warning(
-                        'Current value is too high: {0:.3f}A.'.format(current))
+                    _log.warning(f'Current value is too high: {current:.3f}A.')
                 value = self._charge
             self._time0 = timestamp
         return value
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        status = False
         if reason == 'SI-Glob:AP-CurrInfo:DCCT-Sel':
             if self._dcctfltcheck_mode == _Const.DCCTFltCheck.Off:
-                done = self._update_dcct_mode(value)
-                if done:
+                if self._update_dcct_mode(value):
                     self.run_callbacks(
                         'SI-Glob:AP-CurrInfo:DCCT-Sts', self._dcct_mode)
-                    status = True
+                    return True
         elif reason == 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sel':
             self._update_dcctfltcheck_mode(value)
             self.run_callbacks(
                 'SI-Glob:AP-CurrInfo:DCCTFltCheck-Sts',
                 self._dcctfltcheck_mode)
-            status = True
-        return status
+            return True
+        return False
 
     # ----- handle writes -----
     def _update_dcct_mode(self, value):
@@ -597,30 +605,26 @@ class SICurrInfoApp(_CurrInfoApp):
 
     def _update_injeff(self):
         # Sleep some time here to ensure SI DCCT will have been updated
-        _time.sleep(0.11)
+        _time.sleep(0.21)
 
         # get booster current
         bo_curr = self._bo_curr3gev_pv.value
 
         # choose current PV
-        buffer = self._current_13c4_buffer \
-            if self._dcct_mode == _Const.DCCT.DCCT13C4 \
-            else self._current_14c4_buffer
+        if self._dcct_mode == _Const.DCCT.DCCT13C4:
+            buffer = self._current_13c4_buffer
+        else:
+            buffer = self._current_14c4_buffer
         timestamp_dq, value_dq = buffer.serie
         timestamp_dq = _np.asarray(timestamp_dq)
         value_dq = _np.asarray(value_dq)
 
-        # check buffer not empty
-        if not timestamp_dq.size:
-            return
-
-        # check if there is valid current in Booster
-        if bo_curr < self.CURR_THRESHOLD:
-            return
-
-        # calculate efficiency
-        self._injcurr = value_dq[-1] - _np.min(value_dq)  # mA
-        self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
+        self._injcurr = 0.0
+        self._injeff = 0.0
+        # check if buffer not empty and if there is valid current in Booster
+        if timestamp_dq.size and bo_curr >= self.CURR_THRESHOLD:
+            self._injcurr = value_dq.ptp()  # mA
+            self._injeff = 100*(self._injcurr/bo_curr) * self.HARMNUM_RATIO
 
         # calculate injected charge: 1e6 * mA / Hz = nC
         self._injcharge = 1e6*self._injcurr*self.HARMNUM/self._rffreq_pv.value

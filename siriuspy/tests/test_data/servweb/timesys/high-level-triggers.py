@@ -9,7 +9,7 @@
 {
     'SI-Glob:TI-Mags-Corrs': {
         'database': {
-            'Src': {'value': 0, 'enums': ('MigSI', 'OrbSI', 'Cycle', 'Study')},
+            'Src': {'enums': ('OrbSI', 'Cycle', 'Study')},
             'Delay': {'value': 0.0, 'hilim': 1.0, 'high': 1.0, 'hihi': 1.0},
             'RFDelayType': {'value': 1, 'states': (2, 0)},
             'NrPulses': {

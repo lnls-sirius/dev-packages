@@ -10,6 +10,7 @@ __all__ = [
     'callbacks', 'csdev', 'envars', 'thread', 'util',
     'bsmp', 'clientarch', 'clientconfigdb', 'clientweb', 'currinfo',
     'cycle', 'devices', 'diagbeam', 'diagsys', 'epics', 'machshift',
-    'magnet', 'meas', 'namesys', 'optics', 'opticscorr', 'posang',
-    'pwrsupply', 'ramp', 'search', 'simul', 'sofb', 'timesys'
+    'magnet', 'meas', 'namesys', 'optics', 'opticscorr', 'oscilloscope',
+    'posang', 'pwrsupply', 'ramp', 'search', 'simul', 'sofb', 'timesys',
+    'dvfimgproc',
     ]
