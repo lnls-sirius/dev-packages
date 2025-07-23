@@ -113,6 +113,16 @@ class MirrorBase(_Device):
         """Return M1 temperature reference setpoint [°C]."""
         return self[self.PVS.TEMP_RB]
 
+    @property
+    def flowmeter_1(self):
+        """Return M1 flowmeter 1 value [mL/min]."""
+        return self[self.PVS.FLOWMETER1_MON]
+
+    @property
+    def flowmeter_2(self):
+        """Return M1 flowmeter 2 value [mL/min]."""
+        return self[self.PVS.FLOWMETER2_MON]
+
     @ry_pos.setter
     def ry_pos(self, value):
         """Set the linear actuator pos related to RY rotation [mm].
@@ -207,7 +217,7 @@ class CAXMirror(MirrorBase):
     class DEVICES:
         """."""
 
-        CAX_FOE = "CAX:A"
+        CAX_FOE = "CAX"
 
         ALL = (CAX_FOE,)
 
@@ -220,40 +230,44 @@ class CAXMirror(MirrorBase):
 
         super().__init__(devname=devname, props2init=props2init, **kwargs)
         # MOTORS
-        self.PVS.RY_SP = "PP01:A.VAL"
-        self.PVS.RY_RB = "PP01:A.VAL"  # That doesn't have a RB PV
-        self.PVS.RY_MON = "PP01:A.RBV"  # RBV is not the pv of readback
-        self.PVS.RY_STOP = "PP01:A.STOP"
+        self.PVS.RY_SP = "A:PP01:A.VAL"
+        self.PVS.RY_RB = "A:PP01:A.VAL"  # That doesn't have a RB PV
+        self.PVS.RY_MON = "A:PP01:A.RBV"  # RBV is not the pv of readback
+        self.PVS.RY_STOP = "A:PP01:A.STOP"
 
-        self.PVS.TX_SP = "PP01:B.VAL"
-        self.PVS.TX_RB = "PP01:B.VAL"  # That doesn't have a RB PV
-        self.PVS.TX_MON = "PP01:B.RBV"  # RBV is not the pv of readback
-        self.PVS.TX_STOP = "PP01:B.STOP"
+        self.PVS.TX_SP = "A:PP01:B.VAL"
+        self.PVS.TX_RB = "A:PP01:B.VAL"  # That doesn't have a RB PV
+        self.PVS.TX_MON = "A:PP01:B.RBV"  # RBV is not the pv of readback
+        self.PVS.TX_STOP = "A:PP01:B.STOP"
 
-        self.PVS.Y1_SP = "PP01:C.VAL"
-        self.PVS.Y1_RB = "PP01:C.VAL"  # That doesn't have a RB PV
-        self.PVS.Y1_MON = "PP01:C.RBV"  # RBV is not the pv of readback
-        self.PVS.Y1_STOP = "PP01:C.STOP"
+        self.PVS.Y1_SP = "A:PP01:C.VAL"
+        self.PVS.Y1_RB = "A:PP01:C.VAL"  # That doesn't have a RB PV
+        self.PVS.Y1_MON = "A:PP01:C.RBV"  # RBV is not the pv of readback
+        self.PVS.Y1_STOP = "A:PP01:C.STOP"
 
-        self.PVS.Y2_SP = "PP01:D.VAL"
-        self.PVS.Y2_RB = "PP01:D.VAL"  # That doesn't have a RB PV
-        self.PVS.Y2_MON = "PP01:D.RBV"  # RBV is not the pv of readback
-        self.PVS.Y2_STOP = "PP01:D.STOP"
+        self.PVS.Y2_SP = "A:PP01:D.VAL"
+        self.PVS.Y2_RB = "A:PP01:D.VAL"  # That doesn't have a RB PV
+        self.PVS.Y2_MON = "A:PP01:D.RBV"  # RBV is not the pv of readback
+        self.PVS.Y2_STOP = "A:PP01:D.STOP"
 
-        self.PVS.Y3_SP = "PP01:E.VAL"
-        self.PVS.Y3_RB = "PP01:E.VAL"  # That doesn't have a RB PV
-        self.PVS.Y3_MON = "PP01:E.RBV"  # RBV is not the pv of readback
-        self.PVS.Y3_STOP = "PP01:E.STOP"
+        self.PVS.Y3_SP = "A:PP01:E.VAL"
+        self.PVS.Y3_RB = "A:PP01:E.VAL"  # That doesn't have a RB PV
+        self.PVS.Y3_MON = "A:PP01:E.RBV"  # RBV is not the pv of readback
+        self.PVS.Y3_STOP = "A:PP01:E.STOP"
 
         # SENSORS
-        self.PVS.PHOTOCOLLECTOR = "RIO01:9215A:ai0"
-        self.PVS.TEMP0_MON = "RIO01:9226B:temp0"
-        self.PVS.TEMP1_MON = "RIO01:9226B:temp1"
-        self.PVS.TEMP2_MON = "RIO01:9226B:temp2"
-        self.PVS.TEMP3_MON = "RIO01:9226B:temp3"
-        self.PVS.TEMP4_MON = "RIO01:9226B:temp4"
-        self.PVS.TEMP_SP = "RIO01:M1_CtrltempSp"
-        self.PVS.TEMP_RB = "RIO01:M1_CtrltempSp"  # That doesn't have a RB PV
+        self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
+        self.PVS.TEMP0_MON = "A:RIO01:9226B:temp0"
+        self.PVS.TEMP1_MON = "A:RIO01:9226B:temp1"
+        self.PVS.TEMP2_MON = "A:RIO01:9226B:temp2"
+        self.PVS.TEMP3_MON = "A:RIO01:9226B:temp3"
+        self.PVS.TEMP4_MON = "A:RIO01:9226B:temp4"
+        self.PVS.TEMP_SP = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TEMP_RB = "A:RIO01:M1_CtrltempSp"  # That doesn't have a RB PV
+
+        # FLOWMETERS
+        self.PVS.FLOWMETER1_MON = "F:EPS01:MR1FIT1"
+        self.PVS.FLOWMETER2_MON = "F:EPS01:MR1FIT2"
 
         self.PROPERTIES_DEFAULT = tuple(
             set(value for key, value in vars(self.PVS).items())
