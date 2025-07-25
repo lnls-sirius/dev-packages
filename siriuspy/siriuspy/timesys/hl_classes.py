@@ -167,10 +167,8 @@ class _BaseHL(_Callback):
             if value is None:
                 return
             self.run_callbacks(self._get_pv_name(prop), **value)
-            # Uncomment this if you want to update setpoint PVs as well
-            # This is not recommended though, because it can create very
-            # strange unusual behavior with widgets such as spinbox in PyDM
-            # and CS-Studio.
+
+            # Update SP PVs as well
             if not _PVName.is_rb_pv(suf):
                 continue
             value = self.read(prop, is_sp=True)
