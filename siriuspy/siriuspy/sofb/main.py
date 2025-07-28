@@ -986,7 +986,7 @@ class SOFB(_BaseClass):
         notnan = ~_np.isnan(kicks)
         self._ref_corr_kicks[notnan] = kicks[notnan]
         self._LQTHREAD.put(
-            self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), )
+            (self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), ))
         )
 
     def _update_ref_corr_kicks_pvs(self, kicks):
@@ -1133,7 +1133,7 @@ class SOFB(_BaseClass):
             # fofb.refx = refx - dorb[:dorb.size//2]
             # fofb.refy = refy - dorb[dorb.size//2:]
             fofb.cmd_fofbctrl_syncreforb()
-            self._LQTHREAD.put(self. _update_fofb_dorb, (dorb, ))
+            self._LQTHREAD.put((self. _update_fofb_dorb, (dorb, )))
 
         if self._download_fofb_kicks and fofb.loop_state:
             # NOTE: Do not download kicks from correctors not in the loop:
@@ -1151,7 +1151,7 @@ class SOFB(_BaseClass):
             dkicks2 *= -self._download_fofb_kicks_perc
 
             self._LQTHREAD.put(
-                self._update_fofb_download_kicks, (dkicks2.copy())
+                (self._update_fofb_download_kicks, (dkicks2.copy(), ))
             )
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False
