@@ -87,6 +87,43 @@ class SOFB(_BaseClass):
             for i in range(1, 21)
         ]
 
+    @property
+    def connected(self):
+        """."""
+        if self.acc == 'SI' and not self.fofb.connected:
+            return False
+        for acm in self._acms:
+            if not acm.connected:
+                return False
+        if not self._havebeam_pv.connected:
+            return False
+        if self._orbit is not None and not self._orbit.connected:
+            return False
+        if self._correctors is not None and not self._correctors.connected:
+            return False
+        return True
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time()
+        tout = timeout
+        if self.acc == 'SI' and not self.fofb.wait_for_connection(tout):
+            return False
+        for amc in self._amcs:
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not amc.wait_for_connection(tout):
+                return False
+        tout = timeout - (_time() - t0_)
+        if tout <= 0 or not self._havebeam_pv.wait_for_connection(tout):
+            return False
+        for dev in [self._orbit, self._correctors]:
+            if dev is None:
+                continue
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not dev.wait_for_connection(tout):
+                return False
+        return True
+
     def get_map2write(self):
         """Get the database of the class."""
         dbase = {
@@ -949,7 +986,7 @@ class SOFB(_BaseClass):
         notnan = ~_np.isnan(kicks)
         self._ref_corr_kicks[notnan] = kicks[notnan]
         self._LQTHREAD.put(
-            self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), )
+            (self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), ))
         )
 
     def _update_ref_corr_kicks_pvs(self, kicks):
@@ -1096,7 +1133,7 @@ class SOFB(_BaseClass):
             # fofb.refx = refx - dorb[:dorb.size//2]
             # fofb.refy = refy - dorb[dorb.size//2:]
             fofb.cmd_fofbctrl_syncreforb()
-            self._LQTHREAD.put(self. _update_fofb_dorb, (dorb, ))
+            self._LQTHREAD.put((self. _update_fofb_dorb, (dorb, )))
 
         if self._download_fofb_kicks and fofb.loop_state:
             # NOTE: Do not download kicks from correctors not in the loop:
@@ -1114,7 +1151,7 @@ class SOFB(_BaseClass):
             dkicks2 *= -self._download_fofb_kicks_perc
 
             self._LQTHREAD.put(
-                self._update_fofb_download_kicks, (dkicks2.copy())
+                (self._update_fofb_download_kicks, (dkicks2.copy(), ))
             )
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False

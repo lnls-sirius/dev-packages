@@ -85,7 +85,8 @@ class ProcessImage(BaseClass):
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
         self._flip = [False, False]
-        self._beam_params = [None, None]
+        siz = len(self.FitParams)
+        self._beam_params = [[None,] * siz, [None,] * siz]
 
     def get_map2write(self):
         """."""
@@ -176,7 +177,10 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Image is not a numpy array')
             return
-        self._process_image(val)
+        try:
+            self._process_image(val)
+        except Exception as err:
+            _log.error(str(err))
 
     @property
     def imagewidth(self):
@@ -429,7 +433,7 @@ class ProcessImage(BaseClass):
         if not isinstance(val, _np.ndarray):
             _log.error('Could not set background')
             return
-        img = self._adjust_image_dimensions(np.array(val, dtype=float))
+        img = self._adjust_image_dimensions(_np.array(val, dtype=float))
         if img is None:
             _log.error('Could not set background')
             return
@@ -460,12 +464,18 @@ class ProcessImage(BaseClass):
     @property
     def beamsizex(self):
         """."""
-        return abs(self._beam_params[self.Plane.X][self.FitParams.Sig])
+        val = self._beam_params[self.Plane.X][self.FitParams.Sig]
+        if val is None:
+            return
+        return abs(val)
 
     @property
     def beamsizey(self):
         """."""
-        return abs(self._beam_params[self.Plane.Y][self.FitParams.Sig])
+        val = self._beam_params[self.Plane.Y][self.FitParams.Sig]
+        if val is None:
+            return
+        return abs(val)
 
     @property
     def beamamplx(self):
@@ -559,6 +569,8 @@ class ProcessImage(BaseClass):
     @property
     def beamcentermmx(self):
         """."""
+        if self.beamcenterx is None:
+            return
         val = self.beamcenterx - self._conv_cen[self.Plane.X]
         val *= self._conv_scale[self.Plane.X]
         return val
@@ -566,6 +578,8 @@ class ProcessImage(BaseClass):
     @property
     def beamcentermmy(self):
         """."""
+        if self.beamcentery is None:
+            return
         # Inverted due image origin in Pxls:
         val = self._conv_cen[self.Plane.Y] - self.beamcentery
         val *= self._conv_scale[self.Plane.Y]
@@ -574,11 +588,15 @@ class ProcessImage(BaseClass):
     @property
     def beamsizemmx(self):
         """."""
+        if self.beamsizex is None:
+            return
         return self.beamsizex * self._conv_scale[self.Plane.X]
 
     @property
     def beamsizemmy(self):
         """."""
+        if self.beamsizey is None:
+            return
         return self.beamsizey * self._conv_scale[self.Plane.Y]
 
     def cmd_reset_buffer(self, *args):
@@ -643,10 +661,8 @@ class ProcessImage(BaseClass):
             parx = self._calc_moments(axisx, projx)
             pary = self._calc_moments(axisy, projy)
         else:
-            parx = self._fit_gaussian(
-                axisx, projx, self._beam_params[self.Plane.X])
-            pary = self._fit_gaussian(
-                axisy, projy, self._beam_params[self.Plane.Y])
+            parx = self._fit_gaussian(axisx, projx, par=None)
+            pary = self._fit_gaussian(axisy, projy, par=None)
         self._roi_gauss[self.Plane.X] = self._gaussian(axisx, *parx)
         self._roi_gauss[self.Plane.Y] = self._gaussian(axisy, *pary)
         self._beam_params[self.Plane.X] = parx
@@ -687,29 +703,27 @@ class ProcessImage(BaseClass):
         image = self._image
         axis_x = _np.arange(image.shape[self.Plane.X])
         axis_y = _np.arange(image.shape[self.Plane.Y])
+        roi_sx = self._roi_size[self.Plane.X]
+        roi_sy = self._roi_size[self.Plane.Y]
 
         if self._conv_autocenter:
             self.px2mmcenterx = image.shape[self.Plane.X]//2
             self.px2mmcentery = image.shape[self.Plane.Y]//2
 
         if self._roi_autocenter:
-            proj_x = image.sum(axis=0)
-            proj_y = image.sum(axis=1)
-            parx = self._calc_moments(axis_x, proj_x)
-            pary = self._calc_moments(axis_y, proj_y)
-            if not any(_np.isnan(parx+pary)):
-                self.roicenterx = int(parx[self.FitParams.Cen])
-                self.roicentery = int(pary[self.FitParams.Cen])
-            else:
-                _log.error('Some fitted params are NaN.')
-
-        strtx = self._roi_cen[self.Plane.X] - self._roi_size[self.Plane.X]
-        endx = self._roi_cen[self.Plane.X] + self._roi_size[self.Plane.X]
-        strty = self._roi_cen[self.Plane.Y] - self._roi_size[self.Plane.Y]
-        endy = self._roi_cen[self.Plane.Y] + self._roi_size[self.Plane.Y]
-        strtx, strty = max(strtx, 0), max(strty, 0)
-        endx = min(endx, image.shape[self.Plane.X])
-        endy = min(endy, image.shape[self.Plane.Y])
+            cnx, cny, strtx, strty, endx, endy = self._iterate_find_center_roi(
+                image, roi_sx, roi_sy, nr_iters=1
+            )
+            self.roicenterx = cnx
+            self.roicentery = cny
+        else:
+            strtx = self._roi_cen[self.Plane.X] - roi_sx
+            endx = self._roi_cen[self.Plane.X] + roi_sx
+            strty = self._roi_cen[self.Plane.Y] - roi_sy
+            endy = self._roi_cen[self.Plane.Y] + roi_sy
+            strtx, strty = max(strtx, 0), max(strty, 0)
+            endx = min(endx, image.shape[self.Plane.X])
+            endy = min(endy, image.shape[self.Plane.Y])
 
         image = image[strty:endy, strtx:endx]
         self._roi_proj[self.Plane.X] = image.sum(axis=self.Plane.Y)
@@ -728,6 +742,37 @@ class ProcessImage(BaseClass):
         self.run_callbacks('ROIStartY-Mon', self._roi_start[self.Plane.Y])
         self.run_callbacks('ROIEndX-Mon', self._roi_end[self.Plane.X])
         self.run_callbacks('ROIEndY-Mon', self._roi_end[self.Plane.Y])
+
+    def _iterate_find_center_roi(self, image, roi_sx, roi_sy, nr_iters=1):
+        axis_x = _np.arange(image.shape[self.Plane.X])
+        axis_y = _np.arange(image.shape[self.Plane.Y])
+
+        ax_x = axis_x
+        ax_y = axis_y
+        img = image
+        for _ in range(max(nr_iters, 0) + 1):
+            proj_x = img.sum(axis=self.Plane.Y)
+            proj_y = img.sum(axis=self.Plane.X)
+            parx = self._calc_moments(ax_x, proj_x)
+            pary = self._calc_moments(ax_y, proj_y)
+            if any(_np.isnan(parx+pary)):
+                msg = 'Some NaNs were found in statistics'
+                _log.error(msg)
+                raise ValueError(msg)
+            cenx = int(parx[self.FitParams.Cen])
+            ceny = int(pary[self.FitParams.Cen])
+            strtx = cenx - roi_sx
+            strty = ceny - roi_sy
+            strtx, strty = max(strtx, 0), max(strty, 0)
+            endx = cenx + roi_sx
+            endy = ceny + roi_sy
+            endx = min(endx, image.shape[self.Plane.X])
+            endy = min(endy, image.shape[self.Plane.Y])
+
+            img = image[strty:endy, strtx:endx]
+            ax_x = axis_x[strtx:endx]
+            ax_y = axis_y[strty:endy]
+        return cenx, ceny, strtx, strty, endx, endy
 
     @classmethod
     def _calc_moments(cls, axis, proj):
