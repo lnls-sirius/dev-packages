@@ -451,13 +451,13 @@ class SOFBTLines(ConstTLines):
                 "TrigAcqChan-Sel": {
                     "type": "enum",
                     "unit": "FAcq_FOFB_TbT_ADC_ADCSwp",
-                    "value": self.TrigAcqChan.ADC,
+                    "value": self.TrigAcqChan.ADCSwp,
                     "enums": self.TrigAcqChan._fields,
                 },
                 "TrigAcqChan-Sts": {
                     "type": "enum",
                     "unit": "FAcq_FOFB_TbT_ADC_ADCSwp",
-                    "value": self.TrigAcqChan.ADC,
+                    "value": self.TrigAcqChan.ADCSwp,
                     "enums": self.TrigAcqChan._fields,
                 },
                 "TrigAcqRepeat-Sel": {
@@ -982,6 +982,8 @@ class SOFBRings(SOFBTLines, ConstRings):
             }
         )
         dbase = super().get_orbit_database(prefix=prefix)
+        dbase['TrigAcqChan-Sel']['value'] = self.TrigAcqChan.TbT
+        dbase['TrigAcqChan-Sts']['value'] = self.TrigAcqChan.TbT
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
 
