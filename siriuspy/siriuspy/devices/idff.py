@@ -174,7 +174,7 @@ class IDFFCtrlBase(_Device):
     @property
     def calc_corr_current_qd1_2(self):
         """Return calculated QD1_2 power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRQB1_2CURRENT_MON
+        curr_name = self.PARAM_PVS.CORRQD1_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
