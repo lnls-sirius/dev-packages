@@ -897,11 +897,12 @@ class APU(IDBase):
     class DEVICES:
         """Device names."""
 
-        APU22_08SB = 'SI-08SB:ID-APU22'
+        # APU22_08SB = 'SI-08SB:ID-APU22' # APU22 -> IVU18
         APU22_09SA = 'SI-09SA:ID-APU22'
         APU58_11SP = 'SI-11SP:ID-APU58'
+        APU22_17SA = 'SI-17SA:ID-APU22'
         ALL = (
-            APU22_08SB, APU22_09SA, APU58_11SP, )
+            APU22_09SA, APU58_11SP, APU22_17SA)
 
     _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
     _CMD_MOVE = 3
