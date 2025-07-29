@@ -82,7 +82,7 @@ class Tune(_DeviceSet):
         SI = 'SI-Glob:DI-Tune'
         ALL = (SI, )
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         # check if device exists
         if devname is None:
@@ -90,10 +90,15 @@ class Tune(_DeviceSet):
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H)
-        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V)
-        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H)
-        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V)
+        isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False")
+
+        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H, props2init=props2init)
+        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V, props2init=props2init)
+        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H, props2init=props2init)
+        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V, props2init=props2init)
 
         devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
 
