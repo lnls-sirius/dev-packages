@@ -1179,7 +1179,7 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBDownloadKicks-Mon': {
-                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBDownloadKicksCH-Mon': {
                 'type': 'float',
@@ -1211,10 +1211,10 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'float', 'value': 100.0, 'prec': 2, 'unit': '%',
                 'lolim': -0.1, 'hilim': 100.1},
             'FOFBUpdateRefOrb-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrb-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrb-Mon': {
                 'type': 'enum', 'value': self.DsblEnbl.Dsbl,

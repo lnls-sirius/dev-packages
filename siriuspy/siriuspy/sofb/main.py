@@ -61,7 +61,7 @@ class SOFB(_BaseClass):
             self.fofb = HLFOFB()
             self._download_fofb_kicks = True
             self._download_fofb_kicks_perc = 0.40
-            self._update_fofb_reforb = False
+            self._update_fofb_reforb = True
             self._update_fofb_reforb_perc = 100.0
             self._update_fofb_reforb_iter = 0
             self._update_fofb_reforb_rate = 3  # every n SOFB iterations
