@@ -1196,6 +1196,14 @@ class SOFBSI(SOFBRings, ConstSI):
             'FOFBDownloadKicksRF-Mon': {
                 'type': 'float', 'value': 0, 'prec': 3, 'unit': 'Hz',
             },
+            'FOFBUpdateRefOrbRate-SP': {
+                'type': 'int', 'value': 3, 'unit': 'LoopFreqDiv',
+                'lolim': 1, 'hilim': 100,
+            },
+            'FOFBUpdateRefOrbRate-RB': {
+                'type': 'int', 'value': 3, 'unit': 'LoopFreqDiv',
+                'lolim': 1, 'hilim': 100,
+            },
             'FOFBUpdateRefOrbPerc-SP': {
                 'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
                 'lolim': -100.1, 'hilim': 100.1},

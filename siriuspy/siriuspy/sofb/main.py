@@ -63,6 +63,8 @@ class SOFB(_BaseClass):
             self._download_fofb_kicks_perc = 0.40
             self._update_fofb_reforb = False
             self._update_fofb_reforb_perc = 0.0
+            self._update_fofb_reforb_iter = 0
+            self._update_fofb_reforb_rate = 3  # every n SOFB iterations
             self._donot_affect_fofb_bpms = False
             self._project_onto_fofb_nullspace = False
             self._drive_divisor = 12
@@ -169,7 +171,8 @@ class SOFB(_BaseClass):
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
-            dbase['FOFBUpdateRefOrbPerc-SP'] = self.set_fofb_updatereforb_perc
+            dbase['FOFBUpdateRefOrbPerc-SP'] = self.set_update_fofb_reforb_perc
+            dbase['FOFBUpdateRefOrbRate-SP'] = self.set_update_fofb_reforb_rate
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
                 self.set_fofb_interaction_props, 'updatereforb')
             dbase['FOFBNullSpaceProj-Sel'] = _part(
@@ -316,7 +319,7 @@ class SOFB(_BaseClass):
         self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True
 
-    def set_fofb_updatereforb_perc(self, value: float):
+    def set_update_fofb_reforb_perc(self, value: float):
         """Set percentage of reference orbit update in FOFB.
 
         Args:
@@ -331,6 +334,16 @@ class SOFB(_BaseClass):
         self._update_fofb_reforb_perc = value
         self.run_callbacks("FOFBUpdateRefOrbPerc-RB", value * 100)
         return True
+
+    def set_update_fofb_reforb_rate(self, value: int):
+        """Set rate of reference orbit update in FOFB.
+
+        Args:
+            value (int): update rate in units of loop iterations.
+        """
+        value = min(max(int(value), 1), 100)
+        self._update_fofb_reforb_rate = value
+        self.run_callbacks("FOFBUpdateRefOrbRate-RB", value)
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
@@ -1115,27 +1128,24 @@ class SOFB(_BaseClass):
     # ):
     def _interact_with_fofb_in_apply_kicks(self, kicks, dkicks):
         fofb = self.fofb
-        # if refx is None or refy is None:
-        #     refx = fofb.refx
-        #     refy = fofb.refy
+        if not fofb.loop_state:
+            return kicks
 
-        if self._update_fofb_reforb and fofb.loop_state:
-            dorb = self.matrix.estimate_orbit_variation(dkicks)
-            dorb *= self._update_fofb_reforb_perc
-            # NOTE: According to my understanding of SOLEIL's paper on this
-            # subject:
-            # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
-            # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
-            # this is what they do there:
-            fofb.refx -= dorb[: dorb.size // 2]
-            fofb.refy -= dorb[dorb.size // 2 :]
-            # But it seems this may also be a possibility:
-            # fofb.refx = refx - dorb[:dorb.size//2]
-            # fofb.refy = refy - dorb[dorb.size//2:]
-            fofb.cmd_fofbctrl_syncreforb()
-            self._LQTHREAD.put((self. _update_fofb_dorb, (dorb, )))
+        if self._update_fofb_reforb:
+            self._update_fofb_reforb_iter += 1
+            if self._update_fofb_reforb_iter >= self._update_fofb_reforb_rate:
+                self._update_fofb_reforb_iter = 0
+                dorb = self.matrix.estimate_orbit_variation(dkicks)
+                # NOTE: According to SOLEIL's paper on this subject:
+                # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
+                # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
+                # this is what they do there:
+                fofb.refx -= dorb[:dorb.size // 2]
+                fofb.refy -= dorb[dorb.size // 2:]
+                fofb.cmd_fofbctrl_syncreforb()
+                self._LQTHREAD.put((self._update_fofb_dorb, (dorb, )))
 
-        if self._download_fofb_kicks and fofb.loop_state:
+        if self._download_fofb_kicks:
             # NOTE: Do not download kicks from correctors not in the loop:
             kickch = fofb.kickch_acc.copy()
             kickcv = fofb.kickcv_acc.copy()

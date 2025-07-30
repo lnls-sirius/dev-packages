@@ -234,6 +234,7 @@ _si_sofb = [
     ['SI-Glob:AP-SOFB:FOFBZeroDistortionAtBPMs-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBDownloadKicksPerc-SP', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBUpdateRefOrbPerc-SP', 0, 0.0],
+    ['SI-Glob:AP-SOFB:FOFBUpdateRefOrbRate-SP', 0, 0],
     ['SI-Glob:AP-SOFB:RespMat-SP', [0.0, ]*449600, 0.0],
     ['SI-Glob:AP-SOFB:RespMatMode-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:BPMXEnblList-SP', [0, ]*800, 0.0],
