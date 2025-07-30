@@ -230,8 +230,6 @@ _si_sofb = [
     ['SI-Glob:AP-SOFB:CorrPSSOFBEnbl-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBDownloadKicks-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBUpdateRefOrb-Sel', 0, 0.0],
-    ['SI-Glob:AP-SOFB:FOFBNullSpaceProj-Sel', 0, 0.0],
-    ['SI-Glob:AP-SOFB:FOFBZeroDistortionAtBPMs-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBDownloadKicksPerc-SP', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBUpdateRefOrbPerc-SP', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBUpdateRefOrbRate-SP', 0, 0],

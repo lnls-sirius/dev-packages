@@ -65,8 +65,6 @@ class SOFB(_BaseClass):
             self._update_fofb_reforb_perc = 0.0
             self._update_fofb_reforb_iter = 0
             self._update_fofb_reforb_rate = 3  # every n SOFB iterations
-            self._donot_affect_fofb_bpms = False
-            self._project_onto_fofb_nullspace = False
             self._drive_divisor = 12
             self._drive_nrcycles = 10
             self._drive_amplitude = 5
@@ -175,10 +173,6 @@ class SOFB(_BaseClass):
             dbase['FOFBUpdateRefOrbRate-SP'] = self.set_update_fofb_reforb_rate
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
                 self.set_fofb_interaction_props, 'updatereforb')
-            dbase['FOFBNullSpaceProj-Sel'] = _part(
-                self.set_fofb_interaction_props, 'nullspaceproj')
-            dbase['FOFBZeroDistortionAtBPMs-Sel'] = _part(
-                self.set_fofb_interaction_props, 'zerodistortion')
             dbase['DriveFreqDivisor-SP'] = self.set_drive_divisor
             dbase['DriveNrCycles-SP'] = self.set_drive_nrcycles
             dbase['DriveAmplitude-SP'] = self.set_drive_amplitude
@@ -294,12 +288,6 @@ class SOFB(_BaseClass):
         elif prop.lower().startswith("update"):
             self._update_fofb_reforb = value
             self.run_callbacks("FOFBUpdateRefOrb-Sts", value)
-        elif prop.lower().startswith("null"):
-            self._project_onto_fofb_nullspace = value
-            self.run_callbacks("FOFBNullSpaceProj-Sts", value)
-        elif prop.lower().startswith("zero"):
-            self._donot_affect_fofb_bpms = value
-            self.run_callbacks("FOFBZeroDistortionAtBPMs-Sts", value)
         else:
             return False
         return True
@@ -596,12 +584,8 @@ class SOFB(_BaseClass):
         fofb_state = self.fofb.connected and self.fofb.loop_state
         download = self._download_fofb_kicks and fofb_state
         update = self._update_fofb_reforb and fofb_state
-        project = self._project_onto_fofb_nullspace and fofb_state
-        donot = self._donot_affect_fofb_bpms and fofb_state
         self.run_callbacks("FOFBDownloadKicks-Mon", download)
         self.run_callbacks("FOFBUpdateRefOrb-Mon", update)
-        self.run_callbacks("FOFBNullSpaceProj-Mon", project)
-        self.run_callbacks("FOFBZeroDistortionAtBPMs-Mon", donot)
 
     def _set_delta_kick(self, code, dkicks):
         nr_ch = self._csorb.nr_ch
@@ -942,7 +926,6 @@ class SOFB(_BaseClass):
                 orb *= 2 * 3  # Maximum orbit distortion of 3 um
 
             tims.append(_time())
-            orb = self._interact_with_fofb_in_calc_kicks(orb)
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
@@ -1108,24 +1091,6 @@ class SOFB(_BaseClass):
             return False
         return True
 
-    def _interact_with_fofb_in_calc_kicks(self, orb):
-        fofb = self.fofb
-
-        if self._donot_affect_fofb_bpms and fofb.loop_state:
-            enbllist = _np.r_[fofb.bpmxenbl, fofb.bpmyenbl]
-            orb[enbllist] = 0.0
-
-        if self._project_onto_fofb_nullspace and fofb.loop_state:
-            # this approach is similar to what is proposed by APS:
-            # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
-            imat_fofb = fofb.invrespmat_mon
-            imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
-            orb -= _np.dot(fofb.respmat, _np.dot(imat_fofb, orb))
-        return orb
-
-    # def _interact_with_fofb_in_apply_kicks(
-    #     self, kicks, dkicks, refx=None, refy=None
-    # ):
     def _interact_with_fofb_in_apply_kicks(self, kicks, dkicks):
         fofb = self.fofb
         if not fofb.loop_state:
@@ -1185,9 +1150,6 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         orb = self.orbit.get_orbit()
-
-        if self.acc == "SI":
-            orb = self._interact_with_fofb_in_calc_kicks(orb)
 
         msg = "Calculating kicks."
         self._update_log(msg)

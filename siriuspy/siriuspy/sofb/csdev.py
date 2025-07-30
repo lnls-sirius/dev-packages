@@ -1231,24 +1231,6 @@ class SOFBSI(SOFBRings, ConstSI):
                 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
             },
-            'FOFBNullSpaceProj-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBNullSpaceProj-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBNullSpaceProj-Mon': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBZeroDistortionAtBPMs-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBZeroDistortionAtBPMs-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBZeroDistortionAtBPMs-Mon': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
             'DriveFreqDivisor-SP': {
                 'type': 'int', 'value': 12, 'unit': 'Div',
                 'lolim': 0, 'hilim': 1000},
