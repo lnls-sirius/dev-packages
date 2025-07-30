@@ -332,6 +332,7 @@ class SOFB(_BaseClass):
         value = min(max(int(value), 1), 100)
         self._update_fofb_reforb_rate = value
         self.run_callbacks("FOFBUpdateRefOrbRate-RB", value)
+        return True
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
@@ -1105,8 +1106,8 @@ class SOFB(_BaseClass):
                 # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
                 # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
                 # this is what they do there:
-                fofb.refx -= dorb[:dorb.size // 2]
-                fofb.refy -= dorb[dorb.size // 2:]
+                fofb.refx = fofb.refx + dorb[:dorb.size // 2]
+                fofb.refy = fofb.refy + dorb[dorb.size // 2:]
                 fofb.cmd_fofbctrl_syncreforb()
                 self._LQTHREAD.put((self._update_fofb_dorb, (dorb, )))
 
