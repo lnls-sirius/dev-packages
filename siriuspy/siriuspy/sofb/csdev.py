@@ -1205,11 +1205,11 @@ class SOFBSI(SOFBRings, ConstSI):
                 'lolim': 1, 'hilim': 100,
             },
             'FOFBUpdateRefOrbPerc-SP': {
-                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': -100.1, 'hilim': 100.1},
+                'type': 'float', 'value': 100.0, 'prec': 2, 'unit': '%',
+                'lolim': -0.1, 'hilim': 100.1},
             'FOFBUpdateRefOrbPerc-RB': {
-                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': -100.1, 'hilim': 100.1},
+                'type': 'float', 'value': 100.0, 'prec': 2, 'unit': '%',
+                'lolim': -0.1, 'hilim': 100.1},
             'FOFBUpdateRefOrb-Sel': {
                 'type': 'enum', 'value': self.DsblEnbl.Dsbl,
                 'enums': self.DsblEnbl._fields},
@@ -1337,6 +1337,8 @@ class SOFBSI(SOFBRings, ConstSI):
             }
         )
         dbase = super().get_orbit_database(prefix=prefix)
+        dbase["SmoothNrPts-SP"]['value'] = 20
+        dbase["SmoothNrPts-RB"]['value'] = 20
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
 

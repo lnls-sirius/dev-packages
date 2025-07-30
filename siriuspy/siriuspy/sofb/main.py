@@ -62,7 +62,7 @@ class SOFB(_BaseClass):
             self._download_fofb_kicks = True
             self._download_fofb_kicks_perc = 0.40
             self._update_fofb_reforb = False
-            self._update_fofb_reforb_perc = 0.0
+            self._update_fofb_reforb_perc = 100.0
             self._update_fofb_reforb_iter = 0
             self._update_fofb_reforb_rate = 3  # every n SOFB iterations
             self._drive_divisor = 12
@@ -318,7 +318,7 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value / 100, -1), 1)
+        value = min(max(value / 100, -0.1), 1)
         self._update_fofb_reforb_perc = value
         self.run_callbacks("FOFBUpdateRefOrbPerc-RB", value * 100)
         return True
