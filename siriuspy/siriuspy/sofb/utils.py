@@ -43,7 +43,7 @@ BUMP_MATRICES = {
         ]
     ),
     # The B1 matrix was calculated using the storage ring model.
-    "C1_LB": _np.array(
+    "C1_LowBeta": _np.array(
         [  # NOTE: first B1 (3.0 mrad) in sector (in subsec C1).
            # This is validy for C1 just after a low-beta section
             [0.26221, -1.03651, 0, 0,],
@@ -52,7 +52,7 @@ BUMP_MATRICES = {
             [0, 0, 0.08463, 1.89979,],
         ]
     ),
-    "C1_HB": _np.array(
+    "C1_HighBeta": _np.array(
         [  # NOTE: first B1 (3.0 mrad) in sector (in subsec C1).
             # This is validy for C1 just after a high-beta section
             [0.90103, -1.30066, 0.00002, 0,],
@@ -90,7 +90,7 @@ def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
     sec -= 1
     subname = subsec[2:]
     if subname == 'C1':
-        subname += '_HB' if sec % 4 == 0 else '_LB'
+        subname += '_HighBeta' if sec % 4 == 0 else '_LowBeta'
 
     vec = _np.array([psx, agx, psy, agy])
     pos_bpm = _np.dot(BUMP_MATRICES[subname], vec)
