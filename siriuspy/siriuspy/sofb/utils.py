@@ -27,28 +27,38 @@ BUMP_MATRICES = {
     # The BC matrix was calculated using the storage ring model.
     "BC": _np.array(
         [
-            [1.11371, -0.61624, 0, 0],
-            [1.25316, 1.54265, 0, 0],
-            [0, 0, 0.90631, -0.57170],
-            [0, 0, 0.69528, 1.80929],
+            [1.09548, -0.62064, 0, 0,],
+            [1.19176, 1.52848, 0, 0,],
+            [0, 0, 0.90631, -0.57170,],
+            [0, 0, 0.69528, 1.80929,],
         ]
     ),
     # The B2 matrix was calculated using the storage ring model.
     "C2": _np.array(
-        [  # NOTE: first B2 (23.0 mrad) in sector (in subsec C2).
-            [1.23679, -0.43310, 0, 0],
-            [0.75773, 1.19247, 0, 0],
-            [0, 0, 0.90320, -0.50532],
-            [0, 0, -0.68264, 6.16011],
+        [  # NOTE: first B2 (20.0 mrad) in sector (in subsec C2).
+            [1.02360, -0.52707, -0.00003, 0.00018,],
+            [0.14954, 0.72483, 0.00001, -0.00009,],
+            [0, 0, 0.92087, -0.46230,],
+            [0, 0, -0.90697, 6.12261,],
         ]
     ),
     # The B1 matrix was calculated using the storage ring model.
-    "C1": _np.array(
-        [  # NOTE: first B1 (3.2 mrad) in sector (in subsec C1).
-            [0.94139, -1.26921, 0, 0],
-            [2.58532, 2.83033, 0, 0],
-            [0, 0, 0.97724, -1.92058],
-            [0, 0, 0.09027, 1.89970],
+    "C1_LB": _np.array(
+        [  # NOTE: first B1 (3.0 mrad) in sector (in subsec C1).
+           # This is validy for C1 just after a low-beta section
+            [0.26221, -1.03651, 0, 0,],
+            [1.82093, 2.15034, 0, 0,],
+            [0, 0, 1.24956, -2.86621,],
+            [0, 0, 0.08463, 1.89979,],
+        ]
+    ),
+    "C1_HB": _np.array(
+        [  # NOTE: first B1 (3.0 mrad) in sector (in subsec C1).
+            # This is validy for C1 just after a high-beta section
+            [0.90103, -1.30066, 0.00002, 0,],
+            [1.81785, 2.14955, -0.00004, -0.00001,],
+            [0, 0, 0.98296, -1.91666,],
+            [0, 0, 0.08463, 1.89979,],
         ]
     ),
 }
@@ -79,12 +89,14 @@ def si_calculate_bump(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
         raise ValueError("Section must be between 01..20.")
     sec -= 1
     subname = subsec[2:]
+    if subname == 'C1':
+        subname += '_HB' if sec % 4 == 0 else '_LB'
 
     vec = _np.array([psx, agx, psy, agy])
     pos_bpm = _np.dot(BUMP_MATRICES[subname], vec)
 
-    bpm1 = sec * 8 + bpmidcs[subname] - 1
-    bpm2 = sec * 8 + bpmidcs[subname]
+    bpm1 = sec * 8 + bpmidcs[subname[0:2]] - 1
+    bpm2 = sec * 8 + bpmidcs[subname[0:2]]
 
     orbx, orby = orbx.copy(), orby.copy()
     orbx[bpm1] += pos_bpm[0]
