@@ -1156,10 +1156,28 @@ class SISOFB(BOSOFB):
         )
 
     @staticmethod
-    def si_calculate_bumps(orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0):
+    def si_calculate_bumps(
+        orbx,
+        orby,
+        subsec,
+        agx=0,
+        agy=0,
+        psx=0,
+        psy=0,
+        n_bpms_out=3,
+        minsingval=0.2,
+    ):
         """."""
         return _si_calculate_bump(
-            orbx, orby, subsec, agx=agx, agy=agy, psx=psx, psy=psy
+            orbx,
+            orby,
+            subsec,
+            agx=agx,
+            agy=agy,
+            psx=psx,
+            psy=psy,
+            n_bpms_out=n_bpms_out,
+            minsingval=minsingval,
         )
 
     @property
