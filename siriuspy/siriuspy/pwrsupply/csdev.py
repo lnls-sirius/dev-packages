@@ -5,8 +5,7 @@ import numpy as _np
 # from pcaspy import Severity as _Severity
 from .. import csdev as _csdev
 from ..search import PSSearch as _PSSearch
-from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP, \
-    UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
+from .bsmp.constants import ConstPSBSMP as _ConstPSBSMP
 from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
 # --- Wfm ---
@@ -1017,6 +1016,7 @@ def _get_ps_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'Log-Mon': {'type': 'string', 'value': 'Starting...'},
         'TimestampBoot-Cte': {'type': 'float', 'value': 0,
                               'prec': 7, 'unit': 'timestamp'},
         'TimestampUpdate-Mon': {'type': 'float', 'value': 0,
