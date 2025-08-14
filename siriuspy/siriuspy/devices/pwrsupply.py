@@ -107,7 +107,10 @@ class _PSDev(_Device):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
         # private attribute with strength setpoint pv object
-        self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        if self._strength_sp_propty in props2init:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        else:
+            self._strength_sp_pv = None
 
         try:
             name = devname.substitute(dis='MA')
@@ -192,41 +195,57 @@ class _PSDev(_Device):
     @property
     def strength_upper_ctrl_limit(self):
         """Return Strength SP upper control limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.upper_ctrl_limit
 
     @property
     def strength_lower_ctrl_limit(self):
         """Return Strength SP lower control limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.lower_ctrl_limit
 
     @property
     def strength_upper_alarm_limit(self):
         """Return Strength SP upper alarm limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.upper_alarm_limit
 
     @property
     def strength_lower_alarm_limit(self):
         """Return Strength SP lower alarm limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.lower_alarm_limit
 
     @property
     def strength_upper_warning_limit(self):
         """Return Strength SP upper warning limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.upper_warning_limit
 
     @property
     def strength_lower_warning_limit(self):
         """Return Strength SP lower warning limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.lower_warning_limit
 
     @property
     def strength_upper_disp_limit(self):
         """Return Strength SP upper display limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.upper_disp_limit
 
     @property
     def strength_lower_disp_limit(self):
         """Return Strength SP lower display limit."""
+        if self._strength_sp_pv is None:
+            self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return self._strength_sp_pv.lower_disp_limit
 
     @property
