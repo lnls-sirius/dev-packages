@@ -107,7 +107,7 @@ class _PSDev(_Device):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
         # private attribute with strength setpoint pv object
-        if self._strength_sp_propty in props2init:
+        if props2init == 'all' or self._strength_sp_propty in props2init:
             self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
         else:
             self._strength_sp_pv = None
