@@ -15,6 +15,7 @@ class ETypes(_csdev.ETypes):
     OPEN_CLOSED = ('Open', 'Closed')
     STS_LBLS_CORR = (
         'Connected', 'PwrStateOn', 'OpModeConfigured')
+    CORR_RAMP_STATUS = ('Off', 'On')
 
 
 _et = ETypes
@@ -36,6 +37,7 @@ class IDFFConst(_csdev.Const):
     DEFAULT_LOOP_FREQ_MAX = 100  # [Hz]
     DEFAULT_LOOP_FREQ = 10  # [Hz]
     DEFAULT_LOOP_STATE = LoopState.Open
+    DEFAULT_CORR_RAMP_STATUS = _et.CORR_RAMP_STATUS.index('Off')
     DEFAULT_CORR_PREC = 4
 
     def __init__(self, idname,
@@ -90,6 +92,10 @@ class IDFFConst(_csdev.Const):
             'ConfigName-SP': {'type': 'string', 'value': ''},
             'ConfigName-RB': {'type': 'string', 'value': ''},
             'CorrConfig-Cmd': {'type': 'int', 'value': 0},
+            'CorrRamp-Cmd': {'type': 'int', 'value': 0},
+            'CorrRampStatus-Mon': {
+                'type': 'enum', 'enums': _et.CORR_RAMP_STATUS,
+                'value': self.DEFAULT_CORR_RAMP_STATUS},
             'CorrSaveOffsets-Cmd': {'type': 'int', 'value': 0},
             'CorrStatus-Mon': {
                 'type': 'int', 'value': self.DEFAULT_CORR_STATUS},
