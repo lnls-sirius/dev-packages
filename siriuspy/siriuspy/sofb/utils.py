@@ -29,9 +29,9 @@ def si_calculate_bump(
     Outputs:
         orbx, orby - The orbits with the bump applied to them
     """
-    # get section and subsection
     from apsuite.orbcorr.si_bumps import SiCalcBumps
 
+    # get section and subsection
     section_nr = int(subsec[:2])
     if not 1 <= section_nr <= 20:
         raise ValueError('Section must be between 01..20.')
