@@ -3,6 +3,17 @@
 import numpy as _np
 
 
+def get_matrix_ss_section(section_type):
+    SS_LENGTHS = {'SA': 7.0358, 'SB': 6.1758, 'SP': 6.1758}
+    length = SS_LENGTHS[section_type]
+    return _np.array([
+        [1, -length / 2, 0, 0],
+        [1, length / 2, 0, 0],
+        [0, 0, 1, -length / 2],
+        [0, 0, 1, length / 2],
+    ])
+
+
 def si_calculate_bump(
     orbx,
     orby,
@@ -37,19 +48,22 @@ def si_calculate_bump(
         raise ValueError('Section must be between 01..20.')
 
     section_type = subsec[2:]
-    bump = SiCalcBumps()
-    _, _, mat_s2r = bump.calc_matrices(
-        section_type=section_type,
-        section_nr=section_nr,
-        n_bpms_out=n_bpms_out,
-        use_ss_tfm=True,
-        minsingval=minsingval,
-    )
+    if 'S' in section_type:
+        mat_s2r = get_matrix_ss_section(section_type)
+    else:
+        bump = SiCalcBumps()
+        _, _, mat_s2r = bump.calc_matrices(
+            section_type=section_type,
+            section_nr=section_nr,
+            n_bpms_out=n_bpms_out,
+            use_ss_tfm=False,
+            minsingval=minsingval,
+        )
+        idcs = bump.get_bpm_indices(section_type, section_nr - 1)
 
     vec = _np.array([psx, agx, psy, agy])
     pos_bpm = _np.dot(mat_s2r, vec)
 
-    idcs = bump.get_bpm_indices(section_type, section_nr - 1)
     bpm1 = idcs[0]
     bpm2 = idcs[1]
 
