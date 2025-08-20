@@ -40,8 +40,6 @@ def si_calculate_bump(
     Outputs:
         orbx, orby - The orbits with the bump applied to them
     """
-    from apsuite.orbcorr.si_bumps import SiCalcBumps
-
     # get section and subsection
     section_nr = int(subsec[:2])
     if not 1 <= section_nr <= 20:
@@ -50,7 +48,10 @@ def si_calculate_bump(
     section_type = subsec[2:]
     if 'S' in section_type:
         mat_s2r = get_matrix_ss_section(section_type)
+        idcs = [(section_nr - 1) * 8 - 1, (section_nr - 1) * 8]
     else:
+        from apsuite.orbcorr.si_bumps import SiCalcBumps
+
         bump = SiCalcBumps()
         _, _, mat_s2r = bump.calc_matrices(
             section_type=section_type,
