@@ -16,9 +16,9 @@ class PSSearch:
 
     # auxiliary BO dipole bsmp devices not to be considered
     # power supplies from standpoint of high level appplications
-    _bo_dip_auxps = \
-        set('BO-Fam:PS-B-' + idx for idx in
-            ('1a', '1b', '1c', '2a', '2b', '2c'))
+    _bo_dip_auxps = set(
+        'BO-Fam:PS-B-' + idx for idx in ('1a', '1b', '1c', '2a', '2b', '2c')
+    )
 
     _splims_labels = list()
     _splims_ps_unit = list()
@@ -99,7 +99,8 @@ class PSSearch:
         """Return a sorted and filtered list of all power supply names."""
         PSSearch._reload_pstype_2_psnames_dict()
         psnames = _Filter.process_filters(
-            PSSearch._psnames_list, filters=filters)
+            PSSearch._psnames_list, filters=filters
+        )
         if filter_auxps:
             psnames = set(psnames) - PSSearch._bo_dip_auxps
         return sorted(psnames)
@@ -109,7 +110,7 @@ class PSSearch:
         """Return a list with Magnet nicknames."""
         if not names:
             names = PSSearch.get_psnames(filters=filters)
-        nicknames = len(names)*['']
+        nicknames = len(names) * ['']
         for i, pss in enumerate(names):
             nicknames[i] = pss.sub + ('-' + pss.idx if pss.idx else '')
         return nicknames
@@ -218,7 +219,7 @@ class PSSearch:
         for key, value in PSSearch._pstype_dict.items():
             if key == pstype:
                 return value[1]
-        raise KeyError('Invalid pstype "'+pstype+'"!')
+        raise KeyError('Invalid pstype "' + pstype + '"!')
 
     @staticmethod
     def conv_pstype_2_splims(pstype):
@@ -367,13 +368,22 @@ class PSSearch:
     def get_splims_unit(psmodel):
         """Return SP limits unit."""
         PSSearch._reload_pstype_2_splims_dict()
-        if psmodel in ('FBP', 'FBP_DCLink',
-                       'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
-                       'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC',
-                       'FAP', 'FAP_2P2S', 'FAP_4P',
-                       'LINAC_PS', 'FOFB_PS'):
+        if psmodel in (
+            'FBP',
+            'FBP_DCLink',
+            'FAC_DCDC',
+            'FAC_2S_DCDC',
+            'FAC_2S_ACDC',
+            'FAC_2P4S_DCDC',
+            'FAC_2P4S_ACDC',
+            'FAP',
+            'FAP_2P2S',
+            'FAP_4P',
+            'LINAC_PS',
+            'FOFB_PS',
+        ):
             return PSSearch._splims_ps_unit
-        elif psmodel in ('APU', ):
+        elif psmodel in ('APU',):
             return 'mm'
         elif psmodel in ('FP_SEPT', 'FP_KCKR', 'FP_KCKRCCOIL', 'FP_PINGER'):
             return PSSearch._splims_pu_unit
@@ -452,7 +462,8 @@ class PSSearch:
                 return
             if not _web.server_online():
                 raise Exception(
-                    'could not read setpoint limits from web server!')
+                    'could not read setpoint limits from web server!'
+                )
             # ps data
             text = _web.ps_pstype_setpoint_limits()
             ps_data, ps_param_dict = _util.read_text_data(text)
@@ -462,10 +473,15 @@ class PSSearch:
 
             # checks consistency between PS and PU static tables.
             # this should be implemented elsewhere, not in PSSearch!
-            if sorted(ps_param_dict['power_supply_type']) != \
-                    sorted(pu_param_dict['power_supply_type']):
-                raise ValueError(('Inconsistent limit labels between PS '
-                                  'and PU static tables!'))
+            if sorted(ps_param_dict['power_supply_type']) != sorted(
+                pu_param_dict['power_supply_type']
+            ):
+                raise ValueError(
+                    (
+                        'Inconsistent limit labels between PS '
+                        'and PU static tables!'
+                    )
+                )
 
             PSSearch._splims_ps_unit = ps_param_dict['unit']
             PSSearch._splims_pu_unit = pu_param_dict['unit']
@@ -475,9 +491,10 @@ class PSSearch:
             data = ps_data + pu_data
             for datum in data:
                 pstype, *lims = datum
-                pstype_2_splims_dict[pstype] = \
-                    {PSSearch._splims_labels[i]:
-                     float(lims[i]) for i in range(len(lims))}
+                pstype_2_splims_dict[pstype] = {
+                    PSSearch._splims_labels[i]: float(lims[i])
+                    for i in range(len(lims))
+                }
             PSSearch._pstype_2_splims_dict = pstype_2_splims_dict
 
     @staticmethod
@@ -488,9 +505,11 @@ class PSSearch:
                 return
             if not _web.server_online():
                 raise Exception(
-                    'could not read "' + str(pstype) + '" from web server!')
-            PSSearch._pstype_2_excdat_dict[pstype] = \
-                _ExcitationData(filename_web=pstype + '.txt')
+                    'could not read "' + str(pstype) + '" from web server!'
+                )
+            PSSearch._pstype_2_excdat_dict[pstype] = _ExcitationData(
+                filename_web=pstype + '.txt'
+            )
 
     @staticmethod
     def _reload_psname_2_psmodel_dict():
@@ -521,8 +540,7 @@ class PSSearch:
             if PSSearch._psname_2_siggen_dict:
                 return
             if not _web.server_online():
-                raise Exception(
-                    'could not read siggen config from web server')
+                raise Exception('could not read siggen config from web server')
             text = _web.ps_siggen_configuration_read()
             data, _ = _util.read_text_data(text)
             psname_2_siggen_dict = dict()
@@ -561,8 +579,9 @@ class PSSearch:
             if PSSearch._bbbname_2_bbbip_dict:
                 return
             _bbbiptext, _ = _util.read_text_data(_web.beaglebone_ip_list())
-            PSSearch._bbbname_2_bbbip_dict = \
-                {name: ip for name, ip in _bbbiptext}
+            PSSearch._bbbname_2_bbbip_dict = {
+                name: ip for name, ip in _bbbiptext
+            }
 
     @staticmethod
     def _reload_bbb_2_freq_dict():
@@ -571,7 +590,8 @@ class PSSearch:
                 return
             if not _web.server_online():
                 raise Exception(
-                    'could not read BBB frequency map from web server')
+                    'could not read BBB frequency map from web server'
+                )
             data, _ = _util.read_text_data(_web.beaglebone_freq_mapping())
             bbbname_2_freq_dict = dict()
             for line in data:
@@ -608,8 +628,8 @@ class PSSearch:
         for line in data:
             udc, *bsmps = line
             udc_2_bsmp_dict[udc] = list()
-            for i in range(len(bsmps)//2):
-                bsmp = bsmps[2*i+0], int(bsmps[2*i+1])
+            for i in range(len(bsmps) // 2):
+                bsmp = bsmps[2 * i + 0], int(bsmps[2 * i + 1])
                 udc_2_bsmp_dict[udc].append(bsmp)
                 bsmp_2_udc_dict[bsmp[0]] = udc
         PSSearch._udc_2_bsmp_dict = udc_2_bsmp_dict
@@ -622,7 +642,8 @@ class PSSearch:
                 return
             if not _web.server_online():
                 raise Exception(
-                    'could not read BSMP to DCLink map from web server')
+                    'could not read BSMP to DCLink map from web server'
+                )
             data, _ = _util.read_text_data(_web.bsmp_dclink_mapping())
             ps_2_dclink_dict = dict()
             dclink_2_ps_dict = dict()
