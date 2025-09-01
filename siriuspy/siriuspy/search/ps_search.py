@@ -293,7 +293,7 @@ class PSSearch:
 
     @staticmethod
     def conv_bbbname_2_bbbip(bbbname):
-        """Return UDCs connected with a beaglebone."""
+        """Return beaglebone IP."""
         PSSearch._reload_bbbname_2_bbbip_dict()
         return PSSearch._bbbname_2_bbbip_dict[bbbname]
 
