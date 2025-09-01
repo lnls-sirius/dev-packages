@@ -41,6 +41,7 @@ class PSSearch:
     _bsmp_2_udc_dict = dict()
     _ps_2_dclink_dict = dict()
     _dclink_2_ps_dict = dict()
+    _bbbname_2_bbbip_dict = dict()
 
     _lock = _Lock()
 
@@ -288,6 +289,12 @@ class PSSearch:
         with PSSearch._lock:
             PSSearch._reload_bbb_2_udc_dict()
         return PSSearch._bbbname_2_udc_dict[bbbname]
+
+    @staticmethod
+    def conv_bbbname_2_bbbip(bbbname):
+        """Return UDCs connected with a beaglebone."""
+        PSSearch._reload_bbbname_2_bbbip_dict()
+        return PSSearch._bbbname_2_bbbip_dict[bbbname]
 
     @staticmethod
     def conv_udc_2_bbbname(udc):
@@ -546,6 +553,16 @@ class PSSearch:
             for bbb, bsmps in PSSearch._bbbname_2_bsmps_dict.items():
                 bsmps_2_bbbname_dict.update({x: bbb for x in bsmps})
             PSSearch._bsmps_2_bbbname_dict = bsmps_2_bbbname_dict
+
+    @staticmethod
+    def _reload_bbbname_2_bbbip_dict():
+        """Load BBBName to BBBIP dict."""
+        with PSSearch._lock:
+            if PSSearch._bbbname_2_bbbip_dict:
+                return
+            _bbbiptext, _ = _util.read_text_data(_web.beaglebone_ip_list())
+            PSSearch._bbbname_2_bbbip_dict = \
+                {name: ip for name, ip in _bbbiptext}
 
     @staticmethod
     def _reload_bbb_2_freq_dict():
