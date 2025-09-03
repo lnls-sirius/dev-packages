@@ -34,7 +34,7 @@ class PSSearch:
         'LINAC_PS',
         'FOFB_PS',
     )
-    _ID_UNIT_TYPES = ('APU')
+    _ID_UNIT_TYPES = ('APU', )
     _PU_UNIT_TYPES = ('FP_SEPT', 'FP_KCKR', 'FP_KCKRCCOIL', 'FP_PINGER')
 
     _splims_labels = list()
