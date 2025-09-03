@@ -102,23 +102,24 @@ def read_text_data(text):
     return data, parameters
 
 
-def print_ioc_banner(ioc_name, db, description, version, prefix):
+def print_ioc_banner(ioc_name, db, description, version, prefix, log=None):
     """IOC banner."""
+    log = log or _log
     strl = '==================================='
     nchars = (len(strl)-len(ioc_name))//2
     line = ' '*nchars + ioc_name + ' '*nchars
-    _log.info(strl)
-    _log.info(line)
-    _log.info(strl)
-    _log.info(description)
-    _log.info('LNLS, Sirius Project.')
-    _log.info('Version   : %s', version)
-    _log.info('Timestamp : %s', get_timestamp())
-    _log.info('Prefix    : %s', prefix)
-    _log.info('')
+    log.info(strl)
+    log.info(line)
+    log.info(strl)
+    log.info(description)
+    log.info('LNLS, Sirius Project.')
+    log.info('Version   : %s', version)
+    log.info('Timestamp : %s', get_timestamp())
+    log.info('Prefix    : %s', prefix)
+    log.info('')
     pvs = sorted(tuple(db.keys()))
     for i, pvname in enumerate(pvs, 1):
-        _log.info('{0:04d} {1:<}'.format(i, pvname))
+        log.info('{0:04d} {1:<}'.format(i, pvname))
 
 
 def configure_log_file(stream=None, filename=None, debug=False):
@@ -245,7 +246,7 @@ def check_public_interface_namespace(namespace, valid_interface,
     """
     for name in namespace.__dict__:
         if checkdoc_flag:
-            doc = getattr(name, '__doc__')
+            doc = name.__doc__
             if doc is None or len(doc) < 5:
                 if print_flag:
                     print('"' + name + '" has an invalid docstring!')
