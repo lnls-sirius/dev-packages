@@ -46,7 +46,7 @@ class LogMonHandler(logging.Handler):
         """Object that calls 'callback' to update 'Log-Mon'PVs."""
         self.callback = callback
         super().__init__(level)
-        self.addFilter(self._filter_only_ioc)
+        self.addFilter(self._filter_to_logmon)
 
     def emit(self, record):
         """."""
@@ -61,7 +61,7 @@ class LogMonHandler(logging.Handler):
             self.callback(msg)
 
     @staticmethod
-    def _filter_only_ioc(record):
-        """Do not show in PV log messages destined only to IOC logs."""
-        extra = 'ioc_only'
+    def _filter_to_logmon(record):
+        """Filter messages that add extra parameter 'to_logmon'."""
+        extra = 'to_logmon'
         return not (hasattr(record, extra) and bool(getattr(record, extra)))
