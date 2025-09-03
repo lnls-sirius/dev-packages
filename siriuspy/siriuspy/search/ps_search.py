@@ -20,6 +20,23 @@ class PSSearch:
         'BO-Fam:PS-B-' + idx for idx in ('1a', '1b', '1c', '2a', '2b', '2c')
     )
 
+    _PS_UNIT_TYPES = (
+        'FBP',
+        'FBP_DCLink',
+        'FAC_DCDC',
+        'FAC_2S_DCDC',
+        'FAC_2S_ACDC',
+        'FAC_2P4S_DCDC',
+        'FAC_2P4S_ACDC',
+        'FAP',
+        'FAP_2P2S',
+        'FAP_4P',
+        'LINAC_PS',
+        'FOFB_PS',
+    )
+    _ID_UNIT_TYPES = ('APU')
+    _PU_UNIT_TYPES = ('FP_SEPT', 'FP_KCKR', 'FP_KCKRCCOIL', 'FP_PINGER')
+
     _splims_labels = list()
     _splims_ps_unit = list()
     _splims_pu_unit = list()
@@ -368,24 +385,11 @@ class PSSearch:
     def get_splims_unit(psmodel):
         """Return SP limits unit."""
         PSSearch._reload_pstype_2_splims_dict()
-        if psmodel in (
-            'FBP',
-            'FBP_DCLink',
-            'FAC_DCDC',
-            'FAC_2S_DCDC',
-            'FAC_2S_ACDC',
-            'FAC_2P4S_DCDC',
-            'FAC_2P4S_ACDC',
-            'FAP',
-            'FAP_2P2S',
-            'FAP_4P',
-            'LINAC_PS',
-            'FOFB_PS',
-        ):
+        if psmodel in PSSearch._PS_UNIT_TYPES:
             return PSSearch._splims_ps_unit
-        elif psmodel in ('APU',):
+        elif psmodel in PSSearch._ID_UNIT_TYPES:
             return 'mm'
-        elif psmodel in ('FP_SEPT', 'FP_KCKR', 'FP_KCKRCCOIL', 'FP_PINGER'):
+        elif psmodel in PSSearch._PU_UNIT_TYPES:
             return PSSearch._splims_pu_unit
         else:
             raise ValueError(psmodel)
@@ -477,10 +481,8 @@ class PSSearch:
                 pu_param_dict['power_supply_type']
             ):
                 raise ValueError(
-                    (
-                        'Inconsistent limit labels between PS '
-                        'and PU static tables!'
-                    )
+                    'Inconsistent limit labels between PS '
+                    'and PU static tables!'
                 )
 
             PSSearch._splims_ps_unit = ps_param_dict['unit']
