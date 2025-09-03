@@ -102,24 +102,24 @@ def read_text_data(text):
     return data, parameters
 
 
-def print_ioc_banner(ioc_name, db, description, version, prefix, log=None):
+def print_ioc_banner(ioc_name, db, description, version, prefix, logger=None):
     """IOC banner."""
-    log = log or _log
+    logger = logger or _log
     strl = '==================================='
     nchars = (len(strl)-len(ioc_name))//2
     line = ' '*nchars + ioc_name + ' '*nchars
-    log.info(strl)
-    log.info(line)
-    log.info(strl)
-    log.info(description)
-    log.info('LNLS, Sirius Project.')
-    log.info('Version   : %s', version)
-    log.info('Timestamp : %s', get_timestamp())
-    log.info('Prefix    : %s', prefix)
-    log.info('')
+    logger.info(strl)
+    logger.info(line)
+    logger.info(strl)
+    logger.info(description)
+    logger.info('LNLS, Sirius Project.')
+    logger.info('Version   : %s', version)
+    logger.info('Timestamp : %s', get_timestamp())
+    logger.info('Prefix    : %s', prefix)
+    logger.info('')
     pvs = sorted(tuple(db.keys()))
     for i, pvname in enumerate(pvs, 1):
-        log.info('{0:04d} {1:<}'.format(i, pvname))
+        logger.info("%04d %s", i, pvname)
 
 
 def configure_log_file(stream=None, filename=None, debug=False):
