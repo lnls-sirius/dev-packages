@@ -1,5 +1,5 @@
 """BSMP protocol implementation."""
-import typing
+import typing as _typing
 
 from ..logging import get_logger as _get_logger
 from . import constants as _const
@@ -9,6 +9,9 @@ from .exceptions import SerialError as _SerialError
 from .serial import Channel as _Channel
 from .serial import IOInterface as _IOInterface
 from .serial import Message as _Message
+
+
+LOGGER = _get_logger()
 
 
 class BSMP:
@@ -42,14 +45,14 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def query_list_of_group_of_variables(self, timeout: float) -> typing.Tuple[int, typing.Optional[typing.List[typing.Tuple[bool, int]]]]:
+    def query_list_of_group_of_variables(self, timeout: float) -> _typing.Tuple[int, _typing.Optional[_typing.List[_typing.Tuple[bool, int]]]]:
         """Consult groups list. Command 0x04."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
             _const.CMD_LIST_OF_GROUP_OF_VARIABLES
 
         # build payload
-        payload: typing.List[str] = []
+        payload: _typing.List[str] = []
 
         # send request package
         try:
@@ -60,7 +63,7 @@ class BSMP:
 
         # expected response
         if res.cmd == ack:
-            groupdata: typing.List[typing.Tuple[bool, int]] = []
+            groupdata: _typing.List[_typing.Tuple[bool, int]] = []
             for groupchar in res.payload:
                 byte = ord(groupchar)
                 waccess = (byte & 0b10000000) > 0
@@ -75,7 +78,7 @@ class BSMP:
         self,
         group_id: int,
         timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[int]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[int]]]:
         """Return id of the variables in the given group."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_GROUP_OF_VARIABLES, \
@@ -115,7 +118,7 @@ class BSMP:
         self,
         var_id: int,
         timeout: float
-    ) -> typing.Union[typing.Tuple[None, None], typing.Tuple[int, typing.Any]]:
+    ) -> _typing.Union[_typing.Tuple[None, None], _typing.Tuple[int, _typing.Any]]:
         """Read variable."""
         # command and expected response
         cmd, ack = _const.CMD_READ_VARIABLE, _const.CMD_VARIABLE_VALUE
@@ -212,9 +215,9 @@ class BSMP:
     # 0x3_
     def create_group_of_variables(
         self,
-        var_ids: typing.List[int],
+        var_ids: _typing.List[int],
         timeout: float
-    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[_typing.Optional[int], _typing.Optional[_typing.List[str]]]:
         """Create new group with given variable ids."""
         cmd, ack = \
             _const.CMD_CREATE_GROUP_OF_VARIABLES, _const.ACK_OK
@@ -252,13 +255,13 @@ class BSMP:
     def remove_all_groups_of_variables(
         self,
         timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[str]]]:
         """Remove all groups."""
         cmd, ack = \
             _const.CMD_REMOVE_ALL_GROUPS_OF_VARIABLES, _const.ACK_OK
 
         # build payload
-        payload: typing.List[str] = []
+        payload: _typing.List[str] = []
 
         # send request package
         try:
@@ -284,7 +287,7 @@ class BSMP:
             block,
             timeout: float,
             print_error: bool = True
-    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[_typing.Optional[int], _typing.Optional[_typing.List[str]]]:
         """Read curve block."""
         # command and expected response
         cmd, ack = _const.CMD_REQUEST_CURVE_BLOCK, _const.CMD_CURVE_BLOCK
@@ -355,7 +358,7 @@ class BSMP:
             block,
             value,
             timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[str]]]:
         """Write to curve block."""
         # command and expected response
         cmd, ack = _const.CMD_CURVE_BLOCK, _const.ACK_OK
@@ -384,7 +387,7 @@ class BSMP:
         self,
         curve_id: int,
         timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[str]]]:
         """Recalculate curve checksum."""
         # command and expected response
         cmd, ack = \
@@ -415,7 +418,7 @@ class BSMP:
         timeout: float = _timeout_execute_function,
         read_flag: bool = True,
         print_error: bool = True
-    ) -> typing.Optional[typing.Tuple[int, typing.Optional[typing.Union[typing.List[str], str]]]]:
+    ) -> _typing.Optional[_typing.Tuple[int, _typing.Optional[_typing.Union[_typing.List[str], str]]]]:
         """Execute a function.
 
         parameter:
@@ -455,7 +458,7 @@ class BSMP:
             cmd, res.cmd, func_id=func_id, print_error=print_error)
 
     @staticmethod
-    def anomalous_response(cmd, ack: int, **kwargs) -> typing.Tuple[int, None]:
+    def anomalous_response(cmd, ack: int, **kwargs) -> _typing.Tuple[int, None]:
         """Print information about anomalous response."""
         # response with error
         if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:
