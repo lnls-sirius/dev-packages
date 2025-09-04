@@ -1,6 +1,7 @@
 """BSMP protocol implementation."""
 import typing
 
+from ..logging import get_logger as _get_logger
 from . import constants as _const
 from .entities import Entities as _Entities
 from .exceptions import SerialAnomResp as _SerialAnomResp
@@ -137,7 +138,8 @@ class BSMP:
 
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for command 0x{:02X}: {}!'
-            print(fmts.format(cmd, res.cmd))
+            logmsg = fmts.format(cmd, res.cmd)
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
             return None, None
 
         # anomalous response
@@ -236,9 +238,12 @@ class BSMP:
                 self.entities.add_group(var_ids)
                 return _const.ACK_OK, None
             # unexpected non-empty response payload
-            fmts = ('Unexpected BSMP non-empty resp payload '
-                    'for command 0x{:02X}: {}!')
-            print(fmts.format(cmd, res.cmd))
+            fmts = (
+                'Unexpected BSMP non-empty resp payload '
+                'for command 0x{:02X}: {}!'
+            )
+            logmsg = fmts.format(cmd, res.cmd)
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
             return None, None
 
         # anomalous response
@@ -300,19 +305,41 @@ class BSMP:
             curve = self.entities.curves[curve_id]
             if len(data) % curve.type.size:
                 # unexpected curve size
-                fmts = ('Curve size is not multiple of curve.type.size!\n'
-                        ' received curce size: {}\n'
-                        ' curve.type.size: {}')
-                print(fmts.format(len(data), curve.type.size))
+                LOGGER.warning(
+                    'Curve size is not multiple of curve.type.size!',
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- received curve size : %d',
+                    len(data),
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- curve.type.size     : %d',
+                    curve.type.size,
+                    extra={'to_logmon': True},
+                )
                 return None, None
             cid = ord(res.payload[0])
             cblock = (ord(res.payload[1]) << 8) + ord(res.payload[2])
             if cid != curve_id or cblock != block:
                 # unexpected curve id or block number
-                fmts = ('Invalid curve id or block offset in response!\n'
-                        ' expected - curve_id:{}, block_offset:{}\n'
-                        ' received - curve_id:{}, block_offset:{}')
-                print(fmts.format(curve_id, block, cid, cblock))
+                LOGGER.warning(
+                    'Invalid curve id or block offset in response!',
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- expected, curve_id : %d, block_offset : %d',
+                    curve_id,
+                    block,
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- received, curve_id : %d, block_offset : %d',
+                    cid,
+                    cblock,
+                    extra={'to_logmon': True},
+                )
                 return None, None
 
             # expected result
@@ -434,16 +461,19 @@ class BSMP:
         if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:
             if 'print_error' not in kwargs or kwargs['print_error']:
                 fmts = 'BSMP response (error) for command 0x{:02X}: 0x{:02X}!'
-                print(fmts.format(cmd, ack))
+                logmsg = fmts.format(cmd, ack)
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
                 for key, value in kwargs.items():
-                    print('{}: {}'.format(key, value))
+                    logmsg = ' - {}: {}'.format(key, value)
+                    LOGGER.warning(logmsg, extra={'to_logmon': True})
             return ack, None
 
         # unexpected response, raise Exception
         fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
         errmsg = fmts.format(cmd, ack)
         if 'print_error' not in kwargs or kwargs['print_error']:
-            print(errmsg)
+            LOGGER.warning(errmsg, extra={'to_logmon': True})
             for key, value in kwargs.items():
-                print('{}: {}'.format(key, value))
+                logmsg = ' - {}: {}'.format(key, value)
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
         raise _SerialAnomResp(errmsg)
