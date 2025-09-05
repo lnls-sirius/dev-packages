@@ -5,8 +5,12 @@ import numpy as _np
 
 from . import prucparms as _prucparms
 
+from ...logging import get_logger as _get_logger
 from ..bsmp.constants import UDC_MAX_NR_DEV as _UDC_MAX_NR_DEV
 from ..bsmp.factory import PSBSMPFactory as _PSBSMPFactory
+
+
+LOGGER = _get_logger()
 
 
 class UDC:
@@ -83,8 +87,11 @@ class UDC:
                 func_id=self.CONST_PSBSMP.F_TURN_OFF)
             if ack != self.CONST_BSMP.ACK_OK:
                 dev_id = dev.channel.address
-                print(('UDC.reset: could not turn off '
-                       'device id:{} !').format(dev_id))
+                logmsg = (
+                    'UDC.reset: could not turn off '
+                    'device id:{} !'
+                ).format(dev_id)
+                LOGGER.warning(logmsg)
                 return ack, data
 
         # reset UDC proper.
