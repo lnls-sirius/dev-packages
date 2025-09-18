@@ -1,7 +1,6 @@
 """ClientArchiver Exception Classes."""
 
 import asyncio as _asyncio
-import urllib as _urllib
 
 
 class ClientArchError(Exception):
@@ -22,7 +21,7 @@ class RuntimeError(ClientArchError, RuntimeError):
 
 class TypeError(ClientArchError, TypeError):
     """ClientArch TypeError Exception."""
-    
+
 
 class IndexError(ClientArchError, IndexError):
     """ClientArch IndexError Exception."""

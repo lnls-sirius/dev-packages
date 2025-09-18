@@ -1,8 +1,9 @@
 """Time conversion module."""
 
-from . import exceptions as _exceptions
-from datetime import datetime as _datetime, timedelta as _timedelta
 from calendar import timegm as _timegm
+from datetime import datetime as _datetime, timedelta as _timedelta
+
+from . import exceptions as _exceptions
 
 
 class Time(_datetime):
@@ -31,44 +32,60 @@ class Time(_datetime):
     """
 
     _DEFAULT_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
-    _DATETIME_ARGS = {'year', 'month', 'day', 'hour', 'minute',
-                      'second', 'microsecond', 'tzinfo'}
+    _DATETIME_ARGS = {
+        'year',
+        'month',
+        'day',
+        'hour',
+        'minute',
+        'second',
+        'microsecond',
+        'tzinfo',
+    }
 
     def __new__(cls, *args, **kwargs):
         """New object."""
         if not args and not kwargs:
             raise _exceptions.TypeError(
-                'no arguments found to build Time object')
+                'no arguments found to build Time object'
+            )
         if len(args) == 1:
             if isinstance(args[0], (float, int)):
                 return Time.fromtimestamp(args[0])
             if isinstance(args[0], str):
-                timestamp_format = \
-                    kwargs['timestamp_format'] if 'timestamp_format'\
-                    in kwargs else Time._DEFAULT_TIMESTAMP_FORMAT
+                timestamp_format = (
+                    kwargs['timestamp_format']
+                    if 'timestamp_format' in kwargs
+                    else Time._DEFAULT_TIMESTAMP_FORMAT
+                )
                 return Time.strptime(args[0], timestamp_format)
             raise _exceptions.TypeError(
-                f'argument of unexpected type {type(args[0])}')
+                f'argument of unexpected type {type(args[0])}'
+            )
         if len(kwargs) == 1:
             if 'timestamp' in kwargs:
                 return Time.fromtimestamp(kwargs['timestamp'])
             if 'timestamp_string' in kwargs:
                 return Time.strptime(
-                    kwargs['timestamp_string'], Time._DEFAULT_TIMESTAMP_FORMAT)
+                    kwargs['timestamp_string'], Time._DEFAULT_TIMESTAMP_FORMAT
+                )
             if set(kwargs.keys()) & Time._DATETIME_ARGS:
                 raise _exceptions.TypeError(
-                    'missing input arguments, verify usage options.')
-            raise _exceptions.TypeError(
-                f'unexpected key argument {kwargs}')
+                    'missing input arguments, verify usage options.'
+                )
+            raise _exceptions.TypeError(f'unexpected key argument {kwargs}')
         if len(kwargs) == 2:
             if set(kwargs.keys()) == {'timestamp_string', 'timestamp_format'}:
                 return Time.strptime(
-                    kwargs['timestamp_string'], kwargs['timestamp_format'])
+                    kwargs['timestamp_string'], kwargs['timestamp_format']
+                )
             if set(kwargs.keys()) & Time._DATETIME_ARGS:
                 raise _exceptions.TypeError(
-                    'missing input arguments, verify usage options.')
+                    'missing input arguments, verify usage options.'
+                )
             raise _exceptions.TypeError(
-                f'unexpected key arguments {list(kwargs.keys())}')
+                f'unexpected key arguments {list(kwargs.keys())}'
+            )
         return super().__new__(cls, *args, **kwargs)
 
     def get_iso8601(self):
@@ -97,25 +114,28 @@ class Time(_datetime):
 
     @staticmethod
     def conv_to_epoch(time, datetime_format):
-        """get epoch from datetime."""
+        """Get epoch from datetime."""
         utc_time = _datetime.strptime(time, datetime_format)
         epoch_time = _timegm(utc_time.timetuple())
         return epoch_time
 
 
 def get_time_intervals(
-        time_start, time_stop, interval, return_isoformat=False):
+    time_start, time_stop, interval, return_isoformat=False
+):
     """Return intervals of 'interval' duration from time_start to time_stop."""
     if time_start + interval >= time_stop:
-        timestamp_start = time_start.get_iso8601() \
-            if return_isoformat else time_start
-        timestamp_stop = time_stop.get_iso8601() \
-            if return_isoformat else time_stop
+        timestamp_start = (
+            time_start.get_iso8601() if return_isoformat else time_start
+        )
+        timestamp_stop = (
+            time_stop.get_iso8601() if return_isoformat else time_stop
+        )
     else:
         t_start = time_start
         t_stop = t_start + interval
-        timestamp_start = [t_start, ]
-        timestamp_stop = [t_stop, ]
+        timestamp_start = [t_start]
+        timestamp_stop = [t_stop]
         while t_stop < time_stop:
             t_start += interval
             t_stop = t_stop + interval
