@@ -10,6 +10,7 @@ from siriuspy.pwrsupply.pructrl.pru import PRU
 
 
 PUB_INTERFACE = (
+    'LOGGER',
     'PRUInterface',
     'PRU',
 )
