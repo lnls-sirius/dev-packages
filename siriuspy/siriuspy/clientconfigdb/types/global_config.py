@@ -1,6 +1,8 @@
 """AS Global configuration."""
 from copy import deepcopy as _dcopy
 
+import numpy as _np
+
 from siriuspy.pwrsupply.csdev import \
     DEFAULT_WFM_FBP as _DEFAULT_WFM_FBP, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
@@ -2697,16 +2699,25 @@ _pvs_si_septff = [
 ]
 
 
+_pvs_as_injection = [
+    [
+        'AS-Glob:AP-InjCtrl:BucketListAllowedMask-SP',
+        _np.ones(864, dtype=int),
+        0.0
+    ],
+]
+
 _template_dict = {
     'pvs':
-    _pvs_as_ti +
-    _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
-    _pvs_as_pu +
-    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
-    _bpm_pvs +
-    _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
-    _pvs_si_ps_fam +
-    _pvs_si_ps_ch + _pvs_si_ps_cv +
-    _pvs_si_ps_qs + _pvs_si_ps_qn +
-    _pvs_si_ps_ids + _pvs_si_septff
-    }
+        _pvs_as_ti +
+        _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
+        _pvs_as_pu +
+        _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
+        _bpm_pvs +
+        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
+        _pvs_si_ps_fam +
+        _pvs_si_ps_ch + _pvs_si_ps_cv +
+        _pvs_si_ps_qs + _pvs_si_ps_qn +
+        _pvs_si_ps_ids + _pvs_si_septff +
+        _pvs_as_injection
+}

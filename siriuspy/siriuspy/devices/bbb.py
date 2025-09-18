@@ -12,6 +12,7 @@ from ..namesys import SiriusPVName as _PVName
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from .dcct import DCCT
 from .rf import RFCav
+from .fpmosc import FPMOsc
 
 
 class BunchbyBunch(_DeviceSet):
@@ -41,6 +42,7 @@ class BunchbyBunch(_DeviceSet):
             raise ValueError(
                 "props2init must be 'all' or bool(props2init) == False")
 
+        self.fpmosc = FPMOsc(FPMOsc.DEVICES.SI)
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4, props2init=props2init)
         self.rfcav_a = RFCav(RFCav.DEVICES.SIA, props2init=props2init)
         self.rfcav_b = RFCav(RFCav.DEVICES.SIB, props2init=props2init)
@@ -61,7 +63,7 @@ class BunchbyBunch(_DeviceSet):
         devs = [
             self.info, self.timing, self.sram, self.bram, self.coeffs,
             self.feedback, self.drive0, self.drive1, self.drive2,
-            self.bunch_clean, self.fbe, self.dcct,
+            self.bunch_clean, self.fbe, self.dcct, self.fpmosc,
             self.rfcav_a, self.rfcav_b, self.single_bunch, self.phase_track]
 
         if devname.endswith('-L'):
