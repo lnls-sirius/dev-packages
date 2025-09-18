@@ -540,7 +540,7 @@ class PVDataSet(_Base):
         """Update."""
         self.connect()
         if timeout is not None:
-            self.timeout = None
+            self.timeout = timeout
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
             return
