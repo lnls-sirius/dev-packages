@@ -70,6 +70,8 @@ class Screen(_DeviceSet):
 
 
 class LIScreen(_Device):
+    """."""
+
     PROPERTIES_DEFAULT = (
         "RAW:ArrayData",
         "IMG:ArrayData",
@@ -102,94 +104,88 @@ class LIScreen(_Device):
         super().__init__(devname, props2init=props2init)
 
     @property
+    def image_width(self):
+        """."""
+        return self["ROI:MaxSizeX_RBV"]
+
+    @property
+    def image_height(self):
+        """."""
+        return self["ROI:MaxSizeY_RBV"]
+
+    @property
+    def image(self):
+        """."""
+        row_image = self["RAW:ArrayData"]
+        h = self.image_height
+        w = self.image_width
+        return row_image.reshape([h, w])
+
+    @property
+    def centerx(self):
+        """."""
+        return self["X:Gauss:Peak"]
+
+    @property
+    def centery(self):
+        """."""
+        return self["Y:Gauss:Peak"]
+
+    @property
+    def sigmax(self):
+        """."""
+        return self["X:Gauss:Sigma"]
+
+    @property
+    def sigmay(self):
+        """."""
+        return self["Y:Gauss:Sigma"]
+
+    @property
+    def scale_factor_x(self):
+        """Pixel to mm."""
+        return self["X:Gauss:Coef"]
+
+    @property
+    def scale_factor_y(self):
+        """Pixel to mm."""
+        return self["Y:Gauss:Coef"]
+
+    @property
+    def roix_size(self):
+        """."""
+        return self["ROI:SizeX_RBV"]
+
+    @property
+    def roiy_size(self):
+        """."""
+        return self["ROI:SizeY_RBV"]
+
+    @property
+    def roix_start(self):
+        """."""
+        return self["ROI:MinX_RBV"]
+
+    @property
+    def roiy_start(self):
+        """."""
+        return self["ROI:MinY_RBV"]
+
+    @property
     def image_roi(self):
+        """."""
         img = self["IMG:ArrayData"]
         return img.reshape((self.roix_size, self.roiy_size))
 
     @property
-    def image_raw(self):
-        img = self["RAW:ArrayData"]
-        return img.reshape((self.roiy_max, self.roix_max))
-
-    @property
-    def roix_max(self):
-        return self["ROI:MaxSizeX_RBV"]
-
-    @property
-    def roiy_max(self):
-        return self["ROI:MaxSizeY_RBV"]
-
-    @property
-    def roix_size(self):
-        return self["ROI:SizeX_RBV"]
-
-    @roix_size.setter
-    def roix_size(self, value):
-        self["ROI:SizeX"] = value
-
-    @property
-    def roiy_size(self):
-        return self["ROI:SizeY_RBV"]
-
-    @roiy_size.setter
-    def roiy_size(self, value):
-        self["ROI:SizeY"] = value
-
-    @property
-    def roix_start(self):
-        return self["ROI:MinX_RBV"]
-
-    @roix_start.setter
-    def roix_start(self, value):
-        self["ROI:MinX_"] = value
-
-    @property
-    def roiy_start(self):
-        return self["ROI:MinY_RBV"]
-
-    @roiy_start.setter
-    def roiy_start(self, value):
-        self["ROI:MinY_"] = value
-
-    @property
-    def gauss_centerx(self):
-        return self["X:Gauss:Peak"]
-
-    @property
-    def gauss_centery(self):
-        return self["Y:Gauss:Peak"]
-
-    @property
-    def gauss_sigmax(self):
-        return self["X:Gauss:Sigma"]
-
-    @property
-    def gauss_sigmay(self):
-        return self["Y:Gauss:Sigma"]
-
-    @property
-    def gauss_coeffx(self):
-        return self["X:Gauss:Coef"]
-
-    @property
-    def gauss_coeffy(self):
-        return self["Y:Gauss:Coef"]
-
-    @property
     def cam_exposure(self):
+        """."""
         return self["CAM:AcquireTime_RBV"]
-
-    @cam_exposure.setter
-    def cam_exposure(self, value):
-        self["CAM:AcquireTime"] = value
 
     @property
     def cam_gain(self):
+        """."""
         return self["CAM:Gain_RBV"]
-
-    @cam_gain.setter
-    def cam_gain(self, value):
-        self["CAM:Gain"] = value
 
 
 class TBBOTSScreen(_DeviceSet):
