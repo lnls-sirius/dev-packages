@@ -20,6 +20,7 @@ class PSController:
         'WfmOffsetKL-SP', 'WfmOffsetKL-RB',
         'WfmOffsetSL-SP', 'WfmOffsetSL-RB',
         'WfmOffsetEnergy-SP', 'WfmOffsetEnergy-RB',
+        'Log-Mon',  # This PV is related to the IOC, not PSController
         }
 
     def __init__(self, readers, writers,
