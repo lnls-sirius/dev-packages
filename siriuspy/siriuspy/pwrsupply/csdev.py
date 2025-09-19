@@ -16,15 +16,14 @@ from .siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 MAX_WFMSIZE_FBP = 1024
 DEF_WFMSIZE_FBP = 980
 DEFAULT_WFM_FBP = _np.zeros(DEF_WFMSIZE_FBP, dtype=float)
-MAX_WFMSIZE_OTHERS = 4096
-DEF_WFMSIZE_OTHERS = 3920
-DEFAULT_WFM_OTHERS = _np.zeros(DEF_WFMSIZE_OTHERS, dtype=float)
+MAX_WFMSIZE = 4096
+DEF_WFMSIZE = 3920
 DEFAULT_WFM_SELECTED = 0
 DEFAULT_WFM_FREQUENCY = 2000.0  # [Hz]
 DEFAULT_WFM_GAIN = 1.0
 DEFAULT_WFM_OFFSET = 0.0  # [A/V]
 
-DEFAULT_WFM = _np.zeros(DEF_WFMSIZE_OTHERS)
+DEFAULT_WFM = _np.zeros(DEF_WFMSIZE)
 
 # --- SOFBCurrent ---
 PSSOFB_MAX_NR_UDC = 2
@@ -1306,16 +1305,16 @@ def _get_ps_basic_propty_database():
             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0, 'unit': 'count'},
         # Wfm - UDC
-        'Wfm-SP': {'type': 'float', 'count': MAX_WFMSIZE_OTHERS,
+        'Wfm-SP': {'type': 'float', 'count': MAX_WFMSIZE,
                    'value': list(DEFAULT_WFM), 'unit': 'A',
                    'prec': PS_CURRENT_PRECISION},
-        'Wfm-RB': {'type': 'float', 'count': MAX_WFMSIZE_OTHERS,
+        'Wfm-RB': {'type': 'float', 'count': MAX_WFMSIZE,
                    'value': list(DEFAULT_WFM), 'unit': 'A',
                    'prec': PS_CURRENT_PRECISION},
-        'WfmRef-Mon': {'type': 'float', 'count': MAX_WFMSIZE_OTHERS,
+        'WfmRef-Mon': {'type': 'float', 'count': MAX_WFMSIZE,
                        'value': list(DEFAULT_WFM), 'unit': 'A',
                        'prec': PS_CURRENT_PRECISION},
-        'Wfm-Mon': {'type': 'float', 'count': MAX_WFMSIZE_OTHERS,
+        'Wfm-Mon': {'type': 'float', 'count': MAX_WFMSIZE,
                     'value': list(DEFAULT_WFM), 'unit': 'A/V/p.u.',
                     'prec': PS_CURRENT_PRECISION},
         # 'WfmMonAcq-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
