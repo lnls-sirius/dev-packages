@@ -1106,14 +1106,17 @@ _pvs_si_llrf_b = [
     ['RA-RaSIB01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
     ]
 
+
 _bpm_propts = [
     [':RFFEAtt-SP', 0.0, 0.0],
     ]
+
 
 _bpm_pvs = list()
 for dev in _bpms:
     for ppt, val, dly in _bpm_propts:
         _bpm_pvs.append([dev+ppt, val, dly])
+
 
 _pvs_tb_ps = [
     ['TB-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
@@ -1224,6 +1227,12 @@ _pvs_bo_ps = [
     ['BO-45U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-47U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-49U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+    ['BO-Fam:PS-B-1:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-B-2:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-QD:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-QF:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-SD:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-SF:WfmOffset-SP', 0.0, 0.0],  # [A]
     ]
 
 
