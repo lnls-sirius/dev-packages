@@ -6,7 +6,7 @@ import numpy as _np
 from siriuspy.pwrsupply.csdev import \
     DEFAULT_WFM_FBP as _DEFAULT_WFM_FBP, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
-    DEFAULT_WFM_OTHERS as _DEFAULT_WFM_OTHERS
+    DEFAULT_WFM as _DEFAULT_WFM
 
 from siriuspy.clientconfigdb.types.as_diagnostics import _bpms
 
@@ -1170,12 +1170,12 @@ _pvs_tb_ps = [
 
 
 _pvs_bo_ps = [
-    ['BO-Fam:PS-B-1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-B-2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-QD:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-QF:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-SD:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-SF:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
+    ['BO-Fam:PS-B-1:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-B-2:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-QD:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-QF:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-SD:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-SF:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
     ['BO-02D:PS-QS:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-01U:PS-CH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-03U:PS-CH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]

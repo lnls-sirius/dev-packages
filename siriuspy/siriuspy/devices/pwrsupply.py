@@ -8,7 +8,7 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _Const, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
-    MAX_WFMSIZE_OTHERS as _MAX_WFMSIZE_OTHERS
+    MAX_WFMSIZE as _MAX_WFMSIZE
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 from ..magnet.factory import NormalizerFactory as _NormFactory
 
@@ -567,7 +567,7 @@ class PowerSupply(_PSDev):
     def wfm(self, value):
         """."""
         value = _np.array(value).ravel()
-        max_size = _MAX_WFMSIZE_OTHERS
+        max_size = _MAX_WFMSIZE
         if self.psmodel == 'FBP':
             max_size = _MAX_WFMSIZE_FBP
         self['Wfm-SP'] = value[:max_size]
