@@ -149,7 +149,7 @@ def generate_bpm_static_table():
     """."""
     disclaimer = \
         "# This file was generated automatically from the data of the files\n"\
-        "# in the subfolder Mapeamento_placas_MicroTCA_vs_BPMs and the\n"\
+        "# in the subfolder microTCA-vs-BPMs-mapping and the\n"\
         "# models of the accelerators in the pymodels repository by the\n"\
         "# function: \n"\
         "#      siriuspy.optics.lattice_survey.generate_bpm_static_table.\n"\
