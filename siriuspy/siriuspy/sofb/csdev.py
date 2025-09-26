@@ -76,7 +76,7 @@ class ConstTLines(_csdev.Const):
     TINY_KICK = 1e-3  # [urad]
     DEF_MAX_ORB_DISTORTION = 50  # [um]
     ACQRATE_TRIGMODE = 2  # [Hz]
-    ACQRATE_SLOWORB = 60  # [Hz]
+    ORBIT_UPDATE_RATE = 60  # [Hz] very high frequency to improve sinc.
     BPMsFreq = 10.48  # [Hz]
 
     TrigAcqCtrl = _CSBPM.AcqEvents
@@ -451,13 +451,13 @@ class SOFBTLines(ConstTLines):
                 "TrigAcqChan-Sel": {
                     "type": "enum",
                     "unit": "FAcq_FOFB_TbT_ADC_ADCSwp",
-                    "value": self.TrigAcqChan.ADC,
+                    "value": self.TrigAcqChan.ADCSwp,
                     "enums": self.TrigAcqChan._fields,
                 },
                 "TrigAcqChan-Sts": {
                     "type": "enum",
                     "unit": "FAcq_FOFB_TbT_ADC_ADCSwp",
-                    "value": self.TrigAcqChan.ADC,
+                    "value": self.TrigAcqChan.ADCSwp,
                     "enums": self.TrigAcqChan._fields,
                 },
                 "TrigAcqRepeat-Sel": {
@@ -982,6 +982,8 @@ class SOFBRings(SOFBTLines, ConstRings):
             }
         )
         dbase = super().get_orbit_database(prefix=prefix)
+        dbase['TrigAcqChan-Sel']['value'] = self.TrigAcqChan.TbT
+        dbase['TrigAcqChan-Sts']['value'] = self.TrigAcqChan.TbT
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
 
@@ -1177,7 +1179,7 @@ class SOFBSI(SOFBRings, ConstSI):
                 'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBDownloadKicks-Mon': {
-                'type': 'enum', 'value': self.DsblEnbl.Enbl,
+                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBDownloadKicksCH-Mon': {
                 'type': 'float',
@@ -1194,17 +1196,25 @@ class SOFBSI(SOFBRings, ConstSI):
             'FOFBDownloadKicksRF-Mon': {
                 'type': 'float', 'value': 0, 'prec': 3, 'unit': 'Hz',
             },
+            'FOFBUpdateRefOrbRate-SP': {
+                'type': 'int', 'value': 3, 'unit': 'LoopFreqDiv',
+                'lolim': 1, 'hilim': 100,
+            },
+            'FOFBUpdateRefOrbRate-RB': {
+                'type': 'int', 'value': 3, 'unit': 'LoopFreqDiv',
+                'lolim': 1, 'hilim': 100,
+            },
             'FOFBUpdateRefOrbPerc-SP': {
-                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': -100.1, 'hilim': 100.1},
+                'type': 'float', 'value': 100.0, 'prec': 2, 'unit': '%',
+                'lolim': -0.1, 'hilim': 100.1},
             'FOFBUpdateRefOrbPerc-RB': {
-                'type': 'float', 'value': 0.0, 'prec': 2, 'unit': '%',
-                'lolim': -100.1, 'hilim': 100.1},
+                'type': 'float', 'value': 100.0, 'prec': 2, 'unit': '%',
+                'lolim': -0.1, 'hilim': 100.1},
             'FOFBUpdateRefOrb-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrb-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
+                'type': 'enum', 'value': self.DsblEnbl.Enbl,
                 'enums': self.DsblEnbl._fields},
             'FOFBUpdateRefOrb-Mon': {
                 'type': 'enum', 'value': self.DsblEnbl.Dsbl,
@@ -1221,24 +1231,6 @@ class SOFBSI(SOFBRings, ConstSI):
                 'count': self.nr_bpms,
                 'value': self.nr_bpms*[0],
             },
-            'FOFBNullSpaceProj-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBNullSpaceProj-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBNullSpaceProj-Mon': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBZeroDistortionAtBPMs-Sel': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBZeroDistortionAtBPMs-Sts': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
-            'FOFBZeroDistortionAtBPMs-Mon': {
-                'type': 'enum', 'value': self.DsblEnbl.Dsbl,
-                'enums': self.DsblEnbl._fields},
             'DriveFreqDivisor-SP': {
                 'type': 'int', 'value': 12, 'unit': 'Div',
                 'lolim': 0, 'hilim': 1000},
@@ -1345,6 +1337,8 @@ class SOFBSI(SOFBRings, ConstSI):
             }
         )
         dbase = super().get_orbit_database(prefix=prefix)
+        dbase["SmoothNrPts-SP"]['value'] = 20
+        dbase["SmoothNrPts-RB"]['value'] = 20
         dbase.update(self._add_prefix(db_ring, prefix))
         return dbase
 

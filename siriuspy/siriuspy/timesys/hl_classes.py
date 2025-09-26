@@ -1,19 +1,18 @@
 """Define the high level classes."""
 
+import logging as _log
 import time as _time
 from functools import partial as _partial, reduce as _reduce
-from operator import or_ as _or_, and_ as _and_
-import logging as _log
+from operator import and_ as _and_, or_ as _or_
 from threading import Lock as _Lock
 
 import numpy as _np
 
-from ..util import mode as _mode
-from ..thread import RepeaterThread as _Timer
-from ..search import HLTimeSearch as _HLSearch
-from ..namesys import SiriusPVName as _PVName
 from ..callbacks import Callback as _Callback
-
+from ..namesys import SiriusPVName as _PVName
+from ..search import HLTimeSearch as _HLSearch
+from ..thread import RepeaterThread as _Timer
+from ..util import mode as _mode
 from .csdev import get_hl_trigger_database as _get_hl_trigger_database
 from .ll_classes import get_ll_trigger as _get_ll_trigger
 
@@ -72,8 +71,11 @@ class _BaseHL(_Callback):
 
     def wait_for_connection(self, timeout=None):
         """."""
-        return all(map(
-            lambda x: x.wait_for_connection(timeout=timeout), self._ll_objs))
+        return all(
+            map(
+                lambda x: x.wait_for_connection(timeout=timeout), self._ll_objs
+            )
+        )
 
     @property
     def locked(self):
@@ -99,8 +101,9 @@ class _BaseHL(_Callback):
         """
         if value is None:
             return False
-        return _reduce(_and_, map(
-            lambda x: x.write(prop_name, value), self._ll_objs))
+        return _reduce(
+            _and_, map(lambda x: x.write(prop_name, value), self._ll_objs)
+        )
 
     def read(self, prop_name, is_sp=False):
         """Read."""
@@ -139,7 +142,8 @@ class _BaseHL(_Callback):
                 continue
             prop = self._get_prop_name(pvname)
             map2readpvs[pvname] = _partial(
-                self.read, prop, is_sp=_PVName.is_sp_pv(pvname))
+                self.read, prop, is_sp=_PVName.is_sp_pv(pvname)
+            )
         return map2readpvs
 
     def _on_change_pvs(self, *args, **kwargs):
@@ -155,7 +159,7 @@ class _BaseHL(_Callback):
             self._timer.start()
 
     def _update_pvs_thread(self):
-        _time.sleep(1/10)  # limit update in 10Hz
+        _time.sleep(1 / 10)  # limit update in 10Hz
         for prop, suf in self._all_props_suffix.items():
             if _PVName.is_cmd_pv(suf):
                 continue
@@ -163,10 +167,8 @@ class _BaseHL(_Callback):
             if value is None:
                 return
             self.run_callbacks(self._get_pv_name(prop), **value)
-            # Uncomment this if you want to update setpoint PVs as well
-            # This is not recommended though, because it can create very
-            # strange unusual behavior with widgets such as spinbox in PyDM
-            # and CS-Studio.
+
+            # Update SP PVs as well
             if not _PVName.is_rb_pv(suf):
                 continue
             value = self.read(prop, is_sp=True)
@@ -198,16 +200,14 @@ class _BaseHL(_Callback):
         return pvname
 
     def _get_prop_name(self, pvname, with_suffix=False):
-        ret = pvname[len(self.prefix):].split('-')
+        ret = pvname[len(self.prefix) :].split('-')
         if with_suffix:
             return ret[0], '-' + ret[1]
         else:
             return ret[0]
 
     def _combine_default(self, values):
-        dic_ = {
-            'alarm': self.Alarm.COMM,
-            'severity': self.Severity.INVALID}
+        dic_ = {'alarm': self.Alarm.COMM, 'severity': self.Severity.INVALID}
         values = [val for val in values if val is not None]
         if not values:
             dic_['value'] = None
@@ -225,7 +225,6 @@ class HLTrigger(_BaseHL):
 
     def __init__(self, hl_trigger, callback=None):
         """Appropriately initialize the instance."""
-
         src_enums = _get_hl_trigger_database(hl_trigger=hl_trigger)
         src_enums = src_enums['Src-Sel']['enums']
         ll_obj_names = _HLSearch.get_ll_trigger_names(hl_trigger)
@@ -236,8 +235,9 @@ class HLTrigger(_BaseHL):
 
         ll_objs = list()
         for name in ll_obj_names:
-            ll_objs.append(_get_ll_trigger(
-                channel=name, source_enums=src_enums))
+            ll_objs.append(
+                _get_ll_trigger(channel=name, source_enums=src_enums)
+            )
         super().__init__(hl_trigger + ':', ll_objs, callback=callback)
 
     def process(self):
@@ -280,7 +280,7 @@ class HLTrigger(_BaseHL):
                 self._update_deltadelay(value)
                 value = self._hldelay + self._hldeltadelay
         else:
-            value = len(self._ll_objs) * [value, ]
+            value = len(self._ll_objs) * [value]
 
         boo = True
         for val, obj in zip(value, self._ll_objs):
@@ -295,7 +295,7 @@ class HLTrigger(_BaseHL):
         if prop_name.startswith('DeltaDelayRaw'):
             prop_name = prop_name.replace('DeltaDelayRaw', 'DelayRaw')
         if prop_name.startswith('LowLvlLock') and is_sp:
-            vals = len(self._ll_objs) * [self.locked, ]
+            vals = len(self._ll_objs) * [self.locked]
         else:
             vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
         return fun(vals)
@@ -303,7 +303,8 @@ class HLTrigger(_BaseHL):
     def get_database(self):
         """Get the database."""
         return _get_hl_trigger_database(
-            hl_trigger=self.prefix[:-1], prefix=self.prefix)
+            hl_trigger=self.prefix[:-1], prefix=self.prefix
+        )
 
     def get_ll_triggers(self):
         """."""
@@ -340,7 +341,8 @@ class HLTrigger(_BaseHL):
             return {
                 'value': None,
                 'alarm': self.Alarm.COMM,
-                'severity': self.Severity.INVALID}
+                'severity': self.Severity.INVALID,
+            }
         alarm = self.Alarm.NO
         severity = self.Severity.NO
         values = _np.array(values) - min(values)
@@ -351,7 +353,8 @@ class HLTrigger(_BaseHL):
             return {
                 'value': None,
                 'alarm': self.Alarm.COMM,
-                'severity': self.Severity.INVALID}
+                'severity': self.Severity.INVALID,
+            }
         alarm = self.Alarm.NO
         severity = self.Severity.NO
         values = min(values)
@@ -366,4 +369,5 @@ class HLTrigger(_BaseHL):
             'Delay': self._combine_delay,
             'DelayRaw': self._combine_delay,
             'TotalDelay': self._combine_delay,
-            'TotalDelayRaw': self._combine_delay}
+            'TotalDelayRaw': self._combine_delay,
+        }
