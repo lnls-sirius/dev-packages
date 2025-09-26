@@ -120,6 +120,8 @@ class RFGen(_Device):
         # check if device exists
         if devname not in RFGen.DEVICES.ALL:
             raise NotImplementedError(devname)
+        if props2init is None:
+            props2init = ['GeneralFreq-SP', 'GeneralFreq-RB']
         super().__init__(devname, props2init=props2init)
 
     @property
