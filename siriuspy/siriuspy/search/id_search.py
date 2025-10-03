@@ -93,6 +93,12 @@ class IDSearch:
                 58,
                 0, 29, 29, 0, 0.01,
                 None, None, None, None)),
+        'SI-11SP:ID-SIMUL': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                18.5,
+                4.2, 24, 24, 24, 0.01,
+                None, None, None, None)),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
@@ -151,6 +157,9 @@ class IDSearch:
             3: ('vertical', -52.5/2),  # [mm]
         },
         'SI-11SP:ID-APU58': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-11SP:ID-SIMUL': {
             0: ('horizontal', None),  # [mm]
         },
         'SI-14SB:ID-IVU18': {
@@ -246,6 +255,15 @@ class IDSearch:
             IDFF_QS_LABELS[1]: 'SI-10SB:PS-QS-2:Current-SP',
         },
         'SI-11SP:ID-APU58': None,
+        'SI-11SP:ID-SIMUL':  {
+            'polarizations': ('horizontal', ),
+            'pparameter': None,
+            'kparameter': 'SI-11SP:ID-SIMUL:KParam-Mon',
+            IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-11SP:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-11SP:PS-CV-2:Current-SP',
+        },
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
