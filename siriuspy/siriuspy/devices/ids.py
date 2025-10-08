@@ -603,7 +603,7 @@ class IDBase(_Device):
     def cmd_move(self, pparam=None, kparam=None, timeout=None):
         """Command to set and start pparam and kparam movements.
 
-        Args
+        Args:
             pparam : target pparameter value
             kparam : target kparameter value
             timeout : additional timeout beyond movement ETA. [s]
@@ -741,7 +741,7 @@ class IDBase(_Device):
                     propty_sp.replace('-SP', '-RB').replace('-Sel', '-Sts')
             self[propty_sp] = value
             if isinstance(value, float):
-                success &= super()._wait_float(
+                success &= self.wait_float(
                     propty_rb, value, timeout=timeout)
             else:
                 success &= super()._wait(

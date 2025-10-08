@@ -131,7 +131,7 @@ class RFGen(_Device):
     def set_frequency(self, value, tol=1, timeout=10):
         """Set RF phase and wait until it gets there."""
         self.frequency = value
-        return self._wait_float(
+        return self.wait_float(
             'GeneralFreq-RB', value, abs_tol=tol, timeout=timeout)
 
     @property
@@ -742,7 +742,7 @@ class _BaseLLRF(_Device):
         """Set RF phase and wait until it gets there."""
         self.phase = value
         pv2wait = 'SLInpPhs-Mon' if wait_mon else 'SLRefPhs-Mon'
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     def phase_shift_cav_sp(self):
         """."""
@@ -818,7 +818,7 @@ class _BaseLLRF(_Device):
         """Set RF voltage and wait until it gets there."""
         self.voltage = value
         pv2wait = 'SLInpAmp-Mon' if wait_mon else 'SLRefAmp-Mon'
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def voltage_refmin_sp(self):
@@ -871,7 +871,7 @@ class _BaseLLRF(_Device):
         """Set RF phase and wait until it gets there."""
         self.conditioning_duty_cycle = value
         pv2wait = 'CondDuty-RB' if wait_mon else 'CondDutyCycle-Mon'
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def detune(self):
