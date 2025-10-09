@@ -198,6 +198,32 @@ class Device:
         func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
         return self.wait(propty, value, comp=func, timeout=timeout)
 
+    def wait_several(self, props_values, timeout=None, comp='eq'):
+        """Wait several properties to reach the desired value.
+
+        Args:
+            props_values (list[2-tuple]): List of 2-tuples with property names
+                and values, respectively.
+            timeout (float, optional): Timeout of operation. Defaults to None,
+                which means it will wait forever.
+            comp (str, optional): Type of comparison to make. Can be any
+                operator of module `operator` or any callable that accepts two
+                entries and return a boolean. Defaults to 'eq'.
+
+        Returns:
+            bool: Whether or not timeout was reached before all conditions are
+                met.
+        """
+        timeout = _DEF_TIMEOUT if timeout is None else timeout
+        t0_ = _time.time()
+        for propty, value in props_values.items():
+            timeout_left = max(0, timeout - (_time.time() - t0_))
+            if timeout_left == 0:
+                return False
+            if not self.wait(propty, value, timeout=timeout_left, comp=comp):
+                return False
+        return True
+
     @property
     def hosts(self):
         """Return dict of IOC hosts providing device properties."""
@@ -247,17 +273,6 @@ class Device:
         return pvclass(
             pvname, auto_monitor=auto_monitor,
             connection_timeout=Device.CONNECTION_TIMEOUT)
-
-    def _wait_set(self, props_values, timeout=None, comp='eq'):
-        timeout = _DEF_TIMEOUT if timeout is None else timeout
-        t0_ = _time.time()
-        for propty, value in props_values.items():
-            timeout_left = max(0, timeout - (_time.time() - t0_))
-            if timeout_left == 0:
-                return False
-            if not self.wait(propty, value, timeout=timeout_left, comp=comp):
-                return False
-        return True
 
     def _get_pvname(self, propty):
         dev = self._devname

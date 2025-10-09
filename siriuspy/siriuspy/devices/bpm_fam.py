@@ -281,7 +281,7 @@ class FamBPMs(_DeviceSet):
             if mask_end is not None:
                 props['TbTDataMaskSamplesEnd-RB'] = mask_end[i]
 
-            if not bpm._wait_set(props, timeout=tout):
+            if not bpm.wait_several(props, timeout=tout):
                 okall = False
                 for prop, sp in props.items():
                     rb = bpm[prop]

@@ -1360,7 +1360,7 @@ class EPU(PAPU):
             return True
         self['EnblPwrAll-Cmd'] = 1
         props_values = {'PwrPhase-Mon': 1, 'PwrGap-Mon': 1}
-        return self._wait_set(props_values, timeout=timeout)
+        return self.wait_several(props_values, timeout=timeout)
 
     # --- set methods ---
 
