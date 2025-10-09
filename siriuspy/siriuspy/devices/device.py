@@ -8,14 +8,14 @@ from functools import partial as _partial
 import numpy as _np
 from epics.ca import (
     CASeverityException as _CASeverityException,
-    ChannelAccessGetFailure as _ChannelAccessGetFailure
+    ChannelAccessGetFailure as _ChannelAccessGetFailure,
 )
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import (
     CONNECTION_TIMEOUT as _CONN_TIMEOUT,
     GET_TIMEOUT as _GET_TIMEOUT,
-    PV as _PV
+    PV as _PV,
 )
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..simul import SimPV as _PVSim, Simulation as _Simulation
@@ -179,7 +179,21 @@ class Device:
         return attributes
 
     def wait(self, propty, value, timeout=None, comp='eq'):
-        """."""
+        """Wait until comparison of property value is true against 'value'.
+
+        Args:
+            propty (str): Name of the property to wait condition to be met.
+            value (str|float|int|bool|numpy.ndarray): value to be set.
+            timeout (float, optional): Timeout of operation. Defaults to None,
+                which means it will wait forever.
+            comp (str, optional): Type of comparison to make. Can be any
+                operator of module `operator` or any callable that accepts two
+                entries and return a boolean. Defaults to 'eq'.
+
+        Returns:
+            isok (bool): Whether condition was met within timeout.
+
+        """
 
         def comp_(val):
             boo = comp(self[propty], val)
@@ -206,7 +220,20 @@ class Device:
     def wait_float(
         self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None
     ):
-        """Wait until float value gets close enough of desired value."""
+        """Wait until float value gets close enough of desired value.
+
+        Args:
+            propty (str): Name of the property to wait condition to be met.
+            value (str|float|int|bool|numpy.ndarray): value to be set.
+            rel_tol (float, optional): relative tolerance. Defaults to 0.0.
+            abs_tol (float, optional): absolute tolerance. Defaults to 0.1.
+            timeout (float, optional): Timeout of operation. Defaults to None,
+                which means it will wait forever.
+
+        Returns:
+            isok (bool): Whether condition was met within timeout.
+
+        """
         isc = _np.isclose if isinstance(value, _np.ndarray) else _math.isclose
         func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
         return self.wait(propty, value, comp=func, timeout=timeout)
