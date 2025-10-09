@@ -423,12 +423,39 @@ class DeviceSet:
                 if wait_between_devs > 0:
                     _time.sleep(wait_between_devs)
 
-    # --- private methods ---
+    def wait_devices_propty(
+        self,
+        propty,
+        values,
+        devices=None,
+        comp='eq',
+        timeout=None,
+        return_prob=False
+    ):
+        """Wait for devices property to reach value(s).
 
-    def _wait_devices_propty(
-            self, devices, propty, values, comp='eq',
-            timeout=None, return_prob=False):
-        """Wait for devices property to reach value(s)."""
+        Args:
+            propty (str): Name of the property to wait condition to be met.
+                Must be a single and valid property for all devices.
+            values (str|float|int|list|tuple|numpy.ndarray): value or list of
+                values to be set. If a list, then must be of the same size as
+                devices, else all devices will be set with the same value.
+            devices (list, optional): list of devices to set the given propty.
+                Defaults to None, which means all devices of self will be set.
+                The devices in the list not necessarily need to be in self.
+            timeout (float, optional): Timeout of operation. Defaults to None,
+                which means it will wait forever.
+            comp (str, optional): Type of comparison to make. Can be any
+                operator of module `operator` or any callable that accepts two
+                entries and return a boolean. Defaults to 'eq'.
+            return_prob (bool, optional): Whether to return list of PV names
+                for which comparison failed. Defaults to False.
+
+        Returns:
+            allok (bool): Whether all conditions were met within timeout.
+            probs (list[str]): list of PV names for which comparison failed.
+                Only returned if return_prob is True.
+        """
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
@@ -456,6 +483,8 @@ class DeviceSet:
         if return_prob:
             return allok, [dev.pv_object(propty).pvname for dev in dev2val]
         return allok
+
+    # --- private methods ---
 
     def _get_dev_2_val(self, devices, values):
         """Get devices to values dict."""

@@ -120,8 +120,8 @@ class PUMagsStandbyHandler(_BaseHandler):
         )
 
         # wait for pulsed magnet pulse to be off
-        retval = self._wait_devices_propty(
-            self._pudevs, 'Pulse-Sts', _PSConst.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'Pulse-Sts', _PSConst.DsblEnbl.Dsbl, devices=self._pudevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet Pulse to be disabled '\
@@ -134,8 +134,8 @@ class PUMagsStandbyHandler(_BaseHandler):
         )
 
         # wait for pulsed magnet power state to be off
-        retval = self._wait_devices_propty(
-            self._pudevs, 'PwrState-Sts', _PSConst.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'PwrState-Sts', _PSConst.DsblEnbl.Dsbl, devices=self._pudevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet PwrState to be off '\
@@ -154,8 +154,8 @@ class PUMagsStandbyHandler(_BaseHandler):
         )
 
         # wait for pulsed magnet power state to be on
-        retval = self._wait_devices_propty(
-            devs, 'PwrState-Sts', _PSConst.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'PwrState-Sts', _PSConst.DsblEnbl.Enbl, devices=devs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet PwrState to be on '\
@@ -171,8 +171,8 @@ class PUMagsStandbyHandler(_BaseHandler):
         )
 
         # wait for pulsed magnet pulse to be on
-        retval = self._wait_devices_propty(
-            devs, 'Pulse-Sts', _PSConst.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'Pulse-Sts', _PSConst.DsblEnbl.Enbl, devices=devs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for pulsed magnet Pulse to be enabled '\
@@ -246,9 +246,10 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait for PS change opmode
-        retval = self._wait_devices_propty(
-            self._psdevs, 'OpMode-Sts',
+        retval = self.wait_devices_propty(
+            'OpMode-Sts',
             len(self._psdevs)*[[_PSConst.States.SlowRef, _PSConst.States.Off]],
+            devices=self._psdevs,
             comp=lambda x, y: x in y, timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO PS to be in OpMode SlowRef '\
@@ -261,8 +262,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait current change to zero
-        retval = self._wait_devices_propty(
-            self._psdevs, 'Current-RB', 0.0,
+        retval = self.wait_devices_propty(
+            'Current-RB', 0.0, devices=self._psdevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO PS to be with current zero '\
@@ -279,8 +280,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait for PS change opmode
-        retval = self._wait_devices_propty(
-            self._psdevs, 'OpMode-Sts', _PSConst.States.RmpWfm,
+        retval = self.wait_devices_propty(
+            'OpMode-Sts', _PSConst.States.RmpWfm, devices=self._psdevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO PS to be in OpMode RmpWfm '\
@@ -293,8 +294,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait for PS WfmUpdateAuto to be enabled
-        retval = self._wait_devices_propty(
-            self._psdevs, 'WfmUpdateAuto-Sts', _PSConst.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'WfmUpdateAuto-Sts', _PSConst.DsblEnbl.Enbl, devices=self._psdevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO PS WfmUpdateAuto to be enabled '\
@@ -308,8 +309,10 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait for trigger source to be configured
-        retval = self._wait_devices_propty(
-            self._trigdevs, 'Src-Sts', values, timeout=3, return_prob=True)
+        retval = self.wait_devices_propty(
+            'Src-Sts', values, devices=self._trigdevs, timeout=3,
+            return_prob=True
+        )
         if not retval[0]:
             text = 'Check for BO Mags Triggers to be in RmpBO event '\
                    'timed out without success! Verify BO Mags Triggers!'
@@ -329,8 +332,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait for triggers to be disabled
-        retval = self._wait_devices_propty(
-            self._trigdevs, 'State-Sts', _TIConst.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'State-Sts', _TIConst.DsblEnbl.Dsbl, devices=self._trigdevs,
             timeout=3, return_prob=True)
 
         if retval[0]:
@@ -347,8 +350,8 @@ class BOPSRampStandbyHandler(_BaseHandler):
         )
 
         # wait for triggers to be enabled
-        retval = self._wait_devices_propty(
-            self._trigdevs, 'State-Sts', _TIConst.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'State-Sts', _TIConst.DsblEnbl.Enbl, devices=self._trigdevs,
             timeout=3, return_prob=True)
 
         if retval[0]:
@@ -383,8 +386,8 @@ class BORFRampStandbyHandler(_BaseHandler):
         self.llrf.rmp_enable = _Const.DsblEnbl.Dsbl
 
         # wait for RF ramp to be disable
-        retval = self._wait_devices_propty(
-            self.llrf, 'RmpEnbl-Sts', _Const.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'RmpEnbl-Sts', _Const.DsblEnbl.Dsbl, devices=self.llrf,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO RF Ramp to be disabled timed '\
@@ -407,8 +410,8 @@ class BORFRampStandbyHandler(_BaseHandler):
         self.llrf.rmp_enable = _Const.DsblEnbl.Enbl
 
         # wait for RF ramp to be enabled
-        retval = self._wait_devices_propty(
-            self.llrf, 'RmpEnbl-Sts', _Const.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'RmpEnbl-Sts', _Const.DsblEnbl.Enbl, devices=self.llrf,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for BO RF Ramp to be enabled timed '\
@@ -425,8 +428,8 @@ class BORFRampStandbyHandler(_BaseHandler):
         )
 
         # wait for triggers to be disabled
-        retval = self._wait_devices_propty(
-            self.rmptrg, 'State-Sts', _TIConst.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'State-Sts', _TIConst.DsblEnbl.Dsbl, devices=self.rmptrg,
             timeout=3, return_prob=True)
 
         if retval[0]:
@@ -443,8 +446,8 @@ class BORFRampStandbyHandler(_BaseHandler):
         )
 
         # wait for triggers to be enabled
-        retval = self._wait_devices_propty(
-            self.rmptrg, 'State-Sts', _TIConst.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'State-Sts', _TIConst.DsblEnbl.Enbl, devices=self.rmptrg,
             timeout=3, return_prob=True)
 
         if retval[0]:
@@ -527,8 +530,8 @@ class LinacStandbyHandler(_BaseHandler):
             'SET_FB_MODE', _Const.DsblEnbl.Dsbl, devices=self._llrf_devs
         )
         # wait for feedback to turn off
-        retval = self._wait_devices_propty(
-            self._llrf_devs, 'GET_FB_MODE', _Const.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'GET_FB_MODE', _Const.DsblEnbl.Dsbl, devices=self._llrf_devs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Feedback Mode to be off '\
@@ -542,8 +545,8 @@ class LinacStandbyHandler(_BaseHandler):
             devices=self._llrf_devs
         )
         # wait for integral to turn off
-        retval = self._wait_devices_propty(
-            self._llrf_devs, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl, devices=self._llrf_devs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Integral Mode to be off '\
@@ -559,8 +562,8 @@ class LinacStandbyHandler(_BaseHandler):
             'TRIGOUT', _Const.DsblEnbl.Dsbl, devices=self._moddevs
         )
         # wait for modulator trigout to turn off
-        retval = self._wait_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'TRIGOUT', _Const.DsblEnbl.Dsbl, devices=self._moddevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI modulator TrigOut to be off timed '\
@@ -575,8 +578,8 @@ class LinacStandbyHandler(_BaseHandler):
             'CHARGE', _Const.DsblEnbl.Dsbl, devices=self._moddevs
         )
         # wait for modulator charge to turn off
-        retval = self._wait_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl,
+        retval = self.wait_devices_propty(
+            'CHARGE', _Const.DsblEnbl.Dsbl, devices=self._moddevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI modulator Charge to be off timed '\
@@ -592,8 +595,8 @@ class LinacStandbyHandler(_BaseHandler):
             'CHARGE', _Const.DsblEnbl.Enbl, devices=self._moddevs
         )
         # wait for modulators charge to turn on
-        retval = self._wait_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'CHARGE', _Const.DsblEnbl.Enbl, devices=self._moddevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI modulator Charge to be on timed '\
@@ -614,8 +617,8 @@ class LinacStandbyHandler(_BaseHandler):
             'TRIGOUT', _Const.DsblEnbl.Enbl, devices=self._moddevs
         )
         # wait for modulator trigout to turn on
-        retval = self._wait_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'TRIGOUT', _Const.DsblEnbl.Enbl, devices=self._moddevs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI modulator TrigOut to be on timed '\
@@ -643,8 +646,9 @@ class LinacStandbyHandler(_BaseHandler):
             devices=self._llrf_devs
         )
         # wait for integral to turn on
-        retval = self._wait_devices_propty(
-            self._llrf_devs, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl,
+            devices=self._llrf_devs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Integral Mode to be on '\
@@ -656,8 +660,8 @@ class LinacStandbyHandler(_BaseHandler):
             'SET_FB_MODE', _Const.DsblEnbl.Enbl, devices=self._llrf_devs
         )
         # wait for feedback to turn on
-        retval = self._wait_devices_propty(
-            self._llrf_devs, 'GET_FB_MODE', _Const.DsblEnbl.Enbl,
+        retval = self.wait_devices_propty(
+            'GET_FB_MODE', _Const.DsblEnbl.Enbl, devices=self._llrf_devs,
             timeout=3, return_prob=True)
         if not retval[0]:
             text = 'Check for LI LLRF Feedback Mode to be on '\

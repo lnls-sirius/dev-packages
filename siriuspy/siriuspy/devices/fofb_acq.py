@@ -288,43 +288,43 @@ class _FamFOFBAcqBase(_DeviceSet, _FOFBCtrlAcqConst):
         """Set channel for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('Channel-Sel', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'Channel-Sts', val)
+        return self.wait_devices_propty('Channel-Sts', val, devices=ctrls)
 
     def set_nrshots(self, val):
         """Set nrshots for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('Shots-SP', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'Shots-RB', val)
+        return self.wait_devices_propty('Shots-RB', val, devices=ctrls)
 
     def set_update_time(self, val):
         """Set update_time for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('UpdateTime-SP', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'UpdateTime-RB', val)
+        return self.wait_devices_propty('UpdateTime-RB', val, devices=ctrls)
 
     def set_repeat(self, val):
         """Set repeat for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('TriggerRep-Sel', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'TriggerRep-Sts', val)
+        return self.wait_devices_propty('TriggerRep-Sts', val, devices=ctrls)
 
     def set_nrsamples_pre(self, val):
         """Set nrsamples_pre for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('SamplesPre-SP', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'SamplesPre-RB', val)
+        return self.wait_devices_propty('SamplesPre-RB', val, devices=ctrls)
 
     def set_nrsamples_post(self, val):
         """Set nrsamples_post for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('SamplesPost-SP', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'SamplesPost-RB', val)
+        return self.wait_devices_propty('SamplesPost-RB', val, devices=ctrls)
 
     def set_trigger(self, val):
         """Set trigger for all FOFBCtrl."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('Trigger-Sel', val, devices=ctrls)
-        return self._wait_devices_propty(ctrls, 'Trigger-Sts', val)
+        return self.wait_devices_propty('Trigger-Sts', val, devices=ctrls)
 
 
 # ------- system identification devices -------
@@ -752,16 +752,16 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         ctrls = list(self._ctlrs.values())
 
         self.set_devices_propty('PRBSSyncEn-Sel', 1, devices=ctrls)
-        if not self._wait_devices_propty(
-                ctrls, 'PRBSSyncEn-Sts', 1, timeout=timeout/2):
+        if not self.wait_devices_propty(
+                'PRBSSyncEn-Sts', 1, timeout=timeout/2, devices=ctrls):
             return False
 
         self._evt_fofb.cmd_external_trigger()
         _time.sleep(2)
 
         self.set_devices_propty('PRBSSyncEn-Sel', 0, devices=ctrls)
-        if not self._wait_devices_propty(
-                ctrls, 'PRBSSyncEn-Sts', 0, timeout=timeout/2):
+        if not self.wait_devices_propty(
+                'PRBSSyncEn-Sts', 0, timeout=timeout/2, devices=ctrls):
             return False
         return True
 
@@ -842,8 +842,8 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         """Command to enable PRBS for correctors."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('PRBSFOFBAccEn-Sel', 1, devices=ctrls)
-        if not self._wait_devices_propty(
-                ctrls, 'PRBSFOFBAccEn-Sts', 1, timeout=timeout):
+        if not self.wait_devices_propty(
+                'PRBSFOFBAccEn-Sts', 1, timeout=timeout, devices=ctrls):
             return False
         return True
 
@@ -851,8 +851,8 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         """Command to disable PRBS for correctors."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('PRBSFOFBAccEn-Sel', 0, devices=ctrls)
-        if not self._wait_devices_propty(
-                ctrls, 'PRBSFOFBAccEn-Sts', 0, timeout=timeout/2):
+        if not self.wait_devices_propty(
+                'PRBSFOFBAccEn-Sts', 0, timeout=timeout/2, devices=ctrls):
             return False
         return True
 
@@ -976,8 +976,8 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         """Command to enable PRBS for BPMs."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('PRBSBPMPosEn-Sel', 1, devices=ctrls)
-        if not self._wait_devices_propty(
-                ctrls, 'PRBSBPMPosEn-Sts', 1, timeout=timeout):
+        if not self.wait_devices_propty(
+                'PRBSBPMPosEn-Sts', 1, timeout=timeout, devices=ctrls):
             return False
         return True
 
@@ -985,8 +985,8 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         """Command to disable PRBS for BPMs."""
         ctrls = list(self._ctlrs.values())
         self.set_devices_propty('PRBSBPMPosEn-Sel', 0, devices=ctrls)
-        if not self._wait_devices_propty(
-                ctrls, 'PRBSBPMPosEn-Sts', 0, timeout=timeout/2):
+        if not self.wait_devices_propty(
+                'PRBSBPMPosEn-Sts', 0, timeout=timeout/2, devices=ctrls):
             return False
         return True
 

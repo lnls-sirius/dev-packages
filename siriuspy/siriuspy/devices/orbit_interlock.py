@@ -557,24 +557,24 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
     def set_gen_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM general interlock."""
         self.set_devices_propty('IntlkEn-Sel', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkEn-Sts', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_gen_enable(self, timeout=TIMEOUT, return_prob=False):
         """Enable all BPM general interlock."""
         for dev in self.devices:
             dev.gen_enable = 1
-        return self._wait_devices_propty(
-            self.devices, 'IntlkEn-Sts', 1, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkEn-Sts', 1, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_gen_disable(self, timeout=TIMEOUT, return_prob=False):
         """Disable all BPM general interlock."""
         for dev in self.devices:
             dev.gen_enable = 0
-        return self._wait_devices_propty(
-            self.devices, 'IntlkEn-Sts', 0, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkEn-Sts', 0, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_reset_gen(self):
@@ -618,24 +618,24 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
     def set_minsum_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM minimum sum interlock."""
         self.set_devices_propty('IntlkMinSumEn-Sel', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkMinSumEn-Sts', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkMinSumEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_minsum_enable(self, timeout=TIMEOUT, return_prob=False):
         """Enable all BPM minimum sum threshold."""
         for dev in self.devices:
             dev.minsum_enable = 1
-        return self._wait_devices_propty(
-            self.devices, 'IntlkMinSumEn-Sts', 1, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkMinSumEn-Sts', 1, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_minsum_disable(self, timeout=TIMEOUT, return_prob=False):
         """Disable all BPM minimum sum threshold."""
         for dev in self.devices:
             dev.minsum_enable = 0
-        return self._wait_devices_propty(
-            self.devices, 'IntlkMinSumEn-Sts', 0, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkMinSumEn-Sts', 0, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -660,8 +660,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtMinSum-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtMinSum-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtMinSum-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     # --- position interlock ---
@@ -679,24 +679,24 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
     def set_pos_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM position interlock."""
         self.set_devices_propty('IntlkPosEn-Sel', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkPosEn-Sts', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkPosEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_pos_enable(self, timeout=TIMEOUT, return_prob=False):
         """Enable all BPM position interlock."""
         for dev in self.devices:
             dev.pos_enable = 1
-        return self._wait_devices_propty(
-            self.devices, 'IntlkPosEn-Sts', 1, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkPosEn-Sts', 1, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_pos_disable(self, timeout=TIMEOUT, return_prob=False):
         """Disable all BPM position interlock."""
         for dev in self.devices:
             dev.pos_enable = 0
-        return self._wait_devices_propty(
-            self.devices, 'IntlkPosEn-Sts', 0, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkPosEn-Sts', 0, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_reset_pos(self):
@@ -728,8 +728,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtPosMinX-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtPosMinX-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtPosMinX-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -755,8 +755,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtPosMaxX-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtPosMaxX-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtPosMaxX-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -782,8 +782,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtPosMinY-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtPosMinY-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtPosMinY-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -809,8 +809,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtPosMaxY-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtPosMaxY-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtPosMaxY-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -908,24 +908,24 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
     def set_ang_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM angulation interlock."""
         self.set_devices_propty('IntlkAngEn-Sel', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkAngEn-Sts', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkAngEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_ang_enable(self, timeout=TIMEOUT, return_prob=False):
         """Enable all BPM angulation interlock."""
         for dev in self.devices:
             dev.ang_enable = 1
-        return self._wait_devices_propty(
-            self.devices, 'IntlkAngEn-Sts', 1, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkAngEn-Sts', 1, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_ang_disable(self, timeout=TIMEOUT, return_prob=False):
         """Disable all BPM angulation interlock."""
         for dev in self.devices:
             dev.ang_enable = 0
-        return self._wait_devices_propty(
-            self.devices, 'IntlkAngEn-Sts', 0, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkAngEn-Sts', 0, timeout=timeout,
             return_prob=return_prob)
 
     def cmd_reset_ang(self):
@@ -957,8 +957,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtAngMinX-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtAngMinX-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtAngMinX-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -984,8 +984,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtAngMaxX-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtAngMaxX-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtAngMaxX-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -1011,8 +1011,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtAngMinY-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtAngMinY-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtAngMinY-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
@@ -1038,8 +1038,8 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
         """
         value = self._handle_thres_input(value)
         self.set_devices_propty('IntlkLmtAngMaxY-SP', value)
-        return self._wait_devices_propty(
-            self.devices, 'IntlkLmtAngMaxY-RB', value, timeout=timeout,
+        return self.wait_devices_propty(
+            'IntlkLmtAngMaxY-RB', value, timeout=timeout,
             return_prob=return_prob)
 
     @property
