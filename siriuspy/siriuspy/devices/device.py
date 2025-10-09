@@ -499,6 +499,8 @@ class DeviceSet:
             probs (list[str]): list of PV names for which comparison failed.
                 Only returned if return_prob is True.
         """
+        if devices is None:
+            devices = self._devices
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
