@@ -6,12 +6,17 @@ import time as _time
 from functools import partial as _partial
 
 import numpy as _np
-from epics.ca import CASeverityException as _CASeverityException, \
+from epics.ca import (
+    CASeverityException as _CASeverityException,
     ChannelAccessGetFailure as _ChannelAccessGetFailure
+)
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
-from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
-    GET_TIMEOUT as _GET_TIMEOUT, PV as _PV
+from ..epics import (
+    CONNECTION_TIMEOUT as _CONN_TIMEOUT,
+    GET_TIMEOUT as _GET_TIMEOUT,
+    PV as _PV
+)
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..simul import SimPV as _PVSim, Simulation as _Simulation
 
@@ -51,8 +56,12 @@ class Device:
     PROPERTY_SEP = ':'
 
     def __init__(
-            self, devname, props2init='all', auto_monitor=True,
-            auto_monitor_mon=False):
+        self,
+        devname,
+        props2init='all',
+        auto_monitor=True,
+        auto_monitor_mon=False,
+    ):
         """."""
         self._devname = _SiriusPVName(devname) if devname else devname
         self._auto_monitor = auto_monitor
@@ -83,14 +92,16 @@ class Device:
         """Return properties that were added to the PV list that are not in
         PROPERTIES_DEFAULT.
         """
-        return tuple(sorted(
-            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT)))
+        return tuple(
+            sorted(set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
+        )
 
     @property
     def properties_all(self):
         """Return all properties of the device, connected or not."""
-        return tuple(sorted(
-            set(self.PROPERTIES_DEFAULT + self.properties_in_use)))
+        return tuple(
+            sorted(set(self.PROPERTIES_DEFAULT + self.properties_in_use))
+        )
 
     @property
     def simulators(self):
@@ -169,6 +180,7 @@ class Device:
 
     def wait(self, propty, value, timeout=None, comp='eq'):
         """."""
+
         def comp_(val):
             boo = comp(self[propty], val)
             if isinstance(boo, _np.ndarray):
@@ -192,7 +204,8 @@ class Device:
         return True
 
     def wait_float(
-            self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
+        self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None
+    ):
         """Wait until float value gets close enough of desired value."""
         isc = _np.isclose if isinstance(value, _np.ndarray) else _math.isclose
         func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
@@ -271,14 +284,17 @@ class Device:
         in_sim = _Simulation.pv_check(pvname)
         pvclass = _PVSim if in_sim else _PV
         return pvclass(
-            pvname, auto_monitor=auto_monitor,
-            connection_timeout=Device.CONNECTION_TIMEOUT)
+            pvname,
+            auto_monitor=auto_monitor,
+            connection_timeout=Device.CONNECTION_TIMEOUT,
+        )
 
     def _get_pvname(self, propty):
         dev = self._devname
         pref = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
-        if isinstance(dev, _SiriusPVName) and \
-                dev.is_standard(name_type='devname'):
+        if isinstance(dev, _SiriusPVName) and dev.is_standard(
+            name_type='devname'
+        ):
             ppt = dev.propty
             pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
         elif dev:
@@ -430,7 +446,7 @@ class DeviceSet:
         devices=None,
         comp='eq',
         timeout=None,
-        return_prob=False
+        return_prob=False,
     ):
         """Wait for devices property to reach value(s).
 
@@ -462,7 +478,7 @@ class DeviceSet:
 
         timeout = _DEF_TIMEOUT if timeout is None else timeout
         tini = _time.time()
-        for _ in range(int(timeout/_TINY_INTERVAL)):
+        for _ in range(int(timeout / _TINY_INTERVAL)):
             okdevs = set()
             for k, v in dev2val.items():
                 boo = comp(k[propty], v)
@@ -490,10 +506,10 @@ class DeviceSet:
         """Get devices to values dict."""
         # always use an iterable object
         if not isinstance(devices, (tuple, list)):
-            devices = [devices, ]
+            devices = [devices]
         # if 'values' is not iterable, consider the same value for all devices
         if not isinstance(values, (tuple, list)):
-            values = len(devices)*[values]
+            values = len(devices) * [values]
         return {k: v for k, v in zip(devices, values)}
 
     def __getitem__(self, devidx):
