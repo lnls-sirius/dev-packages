@@ -240,4 +240,4 @@ class CAXCtrl(_Device):
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
         self[propty] = 1
-        return self._wait(propty, 0, timeout=timeout)
+        return self.wait(propty, 0, timeout=timeout)

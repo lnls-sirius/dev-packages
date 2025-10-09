@@ -1279,7 +1279,7 @@ class HLFOFB(_Device):
         'CtrlrSyncMaxOrbDist-Cmd', 'CtrlrSyncPacketLossDetec-Cmd',
         'CtrlrReset-Cmd',
         'FOFBAccDecimation-Sel', 'FOFBAccDecimation-Sts',
-        'FOFBAccDecimation-SP',  'FOFBAccDecimation-RB',
+        'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
         'PSConfigMat-SP', 'PSConfigMat-RB',
         'KickCHAcc-Mon', 'KickCVAcc-Mon',
         'KickCHRef-Mon', 'KickCVRef-Mon',
@@ -1340,7 +1340,7 @@ class HLFOFB(_Device):
         if self.loop_state == _Const.LoopState.Closed:
             return True
         self['LoopState-Sel'] = _Const.LoopState.Closed
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', _Const.LoopState.Closed, timeout=timeout)
 
     def cmd_turn_off_loop_state(self, timeout=None):
@@ -1348,7 +1348,7 @@ class HLFOFB(_Device):
         if self.loop_state == _Const.LoopState.Open:
             return True
         self['LoopState-Sel'] = _Const.LoopState.Open
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', _Const.LoopState.Open, timeout=timeout)
 
     @property
@@ -1806,6 +1806,6 @@ class HLFOFB(_Device):
     def wait_respm_meas(self, timeout=None):
         """Wait for response matrix measure."""
         timeout = timeout or self._default_timeout_respm
-        return self._wait(
+        return self.wait(
             'MeasRespMat-Mon', self._data.MeasRespMatMon.Measuring,
             timeout=timeout, comp='ne')

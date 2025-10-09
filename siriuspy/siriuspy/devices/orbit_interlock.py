@@ -283,8 +283,7 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     @property
     def minsum_enable(self):
-        """
-        Minimum sum threshold enable.
+        """Minimum sum threshold enable.
 
         If enabled, generate orbit interlock only when sum exceeds
         value in 'minsum_thres' property.
@@ -358,64 +357,56 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     @property
     def pos_inst_lower_x(self):
-        """
-        Instantaneous position interlock set when X
+        """Instantaneous position interlock set when X
         minimum threshold is exceeded.
         """
         return self['IntlkPosLowerX-Mon']
 
     @property
     def pos_inst_upper_x(self):
-        """
-        Instantaneous position interlock set when X
+        """Instantaneous position interlock set when X
         maximum threshold is exceeded.
         """
         return self['IntlkPosUpperX-Mon']
 
     @property
     def pos_inst_lower_y(self):
-        """
-        Instantaneous position interlock set when Y
+        """Instantaneous position interlock set when Y
         minimum threshold is exceeded.
         """
         return self['IntlkPosLowerY-Mon']
 
     @property
     def pos_inst_upper_y(self):
-        """
-        Instantaneous position interlock set when Y
+        """Instantaneous position interlock set when Y
         maximum threshold is exceeded.
         """
         return self['IntlkPosUpperY-Mon']
 
     @property
     def pos_latch_lower_x(self):
-        """
-        Latch position interlock set when X
+        """Latch position interlock set when X
         minimum threshold is exceeded.
         """
         return self['IntlkPosLowerLtcX-Mon']
 
     @property
     def pos_latch_upper_x(self):
-        """
-        Latch position interlock set when X
+        """Latch position interlock set when X
         maximum threshold is exceeded.
         """
         return self['IntlkPosUpperLtcX-Mon']
 
     @property
     def pos_latch_lower_y(self):
-        """
-        Latch position interlock set when Y
+        """Latch position interlock set when Y
         minimum threshold is exceeded.
         """
         return self['IntlkPosLowerLtcY-Mon']
 
     @property
     def pos_latch_upper_y(self):
-        """
-        Latch position interlock set when Y
+        """Latch position interlock set when Y
         maximum threshold is exceeded.
         """
         return self['IntlkPosUpperLtcY-Mon']
@@ -474,64 +465,56 @@ class BPMOrbitIntlk(BaseOrbitIntlk, _Device):
 
     @property
     def ang_inst_lower_x(self):
-        """
-        Instantaneous angulation interlock set when X
+        """Instantaneous angulation interlock set when X
         minimum threshold is exceeded.
         """
         return self['IntlkAngLowerX-Mon']
 
     @property
     def ang_inst_upper_x(self):
-        """
-        Instantaneous angulation interlock set when X
+        """Instantaneous angulation interlock set when X
         maximum threshold is exceeded.
         """
         return self['IntlkAngUpperX-Mon']
 
     @property
     def ang_inst_lower_y(self):
-        """
-        Instantaneous angulation interlock set when Y
+        """Instantaneous angulation interlock set when Y
         minimum threshold is exceeded.
         """
         return self['IntlkAngLowerY-Mon']
 
     @property
     def ang_inst_upper_y(self):
-        """
-        Instantaneous angulation interlock set when Y
+        """Instantaneous angulation interlock set when Y
         maximum threshold is exceeded.
         """
         return self['IntlkAngUpperY-Mon']
 
     @property
     def ang_latch_lower_x(self):
-        """
-        Latch angulation interlock set when X
+        """Latch angulation interlock set when X
         minimum threshold is exceeded.
         """
         return self['IntlkAngLowerLtcX-Mon']
 
     @property
     def ang_latch_upper_x(self):
-        """
-        Latch angulation interlock set when X
+        """Latch angulation interlock set when X
         maximum threshold is exceeded.
         """
         return self['IntlkAngUpperLtcX-Mon']
 
     @property
     def ang_latch_lower_y(self):
-        """
-        Latch angulation interlock set when Y
+        """Latch angulation interlock set when Y
         minimum threshold is exceeded.
         """
         return self['IntlkAngLowerLtcY-Mon']
 
     @property
     def ang_latch_upper_y(self):
-        """
-        Latch angulation interlock set when Y
+        """Latch angulation interlock set when Y
         maximum threshold is exceeded.
         """
         return self['IntlkAngUpperLtcY-Mon']
@@ -1224,7 +1207,7 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
     def set_enable(self, value, timeout=TIMEOUT):
         """Set enable state for BPM general interlock."""
         self['Enable-Sel'] = bool(value)
-        return self._wait('Enable-Sts', bool(value), timeout=timeout)
+        return self.wait('Enable-Sts', bool(value), timeout=timeout)
 
     def cmd_enable(self, timeout=TIMEOUT):
         """Enable all BPM general interlock."""
@@ -1238,7 +1221,7 @@ class HLOrbitInterlock(BaseOrbitIntlk, _Device):
         """Enable all BPM general interlock."""
         val = self['Reset-Cmd']
         self['Reset-Cmd'] = True
-        return self._wait('Reset-Cmd', val+1, timeout=timeout)
+        return self.wait('Reset-Cmd', val+1, timeout=timeout)
 
     @property
     def pos_x_min_thres(self):

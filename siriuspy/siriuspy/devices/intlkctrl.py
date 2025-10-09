@@ -64,12 +64,12 @@ class ASMPSCtrl(_Device):
     def cmd_gamma_enable(self, timeout=None):
         """Enable gamma signal for beamlines."""
         self['EnblGamma-Cmd'] = 1
-        return self._wait('AlarmGammaShutter-Mon', 1, timeout)
+        return self.wait('AlarmGammaShutter-Mon', 1, timeout)
 
     def cmd_gamma_disable(self, timeout=None):
         """Disable gamma signal for beamlines."""
         self['DsblGamma-Cmd'] = 1
-        return self._wait('AlarmGammaShutter-Mon', 0, timeout)
+        return self.wait('AlarmGammaShutter-Mon', 0, timeout)
 
 
 class BLInterlockCtrl(_Device):

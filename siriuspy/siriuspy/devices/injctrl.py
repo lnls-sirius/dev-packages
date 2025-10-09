@@ -116,7 +116,7 @@ class InjCtrl(_Device):
         """Wait Mode-Sts to reach `injmode` value."""
         if isinstance(injmode, str):
             injmode = self.InjMode._fields.index(injmode)
-        return self._wait('Mode-Sts', injmode, timeout=timeout)
+        return self.wait('Mode-Sts', injmode, timeout=timeout)
 
     @property
     def injtype(self):
@@ -144,7 +144,7 @@ class InjCtrl(_Device):
 
     def wait_injtype_cmd_finish(self, timeout=None):
         """Wait TypeCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'TypeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
@@ -172,7 +172,7 @@ class InjCtrl(_Device):
 
     def wait_bias_volt_cmd_finish(self, timeout=None):
         """Wait BiasVoltCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'BiasVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
@@ -191,7 +191,7 @@ class InjCtrl(_Device):
 
     def wait_filacurr_cmd_finish(self, timeout=None):
         """Wait FilaOpCurrCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'FilaOpCurrCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
@@ -210,7 +210,7 @@ class InjCtrl(_Device):
 
     def wait_hvolt_cmd_finish(self, timeout=None):
         """Wait HVOpVoltCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'HVOpVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
@@ -266,24 +266,24 @@ class InjCtrl(_Device):
 
     def wait_pumode_cmd_finish(self, timeout=None):
         """Wait PUModeCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'PUModeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     def cmd_change_pumode_to_onaxis(self, timeout=10):
         """Change PUMode to On-Axis injection."""
         self.pumode = self.PUMode.OnAxis
-        return self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
+        return self.wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
 
     def cmd_change_pumode_to_accumulation(self, timeout=10):
         """Change PUMode to accumulation."""
         self.pumode = self.PUMode.Accumulation
-        return self._wait(
+        return self.wait(
             'PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
 
     def cmd_change_pumode_to_optimization(self, timeout=10):
         """Change PUMode to optimization."""
         self.pumode = self.PUMode.Optimization
-        return self._wait(
+        return self.wait(
             'PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
 
     @property
@@ -629,7 +629,7 @@ class InjCtrl(_Device):
     def injsys_turn_on_order(self):
         """Injection system turn on command order.
 
-        Return
+        Return:
         ------
         str
             A string of a list with the reference of the handlers,
@@ -651,7 +651,7 @@ class InjCtrl(_Device):
     def injsys_turn_off_order(self):
         """Injection system turn on command order.
 
-        Return
+        Return:
         ------
         str
             A string of a list with the reference of the handlers,
@@ -671,7 +671,7 @@ class InjCtrl(_Device):
 
     def wait_injsys_cmd_finish(self, timeout=None):
         """Wait InjSysCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'InjSysCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     def check_injsys_cmd_completed(self):
@@ -698,7 +698,7 @@ class InjCtrl(_Device):
 
     def wait_rfkillbeam_cmd_finish(self, timeout=None):
         """Wait RFKillBeam-Mon to reach `Idle` value."""
-        return self._wait(
+        return self.wait(
             'RFKillBeam-Mon', self.IdleRun.Idle, timeout=timeout)
 
     # ----- diagnostics properties -----

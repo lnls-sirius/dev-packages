@@ -726,13 +726,13 @@ class BPM(_Device):
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
-        return self._wait(
+        return self.wait(
             'GENStatus-Mon', self.ACQSTATES_FINISHED, timeout=timeout,
             comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
-        return self._wait(
+        return self.wait(
             'GENStatus-Mon', self.ACQSTATES_STARTED, timeout=timeout,
             comp=lambda x, y: x in y)
 
@@ -749,40 +749,40 @@ class BPM(_Device):
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
         self.switching_mode = _csbpm.SwModes.switching
-        return self._wait('SwMode-Sts', _csbpm.SwModes.switching)
+        return self.wait('SwMode-Sts', _csbpm.SwModes.switching)
 
     def cmd_turn_off_switching(self):
         """Command Turn off Switching."""
         self.switching_mode = _csbpm.SwModes.direct
-        return self._wait('SwMode-Sts', _csbpm.SwModes.direct)
+        return self.wait('SwMode-Sts', _csbpm.SwModes.direct)
 
     def cmd_sync_tbt(self):
         """Synchronize TbT acquisitions with Timing System."""
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbTPhaseSyncEn-Sts', 0)
+        return self.wait('TbTPhaseSyncEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
         self.fofb_sync_enbl = 1
         _time.sleep(0.1)
         self.fofb_sync_enbl = 0
-        return self._wait('FOFBPhaseSyncEn-Sts', 0)
+        return self.wait('FOFBPhaseSyncEn-Sts', 0)
 
     def cmd_sync_facq(self):
         """Synchronize FAcq acquisitions with Timing System."""
         self.facq_sync_enbl = 1
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
-        return self._wait('FAcqPhaseSyncEn-Sts', 0)
+        return self.wait('FAcqPhaseSyncEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('MonitPhaseSyncEn-Sts', 0)
+        return self.wait('MonitPhaseSyncEn-Sts', 0)
 
     def get_sampling_frequency(
             self, rf_freq: float, acq_rate='') -> float:

@@ -389,7 +389,7 @@ class DVF(_Device):
         # check readback values
         for propty, value in props_values.items():
             propty = self._get_propty(propty)
-            if not self._wait(propty + '_RBV', value, timeout=timeout):
+            if not self.wait(propty + '_RBV', value, timeout=timeout):
                 return False
 
         # configure image acquisition parameters
@@ -477,7 +477,7 @@ class DVF(_Device):
         timeout = timeout or self._default_timeout
         self[propty] = value
         propty = self._get_propty(propty)
-        return self._wait(propty + '_RBV', value, timeout=timeout)
+        return self.wait(propty + '_RBV', value, timeout=timeout)
 
 
 class DVFImgProc(DVF):

@@ -147,13 +147,13 @@ class _FOFBCtrlAcqBase(_Device, _FOFBCtrlBase, _FOFBCtrlAcqConst):
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
-        return self._wait(
+        return self.wait(
             'Status-Mon', _FOFBCtrlAcqConst.STATES_FINISHED,
             timeout=timeout, comp=lambda x, y: x in y)
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
-        return self._wait(
+        return self.wait(
             'Status-Mon', _FOFBCtrlAcqConst.STATES_STARTED,
             timeout=timeout, comp=lambda x, y: x in y)
 
@@ -237,8 +237,7 @@ class _FamFOFBAcqBase(_DeviceSet, _FOFBCtrlAcqConst):
 
     @property
     def nrshots(self):
-        """
-        Number of shots in the acquisition for all
+        """Number of shots in the acquisition for all
         controllers in ctrldevs.
         """
         return _np.array([dev.nrshots for dev in self._ctlrs.values()])
@@ -250,24 +249,21 @@ class _FamFOFBAcqBase(_DeviceSet, _FOFBCtrlAcqConst):
 
     @property
     def repeat(self):
-        """
-        Whether the acquisition is repeat or normal for all
+        """Whether the acquisition is repeat or normal for all
         controllers in ctrldevs.
         """
         return _np.array([dev.repeat for dev in self._ctlrs.values()])
 
     @property
     def nrsamples_pre(self):
-        """
-        Number of samples previous to trigger acquisition for all
+        """Number of samples previous to trigger acquisition for all
         controllers in ctrldevs.
         """
         return _np.array([dev.nrsamples_pre for dev in self._ctlrs.values()])
 
     @property
     def nrsamples_post(self):
-        """
-        Number of samples posterior to trigger acquisition for all
+        """Number of samples posterior to trigger acquisition for all
         controllers in ctrldevs.
         """
         return _np.array([dev.nrsamples_post for dev in self._ctlrs.values()])
@@ -579,8 +575,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_mov_avg_taps(self):
-        """
-        Number of taps of the PRBS moving average filter of all controllers.
+        """Number of taps of the PRBS moving average filter of all controllers.
         """
         return _np.array(
             [dev.prbs_mov_avg_taps for dev in self._ctlrs.values()])
@@ -593,8 +588,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_fofbacc_enbl(self):
-        """
-        Whether to enable or not PRBS actuation in correctors
+        """Whether to enable or not PRBS actuation in correctors
         of all controllers in ctrldevs.
         """
         return _np.array(
@@ -614,8 +608,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_bpmpos_enbl(self):
-        """
-        Whether to enable or not PRBS excitation in BPMs PosX
+        """Whether to enable or not PRBS excitation in BPMs PosX
         of all controllers in ctrldevs.
         """
         return _np.array(
@@ -623,8 +616,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_bpmposx_lvl0(self):
-        """
-        Array with all BPMs PosX value for PRBS level 0 of all
+        """Array with all BPMs PosX value for PRBS level 0 of all
         controllers in ctrldevs [nm].
         """
         return _np.array(
@@ -632,8 +624,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_bpmposx_lvl1(self):
-        """
-        Array with all BPMs PosX value for PRBS level 1 of all
+        """Array with all BPMs PosX value for PRBS level 1 of all
         controllers in ctrldevs [nm].
         """
         return _np.array(
@@ -641,8 +632,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_bpmposy_lvl0(self):
-        """
-        Array with all BPMs PosY value for PRBS level 0 of all
+        """Array with all BPMs PosY value for PRBS level 0 of all
         controllers in ctrldevs [nm].
         """
         return _np.array(
@@ -650,8 +640,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     @property
     def prbs_bpmposy_lvl1(self):
-        """
-        Array with all BPMs PosY value for PRBS level 1 of all
+        """Array with all BPMs PosY value for PRBS level 1 of all
         controllers in ctrldevs [nm].
         """
         return _np.array(
@@ -789,8 +778,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     def check_prbs_fofbacc_levels(
             self, level0, level1=None, atol=DEF_ATOL_FOFBACC):
-        """
-        Check whether power supply FOFBAcc PRBS excitation levels are equal to
+        """Check whether power supply FOFBAcc PRBS excitation levels are equal to
         desired values.
 
         Args:
@@ -821,8 +809,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
     def wait_prbs_fofbacc_levels(
             self, level0, level1=None, atol=DEF_ATOL_FOFBACC,
             timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
-        """
-        Wait for power supply FOFBAcc PRBS excitation levels to be equal to
+        """Wait for power supply FOFBAcc PRBS excitation levels to be equal to
         desired values. Refer to check_prbs_fofbacc_levels for more details
         on arguments and returns.
         """
@@ -879,8 +866,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         return True
 
     def check_prbs_bpmposx_levels(self, level0, level1=None):
-        """
-        Check whether BPM PosX PRBS excitation levels are equal to
+        """Check whether BPM PosX PRBS excitation levels are equal to
         desired values.
 
         Args:
@@ -904,8 +890,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     def wait_prbs_bpmposx_levels(
             self, level0, level1=None, timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
-        """
-        Wait for BPM PosX PRBS excitation levels to be equal to desired
+        """Wait for BPM PosX PRBS excitation levels to be equal to desired
         values. Refer to check_prbs_bpmposx_levels for more details on
         arguments and returns.
         """
@@ -933,8 +918,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
         return True
 
     def check_prbs_bpmposy_levels(self, level0, level1=None):
-        """
-        Check whether BPM PosY PRBS excitation levels are equal to
+        """Check whether BPM PosY PRBS excitation levels are equal to
         desired values.
 
         Args:
@@ -958,8 +942,7 @@ class FamFOFBSysId(_FamFOFBAcqBase):
 
     def wait_prbs_bpmposy_levels(
             self, level0, level1=None, timeout=_FamFOFBAcqBase.DEF_TIMEOUT):
-        """
-        Wait for BPM PosY PRBS excitation levels to be equal to desired
+        """Wait for BPM PosY PRBS excitation levels to be equal to desired
         values. Refer to check_prbs_bpmposx_levels for more details on
         arguments and returns.
         """

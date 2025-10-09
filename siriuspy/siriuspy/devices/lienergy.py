@@ -57,9 +57,9 @@ class LIEnergy(_Device):
     def cmd_turn_on_measurement(self, timeout=10):
         """."""
         self['MeasureCtrl-Sel'] = 1
-        return self._wait('MeasureCtrl-Sts', 1, timeout=timeout)
+        return self.wait('MeasureCtrl-Sts', 1, timeout=timeout)
 
     def cmd_turn_off_measurement(self, timeout=10):
         """."""
         self['MeasureCtrl-Sel'] = 0
-        return self._wait('MeasureCtrl-Sts', 0, timeout=timeout)
+        return self.wait('MeasureCtrl-Sts', 0, timeout=timeout)

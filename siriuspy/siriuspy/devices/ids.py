@@ -485,11 +485,11 @@ class IDBase(_Device):
 
     def wait_move_start(self, timeout=None):
         """Wait for movement to start."""
-        return self._wait('Moving-Mon', 1, timeout)
+        return self.wait('Moving-Mon', 1, timeout)
 
     def wait_move_finish(self, timeout=None):
         """Wait for movement to finish."""
-        return self._wait('Moving-Mon', 0, timeout)
+        return self.wait('Moving-Mon', 0, timeout)
 
     def wait_move_config(self, pparam, kparam, timeout):
         """."""
@@ -664,7 +664,7 @@ class IDBase(_Device):
         timeout = max(0, timeout - (t2_ - t0_))
 
         # wait for polarization value within timeout
-        return self._wait(
+        return self.wait(
             self.PARAM_PVS.POL_MON, polarization, timeout=timeout, comp='eq')
 
     def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
@@ -744,7 +744,7 @@ class IDBase(_Device):
                 success &= self.wait_float(
                     propty_rb, value, timeout=timeout)
             else:
-                success &= super()._wait(
+                success &= self.wait(
                     propty_rb, value, timeout=timeout, comp='eq')
         return success
 
@@ -1166,14 +1166,14 @@ class PAPU(IDBase):
     def cmd_move_phase_enable(self, timeout=None):
         """Command to release and enable ID phase movement."""
         self['EnblAndReleasePhase-Sel'] = 1
-        return super()._wait(
+        return self.wait(
             'AllowedToChangePhase-Mon',
             1, timeout=timeout, comp='eq')
 
     def cmd_move_phase_disable(self, timeout=None):
         """Command to disable and break ID phase movement."""
         self['EnblAndReleasePhase-Sel'] = 0
-        return super()._wait(
+        return self.wait(
             'AllowedToChangePhase-Mon',
             0, timeout=timeout, comp='eq')
 
@@ -1381,14 +1381,14 @@ class EPU(PAPU):
     def cmd_move_gap_enable(self, timeout=None):
         """Command to release and enable ID gap movement."""
         self['EnblAndReleaseGap-Sel'] = 1
-        return super()._wait(
+        return self.wait(
             'AllowedToChangeGap-Mon',
             1, timeout=timeout, comp='eq')
 
     def cmd_move_gap_disable(self, timeout=None):
         """Command to disable and break ID gap movement."""
         self['EnblAndReleaseGap-Sel'] = 0
-        return super()._wait(
+        return self.wait(
             'AllowedToChangeGap-Mon',
             0, timeout=timeout, comp='eq')
 

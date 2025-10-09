@@ -61,12 +61,12 @@ class EGBias(_Device):
     def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.On
-        return self._wait('swstatus', self.PWRSTATE.On, timeout)
+        return self.wait('swstatus', self.PWRSTATE.On, timeout)
 
     def cmd_turn_off(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.Off
-        return self._wait('swstatus', self.PWRSTATE.Off, timeout)
+        return self.wait('swstatus', self.PWRSTATE.Off, timeout)
 
     def is_on(self):
         """."""
@@ -133,12 +133,12 @@ class EGFilament(_Device):
     def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.On
-        return self._wait('swstatus', self.PWRSTATE.On, timeout)
+        return self.wait('swstatus', self.PWRSTATE.On, timeout)
 
     def cmd_turn_off(self, timeout=DEF_TIMEOUT):
         """."""
         self['switch'] = self.PWRSTATE.Off
-        return self._wait('swstatus', self.PWRSTATE.Off, timeout)
+        return self.wait('swstatus', self.PWRSTATE.Off, timeout)
 
     def is_on(self):
         """."""
@@ -218,25 +218,25 @@ class EGHVPS(_Device):
             _time.sleep(1)
 
         self['enable'] = self.PWRSTATE.On
-        if not self._wait('enstatus', self.PWRSTATE.On, timeout=timeout):
+        if not self.wait('enstatus', self.PWRSTATE.On, timeout=timeout):
             return False
         return True
 
     def cmd_turn_on(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = self.PWRSTATE.On
-        if not self._wait('enstatus', self.PWRSTATE.On, timeout=timeout/2):
+        if not self.wait('enstatus', self.PWRSTATE.On, timeout=timeout/2):
             return False
         self['switch'] = self.PWRSTATE.On
-        return self._wait('swstatus', self.PWRSTATE.On, timeout=timeout/2)
+        return self.wait('swstatus', self.PWRSTATE.On, timeout=timeout/2)
 
     def cmd_turn_off(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = self.PWRSTATE.Off
-        if not self._wait('enstatus', self.PWRSTATE.Off, timeout=timeout/2):
+        if not self.wait('enstatus', self.PWRSTATE.Off, timeout=timeout/2):
             return False
         self['switch'] = self.PWRSTATE.Off
-        return self._wait('swstatus', self.PWRSTATE.Off, timeout=timeout/2)
+        return self.wait('swstatus', self.PWRSTATE.Off, timeout=timeout/2)
 
     def is_on(self):
         """."""
@@ -306,12 +306,12 @@ class EGTriggerPS(_Device):
     def cmd_enable_trigger(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = 1
-        return self._wait('enablereal', value=1, timeout=timeout)
+        return self.wait('enablereal', value=1, timeout=timeout)
 
     def cmd_disable_trigger(self, timeout=DEF_TIMEOUT):
         """."""
         self['enable'] = 0
-        return self._wait('enablereal', value=0, timeout=timeout)
+        return self.wait('enablereal', value=0, timeout=timeout)
 
     def is_on(self):
         """."""
@@ -394,12 +394,12 @@ class EGPulsePS(_Device):
     def cmd_turn_off_single_bunch_switch(self, timeout=DEF_TIMEOUT):
         """Turn off single bunch switch."""
         self.single_bunch_switch = 0
-        return self._wait('singleswstatus', 0, timeout=timeout)
+        return self.wait('singleswstatus', 0, timeout=timeout)
 
     def cmd_turn_off_single_bunch_mode(self, timeout=DEF_TIMEOUT):
         """Turn off single bunch mode."""
         self.single_bunch_mode = 0
-        return self._wait('singleselstatus', 0, timeout=timeout)
+        return self.wait('singleselstatus', 0, timeout=timeout)
 
     def cmd_turn_off_single_bunch(self, timeout=DEF_TIMEOUT):
         """Turn off single bunch."""
@@ -410,12 +410,12 @@ class EGPulsePS(_Device):
     def cmd_turn_on_single_bunch_switch(self, timeout=DEF_TIMEOUT):
         """Turn on single bunch switch."""
         self.single_bunch_switch = 1
-        return self._wait('singleswstatus', 1, timeout=timeout)
+        return self.wait('singleswstatus', 1, timeout=timeout)
 
     def cmd_turn_on_single_bunch_mode(self, timeout=DEF_TIMEOUT):
         """Turn on single bunch mode."""
         self.single_bunch_mode = 1
-        return self._wait('singleselstatus', 1, timeout=timeout)
+        return self.wait('singleselstatus', 1, timeout=timeout)
 
     def cmd_turn_on_single_bunch(self, timeout=DEF_TIMEOUT):
         """Turn on single bunch."""
@@ -426,12 +426,12 @@ class EGPulsePS(_Device):
     def cmd_turn_off_multi_bunch_switch(self, timeout=DEF_TIMEOUT):
         """Turn off multi bunch switch."""
         self.multi_bunch_switch = 0
-        return self._wait('multiswstatus', 0, timeout=timeout)
+        return self.wait('multiswstatus', 0, timeout=timeout)
 
     def cmd_turn_off_multi_bunch_mode(self, timeout=DEF_TIMEOUT):
         """Turn off multi bunch mode."""
         self.multi_bunch_mode = 0
-        return self._wait('multiselstatus', 0, timeout=timeout)
+        return self.wait('multiselstatus', 0, timeout=timeout)
 
     def cmd_turn_off_multi_bunch(self, timeout=DEF_TIMEOUT):
         """Turn off multi bunch."""
@@ -442,12 +442,12 @@ class EGPulsePS(_Device):
     def cmd_turn_on_multi_bunch_switch(self, timeout=DEF_TIMEOUT):
         """Turn on multi bunch switch."""
         self.multi_bunch_switch = 1
-        return self._wait('multiswstatus', 1, timeout=timeout)
+        return self.wait('multiswstatus', 1, timeout=timeout)
 
     def cmd_turn_on_multi_bunch_mode(self, timeout=DEF_TIMEOUT):
         """Turn on multi bunch mode."""
         self.multi_bunch_mode = 1
-        return self._wait('multiselstatus', 1, timeout=timeout)
+        return self.wait('multiselstatus', 1, timeout=timeout)
 
     def cmd_turn_on_multi_bunch(self, timeout=DEF_TIMEOUT):
         """Turn on multi bunch."""

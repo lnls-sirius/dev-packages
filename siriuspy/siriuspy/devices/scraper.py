@@ -57,11 +57,11 @@ class _ScraperDev(_Device):
     def _wait_finish_moving(self, pv_names, timeout=10):
         """."""
         t0 = _time.time()
-        ret1 = self._wait(propty=pv_names[0], value=1, timeout=timeout)
+        ret1 = self.wait(propty=pv_names[0], value=1, timeout=timeout)
         if not ret1:
             return ret1
         timeout -= _time.time() - t0
-        ret2 = self._wait(propty=pv_names[1], value=1, timeout=timeout)
+        ret2 = self.wait(propty=pv_names[1], value=1, timeout=timeout)
         return ret2
 
     @staticmethod
@@ -165,12 +165,12 @@ class ScraperH(_ScraperDev):
     def cmd_force_left_slit(self):
         """Force left slit position."""
         self['ForceLeftSlitPos-Cmd'] = 1
-        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
+        return self.wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
     def cmd_force_right_slit(self):
         """Force right slit position."""
         self['ForceRightSlitPos-Cmd'] = 1
-        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
+        return self.wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
 
 class ScraperV(_ScraperDev):
@@ -264,9 +264,9 @@ class ScraperV(_ScraperDev):
     def cmd_force_top_slit(self):
         """Force top slit position."""
         self['ForceTopSlitPos-Cmd'] = 1
-        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
+        return self.wait(propty='ForceComplete-Mon', value=1, timeout=10)
 
     def cmd_force_bottom_slit(self):
         """Force bottom slit position."""
         self['ForceBottomSlitPos-Cmd'] = 1
-        return self._wait(propty='ForceComplete-Mon', value=1, timeout=10)
+        return self.wait(propty='ForceComplete-Mon', value=1, timeout=10)

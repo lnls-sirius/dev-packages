@@ -570,7 +570,8 @@ class App(_Callback):
 
     def set_enable(self, value):
         """Set orbit interlock state.
-        Configure global BPM interlock enable and EVG interlock enable."""
+        Configure global BPM interlock enable and EVG interlock enable.
+        """
         self._set_queue.put((self._do_set_enable, (value, )))
         return True
 
@@ -605,7 +606,7 @@ class App(_Callback):
         self._update_log('Configured BPM general interlock enable.')
 
         self._evg_dev['IntlkCtrlEnbl-Sel'] = value
-        if not self._evg_dev._wait(
+        if not self._evg_dev.wait(
                 'IntlkCtrlEnbl-Sts', value, timeout=self._const.DEF_TIMEOUT):
             self._update_log('ERR:Could not set EVG interlock enable.')
             self._state = bkup
@@ -810,7 +811,7 @@ class App(_Callback):
             if afcti['RTMClkLockedLtc-Mon']:
                 continue
             afcti['ClkLockedLtcRst-Cmd'] = 1
-            msg = 'Reset' if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3) \
+            msg = 'Reset' if afcti.wait('RTMClkLockedLtc-Mon', 1, timeout=3) \
                 else 'ERR:Could not reset'
             self._update_log(f'{msg} AFC Timing {idx} lock latchs.')
             if 'not' in msg:
@@ -822,7 +823,7 @@ class App(_Callback):
             if fout['RxLockedLtc-Mon'] == rxv:
                 continue
             fout['RxLockedLtcRst-Cmd'] = 1
-            msg = 'Reset' if fout._wait('RxLockedLtc-Mon', rxv, timeout=3) \
+            msg = 'Reset' if fout.wait('RxLockedLtc-Mon', rxv, timeout=3) \
                 else 'ERR:Could not reset'
             self._update_log(f'{msg} {devname} lock latchs.')
             if 'not' in msg:
@@ -845,7 +846,7 @@ class App(_Callback):
             if afcti['RTMClkLockedLtc-Mon']:
                 continue
             afcti['ClkLockedLtcRst-Cmd'] = 1
-            if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3):
+            if afcti.wait('RTMClkLockedLtc-Mon', 1, timeout=3):
                 continue
             afcti['RTMClkRst-Cmd'] = 1
             self._update_log(f'Sent reset clock to AFC Timing {idx}.')
@@ -935,7 +936,7 @@ class App(_Callback):
                 continue
             desired_value = self._fout2rxenbl[devname]
             dev['RxEnbl-SP'] = desired_value
-            dev._wait('RxEnbl-RB', desired_value, timeout=1)
+            dev.wait('RxEnbl-RB', desired_value, timeout=1)
             dev['RxLockedLtcRst-Cmd'] = 1
         return True
 
@@ -1039,10 +1040,10 @@ class App(_Callback):
             if not self._init:
                 continue
             dev['RxEnbl-SP'] = rxenbl
-            dev._wait('RxEnbl-RB', rxenbl, timeout=1)
+            dev.wait('RxEnbl-RB', rxenbl, timeout=1)
             dev['RxLockedLtcRst-Cmd'] = 1
             if rxenbl:
-                dev._wait('RxLockedLtc-Mon', rxenbl, timeout=1)
+                dev.wait('RxLockedLtc-Mon', rxenbl, timeout=1)
 
         return True
 
@@ -1654,7 +1655,7 @@ class App(_Callback):
         device[propty_sp] = desired_value
 
         # if readback reached desired value, stop thread
-        if device._wait(propty_rb, desired_value, timeout=0.11):
+        if device.wait(propty_rb, desired_value, timeout=0.11):
             if pvname in self._lock_failures:
                 self._lock_failures.remove(pvname)
             thread.stop()

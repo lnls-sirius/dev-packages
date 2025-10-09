@@ -125,48 +125,48 @@ class EVG(_Device):
         self.bucketlist = value
         rb_value = _np.zeros(864)
         rb_value[:len(value)] = value
-        return self._wait('BucketList-RB', rb_value, timeout=timeout)
+        return self.wait('BucketList-RB', rb_value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
         """."""
-        return self._wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
+        return self.wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
 
     def cmd_update_events(self, timeout=10):
         """."""
         val = self.continuous_state
         self['UpdateEvt-Cmd'] = 1
         _time.sleep(0.1)
-        return self._wait(
+        return self.wait(
             propty='ContinuousEvt-Sts', value=val, timeout=timeout)
 
     def cmd_turn_on_injection(self, timeout=10, wait_rb=False):
         """."""
         self.injection_state = 1
         pv2wait = 'InjectionEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=1, timeout=timeout)
+        return self.wait(propty=pv2wait, value=1, timeout=timeout)
 
     def cmd_turn_off_injection(self, timeout=10, wait_rb=False):
         """."""
         self.injection_state = 0
         pv2wait = 'InjectionEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=0, timeout=timeout)
+        return self.wait(propty=pv2wait, value=0, timeout=timeout)
 
     def cmd_turn_on_continuous(self, timeout=10, wait_rb=False):
         """."""
         self.continuous_state = 1
         pv2wait = 'ContinuousEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=1, timeout=timeout)
+        return self.wait(propty=pv2wait, value=1, timeout=timeout)
 
     def cmd_turn_off_continuous(self, timeout=10, wait_rb=False):
         """."""
         self.continuous_state = 0
         pv2wait = 'ContinuousEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=0, timeout=timeout)
+        return self.wait(propty=pv2wait, value=0, timeout=timeout)
 
     def set_nrpulses(self, value, timeout=10):
         """Set and wait number of pulses."""
         self['RepeatBucketList-SP'] = value
-        return self._wait('RepeatBucketList-RB', value, timeout=timeout)
+        return self.wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
 class Event(_Device):
@@ -500,27 +500,27 @@ class Trigger(_Device):
     def cmd_enable(self, timeout=3):
         """Command enable."""
         self.state = 1
-        return self._wait('State-Sts', 1, timeout)
+        return self.wait('State-Sts', 1, timeout)
 
     def cmd_disable(self, timeout=3):
         """Command disable."""
         self.state = 0
-        return self._wait('State-Sts', 0, timeout)
+        return self.wait('State-Sts', 0, timeout)
 
     def cmd_lock_low_level(self, timeout=3):
         """Lock low level IOCs state."""
         self.lock_low_level = 1
-        return self._wait('LowLvlLock-Sts', 1, timeout)
+        return self.wait('LowLvlLock-Sts', 1, timeout)
 
     def cmd_unlock_low_level(self, timeout=3):
         """Unlock low level IOCs state."""
         self.lock_low_level = 0
-        return self._wait('LowLvlLock-Sts', 0, timeout)
+        return self.wait('LowLvlLock-Sts', 0, timeout)
 
     def cmd_set_source(self, value, timeout=3):
         """Set source with timeout."""
         self.source = value
-        return self._wait('Src-Sts', value, timeout)
+        return self.wait('Src-Sts', value, timeout)
 
 
 class HLTiming(_DeviceSet):
@@ -651,7 +651,7 @@ class HLTiming(_DeviceSet):
             t0_ = _time.time()
             tr = self.triggers.get(tn)
             new_src_idx = tr.source_options.index(new_src)
-            boo &= tr._wait('Src-Sts', new_src_idx, timeout=timeout)
+            boo &= tr.wait('Src-Sts', new_src_idx, timeout=timeout)
             timeout = max(timeout - (_time.time() - t0_), 0)
             if not boo:
                 break

@@ -220,7 +220,7 @@ class IDFFCtrlBase(_Device):
         if self.loopstate == _IDFFConst.LoopState.Closed:
             return True
         self['LoopState-Sel'] = _IDFFConst.LoopState.Closed
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', _IDFFConst.LoopState.Closed, timeout=timeout)
 
     def cmd_turn_off_feedforward(self, timeout=None):
@@ -229,7 +229,7 @@ class IDFFCtrlBase(_Device):
         if self.loopstate == _IDFFConst.LoopState.Open:
             return True
         self['LoopState-Sel'] = _IDFFConst.LoopState.Open
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', _IDFFConst.LoopState.Open, timeout=timeout)
 
     @staticmethod

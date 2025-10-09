@@ -106,25 +106,25 @@ class DevLILLRF(_Device):
     def cmd_turn_on_integral_enable(self, timeout=DEF_TIMEOUT):
         """Set and wait for integral enable property to reach 'on' state."""
         self.integral_enable = _Const.DsblEnbl.Enbl
-        return self._wait(
+        return self.wait(
             'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl, timeout=timeout)
 
     def cmd_turn_off_integral_enable(self, timeout=DEF_TIMEOUT):
         """Set and wait for integral enable property to reach 'off' state."""
         self.integral_enable = _Const.DsblEnbl.Dsbl
-        return self._wait(
+        return self.wait(
             'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl, timeout=timeout)
 
     def cmd_turn_on_feedback_state(self, timeout=DEF_TIMEOUT):
         """Set and wait for feedback state property to reach 'on' state."""
         self.feedback_state = _Const.DsblEnbl.Enbl
-        return self._wait(
+        return self.wait(
             'GET_FB_MODE', _Const.DsblEnbl.Enbl, timeout=timeout)
 
     def cmd_turn_off_feedback_state(self, timeout=DEF_TIMEOUT):
         """Set and wait for feedback state property to reach 'off' state."""
         self.feedback_state = _Const.DsblEnbl.Dsbl
-        return self._wait(
+        return self.wait(
             'GET_FB_MODE', _Const.DsblEnbl.Dsbl, timeout=timeout)
 
     def cmd_turn_on_feedback_loop(self, timeout=DEF_TIMEOUT):

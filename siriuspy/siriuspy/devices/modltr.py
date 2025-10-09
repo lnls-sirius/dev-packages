@@ -85,8 +85,8 @@ class LIModltr(_Device):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """Reset."""
         self['RESET'] = 1
-        if not self._wait('RESET', 1, timeout/2):
+        if not self.wait('RESET', 1, timeout/2):
             return False
         _time.sleep(1)
         self['RESET'] = 0
-        return self._wait('RESET', 0, timeout/2)
+        return self.wait('RESET', 0, timeout/2)

@@ -38,12 +38,12 @@ class TuneFrac(_Device):
     def cmd_enable(self, timeout=DEF_TIMEOUT):
         """Enable."""
         self['Enbl-Sel'] = 1
-        return self._wait('Enbl-Sts', value=1, timeout=timeout)
+        return self.wait('Enbl-Sts', value=1, timeout=timeout)
 
     def cmd_disable(self, timeout=DEF_TIMEOUT):
         """Disable."""
         self['Enbl-Sel'] = 0
-        return self._wait('Enbl-Sts', value=0, timeout=timeout)
+        return self.wait('Enbl-Sts', value=0, timeout=timeout)
 
 
 class TuneProc(_Device):

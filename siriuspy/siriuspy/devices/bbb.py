@@ -105,7 +105,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.fbe[propty]
         for i, val in enumerate(values):
             self.fbe[propty] = val
-            self.fbe._wait(propty, val)
+            self.fbe.wait(propty, val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -125,7 +125,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.timing.adc_delay
         for i, val in enumerate(values):
             self.timing.adc_delay = val
-            self.timing._wait('TADC', val)
+            self.timing.wait('TADC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -145,7 +145,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.fbe.be_phase
         for i, val in enumerate(values):
             self.fbe.be_phase = val
-            self.fbe._wait('FBE_BE_PHASE', val)
+            self.fbe.wait('FBE_BE_PHASE', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -165,7 +165,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.timing.dac_delay
         for i, val in enumerate(values):
             self.timing.dac_delay = val
-            self.timing._wait('TDAC', val)
+            self.timing.wait('TDAC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -310,11 +310,11 @@ class SystemInfo(_Device):
     def cmd_reset_counts(self, timeout=DEF_TIMEOUT):
         """."""
         self['CNTRST'] = 1
-        if not self._wait('CNTRST', 1, timeout/2):
+        if not self.wait('CNTRST', 1, timeout/2):
             return False
         _time.sleep(0.2)
         self['CNTRST'] = 0
-        return self._wait('CNTRST', 0, timeout/2)
+        return self.wait('CNTRST', 0, timeout/2)
 
     @property
     def rf_freq_nom(self):
@@ -413,11 +413,11 @@ class Timing(_Device):
     def cmd_reset_clock(self, timeout=DEF_TIMEOUT):
         """."""
         self['CLKRST'] = 1
-        if not self._wait('CLKRST', 1, timeout/2):
+        if not self.wait('CLKRST', 1, timeout/2):
             return False
         _time.sleep(0.2)
         self['CLKRST'] = 0
-        return self._wait('CLKRST', 0, timeout/2)
+        return self.wait('CLKRST', 0, timeout/2)
 
     @property
     def adc_clock(self):
@@ -702,12 +702,12 @@ class Coefficients(_Device):
     def cmd_edit_apply(self, timeout=DEF_TIMEOUT):
         """."""
         self['BO_CPCOEFF'] = 1
-        return self._wait('BO_CPCOEFF', 1, timeout)
+        return self.wait('BO_CPCOEFF', 1, timeout)
 
     def cmd_edit_verify(self, timeout=DEF_TIMEOUT):
         """."""
         self['BO_CVERIFY'] = 1
-        return self._wait('BO_CVERIFY', 1, timeout)
+        return self.wait('BO_CVERIFY', 1, timeout)
 
 
 class Acquisition(_Device):
@@ -911,7 +911,7 @@ class Acquisition(_Device):
     def cmd_data_acquire(self, timeout=DEF_TIMEOUT):
         """."""
         self.acq_enbl = 1
-        return self._wait('ACQ_EN', 1, timeout=timeout)
+        return self.wait('ACQ_EN', 1, timeout=timeout)
 
     def cmd_data_dump(self, timeout=DEF_TIMEOUT, pv_update=False):
         """."""
@@ -923,7 +923,7 @@ class Acquisition(_Device):
     def wait_data_dump(self, timeout=None, pv_update=False):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
-        if not self._wait('DUMP', False, timeout=timeout):
+        if not self.wait('DUMP', False, timeout=timeout):
             print('WARN: Timed out waiting data dump.')
             return False
         if pv_update and not self._update_data_evt.wait(timeout=timeout):
@@ -1444,7 +1444,7 @@ class SingleBunch(_Device):
     def cmd_enable_transfer_function(self, timeout=DEF_TIMEOUT):
         """Enable transfer function."""
         self.transfer_function_enable = 1
-        return self._wait('TF_ENABLE', value=1, timeout=timeout)
+        return self.wait('TF_ENABLE', value=1, timeout=timeout)
 
 
 class PhaseTracking(_Device):
@@ -2053,8 +2053,8 @@ class PwrAmpT(_Device):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """."""
         self['Rst-Cmd'] = 1
-        if not self._wait('Rst-Cmd', 1, timeout/2):
+        if not self.wait('Rst-Cmd', 1, timeout/2):
             return False
         _time.sleep(0.2)
         self['Rst-Cmd'] = 0
-        return self._wait('Rst-Cmd', 0, timeout/2)
+        return self.wait('Rst-Cmd', 0, timeout/2)

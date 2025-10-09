@@ -211,7 +211,7 @@ class FamBPMs(_DeviceSet):
         t0 = _time.time()
         for bpm in self:
             tout = timeout - (_time.time() - t0)
-            if not bpm._wait('RFFEAtt-RB', value, timeout=tout):
+            if not bpm.wait('RFFEAtt-RB', value, timeout=tout):
                 okall = False
                 mstr += (
                     f'\n{bpm.devname:<20s}: ' +
