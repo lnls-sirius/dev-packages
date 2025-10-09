@@ -71,16 +71,20 @@ class IDFFCtrlBase(_Device):
 
     PARAM_PVS = _ParamPVs()
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
         # call base class constructor
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
 
     @property
     def loopstate(self):
@@ -221,7 +225,8 @@ class IDFFCtrlBase(_Device):
             return True
         self['LoopState-Sel'] = _IDFFConst.LoopState.Closed
         return self.wait(
-            'LoopState-Sts', _IDFFConst.LoopState.Closed, timeout=timeout)
+            'LoopState-Sts', _IDFFConst.LoopState.Closed, timeout=timeout
+        )
 
     def cmd_turn_off_feedforward(self, timeout=None):
         """."""
@@ -230,7 +235,8 @@ class IDFFCtrlBase(_Device):
             return True
         self['LoopState-Sel'] = _IDFFConst.LoopState.Open
         return self.wait(
-            'LoopState-Sts', _IDFFConst.LoopState.Open, timeout=timeout)
+            'LoopState-Sts', _IDFFConst.LoopState.Open, timeout=timeout
+        )
 
     @staticmethod
     def conv_idffdevname_2_iddevname(idffdevname):
@@ -241,7 +247,7 @@ class IDFFCtrlBase(_Device):
             iddevname = iddevname.substitute(dev='IVU18')
         elif iddevname.sub in ('06SB', '07SP'):
             iddevname = iddevname.substitute(dev='VPU29')
-        elif iddevname.sub in ('10SB', ):
+        elif iddevname.sub in ('10SB',):
             iddevname = iddevname.substitute(dev='DELTA52')
         else:
             pass
@@ -262,6 +268,7 @@ class IDFFCtrlSoft(IDFFCtrlBase):
 
     class DEVICES:
         """Device names."""
+
         ALL = tuple()
         # should be added in derived classes
 
@@ -276,10 +283,13 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     PARAM_PVS.CORRSTATUS_MON = 'CorrStatus-Mon'
     PARAM_PVS.CORRSTATUSLABELS_CTE = 'CorrStatusLabels-Cte'
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
 
 
 class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
@@ -289,7 +299,7 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
         """Device names."""
 
         DELTA52_10SB_SOFT = 'SI-10SB:AP-IDFF'
-        ALL = (DELTA52_10SB_SOFT, )
+        ALL = (DELTA52_10SB_SOFT,)
 
     IDFFCtrlBase._add_devices(IDFFCtrlSoft.DEVICES, DEVICES)
 
@@ -305,10 +315,13 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     PARAM_PVS.CORRQS_1CURRENT_MON = 'CorrQS_1Current-Mon'
     PARAM_PVS.CORRQS_2CURRENT_MON = 'CorrQS_2Current-Mon'
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -320,7 +333,8 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
 
         # call base class constructor
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
 
 
 class IDFFCtrlSoftIVU(IDFFCtrlSoft):
@@ -346,10 +360,13 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
     PARAM_PVS.CORRQF_2CURRENT_MON = 'CorrQF_2Current-Mon'
     PARAM_PVS.CORRQD2_2CURRENT_MON = 'CorrQD2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -359,7 +376,8 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
 
         # call base class constructor
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
 
 
 class IDFFCtrlSoftVPU(IDFFCtrlSoft):
@@ -383,10 +401,13 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
     PARAM_PVS.CORRCC2_2CURRENT_MON = 'CorrCC2_2Current-Mon'
     PARAM_PVS.CORRCC1_2CURRENT_MON = 'CorrCC1_2Current-Mon'
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -396,7 +417,8 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
 
         # call base class constructor
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
 
 
 class IDFFCtrlHard(IDFFCtrlBase):
@@ -404,15 +426,19 @@ class IDFFCtrlHard(IDFFCtrlBase):
 
     class DEVICES:
         """Device names."""
+
         ALL = tuple()
         # should be added in derived classes
 
     PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
 
-    PROPERTIES_DEFAULT = \
-        tuple(set(
-            value for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None))
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
@@ -451,6 +477,7 @@ class IDFFCtrl(IDFFCtrlBase):
 
     class DEVICES:
         """Device names."""
+
         IDFFCtrlSoft = IDFFCtrlSoft.DEVICES
         IDFFCtrlHard = IDFFCtrlHard.DEVICES
         ALL = IDFFCtrlSoft.ALL + IDFFCtrlHard.ALL
@@ -484,6 +511,7 @@ class IDFF(_DeviceSet):
 
     class DEVICES:
         """Device names."""
+
         ALL = tuple()
 
     IDFFCtrlBase._add_devices(DEVICES, IDFFCtrl.DEVICES)
@@ -502,14 +530,24 @@ class IDFF(_DeviceSet):
         # self._devname = iddevname  # needed for _create_devices
         self._idffconfig = _IDFFConfig()
 
-        self._pparametername = \
-            _IDSearch.conv_idname_2_pparameter_propty(self._iddevname)
-        self._kparametername = \
-            _IDSearch.conv_idname_2_kparameter_propty(self._iddevname)
+        self._pparametername = _IDSearch.conv_idname_2_pparameter_propty(
+            self._iddevname
+        )
+        self._kparametername = _IDSearch.conv_idname_2_kparameter_propty(
+            self._iddevname
+        )
 
         alldevs = self._create_devices()
-        (self._devctrl, self._devid, self._devsch, self._devscv,
-         self._devsqs, self._devslc, self._devsqn, self._devscc) = alldevs
+        (
+            self._devctrl,
+            self._devid,
+            self._devsch,
+            self._devscv,
+            self._devsqs,
+            self._devslc,
+            self._devsqn,
+            self._devscc,
+        ) = alldevs
 
         self._lab2corrdevs = self._create_labels_2_corrdevs_dict()
 
@@ -517,7 +555,7 @@ class IDFF(_DeviceSet):
         if self._with_devctrl:
             devices += [self._devctrl, self._devid]
         else:
-            devices += [self._devid, ]
+            devices += [self._devid]
         devices += self._devsch
         devices += self._devscv
         devices += self._devsqs
@@ -664,7 +702,8 @@ class IDFF(_DeviceSet):
             raise ValueError('Could not load configuration.')
 
     def calculate_setpoints(
-            self, pparameter_value=None, kparameter_value=None):
+        self, pparameter_value=None, kparameter_value=None
+    ):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
@@ -673,10 +712,12 @@ class IDFF(_DeviceSet):
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
-        polarization, pparameter_value, kparameter_value = \
+        polarization, pparameter_value, kparameter_value = (
             self.get_polarization_state(
                 pparameter_value=pparameter_value,
-                kparameter_value=kparameter_value)
+                kparameter_value=kparameter_value,
+            )
+        )
 
         if polarization not in self.idffconfig.polarizations:
             raise ValueError('Polarization is not compatible with ID.')
@@ -685,23 +726,29 @@ class IDFF(_DeviceSet):
         if kparameter_value is None:
             kparameter_value = self.kparameter_mon
         setpoints = self.idffconfig.calculate_setpoints(
-            polarization, pparameter_value, kparameter_value)
+            polarization, pparameter_value, kparameter_value
+        )
         return setpoints, polarization, pparameter_value, kparameter_value
 
-    def implement_setpoints(
-            self, setpoints=None, corrdevs=None):
+    def implement_setpoints(self, setpoints=None, corrdevs=None):
         """Implement setpoints in correctors."""
         if setpoints is None:
-            setpoints, polarization, pparameter_value, kparameter_value = \
+            setpoints, polarization, pparameter_value, kparameter_value = (
                 self.calculate_setpoints(
-                    pparameter_value=None,
-                    kparameter_value=None)
+                    pparameter_value=None, kparameter_value=None
+                )
+            )
         else:
-            polarization, pparameter_value, kparameter_value = [None, ] * 3
+            polarization, pparameter_value, kparameter_value = [None] * 3
         if corrdevs is None:
-            corrdevs = \
-                self._devsch + self._devscv + \
-                self._devsqs + self._devslc + self._devsqn + self._devscc
+            corrdevs = (
+                self._devsch
+                + self._devscv
+                + self._devsqs
+                + self._devslc
+                + self._devsqn
+                + self._devscc
+            )
         for pvname, value in setpoints.items():
             # find corrdev corresponding to pvname
             for dev in corrdevs:
@@ -718,15 +765,21 @@ class IDFF(_DeviceSet):
 
         configs = value['polarizations']
         pvnames = {
-            key: value for key, value in value['pvnames']
-            if key not in ('pparameters', 'kparameters')}
+            key: value
+            for key, value in value['pvnames']
+            if key not in ('pparameters', 'kparameters')
+        }
         corrlabels = set(pvnames.keys())
 
         # check pvnames in configs
         pvsconfig = set(pvnames.values())
         pvsidsearch = set(
-            self.chnames + self.cvnames + self.qsnames +
-            self.lcnames + self.ccnames)
+            self.chnames
+            + self.cvnames
+            + self.qsnames
+            + self.lcnames
+            + self.ccnames
+        )
         symm_diff = pvsconfig ^ pvsidsearch
         if symm_diff:
             raise ValueError('List of pvnames in config is not consistent')
@@ -737,44 +790,52 @@ class IDFF(_DeviceSet):
         symm_diff = pconfig ^ pidsearch
         if symm_diff:
             raise ValueError(
-                'List of polarizations in config is not consistent')
+                'List of polarizations in config is not consistent'
+            )
 
         # check polarization tables consistency
         for polarization, table in configs.items():
             corrtable = {
-                key: value for key, value in table
-                if key not in ('pparameters', 'kparameters')}
+                key: value
+                for key, value in table
+                if key not in ('pparameters', 'kparameters')
+            }
 
             # check 'pparameter'
             if 'pparameter' not in table:
                 raise ValueError(
-                    'Missing pparameter in polarization configuration.')
+                    'Missing pparameter in polarization configuration.'
+                )
 
             # check 'kparameter'
             if 'kparameter' not in table:
                 raise ValueError(
-                    'Missing kparameter in polarization configuration.')
+                    'Missing kparameter in polarization configuration.'
+                )
 
             # check corr label list
             corrlabels_config = set(corrtable.keys())
             symm_diff = corrlabels ^ corrlabels_config
             if symm_diff:
                 raise ValueError(
-                    'List of corrlabels in config is not consistent')
+                    'List of corrlabels in config is not consistent'
+                )
 
             # check nrpts in tables
             param = 'pparameter' if polarization == 'none' else 'kparameter'
             nrpts_corrtables = {len(table) for table in corrtable.values()}
-            nrpts_kparameter = set([len(table[param]), ])
+            nrpts_kparameter = set([len(table[param])])
             symm_diff = nrpts_corrtables ^ nrpts_kparameter
             if symm_diff:
                 raise ValueError(
                     'Corrector tables and kparameter list in config '
-                    'are not consistent')
+                    'are not consistent'
+                )
         return True
 
     def get_polarization_state(
-            self, pparameter_value=None, kparameter_value=None):
+        self, pparameter_value=None, kparameter_value=None
+    ):
         """."""
         if self.pparametername is None:
             if kparameter_value is None:
@@ -789,16 +850,22 @@ class IDFF(_DeviceSet):
         polarization = self.polarization_mon
         if polarization is None:
             polarization = self.idffconfig.get_polarization_state(
-                pparameter=pparameter_value, kparameter=kparameter_value)
+                pparameter=pparameter_value, kparameter=kparameter_value
+            )
         return polarization, pparameter_value, kparameter_value
 
     def rampup_corr_currents(
-            self, nrpts=50, time_interval=10,
-            pparameter_value=None, kparameter_value=None,
-            dry_run=False):
+        self,
+        nrpts=50,
+        time_interval=10,
+        pparameter_value=None,
+        kparameter_value=None,
+        dry_run=False,
+    ):
         """."""
-        setpoints, polarization, pparameter_value, kparameter_value = \
+        setpoints, polarization, pparameter_value, kparameter_value = (
             self.calculate_setpoints(pparameter_value, kparameter_value)
+        )
         if dry_run:
             print(f'polarization : {polarization}')
             print(f'pparameter   : {pparameter_value}')
@@ -821,7 +888,7 @@ class IDFF(_DeviceSet):
         for idx in range(nrpts):
             delta_ramp = (idx + 1) / nrpts
             if dry_run:
-                print(f'point {idx+1}/{nrpts}')
+                print(f'point {idx + 1}/{nrpts}')
             for psname in corrs:
                 devcorr, curr0, curr1 = corrs[psname]
                 curr = curr0 + delta_ramp * (curr1 - curr0)
@@ -834,16 +901,17 @@ class IDFF(_DeviceSet):
             _time.sleep(time_interval / (nrpts - 1))
 
     def _create_devices(self):
-
-        devctrl = None if not self._with_devctrl else IDFFCtrl(
-            devname=self._devname)
+        devctrl = (
+            None if not self._with_devctrl else IDFFCtrl(devname=self._devname)
+        )
         pol_mon = _ID.get_idclass(self.iddevname).PARAM_PVS.POL_MON
-        params = (
-            self._pparametername, self._kparametername, pol_mon)
+        params = (self._pparametername, self._kparametername, pol_mon)
         props2init = tuple(param for param in params if param is not None)
         devid = _ID(
-            devname=self.iddevname, props2init=props2init,
-            auto_monitor_mon=False)
+            devname=self.iddevname,
+            props2init=props2init,
+            auto_monitor_mon=False,
+        )
         devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
         devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
         devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]

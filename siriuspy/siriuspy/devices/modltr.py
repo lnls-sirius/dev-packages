@@ -2,8 +2,8 @@
 
 import time as _time
 
-from .device import Device as _Device
 from ..csdev import Const as _Const
+from .device import Device as _Device
 
 
 class LIModltr(_Device):
@@ -19,13 +19,33 @@ class LIModltr(_Device):
         ALL = (LI_MOD1, LI_MOD2)
 
     PROPERTIES_DEFAULT = (
-        'Remote', 'OutPut_Status', 'RESET',
-        'Run/Stop', 'PreHeat', 'Charge_Allowed', 'TrigOut_Allowed',
-        'Emer_Stop', 'CPS_ALL', 'Thy_Heat', 'Kly_Heat', 'LV_Rdy_OK',
-        'HV_Rdy_OK', 'TRIG_Rdy_OK', 'MOD_Self_Fault', 'MOD_Sys_Ready',
-        'TRIG_Norm', 'Pulse_Current',
-        'RUN_STOP', 'PREHEAT', 'CHARGE', 'TRIGOUT',
-        'WRITE_I', 'READI', 'WRITE_V', 'READV')
+        'Remote',
+        'OutPut_Status',
+        'RESET',
+        'Run/Stop',
+        'PreHeat',
+        'Charge_Allowed',
+        'TrigOut_Allowed',
+        'Emer_Stop',
+        'CPS_ALL',
+        'Thy_Heat',
+        'Kly_Heat',
+        'LV_Rdy_OK',
+        'HV_Rdy_OK',
+        'TRIG_Rdy_OK',
+        'MOD_Self_Fault',
+        'MOD_Sys_Ready',
+        'TRIG_Norm',
+        'Pulse_Current',
+        'RUN_STOP',
+        'PREHEAT',
+        'CHARGE',
+        'TRIGOUT',
+        'WRITE_I',
+        'READI',
+        'WRITE_V',
+        'READV',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
@@ -85,8 +105,8 @@ class LIModltr(_Device):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """Reset."""
         self['RESET'] = 1
-        if not self.wait('RESET', 1, timeout/2):
+        if not self.wait('RESET', 1, timeout / 2):
             return False
         _time.sleep(1)
         self['RESET'] = 0
-        return self.wait('RESET', 0, timeout/2)
+        return self.wait('RESET', 0, timeout / 2)

@@ -10,12 +10,17 @@ class LIEnergy(_Device):
         """Devices names."""
 
         LI = 'LI-Glob:AP-MeasEnergy'
-        ALL = (LI, )
+        ALL = (LI,)
 
     PROPERTIES_DEFAULT = (
-        'Dispersion-SP', 'Dispersion-RB',
-        'IntDipole-Mon', 'Energy-Mon', 'Spread-Mon',
-        'MeasureCtrl-Sel', 'MeasureCtrl-Sts')
+        'Dispersion-SP',
+        'Dispersion-RB',
+        'IntDipole-Mon',
+        'Energy-Mon',
+        'Spread-Mon',
+        'MeasureCtrl-Sel',
+        'MeasureCtrl-Sts',
+    )
 
     def __init__(self, devname=None, props2init='all'):
         """."""

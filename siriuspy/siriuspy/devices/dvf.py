@@ -1,10 +1,11 @@
 """DVF devices."""
 
 import numpy as _np
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
-from mathphys.imgproc import Image2D_Fit as _Image2D_Fit
-from mathphys.imgproc import FitGaussianScipy as _FitGaussianScipy
+from mathphys.imgproc import (
+    FitGaussianScipy as _FitGaussianScipy,
+    Image2D_Fit as _Image2D_Fit
+)
 
 from .device import Device as _Device
 
@@ -20,8 +21,7 @@ class DVF(_Device):
         EMA_DVF2 = 'EMA:A:BASLER02'
         PNR_DVF2 = 'PNR:A:BASLER02'
         BO_DVF = 'BO-50U:DI-VLightCam'
-        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF,
-               EMA_DVF2, PNR_DVF2)
+        ALL = (CAX_DVF1, CAX_DVF2, BO_DVF, EMA_DVF2, PNR_DVF2)
 
     _default_timeout = 10  # [s]
 
@@ -34,54 +34,87 @@ class DVF(_Device):
         'IMAGE_SIZE_X',  # [pixel]
         'IMAGE_PIXEL_SIZE',  # [um]
         'OPTICS_MAGNIFICATION_FACTOR',  # source to image
-        )
+    )
 
     _dev2params = {
         DEVICES.CAX_DVF1: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields,
+            (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0),
+        ),
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0)),
+            _dvfparam_fields,
+            (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0),
+        ),
         DEVICES.BO_DVF: _get_namedtuple(
             'DVFParameters',
-            _dvfparam_fields, (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0)),
-        }
+            _dvfparam_fields,
+            (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0),
+        ),
+    }
 
     PROPERTIES_DEFAULT = (
-        'cam1:MaxSizeX_RBV', 'cam1:MaxSizeY_RBV',
-        'cam1:SizeX', 'cam1:SizeX_RBV',
-        'cam1:SizeY', 'cam1:SizeY_RBV',
-        'cam1:MinX', 'cam1:MinX_RBV',
-        'cam1:MinY', 'cam1:MinY_RBV',
+        'cam1:MaxSizeX_RBV',
+        'cam1:MaxSizeY_RBV',
+        'cam1:SizeX',
+        'cam1:SizeX_RBV',
+        'cam1:SizeY',
+        'cam1:SizeY_RBV',
+        'cam1:MinX',
+        'cam1:MinX_RBV',
+        'cam1:MinY',
+        'cam1:MinY_RBV',
         'cam1:PortName_RBV',
-        'cam1:ArrayCallbacks', 'cam1:ArrayCallbacks_RBV',
-        'cam1:AcquireTime', 'cam1:AcquireTime_RBV',
-        'cam1:AcquirePeriod', 'cam1:AcquirePeriod_RBV',
-        'cam1:Acquire', 'cam1:Acquire_RBV',
-        'cam1:ImageMode', 'cam1:ImageMode_RBV',
-        'cam1:Gain', 'cam1:Gain_RBV',
-        'cam1:GainAuto', 'cam1:GainAuto_RBV',
-        'cam1:PixelFormat', 'cam1:PixelFormat_RBV',
+        'cam1:ArrayCallbacks',
+        'cam1:ArrayCallbacks_RBV',
+        'cam1:AcquireTime',
+        'cam1:AcquireTime_RBV',
+        'cam1:AcquirePeriod',
+        'cam1:AcquirePeriod_RBV',
+        'cam1:Acquire',
+        'cam1:Acquire_RBV',
+        'cam1:ImageMode',
+        'cam1:ImageMode_RBV',
+        'cam1:Gain',
+        'cam1:Gain_RBV',
+        'cam1:GainAuto',
+        'cam1:GainAuto_RBV',
+        'cam1:PixelFormat',
+        'cam1:PixelFormat_RBV',
         'cam1:GC_TemperatureAbs_RBV',
-        'cam1:ARFrameFailures', 'cam1:ARFramesCompleted',
-        'image1:NDArrayPort', 'image1:NDArrayPort_RBV',
-        'image1:EnableCallbacks', 'image1:EnableCallbacks_RBV',
-        'image1:ArraySize0_RBV', 'image1:ArraySize1_RBV',
+        'cam1:ARFrameFailures',
+        'cam1:ARFramesCompleted',
+        'image1:NDArrayPort',
+        'image1:NDArrayPort_RBV',
+        'image1:EnableCallbacks',
+        'image1:EnableCallbacks_RBV',
+        'image1:ArraySize0_RBV',
+        'image1:ArraySize1_RBV',
         'image1:DataType_RBV',
         'image1:ArrayData',
         'ROI1:PortName_RBV',
-        'ROI1:NDArrayPort', 'ROI1:NDArrayPort_RBV',
-        'ROI1:EnableCallbacks', 'ROI1:EnableCallbacks_RBV',
-        'ROI1:MinX', 'ROI1:MinX_RBV',
-        'ROI1:MinY', 'ROI1:MinY_RBV',
-        'ROI1:SizeX', 'ROI1:SizeX_RBV',
-        'ROI1:SizeY', 'ROI1:SizeY_RBV',
-        'ROI1:EnableX', 'ROI1:EnableX_RBV',
-        'ROI1:EnableY', 'ROI1:EnableY_RBV',
-        'ROI1:ArrayCallbacks', 'ROI1:ArrayCallbacks_RBV',
-        'Trans1:EnableCallbacks', 'Trans1:EnableCallbacks_RBV',
-        )
+        'ROI1:NDArrayPort',
+        'ROI1:NDArrayPort_RBV',
+        'ROI1:EnableCallbacks',
+        'ROI1:EnableCallbacks_RBV',
+        'ROI1:MinX',
+        'ROI1:MinX_RBV',
+        'ROI1:MinY',
+        'ROI1:MinY_RBV',
+        'ROI1:SizeX',
+        'ROI1:SizeX_RBV',
+        'ROI1:SizeY',
+        'ROI1:SizeY_RBV',
+        'ROI1:EnableX',
+        'ROI1:EnableX_RBV',
+        'ROI1:EnableY',
+        'ROI1:EnableY_RBV',
+        'ROI1:ArrayCallbacks',
+        'ROI1:ArrayCallbacks_RBV',
+        'Trans1:EnableCallbacks',
+        'Trans1:EnableCallbacks_RBV',
+    )
 
     _PROPTY_NAME_MAP = dict()
 
@@ -92,8 +125,9 @@ class DVF(_Device):
         if devname == DVF.DEVICES.BO_DVF:
             self._devname = devname
             props = self.PROPERTIES_DEFAULT
-            self.PROPERTIES_DEFAULT = \
-                [self._get_propty(prop) for prop in props]
+            self.PROPERTIES_DEFAULT = [
+                self._get_propty(prop) for prop in props
+            ]
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
@@ -105,13 +139,13 @@ class DVF(_Device):
     def intensity_saturation_value(self):
         """Image intensity saturation value."""
         pixel_format_to_num_bits = {
-            0: 8,   # Mono8
+            0: 8,  # Mono8
             1: 12,  # Mono12
-            2: 12   # Mono12Packed
+            2: 12,  # Mono12Packed
         }
         data_type_to_num_bits = {
-            0: 8,   # Int8
-            1: 8,   # UInt8
+            0: 8,  # Int8
+            1: 8,  # UInt8
             2: 16,  # Int16
             3: 16,  # Uint16
             4: 32,  # Int32
@@ -235,9 +269,7 @@ class DVF(_Device):
     @property
     def cam_roi(self):
         """Return current ROI (offsetx, offsety, width, height)."""
-        roi = (
-            self.cam_minx, self.cam_miny,
-            self.cam_sizex, self.cam_sizey)
+        roi = (self.cam_minx, self.cam_miny, self.cam_sizex, self.cam_sizey)
         return roi
 
     @property
@@ -433,9 +465,12 @@ class DVF(_Device):
     def cmd_cam_roi_reset(self, timeout=None):
         """."""
         return self.cmd_cam_roi_set(
-            offsetx=0, offsety=0,
-            width=self.cam_max_sizex, height=self.cam_max_sizey,
-            timeout=timeout)
+            offsetx=0,
+            offsety=0,
+            width=self.cam_max_sizex,
+            height=self.cam_max_sizey,
+            timeout=timeout,
+        )
 
     def _get_propty(self, propty):
         if self.devname != DVF.DEVICES.BO_DVF:
@@ -484,31 +519,45 @@ class DVFImgProc(DVF):
     """."""
 
     PROPERTIES_DEFAULT = DVF.PROPERTIES_DEFAULT + (
-        'ImgIntensityMax-Mon', 'ImgIntensityMin-Mon',
-        'ImgIntensitySum-Mon', 'ImgIsSaturated-Mon',
+        'ImgIntensityMax-Mon',
+        'ImgIntensityMin-Mon',
+        'ImgIntensitySum-Mon',
+        'ImgIsSaturated-Mon',
         'ImgIsWithBeam-Mon',
-        'ImgIsWithBeamThreshold-SP', 'ImgIsWithBeamThreshold-RB',
-
-        'ImgROIX-RB', 'ImgROIX-SP',
-        'ImgROIXCenter-Mon', 'ImgROIXFWHM-Mon',
-        'ImgROIY-RB', 'ImgROIY-SP',
-        'ImgROIYCenter-Mon', 'ImgROIYFWHM-Mon',
-
+        'ImgIsWithBeamThreshold-SP',
+        'ImgIsWithBeamThreshold-RB',
+        'ImgROIX-RB',
+        'ImgROIX-SP',
+        'ImgROIXCenter-Mon',
+        'ImgROIXFWHM-Mon',
+        'ImgROIY-RB',
+        'ImgROIY-SP',
+        'ImgROIYCenter-Mon',
+        'ImgROIYFWHM-Mon',
         'ImgLog-Mon',
-        'ImgROIUpdateWithFWHM-Sel', 'ImgROIUpdateWithFWHM-Sts',
-        'ImgROIYUpdateWithFWHMFactor-RB', 'ImgROIYUpdateWithFWHMFactor-SP',
-        'ImgROIXUpdateWithFWHMFactor-RB', 'ImgROIXUpdateWithFWHMFactor-SP',
-
-        'ImgROIXFitMean-Mon', 'ImgROIXFitSigma-Mon',
-        'ImgROIXFitAmplitude-Mon', 'ImgROIXFitError-Mon',
-        'ImgROIYFitMean-Mon', 'ImgROIYFitSigma-Mon',
-        'ImgROIYFitAmplitude-Mon', 'ImgROIYFitError-Mon',
+        'ImgROIUpdateWithFWHM-Sel',
+        'ImgROIUpdateWithFWHM-Sts',
+        'ImgROIYUpdateWithFWHMFactor-RB',
+        'ImgROIYUpdateWithFWHMFactor-SP',
+        'ImgROIXUpdateWithFWHMFactor-RB',
+        'ImgROIXUpdateWithFWHMFactor-SP',
+        'ImgROIXFitMean-Mon',
+        'ImgROIXFitSigma-Mon',
+        'ImgROIXFitAmplitude-Mon',
+        'ImgROIXFitError-Mon',
+        'ImgROIYFitMean-Mon',
+        'ImgROIYFitSigma-Mon',
+        'ImgROIYFitAmplitude-Mon',
+        'ImgROIYFitError-Mon',
         'ImgFitAngle-Mon',
-        'ImgFitSigma1-Mon', 'ImgFitSigma2-Mon',
+        'ImgFitSigma1-Mon',
+        'ImgFitSigma2-Mon',
         'ImgFitProcTime-Mon',
-        'ImgFitAngleUseCMomSVD-Sel', 'ImgFitAngleUseCMomSVD-Sts',
-        'ImgDVFStatus-Mon', 'ImgDVFStatusLabels-Cte',
-        )
+        'ImgFitAngleUseCMomSVD-Sel',
+        'ImgFitAngleUseCMomSVD-Sts',
+        'ImgDVFStatus-Mon',
+        'ImgDVFStatusLabels-Cte',
+    )
 
     def __init__(self, devname, props2init='all', **kwargs):
         """."""
@@ -703,14 +752,14 @@ class DVFImgProc(DVF):
         width = int(width)
         width -= width % multp
         centerx = self.cam_minx + self.roix_center
-        offsetx = int(centerx - width/2)
+        offsetx = int(centerx - width / 2)
         offsetx -= offsetx % multp
 
         height = 2 * self.roiy_fwhm * abs(roiy_fwhm_factor)
         height = int(height)
         height -= height % multp
         centery = self.cam_miny + self.roiy_center
-        offsety = int(centery - height/2)
+        offsety = int(centery - height / 2)
         offsety -= offsety % multp
 
         params = (offsetx, offsety, width, height)
@@ -731,6 +780,9 @@ class DVFImgProc(DVF):
     def create_image2dfit(self):
         """Return a Image2DFit object with current image as data."""
         imgfit2d = _Image2D_Fit(
-            data=self.image, fitgauss=self._fitgaussian,
-            roix=self.roix, roiy=self.roiy)
+            data=self.image,
+            fitgauss=self._fitgaussian,
+            roix=self.roix,
+            roiy=self.roiy,
+        )
         return imgfit2d

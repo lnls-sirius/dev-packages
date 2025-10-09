@@ -1,7 +1,8 @@
 """Storage Ring Scrapers."""
 
-from .device import Device as _Device
 import time as _time
+
+from .device import Device as _Device
 
 
 class _ScraperDev(_Device):
@@ -15,9 +16,12 @@ class _ScraperDev(_Device):
         ALL = (H, V)
 
     PROPERTIES_DEFAULT = (
-        'Home-Cmd', 'ForceComplete-Mon', 'CoordConvErr-Mon',
-        'EnblBacklashComp-Sel', 'EnblBacklashComp-Sts'
-        )
+        'Home-Cmd',
+        'ForceComplete-Mon',
+        'CoordConvErr-Mon',
+        'EnblBacklashComp-Sel',
+        'EnblBacklashComp-Sts',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
@@ -76,18 +80,29 @@ class ScraperH(_ScraperDev):
     """."""
 
     PROPERTIES_DEFAULT = _ScraperDev.PROPERTIES_DEFAULT + (
-        'LeftSlitPos-SP', 'LeftSlitPos-RB',
-        'RightSlitPos-SP', 'RightSlitPos-RB',
-        'RightDoneMov-Mon', 'LeftDoneMov-Mon',
-        'LeftSlitInnerLim-SP', 'LeftSlitInnerLim-RB',
-        'LeftSlitOuterLim-SP', 'LeftSlitOuterLim-RB',
-        'LeftSlitBacklashDist-SP', 'LeftSlitBacklashDist-RB',
-        'LeftMotionCtrl-Cte', 'ForceLeftSlitPos-Cmd',
-        'RightSlitInnerLim-SP', 'RightSlitInnerLim-RB',
-        'RightSlitOuterLim-SP', 'RightSlitOuterLim-RB',
-        'RightSlitBacklashDist-SP', 'RightSlitBacklashDist-RB',
-        'RightMotionCtrl-Cte', 'ForceRightSlitPos-Cmd',
-        )
+        'LeftSlitPos-SP',
+        'LeftSlitPos-RB',
+        'RightSlitPos-SP',
+        'RightSlitPos-RB',
+        'RightDoneMov-Mon',
+        'LeftDoneMov-Mon',
+        'LeftSlitInnerLim-SP',
+        'LeftSlitInnerLim-RB',
+        'LeftSlitOuterLim-SP',
+        'LeftSlitOuterLim-RB',
+        'LeftSlitBacklashDist-SP',
+        'LeftSlitBacklashDist-RB',
+        'LeftMotionCtrl-Cte',
+        'ForceLeftSlitPos-Cmd',
+        'RightSlitInnerLim-SP',
+        'RightSlitInnerLim-RB',
+        'RightSlitOuterLim-SP',
+        'RightSlitOuterLim-RB',
+        'RightSlitBacklashDist-SP',
+        'RightSlitBacklashDist-RB',
+        'RightMotionCtrl-Cte',
+        'ForceRightSlitPos-Cmd',
+    )
 
     def __init__(self, devname=None, props2init='all'):
         """."""
@@ -177,16 +192,25 @@ class ScraperV(_ScraperDev):
     """."""
 
     PROPERTIES_DEFAULT = _ScraperDev.PROPERTIES_DEFAULT + (
-        'TopSlitPos-SP', 'TopSlitPos-RB',
-        'BottomSlitPos-SP', 'BottomSlitPos-RB',
-        'BottomDoneMov-Mon', 'TopDoneMov-Mon',
-        'TopSlitInnerLim-SP', 'TopSlitInnerLim-RB',
-        'TopSlitOuterLim-SP', 'TopSlitOuterLim-RB',
-        'TopMotionCtrl-Cte', 'ForceTopSlitPos-Cmd',
-        'BottomSlitInnerLim-SP', 'BottomSlitInnerLim-RB',
-        'BottomSlitOuterLim-SP', 'BottomSlitOuterLim-RB',
-        'BottomMotionCtrl-Cte', 'ForceBottomSlitPos-Cmd',
-        )
+        'TopSlitPos-SP',
+        'TopSlitPos-RB',
+        'BottomSlitPos-SP',
+        'BottomSlitPos-RB',
+        'BottomDoneMov-Mon',
+        'TopDoneMov-Mon',
+        'TopSlitInnerLim-SP',
+        'TopSlitInnerLim-RB',
+        'TopSlitOuterLim-SP',
+        'TopSlitOuterLim-RB',
+        'TopMotionCtrl-Cte',
+        'ForceTopSlitPos-Cmd',
+        'BottomSlitInnerLim-SP',
+        'BottomSlitInnerLim-RB',
+        'BottomSlitOuterLim-SP',
+        'BottomSlitOuterLim-RB',
+        'BottomMotionCtrl-Cte',
+        'ForceBottomSlitPos-Cmd',
+    )
 
     def __init__(self, devname=None, props2init='all'):
         """."""
