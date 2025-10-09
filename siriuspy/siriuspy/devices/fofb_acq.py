@@ -286,38 +286,45 @@ class _FamFOFBAcqBase(_DeviceSet, _FOFBCtrlAcqConst):
 
     def set_channel(self, val):
         """Set channel for all FOFBCtrl."""
-        self.set_devices_propty('Channel-Sel', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'Channel-Sts', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('Channel-Sel', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'Channel-Sts', val)
 
     def set_nrshots(self, val):
         """Set nrshots for all FOFBCtrl."""
-        self.set_devices_propty('Shots-SP', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'Shots-RB', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('Shots-SP', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'Shots-RB', val)
 
     def set_update_time(self, val):
         """Set update_time for all FOFBCtrl."""
-        self.set_devices_propty('UpdateTime-SP', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'UpdateTime-RB', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('UpdateTime-SP', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'UpdateTime-RB', val)
 
     def set_repeat(self, val):
         """Set repeat for all FOFBCtrl."""
-        self.set_devices_propty('TriggerRep-Sel', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'TriggerRep-Sts', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('TriggerRep-Sel', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'TriggerRep-Sts', val)
 
     def set_nrsamples_pre(self, val):
         """Set nrsamples_pre for all FOFBCtrl."""
-        self.set_devices_propty('SamplesPre-SP', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'SamplesPre-RB', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('SamplesPre-SP', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'SamplesPre-RB', val)
 
     def set_nrsamples_post(self, val):
         """Set nrsamples_post for all FOFBCtrl."""
-        self.set_devices_propty('SamplesPost-SP', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'SamplesPost-RB', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('SamplesPost-SP', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'SamplesPost-RB', val)
 
     def set_trigger(self, val):
         """Set trigger for all FOFBCtrl."""
-        self.set_devices_propty('Trigger-Sel', val, devices=self._ctlrs)
-        return self._wait_devices_propty(self._ctlrs, 'Trigger-Sts', val)
+        ctrls = list(self._ctlrs.values())
+        self.set_devices_propty('Trigger-Sel', val, devices=ctrls)
+        return self._wait_devices_propty(ctrls, 'Trigger-Sts', val)
 
 
 # ------- system identification devices -------
