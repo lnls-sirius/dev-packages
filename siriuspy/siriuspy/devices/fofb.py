@@ -383,7 +383,7 @@ class FamFOFBControllers(_DeviceSet):
     def set_max_orb_distortion(self, value, timeout=DEF_TIMEOUT):
         """Set orbit distortion threshold [nm]."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'MaxOrbDistortion-SP', value)
+        self.set_devices_propty('MaxOrbDistortion-SP', value, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'MaxOrbDistortion-RB', value, timeout=timeout):
             return False
@@ -403,7 +403,9 @@ class FamFOFBControllers(_DeviceSet):
     def set_max_orb_distortion_enbl(self, value, timeout=DEF_TIMEOUT):
         """Set orbit distortion above threshold detection enable status."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'MaxOrbDistortionEnbl-Sel', value)
+        self.set_devices_propty(
+            'MaxOrbDistortionEnbl-Sel', value, devices=devs
+        )
         if not self._wait_devices_propty(
                 devs, 'MaxOrbDistortionEnbl-Sts', value, timeout=timeout):
             return False
@@ -423,7 +425,7 @@ class FamFOFBControllers(_DeviceSet):
     def set_min_bpm_count(self, value, timeout=DEF_TIMEOUT):
         """Set minimum BPM packet count."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'MinBPMCnt-SP', value)
+        self.set_devices_propty('MinBPMCnt-SP', value, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'MinBPMCnt-RB', value, timeout=timeout):
             return False
@@ -443,7 +445,7 @@ class FamFOFBControllers(_DeviceSet):
     def set_min_bpm_count_enbl(self, value, timeout=DEF_TIMEOUT):
         """Set orbit distortion above threshold detection enable status."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'MinBPMCntEnbl-Sel', value)
+        self.set_devices_propty('MinBPMCntEnbl-Sel', value, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'MinBPMCntEnbl-Sts', value, timeout=timeout):
             return False
@@ -470,7 +472,7 @@ class FamFOFBControllers(_DeviceSet):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """Send reset interlock command for all FOFB controllers."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'LoopIntlkReset-Cmd', 1)
+        self.set_devices_propty('LoopIntlkReset-Cmd', 1, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'LoopIntlk-Mon', 0, timeout=timeout):
             return False
@@ -562,16 +564,16 @@ class FamFOFBControllers(_DeviceSet):
 
         # temporary solution: disable BPM DCCs that are not in FOFB network
         dcc2dsbl = list(self._bpmdcc2dsbl.values())
-        self._set_devices_propty(dcc2dsbl, 'CCEnable-Sel', 0)
+        self.set_devices_propty('CCEnable-Sel', 0, devices=dcc2dsbl)
         if not self._wait_devices_propty(
                 dcc2dsbl, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
 
-        self._set_devices_propty(alldccs, 'CCEnable-Sel', 0)
+        self.set_devices_propty('CCEnable-Sel', 0, devices=alldccs)
         if not self._wait_devices_propty(
                 alldccs, 'CCEnable-Sts', 0, timeout=timeout/2):
             return False
-        self._set_devices_propty(enbdccs, 'CCEnable-Sel', 1)
+        self.set_devices_propty('CCEnable-Sel', 1, devices=enbdccs)
         if not self._wait_devices_propty(
                 enbdccs, 'CCEnable-Sts', 1, timeout=timeout/2):
             return False
@@ -626,7 +628,7 @@ class FamFOFBControllers(_DeviceSet):
             self, value=DEF_DCC_TIMEFRAMELEN, timeout=DEF_TIMEOUT):
         """Set DCCs TimeFrameLen."""
         dccs = list(self._ctl_dccs.values()) + list(self._bpm_dccs.values())
-        self._set_devices_propty(dccs, 'TimeFrameLen-SP', value)
+        self.set_devices_propty('TimeFrameLen-SP', value, devices=dccs)
         if not self._wait_devices_propty(
                 dccs, 'TimeFrameLen-RB', value, timeout=timeout):
             return False
@@ -660,11 +662,11 @@ class FamFOFBControllers(_DeviceSet):
         devs = list(self._bpm_trgs.values())
         rsrc = self.DEF_BPMTRIG_RCVSRC
         rins = self.DEF_BPMTRIG_RCVIN
-        self._set_devices_propty(devs, 'RcvSrc-Sel', rsrc)
+        self.set_devices_propty('RcvSrc-Sel', rsrc, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'RcvSrc-Sts', rsrc, timeout=timeout/2):
             return False
-        self._set_devices_propty(devs, 'RcvInSel-SP', rins)
+        self.set_devices_propty('RcvInSel-SP', rins, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'RcvInSel-RB', rins, timeout=timeout/2):
             return False
@@ -682,11 +684,11 @@ class FamFOFBControllers(_DeviceSet):
     def cmd_dsbl_sysid_exc(self, timeout=DEF_TIMEOUT):
         """Command to disable SYSID excitation."""
         devs = list(self._ctl_refs.values())
-        self._set_devices_propty(devs, 'SYSIDPRBSFOFBAccEn-Sel', 0)
+        self.set_devices_propty('SYSIDPRBSFOFBAccEn-Sel', 0, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'SYSIDPRBSFOFBAccEn-Sts', 0, timeout=timeout/2):
             return False
-        self._set_devices_propty(devs, 'SYSIDPRBSBPMPosEn-Sel', 0)
+        self.set_devices_propty('SYSIDPRBSBPMPosEn-Sel', 0, devices=devs)
         if not self._wait_devices_propty(
                 devs, 'SYSIDPRBSBPMPosEn-Sts', 0, timeout=timeout/2):
             return False
@@ -891,7 +893,7 @@ class FamFastCorrs(_DeviceSet):
             self, state, psnames=None, psindices=None):
         """Command to set power supply pwrstate."""
         devs = self._get_devices(psnames, psindices)
-        self._set_devices_propty(devs, 'PwrState-Sel', state)
+        self.set_devices_propty('PwrState-Sel', state, devices=devs)
         return True
 
     def check_pwrstate(
@@ -908,7 +910,7 @@ class FamFastCorrs(_DeviceSet):
             self, opmode, psnames=None, psindices=None):
         """Command to set power supply opmode."""
         devs = self._get_devices(psnames, psindices)
-        self._set_devices_propty(devs, 'OpMode-Sel', opmode)
+        self.set_devices_propty('OpMode-Sel', opmode, devices=devs)
         return True
 
     def check_opmode(

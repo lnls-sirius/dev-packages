@@ -394,15 +394,36 @@ class DeviceSet:
         """Return devices."""
         return self._devices
 
-    # --- private methods ---
+    def set_devices_propty(
+        self, propty, values, devices=None, wait_between_devs=0
+    ):
+        """Set devices property to value(s).
 
-    def _set_devices_propty(self, devices, propty, values, wait=0):
-        """Set devices property to value(s)."""
+        This method does not wait for properties to reach the desired value.
+        Use it in conjunction with wait_devices_propty to do so.
+
+        Args:
+            propty (str): Name of the property to set. Must be a single and
+                valid property for all devices.
+            values (str|float|int|list|tuple|numpy.ndarray): value or list of
+                values to be set. If a list, then must be of the same size as
+                devices, else all devices will be set with the same value.
+            devices (list, optional): list of devices to set the given propty.
+                Defaults to None, which means all devices of self will be set.
+                The devices in the list not necessarily need to be in self.
+            wait_between_devs (float, optional): If larger than 0, wait this
+                time between each set action. Defaults to 0.
+        """
+        if devices is None:
+            devices = self._devices
         dev2val = self._get_dev_2_val(devices, values)
         for dev, val in dev2val.items():
             if dev.pv_object(propty).wait_for_connection():
                 dev[propty] = val
-                _time.sleep(wait)
+                if wait_between_devs > 0:
+                    _time.sleep(wait_between_devs)
+
+    # --- private methods ---
 
     def _wait_devices_propty(
             self, devices, propty, values, comp='eq',

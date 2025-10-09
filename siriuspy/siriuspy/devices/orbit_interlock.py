@@ -556,7 +556,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     def set_gen_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM general interlock."""
-        self._set_devices_propty(self.devices, 'IntlkEn-Sel', value)
+        self.set_devices_propty('IntlkEn-Sel', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
@@ -617,7 +617,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     def set_minsum_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM minimum sum interlock."""
-        self._set_devices_propty(self.devices, 'IntlkMinSumEn-Sel', value)
+        self.set_devices_propty('IntlkMinSumEn-Sel', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkMinSumEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
@@ -659,7 +659,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtMinSum-SP', value)
+        self.set_devices_propty('IntlkLmtMinSum-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtMinSum-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -678,7 +678,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     def set_pos_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM position interlock."""
-        self._set_devices_propty(self.devices, 'IntlkPosEn-Sel', value)
+        self.set_devices_propty('IntlkPosEn-Sel', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkPosEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
@@ -727,7 +727,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtPosMinX-SP', value)
+        self.set_devices_propty('IntlkLmtPosMinX-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtPosMinX-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -754,7 +754,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtPosMaxX-SP', value)
+        self.set_devices_propty('IntlkLmtPosMaxX-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtPosMaxX-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -781,7 +781,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtPosMinY-SP', value)
+        self.set_devices_propty('IntlkLmtPosMinY-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtPosMinY-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -808,7 +808,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtPosMaxY-SP', value)
+        self.set_devices_propty('IntlkLmtPosMaxY-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtPosMaxY-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -907,7 +907,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
     def set_ang_enable(self, value, timeout=TIMEOUT, return_prob=False):
         """Set enable state for BPM angulation interlock."""
-        self._set_devices_propty(self.devices, 'IntlkAngEn-Sel', value)
+        self.set_devices_propty('IntlkAngEn-Sel', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkAngEn-Sts', value, timeout=timeout,
             return_prob=return_prob)
@@ -956,7 +956,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtAngMinX-SP', value)
+        self.set_devices_propty('IntlkLmtAngMinX-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtAngMinX-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -983,7 +983,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtAngMaxX-SP', value)
+        self.set_devices_propty('IntlkLmtAngMaxX-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtAngMaxX-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -1010,7 +1010,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtAngMinY-SP', value)
+        self.set_devices_propty('IntlkLmtAngMinY-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtAngMinY-RB', value, timeout=timeout,
             return_prob=return_prob)
@@ -1037,7 +1037,7 @@ class OrbitInterlock(BaseOrbitIntlk, _DeviceSet):
 
         """
         value = self._handle_thres_input(value)
-        self._set_devices_propty(self.devices, 'IntlkLmtAngMaxY-SP', value)
+        self.set_devices_propty('IntlkLmtAngMaxY-SP', value)
         return self._wait_devices_propty(
             self.devices, 'IntlkLmtAngMaxY-RB', value, timeout=timeout,
             return_prob=return_prob)

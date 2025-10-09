@@ -115,8 +115,9 @@ class PUMagsStandbyHandler(_BaseHandler):
     def cmd_turn_off(self):
         """Turn off."""
         # set pulsed magnet pulse off
-        self._set_devices_propty(
-            self._pudevs, 'Pulse-Sel', _PSConst.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'Pulse-Sel', _PSConst.DsblEnbl.Dsbl, devices=self._pudevs
+        )
 
         # wait for pulsed magnet pulse to be off
         retval = self._wait_devices_propty(
@@ -128,8 +129,9 @@ class PUMagsStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # set pulsed magnet power state off
-        self._set_devices_propty(
-            self._pudevs, 'PwrState-Sel', _PSConst.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'PwrState-Sel', _PSConst.DsblEnbl.Dsbl, devices=self._pudevs
+        )
 
         # wait for pulsed magnet power state to be off
         retval = self._wait_devices_propty(
@@ -147,7 +149,9 @@ class PUMagsStandbyHandler(_BaseHandler):
         devs = [dev for dev in self._pudevs if 'InjDpKckr' not in dev.devname]
 
         # set pulsed magnet power state on
-        self._set_devices_propty(devs, 'PwrState-Sel', _PSConst.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'PwrState-Sel', _PSConst.DsblEnbl.Enbl, devices=devs
+        )
 
         # wait for pulsed magnet power state to be on
         retval = self._wait_devices_propty(
@@ -162,7 +166,9 @@ class PUMagsStandbyHandler(_BaseHandler):
         _time.sleep(1)
 
         # set pulsed magnet pulse on
-        self._set_devices_propty(devs, 'Pulse-Sel', _PSConst.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'Pulse-Sel', _PSConst.DsblEnbl.Enbl, devices=devs
+        )
 
         # wait for pulsed magnet pulse to be on
         retval = self._wait_devices_propty(
@@ -235,8 +241,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
         _time.sleep(0.5)
 
         # set slowref
-        self._set_devices_propty(
-            self._psdevs, 'OpMode-Sel', _PSConst.OpMode.SlowRef)
+        self.set_devices_propty(
+            'OpMode-Sel', _PSConst.OpMode.SlowRef, devices=self._psdevs
+        )
 
         # wait for PS change opmode
         retval = self._wait_devices_propty(
@@ -249,7 +256,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # set current to zero
-        self._set_devices_propty(self._psdevs, 'Current-SP', 0.0)
+        self.set_devices_propty(
+            'Current-SP', 0.0, devices=self._psdevs
+        )
 
         # wait current change to zero
         retval = self._wait_devices_propty(
@@ -265,8 +274,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
     def cmd_turn_on(self):
         """Turn on."""
         # set rmpwfm
-        self._set_devices_propty(
-            self._psdevs, 'OpMode-Sel', _PSConst.OpMode.RmpWfm)
+        self.set_devices_propty(
+            'OpMode-Sel', _PSConst.OpMode.RmpWfm, devices=self._psdevs
+        )
 
         # wait for PS change opmode
         retval = self._wait_devices_propty(
@@ -278,8 +288,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # set WfmUpdateAuto
-        self._set_devices_propty(
-            self._psdevs, 'WfmUpdateAuto-Sel', _PSConst.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'WfmUpdateAuto-Sel', _PSConst.DsblEnbl.Enbl, devices=self._psdevs
+        )
 
         # wait for PS WfmUpdateAuto to be enabled
         retval = self._wait_devices_propty(
@@ -292,7 +303,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
 
         # configure trigger source
         values = [dev.source_options.index('RmpBO') for dev in self._trigdevs]
-        self._set_devices_propty(self._trigdevs, 'Src-Sel', values)
+        self.set_devices_propty(
+            'Src-Sel', values, devices=self._trigdevs
+        )
 
         # wait for trigger source to be configured
         retval = self._wait_devices_propty(
@@ -311,8 +324,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
     def disable_triggers(self):
         """."""
         # disable triggers
-        self._set_devices_propty(
-            self._trigdevs, 'State-Sel', _TIConst.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'State-Sel', _TIConst.DsblEnbl.Dsbl, devices=self._trigdevs
+        )
 
         # wait for triggers to be disabled
         retval = self._wait_devices_propty(
@@ -328,8 +342,9 @@ class BOPSRampStandbyHandler(_BaseHandler):
     def enable_triggers(self):
         """."""
         # enable triggers
-        self._set_devices_propty(
-            self._trigdevs, 'State-Sel', _TIConst.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'State-Sel', _TIConst.DsblEnbl.Enbl, devices=self._trigdevs
+        )
 
         # wait for triggers to be enabled
         retval = self._wait_devices_propty(
@@ -405,8 +420,9 @@ class BORFRampStandbyHandler(_BaseHandler):
     def disable_triggers(self):
         """."""
         # disable triggers
-        self._set_devices_propty(
-            self.rmptrg, 'State-Sel', _TIConst.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'State-Sel', _TIConst.DsblEnbl.Dsbl, devices=self.rmptrg
+        )
 
         # wait for triggers to be disabled
         retval = self._wait_devices_propty(
@@ -422,8 +438,9 @@ class BORFRampStandbyHandler(_BaseHandler):
     def enable_triggers(self):
         """."""
         # enable triggers
-        self._set_devices_propty(
-            self.rmptrg, 'State-Sel', _TIConst.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'State-Sel', _TIConst.DsblEnbl.Enbl, devices=self.rmptrg
+        )
 
         # wait for triggers to be enabled
         retval = self._wait_devices_propty(
@@ -506,8 +523,9 @@ class LinacStandbyHandler(_BaseHandler):
     def cmd_turn_off(self):
         """Turn off."""
         # turn feedback off
-        self._set_devices_propty(
-            self._llrf_devs, 'SET_FB_MODE', _Const.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'SET_FB_MODE', _Const.DsblEnbl.Dsbl, devices=self._llrf_devs
+        )
         # wait for feedback to turn off
         retval = self._wait_devices_propty(
             self._llrf_devs, 'GET_FB_MODE', _Const.DsblEnbl.Dsbl,
@@ -518,8 +536,11 @@ class LinacStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # turn integral off
-        self._set_devices_propty(
-            self._llrf_devs, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'SET_INTEGRAL_ENABLE',
+            _Const.DsblEnbl.Dsbl,
+            devices=self._llrf_devs
+        )
         # wait for integral to turn off
         retval = self._wait_devices_propty(
             self._llrf_devs, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Dsbl,
@@ -534,8 +555,9 @@ class LinacStandbyHandler(_BaseHandler):
             result = [True, 'Some trigger sources did not change.', []]
 
         # turn modulator trigout off
-        self._set_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'TRIGOUT', _Const.DsblEnbl.Dsbl, devices=self._moddevs
+        )
         # wait for modulator trigout to turn off
         retval = self._wait_devices_propty(
             self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Dsbl,
@@ -549,8 +571,9 @@ class LinacStandbyHandler(_BaseHandler):
         _time.sleep(1)
 
         # turn modulator charge off
-        self._set_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl)
+        self.set_devices_propty(
+            'CHARGE', _Const.DsblEnbl.Dsbl, devices=self._moddevs
+        )
         # wait for modulator charge to turn off
         retval = self._wait_devices_propty(
             self._moddevs, 'CHARGE', _Const.DsblEnbl.Dsbl,
@@ -565,8 +588,9 @@ class LinacStandbyHandler(_BaseHandler):
     def cmd_turn_on(self):
         """Turn on."""
         # turn modulators charge on
-        self._set_devices_propty(
-            self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'CHARGE', _Const.DsblEnbl.Enbl, devices=self._moddevs
+        )
         # wait for modulators charge to turn on
         retval = self._wait_devices_propty(
             self._moddevs, 'CHARGE', _Const.DsblEnbl.Enbl,
@@ -586,8 +610,9 @@ class LinacStandbyHandler(_BaseHandler):
         _time.sleep(1)
 
         # turn modulator trigout on
-        self._set_devices_propty(
-            self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'TRIGOUT', _Const.DsblEnbl.Enbl, devices=self._moddevs
+        )
         # wait for modulator trigout to turn on
         retval = self._wait_devices_propty(
             self._moddevs, 'TRIGOUT', _Const.DsblEnbl.Enbl,
@@ -612,8 +637,11 @@ class LinacStandbyHandler(_BaseHandler):
         _time.sleep(LinacStandbyHandler.WAIT_2_TURNON)
 
         # turn integral on
-        self._set_devices_propty(
-            self._llrf_devs, 'SET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'SET_INTEGRAL_ENABLE',
+            _Const.DsblEnbl.Enbl,
+            devices=self._llrf_devs
+        )
         # wait for integral to turn on
         retval = self._wait_devices_propty(
             self._llrf_devs, 'GET_INTEGRAL_ENABLE', _Const.DsblEnbl.Enbl,
@@ -624,8 +652,9 @@ class LinacStandbyHandler(_BaseHandler):
             return [False, text, retval[1]]
 
         # turn feedback on
-        self._set_devices_propty(
-            self._llrf_devs, 'SET_FB_MODE', _Const.DsblEnbl.Enbl)
+        self.set_devices_propty(
+            'SET_FB_MODE', _Const.DsblEnbl.Enbl, devices=self._llrf_devs
+        )
         # wait for feedback to turn on
         retval = self._wait_devices_propty(
             self._llrf_devs, 'GET_FB_MODE', _Const.DsblEnbl.Enbl,
@@ -843,8 +872,7 @@ class InjSysStandbyHandler(_DeviceSet):
         return self._command_base('off', run_in_thread)
 
     def get_dev_state(self, devnames):
-        """
-        Return the state, on (True) or off (False), for each device in
+        """Return the state, on (True) or off (False), for each device in
         devnames.
 
         Parameters
