@@ -8,14 +8,14 @@ from functools import partial as _partial
 import numpy as _np
 from epics.ca import (
     CASeverityException as _CASeverityException,
-    ChannelAccessGetFailure as _ChannelAccessGetFailure,
+    ChannelAccessGetFailure as _ChannelAccessGetFailure
 )
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import (
     CONNECTION_TIMEOUT as _CONN_TIMEOUT,
     GET_TIMEOUT as _GET_TIMEOUT,
-    PV as _PV,
+    PV as _PV
 )
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..simul import SimPV as _PVSim, Simulation as _Simulation
