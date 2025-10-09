@@ -541,7 +541,7 @@ class DeviceSet:
         # if 'values' is not iterable, consider the same value for all devices
         if not isinstance(values, (tuple, list)):
             values = len(devices) * [values]
-        return {k: v for k, v in zip(devices, values)}
+        return {k: v for k, v in zip(devices, values, strict=False)}
 
     def __getitem__(self, devidx):
         """Return device."""
