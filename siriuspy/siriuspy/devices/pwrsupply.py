@@ -8,7 +8,7 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import Const as _Const, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
-    MAX_WFMSIZE_OTHERS as _MAX_WFMSIZE_OTHERS
+    MAX_WFMSIZE as _MAX_WFMSIZE
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 from ..magnet.factory import NormalizerFactory as _NormFactory
 
@@ -106,9 +106,6 @@ class _PSDev(_Device):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
 
-        # private attribute with strength setpoint pv object
-        self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
-
         try:
             name = devname.substitute(dis='MA')
             if name.dev == 'B1B2' or (name.sec == 'BO' and name.dev == 'B'):
@@ -192,42 +189,50 @@ class _PSDev(_Device):
     @property
     def strength_upper_ctrl_limit(self):
         """Return Strength SP upper control limit."""
-        return self._strength_sp_pv.upper_ctrl_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_ctrl_limit
 
     @property
     def strength_lower_ctrl_limit(self):
         """Return Strength SP lower control limit."""
-        return self._strength_sp_pv.lower_ctrl_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_ctrl_limit
 
     @property
     def strength_upper_alarm_limit(self):
         """Return Strength SP upper alarm limit."""
-        return self._strength_sp_pv.upper_alarm_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_alarm_limit
 
     @property
     def strength_lower_alarm_limit(self):
         """Return Strength SP lower alarm limit."""
-        return self._strength_sp_pv.lower_alarm_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_alarm_limit
 
     @property
     def strength_upper_warning_limit(self):
         """Return Strength SP upper warning limit."""
-        return self._strength_sp_pv.upper_warning_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_warning_limit
 
     @property
     def strength_lower_warning_limit(self):
         """Return Strength SP lower warning limit."""
-        return self._strength_sp_pv.lower_warning_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_warning_limit
 
     @property
     def strength_upper_disp_limit(self):
         """Return Strength SP upper display limit."""
-        return self._strength_sp_pv.upper_disp_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_disp_limit
 
     @property
     def strength_lower_disp_limit(self):
         """Return Strength SP lower display limit."""
-        return self._strength_sp_pv.lower_disp_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_disp_limit
 
     @property
     def pwrstate(self):
@@ -562,7 +567,7 @@ class PowerSupply(_PSDev):
     def wfm(self, value):
         """."""
         value = _np.array(value).ravel()
-        max_size = _MAX_WFMSIZE_OTHERS
+        max_size = _MAX_WFMSIZE
         if self.psmodel == 'FBP':
             max_size = _MAX_WFMSIZE_FBP
         self['Wfm-SP'] = value[:max_size]

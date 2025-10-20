@@ -1262,7 +1262,9 @@ _fofbctrls = [
     'IA-19RaBPM:BS-FOFBCtrl',
     'IA-20RaBPM:BS-FOFBCtrl',
 ]
-_fofb_propts = list()
+_fofb_propts = [
+    [':SYSIDBaseBPMId-SP', 0, 0],
+]
 for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
     _fofb_propts.extend([
         [f':TRIGGER{phy_trig}Dir-Sel', 0, 0.0],

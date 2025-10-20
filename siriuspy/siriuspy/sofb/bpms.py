@@ -42,7 +42,7 @@ class BPM(_BaseTimingConfig):
         self._pvs['offsety'] = _PV(pvpref + "PosYOffset-RB", **opt)
         self._config_ok_vals = {
             "SwMode": _CSBPM.SwModes.switching,
-            "ACQChannel": _CSBPM.AcqChan.ADCSwap,
+            "ACQChannel": _CSBPM.AcqChan.ADCSwp,
             "ACQShots": 1,
             "ACQUpdateTime": 0.001,
             "ACQSamplesPre": 0,

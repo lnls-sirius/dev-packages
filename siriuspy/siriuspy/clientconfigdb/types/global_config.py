@@ -1,10 +1,12 @@
 """AS Global configuration."""
 from copy import deepcopy as _dcopy
 
+import numpy as _np
+
 from siriuspy.pwrsupply.csdev import \
     DEFAULT_WFM_FBP as _DEFAULT_WFM_FBP, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
-    DEFAULT_WFM_OTHERS as _DEFAULT_WFM_OTHERS
+    DEFAULT_WFM as _DEFAULT_WFM
 
 from siriuspy.clientconfigdb.types.as_diagnostics import _bpms
 
@@ -1104,14 +1106,17 @@ _pvs_si_llrf_b = [
     ['RA-RaSIB01:RF-LLRF:Detune-SP', 0, 0.0],  # Deg
     ]
 
+
 _bpm_propts = [
     [':RFFEAtt-SP', 0.0, 0.0],
     ]
+
 
 _bpm_pvs = list()
 for dev in _bpms:
     for ppt, val, dly in _bpm_propts:
         _bpm_pvs.append([dev+ppt, val, dly])
+
 
 _pvs_tb_ps = [
     ['TB-Fam:PS-B:OpMode-Sel', _SLOWREF, 0.0],
@@ -1165,12 +1170,12 @@ _pvs_tb_ps = [
 
 
 _pvs_bo_ps = [
-    ['BO-Fam:PS-B-1:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-B-2:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-QD:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-QF:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-SD:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
-    ['BO-Fam:PS-SF:Wfm-SP', _DEFAULT_WFM_OTHERS, 0.0],  # [A]
+    ['BO-Fam:PS-B-1:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-B-2:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-QD:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-QF:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-SD:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
+    ['BO-Fam:PS-SF:Wfm-SP', _DEFAULT_WFM, 0.0],  # [A]
     ['BO-02D:PS-QS:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-01U:PS-CH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-03U:PS-CH:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
@@ -1222,6 +1227,12 @@ _pvs_bo_ps = [
     ['BO-45U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-47U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
     ['BO-49U:PS-CV:Wfm-SP', _DEFAULT_WFM_FBP, 0.0],  # [A]
+    ['BO-Fam:PS-B-1:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-B-2:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-QD:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-QF:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-SD:WfmOffset-SP', 0.0, 0.0],  # [A]
+    ['BO-Fam:PS-SF:WfmOffset-SP', 0.0, 0.0],  # [A]
     ]
 
 
@@ -2697,16 +2708,25 @@ _pvs_si_septff = [
 ]
 
 
+_pvs_as_injection = [
+    [
+        'AS-Glob:AP-InjCtrl:BucketListAllowedMask-SP',
+        _np.ones(864, dtype=int),
+        0.0
+    ],
+]
+
 _template_dict = {
     'pvs':
-    _pvs_as_ti +
-    _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
-    _pvs_as_pu +
-    _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
-    _bpm_pvs +
-    _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
-    _pvs_si_ps_fam +
-    _pvs_si_ps_ch + _pvs_si_ps_cv +
-    _pvs_si_ps_qs + _pvs_si_ps_qn +
-    _pvs_si_ps_ids + _pvs_si_septff
-    }
+        _pvs_as_ti +
+        _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
+        _pvs_as_pu +
+        _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
+        _bpm_pvs +
+        _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
+        _pvs_si_ps_fam +
+        _pvs_si_ps_ch + _pvs_si_ps_cv +
+        _pvs_si_ps_qs + _pvs_si_ps_qn +
+        _pvs_si_ps_ids + _pvs_si_septff +
+        _pvs_as_injection
+}

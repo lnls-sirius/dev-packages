@@ -81,7 +81,8 @@ class Device:
     @property
     def properties_added(self):
         """Return properties that were added to the PV list that are not in
-        PROPERTIES_DEFAULT."""
+        PROPERTIES_DEFAULT.
+        """
         return tuple(sorted(
             set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT)))
 

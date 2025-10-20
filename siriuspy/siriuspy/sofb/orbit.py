@@ -65,6 +65,7 @@ class EpicsOrbit(BaseOrbit):
                 callback=self._update_sloworb_raw,
                 auto_monitor=True,
             )
+            self._smooth_npts = 20
         self._timestamp_last_news = 0  # [s] timestamp in epoch
         self._last_num_news = 0
         self._orbit_thread = _Repeat(
@@ -730,7 +731,7 @@ class EpicsOrbit(BaseOrbit):
             with self._lock_raw_orbs:
                 raws = self.raw_orbs
                 raws[plane].append(orbs[plane])
-                raws[plane] = raws[plane][-self._smooth_npts :]
+                raws[plane] = raws[plane][-self._smooth_npts:]
                 if not raws[plane]:
                     return
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
