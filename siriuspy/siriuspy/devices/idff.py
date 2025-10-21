@@ -4,6 +4,8 @@ import inspect as _inspect
 import time as _time
 from copy import deepcopy as _dcopy
 
+import numpy as _np
+
 from ..idff.config import IDFFConfig as _IDFFConfig
 from ..idff.csdev import IDFFConst as _IDFFConst
 from ..namesys import SiriusPVName as _SiriusPVName
@@ -45,6 +47,8 @@ class _ParamPVs:
     CORRCC2_1CURRENT_MON = None
     CORRCC2_2CURRENT_MON = None
     CORRCC1_2CURRENT_MON = None
+    TABLE_SP = None
+    TABLE_RB = None
 
     def __str__(self):
         """Print parameters."""
@@ -408,11 +412,35 @@ class IDFFCtrlHard(IDFFCtrlBase):
         # should be added in derived classes
 
     PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
+    PARAM_PVS.TABLE_SP = "Table-SP"
+    PARAM_PVS.TABLE_RB = "Table-RB"
 
     PROPERTIES_DEFAULT = \
         tuple(set(
             value for key, value in _inspect.getmembers(PARAM_PVS)
             if not key.startswith('_') and value is not None))
+
+    def get_ffwd_table_corr_labels(self):
+        """."""
+        corr_labels = list()
+        corr_labels += self.IDFF_CH_LABELS
+        corr_labels += self.IDFF_CV_LABELS
+        corr_labels += self.IDFF_CC_LABELS
+        corr_labels += self.IDFF_LC_LABELS
+        corr_labels += self.IDFF_QS_LABELS
+        corr_labels += self.IDFF_QN_LABELS
+        return corr_labels
+
+    def get_ffwd_table(self):
+        """Return FF table dict."""
+        param_name = self.PARAM_PVS.TABLE_RB
+        if param_name is None:
+            return dict()
+        ff_table = _np.array(self[param_name])
+        clabels = self.get_ffwd_table_corr_labels()
+        ff_table = ff_table.reshape(len(clabels), -1)
+        ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
+        return ff_table
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
@@ -685,12 +713,33 @@ class IDFF(_DeviceSet):
         return setpoints
 
     def calculate_setpoints(
-            self, pparameter_value=None, kparameter_value=None):
+            self, pparameter_value=None, kparameter_value=None,
+            use_ioc_tables=False):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        if use_ioc_tables:
+            if kparameter_value is None:
+                kparameter_value = self.kparameter_mon
+
+            ff_tables = self.ctrldev.get_ffwd_table()
+            setpoints = dict()
+
+            idparams = _IDSearch.conv_idname_2_parameters(self.iddevname)
+            idff = _IDSearch.conv_idname_2_idff(self.iddevname)
+            for corrlabel, ff_table in ff_tables.items():
+                # IOC tables gap zero gap offset!
+                klims = 0*idparams.KPARAM_MIN, idparams.KPARAM_MAX
+                kparam = _np.linspace(*klims, len(ff_table))
+                # linear interpolation
+                curr = _np.interp(kparameter_value, kparam, ff_table)
+                corr_pvname = idff[corrlabel]
+                setpoints[corr_pvname] = curr
+            sts = self.polarization_mon, self.pparameter_mon, kparameter_value
+            return setpoints, *sts
+
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
@@ -816,14 +865,16 @@ class IDFF(_DeviceSet):
     def rampup_corr_currents(
             self, nrpts=50, time_interval=10,
             pparameter_value=None, kparameter_value=None,
-            dry_run=False):
+            dry_run=False, use_ioc_tables=False):
         """."""
         setpoints, polarization, pparameter_value, kparameter_value = \
-            self.calculate_setpoints(pparameter_value, kparameter_value)
+            self.calculate_setpoints(
+                pparameter_value, kparameter_value, use_ioc_tables)
         if dry_run:
-            print(f'polarization : {polarization}')
-            print(f'pparameter   : {pparameter_value}')
-            print(f'kparameter   : {kparameter_value}')
+            print(f'use_ioc_tables : {use_ioc_tables}')
+            print(f'polarization   : {polarization}')
+            print(f'pparameter     : {pparameter_value}')
+            print(f'kparameter     : {kparameter_value}')
             print()
         devcorrs = []
         devcorrs += self.chdevs
