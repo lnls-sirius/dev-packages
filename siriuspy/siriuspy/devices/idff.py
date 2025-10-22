@@ -516,7 +516,9 @@ class IDFF(_DeviceSet):
 
     IDFFCtrlBase._add_devices(DEVICES, IDFFCtrl.DEVICES)
 
-    def __init__(self, devname, with_devctrl=True):
+    def __init__(
+            self, devname, props2init_ctrl='all',
+            props2init_corrs='all', with_devctrl=True):
         """."""
         self._with_devctrl = with_devctrl
 
@@ -535,7 +537,7 @@ class IDFF(_DeviceSet):
         self._kparametername = \
             _IDSearch.conv_idname_2_kparameter_propty(self._iddevname)
 
-        alldevs = self._create_devices()
+        alldevs = self._create_devices(props2init_ctrl, props2init_corrs)
         (self._devctrl, self._devid, self._devsch, self._devscv,
          self._devsqs, self._devslc, self._devsqn, self._devscc) = alldevs
 
@@ -905,10 +907,10 @@ class IDFF(_DeviceSet):
                 print()
             _time.sleep(time_interval / (nrpts - 1))
 
-    def _create_devices(self):
+    def _create_devices(self, props2init_ctrl, props2init_corrs):
 
         devctrl = None if not self._with_devctrl else IDFFCtrl(
-            devname=self._devname)
+            devname=self._devname, props2init=props2init_ctrl)
         pol_mon = _ID.get_idclass(self.iddevname).PARAM_PVS.POL_MON
         params = (
             self._pparametername, self._kparametername, pol_mon)
@@ -916,12 +918,14 @@ class IDFF(_DeviceSet):
         devid = _ID(
             devname=self.iddevname, props2init=props2init,
             auto_monitor_mon=False)
-        devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
-        devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
-        devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-        devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
-        devsqn = [_PowerSupplyFBP(devname=dev) for dev in self.qnnames]
-        devscc = [_PowerSupplyFBP(devname=dev) for dev in self.ccnames]
+        psclass = _PowerSupplyFBP
+        p2i = props2init_corrs
+        devsch = [psclass(devname=dev, props2init=p2i) for dev in self.chnames]
+        devscv = [psclass(devname=dev, props2init=p2i) for dev in self.cvnames]
+        devsqs = [psclass(devname=dev, props2init=p2i) for dev in self.qsnames]
+        devslc = [psclass(devname=dev, props2init=p2i) for dev in self.lcnames]
+        devsqn = [psclass(devname=dev, props2init=p2i) for dev in self.qnnames]
+        devscc = [psclass(devname=dev, props2init=p2i) for dev in self.ccnames]
         return devctrl, devid, devsch, devscv, devsqs, devslc, devsqn, devscc
 
     def _create_labels_2_corrdevs_dict(self):
