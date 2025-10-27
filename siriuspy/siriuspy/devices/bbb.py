@@ -4,15 +4,13 @@ import time as _time
 from threading import Event as _Event
 
 import numpy as _np
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..namesys import SiriusPVName as _PVName
-
-from .device import Device as _Device, DeviceSet as _DeviceSet
 from .dcct import DCCT
-from .rf import RFCav
+from .device import Device as _Device, DeviceSet as _DeviceSet
 from .fpmosc import FPMOsc
+from .rf import RFCav
 
 
 class BunchbyBunch(_DeviceSet):
@@ -21,7 +19,8 @@ class BunchbyBunch(_DeviceSet):
     _devices = {
         'H': 'SI-Glob:DI-BbBProc-H',
         'V': 'SI-Glob:DI-BbBProc-V',
-        'L': 'SI-Glob:DI-BbBProc-L'}
+        'L': 'SI-Glob:DI-BbBProc-L',
+    }
     DEVICES = _get_namedtuple('Devices', *zip(*_devices.items()))
     FBEDEV_PLANE = 'V'
 
@@ -40,7 +39,8 @@ class BunchbyBunch(_DeviceSet):
         _isall = isinstance(props2init, str) and props2init.lower() == 'all'
         if not _isall and props2init:
             raise ValueError(
-                "props2init must be 'all' or bool(props2init) == False")
+                "props2init must be 'all' or bool(props2init) == False"
+            )
 
         self.fpmosc = FPMOsc(FPMOsc.DEVICES.SI)
         self.dcct = DCCT(DCCT.DEVICES.SI_13C4, props2init=props2init)
@@ -61,10 +61,24 @@ class BunchbyBunch(_DeviceSet):
         fbe_dev = devname.substitute(idx=self.FBEDEV_PLANE)
         self.fbe = FrontBackEnd(fbe_dev, props2init=props2init)
         devs = [
-            self.info, self.timing, self.sram, self.bram, self.coeffs,
-            self.feedback, self.drive0, self.drive1, self.drive2,
-            self.bunch_clean, self.fbe, self.dcct, self.fpmosc,
-            self.rfcav_a, self.rfcav_b, self.single_bunch, self.phase_track]
+            self.info,
+            self.timing,
+            self.sram,
+            self.bram,
+            self.coeffs,
+            self.feedback,
+            self.drive0,
+            self.drive1,
+            self.drive2,
+            self.bunch_clean,
+            self.fbe,
+            self.dcct,
+            self.fpmosc,
+            self.rfcav_a,
+            self.rfcav_b,
+            self.single_bunch,
+            self.phase_track,
+        ]
 
         if devname.endswith('-L'):
             self.pwr_amp1 = PwrAmpL(devname, num=0, props2init=props2init)
@@ -84,7 +98,8 @@ class BunchbyBunch(_DeviceSet):
             devname = devname
         elif devname in BunchbyBunch.DEVICES._fields:
             devname = BunchbyBunch.DEVICES[
-                BunchbyBunch.DEVICES._fields.index(devname)]
+                BunchbyBunch.DEVICES._fields.index(devname)
+            ]
         else:
             raise NotImplementedError(devname)
         return _PVName(devname)
@@ -105,7 +120,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.fbe[propty]
         for i, val in enumerate(values):
             self.fbe[propty] = val
-            self.fbe._wait(propty, val)
+            self.fbe.wait(propty, val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -125,7 +140,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.timing.adc_delay
         for i, val in enumerate(values):
             self.timing.adc_delay = val
-            self.timing._wait('TADC', val)
+            self.timing.wait('TADC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'mean':
                 mon_val = self.sram.data_mean
@@ -145,7 +160,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.fbe.be_phase
         for i, val in enumerate(values):
             self.fbe.be_phase = val
-            self.fbe._wait('FBE_BE_PHASE', val)
+            self.fbe.wait('FBE_BE_PHASE', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -165,7 +180,7 @@ class BunchbyBunch(_DeviceSet):
         init_val = self.timing.dac_delay
         for i, val in enumerate(values):
             self.timing.dac_delay = val
-            self.timing._wait('TDAC', val)
+            self.timing.wait('TDAC', val)
             _time.sleep(wait)
             if mon_type.lower() in 'peak':
                 mon_val = self.sram.spec_marker1_mag
@@ -226,11 +241,28 @@ class SystemInfo(_Device):
     DEF_TIMEOUT = 10  # [s]
 
     PROPERTIES_DEFAULT = (
-        'ERRSUM', 'CLKMISS', 'CLKMISS_COUNT', 'PLL_UNLOCK',
-        'PLL_UNLOCK_COUNT', 'DCM_UNLOCK', 'DCM_UNLOCK_COUNT', 'ADC_OVR',
-        'ADC_OVR_COUNT', 'SAT', 'SAT_COUNT', 'FID_ERR', 'FID_ERR_COUNT',
-        'RST_COUNT', 'CNTRST', 'RF_FREQ', 'FREV', 'HARM_NUM', 'REVISION',
-        'GW_TYPE', 'IP_ADDR')
+        'ERRSUM',
+        'CLKMISS',
+        'CLKMISS_COUNT',
+        'PLL_UNLOCK',
+        'PLL_UNLOCK_COUNT',
+        'DCM_UNLOCK',
+        'DCM_UNLOCK_COUNT',
+        'ADC_OVR',
+        'ADC_OVR_COUNT',
+        'SAT',
+        'SAT_COUNT',
+        'FID_ERR',
+        'FID_ERR_COUNT',
+        'RST_COUNT',
+        'CNTRST',
+        'RF_FREQ',
+        'FREV',
+        'HARM_NUM',
+        'REVISION',
+        'GW_TYPE',
+        'IP_ADDR',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
@@ -310,11 +342,11 @@ class SystemInfo(_Device):
     def cmd_reset_counts(self, timeout=DEF_TIMEOUT):
         """."""
         self['CNTRST'] = 1
-        if not self._wait('CNTRST', 1, timeout/2):
+        if not self.wait('CNTRST', 1, timeout / 2):
             return False
         _time.sleep(0.2)
         self['CNTRST'] = 0
-        return self._wait('CNTRST', 0, timeout/2)
+        return self.wait('CNTRST', 0, timeout / 2)
 
     @property
     def rf_freq_nom(self):
@@ -353,12 +385,26 @@ class Timing(_Device):
     DEF_TIMEOUT = 10  # [s]
 
     PROPERTIES_DEFAULT = (
-        'TADC', 'TDAC', 'DELAY', 'OFF_FIDS', 'FID_DELAY', 'CLKRST',
-        'FREQ_CNT_CH0', 'FREQ_CNT_CH1', 'FREQ_CNT_CH2', 'FREQ_CNT_CH3',
+        'TADC',
+        'TDAC',
+        'DELAY',
+        'OFF_FIDS',
+        'FID_DELAY',
+        'CLKRST',
+        'FREQ_CNT_CH0',
+        'FREQ_CNT_CH1',
+        'FREQ_CNT_CH2',
+        'FREQ_CNT_CH3',
         'FREQ_CNT_CH4',
-        'ECLDEL0', 'ECLDEL1', 'ECLDEL2', 'ECLDEL3',
-        'ECLDEL0_SUBWR', 'ECLDEL1_SUBWR', 'ECLDEL2_SUBWR', 'ECLDEL3_SUBWR',
-        )
+        'ECLDEL0',
+        'ECLDEL1',
+        'ECLDEL2',
+        'ECLDEL3',
+        'ECLDEL0_SUBWR',
+        'ECLDEL1_SUBWR',
+        'ECLDEL2_SUBWR',
+        'ECLDEL3_SUBWR',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
@@ -413,11 +459,11 @@ class Timing(_Device):
     def cmd_reset_clock(self, timeout=DEF_TIMEOUT):
         """."""
         self['CLKRST'] = 1
-        if not self._wait('CLKRST', 1, timeout/2):
+        if not self.wait('CLKRST', 1, timeout / 2):
             return False
         _time.sleep(0.2)
         self['CLKRST'] = 0
-        return self._wait('CLKRST', 0, timeout/2)
+        return self.wait('CLKRST', 0, timeout / 2)
 
     @property
     def adc_clock(self):
@@ -505,14 +551,34 @@ class Coefficients(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'CSET0', 'CSET1', 'CSET2', 'CSET3', 'COEFF',
-        'DESC_CSET0', 'DESC_CSET1', 'DESC_CSET2', 'DESC_CSET3', 'DESC_COEFF',
-        'CVERIFY.C', 'CVERIFY.D', 'CVERIFY.G', 'CVERIFY.H',
-        'LDSET', 'BO_CVERIFY', 'BO_CPCOEFF',
-        'FLT_GAIN', 'FLT_FREQ', 'FLT_PHASE', 'FLT_TAPS',
-        'FTF_MAG', 'FTF_PHASE', 'FTF_FREQ',
-        'FTF_TUNE', 'FTF_GTUNE', 'FTF_PTUNE',
-        )
+        'CSET0',
+        'CSET1',
+        'CSET2',
+        'CSET3',
+        'COEFF',
+        'DESC_CSET0',
+        'DESC_CSET1',
+        'DESC_CSET2',
+        'DESC_CSET3',
+        'DESC_COEFF',
+        'CVERIFY.C',
+        'CVERIFY.D',
+        'CVERIFY.G',
+        'CVERIFY.H',
+        'LDSET',
+        'BO_CVERIFY',
+        'BO_CPCOEFF',
+        'FLT_GAIN',
+        'FLT_FREQ',
+        'FLT_PHASE',
+        'FLT_TAPS',
+        'FTF_MAG',
+        'FTF_PHASE',
+        'FTF_FREQ',
+        'FTF_TUNE',
+        'FTF_GTUNE',
+        'FTF_PTUNE',
+    )
 
     DEF_TIMEOUT = 10  # [s]
     OFF, ON = 0, 1
@@ -526,7 +592,7 @@ class Coefficients(_Device):
     @property
     def set0(self):
         """."""
-        return self['CSET0']/self.FPGA_BITS
+        return self['CSET0'] / self.FPGA_BITS
 
     @set0.setter
     def set0(self, value):
@@ -702,12 +768,12 @@ class Coefficients(_Device):
     def cmd_edit_apply(self, timeout=DEF_TIMEOUT):
         """."""
         self['BO_CPCOEFF'] = 1
-        return self._wait('BO_CPCOEFF', 1, timeout)
+        return self.wait('BO_CPCOEFF', 1, timeout)
 
     def cmd_edit_verify(self, timeout=DEF_TIMEOUT):
         """."""
         self['BO_CVERIFY'] = 1
-        return self._wait('BO_CVERIFY', 1, timeout)
+        return self.wait('BO_CVERIFY', 1, timeout)
 
 
 class Acquisition(_Device):
@@ -716,21 +782,63 @@ class Acquisition(_Device):
     ACQTYPE = _get_namedtuple('Devices', ('SRAM', 'BRAM'))
 
     PROPERTIES_DEFAULT = (
-        'GDTIME', 'HOLDTIME', 'POSTTIME', 'ACQTIME',
-        'REC_DS', 'POSTSEL', 'ACQ_EN', 'ACQ_SINGLE', 'SP_AVG',
-        'HWTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
-        'DUMP', 'RAW_SAMPLES', 'RAW', 'ACQ_TURNS', 'POST_TURNS',
-        'MEAN', 'RMS', 'XSC', 'SPEC', 'MAXRMS', 'TSC', 'FREQ',
-        'ACQ_MASK', 'ACQ_PATTERN',
-        'SP_LOW1', 'SP_HIGH1', 'SP_SEARCH1',
-        'SP_LOW2', 'SP_HIGH2', 'SP_SEARCH2',
-        'PEAKFREQ1', 'PEAK1', 'PEAKTUNE1',
-        'PEAKFREQ2', 'PEAK2', 'PEAKTUNE2',
-        'MD_ENABLE', 'MD_SMODE', 'MD_FTUNE', 'MD_FSPAN', 'MD_MSEL',
-        'MD_AVG', 'MD_SP_LOW', 'MD_SP_HIGH', 'MD_SP_SEARCH',
-        'MD_MAXMODE', 'MD_MAXVAL', 'MD_PEAK', 'MD_PEAKFREQ', 'MD_PEAKTUNE',
-        'MD_MODES', 'MD_SPEC',
-        )
+        'GDTIME',
+        'HOLDTIME',
+        'POSTTIME',
+        'ACQTIME',
+        'REC_DS',
+        'POSTSEL',
+        'ACQ_EN',
+        'ACQ_SINGLE',
+        'SP_AVG',
+        'HWTEN',
+        'TRIG_IN_SEL',
+        'ARM',
+        'ARM_MON',
+        'BR_ARM',
+        'DUMP',
+        'RAW_SAMPLES',
+        'RAW',
+        'ACQ_TURNS',
+        'POST_TURNS',
+        'MEAN',
+        'RMS',
+        'XSC',
+        'SPEC',
+        'MAXRMS',
+        'TSC',
+        'FREQ',
+        'ACQ_MASK',
+        'ACQ_PATTERN',
+        'SP_LOW1',
+        'SP_HIGH1',
+        'SP_SEARCH1',
+        'SP_LOW2',
+        'SP_HIGH2',
+        'SP_SEARCH2',
+        'PEAKFREQ1',
+        'PEAK1',
+        'PEAKTUNE1',
+        'PEAKFREQ2',
+        'PEAK2',
+        'PEAKTUNE2',
+        'MD_ENABLE',
+        'MD_SMODE',
+        'MD_FTUNE',
+        'MD_FSPAN',
+        'MD_MSEL',
+        'MD_AVG',
+        'MD_SP_LOW',
+        'MD_SP_HIGH',
+        'MD_SP_SEARCH',
+        'MD_MAXMODE',
+        'MD_MAXVAL',
+        'MD_PEAK',
+        'MD_PEAKFREQ',
+        'MD_PEAKTUNE',
+        'MD_MODES',
+        'MD_SPEC',
+    )
 
     DEF_TIMEOUT = 10  # [s]
 
@@ -738,7 +846,7 @@ class Acquisition(_Device):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
         acqtype = Acquisition.process_acquisition_type(acqtype)
-        super().__init__(devname+':'+acqtype+'_', props2init=props2init)
+        super().__init__(devname + ':' + acqtype + '_', props2init=props2init)
 
         pvo = self.pv_object('RAW')
         self._update_data_evt = _Event()
@@ -911,7 +1019,7 @@ class Acquisition(_Device):
     def cmd_data_acquire(self, timeout=DEF_TIMEOUT):
         """."""
         self.acq_enbl = 1
-        return self._wait('ACQ_EN', 1, timeout=timeout)
+        return self.wait('ACQ_EN', 1, timeout=timeout)
 
     def cmd_data_dump(self, timeout=DEF_TIMEOUT, pv_update=False):
         """."""
@@ -923,7 +1031,7 @@ class Acquisition(_Device):
     def wait_data_dump(self, timeout=None, pv_update=False):
         """."""
         timeout = timeout or Acquisition.DEF_TIMEOUT
-        if not self._wait('DUMP', False, timeout=timeout):
+        if not self.wait('DUMP', False, timeout=timeout):
             print('WARN: Timed out waiting data dump.')
             return False
         if pv_update and not self._update_data_evt.wait(timeout=timeout):
@@ -1192,22 +1300,46 @@ class SingleBunch(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'ACQTIME', 'ACQ_SAMPLES', 'ACQ_EN', 'ACQ_SINGLE',
-        'BUNCH_ID', 'RAW_BUNCH_ID',
-        'EXTEN', 'TRIG_IN_SEL', 'ARM', 'ARM_MON', 'BR_ARM',
-        'RAW_SAMPLES', 'TSC', 'RAW', 'FREQ', 'MAG', 'PHASE', 'TF_ENABLE',
-        'NFFT', 'NOVERLAP', 'DEL_CAL', 'SP_AVG',
-        'MEANVAL', 'RMSVAL', 'AMP_PP',
-        'SP_LOW1', 'SP_HIGH1', 'PEAKFREQ1', 'PEAKTUNE1',
-        'PEAK1', 'SP_SEARCH1', 'PHASE1',
-        )
+        'ACQTIME',
+        'ACQ_SAMPLES',
+        'ACQ_EN',
+        'ACQ_SINGLE',
+        'BUNCH_ID',
+        'RAW_BUNCH_ID',
+        'EXTEN',
+        'TRIG_IN_SEL',
+        'ARM',
+        'ARM_MON',
+        'BR_ARM',
+        'RAW_SAMPLES',
+        'TSC',
+        'RAW',
+        'FREQ',
+        'MAG',
+        'PHASE',
+        'TF_ENABLE',
+        'NFFT',
+        'NOVERLAP',
+        'DEL_CAL',
+        'SP_AVG',
+        'MEANVAL',
+        'RMSVAL',
+        'AMP_PP',
+        'SP_LOW1',
+        'SP_HIGH1',
+        'PEAKFREQ1',
+        'PEAKTUNE1',
+        'PEAK1',
+        'SP_SEARCH1',
+        'PHASE1',
+    )
 
     DEF_TIMEOUT = 10  # [s]
 
     def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        super().__init__(devname+':'+'SB_', props2init=props2init)
+        super().__init__(devname + ':' + 'SB_', props2init=props2init)
 
     @property
     def acqtime(self):
@@ -1444,18 +1576,30 @@ class SingleBunch(_Device):
     def cmd_enable_transfer_function(self, timeout=DEF_TIMEOUT):
         """Enable transfer function."""
         self.transfer_function_enable = 1
-        return self._wait('TF_ENABLE', value=1, timeout=timeout)
+        return self.wait('TF_ENABLE', value=1, timeout=timeout)
 
 
 class PhaseTracking(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'PHTRK_GAIN', 'PHTRK_SETPT', 'PHTRK_RANGE', 'PHTRK_DECIM',
-        'PHTRK_RATE', 'PHTRK_BANDWIDTH', 'PHTRK_LOOPCTRL',
-        'PHTRK_MAG', 'PHTRK_TFGAIN', 'PHTRK_SHIFT', 'PHTRK_PHASE',
-        'PHTRK_ERROR', 'PHTRK_FREQ0', 'PHTRK_TUNE',
-        'DRIVE2_TRACK', 'PHTRK_MOD')
+        'PHTRK_GAIN',
+        'PHTRK_SETPT',
+        'PHTRK_RANGE',
+        'PHTRK_DECIM',
+        'PHTRK_RATE',
+        'PHTRK_BANDWIDTH',
+        'PHTRK_LOOPCTRL',
+        'PHTRK_MAG',
+        'PHTRK_TFGAIN',
+        'PHTRK_SHIFT',
+        'PHTRK_PHASE',
+        'PHTRK_ERROR',
+        'PHTRK_FREQ0',
+        'PHTRK_TUNE',
+        'DRIVE2_TRACK',
+        'PHTRK_MOD',
+    )
 
     DEF_TIMEOUT = 10  # [s]
 
@@ -1577,11 +1721,18 @@ class FrontBackEnd(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'FBE_Z_ATT', 'FBE_Z_PHASE', 'FBELT_SERVO_SETPT',
-        'FBE_BE_ATT', 'FBE_BE_PHASE',
-        'FBE_X_ATT', 'FBE_X_PHASE', 'FBELT_X_PHASE_SETPT',
-        'FBE_Y_ATT', 'FBE_Y_PHASE', 'FBELT_Y_PHASE_SETPT',
-        )
+        'FBE_Z_ATT',
+        'FBE_Z_PHASE',
+        'FBELT_SERVO_SETPT',
+        'FBE_BE_ATT',
+        'FBE_BE_PHASE',
+        'FBE_X_ATT',
+        'FBE_X_PHASE',
+        'FBELT_X_PHASE_SETPT',
+        'FBE_Y_ATT',
+        'FBE_Y_PHASE',
+        'FBELT_Y_PHASE_SETPT',
+    )
 
     FPGA_BITS = 2**15
 
@@ -1675,10 +1826,18 @@ class Feedback(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'PROC_DS', 'FBCTRL', 'SHIFTGAIN', 'SETSEL', 'SAT_THRESHOLD',
-        'FB_MASK', 'FB_PATTERN', 'CF_MASK', 'CF_PATTERN',
-        'CF_PATTERN_SUB.VALB', 'GDEN',
-        )
+        'PROC_DS',
+        'FBCTRL',
+        'SHIFTGAIN',
+        'SETSEL',
+        'SAT_THRESHOLD',
+        'FB_MASK',
+        'FB_PATTERN',
+        'CF_MASK',
+        'CF_PATTERN',
+        'CF_PATTERN_SUB.VALB',
+        'GDEN',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
@@ -1790,9 +1949,19 @@ class Drive(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'MOD', 'AMPL', 'WAVEFORM', 'FREQ', 'FREQ_ACT', 'SPAN', 'SPAN_ACT',
-        'PERIOD', 'PERIOD_ACT', 'MASK', 'PATTERN', 'BITS',
-        )
+        'MOD',
+        'AMPL',
+        'WAVEFORM',
+        'FREQ',
+        'FREQ_ACT',
+        'SPAN',
+        'SPAN_ACT',
+        'PERIOD',
+        'PERIOD_ACT',
+        'MASK',
+        'PATTERN',
+        'BITS',
+    )
 
     def __init__(self, devname, drive_num=None, props2init='all'):
         """."""
@@ -1801,7 +1970,7 @@ class Drive(_Device):
         if drive_num is not None:
             propty += str(drive_num)
         propty += '_'
-        super().__init__(devname+':'+propty, props2init=props2init)
+        super().__init__(devname + ':' + propty, props2init=props2init)
 
     @property
     def number_of_bits(self):
@@ -1885,12 +2054,18 @@ class BunchClean(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        'ENABLE', 'AMPL', 'TUNE', 'PATTERN', 'PERIOD', 'SPAN')
+        'ENABLE',
+        'AMPL',
+        'TUNE',
+        'PATTERN',
+        'PERIOD',
+        'SPAN',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        super().__init__(devname+':CLEAN_', props2init=props2init)
+        super().__init__(devname + ':CLEAN_', props2init=props2init)
 
     @property
     def state(self):
@@ -1957,7 +2132,7 @@ class PwrAmpL(_Device):
     def __init__(self, devname, num=0, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        super().__init__(devname+f':MCLRAW_{num:d}_', props2init=props2init)
+        super().__init__(devname + f':MCLRAW_{num:d}_', props2init=props2init)
 
     @property
     def status(self):
@@ -2004,14 +2179,21 @@ class PwrAmpT(_Device):
     DEF_TIMEOUT = 10  # [s]
 
     PROPERTIES_DEFAULT = (
-        'Rst-Cmd', 'Enbl-Sts', 'Enbl-Sel', 'GainAuto-Sts', 'GainAuto-Sel',
-        'Gain-SP', 'Gain-RB', 'GainStep-SP', 'GainStep-RB',
-        )
+        'Rst-Cmd',
+        'Enbl-Sts',
+        'Enbl-Sel',
+        'GainAuto-Sts',
+        'GainAuto-Sel',
+        'Gain-SP',
+        'Gain-RB',
+        'GainStep-SP',
+        'GainStep-RB',
+    )
 
     def __init__(self, devname, props2init='all'):
         """."""
         devname = BunchbyBunch.process_device_name(devname)
-        devname = devname.substitute(dev='BbBAmp'+devname.idx, idx='')
+        devname = devname.substitute(dev='BbBAmp' + devname.idx, idx='')
         super().__init__(devname, props2init=props2init)
 
     @property
@@ -2053,8 +2235,8 @@ class PwrAmpT(_Device):
     def cmd_reset(self, timeout=DEF_TIMEOUT):
         """."""
         self['Rst-Cmd'] = 1
-        if not self._wait('Rst-Cmd', 1, timeout/2):
+        if not self.wait('Rst-Cmd', 1, timeout / 2):
             return False
         _time.sleep(0.2)
         self['Rst-Cmd'] = 0
-        return self._wait('Rst-Cmd', 0, timeout/2)
+        return self.wait('Rst-Cmd', 0, timeout / 2)

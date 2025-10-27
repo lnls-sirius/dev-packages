@@ -414,68 +414,68 @@ class TLSOFB(_Device):
         prop = 'SmoothReset-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_calccorr(self):
         """."""
         prop = 'CalcDelta-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_applycorr_ch(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.CH
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_applycorr_cv(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.CV
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_applycorr_rf(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.RF
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_applycorr_all(self):
         """."""
         prop = 'ApplyDelta-Cmd'
         val = self[prop]
         self[prop] = self._data.ApplyDelta.All
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_measrespmat_start(self):
         """."""
         prop = 'MeasRespMat-Cmd'
         val = self[prop]
         self[prop] = 0
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_measrespmat_stop(self):
         """."""
         prop = 'MeasRespMat-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_measrespmat_reset(self):
         """."""
         prop = 'MeasRespMat-Cmd'
         val = self[prop]
         self[prop] = 2
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
     def cmd_trigacq_start(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Start'
-        ret = self._wait(
+        ret = self.wait(
             'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Start, timeout=timeout
         )
         if not ret:
@@ -486,7 +486,7 @@ class TLSOFB(_Device):
     def cmd_trigacq_stop(self, timeout=10):
         """."""
         self['TrigAcqCtrl-Sel'] = 'Stop'
-        ret = self._wait(
+        ret = self.wait(
             'TrigAcqCtrl-Sts', self._data.TrigAcqCtrl.Stop, timeout=timeout
         )
         if not ret:
@@ -558,7 +558,7 @@ class TLSOFB(_Device):
     def wait_buffer(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout
-        return self._wait(
+        return self.wait(
             'BufferCount-Mon', self.nr_points, timeout=timeout, comp='ge'
         )
 
@@ -567,7 +567,7 @@ class TLSOFB(_Device):
         def_timeout = min(1.05 * self.deltakickrf, self.maxdeltakickrf) // 20
         def_timeout = max(self._default_timeout_kick_apply, def_timeout)
         timeout = timeout or def_timeout
-        return self._wait(
+        return self.wait(
             'ApplyDelta-Mon',
             self._data.ApplyDeltaMon.Applying,
             timeout=timeout,
@@ -577,7 +577,7 @@ class TLSOFB(_Device):
     def wait_respm_meas(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout_respm
-        return self._wait(
+        return self.wait(
             'MeasRespMat-Mon',
             self._data.MeasRespMatMon.Measuring,
             timeout=timeout,
@@ -586,14 +586,14 @@ class TLSOFB(_Device):
 
     def wait_orb_status_ok(self, timeout=10):
         """."""
-        return self._wait('OrbStatus-Mon', 0, timeout=timeout)
+        return self.wait('OrbStatus-Mon', 0, timeout=timeout)
 
     def cmd_sync_bpms(self):
         """Synchronize BPMs."""
         prop = 'SyncBPMs-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
 
 class BOSOFB(TLSOFB):
@@ -731,7 +731,7 @@ class BOSOFB(TLSOFB):
         prop = 'MTurnAcquire-Cmd'
         val = self[prop]
         self[prop] = 1
-        return self._wait(prop, val + 1)
+        return self.wait(prop, val + 1)
 
 
 class SISOFB(BOSOFB):
@@ -814,7 +814,7 @@ class SISOFB(BOSOFB):
         """."""
         mode = self._data.SOFBMode.MultiTurn
         self.opmode = mode
-        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        ret = self.wait('SOFBMode-Sts', mode, timeout=timeout)
         if not ret:
             return False
         _time.sleep(1)  # Status PV updates at 2Hz
@@ -824,7 +824,7 @@ class SISOFB(BOSOFB):
         """."""
         mode = self._data.SOFBMode.SlowOrb
         self.opmode = mode
-        ret = self._wait('SOFBMode-Sts', mode, timeout=timeout)
+        ret = self.wait('SOFBMode-Sts', mode, timeout=timeout)
         if not ret:
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
@@ -1092,7 +1092,7 @@ class SISOFB(BOSOFB):
         if self.autocorrsts == self._data.LoopState.Closed:
             return True
         self['LoopState-Sel'] = self._data.LoopState.Closed
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', self._data.LoopState.Closed, timeout=timeout
         )
 
@@ -1102,7 +1102,7 @@ class SISOFB(BOSOFB):
         if self.autocorrsts == self._data.LoopState.Open:
             return True
         self['LoopState-Sel'] = self._data.LoopState.Open
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', self._data.LoopState.Open, timeout=timeout
         )
 
@@ -1126,7 +1126,7 @@ class SISOFB(BOSOFB):
         if self.synckicksts == self._data.CorrSync.Off:
             return True
         self['CorrSync-Sel'] = self._data.CorrSync.Off
-        return self._wait(
+        return self.wait(
             'CorrSync-Sts', self._data.CorrSync.Off, timeout=timeout
         )
 
@@ -1136,7 +1136,7 @@ class SISOFB(BOSOFB):
         if self.drivests == self._data.DriveState.Closed:
             return True
         self['DriveState-Sel'] = self._data.DriveState.Closed
-        return self._wait(
+        return self.wait(
             'DriveState-Sts', self._data.DriveState.Closed, timeout=timeout
         )
 
@@ -1151,7 +1151,7 @@ class SISOFB(BOSOFB):
     def wait_drive(self, timeout=None):
         """."""
         timeout = timeout or self._default_timeout_respm
-        return self._wait(
+        return self.wait(
             'DriveState-Sts', self._data.DriveState.Open, timeout=timeout
         )
 
