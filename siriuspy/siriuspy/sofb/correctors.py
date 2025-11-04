@@ -89,7 +89,7 @@ class RFCtrl(Corrector):
     TINY_VAR = 0.01  # [Hz]
     LARGE_VAR = 10000  # [Hz]
     MAX_DELTA = 200  # [Hz]
-    INTVL = 1  # [Hz]
+    INTVL = 1  # [s]
 
     def __init__(self, acc):
         """Init method."""
