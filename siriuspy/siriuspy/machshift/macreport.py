@@ -1384,14 +1384,21 @@ class MacReport:
         self._raw_data['Failures']['NoEBeam'] = \
             _np.logical_not(self._is_stored_users)
 
-        # - wrong shift failures (ignore shorter than 60s)
+        # - wrong shift failures (ignore shorter than 60s,
+        # 12 is the number of points in 60s, considering
+        # we have 1 point for each 5s).
         wrong_shift = \
             1 * ((self._users_shift_progmd_values -
                   self._users_shift_values) > 0)
         ignore_wrong_shift = _np.zeros(wrong_shift.shape)
         for i, val in enumerate(wrong_shift):
+            # do not ignore errors in first 60s
+            if i < 12:
+                continue
+            # fix problems until last 60s
             if i >= len(wrong_shift) - 12:
                 break
+            # properly ignore errors in shift setpoints with duration of 60s
             if val == 1 and not _np.sum(wrong_shift[(i-12):(i+12)]) >= 12:
                 ignore_wrong_shift[i] = 1
         consider_wrong_shift = wrong_shift - ignore_wrong_shift
