@@ -266,6 +266,8 @@ class MacReport:
         # beam dump during archiver failure
         [_Time(2025, 1, 19, 23, 39, 0, 0), _Time(2025, 1, 20, 8, 0, 0, 0)],
         [_Time(2025, 1, 27, 1, 29, 0, 0), _Time(2025, 1, 27, 3, 48, 0, 0)],
+        # beam below userbeam threshold, wrong machine shift for recovery
+        [_Time(2025, 10, 18, 11, 32, 30, 0), _Time(2025, 10, 18, 23, 59, 0, 0)],
     ]
 
     def __init__(self, connector=None, logger=None):
