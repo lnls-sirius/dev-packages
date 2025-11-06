@@ -178,14 +178,16 @@ class Device:
             attributes[pvobj.pvname] = getattr(pvobj, attribute)
         return attributes
 
-    def wait(self, propty, value, timeout=None, comp='eq'):
+    def wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
         """Wait until comparison of property value is true against 'value'.
 
         Args:
             propty (str): Name of the property to wait condition to be met.
             value (str|float|int|bool|numpy.ndarray): value to be set.
-            timeout (float, optional): Timeout of operation. Defaults to None,
-                which means it will wait forever.
+            timeout (float|str, optional): Timeout of operation.
+                Defaults to the module variable `_DEF_TIMEOUT`, which is 10s.
+                It also accepts None, which is the same as the default and the
+                string `'never'`, which is self explanatory.
             comp (str, optional): Type of comparison to make. Can be any
                 operator of module `operator` or any callable that accepts two
                 entries and return a boolean. Defaults to 'eq'.
@@ -227,8 +229,10 @@ class Device:
             value (str|float|int|bool|numpy.ndarray): value to be set.
             rel_tol (float, optional): relative tolerance. Defaults to 0.0.
             abs_tol (float, optional): absolute tolerance. Defaults to 0.1.
-            timeout (float, optional): Timeout of operation. Defaults to None,
-                which means it will wait forever.
+            timeout (float|str, optional): Timeout of operation.
+                Defaults to the module variable `_DEF_TIMEOUT`, which is 10s.
+                It also accepts None, which is the same as the default and the
+                string `'never'`, which is self explanatory.
 
         Returns:
             isok (bool): Whether condition was met within timeout.
@@ -244,8 +248,9 @@ class Device:
         Args:
             props_values (dict): Dictionary with property names and values,
                 respectively.
-            timeout (float, optional): Timeout of operation. Defaults to None,
-                which means it will wait forever.
+            timeout (float, optional): Timeout of operation.
+                Defaults to the module variable `_DEF_TIMEOUT`, which is 10s.
+                It also accepts None, which is the same as the default.
             comp (str, optional): Type of comparison to make. Can be any
                 operator of module `operator` or any callable that accepts two
                 entries and return a boolean. Defaults to 'eq'.
