@@ -281,11 +281,17 @@ class Device:
     def _enum_selector(value, enums):
         if value is None:
             return
-        if hasattr(enums, '_fields'):
+        if hasattr(enums, '_fields'):  # in case of namedtuple
+            vals = enums
             enums = enums._fields
+        elif isinstance(enums, dict):  # in case of dictionary
+            enums, vals = list(zip(*enums.items()))
+        else:  # in case of tuple or list
+            vals = list(range(len(enums)))
+
         if isinstance(value, str) and value in enums:
-            return enums.index(value)
-        elif 0 <= int(value) < len(enums):
+            return vals[enums.index(value)]
+        elif value in vals:
             return value
 
 
