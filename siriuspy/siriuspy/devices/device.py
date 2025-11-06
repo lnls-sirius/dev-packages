@@ -242,8 +242,8 @@ class Device:
         """Wait several properties to reach the desired value.
 
         Args:
-            props_values (list[2-tuple]): List of 2-tuples with property names
-                and values, respectively.
+            props_values (dict): Dictionary with property names and values,
+                respectively.
             timeout (float, optional): Timeout of operation. Defaults to None,
                 which means it will wait forever.
             comp (str, optional): Type of comparison to make. Can be any
