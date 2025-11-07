@@ -81,6 +81,9 @@ class BBBFactory:
             # create pru controller for devices
             freq = freqs[psmodel_name]
             freq = None if freq == 0 else freq
+
+            freq = 10.0  # [Hz] 01M1-FFCH tests
+
             pru_controller = _PRUController(pru, prucqueue,
                                             psmodel, devs,
                                             processing=False,
