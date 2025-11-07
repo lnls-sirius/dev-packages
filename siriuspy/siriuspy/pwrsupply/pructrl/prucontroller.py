@@ -546,7 +546,7 @@ class PRUController:
 
             # update device wfm curves cyclically
             if self._scope_update:
-                self._scope_update_dev_idx = 8  # test for SI-01M1:PS-FFCH
+                self._scope_update_dev_idx = 8  # test for SI-01M1:PS-FFCV
                 # self._scope_update_dev_idx = \
                 #     (self._scope_update_dev_idx + 1) % len(self._device_ids)
                 dev_id = self._device_ids[self._scope_update_dev_idx]
