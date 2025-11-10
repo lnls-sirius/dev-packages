@@ -1,12 +1,13 @@
 """PV Arch Module."""
 
 from copy import deepcopy as _dcopy
+from datetime import timedelta as _timedelta
+from urllib.parse import quote as _quote
 
 import numpy as _np
-from mathphys.functions import (
-    load_pickle as _load_pickle,
+from lzstring import LZString
+from mathphys.functions import load_pickle as _load_pickle, \
     save_pickle as _save_pickle
-)
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
@@ -86,6 +87,93 @@ class _Base:
         """."""
         if self.connector:
             self.connector.switch_to_offline_data()
+
+    @staticmethod
+    def gen_archviewer_link(
+        start,
+        end,
+        pv_list,
+        ref,
+    ):
+        """Generate compressed archiver viewer link.
+
+        Parameters
+        ----------
+        start: datetime
+            Date when the data starts.
+        end: datetime
+            Date when the data end.
+        pv_list: list[tuple[str, int, str|None, bool]]
+            List of the configurations to be shown in archiver viewer for
+            each PV.
+            Must contain in each tuple the values:
+            (pvname, optimization_points, color)
+                pvname: str
+                    Name of the PV
+                optimization_points:
+                    Number of points to be plotted in the axis
+                    (If 0, show all the points(no optimization))
+                color: str | None
+                    The color of the trace/axis for the PV
+                    (hexadecimal RGB format: #00aa11,
+                    if None no color is selected)
+                use_diff: bool
+                    If the axis for the PV should enable the diff function.
+        ref: datetime|None (Optional parameter)
+            Date of the diff reference
+
+        Example:
+
+        start = datetime(2025, 10, 23, 8, 3, 13)
+        end  = datetime(2025, 10, 23, 9, 3, 13)
+        ref = datetime(2025, 10, 23, 9, 3, 13)
+
+        url = generateArchiverViewerLink(start, end, [
+            ('SI-10C1:DI-BPM-2:PosX-Mon', 10, "#00ff00", False),
+            ('SI-10C1:DI-BPM-1:PosX-Mon', 100, "#0000ff", False),
+            ('SI-10C1:DI-BPM-1:PosY-Mon', 0, "#ff0000", True)],
+            ref)
+        print(url)
+        """
+        # Thanks to Rafael Lyra for the basis of this implementation!
+        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + 'pvConfig='
+        pv_search = ''
+        for pvname, optimization_points, color, use_diff in pv_list:
+            pv_search += 'pv='
+            url_pvname = _quote(pvname)
+            if optimization_points > 0:
+                pv_search += f'optimized_{optimization_points}({url_pvname})'
+            else:
+                pv_search += url_pvname
+
+            if ref is not None and use_diff:
+                pv_search += '_diff'
+
+            if color is not None:
+                pv_search += f'__{color}'
+            pv_search += '&'
+
+        search_url = pv_search
+
+        date_pattern = '%Y-%m-%dT%H:%M:%S.000Z'
+        time_zone = _timedelta(hours=3)
+
+        start = start + time_zone
+        formatted_start = start.strftime(date_pattern)
+        search_url += f'from={_quote(formatted_start)}&'
+
+        end = end + time_zone
+        formatted_end = end.strftime(date_pattern)
+        search_url += f'to={_quote(formatted_end)}&'
+
+        if ref is not None:
+            ref = ref + time_zone
+            formatted_ref = ref.strftime(date_pattern)
+            search_url += f'ref={_quote(formatted_ref)}'
+
+        lz = LZString()
+        compressed_data = lz.compressToEncodedURIComponent(search_url)
+        return archiver_viewer_url + compressed_data
 
 
 class PVDetails(_Base):
