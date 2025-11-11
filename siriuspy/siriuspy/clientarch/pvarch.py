@@ -136,7 +136,7 @@ class _Base:
         print(url)
         """
         # Thanks to Rafael Lyra for the basis of this implementation!
-        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + 'pvConfig='
+        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
         pv_search = ''
         for pvname, optimization_points, color, use_diff in pv_list:
             pv_search += 'pv='
