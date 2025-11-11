@@ -124,9 +124,11 @@ class _Base:
 
         Example:
 
-        start = datetime(2025, 10, 23, 8, 3, 13)
-        end  = datetime(2025, 10, 23, 9, 3, 13)
-        ref = datetime(2025, 10, 23, 9, 3, 13)
+        from siriuspy.clientarch import Time
+
+        start = Time(2025, 10, 23, 8, 3, 13)
+        end  = Time(2025, 10, 23, 9, 3, 13)
+        ref = Time(2025, 10, 23, 9, 3, 13)
 
         url = generateArchiverViewerLink(start, end, [
             ('SI-10C1:DI-BPM-2:PosX-Mon', 10, "#00ff00", False),
