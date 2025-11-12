@@ -43,9 +43,10 @@ class ASMPSCtrl(_Device):
 
     PROPERTIES_DEFAULT = (
         'AlarmGammaShutter-Mon',
-        'DsblGamma-Cmd', 'EnblGamma-Cmd',
+        'DsblGamma-Cmd',
+        'EnblGamma-Cmd',
         # 'DsblGamma-Mon', 'EnblGamma-Mon',
-        )
+    )
 
     def __init__(self, props2init='all', **kwargs):
         """Init."""
@@ -64,12 +65,12 @@ class ASMPSCtrl(_Device):
     def cmd_gamma_enable(self, timeout=None):
         """Enable gamma signal for beamlines."""
         self['EnblGamma-Cmd'] = 1
-        return self._wait('AlarmGammaShutter-Mon', 1, timeout)
+        return self.wait('AlarmGammaShutter-Mon', 1, timeout)
 
     def cmd_gamma_disable(self, timeout=None):
         """Disable gamma signal for beamlines."""
         self['DsblGamma-Cmd'] = 1
-        return self._wait('AlarmGammaShutter-Mon', 0, timeout)
+        return self.wait('AlarmGammaShutter-Mon', 0, timeout)
 
 
 class BLInterlockCtrl(_Device):
@@ -85,18 +86,15 @@ class BLInterlockCtrl(_Device):
         """Devices names."""
 
         CAX = 'CAX'
-        ALL = (CAX, )
+        ALL = (CAX,)
 
     PROPERTIES_DEFAULT = (
         # Status da liberação do gamma pela máquina – 1 indica liberado
         'M:PPS01:HABILITACAO_MAQUINA',
-
         # general EPS status for frontend shutter
         'F:PPS01:HABILITACAO_EPS_GS_X',
-
         # general EPS status for hutchA shutter
         'A:PPS01:HABILITACAO_EPS',
-
         # EPS status
         'A:EPS01:StatusPos',
         'A:EPS01:StatusTemp',
@@ -105,31 +103,27 @@ class BLInterlockCtrl(_Device):
         'F:EPS01:StatusPos',
         'F:EPS01:StatusTemp',
         'F:EPS01:StatusVac',
-
         # open front-end and first hutchA valve gates
         'F:EPS01:openGates',
-
-        'A:EPS01:GV5open', 'A:EPS01:GV5closed',  # open/close gate status
-        'F:EPS01:GV4open', 'F:EPS01:GV4closed',  # open/close gate status
-        'F:EPS01:GV3open', 'F:EPS01:GV3closed',  # open/close gate status
+        'A:EPS01:GV5open',
+        'A:EPS01:GV5closed',  # open/close gate status
+        'F:EPS01:GV4open',
+        'F:EPS01:GV4closed',  # open/close gate status
+        'F:EPS01:GV3open',
+        'F:EPS01:GV3closed',  # open/close gate status
         # 'F:EPS01:GV2open', 'F:EPS01:GV2closed',  # open/close gate status
-        'F:EPS01:GV1open', 'F:EPS01:GV1closed',  # open/close gate status
-
+        'F:EPS01:GV1open',
+        'F:EPS01:GV1closed',  # open/close gate status
         # reset EPS
         'F:EPS01:resetCmd',
-
         # Enviar 1 para abrir o Front-end completo (abre o gamma e o photon)
         'F:PPS01:FOEOPEN',
-
         # Enviar 1 para fechar o Front-end completo (fecha o photon e o gamma)
         'F:PPS01:FOECLOSE',
-
         # Status photon shutter front-end – 0 indica aberto
         'F:PPS01:PS_STATUS',
-
         # Status gamma shutter front-end – 0 indica aberto
         'F:PPS01:GS_X_STATUS',
-
         # shutter da cabana a
         # - Enviar 1 – se estiver fechado abre – se estiver aberto fecha
         'A:PPS01:OEAOPENCLOSE',
@@ -141,9 +135,11 @@ class BLInterlockCtrl(_Device):
         'B:PPS01:SEARCH_OK',
         # open other hutchA and hutchB valve gates
         'B:EPS01:openGates',
-        'B:EPS01:GV7open', 'B:EPS01:GV7closed',  # open/close gate status
-        'A:EPS01:GV6open', 'A:EPS01:GV6closed',  # open/close gate status
-        )
+        'B:EPS01:GV7open',
+        'B:EPS01:GV7closed',  # open/close gate status
+        'A:EPS01:GV6open',
+        'A:EPS01:GV6closed',  # open/close gate status
+    )
 
     def __init__(self, devname=None, props2init='all', **kwargs):
         """Init."""
@@ -176,7 +172,8 @@ class BLInterlockCtrl(_Device):
         """."""
         msg = 'machine gamma not enabled.'
         return self._check_set_error_log(
-            self['M:PPS01:HABILITACAO_MAQUINA'] == 1, msg)
+            self['M:PPS01:HABILITACAO_MAQUINA'] == 1, msg
+        )
 
     @property
     def is_frontend_gamma_shutter_opened(self):
@@ -299,22 +296,26 @@ class BLInterlockCtrl(_Device):
         """."""
         msg = 'front-end shutter EPS permission not Ok.'
         return self._check_set_error_log(
-            bool(self['F:PPS01:HABILITACAO_EPS_GS_X']), msg)
+            bool(self['F:PPS01:HABILITACAO_EPS_GS_X']), msg
+        )
 
     @property
     def is_hutchA_shutter_eps_permission_ok(self):
         """."""
         msg = 'hutch A EPS permission not Ok.'
         return self._check_set_error_log(
-            bool(self['A:PPS01:HABILITACAO_EPS']), msg)
+            bool(self['A:PPS01:HABILITACAO_EPS']), msg
+        )
 
     @property
     def is_frontend_eps_ok(self):
         """."""
-        if self.is_frontend_eps_mirror_pos_ok and \
-                self.is_frontend_eps_mirror_pos_ok and \
-                self.is_frontend_eps_temperatures_ok and \
-                self.is_frontend_eps_vacuum_ok:
+        if (
+            self.is_frontend_eps_mirror_pos_ok
+            and self.is_frontend_eps_mirror_pos_ok
+            and self.is_frontend_eps_temperatures_ok
+            and self.is_frontend_eps_vacuum_ok
+        ):
             return True
         else:
             return False
@@ -322,9 +323,11 @@ class BLInterlockCtrl(_Device):
     @property
     def is_hutchA_eps_ok(self):
         """."""
-        if self.is_hutchA_eps_dvf_pos_ok and \
-                self.is_hutchA_eps_temperatures_ok and \
-                self.is_hutchA_eps_vacuum_ok:
+        if (
+            self.is_hutchA_eps_dvf_pos_ok
+            and self.is_hutchA_eps_temperatures_ok
+            and self.is_hutchA_eps_vacuum_ok
+        ):
             return True
         else:
             return False
@@ -337,9 +340,11 @@ class BLInterlockCtrl(_Device):
     @property
     def is_beamline_eps_ok(self):
         """."""
-        if self.is_frontend_eps_ok and \
-                self.is_hutchA_eps_ok and \
-                self.is_hutchB_eps_ok:
+        if (
+            self.is_frontend_eps_ok
+            and self.is_hutchA_eps_ok
+            and self.is_hutchB_eps_ok
+        ):
             return True
         else:
             return False
@@ -347,15 +352,17 @@ class BLInterlockCtrl(_Device):
     @property
     def is_beamline_opened(self):
         """Return whether BL is opened."""
-        return self.is_hutchA_intlk_search_done and \
-            self.is_hutchB_intlk_search_done and \
-            self.is_machine_gamma_enabled and \
-            self.is_beamline_eps_ok and \
-            self.is_frontend_shutter_eps_permission_ok and \
-            self.is_hutchA_shutter_eps_permission_ok and \
-            self.is_frontend_gamma_shutter_opened and \
-            self.is_frontend_photon_shutter_opened and \
-            self.is_hutchA_gamma_shutter_opened
+        return (
+            self.is_hutchA_intlk_search_done
+            and self.is_hutchB_intlk_search_done
+            and self.is_machine_gamma_enabled
+            and self.is_beamline_eps_ok
+            and self.is_frontend_shutter_eps_permission_ok
+            and self.is_hutchA_shutter_eps_permission_ok
+            and self.is_frontend_gamma_shutter_opened
+            and self.is_frontend_photon_shutter_opened
+            and self.is_hutchA_gamma_shutter_opened
+        )
 
     def cmd_beamline_eps_reset(self):
         """."""
@@ -398,8 +405,10 @@ class BLInterlockCtrl(_Device):
 
     def cmd_frontend_gamma_and_photon_open(self, timeout=None):
         """."""
-        if self.is_frontend_gamma_shutter_opened and \
-                self.is_frontend_photon_shutter_opened:
+        if (
+            self.is_frontend_gamma_shutter_opened
+            and self.is_frontend_photon_shutter_opened
+        ):
             return True
         else:
             self['F:PPS01:FOEOPEN'] = 1
@@ -407,9 +416,10 @@ class BLInterlockCtrl(_Device):
         if timeout is None:
             return True
         t0 = _time.time()
-        while \
-                not self.is_frontend_gamma_shutter_opened or \
-                not self.is_frontend_photon_shutter_opened:
+        while (
+            not self.is_frontend_gamma_shutter_opened
+            or not self.is_frontend_photon_shutter_opened
+        ):
             if _time.time() - t0 > timeout:
                 print(self.error_log)
                 return False
@@ -419,9 +429,10 @@ class BLInterlockCtrl(_Device):
 
     def cmd_frontend_gamma_and_photon_close(self, timeout=None):
         """."""
-        if \
-                not self.is_frontend_gamma_shutter_opened and \
-                not self.is_frontend_photon_shutter_opened:
+        if (
+            not self.is_frontend_gamma_shutter_opened
+            and not self.is_frontend_photon_shutter_opened
+        ):
             return True
         else:
             self['F:PPS01:FOECLOSE'] = 1
@@ -429,9 +440,10 @@ class BLInterlockCtrl(_Device):
         if timeout is None:
             return True
         t0 = _time.time()
-        while \
-                self.is_frontend_gamma_shutter_opened or \
-                self.is_frontend_photon_shutter_opened:
+        while (
+            self.is_frontend_gamma_shutter_opened
+            or self.is_frontend_photon_shutter_opened
+        ):
             if _time.time() - t0 > timeout:
                 print('close frontend shutter timeout reached!')
                 return False
@@ -513,7 +525,8 @@ class BLInterlockCtrl(_Device):
         # check hutchA shutter permission and open gatevalves for hutchB
         if not self.is_hutchA_shutter_eps_permission_ok:
             is_ok = self.cmd_hutchB_gatevalves_open(
-                timeout=self.TIMEOUT_GATEVALVE)
+                timeout=self.TIMEOUT_GATEVALVE
+            )
             if not is_ok:
                 print(self.error_log)
                 return False
@@ -521,7 +534,8 @@ class BLInterlockCtrl(_Device):
         # open frontend gamma and photon shutter
         print('open frontend gamma and photon shutters')
         is_ok = self.cmd_frontend_gamma_and_photon_open(
-            timeout=self.TIMEOUT_SHUTTER)
+            timeout=self.TIMEOUT_SHUTTER
+        )
         if not is_ok:
             print(self.error_log)
             return False
@@ -540,8 +554,11 @@ class BLInterlockCtrl(_Device):
         self._error_log = msg
 
     def _check_set_error_log(self, cond, msg_fail, msg_succeed=None):
-        msg_succeed = BLInterlockCtrl._DEF_MSG_SUCCESS if msg_succeed is None \
+        msg_succeed = (
+            BLInterlockCtrl._DEF_MSG_SUCCESS
+            if msg_succeed is None
             else msg_succeed
+        )
         if not cond:
             self._set_error_log(msg_fail)
             return False

@@ -155,7 +155,7 @@ class RFGen(_Device):
     def set_frequency(self, value, tol=1, timeout=10):
         """Set RF phase and wait until it gets there."""
         self.frequency = value
-        return self._wait_float(
+        return self.wait_float(
             'GeneralFreq-RB', value, abs_tol=tol, timeout=timeout
         )
 
@@ -190,12 +190,12 @@ class RFGen(_Device):
     def cmd_freq_opmode_to_continuous_wave(self):
         """."""
         self.freq_opmode = self.FREQ_OPMODE.CW
-        return self._wait('GeneralFSweep-Sts', self.FREQ_OPMODE.CW)
+        return self.wait('GeneralFSweep-Sts', self.FREQ_OPMODE.CW)
 
     def cmd_freq_opmode_to_sweep(self):
         """."""
         self.freq_opmode = self.FREQ_OPMODE.SWE
-        return self._wait('GeneralFSweep-Sts', self.FREQ_OPMODE.SWE)
+        return self.wait('GeneralFSweep-Sts', self.FREQ_OPMODE.SWE)
 
     @property
     def freq_sweep_is_running(self):
@@ -204,7 +204,7 @@ class RFGen(_Device):
 
     def wait_freq_sweep_to_finish(self, timeout=10):
         """Wait until the current frequency sweep is finished."""
-        return self._wait(
+        return self.wait(
             'FreqFRunnMode-Mon', self.SWEEP_RUNNING.OFF, timeout=timeout
         )
 
@@ -253,12 +253,12 @@ class RFGen(_Device):
     def cmd_freq_sweep_mode_to_automatic(self):
         """."""
         self.freq_sweep_mode = self.SWEEP_MODE.AUTO
-        return self._wait('FreqFSweepMode-Sts', self.SWEEP_MODE.AUTO)
+        return self.wait('FreqFSweepMode-Sts', self.SWEEP_MODE.AUTO)
 
     def cmd_freq_sweep_mode_to_step(self):
         """."""
         self.freq_sweep_mode = self.SWEEP_MODE.STEP
-        return self._wait('FreqFSweepMode-Sts', self.SWEEP_MODE.STEP)
+        return self.wait('FreqFSweepMode-Sts', self.SWEEP_MODE.STEP)
 
     @property
     def freq_sweep_spacing_mode(self):
@@ -289,12 +289,12 @@ class RFGen(_Device):
     def cmd_freq_sweep_spacing_mode_to_linear(self):
         """."""
         self.freq_sweep_spacing_mode = self.SWEEP_SPACING.LIN
-        return self._wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LIN)
+        return self.wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LIN)
 
     def cmd_freq_sweep_spacing_mode_to_log(self):
         """."""
         self.freq_sweep_spacing_mode = self.SWEEP_SPACING.LOG
-        return self._wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LOG)
+        return self.wait('FreqFSpacMode-Sts', self.SWEEP_SPACING.LOG)
 
     @property
     def freq_sweep_trig_src(self):
@@ -331,17 +331,17 @@ class RFGen(_Device):
     def cmd_freq_sweep_trig_src_to_external(self):
         """."""
         self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.EXT
-        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.EXT)
+        return self.wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.EXT)
 
     def cmd_freq_sweep_trig_src_to_single(self):
         """."""
         self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.SING
-        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.SING)
+        return self.wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.SING)
 
     def cmd_freq_sweep_trig_src_to_auto(self):
         """."""
         self.freq_sweep_trig_src = self.SWEEP_TRIG_SRC.AUTO
-        return self._wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.AUTO)
+        return self.wait('TrigFSweepSrc-Sts', self.SWEEP_TRIG_SRC.AUTO)
 
     @property
     def freq_sweep_shape(self):
@@ -396,12 +396,12 @@ class RFGen(_Device):
     def cmd_freq_sweep_shape_to_sawtooth(self):
         """."""
         self.freq_sweep_shape = self.SWEEP_SHAPE.SAWT
-        return self._wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.SAWT)
+        return self.wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.SAWT)
 
     def cmd_freq_sweep_shape_to_triangular(self):
         """."""
         self.freq_sweep_shape = self.SWEEP_SHAPE.TRI
-        return self._wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.TRI)
+        return self.wait('FreqFreqShp-Sts', self.SWEEP_SHAPE.TRI)
 
     @property
     def freq_sweep_retrace(self):
@@ -432,12 +432,12 @@ class RFGen(_Device):
     def cmd_freq_sweep_retrace_turn_off(self):
         """."""
         self.freq_sweep_retrace = self.SWEEP_RETRACE.OFF
-        return self._wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.OFF)
+        return self.wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.OFF)
 
     def cmd_freq_sweep_retrace_turn_on(self):
         """."""
         self.freq_sweep_retrace = self.SWEEP_RETRACE.ON
-        return self._wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.ON)
+        return self.wait('FreqFreqRetr-Sts', self.SWEEP_RETRACE.ON)
 
     @property
     def freq_sweep_span(self):
@@ -747,7 +747,7 @@ class _BaseLLRF(_Device):
     def set_slow_loop_state(self, value, timeout=None):
         """Wait for slow loop state to reach `value`."""
         self.slow_loop_state = value
-        return self._wait('SL-Sts', value, timeout=timeout)
+        return self.wait('SL-Sts', value, timeout=timeout)
 
     @property
     def is_cw(self):
@@ -771,10 +771,10 @@ class _BaseLLRF(_Device):
     def set_rmp_enable(self, value, timeout=None, wait_ready=False):
         """Set ramp enable."""
         self.rmp_enable = value
-        if not self._wait('RmpEnbl-Sts', value, timeout=timeout):
+        if not self.wait('RmpEnbl-Sts', value, timeout=timeout):
             return False
         if wait_ready:
-            return self._wait('RmpReady-Mon', value, timeout=timeout)
+            return self.wait('RmpReady-Mon', value, timeout=timeout)
         return True
 
     @property
@@ -837,7 +837,7 @@ class _BaseLLRF(_Device):
         """Set RF phase and wait until it gets there."""
         self.phase = value
         pv2wait = 'SLInpPhs-Mon' if wait_mon else 'SLRefPhs-Mon'
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     def phase_shift_cav_sp(self):
         """."""
@@ -907,13 +907,13 @@ class _BaseLLRF(_Device):
     def set_voltage_incrate(self, value, timeout=None):
         """Set and wait voltage increase rate to reach `value`."""
         self.voltage_incrate = value
-        return self._wait('AmpIncRate-RB', value, timeout=timeout)
+        return self.wait('AmpIncRate-RB', value, timeout=timeout)
 
     def set_voltage(self, value, tol=1, timeout=10, wait_mon=False):
         """Set RF voltage and wait until it gets there."""
         self.voltage = value
         pv2wait = 'SLInpAmp-Mon' if wait_mon else 'SLRefAmp-Mon'
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def voltage_refmin_sp(self):
@@ -941,12 +941,12 @@ class _BaseLLRF(_Device):
     def cmd_turn_on_conditioning(self, timeout=10):
         """Turn on conditioning mode."""
         self.conditioning_state = 1
-        return self._wait('CondEnbl-Sts', 1, timeout=timeout)
+        return self.wait('CondEnbl-Sts', 1, timeout=timeout)
 
     def cmd_turn_off_conditioning(self, timeout=10):
         """Turn off conditioning mode."""
         self.conditioning_state = 0
-        return self._wait('CondEnbl-Sts', 0, timeout=timeout)
+        return self.wait('CondEnbl-Sts', 0, timeout=timeout)
 
     @property
     def conditioning_duty_cycle_mon(self):
@@ -966,7 +966,7 @@ class _BaseLLRF(_Device):
         """Set RF phase and wait until it gets there."""
         self.conditioning_duty_cycle = value
         pv2wait = 'CondDuty-RB' if wait_mon else 'CondDutyCycle-Mon'
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     @property
     def detune(self):
@@ -1530,7 +1530,7 @@ class SILLRFPreAmp(_Device):
         _time.sleep(1)
         self['PINSwEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PINSwSts-Mon', 1, timeout=timeout)
+            return self.wait('PINSwSts-Mon', 1, timeout=timeout)
         return True
 
     def cmd_disable_pinsw(self, timeout=None, wait_mon=True):
@@ -1539,7 +1539,7 @@ class SILLRFPreAmp(_Device):
         _time.sleep(1)
         self['PINSwDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PINSwSts-Mon', 0, timeout=timeout)
+            return self.wait('PINSwSts-Mon', 0, timeout=timeout)
         return True
 
 
@@ -1567,7 +1567,7 @@ class BOLLRFPreAmp(_Device):
         _time.sleep(1)
         self['PinSwEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PinSw-Mon', 1, timeout=timeout)
+            return self.wait('PinSw-Mon', 1, timeout=timeout)
         return True
 
     def cmd_disable_pinsw(self, timeout=None, wait_mon=True):
@@ -1576,7 +1576,7 @@ class BOLLRFPreAmp(_Device):
         _time.sleep(1)
         self['PinSwDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PinSw-Mon', 0, timeout=timeout)
+            return self.wait('PinSw-Mon', 0, timeout=timeout)
         return True
 
 
@@ -1607,7 +1607,7 @@ class SIRFDCAmp(_Device):
         _time.sleep(1)
         self['PwrDCEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrDC-Mon', 1, timeout=timeout)
+            return self.wait('PwrDC-Mon', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
@@ -1616,7 +1616,7 @@ class SIRFDCAmp(_Device):
         _time.sleep(1)
         self['PwrDCDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrDC-Mon', 0, timeout=timeout)
+            return self.wait('PwrDC-Mon', 0, timeout=timeout)
         return True
 
 
@@ -1644,7 +1644,7 @@ class BORFDCAmp(_Device):
         _time.sleep(1)
         self['PwrCnvEnbl-Sel'] = 0
         if wait_mon:
-            return self._wait('PwrCnv-Sts', 1, timeout=timeout)
+            return self.wait('PwrCnv-Sts', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
@@ -1653,7 +1653,7 @@ class BORFDCAmp(_Device):
         _time.sleep(1)
         self['PwrCnvDsbl-Sel'] = 0
         if wait_mon:
-            return self._wait('PwrCnv-Sts', 0, timeout=timeout)
+            return self.wait('PwrCnv-Sts', 0, timeout=timeout)
         return True
 
 
@@ -1684,7 +1684,7 @@ class SIRFACAmp(_Device):
         _time.sleep(1)
         self['PwrACEnbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrAC-Mon', 1, timeout=timeout)
+            return self.wait('PwrAC-Mon', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
@@ -1693,7 +1693,7 @@ class SIRFACAmp(_Device):
         _time.sleep(1)
         self['PwrACDsbl-Cmd'] = 0
         if wait_mon:
-            return self._wait('PwrAC-Mon', 0, timeout=timeout)
+            return self.wait('PwrAC-Mon', 0, timeout=timeout)
         return True
 
 
@@ -1721,7 +1721,7 @@ class BORF300VDCAmp(_Device):
         _time.sleep(1)
         self['300VdcEnbl-Sel'] = 0
         if wait_mon:
-            return self._wait('300Vdc-Sts', 1, timeout=timeout)
+            return self.wait('300Vdc-Sts', 1, timeout=timeout)
         return True
 
     def cmd_disable(self, timeout=None, wait_mon=True):
@@ -1730,5 +1730,5 @@ class BORF300VDCAmp(_Device):
         _time.sleep(1)
         self['300VdcDsbl-Sel'] = 0
         if wait_mon:
-            return self._wait('300Vdc-Sts', 0, timeout=timeout)
+            return self.wait('300Vdc-Sts', 0, timeout=timeout)
         return True
