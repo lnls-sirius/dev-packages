@@ -45,6 +45,7 @@ class PUStatusPV:
     INTRLCK_6 = 8
     INTRLCK_7 = 9
     INTRLCK_8 = 10
+    INTRLCK_9 = 11
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PU Status PV."""
@@ -62,7 +63,9 @@ class PUStatusPV:
             not computed_pv.pvs[PUStatusPV.INTRLCK_5].connected or \
             not computed_pv.pvs[PUStatusPV.INTRLCK_6].connected or \
             not computed_pv.pvs[PUStatusPV.INTRLCK_7].connected or \
-            not computed_pv.pvs[PUStatusPV.INTRLCK_8].connected
+            not computed_pv.pvs[PUStatusPV.INTRLCK_9].connected
+        if 'Sept' not in puname:
+            disconnected |= not computed_pv.pvs[PUStatusPV.INTRLCK_8]
         if disconnected:
             value |= PUStatusPV.BIT_PUCONNECT
             value |= PUStatusPV.BIT_PWRSTATON
