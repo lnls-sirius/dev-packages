@@ -7,6 +7,7 @@ from ..magnet.factory import NormalizerFactory as _NormFactory
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..pwrsupply.csdev import (
     Const as _Const,
+    get_ps_scopesourcemap as _get_ps_scopesourcemap,
     MAX_WFMSIZE as _MAX_WFMSIZE,
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
 )
@@ -41,6 +42,8 @@ class _PSDev(_Device):
         'Wfm-RB',
         'WfmRef-Mon',
         'Wfm-Mon',
+        'ScopeSrcAddr-SP',
+        'ScopeSrcAddr-RB',
         'ScopeDuration-SP',
         'ScopeDuration-RB',
         'ScopeFreq-SP',
@@ -413,6 +416,18 @@ class PowerSupply(_PSDev):
     class DEVICES:
         """Devices names."""
 
+    def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
+        """."""
+        super().__init__(devname, auto_monitor_mon, props2init)
+        dic = _get_ps_scopesourcemap(devname)
+        str_, vals = list(
+            zip(*[
+                (k.title().replace(' ', '').split('[')[0], v)
+                for k, v in dic.items()
+            ])
+        )
+        self.ScopeSrcAddr = _Const.register('ScopeSrcAddr', str_, values=vals)
+
     @property
     def current(self):
         """."""
@@ -670,6 +685,23 @@ class PowerSupply(_PSDev):
     def wfm_update_auto(self, value):
         """Set waveform auto update."""
         self._enum_setter('WfmUpdateAuto-Sel', value, self.WFMUPDATEAUTO)
+
+    @property
+    def scope_src_addr(self):
+        """Waveform auto update."""
+        return self['ScopeSrcAddr-RB']
+
+    @property
+    def scope_src_addr_str(self):
+        """Waveform auto update."""
+        return self.ScopeSrcAddr._fields[
+            self.ScopeSrcAddr.index(self['ScopeSrcAddr-RB'])
+        ]
+
+    @scope_src_addr.setter
+    def scope_src_addr(self, value):
+        """Set waveform auto update."""
+        self._enum_setter('ScopeSrcAddr-SP', value, self.ScopeSrcAddr)
 
     @property
     def scope_freq(self):
