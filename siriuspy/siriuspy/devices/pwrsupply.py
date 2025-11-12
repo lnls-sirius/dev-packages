@@ -3,17 +3,16 @@
 import numpy as _np
 
 from .. import util as _util
-
+from ..magnet.factory import NormalizerFactory as _NormFactory
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..search import PSSearch as _PSSearch
 from ..pwrsupply.csdev import (
     Const as _Const,
-    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP,
-    MAX_WFMSIZE as _MAX_WFMSIZE,
     get_ps_scopesourcemap as _get_ps_scopesourcemap,
+    MAX_WFMSIZE as _MAX_WFMSIZE,
+    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
 )
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
-from ..magnet.factory import NormalizerFactory as _NormFactory
+from ..search import PSSearch as _PSSearch
 from .device import Device as _Device
 from .timing import Trigger as _Trigger
 
