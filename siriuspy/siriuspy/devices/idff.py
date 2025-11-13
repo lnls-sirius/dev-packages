@@ -784,8 +784,11 @@ class IDFF(_DeviceSet):
                 curr = _np.interp(kparameter_value, kparam, ff_table)
                 corr_pvname = idff[corrlabel]
                 setpoints[corr_pvname] = curr
-            sts = self.polarization_mon, self.pparameter_mon, kparameter_value
-            return setpoints, *sts
+            sts = (
+                setpoints, self.polarization_mon,
+                self.pparameter_mon, kparameter_value
+            )
+            return sts
 
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
