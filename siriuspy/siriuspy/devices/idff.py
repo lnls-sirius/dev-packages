@@ -760,13 +760,16 @@ class IDFF(_DeviceSet):
         self,
         pparameter_value=None,
         kparameter_value=None,
-        use_ioc_tables=False,
+        use_ioc_tables=None,
     ):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        if use_ioc_tables is None:
+            use_ioc_tables = isinstance(self._idffclass, IDFFCtrlHard)
+
         if use_ioc_tables:
             if kparameter_value is None:
                 kparameter_value = self.kparameter_mon
@@ -790,6 +793,9 @@ class IDFF(_DeviceSet):
             )
             return sts
 
+        # NOTE:
+        # For standardization soft IDFF IOCs could have Table-(SP|RB) PVs
+        # like the hard IDFF IOCs have...
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
