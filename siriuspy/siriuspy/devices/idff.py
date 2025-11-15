@@ -295,6 +295,12 @@ class IDFFCtrlSoft(IDFFCtrlBase):
         )
     )
 
+    @property
+    def configname(self):
+        """Return configuration name."""
+        if self.PARAM_PVS.CONFIGNAME_SP:
+            return self[self.PARAM_PVS.CONFIGNAME_RB]
+
 
 class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     """ID Feedforward Control Soft Device for DELTA."""
@@ -768,7 +774,7 @@ class IDFF(_DeviceSet):
         setpoint calculation.
         """
         if use_ioc_tables is None:
-            use_ioc_tables = isinstance(self._idffclass, IDFFCtrlHard)
+            use_ioc_tables = issubclass(self._idffclass, IDFFCtrlHard)
 
         if use_ioc_tables:
             if kparameter_value is None:
@@ -948,7 +954,7 @@ class IDFF(_DeviceSet):
         pparameter_value=None,
         kparameter_value=None,
         dry_run=False,
-        use_ioc_tables=False,
+        use_ioc_tables=None,
     ):
         """."""
         setpoints, polarization, pparameter_value, kparameter_value = (
