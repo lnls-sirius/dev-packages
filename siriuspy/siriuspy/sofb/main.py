@@ -61,10 +61,10 @@ class SOFB(_BaseClass):
             self.fofb = HLFOFB()
             self._download_fofb_kicks = True
             self._download_fofb_kicks_perc = 0.40
-            self._update_fofb_reforb = False
-            self._update_fofb_reforb_perc = 0.0
-            self._donot_affect_fofb_bpms = False
-            self._project_onto_fofb_nullspace = False
+            self._update_fofb_reforb = True
+            self._update_fofb_reforb_perc = 100.0
+            self._update_fofb_reforb_iter = 0
+            self._update_fofb_reforb_rate = 3  # every n SOFB iterations
             self._drive_divisor = 12
             self._drive_nrcycles = 10
             self._drive_amplitude = 5
@@ -86,6 +86,43 @@ class SOFB(_BaseClass):
             _PV(f"IA-{i:02d}RaBPM:TI-AMCFPGAEVR:RefClkLocked-Mon")
             for i in range(1, 21)
         ]
+
+    @property
+    def connected(self):
+        """."""
+        if self.acc == 'SI' and not self.fofb.connected:
+            return False
+        for acm in self._acms:
+            if not acm.connected:
+                return False
+        if not self._havebeam_pv.connected:
+            return False
+        if self._orbit is not None and not self._orbit.connected:
+            return False
+        if self._correctors is not None and not self._correctors.connected:
+            return False
+        return True
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time()
+        tout = timeout
+        if self.acc == 'SI' and not self.fofb.wait_for_connection(tout):
+            return False
+        for amc in self._amcs:
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not amc.wait_for_connection(tout):
+                return False
+        tout = timeout - (_time() - t0_)
+        if tout <= 0 or not self._havebeam_pv.wait_for_connection(tout):
+            return False
+        for dev in [self._orbit, self._correctors]:
+            if dev is None:
+                continue
+            tout = timeout - (_time() - t0_)
+            if tout <= 0 or not dev.wait_for_connection(tout):
+                return False
+        return True
 
     def get_map2write(self):
         """Get the database of the class."""
@@ -132,13 +169,10 @@ class SOFB(_BaseClass):
             dbase['FOFBDownloadKicksPerc-SP'] = self.set_fofb_download_perc
             dbase['FOFBDownloadKicks-Sel'] = _part(
                 self.set_fofb_interaction_props, 'downloadkicks')
-            dbase['FOFBUpdateRefOrbPerc-SP'] = self.set_fofb_updatereforb_perc
+            dbase['FOFBUpdateRefOrbPerc-SP'] = self.set_update_fofb_reforb_perc
+            dbase['FOFBUpdateRefOrbRate-SP'] = self.set_update_fofb_reforb_rate
             dbase['FOFBUpdateRefOrb-Sel'] = _part(
                 self.set_fofb_interaction_props, 'updatereforb')
-            dbase['FOFBNullSpaceProj-Sel'] = _part(
-                self.set_fofb_interaction_props, 'nullspaceproj')
-            dbase['FOFBZeroDistortionAtBPMs-Sel'] = _part(
-                self.set_fofb_interaction_props, 'zerodistortion')
             dbase['DriveFreqDivisor-SP'] = self.set_drive_divisor
             dbase['DriveNrCycles-SP'] = self.set_drive_nrcycles
             dbase['DriveAmplitude-SP'] = self.set_drive_amplitude
@@ -254,12 +288,6 @@ class SOFB(_BaseClass):
         elif prop.lower().startswith("update"):
             self._update_fofb_reforb = value
             self.run_callbacks("FOFBUpdateRefOrb-Sts", value)
-        elif prop.lower().startswith("null"):
-            self._project_onto_fofb_nullspace = value
-            self.run_callbacks("FOFBNullSpaceProj-Sts", value)
-        elif prop.lower().startswith("zero"):
-            self._donot_affect_fofb_bpms = value
-            self.run_callbacks("FOFBZeroDistortionAtBPMs-Sts", value)
         else:
             return False
         return True
@@ -279,7 +307,7 @@ class SOFB(_BaseClass):
         self.run_callbacks("FOFBDownloadKicksPerc-RB", value * 100)
         return True
 
-    def set_fofb_updatereforb_perc(self, value: float):
+    def set_update_fofb_reforb_perc(self, value: float):
         """Set percentage of reference orbit update in FOFB.
 
         Args:
@@ -290,9 +318,20 @@ class SOFB(_BaseClass):
             bool: Whether property was set.
 
         """
-        value = min(max(value / 100, -1), 1)
+        value = min(max(value / 100, -0.1), 1)
         self._update_fofb_reforb_perc = value
         self.run_callbacks("FOFBUpdateRefOrbPerc-RB", value * 100)
+        return True
+
+    def set_update_fofb_reforb_rate(self, value: int):
+        """Set rate of reference orbit update in FOFB.
+
+        Args:
+            value (int): update rate in units of loop iterations.
+        """
+        value = min(max(int(value), 1), 100)
+        self._update_fofb_reforb_rate = value
+        self.run_callbacks("FOFBUpdateRefOrbRate-RB", value)
         return True
 
     def apply_corr(self, code):
@@ -546,12 +585,8 @@ class SOFB(_BaseClass):
         fofb_state = self.fofb.connected and self.fofb.loop_state
         download = self._download_fofb_kicks and fofb_state
         update = self._update_fofb_reforb and fofb_state
-        project = self._project_onto_fofb_nullspace and fofb_state
-        donot = self._donot_affect_fofb_bpms and fofb_state
         self.run_callbacks("FOFBDownloadKicks-Mon", download)
         self.run_callbacks("FOFBUpdateRefOrb-Mon", update)
-        self.run_callbacks("FOFBNullSpaceProj-Mon", project)
-        self.run_callbacks("FOFBZeroDistortionAtBPMs-Mon", donot)
 
     def _set_delta_kick(self, code, dkicks):
         nr_ch = self._csorb.nr_ch
@@ -892,7 +927,6 @@ class SOFB(_BaseClass):
                 orb *= 2 * 3  # Maximum orbit distortion of 3 um
 
             tims.append(_time())
-            orb = self._interact_with_fofb_in_calc_kicks(orb)
             dkicks = self.matrix.calc_kicks(orb)
             tims.append(_time())
 
@@ -949,7 +983,7 @@ class SOFB(_BaseClass):
         notnan = ~_np.isnan(kicks)
         self._ref_corr_kicks[notnan] = kicks[notnan]
         self._LQTHREAD.put(
-            self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), )
+            (self._update_ref_corr_kicks_pvs, (self._ref_corr_kicks.copy(), ))
         )
 
     def _update_ref_corr_kicks_pvs(self, kicks):
@@ -1058,47 +1092,26 @@ class SOFB(_BaseClass):
             return False
         return True
 
-    def _interact_with_fofb_in_calc_kicks(self, orb):
-        fofb = self.fofb
-
-        if self._donot_affect_fofb_bpms and fofb.loop_state:
-            enbllist = _np.r_[fofb.bpmxenbl, fofb.bpmyenbl]
-            orb[enbllist] = 0.0
-
-        if self._project_onto_fofb_nullspace and fofb.loop_state:
-            # this approach is similar to what is proposed by APS:
-            # https://www.aps.anl.gov/sites/www.aps.anl.gov/files/APS-Uploads/Workshops/BES-Light-Sources/Nick%20Sereno%20-%20Fast%20Orbit%20Feedback%20at%20APS.pdf
-            imat_fofb = fofb.invrespmat_mon
-            imat_fofb[-1] *= 0  # RF correction is never applied by FOFB.
-            orb -= _np.dot(fofb.respmat, _np.dot(imat_fofb, orb))
-        return orb
-
-    # def _interact_with_fofb_in_apply_kicks(
-    #     self, kicks, dkicks, refx=None, refy=None
-    # ):
     def _interact_with_fofb_in_apply_kicks(self, kicks, dkicks):
         fofb = self.fofb
-        # if refx is None or refy is None:
-        #     refx = fofb.refx
-        #     refy = fofb.refy
+        if not fofb.loop_state:
+            return kicks
 
-        if self._update_fofb_reforb and fofb.loop_state:
-            dorb = self.matrix.estimate_orbit_variation(dkicks)
-            dorb *= self._update_fofb_reforb_perc
-            # NOTE: According to my understanding of SOLEIL's paper on this
-            # subject:
-            # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
-            # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
-            # this is what they do there:
-            fofb.refx -= dorb[: dorb.size // 2]
-            fofb.refy -= dorb[dorb.size // 2 :]
-            # But it seems this may also be a possibility:
-            # fofb.refx = refx - dorb[:dorb.size//2]
-            # fofb.refy = refy - dorb[dorb.size//2:]
-            fofb.cmd_fofbctrl_syncreforb()
-            self._LQTHREAD.put(self. _update_fofb_dorb, (dorb, ))
+        if self._update_fofb_reforb:
+            self._update_fofb_reforb_iter += 1
+            if self._update_fofb_reforb_iter >= self._update_fofb_reforb_rate:
+                self._update_fofb_reforb_iter = 0
+                dorb = self.matrix.estimate_orbit_variation(dkicks)
+                # NOTE: According to SOLEIL's paper on this subject:
+                # https://accelconf.web.cern.ch/d09/papers/mooc01.pdf
+                # https://accelconf.web.cern.ch/d09/talks/mooc01_talk.pdf
+                # this is what they do there:
+                fofb.refx = fofb.refx + dorb[:dorb.size // 2]
+                fofb.refy = fofb.refy + dorb[dorb.size // 2:]
+                fofb.cmd_fofbctrl_syncreforb()
+                self._LQTHREAD.put((self._update_fofb_dorb, (dorb, )))
 
-        if self._download_fofb_kicks and fofb.loop_state:
+        if self._download_fofb_kicks:
             # NOTE: Do not download kicks from correctors not in the loop:
             kickch = fofb.kickch_acc.copy()
             kickcv = fofb.kickcv_acc.copy()
@@ -1114,7 +1127,7 @@ class SOFB(_BaseClass):
             dkicks2 *= -self._download_fofb_kicks_perc
 
             self._LQTHREAD.put(
-                self._update_fofb_download_kicks, (dkicks2.copy())
+                (self._update_fofb_download_kicks, (dkicks2.copy(), ))
             )
             kicks, dkicks2 = self._process_kicks(
                 self._ref_corr_kicks, dkicks + dkicks2, apply_gain=False
@@ -1138,9 +1151,6 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         orb = self.orbit.get_orbit()
-
-        if self.acc == "SI":
-            orb = self._interact_with_fofb_in_calc_kicks(orb)
 
         msg = "Calculating kicks."
         self._update_log(msg)

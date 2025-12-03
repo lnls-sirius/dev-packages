@@ -229,10 +229,15 @@ class Const(_csdev.Const):
 
         # interlock redundancy table for fout outs
         self.intlkr_fouttable = {
-            self.trigsrc2fout_map[k]: self.trigsrc2fout_map[v]
+            self.trigsrc2fout_map[k]: [self.trigsrc2fout_map[v], ]
             for k, v in self.REDUNDANCY_TABLE.items()}
-        self.intlkr_fouttable.update(
-            {v: k for k, v in self.intlkr_fouttable.items()})
+        auxtable = dict()
+        for foutafcti, foutredlist in self.intlkr_fouttable.items():
+            foutred = foutredlist[0]
+            if foutred not in auxtable:
+                auxtable.update({foutred: list()})
+            auxtable[foutred].append(foutafcti)
+        self.intlkr_fouttable.update(auxtable)
 
         # bpm names and nicknames
         self.bpm_names = _BPMSearch.get_names({'sec': 'SI', 'dev': 'BPM'})

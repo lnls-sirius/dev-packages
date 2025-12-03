@@ -15,75 +15,150 @@ class BPM(_Device):
     """BPM Device."""
 
     ACQSTATES_NOTOK = {
-        _csbpm.AcqStates.Error, _csbpm.AcqStates.No_Memory,
-        _csbpm.AcqStates.Bad_Post_Samples, _csbpm.AcqStates.No_Samples,
-        _csbpm.AcqStates.Too_Many_Samples, _csbpm.AcqStates.Overflow}
+        _csbpm.AcqStates.Error,
+        _csbpm.AcqStates.No_Memory,
+        _csbpm.AcqStates.Bad_Post_Samples,
+        _csbpm.AcqStates.No_Samples,
+        _csbpm.AcqStates.Too_Many_Samples,
+        _csbpm.AcqStates.Overflow,
+    }
     ACQSTATES_STARTED = {
-        _csbpm.AcqStates.Waiting, _csbpm.AcqStates.External_Trig,
-        _csbpm.AcqStates.Data_Trig, _csbpm.AcqStates.Software_Trig,
-        _csbpm.AcqStates.Acquiring}
+        _csbpm.AcqStates.Waiting,
+        _csbpm.AcqStates.External_Trig,
+        _csbpm.AcqStates.Data_Trig,
+        _csbpm.AcqStates.Software_Trig,
+        _csbpm.AcqStates.Acquiring,
+    }
     ACQSTATES_FINISHED = {_csbpm.AcqStates.Idle}
     ACQSTATES_FINISHED |= ACQSTATES_NOTOK
 
     PROPERTIES_ACQ = (
-        'INFOClkFreq-RB', 'INFOHarmonicNumber-RB', 'INFOTbTRate-RB',
-        'INFOFOFBRate-RB', 'INFOMONITRate-RB', 'INFOFAcqRate-RB',
-        'GENAmplAData', 'GENAmplBData', 'GENAmplCData', 'GENAmplDData',
-        'GENPosXData', 'GENPosYData', 'GENSumData',
+        'INFOClkFreq-RB',
+        'INFOHarmonicNumber-RB',
+        'INFOTbTRate-RB',
+        'INFOFOFBRate-RB',
+        'INFOMONITRate-RB',
+        'INFOFAcqRate-RB',
+        'GENAmplAData',
+        'GENAmplBData',
+        'GENAmplCData',
+        'GENAmplDData',
+        'GENPosXData',
+        'GENPosYData',
+        'GENSumData',
         'GENPosQData',
-        'GENChannel-Sel', 'GENChannel-Sts',
-        'GENShots-SP', 'GENShots-RB',
-        'GENUpdateTime-SP', 'GENUpdateTime-RB',
-        'GENSamplesPre-SP', 'GENSamplesPre-RB',
-        'GENSamplesPost-SP', 'GENSamplesPost-RB',
+        'GENChannel-Sel',
+        'GENChannel-Sts',
+        'GENShots-SP',
+        'GENShots-RB',
+        'GENUpdateTime-SP',
+        'GENUpdateTime-RB',
+        'GENSamplesPre-SP',
+        'GENSamplesPre-RB',
+        'GENSamplesPost-SP',
+        'GENSamplesPost-RB',
         'GENTriggerEvent-Cmd',
-        'GENStatus-Mon', 'GENCount-Mon',
-        'GENTrigger-Sel', 'GENTrigger-Sts',
-        'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
-        'GENDataTrigChan-Sel', 'GENDataTrigChan-Sts',
-        'GENTriggerDataSel-SP', 'GENTriggerDataSel-RB',
-        'GENTriggerDataThres-SP', 'GENTriggerDataThres-RB',
-        'GENTriggerDataPol-Sel', 'GENTriggerDataPol-Sts',
-        'GENTriggerDataHyst-SP', 'GENTriggerDataHyst-RB',
-        )
+        'GENStatus-Mon',
+        'GENCount-Mon',
+        'GENTrigger-Sel',
+        'GENTrigger-Sts',
+        'GENTriggerRep-Sel',
+        'GENTriggerRep-Sts',
+        'GENDataTrigChan-Sel',
+        'GENDataTrigChan-Sts',
+        'GENTriggerDataSel-SP',
+        'GENTriggerDataSel-RB',
+        'GENTriggerDataThres-SP',
+        'GENTriggerDataThres-RB',
+        'GENTriggerDataPol-Sel',
+        'GENTriggerDataPol-Sts',
+        'GENTriggerDataHyst-SP',
+        'GENTriggerDataHyst-RB',
+    )
 
     PROPERTIES_DEFAULT = PROPERTIES_ACQ + (
-        'SwMode-Sel', 'SwMode-Sts',
-        'RFFEAtt-SP', 'RFFEAtt-RB',
-        'PosX-Mon', 'PosY-Mon', 'Sum-Mon', 'PosQ-Mon',
-        'AmplA-Mon', 'AmplB-Mon', 'AmplC-Mon', 'AmplD-Mon',
-        'GEN_PolyXArrayCoeff-SP', 'GEN_PolyXArrayCoeff-RB',
-        'GEN_PolyYArrayCoeff-SP', 'GEN_PolyYArrayCoeff-RB',
-        'GEN_PolySUMArrayCoeff-SP', 'GEN_PolySUMArrayCoeff-RB',
-        'GEN_PolyQArrayCoeff-SP', 'GEN_PolyQArrayCoeff-RB',
-        'SwDirGainA-SP', 'SwDirGainB-SP', 'SwDirGainC-SP', 'SwDirGainD-SP',
-        'SwDirGainA-RB', 'SwDirGainB-RB', 'SwDirGainC-RB', 'SwDirGainD-RB',
-        'SwInvGainA-SP', 'SwInvGainB-SP', 'SwInvGainC-SP', 'SwInvGainD-SP',
-        'SwInvGainA-RB', 'SwInvGainB-RB', 'SwInvGainC-RB', 'SwInvGainD-RB',
-        'PosKx-SP', 'PosKx-RB',
-        'PosKy-RB', 'PosKy-SP',
-        'PosKsum-SP', 'PosKsum-RB',
-        'PosKq-SP', 'PosKq-RB',
-        'PosXOffset-SP', 'PosXOffset-RB',
-        'PosYOffset-SP', 'PosYOffset-RB',
-        'PosQOffset-SP', 'PosQOffset-RB',
-        'FOFBPhaseSyncEn-Sel', 'FOFBPhaseSyncEn-Sts', 'SwDivClk-RB',
-        'TbTPhaseSyncEn-Sel', 'TbTPhaseSyncEn-Sts',
-        'FAcqPhaseSyncEn-Sel', 'FAcqPhaseSyncEn-Sts',
-        'MonitPhaseSyncEn-Sel', 'MonitPhaseSyncEn-Sts',
-        'TbTDataMaskEn-Sel', 'TbTDataMaskEn-Sts',
-        'TbTDataMaskSamplesBeg-SP', 'TbTDataMaskSamplesBeg-RB',
-        'TbTDataMaskSamplesEnd-SP', 'TbTDataMaskSamplesEnd-RB',
-        'XYPosCal-Sel', 'XYPosCal-Sts',
-        'SumPosCal-Sel', 'SumPosCal-Sts',
-        'QPosCal-Sel', 'QPosCal-Sts',
-        )
+        'SwMode-Sel',
+        'SwMode-Sts',
+        'RFFEAtt-SP',
+        'RFFEAtt-RB',
+        'PosX-Mon',
+        'PosY-Mon',
+        'Sum-Mon',
+        'PosQ-Mon',
+        'AmplA-Mon',
+        'AmplB-Mon',
+        'AmplC-Mon',
+        'AmplD-Mon',
+        'GEN_PolyXArrayCoeff-SP',
+        'GEN_PolyXArrayCoeff-RB',
+        'GEN_PolyYArrayCoeff-SP',
+        'GEN_PolyYArrayCoeff-RB',
+        'GEN_PolySUMArrayCoeff-SP',
+        'GEN_PolySUMArrayCoeff-RB',
+        'GEN_PolyQArrayCoeff-SP',
+        'GEN_PolyQArrayCoeff-RB',
+        'SwDirGainA-SP',
+        'SwDirGainB-SP',
+        'SwDirGainC-SP',
+        'SwDirGainD-SP',
+        'SwDirGainA-RB',
+        'SwDirGainB-RB',
+        'SwDirGainC-RB',
+        'SwDirGainD-RB',
+        'SwInvGainA-SP',
+        'SwInvGainB-SP',
+        'SwInvGainC-SP',
+        'SwInvGainD-SP',
+        'SwInvGainA-RB',
+        'SwInvGainB-RB',
+        'SwInvGainC-RB',
+        'SwInvGainD-RB',
+        'PosKx-SP',
+        'PosKx-RB',
+        'PosKy-RB',
+        'PosKy-SP',
+        'PosKsum-SP',
+        'PosKsum-RB',
+        'PosKq-SP',
+        'PosKq-RB',
+        'PosXOffset-SP',
+        'PosXOffset-RB',
+        'PosYOffset-SP',
+        'PosYOffset-RB',
+        'PosQOffset-SP',
+        'PosQOffset-RB',
+        'FOFBPhaseSyncEn-Sel',
+        'FOFBPhaseSyncEn-Sts',
+        'SwDivClk-RB',
+        'TbTPhaseSyncEn-Sel',
+        'TbTPhaseSyncEn-Sts',
+        'FAcqPhaseSyncEn-Sel',
+        'FAcqPhaseSyncEn-Sts',
+        'MonitPhaseSyncEn-Sel',
+        'MonitPhaseSyncEn-Sts',
+        'TbTDataMaskEn-Sel',
+        'TbTDataMaskEn-Sts',
+        'TbTDataMaskSamplesBeg-SP',
+        'TbTDataMaskSamplesBeg-RB',
+        'TbTDataMaskSamplesEnd-SP',
+        'TbTDataMaskSamplesEnd-RB',
+        'XYPosCal-Sel',
+        'XYPosCal-Sts',
+        'SumPosCal-Sel',
+        'SumPosCal-Sts',
+        'QPosCal-Sel',
+        'QPosCal-Sts',
+    )
 
     CONV_NM2UM = 1e-3  # [nm] --> [um]
 
     def __init__(
-            self, devname, props2init='all', auto_monitor_mon=True,
-            ispost_mortem=False):
+        self,
+        devname,
+        props2init='all',
+        auto_monitor_mon=True,
+        ispost_mortem=False,
+    ):
         """."""
         # call base class constructor
         self._ispost_mortem = ispost_mortem
@@ -96,7 +171,8 @@ class BPM(_Device):
             props2init = list(self.PROPERTIES_ACQ)
 
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
         self.csdata = _csbpm
 
     def __str__(self):
@@ -726,15 +802,21 @@ class BPM(_Device):
 
     def wait_acq_finish(self, timeout=10):
         """Wait Acquisition to finish."""
-        return self._wait(
-            'GENStatus-Mon', self.ACQSTATES_FINISHED, timeout=timeout,
-            comp=lambda x, y: x in y)
+        return self.wait(
+            'GENStatus-Mon',
+            self.ACQSTATES_FINISHED,
+            timeout=timeout,
+            comp=lambda x, y: x in y,
+        )
 
     def wait_acq_start(self, timeout=10):
         """Wait Acquisition to start."""
-        return self._wait(
-            'GENStatus-Mon', self.ACQSTATES_STARTED, timeout=timeout,
-            comp=lambda x, y: x in y)
+        return self.wait(
+            'GENStatus-Mon',
+            self.ACQSTATES_STARTED,
+            timeout=timeout,
+            comp=lambda x, y: x in y,
+        )
 
     def cmd_acq_start(self):
         """Command Start Acquisition."""
@@ -749,43 +831,42 @@ class BPM(_Device):
     def cmd_turn_on_switching(self):
         """Command Turn on Switching."""
         self.switching_mode = _csbpm.SwModes.switching
-        return self._wait('SwMode-Sts', _csbpm.SwModes.switching)
+        return self.wait('SwMode-Sts', _csbpm.SwModes.switching)
 
     def cmd_turn_off_switching(self):
         """Command Turn off Switching."""
         self.switching_mode = _csbpm.SwModes.direct
-        return self._wait('SwMode-Sts', _csbpm.SwModes.direct)
+        return self.wait('SwMode-Sts', _csbpm.SwModes.direct)
 
     def cmd_sync_tbt(self):
         """Synchronize TbT acquisitions with Timing System."""
         self.tbt_sync_enbl = 1
         _time.sleep(0.1)
         self.tbt_sync_enbl = 0
-        return self._wait('TbTPhaseSyncEn-Sts', 0)
+        return self.wait('TbTPhaseSyncEn-Sts', 0)
 
     def cmd_sync_fofb(self):
         """Synchronize FOFB acquisitions with Timing System."""
         self.fofb_sync_enbl = 1
         _time.sleep(0.1)
         self.fofb_sync_enbl = 0
-        return self._wait('FOFBPhaseSyncEn-Sts', 0)
+        return self.wait('FOFBPhaseSyncEn-Sts', 0)
 
     def cmd_sync_facq(self):
         """Synchronize FAcq acquisitions with Timing System."""
         self.facq_sync_enbl = 1
         _time.sleep(0.1)
         self.facq_sync_enbl = 0
-        return self._wait('FAcqPhaseSyncEn-Sts', 0)
+        return self.wait('FAcqPhaseSyncEn-Sts', 0)
 
     def cmd_sync_monit(self):
         """Synchronize Monit acquisitions with Timing System."""
         self.monit_sync_enbl = 1
         _time.sleep(0.1)
         self.monit_sync_enbl = 0
-        return self._wait('MonitPhaseSyncEn-Sts', 0)
+        return self.wait('MonitPhaseSyncEn-Sts', 0)
 
-    def get_sampling_frequency(
-            self, rf_freq: float, acq_rate='') -> float:
+    def get_sampling_frequency(self, rf_freq: float, acq_rate='') -> float:
         """Return the sampling frequency of the acquisition.
 
         Args:

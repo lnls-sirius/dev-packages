@@ -1,8 +1,6 @@
 """Tune devices."""
 
-
-from .device import Device as _Device
-from .device import DeviceSet as _DeviceSet
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
 class TuneFrac(_Device):
@@ -38,12 +36,12 @@ class TuneFrac(_Device):
     def cmd_enable(self, timeout=DEF_TIMEOUT):
         """Enable."""
         self['Enbl-Sel'] = 1
-        return self._wait('Enbl-Sts', value=1, timeout=timeout)
+        return self.wait('Enbl-Sts', value=1, timeout=timeout)
 
     def cmd_disable(self, timeout=DEF_TIMEOUT):
         """Disable."""
         self['Enbl-Sel'] = 0
-        return self._wait('Enbl-Sts', value=0, timeout=timeout)
+        return self.wait('Enbl-Sts', value=0, timeout=timeout)
 
 
 class TuneProc(_Device):
@@ -56,7 +54,7 @@ class TuneProc(_Device):
         SI_V = 'SI-Glob:DI-TuneProc-V'
         ALL = (SI_H, SI_V)
 
-    PROPERTIES_DEFAULT = ('Trace-Mon', )
+    PROPERTIES_DEFAULT = ('Trace-Mon',)
 
     def __init__(self, devname, props2init='all'):
         """Init."""
@@ -80,9 +78,9 @@ class Tune(_DeviceSet):
         """Devices names."""
 
         SI = 'SI-Glob:DI-Tune'
-        ALL = (SI, )
+        ALL = (SI,)
 
-    def __init__(self, devname=None):
+    def __init__(self, devname=None, props2init='all'):
         """Init."""
         # check if device exists
         if devname is None:
@@ -90,10 +88,16 @@ class Tune(_DeviceSet):
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H)
-        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V)
-        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H)
-        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V)
+        isall = isinstance(props2init, str) and props2init.lower() == 'all'
+        if not isall and props2init:
+            raise ValueError(
+                "props2init must be 'all' or bool(props2init) == False"
+            )
+
+        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H, props2init=props2init)
+        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V, props2init=props2init)
+        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H, props2init=props2init)
+        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V, props2init=props2init)
 
         devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
 
@@ -154,13 +158,16 @@ class TuneCorr(_Device):
         """Devices names."""
 
         SI = 'SI-Glob:AP-TuneCorr'
-        ALL = (SI, )
+        ALL = (SI,)
 
     PROPERTIES_DEFAULT = (
-        'DeltaTuneX-SP', 'DeltaTuneX-RB',
-        'DeltaTuneY-SP', 'DeltaTuneY-RB',
-        'SetNewRefKL-Cmd', 'ApplyDelta-Cmd',
-        )
+        'DeltaTuneX-SP',
+        'DeltaTuneX-RB',
+        'DeltaTuneY-SP',
+        'DeltaTuneY-RB',
+        'SetNewRefKL-Cmd',
+        'ApplyDelta-Cmd',
+    )
 
     def __init__(self, devname=None, props2init='all'):
         """Init."""

@@ -29,24 +29,13 @@ class Corrector(_BaseTimingConfig):
         """Init method."""
         super().__init__(corr_name[:2])
         self._name = _PVName(corr_name)
-        self._sp = None
-        self._rb = None
+        self._pvs['sp'] = None
+        self._pvs['rb'] = None
 
     @property
     def name(self):
         """Corrector name."""
         return self._name
-
-    @property
-    def connected(self):
-        """Status connected."""
-        conn = super().connected
-        pvs = (self._sp, self._rb)
-        for pv in pvs:
-            if not pv.connected:
-                _log.debug("NOT CONN: " + pv.pvname)
-            conn &= pv.connected
-        return conn
 
     @property
     def opmode_ok(self):
@@ -80,13 +69,13 @@ class Corrector(_BaseTimingConfig):
     @property
     def value(self):
         """Value."""
-        if self._rb.connected:
-            return self._rb.value
+        if self._pvs['rb'].connected:
+            return self._pvs['rb'].value
 
     @value.setter
     def value(self, val):
         """."""
-        self._sp.put(val, wait=False)
+        self._pvs['sp'].put(val, wait=False)
 
     @property
     def refvalue(self):
@@ -100,6 +89,7 @@ class RFCtrl(Corrector):
     TINY_VAR = 0.01  # [Hz]
     LARGE_VAR = 10000  # [Hz]
     MAX_DELTA = 200  # [Hz]
+    INTVL = 1  # [s]
 
     def __init__(self, acc):
         """Init method."""
@@ -107,8 +97,8 @@ class RFCtrl(Corrector):
         self._name = self._csorb.RF_GEN_NAME
         opt = {"connection_timeout": TIMEOUT}
         pvpref = LL_PREF + ("-" if LL_PREF else "") + self._name
-        self._sp = _PV(pvpref + ":GeneralFreq-SP", **opt)
-        self._rb = _PV(pvpref + ":GeneralFreq-RB", **opt)
+        self._pvs['sp'] = _PV(pvpref + ":GeneralFreq-SP", **opt)
+        self._pvs['rb'] = _PV(pvpref + ":GeneralFreq-RB", **opt)
         self._config_ok_vals = {"PwrState": 1}
         self._config_pvs_sp = dict()
         self._config_pvs_rb = dict()
@@ -116,8 +106,8 @@ class RFCtrl(Corrector):
     @property
     def value(self):
         """Value."""
-        if self._rb.connected:
-            return self._rb.value
+        if self._pvs['rb'].connected:
+            return self._pvs['rb'].value
 
     @value.setter
     def value(self, freq):
@@ -131,9 +121,9 @@ class RFCtrl(Corrector):
         npoints = int(delta // self.MAX_DELTA) + 2
         freq_span = _np.linspace(freq0, freq, npoints)[1:]
         for i, freq in enumerate(freq_span, 1):
-            self._sp.put(freq, wait=False)
+            self._pvs['sp'].put(freq, wait=False)
             if i != freq_span.size:
-                _time.sleep(1)
+                _time.sleep(self.INTVL)
 
     @property
     def state(self):
@@ -158,16 +148,16 @@ class CHCV(Corrector):
         )
         pvrb = pvsp.substitute(propty_suffix="RB")
         pvref = pvsp.substitute(propty_name="KickRef", propty_suffix="Mon")
-        self._sp = _PV(pvsp, **opt)
-        self._rb = _PV(pvrb, **opt)
-        self._ref = _PV(pvref, **opt)
+        self._pvs['sp'] = _PV(pvsp, **opt)
+        self._pvs['rb'] = _PV(pvrb, **opt)
+        self._pvs['ref'] = _PV(pvref, **opt)
 
         pvoffwfmsp = self._name.substitute(
             prefix=LL_PREF, propty_name='WfmOffsetKick', propty_suffix='SP')
         pvoffwfmrb = self._name.substitute(
             prefix=LL_PREF, propty_name='WfmOffsetKick', propty_suffix='RB')
-        self._wfm_offset_sp = _PV(pvoffwfmsp)
-        self._wfm_offset_rb = _PV(pvoffwfmrb)
+        self._pvs['wfm_offset_sp'] = _PV(pvoffwfmsp)
+        self._pvs['wfm_offset_rb'] = _PV(pvoffwfmrb)
         self._config_ok_vals = {
             'OpMode': _PSConst.OpMode.SlowRef,
             'PwrState': _PSConst.PwrStateSel.On}
@@ -211,22 +201,13 @@ class CHCV(Corrector):
             pvobj.put(val, wait=False)
 
     @property
-    def connected(self):
-        """Status connected."""
-        conn = super().connected
-        conn &= self._ref.connected
-        if not self._ref.connected:
-            _log.debug("NOT CONN: " + self._ref.pvname)
-        return conn
-
-    @property
     def value(self):
         """Value."""
-        if not self._rb.connected:
+        if not self._pvs['rb'].connected:
             return None
         if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
             return self.wfm_offset_kick
-        return self._rb.value
+        return self._pvs['rb'].value
 
     @value.setter
     def value(self, val):
@@ -234,28 +215,28 @@ class CHCV(Corrector):
         if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
             self.wfm_offset_kick = val
         else:
-            self._sp.put(val, wait=False)
+            self._pvs['sp'].put(val, wait=False)
 
     @property
     def wfm_offset_kick(self):
         """."""
-        if not self._wfm_offset_rb.connected:
+        if not self._pvs['wfm_offset_rb'].connected:
             return None
-        return self._wfm_offset_rb.value
+        return self._pvs['wfm_offset_rb'].value
 
     @wfm_offset_kick.setter
     def wfm_offset_kick(self, val):
         """."""
-        self._wfm_offset_sp.put(val, wait=False)
+        self._pvs['wfm_offset_sp'].put(val, wait=False)
 
     @property
     def refvalue(self):
         """."""
-        if not self._ref.connected:
+        if not self._pvs['ref'].connected:
             return None
         if self._config_ok_vals['OpMode'] == _PSConst.OpMode.RmpWfm:
             return self.wfm_offset_kick
-        return self._ref.value
+        return self._pvs['ref'].value
 
     def configure(self):
         """Configure method."""
@@ -281,8 +262,8 @@ class Septum(Corrector):
             prefix=LL_PREF, propty_name="Kick", propty_suffix="SP"
         )
         pvrb = pvsp.substitute(propty_suffix="RB")
-        self._sp = _PV(pvsp, **opt)
-        self._rb = _PV(pvrb, **opt)
+        self._pvs['sp'] = _PV(pvsp, **opt)
+        self._pvs['rb'] = _PV(pvrb, **opt)
         self._nominalkick = 98.55  # mrad
         self._config_ok_vals = {
             "Pulse": 1,
@@ -322,8 +303,8 @@ class Septum(Corrector):
     @property
     def value(self):
         """Value."""
-        if self._rb.connected:
-            val = self._rb.value
+        if self._pvs['rb'].connected:
+            val = self._pvs['rb'].value
             if val is not None:
                 return -(val + self._nominalkick) * 1e3
 
@@ -331,7 +312,7 @@ class Septum(Corrector):
     def value(self, val):
         """."""
         val = val / 1e3 + self._nominalkick
-        self._sp.put(-val, wait=False)
+        self._pvs['sp'].put(-val, wait=False)
 
 
 def get_corr(name):
@@ -353,7 +334,7 @@ class TimingConfig(_BaseTimingConfig):
         pref_name = pref + self._csorb.evg_name + ":" + evt
         trig = self._csorb.trigger_cor_name
         opt = {"connection_timeout": TIMEOUT}
-        self._evt_sender = _PV(pref_name + "ExtTrig-Cmd", **opt)
+        self._pvs['evt_sender'] = _PV(pref_name + "ExtTrig-Cmd", **opt)
         src_val = self._csorb.CorrExtEvtSrc._fields.index(evt)
         src_val = self._csorb.CorrExtEvtSrc[src_val]
         self.EVT = src_val
@@ -411,7 +392,7 @@ class TimingConfig(_BaseTimingConfig):
 
     def send_evt(self):
         """Send event method."""
-        self._evt_sender.value = 1
+        self._pvs['evt_sender'].value = 1
 
     @property
     def state(self):
@@ -462,15 +443,6 @@ class TimingConfig(_BaseTimingConfig):
         if self.put_enable and pvobj.connected:
             pvobj.value = int(value)
 
-    @property
-    def connected(self):
-        """Status connected."""
-        conn = super().connected
-        conn &= self._evt_sender.connected
-        if not self._evt_sender.connected:
-            _log.debug("NOT CONN: " + self._evt_sender.pvname)
-        return conn
-
 
 class BaseCorrectors(_BaseClass):
     """Base correctors class."""
@@ -503,6 +475,16 @@ class EpicsCorrectors(BaseCorrectors):
         self._corrs_thread.start()
 
     @property
+    def connected(self):
+        """."""
+        for cor in self._corrs:
+            if not cor.connected:
+                return False
+        if self.acc == 'SI' and not self.timing.connected:
+            return False
+        return True
+
+    @property
     def sofb(self):
         """."""
         return self._sofb
@@ -515,6 +497,20 @@ class EpicsCorrectors(BaseCorrectors):
     def corrs(self):
         """."""
         return self._corrs
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time.time()
+        for cor in self._corrs:
+            tout = timeout - (_time.time() - t0_)
+            if tout <= 0 or not cor.wait_for_connection(tout):
+                return False
+        if self.acc != 'SI':
+            return True
+        tout = timeout - (_time.time() - t0_)
+        if tout <= 0 or not self.timing.wait_for_connection(tout):
+            return False
+        return True
 
     def shutdown(self):
         """Shutdown threads."""

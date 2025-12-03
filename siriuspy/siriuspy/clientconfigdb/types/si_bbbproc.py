@@ -325,8 +325,20 @@ for p, v, d in _pvs_bbb_proc_l:
     _pvs_bbb_proc_h.append([p.replace('oc-L:', 'oc-H:'), v, d])
     _pvs_bbb_proc_v.append([p.replace('oc-L:', 'oc-V:'), v, d])
 
+_pvs_amplifiers = [
+    ['SI-Glob:DI-BbBAmpH:Enbl-Sel', 0, 0.0],
+    ['SI-Glob:DI-BbBAmpH:GainAuto-Sel', 0, 0.0],
+    ['SI-Glob:DI-BbBAmpH:Gain-SP', 0.0, 0.0],
+    ['SI-Glob:DI-BbBAmpH:GainStep-SP', 0.0, 0.0],
+
+    ['SI-Glob:DI-BbBAmpV:Enbl-Sel', 0, 0.0],
+    ['SI-Glob:DI-BbBAmpV:GainAuto-Sel', 0, 0.0],
+    ['SI-Glob:DI-BbBAmpV:Gain-SP', 0.0, 0.0],
+    ['SI-Glob:DI-BbBAmpV:GainStep-SP', 0.0, 0.0],
+]
 
 _template_dict = {
     'pvs':
-        _pvs_bbb_proc_h + _pvs_bbb_proc_v + _pvs_bbb_proc_l
+        _pvs_bbb_proc_h + _pvs_bbb_proc_v + _pvs_bbb_proc_l +
+        _pvs_amplifiers
     }
