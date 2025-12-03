@@ -25,6 +25,7 @@ class IDSearch:
         'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
+        'ARIRANHA': 'SI-20SB:ID-APU22',
     }
 
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
@@ -117,6 +118,12 @@ class IDSearch:
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None)),
+        'SI-20SB:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.01,
+                None, None, None, None)),
     }
 
     POL_NONE_STR = 'none'
@@ -160,6 +167,9 @@ class IDSearch:
             0: ('horizontal', None),  # [mm]
         },
         'SI-17SA:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-20SB:ID-APU22': {
             0: ('horizontal', None),  # [mm]
         },
     }
@@ -276,6 +286,15 @@ class IDSearch:
             IDFF_CH_LABELS[1]: 'SI-17SA:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
             IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
+        },
+        'SI-20SB:ID-APU22': {
+            'polarizations': ('horizontal', ),
+            'pparameter': None,
+            'kparameter': 'SI-20SB:ID-APU22:Phase-Mon',
+            IDFF_CH_LABELS[0]: 'SI-20SB:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-20SB:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-20SB:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-20SB:PS-CV-2:Current-SP',
         },
     }
 
