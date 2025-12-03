@@ -27,14 +27,22 @@ class FamBPMs(_DeviceSet):
     TBT2ADC_BO_MULTIPLIER = 362
 
     ID_BPMS = (
-        'SI-06SB:DI-BPM-1', 'SI-06SB:DI-BPM-2',
-        'SI-07SP:DI-BPM-1', 'SI-07SP:DI-BPM-2',
-        'SI-08SB:DI-BPM-1', 'SI-08SB:DI-BPM-2',
-        'SI-09SA:DI-BPM-1', 'SI-09SA:DI-BPM-2',
-        'SI-10SB:DI-BPM-1', 'SI-10SB:DI-BPM-2',
-        'SI-11SP:DI-BPM-1', 'SI-11SP:DI-BPM-2',
-        'SI-12SB:DI-BPM-1', 'SI-12SB:DI-BPM-2',
-        'SI-14SB:DI-BPM-1', 'SI-14SB:DI-BPM-2'
+        'SI-06SB:DI-BPM-1',
+        'SI-06SB:DI-BPM-2',
+        'SI-07SP:DI-BPM-1',
+        'SI-07SP:DI-BPM-2',
+        'SI-08SB:DI-BPM-1',
+        'SI-08SB:DI-BPM-2',
+        'SI-09SA:DI-BPM-1',
+        'SI-09SA:DI-BPM-2',
+        'SI-10SB:DI-BPM-1',
+        'SI-10SB:DI-BPM-2',
+        'SI-11SP:DI-BPM-1',
+        'SI-11SP:DI-BPM-2',
+        'SI-12SB:DI-BPM-1',
+        'SI-12SB:DI-BPM-2',
+        'SI-14SB:DI-BPM-1',
+        'SI-14SB:DI-BPM-2',
     )
 
     class DEVICES:
@@ -42,13 +50,17 @@ class FamBPMs(_DeviceSet):
 
         SI = 'SI-Fam:DI-BPM'
         BO = 'BO-Fam:DI-BPM'
-        SI_ID = "SI-Fam:DI-BPM-ID"
+        SI_ID = 'SI-Fam:DI-BPM-ID'
         ALL = (BO, SI, SI_ID)
 
     def __init__(
-            self, devname=None, bpmnames=None, ispost_mortem=False,
-            props2init='all', mturn_signals2acq=('X', 'Y')
-        ):
+        self,
+        devname=None,
+        bpmnames=None,
+        ispost_mortem=False,
+        props2init='all',
+        mturn_signals2acq=('X', 'Y'),
+    ):
         """Family of BPMs.
 
         Args:
@@ -91,9 +103,15 @@ class FamBPMs(_DeviceSet):
         self._ispost_mortem = ispost_mortem
 
         self._mturn_signals2acq = ''
-        self.bpms = [BPM(
-            dev, auto_monitor_mon=False, ispost_mortem=ispost_mortem,
-            props2init=props2init) for dev in bpm_names]
+        self.bpms = [
+            BPM(
+                dev,
+                auto_monitor_mon=False,
+                ispost_mortem=ispost_mortem,
+                props2init=props2init,
+            )
+            for dev in bpm_names
+        ]
 
         # use property here to ensure auto_monitor
         self.mturn_signals2acq = list(mturn_signals2acq)
@@ -132,7 +150,9 @@ class FamBPMs(_DeviceSet):
         sigs = [s.upper() for s in sigs]
         diff = set(sigs) - set(self.ALL_MTURN_SIGNALS2ACQ)
         if diff:
-            raise ValueError('The following signals do not exist: '+str(diff))
+            raise ValueError(
+                'The following signals do not exist: ' + str(diff)
+            )
         self._configure_automonitor_acquisition_pvs(state=False)
         self._mturn_signals2acq = sigs
         self._configure_automonitor_acquisition_pvs(state=True)
@@ -211,11 +231,12 @@ class FamBPMs(_DeviceSet):
         t0 = _time.time()
         for bpm in self:
             tout = timeout - (_time.time() - t0)
-            if not bpm._wait('RFFEAtt-RB', value, timeout=tout):
+            if not bpm.wait('RFFEAtt-RB', value, timeout=tout):
                 okall = False
                 mstr += (
-                    f'\n{bpm.devname:<20s}: ' +
-                    f'rb {bpm.rffe_att:.0f} != sp {value:.0f}')
+                    f'\n{bpm.devname:<20s}: '
+                    + f'rb {bpm.rffe_att:.0f} != sp {value:.0f}'
+                )
 
         stg = ', except:' if mstr else '.'
         _log.info('RFFE attenuation set confirmed in all BPMs%s', stg)
@@ -232,7 +253,7 @@ class FamBPMs(_DeviceSet):
         def _to_array(val, name):
             if val is None:
                 return None
-            if not hasattr(val, "__iter__"):
+            if not hasattr(val, '__iter__'):
                 return _np.full(ndev, val, dtype=int)
 
             arr = _np.asarray(val, dtype=int)
@@ -243,21 +264,21 @@ class FamBPMs(_DeviceSet):
                 )
             return arr
 
-        mask_beg = _to_array(mask_beg, "mask_beg")
-        mask_end = _to_array(mask_end, "mask_end")
+        mask_beg = _to_array(mask_beg, 'mask_beg')
+        mask_end = _to_array(mask_end, 'mask_end')
 
         total_samples = _np.zeros(ndev, dtype=int)
         total_samples += 0 if mask_beg is None else mask_beg
         total_samples += 0 if mask_end is None else mask_end
 
-        if "SI" in self.devname:
+        if 'SI' in self.devname:
             tbt2adc_multiplier = self.TBT2ADC_SI_MULTIPLIER
-        elif "BO" in self.devname:
+        elif 'BO' in self.devname:
             tbt2adc_multiplier = self.TBT2ADC_BO_MULTIPLIER
 
         if _np.any(total_samples >= tbt2adc_multiplier):
-            msg = f"mask_beg + mask_end >= {tbt2adc_multiplier}"
-            msg += ", the number of ADC samples in TbT rate."
+            msg = f'mask_beg + mask_end >= {tbt2adc_multiplier}'
+            msg += ', the number of ADC samples in TbT rate.'
             raise ValueError(msg)
 
         for i, bpm in enumerate(self):
@@ -281,15 +302,13 @@ class FamBPMs(_DeviceSet):
             if mask_end is not None:
                 props['TbTDataMaskSamplesEnd-RB'] = mask_end[i]
 
-            if not bpm._wait_set(props, timeout=tout):
+            if not bpm.wait_several(props, timeout=tout):
                 okall = False
                 for prop, sp in props.items():
                     rb = bpm[prop]
                     if rb == sp:
                         continue
-                    mstr += (
-                        f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
-                    )
+                    mstr += f'\n{bpm.devname:<20s}: rb {prop} {rb} != sp {sp}'
         was_set = mask_beg is not None or mask_end is not None
         status = 'enabled' if enable else 'disabled'
         status += ' & set' if was_set else ''
@@ -358,7 +377,8 @@ class FamBPMs(_DeviceSet):
 
         """
         tsmps = _np.zeros(
-            (len(self._mturn_signals2acq), len(self.bpms)), dtype=float)
+            (len(self._mturn_signals2acq), len(self.bpms)), dtype=float
+        )
         for i, s in enumerate(self._mturn_signals2acq):
             for j, bpm in enumerate(self.bpms):
                 pname = self.conv_signal2pvname_format(s)
@@ -380,8 +400,8 @@ class FamBPMs(_DeviceSet):
 
         """
         fs_bpms = {
-            dev.get_sampling_frequency(rf_freq, acq_rate)
-            for dev in self.bpms}
+            dev.get_sampling_frequency(rf_freq, acq_rate) for dev in self.bpms
+        }
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
         else:
@@ -398,8 +418,7 @@ class FamBPMs(_DeviceSet):
             float: switching frequency.
 
         """
-        fsw_bpms = {
-            dev.get_switching_frequency(rf_freq) for dev in self.bpms}
+        fsw_bpms = {dev.get_switching_frequency(rf_freq) for dev in self.bpms}
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
@@ -407,8 +426,13 @@ class FamBPMs(_DeviceSet):
             return None
 
     def config_mturn_acquisition(
-            self, nr_points_after: int, nr_points_before=0,
-            acq_rate='FAcq', repeat=True, external=True) -> int:
+        self,
+        nr_points_after: int,
+        nr_points_before=0,
+        acq_rate='FAcq',
+        repeat=True,
+        external=True,
+    ) -> int:
         """Configure acquisition for BPMs.
 
         Args:
@@ -443,7 +467,8 @@ class FamBPMs(_DeviceSet):
             acq_rate = dic.get(acq_rate.lower())
         if acq_rate not in self._csbpm.AcqChan:
             raise ValueError(
-                str(acq_rate) + ' is not a valid acquisition rate.')
+                str(acq_rate) + ' is not a valid acquisition rate.'
+            )
 
         rep = self._csbpm.AcqRepeat.Normal
         if repeat:
@@ -717,7 +742,7 @@ class FamBPMs(_DeviceSet):
         t01 = _time.time()
         dtime = t01 - t00
         timeout -= dtime
-        _log.debug("Flags updated (ETA: %.3fs).", dtime)
+        _log.debug('Flags updated (ETA: %.3fs).', dtime)
 
         ret = self.wait_update_mturn_timestamps(timeout)
         if ret != 0:
@@ -725,13 +750,13 @@ class FamBPMs(_DeviceSet):
         t02 = _time.time()
         dtime = t02 - t01
         timeout -= dtime
-        _log.debug("Timestamps updated (ETA: %.3fs).", dtime)
+        _log.debug('Timestamps updated (ETA: %.3fs).', dtime)
 
         ret = self.wait_update_mturn_signals(timeout)
         if ret != 0:
             return ret
         dtime = _time.time() - t02
-        _log.debug("Data updated (ETA: %.3fs).", dtime)
+        _log.debug('Data updated (ETA: %.3fs).', dtime)
         return ret
 
     # ---------------------- Auxiliary methods ------------------------------
