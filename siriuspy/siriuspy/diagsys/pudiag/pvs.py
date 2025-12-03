@@ -97,7 +97,6 @@ class PUStatusPV:
         intlk5 = computed_pv.pvs[PUStatusPV.INTRLCK_5].value
         intlk6 = computed_pv.pvs[PUStatusPV.INTRLCK_6].value
         intlk7 = computed_pv.pvs[PUStatusPV.INTRLCK_7].value
-        intlk8 = computed_pv.pvs[PUStatusPV.INTRLCK_8].value
         intlk9 = computed_pv.pvs[PUStatusPV.INTRLCK_9].value
         cond = intlk1 != 1 or intlk1 is None
         cond |= intlk2 != 1 or intlk2 is None
@@ -106,8 +105,10 @@ class PUStatusPV:
         cond |= intlk5 != 1 or intlk5 is None
         cond |= intlk6 != 1 or intlk6 is None
         cond |= intlk7 != 1 or intlk7 is None
-        cond |= intlk8 != 1 or intlk8 is None
         cond |= intlk9 != 1 or intlk9 is None
+        if 'Sept' not in puname:
+            intlk8 = computed_pv.pvs[PUStatusPV.INTRLCK_8].value
+            cond |= intlk8 != 1 or intlk8 is None
         if cond:
             value |= PUStatusPV.BIT_INTERLOCK
 
