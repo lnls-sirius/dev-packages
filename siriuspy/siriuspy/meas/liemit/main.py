@@ -46,7 +46,7 @@ class CalcEmmitance(_BaseClass):
         return {
             'Place-Sel': _part(self.write, 'place'),
             'Plane-Sel': _part(self.write, 'plane'),
-            }
+        }
 
     def get_map2read(self):
         """."""
@@ -65,7 +65,7 @@ class CalcEmmitance(_BaseClass):
             'Gamma-Mon': _part(self.read, 'gamma'),
             'Emittance-Mon': _part(self.read, 'emittance'),
             'NormEmittance-Mon': _part(self.read, 'norm_emittance'),
-            }
+        }
 
     @property
     def place(self):
@@ -207,8 +207,9 @@ class CalcEmmitance(_BaseClass):
     def _update_quad_strength(self):
         """."""
         KL = self._conv2kl.conv_current_2_strength(
-            self._currents, strengths_dipole=self._energy)
-        self._quadstren = KL/self._quadlen
+            self._currents, strengths_dipole=self._energy
+        )
+        self._quadstren = KL / self._quadlen
         if self._plane == self.Plane.Y:
             self._quadstren *= -1
 
@@ -226,7 +227,7 @@ class CalcEmmitance(_BaseClass):
     def _trans_matrix_analysis(self):
         """."""
         R = self._get_trans_mat()
-        pseudo_inv = (_np.linalg.inv(_np.transpose(R) @ R) @ _np.transpose(R))
+        pseudo_inv = _np.linalg.inv(_np.transpose(R) @ R) @ _np.transpose(R)
         [s_11, s_12, s_22] = pseudo_inv @ (self._beamsize**2)
         # s_11, s_12, s_22 = _np.linalg.lstsq(R, self._beamsize**2)[0]
         self._update_twiss(s_11, s_12, s_22)
@@ -240,12 +241,12 @@ class CalcEmmitance(_BaseClass):
             R[i] = _np.dot(Rd, Rq)
         R11 = R[:, 0, 0].reshape(-1)
         R12 = R[:, 0, 1].reshape(-1)
-        R = _np.column_stack((R11*R11, 2*R11*R12, R12*R12))
+        R = _np.column_stack((R11 * R11, 2 * R11 * R12, R12 * R12))
         return R
 
     def _update_twiss(self, s_11, s_12, s_22):
         """."""
-        self._emittance = _np.sqrt(abs(s_11*s_22 - s_12*s_12))
+        self._emittance = _np.sqrt(abs(s_11 * s_22 - s_12 * s_12))
         self._beta = s_11 / self._emittance
         self._alpha = -s_12 / self._emittance
         self._gamma = s_22 / self._emittance
@@ -257,18 +258,18 @@ class CalcEmmitance(_BaseClass):
         if elem.lower().startswith('qu') and K1 is not None and K1 == 0:
             elem = 'drift'
         if elem.lower().startswith('dr'):
-            matrix = _np.array([[1, L], [0, 1], ])
+            matrix = _np.array([[1, L], [0, 1]])
         elif elem.lower().startswith('qu') and K1 is not None:
             vkq = _np.sqrt(abs(K1))
             if K1 > 0:
-                cos = _np.cos(vkq*L)
-                sin = _np.sin(vkq*L)
-                m11, m12, m21 = cos, 1/vkq*sin, -vkq*sin
+                cos = _np.cos(vkq * L)
+                sin = _np.sin(vkq * L)
+                m11, m12, m21 = cos, 1 / vkq * sin, -vkq * sin
             else:
-                hcos = _np.cosh(vkq*L)
-                hsin = _np.sinh(vkq*L)
-                m11, m12, m21 = hcos, 1/vkq*hsin, vkq*hsin
-            matrix = _np.array([[m11, m12], [m21, m11], ])
+                hcos = _np.cosh(vkq * L)
+                hsin = _np.sinh(vkq * L)
+                m11, m12, m21 = hcos, 1 / vkq * hsin, vkq * hsin
+            matrix = _np.array([[m11, m12], [m21, m11]])
         return matrix
 
 
@@ -285,8 +286,9 @@ class MeasEmmitance(_BaseClass):
         self._measuring = _Event()
         self.emittance_calculator = CalcEmmitance()
         self.image_processor = _ProcessImage()
-        self.image_processor.readingorder = \
+        self.image_processor.readingorder = (
             self.image_processor.ReadingOrder.CLike
+        )
         self._place = 'li'
         self._select_experimental_setup()
 
@@ -323,27 +325,31 @@ class MeasEmmitance(_BaseClass):
         self.emittance_calculator.place = self._place
         if self._place.lower().startswith('li'):
             prof = 'LA-BI:PRF5'
-            self._image_source = _PV(prof+':RAW:ArrayData')
+            self._image_source = _PV(prof + ':RAW:ArrayData')
             self._width_source = _PV(
-                prof+':ROI:MaxSizeX_RBV', callback=self._update_width)
+                prof + ':ROI:MaxSizeX_RBV', callback=self._update_width
+            )
             self._coefx = _PV(
-                prof+':X:Gauss:Coef',
-                callback=self._update_coefx)
+                prof + ':X:Gauss:Coef', callback=self._update_coefx
+            )
             self._coefy = _PV(
-                prof+':Y:Gauss:Coef',
-                callback=self._update_coefy)
+                prof + ':Y:Gauss:Coef', callback=self._update_coefy
+            )
             self.quad_I_sp = _PV('LI-01:PS-QF3:Current-SP')
             self.quad_I_rb = _PV('LI-01:PS-QF3:Current-Mon')
         elif self._place.lower().startswith('tb'):
             self._image_source = _PV('TB-02:DI-Scrn-2:ImgData-Mon')
             self._width_source = _PV(
-                'TB-02:DI-Scrn-2:ImgMaxWidth-Cte', callback=self._update_width)
+                'TB-02:DI-Scrn-2:ImgMaxWidth-Cte', callback=self._update_width
+            )
             self._coefx = _PV(
                 'TB-02:DI-ScrnCam-2:ImgScaleFactorX-RB',
-                callback=self._update_coefx)
+                callback=self._update_coefx,
+            )
             self._coefy = _PV(
                 'TB-02:DI-ScrnCam-2:ImgScaleFactorY-RB',
-                callback=self._update_coefy)
+                callback=self._update_coefy,
+            )
             quad = self.emittance_calculator.quadname
             self.quad_I_sp = _PV(quad + ':Current-SP')
             self.quad_I_rb = _PV(quad + ':Current-RB')
@@ -391,7 +397,7 @@ class MeasEmmitance(_BaseClass):
                 I_now = self.quad_I_rb.value
                 cen_x, sigma_x, cen_y, sigma_y = self.plt_image.get_params()
                 mu, sig = (cen_x, sigma_x) if pl == 'x' else (cen_y, sigma_y)
-                max_size = self.spbox_threshold.value()*1e-3
+                max_size = self.spbox_threshold.value() * 1e-3
                 if sig > max_size:
                     self._measuring.wait(1)
                     continue
