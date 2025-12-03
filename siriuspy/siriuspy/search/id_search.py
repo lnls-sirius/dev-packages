@@ -458,8 +458,10 @@ class IDSearch:
     @staticmethod
     def conv_idname_labels_2_corrnames(idname, correctors):
         """Return correctors names from idname and corrector labels."""
-        idff = IDSearch.conv_idname_2_idff(idname)
         corrs = list()
+        idff = IDSearch.conv_idname_2_idff(idname)
+        if idff is None:
+            return corrs
         for corr in correctors:
             if corr in idff:
                 pvname = _SiriusPVName(idff[corr])
