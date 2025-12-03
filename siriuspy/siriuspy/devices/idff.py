@@ -228,7 +228,7 @@ class IDFFCtrlBase(_Device):
         if self.loopstate == _IDFFConst.LoopState.Closed:
             return True
         self['LoopState-Sel'] = _IDFFConst.LoopState.Closed
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', _IDFFConst.LoopState.Closed, timeout=timeout
         )
 
@@ -238,7 +238,7 @@ class IDFFCtrlBase(_Device):
         if self.loopstate == _IDFFConst.LoopState.Open:
             return True
         self['LoopState-Sel'] = _IDFFConst.LoopState.Open
-        return self._wait(
+        return self.wait(
             'LoopState-Sts', _IDFFConst.LoopState.Open, timeout=timeout
         )
 
@@ -294,6 +294,12 @@ class IDFFCtrlSoft(IDFFCtrlBase):
             if not key.startswith('_') and value is not None
         )
     )
+
+    @property
+    def configname(self):
+        """Return configuration name."""
+        if self.PARAM_PVS.CONFIGNAME_SP:
+            return self[self.PARAM_PVS.CONFIGNAME_RB]
 
 
 class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
@@ -760,13 +766,16 @@ class IDFF(_DeviceSet):
         self,
         pparameter_value=None,
         kparameter_value=None,
-        use_ioc_tables=False,
+        use_ioc_tables=None,
     ):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        if use_ioc_tables is None:
+            use_ioc_tables = issubclass(self._idffclass, IDFFCtrlHard)
+
         if use_ioc_tables:
             if kparameter_value is None:
                 kparameter_value = self.kparameter_mon
@@ -784,9 +793,15 @@ class IDFF(_DeviceSet):
                 curr = _np.interp(kparameter_value, kparam, ff_table)
                 corr_pvname = idff[corrlabel]
                 setpoints[corr_pvname] = curr
-            sts = self.polarization_mon, self.pparameter_mon, kparameter_value
-            return setpoints, *sts
+            sts = (
+                setpoints, self.polarization_mon,
+                self.pparameter_mon, kparameter_value
+            )
+            return sts
 
+        # NOTE:
+        # For standardization soft IDFF IOCs could have Table-(SP|RB) PVs
+        # like the hard IDFF IOCs have...
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
@@ -939,7 +954,7 @@ class IDFF(_DeviceSet):
         pparameter_value=None,
         kparameter_value=None,
         dry_run=False,
-        use_ioc_tables=False,
+        use_ioc_tables=None,
     ):
         """."""
         setpoints, polarization, pparameter_value, kparameter_value = (

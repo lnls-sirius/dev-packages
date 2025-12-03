@@ -1,34 +1,55 @@
 """."""
+
 import time as _time
 from copy import deepcopy as _dcopy
 
 import numpy as _np
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
-from .device import Device as _Device, DeviceSet as _DeviceSet
-from ..timesys.csdev import ETypes as _ETypes, Const as _TIConst, \
-    get_hl_trigger_database as _get_hl_trigger_database
 from ..search import HLTimeSearch as _HLTimeSearch
+from ..timesys.csdev import (
+    Const as _TIConst,
+    ETypes as _ETypes,
+    get_hl_trigger_database as _get_hl_trigger_database
+)
 from ..util import get_bit as _get_bit
+from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
 class EVG(_Device):
     """Device EVG."""
 
     DEVNAME = 'AS-RaMO:TI-EVG'
-    StateMachine = _get_namedtuple('StateMachine', (
-        'Initializing', 'Stopped', 'Continuous', 'Injection',
-        'Preparing_Continuous', 'Preparing_Injection',
-        'Restarting_Continuous'))
+    StateMachine = _get_namedtuple(
+        'StateMachine',
+        (
+            'Initializing',
+            'Stopped',
+            'Continuous',
+            'Injection',
+            'Preparing_Continuous',
+            'Preparing_Injection',
+            'Restarting_Continuous',
+        ),
+    )
 
     PROPERTIES_DEFAULT = (
-        'InjectionEvt-Sel', 'InjectionEvt-Sts', 'UpdateEvt-Cmd',
-        'ContinuousEvt-Sel', 'ContinuousEvt-Sts', 'STATEMACHINE',
-        'RepeatBucketList-SP', 'RepeatBucketList-RB',
-        'BucketList-SP', 'BucketList-RB', 'BucketList-Mon',
-        'BucketListLen-Mon', 'TotalInjCount-Mon', 'InjCount-Mon',
-        'BucketListSyncStatus-Mon')
+        'InjectionEvt-Sel',
+        'InjectionEvt-Sts',
+        'UpdateEvt-Cmd',
+        'ContinuousEvt-Sel',
+        'ContinuousEvt-Sts',
+        'STATEMACHINE',
+        'RepeatBucketList-SP',
+        'RepeatBucketList-RB',
+        'BucketList-SP',
+        'BucketList-RB',
+        'BucketList-Mon',
+        'BucketListLen-Mon',
+        'TotalInjCount-Mon',
+        'InjCount-Mon',
+        'BucketListSyncStatus-Mon',
+    )
 
     def __init__(self, props2init='all'):
         """."""
@@ -53,12 +74,12 @@ class EVG(_Device):
     @property
     def bucketlist_mon(self):
         """Implemented Bucket List."""
-        return self['BucketList-Mon'][:self.bucketlist_len]
+        return self['BucketList-Mon'][: self.bucketlist_len]
 
     @property
     def bucketlist(self):
         """Last setpoint accepted for Bucket List."""
-        return self['BucketList-RB'][:self.bucketlist_len]
+        return self['BucketList-RB'][: self.bucketlist_len]
 
     @bucketlist.setter
     def bucketlist(self, value):
@@ -121,70 +142,77 @@ class EVG(_Device):
         if (step < 0) and (stop > start):
             stop -= 864
         value = _np.arange(start, stop, step)
-        value = (value-1) % 864 + 1
+        value = (value - 1) % 864 + 1
         self.bucketlist = value
         rb_value = _np.zeros(864)
-        rb_value[:len(value)] = value
-        return self._wait('BucketList-RB', rb_value, timeout=timeout)
+        rb_value[: len(value)] = value
+        return self.wait('BucketList-RB', rb_value, timeout=timeout)
 
     def wait_injection_finish(self, timeout=10):
         """."""
-        return self._wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
+        return self.wait(propty='InjectionEvt-Sts', value=0, timeout=timeout)
 
     def cmd_update_events(self, timeout=10):
         """."""
         val = self.continuous_state
         self['UpdateEvt-Cmd'] = 1
         _time.sleep(0.1)
-        return self._wait(
-            propty='ContinuousEvt-Sts', value=val, timeout=timeout)
+        return self.wait(
+            propty='ContinuousEvt-Sts', value=val, timeout=timeout
+        )
 
     def cmd_turn_on_injection(self, timeout=10, wait_rb=False):
         """."""
         self.injection_state = 1
         pv2wait = 'InjectionEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=1, timeout=timeout)
+        return self.wait(propty=pv2wait, value=1, timeout=timeout)
 
     def cmd_turn_off_injection(self, timeout=10, wait_rb=False):
         """."""
         self.injection_state = 0
         pv2wait = 'InjectionEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=0, timeout=timeout)
+        return self.wait(propty=pv2wait, value=0, timeout=timeout)
 
     def cmd_turn_on_continuous(self, timeout=10, wait_rb=False):
         """."""
         self.continuous_state = 1
         pv2wait = 'ContinuousEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=1, timeout=timeout)
+        return self.wait(propty=pv2wait, value=1, timeout=timeout)
 
     def cmd_turn_off_continuous(self, timeout=10, wait_rb=False):
         """."""
         self.continuous_state = 0
         pv2wait = 'ContinuousEvt-' + ('Sts' if wait_rb else 'Sel')
-        return self._wait(propty=pv2wait, value=0, timeout=timeout)
+        return self.wait(propty=pv2wait, value=0, timeout=timeout)
 
     def set_nrpulses(self, value, timeout=10):
         """Set and wait number of pulses."""
         self['RepeatBucketList-SP'] = value
-        return self._wait('RepeatBucketList-RB', value, timeout=timeout)
+        return self.wait('RepeatBucketList-RB', value, timeout=timeout)
 
 
 class Event(_Device):
     """Device Timing Event."""
 
     PROPERTIES_DEFAULT = (
-        'Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB',
-        'DelayType-Sel', 'DelayType-Sts', 'Mode-Sel', 'Mode-Sts',
-        'Code-Mon', 'ExtTrig-Cmd',
-        )
+        'Delay-SP',
+        'Delay-RB',
+        'DelayRaw-SP',
+        'DelayRaw-RB',
+        'DelayType-Sel',
+        'DelayType-Sts',
+        'Mode-Sel',
+        'Mode-Sts',
+        'Code-Mon',
+        'ExtTrig-Cmd',
+    )
 
     MODES = _ETypes.EVT_MODES
     DELAYTYPES = ('Incr', 'Fixed')
 
     def __init__(self, evtname, props2init='all'):
         """."""
-        super().__init__(
-            EVG.DEVNAME + ':' + evtname, props2init=props2init)
+        super().__init__(EVG.DEVNAME + ':' + evtname, props2init=props2init)
 
     @property
     def mode(self):
@@ -262,14 +290,36 @@ class Trigger(_Device):
     POLARITIES = ('Normal', 'Inverse')
 
     PROPERTIES_DEFAULT = (
-        'CtrldChannels-Cte', 'Delay-RB', 'Delay-SP', 'DelayRaw-RB',
-        'DelayRaw-SP', 'DeltaDelay-RB', 'DeltaDelay-SP', 'DeltaDelayRaw-RB',
-        'DeltaDelayRaw-SP', 'Duration-RB', 'Duration-SP', 'InInjTable-Mon',
-        'LowLvlLock-Sel', 'LowLvlLock-Sts', 'LowLvlTriggers-Cte',
-        'NrPulses-RB', 'NrPulses-SP', 'Polarity-Sel', 'Polarity-Sts',
-        'Src-Sel', 'Src-Sts', 'State-Sel', 'State-Sts', 'Status-Mon',
-        'StatusLabels-Cte', 'TotalDelay-Mon', 'TotalDelayRaw-Mon',
-        'WidthRaw-RB', 'WidthRaw-SP')
+        'CtrldChannels-Cte',
+        'Delay-RB',
+        'Delay-SP',
+        'DelayRaw-RB',
+        'DelayRaw-SP',
+        'DeltaDelay-RB',
+        'DeltaDelay-SP',
+        'DeltaDelayRaw-RB',
+        'DeltaDelayRaw-SP',
+        'Duration-RB',
+        'Duration-SP',
+        'InInjTable-Mon',
+        'LowLvlLock-Sel',
+        'LowLvlLock-Sts',
+        'LowLvlTriggers-Cte',
+        'NrPulses-RB',
+        'NrPulses-SP',
+        'Polarity-Sel',
+        'Polarity-Sts',
+        'Src-Sel',
+        'Src-Sts',
+        'State-Sel',
+        'State-Sts',
+        'Status-Mon',
+        'StatusLabels-Cte',
+        'TotalDelay-Mon',
+        'TotalDelayRaw-Mon',
+        'WidthRaw-RB',
+        'WidthRaw-SP',
+    )
 
     def __init__(self, trigname, props2init='all', auto_monitor_mon=False):
         """Init."""
@@ -283,8 +333,8 @@ class Trigger(_Device):
             props2init = list(set(all_props) & set(props2init))
         self._source_options = _database['Src-Sel']['enums']
         super().__init__(
-            trigname, props2init=props2init,
-            auto_monitor_mon=auto_monitor_mon)
+            trigname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
 
     @property
     def status(self):
@@ -295,8 +345,11 @@ class Trigger(_Device):
     def status_str(self):
         """Status string."""
         value = self.status
-        strs = [d for i, d in enumerate(_TIConst.HLTrigStatusLabels)
-                if _get_bit(value, i)]
+        strs = [
+            d
+            for i, d in enumerate(_TIConst.HLTrigStatusLabels)
+            if _get_bit(value, i)
+        ]
         return ', '.join(strs) if strs else 'Ok'
 
     @property
@@ -500,27 +553,27 @@ class Trigger(_Device):
     def cmd_enable(self, timeout=3):
         """Command enable."""
         self.state = 1
-        return self._wait('State-Sts', 1, timeout)
+        return self.wait('State-Sts', 1, timeout)
 
     def cmd_disable(self, timeout=3):
         """Command disable."""
         self.state = 0
-        return self._wait('State-Sts', 0, timeout)
+        return self.wait('State-Sts', 0, timeout)
 
     def cmd_lock_low_level(self, timeout=3):
         """Lock low level IOCs state."""
         self.lock_low_level = 1
-        return self._wait('LowLvlLock-Sts', 1, timeout)
+        return self.wait('LowLvlLock-Sts', 1, timeout)
 
     def cmd_unlock_low_level(self, timeout=3):
         """Unlock low level IOCs state."""
         self.lock_low_level = 0
-        return self._wait('LowLvlLock-Sts', 0, timeout)
+        return self.wait('LowLvlLock-Sts', 0, timeout)
 
     def cmd_set_source(self, value, timeout=3):
         """Set source with timeout."""
         self.source = value
-        return self._wait('Src-Sts', value, timeout)
+        return self.wait('Src-Sts', value, timeout)
 
 
 class HLTiming(_DeviceSet):
@@ -529,23 +582,28 @@ class HLTiming(_DeviceSet):
     SEARCH = _HLTimeSearch
 
     def __init__(
-            self, controlled_trigs='all', trigs_props2init='all',
-            evts_props2init='all'):
+        self,
+        controlled_trigs='all',
+        trigs_props2init='all',
+        evts_props2init='all',
+    ):
         """."""
         self.evg = EVG()
         evs = self.SEARCH.get_configurable_hl_events()
         self.events = {
-            ev: Event(ev, props2init=evts_props2init) for ev in evs.keys()}
+            ev: Event(ev, props2init=evts_props2init) for ev in evs.keys()
+        }
 
         self._triggernames_all = self.SEARCH.get_hl_triggers()
         trigs = self._triggernames_all
         if isinstance(controlled_trigs, (list, tuple)):
             trigs = sorted(set(controlled_trigs) & set(self.triggernames_all))
         self.triggers = {
-            t: Trigger(t, props2init=trigs_props2init) for t in trigs}
+            t: Trigger(t, props2init=trigs_props2init) for t in trigs
+        }
         self._trigs_props2init = trigs_props2init
 
-        devs = [self.evg, ]
+        devs = [self.evg]
         devs += list(self.events.values())
         devs += list(self.triggers.values())
         super().__init__(devs, devname='AS-Glob:TI-HLTiming')
@@ -579,7 +637,8 @@ class HLTiming(_DeviceSet):
             return False
         if trigname not in self.triggers:
             self.triggers[trigname] = Trigger(
-                trigname, props2init=self._trigs_props2init)
+                trigname, props2init=self._trigs_props2init
+            )
         return True
 
     def get_mapping_events2triggers(self) -> dict:
@@ -651,7 +710,7 @@ class HLTiming(_DeviceSet):
             t0_ = _time.time()
             tr = self.triggers.get(tn)
             new_src_idx = tr.source_options.index(new_src)
-            boo &= tr._wait('Src-Sts', new_src_idx, timeout=timeout)
+            boo &= tr.wait('Src-Sts', new_src_idx, timeout=timeout)
             timeout = max(timeout - (_time.time() - t0_), 0)
             if not boo:
                 break
@@ -707,8 +766,8 @@ class HLTiming(_DeviceSet):
 
         tmpl = ' {:^30s} |' * len(tabs)
         print(('{:^12s} |' + tmpl).format('Delay [ms]', *tabs))
-        print('-'*(12+33*len(tabs) + 2))
+        print('-' * (12 + 33 * len(tabs) + 2))
         for dly, trg, evt, tab in dlys:
             stgs = [''] * len(tabs)
             stgs[tabs.index(tab)] = trg
-            print(('{:>12.6f} |' + tmpl).format(dly/1e3, *stgs))
+            print(('{:>12.6f} |' + tmpl).format(dly / 1e3, *stgs))
