@@ -183,15 +183,15 @@ class CalcEmmitance(_BaseClass):
     def _select_experimental_setup(self):
         """."""
         if self.place.lower().startswith('li'):
-            self._quadname = 'LI-01:PS-QF3'
+            self._quadname = 'LI-01:MA-QF3'
             self._quadlen = 0.112
             self._distance = 2.8775
         if self.place.lower().startswith('tb-qd2a'):
-            self._quadname = 'TB-02:PS-QD2A'
+            self._quadname = 'TB-02:MA-QD2A'
             self._quadlen = 0.1
             self._distance = 6.904
         if self.place.lower().startswith('tb-qf2a'):
-            self._quadname = 'TB-02:PS-QF2A'
+            self._quadname = 'TB-02:MA-QF2A'
             self._quadlen = 0.1
             self._distance = 6.534
         self._conv2kl = _NormFact.create(self._quadname)
