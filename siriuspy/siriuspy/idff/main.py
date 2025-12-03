@@ -296,6 +296,9 @@ class App(_Callback):
         corr_setpoints_init = _dcopy(self._corr_setpoints)
         if not corr_setpoints_init:
             self.corr_ramp_status = ramp_off_status
+            self.run_callbacks(
+                self.pvs_prefix + ':CorrRampStatus-Mon', ramp_off_status
+            )
             return False
 
         # current and calculated setpoints
