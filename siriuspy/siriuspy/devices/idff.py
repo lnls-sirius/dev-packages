@@ -4,6 +4,8 @@ import inspect as _inspect
 import time as _time
 from copy import deepcopy as _dcopy
 
+import numpy as _np
+
 from ..idff.config import IDFFConfig as _IDFFConfig
 from ..idff.csdev import IDFFConst as _IDFFConst
 from ..namesys import SiriusPVName as _SiriusPVName
@@ -45,6 +47,8 @@ class _ParamPVs:
     CORRCC2_1CURRENT_MON = None
     CORRCC2_2CURRENT_MON = None
     CORRCC1_2CURRENT_MON = None
+    TABLE_SP = None
+    TABLE_RB = None
 
     def __str__(self):
         """Print parameters."""
@@ -291,6 +295,12 @@ class IDFFCtrlSoft(IDFFCtrlBase):
         )
     )
 
+    @property
+    def configname(self):
+        """Return configuration name."""
+        if self.PARAM_PVS.CONFIGNAME_SP:
+            return self[self.PARAM_PVS.CONFIGNAME_RB]
+
 
 class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     """ID Feedforward Control Soft Device for DELTA."""
@@ -431,6 +441,8 @@ class IDFFCtrlHard(IDFFCtrlBase):
         # should be added in derived classes
 
     PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
+    PARAM_PVS.TABLE_SP = 'Table-SP'
+    PARAM_PVS.TABLE_RB = 'Table-RB'
 
     PROPERTIES_DEFAULT = tuple(
         set(
@@ -439,6 +451,28 @@ class IDFFCtrlHard(IDFFCtrlBase):
             if not key.startswith('_') and value is not None
         )
     )
+
+    def get_ffwd_table_corr_labels(self):
+        """."""
+        corr_labels = list()
+        corr_labels += self.IDFF_CH_LABELS
+        corr_labels += self.IDFF_CV_LABELS
+        corr_labels += self.IDFF_CC_LABELS
+        corr_labels += self.IDFF_LC_LABELS
+        corr_labels += self.IDFF_QS_LABELS
+        corr_labels += self.IDFF_QN_LABELS
+        return corr_labels
+
+    def get_ffwd_table(self):
+        """Return FF table dict."""
+        param_name = self.PARAM_PVS.TABLE_RB
+        if param_name is None:
+            return dict()
+        ff_table = _np.array(self[param_name])
+        clabels = self.get_ffwd_table_corr_labels()
+        ff_table = ff_table.reshape(len(clabels), -1)
+        ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
+        return ff_table
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
@@ -516,7 +550,13 @@ class IDFF(_DeviceSet):
 
     IDFFCtrlBase._add_devices(DEVICES, IDFFCtrl.DEVICES)
 
-    def __init__(self, devname, with_devctrl=True):
+    def __init__(
+        self,
+        devname,
+        props2init_ctrl='all',
+        props2init_corrs='all',
+        with_devctrl=True,
+    ):
         """."""
         self._with_devctrl = with_devctrl
 
@@ -537,7 +577,7 @@ class IDFF(_DeviceSet):
             self._iddevname
         )
 
-        alldevs = self._create_devices()
+        alldevs = self._create_devices(props2init_ctrl, props2init_corrs)
         (
             self._devctrl,
             self._devid,
@@ -701,14 +741,67 @@ class IDFF(_DeviceSet):
         else:
             raise ValueError('Could not load configuration.')
 
+    def read_setpoints(self, corrdevs=None):
+        """Return corrector SP values."""
+        if corrdevs is None:
+            corrdevs = self._devsch + self._devscv + self._devsqs
+        chs = _IDSearch.conv_idname_2_idff_chnames(self.devname)
+        cvs = _IDSearch.conv_idname_2_idff_cvnames(self.devname)
+        qss = _IDSearch.conv_idname_2_idff_qsnames(self.devname)
+        lcs = _IDSearch.conv_idname_2_idff_lcnames(self.devname)
+        qns = _IDSearch.conv_idname_2_idff_qnnames(self.devname)
+        ccs = _IDSearch.conv_idname_2_idff_ccnames(self.devname)
+        corrs = chs + cvs + qss + lcs + qns + ccs
+        setpoints = dict()
+        for pvname in corrs:
+            # find corrdev corresponding to pvname
+            for dev in corrdevs:
+                if dev.devname in pvname:
+                    spvname = _SiriusPVName(pvname)
+                    # propty = spvname.propty.replace('-SP', '-RB')
+                    setpoints[pvname] = dev[spvname.propty]
+        return setpoints
+
     def calculate_setpoints(
-        self, pparameter_value=None, kparameter_value=None
+        self,
+        pparameter_value=None,
+        kparameter_value=None,
+        use_ioc_tables=None,
     ):
         """Return correctors setpoints for a particular ID config.
 
         polarization - a string defining the required polarization for
         setpoint calculation.
         """
+        if use_ioc_tables is None:
+            use_ioc_tables = issubclass(self._idffclass, IDFFCtrlHard)
+
+        if use_ioc_tables:
+            if kparameter_value is None:
+                kparameter_value = self.kparameter_mon
+
+            ff_tables = self.ctrldev.get_ffwd_table()
+            setpoints = dict()
+
+            idparams = _IDSearch.conv_idname_2_parameters(self.iddevname)
+            idff = _IDSearch.conv_idname_2_idff(self.iddevname)
+            for corrlabel, ff_table in ff_tables.items():
+                # IOC tables gap zero gap offset!
+                klims = 0 * idparams.KPARAM_MIN, idparams.KPARAM_MAX
+                kparam = _np.linspace(*klims, len(ff_table))
+                # linear interpolation
+                curr = _np.interp(kparameter_value, kparam, ff_table)
+                corr_pvname = idff[corrlabel]
+                setpoints[corr_pvname] = curr
+            sts = (
+                setpoints, self.polarization_mon,
+                self.pparameter_mon, kparameter_value
+            )
+            return sts
+
+        # NOTE:
+        # For standardization soft IDFF IOCs could have Table-(SP|RB) PVs
+        # like the hard IDFF IOCs have...
         if not self._idffconfig:
             ValueError('IDFFConfig is not loaded!')
 
@@ -861,15 +954,19 @@ class IDFF(_DeviceSet):
         pparameter_value=None,
         kparameter_value=None,
         dry_run=False,
+        use_ioc_tables=None,
     ):
         """."""
         setpoints, polarization, pparameter_value, kparameter_value = (
-            self.calculate_setpoints(pparameter_value, kparameter_value)
+            self.calculate_setpoints(
+                pparameter_value, kparameter_value, use_ioc_tables
+            )
         )
         if dry_run:
-            print(f'polarization : {polarization}')
-            print(f'pparameter   : {pparameter_value}')
-            print(f'kparameter   : {kparameter_value}')
+            print(f'use_ioc_tables : {use_ioc_tables}')
+            print(f'polarization   : {polarization}')
+            print(f'pparameter     : {pparameter_value}')
+            print(f'kparameter     : {kparameter_value}')
             print()
         devcorrs = []
         devcorrs += self.chdevs
@@ -900,9 +997,11 @@ class IDFF(_DeviceSet):
                 print()
             _time.sleep(time_interval / (nrpts - 1))
 
-    def _create_devices(self):
+    def _create_devices(self, props2init_ctrl, props2init_corrs):
         devctrl = (
-            None if not self._with_devctrl else IDFFCtrl(devname=self._devname)
+            None
+            if not self._with_devctrl
+            else IDFFCtrl(devname=self._devname, props2init=props2init_ctrl)
         )
         pol_mon = _ID.get_idclass(self.iddevname).PARAM_PVS.POL_MON
         params = (self._pparametername, self._kparametername, pol_mon)
@@ -912,12 +1011,14 @@ class IDFF(_DeviceSet):
             props2init=props2init,
             auto_monitor_mon=False,
         )
-        devsch = [_PowerSupplyFBP(devname=dev) for dev in self.chnames]
-        devscv = [_PowerSupplyFBP(devname=dev) for dev in self.cvnames]
-        devsqs = [_PowerSupplyFBP(devname=dev) for dev in self.qsnames]
-        devslc = [_PowerSupplyFBP(devname=dev) for dev in self.lcnames]
-        devsqn = [_PowerSupplyFBP(devname=dev) for dev in self.qnnames]
-        devscc = [_PowerSupplyFBP(devname=dev) for dev in self.ccnames]
+        psclass = _PowerSupplyFBP
+        p2i = props2init_corrs
+        devsch = [psclass(devname=dev, props2init=p2i) for dev in self.chnames]
+        devscv = [psclass(devname=dev, props2init=p2i) for dev in self.cvnames]
+        devsqs = [psclass(devname=dev, props2init=p2i) for dev in self.qsnames]
+        devslc = [psclass(devname=dev, props2init=p2i) for dev in self.lcnames]
+        devsqn = [psclass(devname=dev, props2init=p2i) for dev in self.qnnames]
+        devscc = [psclass(devname=dev, props2init=p2i) for dev in self.ccnames]
         return devctrl, devid, devsch, devscv, devsqs, devslc, devsqn, devscc
 
     def _create_labels_2_corrdevs_dict(self):
