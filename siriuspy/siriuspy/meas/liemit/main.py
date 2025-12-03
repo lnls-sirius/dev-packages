@@ -165,7 +165,7 @@ class CalcEmmitance(_BaseClass):
 
     def set_data(self, beam_sizes, currents):
         """."""
-        if None in {currents, beam_sizes}:
+        if currents is None or beam_sizes is None:
             return False
         if isinstance(beam_sizes, (int, float)):
             beam_sizes = [beam_sizes]
