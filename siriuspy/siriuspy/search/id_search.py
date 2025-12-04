@@ -287,15 +287,6 @@ class IDSearch:
             IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
             IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
-        'SI-20SB:ID-APU22': {
-            'polarizations': ('horizontal', ),
-            'pparameter': None,
-            'kparameter': 'SI-20SB:ID-APU22:Phase-Mon',
-            IDFF_CH_LABELS[0]: 'SI-20SB:PS-CH-1:Current-SP',  # upstream
-            IDFF_CH_LABELS[1]: 'SI-20SB:PS-CH-2:Current-SP',  # downstream
-            IDFF_CV_LABELS[0]: 'SI-20SB:PS-CV-1:Current-SP',
-            IDFF_CV_LABELS[1]: 'SI-20SB:PS-CV-2:Current-SP',
-        },
     }
 
     @staticmethod
