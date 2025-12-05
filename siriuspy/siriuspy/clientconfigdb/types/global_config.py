@@ -1036,7 +1036,8 @@ _pvs_li_ps = [
     ]
 
 
-_pvs_as_pu = [
+# this list is used in hla.as_ap_configdb.special_checks!
+PVS_AS_PU = [
     ['TB-04:PU-InjSept:Voltage-SP', 0.0, 0.0],   # [V]
     ['BO-01D:PU-InjKckr:Voltage-SP', 0.0, 0.0],  # [V]
     ['BO-48D:PU-EjeKckr:Voltage-SP', 0.0, 0.0],  # [V]
@@ -1362,7 +1363,8 @@ _pvs_si_ps_fam = [
     ]
 
 
-_pvs_si_ps_ch = [
+# this list is used in hla.as_ap_configdb.special_checks!
+PVS_SI_PS_CH = [
     # NOTE: these are SOFB correctors usually used in SlowRefSync/Wfm mode.
     ['SI-01M2:PS-CH:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CH:Current-SP', 0.0, 0.0],  # [A]
@@ -1608,7 +1610,8 @@ _pvs_si_ps_ch = [
     ]
 
 
-_pvs_si_ps_cv = [
+# this list is used in hla.as_ap_configdb.special_checks!
+PVS_SI_PS_CV = [
     # NOTE: these are SOFB correctors usually used in SlowRefSync/Wfm mode.
     ['SI-01M2:PS-CV:Current-SP', 0.0, 0.0],  # [A]
     ['SI-01C1:PS-CV:Current-SP', 0.0, 0.0],  # [A]
@@ -2716,16 +2719,17 @@ _pvs_as_injection = [
     ],
 ]
 
+
 _template_dict = {
     'pvs':
         _pvs_as_ti +
         _pvs_li_egunmod + _pvs_li_llrf + _pvs_li_ps +
-        _pvs_as_pu +
+        PVS_AS_PU +
         _pvs_as_rf + _pvs_bo_llrf + _pvs_si_llrf_a + _pvs_si_llrf_b +
         _bpm_pvs +
         _pvs_tb_ps + _pvs_bo_ps + _pvs_ts_ps +
         _pvs_si_ps_fam +
-        _pvs_si_ps_ch + _pvs_si_ps_cv +
+        PVS_SI_PS_CH + PVS_SI_PS_CV +
         _pvs_si_ps_qs + _pvs_si_ps_qn +
         _pvs_si_ps_ids + _pvs_si_septff +
         _pvs_as_injection
