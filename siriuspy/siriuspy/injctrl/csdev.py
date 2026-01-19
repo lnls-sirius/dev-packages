@@ -149,6 +149,10 @@ def get_injctrl_propty_database():
     egfilacurr = _ct.FILACURR_OPVALUE
     eghvolt = _ct.HV_OPVALUE
 
+    # beam filling gap
+    def_allowed_buckets = _ct.MAX_BKT * [1]
+    def_allowed_buckets[417:513] = [0] * (513 - 417)
+
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
         'TimestampBoot-Cte': {'type': 'float', 'value': 0,
@@ -271,13 +275,13 @@ def get_injctrl_propty_database():
         "BucketListAllowedMask-SP": {
             "type": "int",
             "count": _ct.MAX_BKT,
-            "value": _ct.MAX_BKT * [1],
+            "value": def_allowed_buckets,
             "unit": "Buckets where injection is allowed",
         },
         "BucketListAllowedMask-RB": {
             "type": "int",
             "count": _ct.MAX_BKT,
-            "value": _ct.MAX_BKT * [1],
+            "value": def_allowed_buckets,
             "unit": "Buckets where injection is allowed",
         },
         'IsInjecting-Mon': {
