@@ -275,13 +275,13 @@ def get_injctrl_propty_database():
         "BucketListAllowedMask-SP": {
             "type": "int",
             "count": _ct.MAX_BKT,
-            "value": def_allowed_buckets,
+            "value": _ct.MAX_BKT * [1],
             "unit": "Buckets where injection is allowed",
         },
         "BucketListAllowedMask-RB": {
             "type": "int",
             "count": _ct.MAX_BKT,
-            "value": def_allowed_buckets,
+            "value": _ct.MAX_BKT * [1],
             "unit": "Buckets where injection is allowed",
         },
         'IsInjecting-Mon': {

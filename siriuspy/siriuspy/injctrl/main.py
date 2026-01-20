@@ -65,7 +65,11 @@ class App(_Callback):
         self._bucketlist_start = 1
         self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
+
+        # initial beam filling gap
         self._bucketlist_allowed_mask = _np.ones(_Const.MAX_BKT, dtype=bool)
+        self._bucketlist_allowed_mask[417:513] = 0  # 96-bucket gap
+
         self._isinj_delay = 0
         self._isinj_duration = 300
 
@@ -330,6 +334,8 @@ class App(_Callback):
             'BucketListStop-RB': self._bucketlist_stop,
             'BucketListStep-SP': self._bucketlist_step,
             'BucketListStep-RB': self._bucketlist_step,
+            'BucketListAllowedMask-SP': self._bucketlist_allowed_mask,
+            'BucketListAllowedMask-RB': self._bucketlist_allowed_mask,
             'IsInjecting-Mon': _Const.IdleInjecting.Idle,
             'IsInjDelay-SP': self._isinj_delay,
             'IsInjDelay-RB': self._isinj_delay,
