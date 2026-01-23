@@ -20,7 +20,7 @@ from .fofb_acq import FamFOFBLamp, FamFOFBSysId, FOFBCtrlLamp, FOFBCtrlSysId, \
     FOFBPSLamp, FOFBPSSysId
 from .fpmosc import FPMOsc
 from .ict import ICT, TranspEff
-from .idff import IDFF
+from .idff import IDFF, IDFFCtrl, IDFFCtrlHard, IDFFCtrlSoft
 from .ids import APU, DELTA, EPU, ID, IDBase, IVU, PAPU, VPU, WIG
 from .injctrl import InjCtrl
 from .injsys import BOPSRampStandbyHandler, BORFRampStandbyHandler, \
