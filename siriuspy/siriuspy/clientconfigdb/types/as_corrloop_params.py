@@ -227,7 +227,6 @@ _si_sofb = [
     ['SI-Glob:AP-SOFB:MaxDeltaKickCV-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:MaxDeltaKickRF-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:CorrSync-Sel', 0, 0.0],
-    ['SI-Glob:AP-SOFB:CorrPSSOFBEnbl-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBDownloadKicks-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBUpdateRefOrb-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:FOFBDownloadKicksPerc-SP', 0, 0.0],
