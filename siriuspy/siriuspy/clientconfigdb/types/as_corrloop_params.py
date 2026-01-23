@@ -255,7 +255,6 @@ _si_fofb = [
     ['SI-Glob:AP-FOFB:CVAccSatMax-SP', 0.0, 0.0],
     ['SI-Glob:AP-FOFB:TimeFrameLen-SP', 0.0, 0.0],
     ['SI-Glob:AP-FOFB:CtrlrSyncUseEnblList-Sel', 0, 0.0],
-    ['SI-Glob:AP-FOFB:KickBufferSize-SP', 0, 0.0],
     ['SI-Glob:AP-FOFB:RefOrbX-SP', [0.0, ]*160, 0.0],
     ['SI-Glob:AP-FOFB:RefOrbY-SP', [0.0, ]*160, 0.0],
     ['SI-Glob:AP-FOFB:BPMXEnblList-SP', [0, ]*160, 0.0],
