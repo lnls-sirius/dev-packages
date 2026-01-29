@@ -63,6 +63,7 @@ class PSStatusPV:
     OPMODE_STS = 3
     WAVFRM_MON = 4
     TRIGEN_STS = 4
+    FFMODE_STS = 5
 
     DTOLWFM_DICT = dict()
 
@@ -136,7 +137,13 @@ class PSStatusPV:
                 else:
                     opmode_sel = _ETypes.OPMODES[sel]
                     opmode_sts = _ETypes.STATES[sts]
-                    checkdiff = sts == _PSConst.States.SlowRef
+                    if psname.sub[2:] in ['SA', 'SB', 'SP']:
+                        # only check diff for IDFF correctors
+                        # if the IDFFMode is disabled
+                        ffsts = computed_pv.pvs[PSStatusPV.FFMODE_STS].value
+                        checkdiff = ffsts == _PSConst.DsblEnbl.Dsbl
+                    else:
+                        checkdiff = sts == _PSConst.States.SlowRef
                 if opmode_sel != opmode_sts:
                     value |= PSStatusPV.BIT_OPMODEDIF
                 # current-diff?
