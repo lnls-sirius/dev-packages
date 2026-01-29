@@ -10,11 +10,14 @@ import asyncio as _asyncio
 import logging as _log
 import ssl as _ssl
 import urllib as _urllib
+from datetime import timedelta as _timedelta
 from threading import Thread as _Thread
+from urllib.parse import quote as _quote
 
 import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
+from lzstring import LZString as _LZString
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
@@ -337,6 +340,98 @@ class ClientArchiver:
         """."""
         self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
         self.session = None
+
+    @staticmethod
+    def gen_archviewer_link(
+        pv_list,
+        time_start,
+        time_stop,
+        time_ref=None,
+    ):
+        """Generate compressed archiver viewer link.
+
+        Parameters
+        ----------
+        pv_list: list[tuple[str, int, str|None, bool]]
+            List of the configurations to be shown in archiver viewer for
+            each PV. Must contain in each tuple the values:
+            (pvname, optimization_points, color)
+                pvname: str
+                    Name of the PV
+                optimization_points:
+                    Number of points to be plotted in the axis
+                    (If 0, show all the points(no optimization))
+                color: str | None
+                    The color of the trace/axis for the PV
+                    (hexadecimal RGB format: #00aa11,
+                    if None no color is selected)
+                use_diff: bool
+                    If the axis for the PV should enable the diff function.
+        time_start: datetime
+            Date when the data starts.
+        time_stop: datetime
+            Date when the data stops.
+        time_ref: datetime|None (Optional parameter)
+            Date of the diff reference
+
+        Example:
+
+        from siriuspy.clientarch import Time
+        from siriuspy.clientarch import ClientArchiver as ca
+
+        time_start = Time(2025, 10, 23, 8, 3, 13)
+        time_stop  = Time(2025, 10, 23, 9, 3, 13)
+        time_ref = Time(2025, 10, 23, 9, 3, 13)
+
+        pv_list = [
+            ('SI-10C1:DI-BPM-2:PosX-Mon', 10, "#00ff00", False),
+            ('SI-10C1:DI-BPM-1:PosX-Mon', 100, "#0000ff", False),
+            ('SI-10C1:DI-BPM-1:PosY-Mon', 0, "#ff0000", True)
+        ]
+
+        url = ca.gen_archviewer_link(
+            pv_list, time_start, time_stop, time_ref)
+        print(url)
+        """
+        # Thanks to Rafael Lyra for the basis of this implementation!
+        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
+        pv_search = ''
+        for pvname, optimization_points, color, use_diff in pv_list:
+            pv_search += 'pv='
+            url_pvname = _quote(pvname)
+            if optimization_points > 0:
+                pv_search += f'optimized_{optimization_points}({url_pvname})'
+            else:
+                pv_search += url_pvname
+
+            if time_ref is not None and use_diff:
+                pv_search += '_diff'
+
+            if color is not None:
+                pv_search += f'__{color}'
+            pv_search += '&'
+
+        search_url = pv_search
+
+        date_pattern = '%Y-%m-%dT%H:%M:%S.000Z'
+        time_zone = _timedelta(hours=3)
+
+        start = time_start + time_zone
+        formatted_start = start.strftime(date_pattern)
+        search_url += f'from={_quote(formatted_start)}&'
+
+        stop = time_stop + time_zone
+        formatted_end = stop.strftime(date_pattern)
+        search_url += f'to={_quote(formatted_end)}&'
+
+        if time_ref is not None:
+            ref = time_ref + time_zone
+            formatted_ref = ref.strftime(date_pattern)
+            search_url += f'ref={_quote(formatted_ref)}'
+
+        lz = _LZString()
+        compressed_data = lz.compressToEncodedURIComponent(search_url)
+        return archiver_viewer_url + compressed_data
 
     # ---------- auxiliary methods ----------
 

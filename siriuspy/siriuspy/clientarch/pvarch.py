@@ -5,7 +5,6 @@ from datetime import timedelta as _timedelta
 from urllib.parse import quote as _quote
 
 import numpy as _np
-from lzstring import LZString
 from mathphys.functions import load_pickle as _load_pickle, \
     save_pickle as _save_pickle
 
@@ -21,6 +20,8 @@ class _Base:
     def __init__(self, connector=None, offline_data=False):
         self._connector = None
         self._offline_data = offline_data
+        self._time_start = None
+        self._time_stop = None
         self.connector = connector
         self.connect()
 
@@ -88,21 +89,70 @@ class _Base:
         if self.connector:
             self.connector.switch_to_offline_data()
 
-    @staticmethod
+    @property
+    def timestamp_start(self):
+        """Timestamp start."""
+        if not self._time_start:
+            return None
+        return self._time_start.timestamp()
+
+    @timestamp_start.setter
+    def timestamp_start(self, new_timestamp):
+        if not isinstance(new_timestamp, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_timestamp))
+            )
+        self._time_start = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_start(self):
+        """Time start."""
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time))
+            )
+        self._time_start = new_time
+
+    @property
+    def timestamp_stop(self):
+        """Timestamp stop."""
+        if not self._time_stop:
+            return None
+        return self._time_stop.timestamp()
+
+    @timestamp_stop.setter
+    def timestamp_stop(self, new_timestamp):
+        if not isinstance(new_timestamp, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_timestamp))
+            )
+        self._time_stop = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_stop(self):
+        """Time stop."""
+        return self._time_stop
+
+    @time_stop.setter
+    def time_stop(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time))
+            )
+        self._time_stop = new_time
+
     def gen_archviewer_link(
-        start,
-        end,
-        pv_list,
-        ref,
-    ):
+            self, pv_list, time_start=None, time_stop=None, time_ref=None):
         """Generate compressed archiver viewer link.
 
         Parameters
         ----------
-        start: datetime
-            Date when the data starts.
-        end: datetime
-            Date when the data end.
         pv_list: list[tuple[str, int, str|None, bool]]
             List of the configurations to be shown in archiver viewer for
             each PV.
@@ -119,63 +169,18 @@ class _Base:
                     if None no color is selected)
                 use_diff: bool
                     If the axis for the PV should enable the diff function.
-        ref: datetime|None (Optional parameter)
+        time_start: datetime
+            Date when the data starts. if 'None', self.time_start is used.
+        time_stop: datetime
+            Date when the data stops. if 'None', self.time_stop is used.
+        time_ref: datetime|None (Optional parameter)
             Date of the diff reference
-
-        Example:
-
-        from siriuspy.clientarch import Time
-
-        start = Time(2025, 10, 23, 8, 3, 13)
-        end  = Time(2025, 10, 23, 9, 3, 13)
-        ref = Time(2025, 10, 23, 9, 3, 13)
-
-        url = generateArchiverViewerLink(start, end, [
-            ('SI-10C1:DI-BPM-2:PosX-Mon', 10, "#00ff00", False),
-            ('SI-10C1:DI-BPM-1:PosX-Mon', 100, "#0000ff", False),
-            ('SI-10C1:DI-BPM-1:PosY-Mon', 0, "#ff0000", True)],
-            ref)
-        print(url)
         """
-        # Thanks to Rafael Lyra for the basis of this implementation!
-        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
-        pv_search = ''
-        for pvname, optimization_points, color, use_diff in pv_list:
-            pv_search += 'pv='
-            url_pvname = _quote(pvname)
-            if optimization_points > 0:
-                pv_search += f'optimized_{optimization_points}({url_pvname})'
-            else:
-                pv_search += url_pvname
-
-            if ref is not None and use_diff:
-                pv_search += '_diff'
-
-            if color is not None:
-                pv_search += f'__{color}'
-            pv_search += '&'
-
-        search_url = pv_search
-
-        date_pattern = '%Y-%m-%dT%H:%M:%S.000Z'
-        time_zone = _timedelta(hours=3)
-
-        start = start + time_zone
-        formatted_start = start.strftime(date_pattern)
-        search_url += f'from={_quote(formatted_start)}&'
-
-        end = end + time_zone
-        formatted_end = end.strftime(date_pattern)
-        search_url += f'to={_quote(formatted_end)}&'
-
-        if ref is not None:
-            ref = ref + time_zone
-            formatted_ref = ref.strftime(date_pattern)
-            search_url += f'ref={_quote(formatted_ref)}'
-
-        lz = LZString()
-        compressed_data = lz.compressToEncodedURIComponent(search_url)
-        return archiver_viewer_url + compressed_data
+        time_start = time_start or self.time_start
+        time_stop = time_stop or self.time_stop
+        url = _ClientArchiver.gen_archviewer_link(
+            pv_list, time_start, time_stop, time_ref)
+        return url
 
 
 class PVDetails(_Base):
@@ -293,8 +298,6 @@ class PVData(_Base):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
         self._pvname = pvname
-        self._time_start = None
-        self._time_stop = None
         self._timestamp = None
         self._value = None
         self._status = None
@@ -314,8 +317,8 @@ class PVData(_Base):
         self.connect()
         url = self.connector.getData(
             self.pvname,
-            self._time_start.get_iso8601(),
-            self._time_stop.get_iso8601(),
+            self.time_start.get_iso8601(),
+            self.time_stop.get_iso8601(),
             get_request_url=True,
         )
         return url
@@ -323,9 +326,9 @@ class PVData(_Base):
     @property
     def timestamp_start(self):
         """Timestamp start."""
-        if not self._time_start:
+        if not self.time_start:
             return None
-        return self._time_start.timestamp()
+        return self.time_start.timestamp()
 
     @timestamp_start.setter
     def timestamp_start(self, new_timestamp):
@@ -334,49 +337,7 @@ class PVData(_Base):
                 'expected argument of type float or int, got '
                 + str(type(new_timestamp))
             )
-        self._time_start = _Time(timestamp=new_timestamp)
-
-    @property
-    def time_start(self):
-        """Time start."""
-        return self._time_start
-
-    @time_start.setter
-    def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_start = new_time
-
-    @property
-    def timestamp_stop(self):
-        """Timestamp stop."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_stop = _Time(timestamp=new_timestamp)
-
-    @property
-    def time_stop(self):
-        """Time stop."""
-        return self._time_stop
-
-    @time_stop.setter
-    def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_stop = new_time
+        self.time_start = _Time(timestamp=new_timestamp)
 
     @property
     def parallel_query_bin_interval(self):
@@ -425,14 +386,14 @@ class PVData(_Base):
         interval = self.parallel_query_bin_interval
         if parallel:
             timestamp_start, timestamp_stop = _get_time_intervals(
-                self._time_start,
-                self._time_stop,
+                self.time_start,
+                self.time_stop,
                 interval,
                 return_isoformat=True,
             )
         else:
-            timestamp_start = self._time_start.get_iso8601()
-            timestamp_stop = self._time_stop.get_iso8601()
+            timestamp_start = self.time_start.get_iso8601()
+            timestamp_stop = self.time_stop.get_iso8601()
 
         data = self.connector.getData(
             self._pvname,
@@ -535,8 +496,6 @@ class PVDataSet(_Base):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
         self._pvnames = pvnames
-        self._time_start = None
-        self._time_stop = None
         self._parallel_query_bin_interval = (
             _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
         )
@@ -578,72 +537,6 @@ class PVDataSet(_Base):
         return list(archived)
 
     @property
-    def timestamp_start(self):
-        """Timestamp start."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_start = _Time(timestamp=new_timestamp)
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_start = self._time_start
-
-    @property
-    def time_start(self):
-        """Time start."""
-        return self._time_start
-
-    @time_start.setter
-    def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_start = new_time
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_start = self._time_start
-
-    @property
-    def timestamp_stop(self):
-        """Timestamp stop."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_stop = _Time(timestamp=new_timestamp)
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_stop = self._time_stop
-
-    @property
-    def time_stop(self):
-        """Time stop."""
-        return self._time_stop
-
-    @time_stop.setter
-    def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_stop = new_time
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_stop = self._time_stop
-
-    @property
     def parallel_query_bin_interval(self):
         """Parallel query bin interval."""
         return self._parallel_query_bin_interval
@@ -674,14 +567,14 @@ class PVDataSet(_Base):
         interval = self.parallel_query_bin_interval
         if parallel:
             timestamp_start, timestamp_stop = _get_time_intervals(
-                self._time_start,
-                self._time_stop,
+                self.time_start,
+                self.time_stop,
                 interval,
                 return_isoformat=True,
             )
         else:
-            timestamp_start = self._time_start.get_iso8601()
-            timestamp_stop = self._time_stop.get_iso8601()
+            timestamp_start = self.time_start.get_iso8601()
+            timestamp_stop = self.time_stop.get_iso8601()
 
         data = self.connector.getData(
             self._pvnames,
@@ -706,9 +599,9 @@ class PVDataSet(_Base):
             pvdata[
                 pvname
             ].parallel_query_bin_interval = self._parallel_query_bin_interval
-            if self._time_start is not None:
-                pvdata[pvname].time_start = self._time_start
-            if self._time_stop is not None:
+            if self.time_start is not None:
+                pvdata[pvname].time_start = self.time_start
+            if self.time_stop is not None:
                 pvdata[pvname].time_stop = self._time_stop
         return pvdata
 
