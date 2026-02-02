@@ -207,11 +207,34 @@ class MirrorBase(_Device):
         return self._cmd_motor_stop(self.PVS.Y3_STOP, timeout)
 
 
+"""From the EPICS Motor Record Homepage
+https://bcda.xray.aps.anl.gov/synApps/motor/motorRecord.htm
+
+#Name    Access	Prompt	                Data type	Comment
+
+CNEN	R/W     Enable control          RECCHOICE	(0:"Disable", 1:"Enable")
+DMOV	R	    Done moving to value	SHORT	    The "done" flag
+
+HLM     R/W*	User High Limit         DOUBLE
+LLM     R/W*	User Low Limit          DOUBLE
+
+MOVN	R	    Motor is moving         SHORT	    Don't confuse with DMOV
+RBV     R       User Readback Value     DOUBLE
+STOP    R/W*	Stop	                SHORT
+VAL     R/W*	User Desired Value      DOUBLE
+
+Obs.:
+CNEN corresponds to the Enable/Disable button in the "Servo" field.
+
+"""
+
+
 class CAXMirror(MirrorBase):
     """CARCARÁ Mirror Device.
 
     * M1 online autodesk drawing:
-    https://drive.autodesk.com/de29ccb7d/shares/SH9285eQTcf875d3c5396deb53e725438482.
+    https://drive.autodesk.com/de29ccb7d/shares/
+    SH9285eQTcf875d3c5396deb53e725438482.
     """
 
     class DEVICES:
@@ -229,31 +252,113 @@ class CAXMirror(MirrorBase):
             raise ValueError("Wrong value for devname")
 
         super().__init__(devname=devname, props2init=props2init, **kwargs)
+
         # MOTORS
-        self.PVS.RY_SP = "A:PP01:A.VAL"
-        self.PVS.RY_RB = "A:PP01:A.VAL"  # That doesn't have a RB PV
-        self.PVS.RY_MON = "A:PP01:A.RBV"  # RBV is not the pv of readback
-        self.PVS.RY_STOP = "A:PP01:A.STOP"
 
-        self.PVS.TX_SP = "A:PP01:B.VAL"
-        self.PVS.TX_RB = "A:PP01:B.VAL"  # That doesn't have a RB PV
-        self.PVS.TX_MON = "A:PP01:B.RBV"  # RBV is not the pv of readback
-        self.PVS.TX_STOP = "A:PP01:B.STOP"
+        # Real actuators for Ry, Tx, Y1, Y2 and Y3
 
-        self.PVS.Y1_SP = "A:PP01:C.VAL"
-        self.PVS.Y1_RB = "A:PP01:C.VAL"  # That doesn't have a RB PV
-        self.PVS.Y1_MON = "A:PP01:C.RBV"  # RBV is not the pv of readback
-        self.PVS.Y1_STOP = "A:PP01:C.STOP"
+        # X Translation
+        self.PVS.TX_SP   = "A:PB01:m1.VAL"    # Setpoint value
+        self.PVS.TX_RBV  = "A:PB01:m1.RBV"    # Readback value
+        self.PVS.TX_HILM  = "A:PB01:m1.HLM"   # High limit
+        self.PVS.TX_LOLM  = "A:PB01:m1.LLM"   # Low limit
+        self.PVS.TX_ENBL = "A:PB01:m1.CNEN"   # Enable/Disable
+        self.PVS.TX_DMVN = "A:PB01:m1.DMOVN"  # Done moving
+        self.PVS.TX_MVN  = "A:PB01:m1.MOVN"   # Motor is moving
+        self.PVS.TX_STOP = "A:PB01:m1.STOP"   # Stop command
 
-        self.PVS.Y2_SP = "A:PP01:D.VAL"
-        self.PVS.Y2_RB = "A:PP01:D.VAL"  # That doesn't have a RB PV
-        self.PVS.Y2_MON = "A:PP01:D.RBV"  # RBV is not the pv of readback
-        self.PVS.Y2_STOP = "A:PP01:D.STOP"
+        # Y Rotation
+        self.PVS.RY_SP   = "A:PB01:m2.VAL"    # Setpoint value
+        self.PVS.RY_RBV  = "A:PB01:m2.VAL"    # Readback value
+        self.PVS.RY_HILM  = "A:PB01:m2.HLM"   # High limit
+        self.PVS.RY_LOLM  = "A:PB01:m2.LLM"   # Low limit
+        self.PVS.RY_ENBL = "A:PB01:m2.CNEN"   # Enable/Disable
+        self.PVS.RY_DMVN = "A:PB01:m2.DMOVN"  # Done moving
+        self.PVS.RY_MVN  = "A:PB01:m2.MOVN"   # Motor is moving
+        self.PVS.RY_STOP = "A:PB01:m2.STOP"   # Stop command
 
-        self.PVS.Y3_SP = "A:PP01:E.VAL"
-        self.PVS.Y3_RB = "A:PP01:E.VAL"  # That doesn't have a RB PV
-        self.PVS.Y3_MON = "A:PP01:E.RBV"  # RBV is not the pv of readback
-        self.PVS.Y3_STOP = "A:PP01:E.STOP"
+        # Called Leveler Z- in the front end.
+        self.PVS.Y1_SP   = "A:PB01:m3.VAL"    # Setpoint value
+        self.PVS.Y1_RBV  = "A:PB01:m3.VAL"    # Readback value
+        self.PVS.Y1_HILM = "A:PB01:m3.HLM"    # High limit
+        self.PVS.Y1_LOLM = "A:PB01:m3.LLM"    # Low limit
+        self.PVS.Y1_ENBL = "A:PB01:m3.CNEN"   # Enable/Disable
+        self.PVS.Y1_DMVN = "A:PB01:m3.DMOVN"  # Done moving
+        self.PVS.Y1_MVN  = "A:PB01:m3.MOVN"   # Motor is moving
+        self.PVS.Y1_STOP = "A:PB01:m3.STOP"   # Stop command
+
+        # Called Leveler X+ in the front end.
+        self.PVS.Y2_SP   = "A:PB01:m4.VAL"    # Setpoint value
+        self.PVS.Y2_RBV  = "A:PB01:m4.VAL"    # Readback value
+        self.PVS.Y2_HILM = "A:PB01:m4.HLM"    # High limit
+        self.PVS.Y2_LOLM = "A:PB01:m4.LLM"    # Low limit
+        self.PVS.Y2_ENBL = "A:PB01:m4.CNEN"   # Enable/Disable
+        self.PVS.Y2_DMVN = "A:PB01:m4.DMOVN"  # Done moving
+        self.PVS.Y2_MVN  = "A:PB01:m4.MOVN"   # Motor is moving
+        self.PVS.Y2_STOP = "A:PB01:m4.STOP"   # Stop command
+
+        # Called Leveler Z+ in the front end.
+
+        self.PVS.Y3_SP   = "A:PB01:m5.VAL"    # Setpoint value
+        self.PVS.Y3_RB   = "A:PB01:m5.VAL"    # Readback value
+        self.PVS.Y3_HILM = "A:PB01:m5.HLM"    # High limit
+        self.PVS.Y3_LOLM = "A:PB01:m5.LLM"    # Low limit
+        self.PVS.Y3_ENBL = "A:PB01:m5.CNEN"   # Enable/Disable
+        self.PVS.Y3_DMVN = "A:PB01:m5.DMOVN"  # Done moving
+        self.PVS.Y3_MVN  = "A:PB01:m5.MOVN"   # Motor is moving
+        self.PVS.Y3_STOP = "A:PB01:m5.STOP"   # Stop command
+
+        # Kinematic actuators for Rx, Ry, Rz and Ty
+
+        # X rotation
+        self.PVS.CS_RX_SP   = "A:PB01:CS1:m1.VAL"    # Setpoint value
+        self.PVS.CS_RX_RBV  = "A:PB01:CS1:m1.RBV"    # Readback value
+        self.PVS.CS_RX_HILM = "A:PB01:CS1:m1.HLM"    # High limit
+        self.PVS.CS_RX_LOLM = "A:PB01:CS1:m1.LLM"    # Low limit
+        self.PVS.CS_RX_ENBL = "A:PB01:CS1:m1.CNEN"   # Enable/Disable
+        self.PVS.CS_RX_DMVN = "A:PB01:CS1:m1.DMOVN"  # Done moving
+        self.PVS.CS_RX_MVN  = "A:PB01:CS1:m1.MOVN"   # Motor is moving
+        self.PVS.CS_RX_STOP = "A:PB01:CS1:m1.STOP"   # Stop command
+
+        # Y rotation
+        self.PVS.CS_RY_SP   = "A:PB01:CS1:m2.VAL"    # Setpoint value
+        self.PVS.CS_RY_RBV  = "A:PB01:CS1:m2.RBV"    # Readback value
+        self.PVS.CS_RY_HILM = "A:PB01:CS1:m2.HLM"    # High limit
+        self.PVS.CS_RY_LOLM = "A:PB01:CS1:m2.LLM"    # Low limit
+        self.PVS.CS_RY_ENBL = "A:PB01:CS1:m2.CNEN"   # Enable/Disable
+        self.PVS.CS_RY_DMVN = "A:PB01:CS1:m2.DMOVN"  # Done moving
+        self.PVS.CS_RY_MVN  = "A:PB01:CS1:m2.MOVN"   # Motor is moving
+        self.PVS.CS_RY_STOP = "A:PB01:CS1:m2.STOP"   # Stop command
+
+        # Z rotation
+        self.PVS.CS_RZ_SP   = "A:PB01:CS1:m3.VAL"    # Setpoint value
+        self.PVS.CS_RZ_RBV  = "A:PB01:CS1:m3.RBV"    # Readback value
+        self.PVS.CS_RZ_HILM = "A:PB01:CS1:m3.HLM"    # High limit
+        self.PVS.CS_RZ_LOLM = "A:PB01:CS1:m3.LLM"    # Low limit
+        self.PVS.CS_RZ_ENBL = "A:PB01:CS1:m3.CNEN"   # Enable/Disable
+        self.PVS.CS_RZ_DMVN = "A:PB01:CS1:m3.DMOVN"  # Done moving
+        self.PVS.CS_RZ_MVN  = "A:PB01:CS1:m3.MOVN"   # Motor is moving
+        self.PVS.CS_RZ_STOP = "A:PB01:CS1:m3.STOP"   # Stop command
+
+        # X translation
+        self.PVS.CS_TX_SP   = "A:PB01:CS1:m7.VAL"    # Setpoint value
+        self.PVS.CS_TX_RBV  = "A:PB01:CS1:m7.RBV"    # Readback value
+        self.PVS.CS_TX_HILM = "A:PB01:CS1:m7.HLM"    # High limit
+        self.PVS.CS_TX_LOLM = "A:PB01:CS1:m7.LLM"    # Low limit
+        self.PVS.CS_TX_ENBL = "A:PB01:CS1:m7.CNEN"   # Enable/Disable
+        self.PVS.CS_TX_DMVN = "A:PB01:CS1:m7.DMOVN"  # Done moving
+        self.PVS.CS_TX_MVN  = "A:PB01:CS1:m7.MOVN"   # Motor is moving
+        self.PVS.CS_TX_STOP = "A:PB01:CS1:m7.STOP"   # Stop command
+
+        # Y translation
+        self.PVS.CS_TY_SP   = "A:PB01:CS1:m8.VAL"    # Setpoint value
+        self.PVS.CS_TY_RBV  = "A:PB01:CS1:m8.RBV"    # Readback value
+        self.PVS.CS_TY_HILM = "A:PB01:CS1:m8.HLM"    # High limit
+        self.PVS.CS_TY_LOLM = "A:PB01:CS1:m8.LLM"    # Low limit
+        self.PVS.CS_TY_ENBL = "A:PB01:CS1:m8.CNEN"   # Enable/Disable
+        self.PVS.CS_TY_DMVN = "A:PB01:CS1:m8.DMOVN"  # Done moving
+        self.PVS.CS_TY_MVN  = "A:PB01:CS1:m8.MOVN"   # Motor is moving
+        self.PVS.CS_TY_STOP = "A:PB01:CS1:m8.STOP"   # Stop command
 
         # SENSORS
         self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
@@ -263,7 +368,7 @@ class CAXMirror(MirrorBase):
         self.PVS.TEMP3_MON = "A:RIO01:9226B:temp3"
         self.PVS.TEMP4_MON = "A:RIO01:9226B:temp4"
         self.PVS.TEMP_SP = "A:RIO01:M1_CtrltempSp"
-        self.PVS.TEMP_RB = "A:RIO01:M1_CtrltempSp"  # That doesn't have a RB PV
+        self.PVS.TEMP_RB = "A:RIO01:M1_CtrltempSp"
 
         # FLOWMETERS
         self.PVS.FLOWMETER1_MON = "F:EPS01:MR1FIT1"
