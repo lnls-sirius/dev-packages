@@ -6,12 +6,17 @@ import time as _time
 from functools import partial as _partial
 
 import numpy as _np
-from epics.ca import CASeverityException as _CASeverityException, \
+from epics.ca import (
+    CASeverityException as _CASeverityException,
     ChannelAccessGetFailure as _ChannelAccessGetFailure
+)
 
 from ..envars import VACA_PREFIX as _VACA_PREFIX
-from ..epics import CONNECTION_TIMEOUT as _CONN_TIMEOUT, \
-    GET_TIMEOUT as _GET_TIMEOUT, PV as _PV
+from ..epics import (
+    CONNECTION_TIMEOUT as _CONN_TIMEOUT,
+    GET_TIMEOUT as _GET_TIMEOUT,
+    PV as _PV
+)
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..simul import SimPV as _PVSim, Simulation as _Simulation
 
@@ -51,8 +56,12 @@ class Device:
     PROPERTY_SEP = ':'
 
     def __init__(
-            self, devname, props2init='all', auto_monitor=True,
-            auto_monitor_mon=False):
+        self,
+        devname,
+        props2init='all',
+        auto_monitor=True,
+        auto_monitor_mon=False,
+    ):
         """."""
         self._devname = _SiriusPVName(devname) if devname else devname
         self._auto_monitor = auto_monitor
@@ -83,14 +92,16 @@ class Device:
         """Return properties that were added to the PV list that are not in
         PROPERTIES_DEFAULT.
         """
-        return tuple(sorted(
-            set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT)))
+        return tuple(
+            sorted(set(self.properties_in_use) - set(self.PROPERTIES_DEFAULT))
+        )
 
     @property
     def properties_all(self):
         """Return all properties of the device, connected or not."""
-        return tuple(sorted(
-            set(self.PROPERTIES_DEFAULT + self.properties_in_use)))
+        return tuple(
+            sorted(set(self.PROPERTIES_DEFAULT + self.properties_in_use))
+        )
 
     @property
     def simulators(self):
@@ -167,6 +178,97 @@ class Device:
             attributes[pvobj.pvname] = getattr(pvobj, attribute)
         return attributes
 
+    def wait(self, propty, value, timeout=_DEF_TIMEOUT, comp='eq'):
+        """Wait until comparison of property value is true against 'value'.
+
+        Args:
+            propty (str): Name of the property to wait condition to be met.
+            value (str|float|int|bool|numpy.ndarray): value to be set.
+            timeout (float|str, optional): Timeout of operation.
+                Defaults to the module variable `_DEF_TIMEOUT`, which is 10s.
+                It also accepts None, which is the same as the default and the
+                string `'never'`, which is self explanatory.
+            comp (str, optional): Type of comparison to make. Can be any
+                operator of module `operator` or any callable that accepts two
+                entries and return a boolean. Defaults to 'eq'.
+
+        Returns:
+            isok (bool): Whether condition was met within timeout.
+
+        """
+
+        def comp_(val):
+            boo = comp(self[propty], val)
+            if isinstance(boo, _np.ndarray):
+                boo = _np.all(boo)
+            return boo
+
+        if isinstance(comp, str):
+            comp = getattr(_opr, comp)
+
+        if not isinstance(timeout, str) and timeout != 'never':
+            timeout = _DEF_TIMEOUT if timeout is None else timeout
+            timeout = 0 if timeout <= 0 else timeout
+        t0_ = _time.time()
+        while not comp_(value):
+            if isinstance(timeout, str) and timeout == 'never':
+                pass
+            else:
+                if _time.time() - t0_ > timeout:
+                    return False
+            _time.sleep(_TINY_INTERVAL)
+        return True
+
+    def wait_float(
+        self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None
+    ):
+        """Wait until float value gets close enough of desired value.
+
+        Args:
+            propty (str): Name of the property to wait condition to be met.
+            value (str|float|int|bool|numpy.ndarray): value to be set.
+            rel_tol (float, optional): relative tolerance. Defaults to 0.0.
+            abs_tol (float, optional): absolute tolerance. Defaults to 0.1.
+            timeout (float|str, optional): Timeout of operation.
+                Defaults to the module variable `_DEF_TIMEOUT`, which is 10s.
+                It also accepts None, which is the same as the default and the
+                string `'never'`, which is self explanatory.
+
+        Returns:
+            isok (bool): Whether condition was met within timeout.
+
+        """
+        isc = _np.isclose if isinstance(value, _np.ndarray) else _math.isclose
+        func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
+        return self.wait(propty, value, comp=func, timeout=timeout)
+
+    def wait_several(self, props_values, timeout=None, comp='eq'):
+        """Wait several properties to reach the desired value.
+
+        Args:
+            props_values (dict): Dictionary with property names and values,
+                respectively.
+            timeout (float, optional): Timeout of operation.
+                Defaults to the module variable `_DEF_TIMEOUT`, which is 10s.
+                It also accepts None, which is the same as the default.
+            comp (str, optional): Type of comparison to make. Can be any
+                operator of module `operator` or any callable that accepts two
+                entries and return a boolean. Defaults to 'eq'.
+
+        Returns:
+            bool: Whether or not timeout was reached before all conditions are
+                met.
+        """
+        timeout = _DEF_TIMEOUT if timeout is None else timeout
+        t0_ = _time.time()
+        for propty, value in props_values.items():
+            timeout_left = max(0, timeout - (_time.time() - t0_))
+            if timeout_left == 0:
+                return False
+            if not self.wait(propty, value, timeout=timeout_left, comp=comp):
+                return False
+        return True
+
     @property
     def hosts(self):
         """Return dict of IOC hosts providing device properties."""
@@ -214,56 +316,17 @@ class Device:
         in_sim = _Simulation.pv_check(pvname)
         pvclass = _PVSim if in_sim else _PV
         return pvclass(
-            pvname, auto_monitor=auto_monitor,
-            connection_timeout=Device.CONNECTION_TIMEOUT)
-
-    def _wait(self, propty, value, timeout=None, comp='eq'):
-        """."""
-        def comp_(val):
-            boo = comp(self[propty], val)
-            if isinstance(boo, _np.ndarray):
-                boo = _np.all(boo)
-            return boo
-
-        if isinstance(comp, str):
-            comp = getattr(_opr, comp)
-
-        if not isinstance(timeout, str) and timeout != 'never':
-            timeout = _DEF_TIMEOUT if timeout is None else timeout
-            timeout = 0 if timeout <= 0 else timeout
-        t0_ = _time.time()
-        while not comp_(value):
-            if isinstance(timeout, str) and timeout == 'never':
-                pass
-            else:
-                if _time.time() - t0_ > timeout:
-                    return False
-            _time.sleep(_TINY_INTERVAL)
-        return True
-
-    def _wait_float(
-            self, propty, value, rel_tol=0.0, abs_tol=0.1, timeout=None):
-        """Wait until float value gets close enough of desired value."""
-        isc = _np.isclose if isinstance(value, _np.ndarray) else _math.isclose
-        func = _partial(isc, abs_tol=abs_tol, rel_tol=rel_tol)
-        return self._wait(propty, value, comp=func, timeout=timeout)
-
-    def _wait_set(self, props_values, timeout=None, comp='eq'):
-        timeout = _DEF_TIMEOUT if timeout is None else timeout
-        t0_ = _time.time()
-        for propty, value in props_values.items():
-            timeout_left = max(0, timeout - (_time.time() - t0_))
-            if timeout_left == 0:
-                return False
-            if not self._wait(propty, value, timeout=timeout_left, comp=comp):
-                return False
-        return True
+            pvname,
+            auto_monitor=auto_monitor,
+            connection_timeout=Device.CONNECTION_TIMEOUT,
+        )
 
     def _get_pvname(self, propty):
         dev = self._devname
         pref = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
-        if isinstance(dev, _SiriusPVName) and \
-                dev.is_standard(name_type='devname'):
+        if isinstance(dev, _SiriusPVName) and dev.is_standard(
+            name_type='devname'
+        ):
             ppt = dev.propty
             pvname = dev.substitute(prefix=_VACA_PREFIX, propty=ppt + propty)
         elif dev:
@@ -281,11 +344,17 @@ class Device:
     def _enum_selector(value, enums):
         if value is None:
             return
-        if hasattr(enums, '_fields'):
+        if hasattr(enums, '_fields'):  # in case of namedtuple
+            vals = enums
             enums = enums._fields
+        elif isinstance(enums, dict):  # in case of dictionary
+            enums, vals = list(zip(*enums.items()))
+        else:  # in case of tuple or list
+            vals = list(range(len(enums)))
+
         if isinstance(value, str) and value in enums:
-            return enums.index(value)
-        elif 0 <= int(value) < len(enums):
+            return vals[enums.index(value)]
+        elif value in vals:
             return value
 
 
@@ -379,27 +448,79 @@ class DeviceSet:
         """Return devices."""
         return self._devices
 
-    # --- private methods ---
+    def set_devices_propty(
+        self, propty, values, devices=None, wait_between_devs=0
+    ):
+        """Set devices property to value(s).
 
-    def _set_devices_propty(self, devices, propty, values, wait=0):
-        """Set devices property to value(s)."""
+        This method does not wait for properties to reach the desired value.
+        Use it in conjunction with wait_devices_propty to do so.
+
+        Args:
+            propty (str): Name of the property to set. Must be a single and
+                valid property for all devices.
+            values (str|float|int|list|tuple|numpy.ndarray): value or list of
+                values to be set. If a list, then must be of the same size as
+                devices, else all devices will be set with the same value.
+            devices (list, optional): list of devices to set the given propty.
+                Defaults to None, which means all devices of self will be set.
+                The devices in the list not necessarily need to be in self.
+            wait_between_devs (float, optional): If larger than 0, wait this
+                time between each set action. Defaults to 0.
+        """
+        if devices is None:
+            devices = self._devices
+
         dev2val = self._get_dev_2_val(devices, values)
         for dev, val in dev2val.items():
             if dev.pv_object(propty).wait_for_connection():
                 dev[propty] = val
-                _time.sleep(wait)
+                if wait_between_devs > 0:
+                    _time.sleep(wait_between_devs)
 
-    def _wait_devices_propty(
-            self, devices, propty, values, comp='eq',
-            timeout=None, return_prob=False):
-        """Wait for devices property to reach value(s)."""
+    def wait_devices_propty(
+        self,
+        propty,
+        values,
+        devices=None,
+        comp='eq',
+        timeout=None,
+        return_prob=False,
+    ):
+        """Wait for devices property to reach value(s).
+
+        Args:
+            propty (str): Name of the property to wait condition to be met.
+                Must be a single and valid property for all devices.
+            values (str|float|int|list|tuple|numpy.ndarray): value or list of
+                values to be set. If a list, then must be of the same size as
+                devices, else all devices will be set with the same value.
+            devices (list, optional): list of devices to set the given propty.
+                Defaults to None, which means all devices of self will be set.
+                The devices in the list not necessarily need to be in self.
+            timeout (float, optional): Timeout of operation. Defaults to None,
+                which means it will wait forever.
+            comp (str, optional): Type of comparison to make. Can be any
+                operator of module `operator` or any callable that accepts two
+                entries and return a boolean. Defaults to 'eq'.
+            return_prob (bool, optional): Whether to return list of PV names
+                for which comparison failed. Defaults to False.
+
+        Returns:
+            allok (bool): Whether all conditions were met within timeout.
+            probs (list[str]): list of PV names for which comparison failed.
+                Only returned if return_prob is True.
+        """
+        if devices is None:
+            devices = self._devices
+
         if isinstance(comp, str):
             comp = getattr(_opr, comp)
         dev2val = self._get_dev_2_val(devices, values)
 
         timeout = _DEF_TIMEOUT if timeout is None else timeout
         tini = _time.time()
-        for _ in range(int(timeout/_TINY_INTERVAL)):
+        for _ in range(int(timeout / _TINY_INTERVAL)):
             okdevs = set()
             for k, v in dev2val.items():
                 boo = comp(k[propty], v)
@@ -421,14 +542,16 @@ class DeviceSet:
             return allok, [dev.pv_object(propty).pvname for dev in dev2val]
         return allok
 
+    # --- private methods ---
+
     def _get_dev_2_val(self, devices, values):
         """Get devices to values dict."""
         # always use an iterable object
         if not isinstance(devices, (tuple, list)):
-            devices = [devices, ]
+            devices = [devices]
         # if 'values' is not iterable, consider the same value for all devices
         if not isinstance(values, (tuple, list)):
-            values = len(devices)*[values]
+            values = len(devices) * [values]
         return {k: v for k, v in zip(devices, values)}
 
     def __getitem__(self, devidx):

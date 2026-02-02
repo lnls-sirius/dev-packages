@@ -25,6 +25,7 @@ class IDSearch:
         'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
+        'ARIRANHA': 'SI-20SB:ID-APU22',
     }
 
     _idname2beamline = {v: k for k, v in _beamline2idname.items()}
@@ -117,6 +118,12 @@ class IDSearch:
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None)),
+        'SI-20SB:ID-APU22': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields, (
+                22,
+                0, 11, 11, 0, 0.01,
+                None, None, None, None)),
     }
 
     POL_NONE_STR = 'none'
@@ -160,6 +167,9 @@ class IDSearch:
             0: ('horizontal', None),  # [mm]
         },
         'SI-17SA:ID-APU22': {
+            0: ('horizontal', None),  # [mm]
+        },
+        'SI-20SB:ID-APU22': {
             0: ('horizontal', None),  # [mm]
         },
     }
@@ -458,8 +468,10 @@ class IDSearch:
     @staticmethod
     def conv_idname_labels_2_corrnames(idname, correctors):
         """Return correctors names from idname and corrector labels."""
-        idff = IDSearch.conv_idname_2_idff(idname)
         corrs = list()
+        idff = IDSearch.conv_idname_2_idff(idname)
+        if idff is None:
+            return corrs
         for corr in correctors:
             if corr in idff:
                 pvname = _SiriusPVName(idff[corr])

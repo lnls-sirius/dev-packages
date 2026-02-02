@@ -1,24 +1,35 @@
 """High Level Orbit Interlock main application."""
 
-import os as _os
 import logging as _log
+import os as _os
 import time as _time
 from functools import partial as _part
 
 import numpy as _np
 
-from ..util import update_bit as _updt_bit, get_bit as _get_bit
-from ..namesys import SiriusPVName as _PVName
-from ..search import LLTimeSearch as _LLTimeSearch, \
-    HLTimeSearch as _HLTimeSearch
-from ..thread import RepeaterThread as _Repeat, \
-    LoopQueueThread as _LoopQueueThread
-from ..epics import CAThread as _CAThread
 from ..callbacks import Callback as _Callback
-from ..devices import OrbitInterlock as _OrbitIntlk, FamBPMs as _FamBPMs, \
-    EVG as _EVG, ASLLRF as _ASLLRF, Trigger as _Trigger, Device as _Device, \
-    SOFB as _SOFB, HLFOFB as _FOFB, AFCPhysicalTrigger as _AFCPhysicalTrigger
-
+from ..devices import (
+    AFCPhysicalTrigger as _AFCPhysicalTrigger,
+    ASLLRF as _ASLLRF,
+    Device as _Device,
+    EVG as _EVG,
+    FamBPMs as _FamBPMs,
+    HLFOFB as _FOFB,
+    OrbitInterlock as _OrbitIntlk,
+    SOFB as _SOFB,
+    Trigger as _Trigger
+)
+from ..epics import CAThread as _CAThread
+from ..namesys import SiriusPVName as _PVName
+from ..search import (
+    HLTimeSearch as _HLTimeSearch,
+    LLTimeSearch as _LLTimeSearch
+)
+from ..thread import (
+    LoopQueueThread as _LoopQueueThread,
+    RepeaterThread as _Repeat
+)
+from ..util import get_bit as _get_bit, update_bit as _updt_bit
 from .csdev import Const as _Const, ETypes as _ETypes
 
 
@@ -45,7 +56,7 @@ class App(_Callback):
             'pos': _np.zeros(self._const.nr_bpms, dtype=bool),
             'ang': _np.zeros(self._const.nr_bpms, dtype=bool),
             'minsum': _np.zeros(self._const.nr_bpms, dtype=bool),
-            }
+        }
         self._limits = {
             'pos_x_min': _np.zeros(self._const.nr_bpms, dtype=int),
             'pos_x_max': _np.zeros(self._const.nr_bpms, dtype=int),
@@ -56,7 +67,7 @@ class App(_Callback):
             'ang_y_min': _np.zeros(self._const.nr_bpms, dtype=int),
             'ang_y_max': _np.zeros(self._const.nr_bpms, dtype=int),
             'minsum': _np.zeros(self._const.nr_bpms, dtype=int),
-            }
+        }
         self._acq_chan = self._pvs_database['PsMtmAcqChannel-Sel']['value']
         self._acq_spre = self._pvs_database['PsMtmAcqSamplesPre-SP']['value']
         self._acq_spost = self._pvs_database['PsMtmAcqSamplesPost-SP']['value']
@@ -74,27 +85,46 @@ class App(_Callback):
 
         # devices and connections
         # # EVG
-        self._evg_dev = _EVG(props2init=[
-            'IntlkCtrlEnbl-Sel', 'IntlkCtrlEnbl-Sts',
-            'IntlkCtrlRst-Cmd',
-            'IntlkCtrlRepeat-Sel', 'IntlkCtrlRepeat-Sts',
-            'IntlkCtrlRepeatTime-SP', 'IntlkCtrlRepeatTime-RB',
-            'IntlkTbl0to15-Sel', 'IntlkTbl0to15-Sts',
-            'IntlkTbl16to27-Sel', 'IntlkTbl16to27-Sts',
-            'IntlkEvtIn0-SP', 'IntlkEvtIn0-RB',
-            'IntlkEvtOut-SP', 'IntlkEvtOut-SP',
-            'IntlkEvtStatus-Mon',
-            'RxEnbl-SP', 'RxEnbl-RB',
-            'RxEnbl-SP.B0', 'RxEnbl-RB.B0',
-            'RxEnbl-SP.B1', 'RxEnbl-RB.B1',
-            'RxEnbl-SP.B2', 'RxEnbl-RB.B2',
-            'RxEnbl-SP.B3', 'RxEnbl-RB.B3',
-            'RxEnbl-SP.B4', 'RxEnbl-RB.B4',
-            'RxEnbl-SP.B5', 'RxEnbl-RB.B5',
-            'RxEnbl-SP.B6', 'RxEnbl-RB.B6',
-            'RxEnbl-SP.B7', 'RxEnbl-RB.B7',
-            'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
-            ])
+        self._evg_dev = _EVG(
+            props2init=[
+                'IntlkCtrlEnbl-Sel',
+                'IntlkCtrlEnbl-Sts',
+                'IntlkCtrlRst-Cmd',
+                'IntlkCtrlRepeat-Sel',
+                'IntlkCtrlRepeat-Sts',
+                'IntlkCtrlRepeatTime-SP',
+                'IntlkCtrlRepeatTime-RB',
+                'IntlkTbl0to15-Sel',
+                'IntlkTbl0to15-Sts',
+                'IntlkTbl16to27-Sel',
+                'IntlkTbl16to27-Sts',
+                'IntlkEvtIn0-SP',
+                'IntlkEvtIn0-RB',
+                'IntlkEvtOut-SP',
+                'IntlkEvtOut-SP',
+                'IntlkEvtStatus-Mon',
+                'RxEnbl-SP',
+                'RxEnbl-RB',
+                'RxEnbl-SP.B0',
+                'RxEnbl-RB.B0',
+                'RxEnbl-SP.B1',
+                'RxEnbl-RB.B1',
+                'RxEnbl-SP.B2',
+                'RxEnbl-RB.B2',
+                'RxEnbl-SP.B3',
+                'RxEnbl-RB.B3',
+                'RxEnbl-SP.B4',
+                'RxEnbl-RB.B4',
+                'RxEnbl-SP.B5',
+                'RxEnbl-RB.B5',
+                'RxEnbl-SP.B6',
+                'RxEnbl-RB.B6',
+                'RxEnbl-SP.B7',
+                'RxEnbl-RB.B7',
+                'RxLockedLtc-Mon',
+                'RxLockedLtcRst-Cmd',
+            ]
+        )
         # interlock callback
         pvo = self._evg_dev.pv_object('IntlkEvtStatus-Mon')
         pvo.auto_monitor = True
@@ -107,18 +137,22 @@ class App(_Callback):
 
         # # Fouts
         foutnames = list(
-            self._const.FOUTS_2_MON |
-            self._const.FOUTSFIXED_RXENBL.keys()
+            self._const.FOUTS_2_MON | self._const.FOUTSFIXED_RXENBL.keys()
         )
         self._thread_cbfout = {fout: None for fout in foutnames}
         self._fout_devs = {
             devname: _Device(
                 devname,
                 props2init=[
-                    'RxEnbl-SP', 'RxEnbl-RB',
-                    'RxLockedLtc-Mon', 'RxLockedLtcRst-Cmd',
-                ], auto_monitor_mon=True)
-            for devname in foutnames}
+                    'RxEnbl-SP',
+                    'RxEnbl-RB',
+                    'RxLockedLtc-Mon',
+                    'RxLockedLtcRst-Cmd',
+                ],
+                auto_monitor_mon=True,
+            )
+            for devname in foutnames
+        }
         self._fout2rxenbl = dict()
         for devname, dev in self._fout_devs.items():
             pvo = dev.pv_object('RxLockedLtc-Mon')
@@ -129,20 +163,31 @@ class App(_Callback):
 
         # # AFC timing
         self._afcti_devs = {
-            idx+1: _Device(
-                f'IA-{idx+1:02}RaBPM:TI-AMCFPGAEVR',
+            idx + 1: _Device(
+                f'IA-{idx + 1:02}RaBPM:TI-AMCFPGAEVR',
                 props2init=[
-                    'DevEnbl-Sel', 'DevEnbl-Sts',
-                    'RTMClkLockedLtc-Mon', 'ClkLockedLtcRst-Cmd',
+                    'DevEnbl-Sel',
+                    'DevEnbl-Sts',
+                    'RTMClkLockedLtc-Mon',
+                    'ClkLockedLtcRst-Cmd',
                     'RTMClkRst-Cmd',
-                    'RTMPhasePropGain-SP', 'RTMPhasePropGain-RB',
-                    'RTMPhaseIntgGain-SP', 'RTMPhaseIntgGain-RB',
-                    'RTMFreqPropGain-SP', 'RTMFreqPropGain-RB',
-                    'RTMFreqIntgGain-SP', 'RTMFreqIntgGain-RB',
-                    'RTMPhaseNavg-SP', 'RTMPhaseNavg-RB',
-                    'RTMPhaseDiv-SP', 'RTMPhaseDiv-RB',
-                    'UpstreamDebugEn-Sel', 'UpstreamDebugEn-Sts',
-                ], auto_monitor_mon=True)
+                    'RTMPhasePropGain-SP',
+                    'RTMPhasePropGain-RB',
+                    'RTMPhaseIntgGain-SP',
+                    'RTMPhaseIntgGain-RB',
+                    'RTMFreqPropGain-SP',
+                    'RTMFreqPropGain-RB',
+                    'RTMFreqIntgGain-SP',
+                    'RTMFreqIntgGain-RB',
+                    'RTMPhaseNavg-SP',
+                    'RTMPhaseNavg-RB',
+                    'RTMPhaseDiv-SP',
+                    'RTMPhaseDiv-RB',
+                    'UpstreamDebugEn-Sel',
+                    'UpstreamDebugEn-Sts',
+                ],
+                auto_monitor_mon=True,
+            )
             for idx in range(20)
         }
         for dev in self._afcti_devs.values():
@@ -163,7 +208,7 @@ class App(_Callback):
             self._llrf_evtcnt_pvnames[devn] = propty
 
             self._everf_devs[devn] = _Device(
-                devn, props2init=[propty, ], auto_monitor_mon=True
+                devn, props2init=[propty], auto_monitor_mon=True
             )
 
         self._everf_evtcnts = dict()
@@ -181,9 +226,8 @@ class App(_Callback):
                 props2init.append(_PVName.from_sp2rb(prop))
             props2init.append('Status-Mon')
             self._hltrig_devs[trigname] = _Trigger(
-                trigname=trigname,
-                props2init=props2init,
-                auto_monitor_mon=True)
+                trigname=trigname, props2init=props2init, auto_monitor_mon=True
+            )
             if 'LLRF' in trigname or 'OrbIntlkRedundancy' in trigname:
                 pvo = self._hltrig_devs[trigname].pv_object('Status-Mon')
                 pvo.add_callback(self._callback_hltrig_status)
@@ -196,33 +240,58 @@ class App(_Callback):
             pvo.add_callback(self._callback_bpm_intlk)
 
         self._fambpm_dev = _FamBPMs(
-            devname=_FamBPMs.DEVICES.SI, ispost_mortem=True,
+            devname=_FamBPMs.DEVICES.SI,
+            ispost_mortem=True,
             props2init=[
-                'GENChannel-Sel', 'GENChannel-Sts',
-                'GENSamplesPre-SP', 'GENSamplesPre-RB',
-                'GENSamplesPost-SP', 'GENSamplesPost-RB',
-                'GENTriggerRep-Sel', 'GENTriggerRep-Sts',
-                'GENTrigger-Sel', 'GENTrigger-Sts',
+                'GENChannel-Sel',
+                'GENChannel-Sts',
+                'GENSamplesPre-SP',
+                'GENSamplesPre-RB',
+                'GENSamplesPost-SP',
+                'GENSamplesPost-RB',
+                'GENTriggerRep-Sel',
+                'GENTriggerRep-Sts',
+                'GENTrigger-Sel',
+                'GENTrigger-Sts',
                 'GENTriggerEvent-Cmd',
                 'GENStatus-Mon',
-                'INFOFAcqRate-RB', 'INFOMONITRate-RB',
-                'TRIGGER_GEN4TrnSrc-Sel', 'TRIGGER_GEN4TrnSrc-Sts',
-                'TRIGGER_GEN4TrnOutSel-SP', 'TRIGGER_GEN4TrnOutSel-RB',
-                'TRIGGER_PM0RcvSrc-Sel', 'TRIGGER_PM0RcvSrc-Sts',
-                'TRIGGER_PM0RcvInSel-SP', 'TRIGGER_PM0RcvInSel-RB',
-                'TRIGGER_PM1RcvSrc-Sel', 'TRIGGER_PM1RcvSrc-Sts',
-                'TRIGGER_PM1RcvInSel-SP', 'TRIGGER_PM1RcvInSel-RB',
-                'TRIGGER_PM6RcvSrc-Sel', 'TRIGGER_PM6RcvSrc-Sts',
-                'TRIGGER_PM6RcvInSel-SP', 'TRIGGER_PM6RcvInSel-RB',
-                'TRIGGER_PM7RcvSrc-Sel', 'TRIGGER_PM7RcvSrc-Sts',
-                'TRIGGER_PM7RcvInSel-SP', 'TRIGGER_PM7RcvInSel-RB',
-                'TRIGGER_PM11RcvSrc-Sel', 'TRIGGER_PM11RcvSrc-Sts',
-                'TRIGGER_PM11RcvInSel-SP', 'TRIGGER_PM11RcvInSel-RB',
-                'TRIGGER_PM12RcvSrc-Sel', 'TRIGGER_PM12RcvSrc-Sts',
-                'TRIGGER_PM12RcvInSel-SP', 'TRIGGER_PM12RcvInSel-RB',
-                'TRIGGER_PM14RcvSrc-Sel', 'TRIGGER_PM14RcvSrc-Sts',
-                'TRIGGER_PM14RcvInSel-SP', 'TRIGGER_PM14RcvInSel-RB',
-                'ADCAD9510PllStatus-Mon'])
+                'INFOFAcqRate-RB',
+                'INFOMONITRate-RB',
+                'TRIGGER_GEN4TrnSrc-Sel',
+                'TRIGGER_GEN4TrnSrc-Sts',
+                'TRIGGER_GEN4TrnOutSel-SP',
+                'TRIGGER_GEN4TrnOutSel-RB',
+                'TRIGGER_PM0RcvSrc-Sel',
+                'TRIGGER_PM0RcvSrc-Sts',
+                'TRIGGER_PM0RcvInSel-SP',
+                'TRIGGER_PM0RcvInSel-RB',
+                'TRIGGER_PM1RcvSrc-Sel',
+                'TRIGGER_PM1RcvSrc-Sts',
+                'TRIGGER_PM1RcvInSel-SP',
+                'TRIGGER_PM1RcvInSel-RB',
+                'TRIGGER_PM6RcvSrc-Sel',
+                'TRIGGER_PM6RcvSrc-Sts',
+                'TRIGGER_PM6RcvInSel-SP',
+                'TRIGGER_PM6RcvInSel-RB',
+                'TRIGGER_PM7RcvSrc-Sel',
+                'TRIGGER_PM7RcvSrc-Sts',
+                'TRIGGER_PM7RcvInSel-SP',
+                'TRIGGER_PM7RcvInSel-RB',
+                'TRIGGER_PM11RcvSrc-Sel',
+                'TRIGGER_PM11RcvSrc-Sts',
+                'TRIGGER_PM11RcvInSel-SP',
+                'TRIGGER_PM11RcvInSel-RB',
+                'TRIGGER_PM12RcvSrc-Sel',
+                'TRIGGER_PM12RcvSrc-Sts',
+                'TRIGGER_PM12RcvInSel-SP',
+                'TRIGGER_PM12RcvInSel-RB',
+                'TRIGGER_PM14RcvSrc-Sel',
+                'TRIGGER_PM14RcvSrc-Sts',
+                'TRIGGER_PM14RcvInSel-SP',
+                'TRIGGER_PM14RcvInSel-RB',
+                'ADCAD9510PllStatus-Mon',
+            ],
+        )
         self._monitsum2intlksum_factor = 0
         for dev in self._fambpm_dev.devices:
             pvo = dev.pv_object('ADCAD9510PllStatus-Mon')
@@ -236,11 +305,20 @@ class App(_Callback):
                 continue
             phytrig_names.extend(cratemap)
         self._phytrig_devs = [
-            _AFCPhysicalTrigger(dev, 4, props2init=[
-                'Dir-Sel', 'Dir-Sts',
-                'DirPol-Sel', 'DirPol-Sts',
-                'TrnLen-SP', 'TrnLen-RB'])
-            for dev in phytrig_names]
+            _AFCPhysicalTrigger(
+                dev,
+                4,
+                props2init=[
+                    'Dir-Sel',
+                    'Dir-Sts',
+                    'DirPol-Sel',
+                    'DirPol-Sts',
+                    'TrnLen-SP',
+                    'TrnLen-RB',
+                ],
+            )
+            for dev in phytrig_names
+        ]
         for dev in self._phytrig_devs:
             pvo = dev.pv_object('Dir-Sel')
             pvo.connection_callbacks.append(self._conn_callback_afcphystrigs)
@@ -250,11 +328,10 @@ class App(_Callback):
         self._llrfs = self._create_llrfs(names)
 
         # # auxiliary devices
-        self._fofb = _FOFB(
-            props2init=['LoopState-Sts', ])
+        self._fofb = _FOFB(props2init=['LoopState-Sts'])
         self._sofb = _SOFB(
-            _SOFB.DEVICES.SI,
-            props2init=['LoopState-Sts', 'SlowSumRaw-Mon'])
+            _SOFB.DEVICES.SI, props2init=['LoopState-Sts', 'SlowSumRaw-Mon']
+        )
         self._sofb.pv_object('SlowSumRaw-Mon').auto_monitor = True
 
         # pvs to write methods
@@ -290,12 +367,15 @@ class App(_Callback):
             'ConfigLLRFIntlk-Cmd': self.cmd_config_llrf,
             'ConfigBPMs-Cmd': self.cmd_config_bpms,
             'ConfigAFCPhyTrigs-Cmd': self.cmd_config_phytrigs,
-            }
+        }
 
         # configuration scanning
         self.thread_check_configs = _Repeat(
-            1.0/App.SCAN_FREQUENCY, self._check_configs, niter=0,
-            is_cathread=True)
+            1.0 / App.SCAN_FREQUENCY,
+            self._check_configs,
+            niter=0,
+            is_cathread=True,
+        )
         self.thread_check_configs.pause()
         self.thread_check_configs.start()
 
@@ -339,14 +419,16 @@ class App(_Callback):
             okl = self._load_file(ilkname, 'enbl')
             pvn = f'{ilk}EnblList'
             enb = self._enable_lists[ilkname]
-            self.run_callbacks(pvn+'-SP', enb)
+            self.run_callbacks(pvn + '-SP', enb)
             if not okl:
-                self.run_callbacks(pvn+'-RB', enb)
+                self.run_callbacks(pvn + '-RB', enb)
         self._bpm_mon_devs, self._ti_mon_devs = self._get_monitored_devices()
         self.run_callbacks(
-            'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
+            'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs)
+        )
         self.run_callbacks(
-            'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
+            'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs)
+        )
         self._config_fout_rxenbl()
 
         # limits
@@ -357,9 +439,9 @@ class App(_Callback):
                     pvn = f'{ilk}{pln}{lim}Lim'
                     okl = self._load_file(atn, 'lim')
                     val = self._limits[atn]
-                    self.run_callbacks(pvn+'-SP', val)
+                    self.run_callbacks(pvn + '-SP', val)
                     if not okl:
-                        self.run_callbacks(pvn+'-RB', val)
+                        self.run_callbacks(pvn + '-RB', val)
 
         okl = self._load_file('minsum', 'lim')
         val = self._limits['minsum']
@@ -400,8 +482,14 @@ class App(_Callback):
             propty_rb = _PVName.from_sp2rb(propty_sp)
             pvo = self._evg_dev.pv_object(propty_rb)
             if init:
-                pvo.add_callback(_part(
-                    self._callback_lock, self._evg_dev, propty_sp, desired_val))
+                pvo.add_callback(
+                    _part(
+                        self._callback_lock,
+                        self._evg_dev,
+                        propty_sp,
+                        desired_val,
+                    )
+                )
             else:
                 pvo.run_callbacks()
 
@@ -429,8 +517,9 @@ class App(_Callback):
                 propty_rb = _PVName.from_sp2rb(propty_sp)
                 pvo = dev.pv_object(propty_rb)
                 if init:
-                    pvo.add_callback(_part(
-                        self._callback_lock, dev, propty_sp, desired_val))
+                    pvo.add_callback(
+                        _part(self._callback_lock, dev, propty_sp, desired_val)
+                    )
                 else:
                     pvo.run_callbacks()
 
@@ -444,8 +533,9 @@ class App(_Callback):
                 if init:
                     pvo.add_callback(
                         _part(
-                            self._callback_lock,
-                            trigdev, prop_sp, desired_val))
+                            self._callback_lock, trigdev, prop_sp, desired_val
+                        )
+                    )
                 else:
                     pvo.run_callbacks()
 
@@ -454,12 +544,22 @@ class App(_Callback):
         pvo_beamtrip = dev.pv_object('FIMLLRF1-Sts')
         pvo_manintlk = dev.pv_object('FIMManual-Sts')
         if init:
-            pvo_beamtrip.add_callback(_part(
-                self._callback_lock, dev,
-                'FIMLLRF1-Sel', self._llrf_intlk_state))
-            pvo_manintlk.add_callback(_part(
-                self._callback_lock, dev,
-                'FIMManual-Sel', self._llrf_intlk_state))
+            pvo_beamtrip.add_callback(
+                _part(
+                    self._callback_lock,
+                    dev,
+                    'FIMLLRF1-Sel',
+                    self._llrf_intlk_state,
+                )
+            )
+            pvo_manintlk.add_callback(
+                _part(
+                    self._callback_lock,
+                    dev,
+                    'FIMManual-Sel',
+                    self._llrf_intlk_state,
+                )
+            )
         else:
             pvo_beamtrip.run_callbacks()
             pvo_manintlk.run_callbacks()
@@ -497,7 +597,8 @@ class App(_Callback):
                 pvo = dev.pv_object(prop_rb)
                 if init:
                     pvo.add_callback(
-                        _part(self._callback_lock, dev, prop_sp, desired_val))
+                        _part(self._callback_lock, dev, prop_sp, desired_val)
+                    )
                 else:
                     pvo.run_callbacks()
 
@@ -521,7 +622,8 @@ class App(_Callback):
                 pvo = dev.pv_object(prop_rb)
                 if init:
                     pvo.add_callback(
-                        _part(self._callback_lock, dev, prop_sp, desired_val))
+                        _part(self._callback_lock, dev, prop_sp, desired_val)
+                    )
                 else:
                     pvo.run_callbacks()
 
@@ -548,7 +650,8 @@ class App(_Callback):
 
         status = self.map_pv2write[reason](value)
         _log.info(
-            '%s Write for: %s --> %s', str(status).upper(), reason, str(value))
+            '%s Write for: %s --> %s', str(status).upper(), reason, str(value)
+        )
         return status
 
     @property
@@ -570,8 +673,9 @@ class App(_Callback):
 
     def set_enable(self, value):
         """Set orbit interlock state.
-        Configure global BPM interlock enable and EVG interlock enable."""
-        self._set_queue.put((self._do_set_enable, (value, )))
+        Configure global BPM interlock enable and EVG interlock enable.
+        """
+        self._set_queue.put((self._do_set_enable, (value,)))
         return True
 
     def _do_set_enable(self, value):
@@ -605,8 +709,9 @@ class App(_Callback):
         self._update_log('Configured BPM general interlock enable.')
 
         self._evg_dev['IntlkCtrlEnbl-Sel'] = value
-        if not self._evg_dev._wait(
-                'IntlkCtrlEnbl-Sts', value, timeout=self._const.DEF_TIMEOUT):
+        if not self._evg_dev.wait(
+            'IntlkCtrlEnbl-Sts', value, timeout=self._const.DEF_TIMEOUT
+        ):
             self._update_log('ERR:Could not set EVG interlock enable.')
             self._state = bkup
             self.run_callbacks('Enable-Sel', self._state)
@@ -637,7 +742,8 @@ class App(_Callback):
         if self._const.nr_bpms != new.size:
             self._update_log(f'ERR:Wrong {intlkname} EnblList size.')
             self.run_callbacks(
-                f'{intlkname}EnblList-SP', self._enable_lists[intlk])
+                f'{intlkname}EnblList-SP', self._enable_lists[intlk]
+            )
             return False
 
         # check coerence, down/up pair should have same enable state
@@ -645,7 +751,8 @@ class App(_Callback):
             self._update_log('ERR:BPM should be enabled in pairs')
             self._update_log('ERR:(M1/M2,C1-1/C1-2,C2/C3-1,C3-2/C4)')
             self.run_callbacks(
-                f'{intlkname}EnblList-SP', self._enable_lists[intlk])
+                f'{intlkname}EnblList-SP', self._enable_lists[intlk]
+            )
             return False
 
         bkup_enbllist = self._enable_lists[intlk]
@@ -661,8 +768,9 @@ class App(_Callback):
         # check if new enable list do not imply in orbit interlock failure
         if intlk in ['pos', 'ang']:
             bkup_bpmmon, bkup_timon = self._bpm_mon_devs, self._ti_mon_devs
-            self._bpm_mon_devs, self._ti_mon_devs = \
+            self._bpm_mon_devs, self._ti_mon_devs = (
                 self._get_monitored_devices()
+            )
             self._config_fout_rxenbl()
             if not self._check_ti_devices_status(self._ti_mon_devs):
                 self._update_log('ERR:Could not set enable list.')
@@ -672,9 +780,11 @@ class App(_Callback):
                 self.run_callbacks(f'{intlkname}EnblList-SP', bkup_enbllist)
                 return False
             self.run_callbacks(
-                'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs))
+                'BPMMonitoredDevices-Mon', '\n'.join(self._bpm_mon_devs)
+            )
             self.run_callbacks(
-                'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs))
+                'TimingMonitoredDevices-Mon', '\n'.join(self._ti_mon_devs)
+            )
 
         # handle device enable configuration
 
@@ -693,7 +803,8 @@ class App(_Callback):
         if self._state and intlk in ['pos', 'ang']:
             glob_en = self._get_gen_bpm_intlk()
             ret = self._orbintlk_dev.set_gen_enable(
-                list(glob_en), timeout=3, return_prob=True)
+                list(glob_en), timeout=3, return_prob=True
+            )
             if not ret[0]:
                 self._update_log('ERR:Could not set BPM general')
                 self._update_log('ERR:interlock enable.')
@@ -810,8 +921,11 @@ class App(_Callback):
             if afcti['RTMClkLockedLtc-Mon']:
                 continue
             afcti['ClkLockedLtcRst-Cmd'] = 1
-            msg = 'Reset' if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3) \
+            msg = (
+                'Reset'
+                if afcti.wait('RTMClkLockedLtc-Mon', 1, timeout=3)
                 else 'ERR:Could not reset'
+            )
             self._update_log(f'{msg} AFC Timing {idx} lock latchs.')
             if 'not' in msg:
                 return False
@@ -822,8 +936,11 @@ class App(_Callback):
             if fout['RxLockedLtc-Mon'] == rxv:
                 continue
             fout['RxLockedLtcRst-Cmd'] = 1
-            msg = 'Reset' if fout._wait('RxLockedLtc-Mon', rxv, timeout=3) \
+            msg = (
+                'Reset'
+                if fout.wait('RxLockedLtc-Mon', rxv, timeout=3)
                 else 'ERR:Could not reset'
+            )
             self._update_log(f'{msg} {devname} lock latchs.')
             if 'not' in msg:
                 return False
@@ -833,8 +950,12 @@ class App(_Callback):
         """Command to reset AFC timing clocks."""
         _ = value
         #  do not allow user to reset in case of correction loops closed
-        if not self._fofb.connected or self._fofb['LoopState-Sts'] or \
-                not self._sofb.connected or self._sofb['LoopState-Sts']:
+        if (
+            not self._fofb.connected
+            or self._fofb['LoopState-Sts']
+            or not self._sofb.connected
+            or self._sofb['LoopState-Sts']
+        ):
             self._update_log('ERR:Open correction loops before ')
             self._update_log('ERR:reseting AFC Timing clocks.')
             return False
@@ -845,7 +966,7 @@ class App(_Callback):
             if afcti['RTMClkLockedLtc-Mon']:
                 continue
             afcti['ClkLockedLtcRst-Cmd'] = 1
-            if afcti._wait('RTMClkLockedLtc-Mon', 1, timeout=3):
+            if afcti.wait('RTMClkLockedLtc-Mon', 1, timeout=3):
                 continue
             afcti['RTMClkRst-Cmd'] = 1
             self._update_log(f'Sent reset clock to AFC Timing {idx}.')
@@ -896,16 +1017,19 @@ class App(_Callback):
             nr_points_after=self._acq_spost,
             acq_rate=self._acq_chan,
             repeat=False,
-            external=True)
+            external=True,
+        )
         if ret < 0:
             self._update_log(
-                'ERR:Failed to stop acquisition for ' +
-                f'{self._const.bpm_names[-ret-1]:s}.')
+                'ERR:Failed to stop acquisition for '
+                + f'{self._const.bpm_names[-ret - 1]:s}.'
+            )
             return
         if ret > 0:
             self._update_log(
-                'ERR:Failed to start acquisition for ' +
-                f'{self._const.bpm_names[ret-1]:s}.')
+                'ERR:Failed to start acquisition for '
+                + f'{self._const.bpm_names[ret - 1]:s}.'
+            )
             return
         self._update_log('...done!')
 
@@ -935,7 +1059,7 @@ class App(_Callback):
                 continue
             desired_value = self._fout2rxenbl[devname]
             dev['RxEnbl-SP'] = desired_value
-            dev._wait('RxEnbl-RB', desired_value, timeout=1)
+            dev.wait('RxEnbl-RB', desired_value, timeout=1)
             dev['RxLockedLtcRst-Cmd'] = 1
         return True
 
@@ -944,8 +1068,12 @@ class App(_Callback):
         _ = value
         # do not allow user configurate loop params in case of
         # correction loops closed
-        if not self._fofb.connected or self._fofb['LoopState-Sts'] or \
-                not self._sofb.connected or self._sofb['LoopState-Sts']:
+        if (
+            not self._fofb.connected
+            or self._fofb['LoopState-Sts']
+            or not self._sofb.connected
+            or self._sofb['LoopState-Sts']
+        ):
             self._update_log('ERR:Open correction loops before ')
             self._update_log('ERR:configuring AFC Timing RTM loop.')
             return False
@@ -1039,10 +1167,10 @@ class App(_Callback):
             if not self._init:
                 continue
             dev['RxEnbl-SP'] = rxenbl
-            dev._wait('RxEnbl-RB', rxenbl, timeout=1)
+            dev.wait('RxEnbl-RB', rxenbl, timeout=1)
             dev['RxLockedLtcRst-Cmd'] = 1
             if rxenbl:
-                dev._wait('RxLockedLtc-Mon', rxenbl, timeout=1)
+                dev.wait('RxLockedLtc-Mon', rxenbl, timeout=1)
 
         return True
 
@@ -1083,10 +1211,15 @@ class App(_Callback):
         for devname in devices:
             devname = _PVName(devname)
 
-            dev = self._evg_dev if 'EVG' in devname else \
-                self._fout_devs[devname.device_name] if 'Fout' in devname \
-                else self._afcti_devs[int(devname.sub[:2])] \
-                if 'AMCFPGA' in devname else None
+            dev = (
+                self._evg_dev
+                if 'EVG' in devname
+                else self._fout_devs[devname.device_name]
+                if 'Fout' in devname
+                else self._afcti_devs[int(devname.sub[:2])]
+                if 'AMCFPGA' in devname
+                else None
+            )
             if dev is None:
                 return True
 
@@ -1095,7 +1228,9 @@ class App(_Callback):
                 return False
             elif 'Fout' in devname:
                 out = int(devname.propty[-1]) if devname.propty else None
-                if out is not None and not _get_bit(dev['RxLockedLtc-Mon'], out):
+                if out is not None and not _get_bit(
+                    dev['RxLockedLtc-Mon'], out
+                ):
                     self._update_log(f'ERR:{dev.devname} OUT{out} not locked')
                     return False
             elif 'AMCFPGA' in devname and not dev['RTMClkLockedLtc-Mon']:
@@ -1126,33 +1261,37 @@ class App(_Callback):
         if self._orbintlk_dev.connected and self._fambpm_dev.connected:
             dev = self._orbintlk_dev
             # PosEnblSynced
-            val = _np.array_equal(
-                dev.pos_enable, self._enable_lists['pos'])
+            val = _np.array_equal(dev.pos_enable, self._enable_lists['pos'])
             value = _updt_bit(value, 1, not val)
             # AngEnblSynced
-            val = _np.array_equal(
-                dev.ang_enable, self._enable_lists['ang'])
+            val = _np.array_equal(dev.ang_enable, self._enable_lists['ang'])
             value = _updt_bit(value, 2, not val)
             # MinSumEnblSynced
             val = _np.array_equal(
-                dev.minsum_enable, self._enable_lists['minsum'])
+                dev.minsum_enable, self._enable_lists['minsum']
+            )
             value = _updt_bit(value, 3, not val)
             # GlobEnblSynced
-            genval = self._get_gen_bpm_intlk() if self._state else \
-                _np.zeros(self._const.nr_bpms, dtype=bool)
+            genval = (
+                self._get_gen_bpm_intlk()
+                if self._state
+                else _np.zeros(self._const.nr_bpms, dtype=bool)
+            )
             val = _np.array_equal(dev.gen_enable, genval)
             value = _updt_bit(value, 4, not val)
             # PosLimsSynced
             okp = True
             for prp in ['pos_x_min', 'pos_x_max', 'pos_y_min', 'pos_y_max']:
                 okp &= _np.array_equal(
-                    getattr(dev, prp+'_thres'), self._limits[prp])
+                    getattr(dev, prp + '_thres'), self._limits[prp]
+                )
             value = _updt_bit(value, 5, not okp)
             # AngLimsSynced
             oka = True
             for prp in ['ang_x_min', 'ang_x_max', 'ang_y_min', 'ang_y_max']:
                 oka &= _np.array_equal(
-                    getattr(dev, prp+'_thres'), self._limits[prp])
+                    getattr(dev, prp + '_thres'), self._limits[prp]
+                )
             value = _updt_bit(value, 6, not oka)
             # MinSumLimsSynced
             oks = _np.array_equal(dev.minsum_thres, self._limits['minsum'])
@@ -1179,11 +1318,14 @@ class App(_Callback):
             okb &= all([d.acq_nrsamples_post == self._acq_spost for d in bpms])
             okb &= all([d.acq_nrsamples_pre == self._acq_spre for d in bpms])
             okb &= all(
-                d.acq_repeat == self._const.AcqRepeat.Normal for d in bpms)
+                d.acq_repeat == self._const.AcqRepeat.Normal for d in bpms
+            )
             okb &= all(
-                d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms)
+                d.acq_trigger == self._const.AcqTrigTyp.External for d in bpms
+            )
             okb &= all(
-                d.acq_status == self._const.AcqStates.Acquiring for d in bpms)
+                d.acq_status == self._const.AcqStates.Acquiring for d in bpms
+            )
             value = _updt_bit(value, 1, not okb)
         else:
             value = 0b11
@@ -1242,12 +1384,12 @@ class App(_Callback):
         for trigname, configs in self._const.HLTRIG_2_CONFIG:
             dev = self._hltrig_devs[trigname]
             if dev.connected:
-                value = _updt_bit(value, bit+1, bool(dev['Status-Mon']))
+                value = _updt_bit(value, bit + 1, bool(dev['Status-Mon']))
                 oko = True
                 for prp, val in configs:
                     prp_rb = _PVName.from_sp2rb(prp)
                     oko &= dev[prp_rb] == val
-                value = _updt_bit(value, bit+2, not oko)
+                value = _updt_bit(value, bit + 2, not oko)
             else:
                 value += 0b111 << bit
             bit += 3
@@ -1259,12 +1401,12 @@ class App(_Callback):
         value = (1 << 4) - 1
         for i, dev in enumerate(self._llrfs):
             if dev.connected:
-                value = _updt_bit(value, 2*i, 0)
+                value = _updt_bit(value, 2 * i, 0)
                 fim_orbit = dev.fast_interlock_monitor_orbit
                 fim_manual = dev.fast_interlock_monitor_manual
                 okc = fim_orbit == self._llrf_intlk_state
                 okc &= fim_manual == self._llrf_intlk_state
-                value = _updt_bit(value, 2*i+1, not okc)
+                value = _updt_bit(value, 2 * i + 1, not okc)
         self.run_callbacks('LLRFStatus-Mon', value)
 
         # check time elapsed
@@ -1274,7 +1416,8 @@ class App(_Callback):
         if tsleep <= 0:
             _log.warning(
                 'Configuration check took more than planned... '
-                '{0:.3f}/{1:.3f} s'.format(ttook, tplanned))
+                '{0:.3f}/{1:.3f} s'.format(ttook, tplanned)
+            )
 
     # --- interlock methods ---
 
@@ -1285,7 +1428,8 @@ class App(_Callback):
         if self._thread_cbevgilk and self._thread_cbevgilk.is_alive():
             return
         self._thread_cbevgilk = _CAThread(
-            target=self._do_callback_evg_intlk, args=(value, ), daemon=True)
+            target=self._do_callback_evg_intlk, args=(value,), daemon=True
+        )
         self._thread_cbevgilk.start()
 
     def _do_callback_evg_intlk(self, value):
@@ -1310,8 +1454,8 @@ class App(_Callback):
         if self._thread_cbfout[nam] and self._thread_cbfout[nam].is_alive():
             return
         self._thread_cbfout[nam] = _CAThread(
-            target=self._do_callback_rxlock,
-            args=(pvname, value, ), daemon=True)
+            target=self._do_callback_rxlock, args=(pvname, value), daemon=True
+        )
         self._thread_cbfout[nam].start()
 
     def _callback_evg_rxlock(self, pvname, value, **kws):
@@ -1325,8 +1469,8 @@ class App(_Callback):
         if self._thread_cbevgrx and self._thread_cbevgrx.is_alive():
             return
         self._thread_cbevgrx = _CAThread(
-            target=self._do_callback_rxlock,
-            args=(pvname, value, ), daemon=True)
+            target=self._do_callback_rxlock, args=(pvname, value), daemon=True
+        )
         self._thread_cbevgrx.start()
 
     def _do_callback_rxlock(self, pvname, value):
@@ -1377,13 +1521,19 @@ class App(_Callback):
                         devpair = pairname.device_name
                         # get the correct bit to verify the redundancy out
                         redunout = int(pairname.propty_name[-1])
-                        redunvalue = self._fout_devs[devpair]['RxLockedLtc-Mon']
+                        redunvalue = self._fout_devs[devpair][
+                            'RxLockedLtc-Mon'
+                        ]
                         redunvalmap.append((redunvalue, redunout))
                     if all([_get_bit(v, b) for v, b in redunvalmap]):
                         outs_in_failure.remove(out)
-                        self._update_log(f'Redundancy of {outnam} of {devname} is ok')
+                        self._update_log(
+                            f'Redundancy of {outnam} of {devname} is ok'
+                        )
                     else:
-                        self._update_log(f'FATAL:redundancy {devname} not locked')
+                        self._update_log(
+                            f'FATAL:redundancy {devname} not locked'
+                        )
             is_failure = bool(outs_in_failure)
 
         if not is_failure:
@@ -1408,9 +1558,8 @@ class App(_Callback):
         # launch thread to log interlock details
         bpmname = _PVName(pvname).device_name
         _CAThread(
-            target=self._log_bpm_intlk,
-            args=(bpmname, ),
-            daemon=True).start()
+            target=self._log_bpm_intlk, args=(bpmname,), daemon=True
+        ).start()
         # launch thread to send interlock to RF as a backup
         if self._thread_cbbpm and self._thread_cbbpm.is_alive():
             return
@@ -1424,17 +1573,22 @@ class App(_Callback):
             return
 
         self._thread_cbbpm = _CAThread(
-            target=self._do_callback_bpm_intlk, daemon=True)
+            target=self._do_callback_bpm_intlk, daemon=True
+        )
         self._thread_cbbpm.start()
 
     def _log_bpm_intlk(self, bpmname):
         # log which interlock flag was raised
         self._update_log(f'FATAL:{bpmname} raised interlock.')
         props = [
-            'IntlkPosLowerLtcX-Mon', 'IntlkPosUpperLtcX-Mon',
-            'IntlkPosLowerLtcY-Mon', 'IntlkPosUpperLtcY-Mon',
-            'IntlkAngLowerLtcX-Mon', 'IntlkAngUpperLtcX-Mon',
-            'IntlkAngLowerLtcY-Mon', 'IntlkAngUpperLtcY-Mon',
+            'IntlkPosLowerLtcX-Mon',
+            'IntlkPosUpperLtcX-Mon',
+            'IntlkPosLowerLtcY-Mon',
+            'IntlkPosUpperLtcY-Mon',
+            'IntlkAngLowerLtcX-Mon',
+            'IntlkAngUpperLtcX-Mon',
+            'IntlkAngLowerLtcY-Mon',
+            'IntlkAngUpperLtcY-Mon',
         ]
         for prop in props:
             idx = self._const.bpm_names.index(bpmname)
@@ -1446,7 +1600,7 @@ class App(_Callback):
         # send kill beam as fast as possible
         self._handle_reliability_failure(is_failure=False)
         # wait minimum period for RF EVE event count to be updated
-        _time.sleep(.1)
+        _time.sleep(0.1)
         # verify if RF EVE counted the event PsMtm
         for devn, propty in self._llrf_evtcnt_pvnames.items():
             new_evtcnt = self._everf_devs[devn][propty]
@@ -1469,7 +1623,8 @@ class App(_Callback):
             if not llrf.interlock_input1_mon & (1 << llrfbit):
                 name = llrf.system_nickname
                 self._update_log(
-                    f'ERR:LLRF-{name} did not receive RFKill event')
+                    f'ERR:LLRF-{name} did not receive RFKill event'
+                )
 
     def _get_bpm_rates_factor(self):
         if self._monitsum2intlksum_factor:
@@ -1479,8 +1634,8 @@ class App(_Callback):
 
         if None in [monit, facq]:
             return 0
-        frac = monit/facq
-        factor = 2**_np.ceil(_np.log2(frac)) / frac
+        frac = monit / facq
+        factor = 2 ** _np.ceil(_np.log2(frac)) / frac
         self._monitsum2intlksum_factor = factor
         return self._monitsum2intlksum_factor
 
@@ -1489,8 +1644,9 @@ class App(_Callback):
         if value == 1:
             return
         devname = _PVName(pvname).device_name
-        is_failure = devname in self._bpm_mon_devs and \
-            devname in self._const.bpm_names
+        is_failure = (
+            devname in self._bpm_mon_devs and devname in self._const.bpm_names
+        )
         flag = 'FATAL' if is_failure else 'WARN'
         self._update_log(f'{flag}:{devname} lost PLL lock')
         if is_failure:
@@ -1553,20 +1709,27 @@ class App(_Callback):
     # --- device lock methods ---
 
     def _callback_lock(
-            self, device, propty_sp, desired_value, pvname, value, **kwargs):
+        self, device, propty_sp, desired_value, pvname, value, **kwargs
+    ):
         thread = _CAThread(
             target=self._start_lock_thread,
             args=(device, propty_sp, desired_value, pvname, value),
-            daemon=True)
+            daemon=True,
+        )
         thread.start()
 
     def _callback_evg_lock_intlk(self, pvname, value, **kwargs):
         thread = _CAThread(
             target=self._start_lock_thread,
             args=(
-                self._evg_dev, 'IntlkCtrlEnbl-Sel', self._state,
-                pvname, value),
-            daemon=True)
+                self._evg_dev,
+                'IntlkCtrlEnbl-Sel',
+                self._state,
+                pvname,
+                value,
+            ),
+            daemon=True,
+        )
         thread.start()
 
     def _callback_fout_lock(self, pvname, value, **kwargs):
@@ -1576,7 +1739,8 @@ class App(_Callback):
         thread = _CAThread(
             target=self._start_lock_thread,
             args=(device, 'RxEnbl-SP', desired_value, pvname, value),
-            daemon=True)
+            daemon=True,
+        )
         thread.start()
 
     def _callback_bpm_lock(self, pvname, value, **kws):
@@ -1587,41 +1751,66 @@ class App(_Callback):
         devidx = self._orbintlk_dev.BPM_NAMES.index(devname)
         device = self._orbintlk_dev.devices[devidx]
         if propty_rb.endswith('En-Sts'):
-            entyp = 'pos' if 'Pos' in propty_rb else \
-                'ang' if 'Ang' in propty_rb else \
-                'minsum' if 'MinSum' in propty_rb else \
-                'gen'
+            entyp = (
+                'pos'
+                if 'Pos' in propty_rb
+                else 'ang'
+                if 'Ang' in propty_rb
+                else 'minsum'
+                if 'MinSum' in propty_rb
+                else 'gen'
+            )
             if entyp == 'gen':
-                desired_value = self._get_gen_bpm_intlk()[devidx] \
-                    if self._state else 0
+                desired_value = (
+                    self._get_gen_bpm_intlk()[devidx] if self._state else 0
+                )
             else:
                 desired_value = self._enable_lists[entyp][devidx]
         elif 'Lmt' in propty_rb:
-            limcls = 'pos' if 'Pos' in propty_rb else \
-                'ang' if 'Ang' in propty_rb else 'minsum'
-            limpln = '_x_' if 'X' in propty_rb else \
-                '_y_' if 'Y' in propty_rb else ''
-            limtyp = '' if 'MinSum' in propty_rb \
-                else 'max' if 'Max' in propty_rb else 'min'
+            limcls = (
+                'pos'
+                if 'Pos' in propty_rb
+                else 'ang'
+                if 'Ang' in propty_rb
+                else 'minsum'
+            )
+            limpln = (
+                '_x_'
+                if 'X' in propty_rb
+                else '_y_'
+                if 'Y' in propty_rb
+                else ''
+            )
+            limtyp = (
+                ''
+                if 'MinSum' in propty_rb
+                else 'max'
+                if 'Max' in propty_rb
+                else 'min'
+            )
             limname = f'{limcls}{limpln}{limtyp}'
             desired_value = self._limits[limname][devidx]
 
         thread = _CAThread(
             target=self._start_lock_thread,
             args=(device, propty_sp, desired_value, pvname, value),
-            daemon=True)
+            daemon=True,
+        )
         thread.start()
 
     def _start_lock_thread(
-            self, device, propty_sp, desired_value, pvname, value):
+        self, device, propty_sp, desired_value, pvname, value
+    ):
         if self._lock_suspend:
             return
 
         # do not try to lock devices that are not in list of monitored devices
         devname = _PVName(pvname).device_name
-        if devname not in self._ti_mon_devs and \
-                devname not in self._bpm_mon_devs and \
-                devname not in self._hltrig_devs:
+        if (
+            devname not in self._ti_mon_devs
+            and devname not in self._bpm_mon_devs
+            and devname not in self._hltrig_devs
+        ):
             return
 
         # if there is already a lock thread, return
@@ -1632,9 +1821,12 @@ class App(_Callback):
         # else, create lock thread with 10 attempts to lock PV
         interval = 1 / 10  # little sleep to avoid CPU load
         thread = _Repeat(
-            interval, self._do_lock,
+            interval,
+            self._do_lock,
             args=(device, propty_sp, desired_value, pvname, value),
-            niter=10, is_cathread=True)
+            niter=10,
+            is_cathread=True,
+        )
         self._lock_threads[pvname] = thread
         thread.start()
 
@@ -1654,14 +1846,14 @@ class App(_Callback):
         device[propty_sp] = desired_value
 
         # if readback reached desired value, stop thread
-        if device._wait(propty_rb, desired_value, timeout=0.11):
+        if device.wait(propty_rb, desired_value, timeout=0.11):
             if pvname in self._lock_failures:
                 self._lock_failures.remove(pvname)
             thread.stop()
             return
 
         # if this was the last iteration, raise a reliability failure
-        if thread.cur_iter == thread.niters-1:
+        if thread.cur_iter == thread.niters - 1:
             self._lock_failures.add(pvname)
             self._update_log(f'FATAL:Fail to lock {pvname}')
             self._handle_reliability_failure()
@@ -1705,8 +1897,7 @@ class App(_Callback):
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, value)
         except FileNotFoundError:
-            self._update_log(
-                f'WARN:Could not save {intlk} {desc} to file.')
+            self._update_log(f'WARN:Could not save {intlk} {desc} to file.')
 
     def _get_file_info(self, intlk, dtype):
         if dtype.startswith(('en', 'lim')):

@@ -4,7 +4,6 @@ import numpy as _np
 
 from ..clientarch import Time
 from ..injctrl.csdev import Const as _Const
-
 from .device import Device as _Device
 
 
@@ -22,69 +21,119 @@ class InjCtrl(_Device):
     IdleRun = _Const.IdleRunning
 
     PROPERTIES_DEFAULT = (
-        'Mode-Sel', 'Mode-Sts',
-        'Type-Sel', 'Type-Sts', 'Type-Mon', 'TypeCmdSts-Mon',
-        'SglBunBiasVolt-SP', 'SglBunBiasVolt-RB',
-        'MultBunBiasVolt-SP', 'MultBunBiasVolt-RB',
+        'Mode-Sel',
+        'Mode-Sts',
+        'Type-Sel',
+        'Type-Sts',
+        'Type-Mon',
+        'TypeCmdSts-Mon',
+        'SglBunBiasVolt-SP',
+        'SglBunBiasVolt-RB',
+        'MultBunBiasVolt-SP',
+        'MultBunBiasVolt-RB',
         'BiasVoltCmdSts-Mon',
-        'FilaOpCurr-SP', 'FilaOpCurr-RB', 'FilaOpCurrCmdSts-Mon',
-        'HVOpVolt-SP', 'HVOpVolt-RB', 'HVOpVoltCmdSts-Mon',
-        'PUMode-Sel', 'PUMode-Sts', 'PUMode-Mon', 'PUModeCmdSts-Mon',
-        'PUModeDeltaPosAng-SP', 'PUModeDeltaPosAng-RB',
-        'PUModeDpKckrDlyRef-SP', 'PUModeDpKckrDlyRef-RB',
-        'PUModeDpKckrKick-SP', 'PUModeDpKckrKick-RB',
-        'TargetCurrent-SP', 'TargetCurrent-RB',
-        'BucketListStart-SP', 'BucketListStart-RB',
-        'BucketListStop-SP', 'BucketListStop-RB',
-        'BucketListStep-SP', 'BucketListStep-RB',
-        'TopUpState-Sel', 'TopUpState-Sts',
-        'TopUpPeriod-SP', 'TopUpPeriod-RB',
-        'TopUpHeadStartTime-SP', 'TopUpHeadStartTime-RB',
+        'FilaOpCurr-SP',
+        'FilaOpCurr-RB',
+        'FilaOpCurrCmdSts-Mon',
+        'HVOpVolt-SP',
+        'HVOpVolt-RB',
+        'HVOpVoltCmdSts-Mon',
+        'PUMode-Sel',
+        'PUMode-Sts',
+        'PUMode-Mon',
+        'PUModeCmdSts-Mon',
+        'PUModeDeltaPosAng-SP',
+        'PUModeDeltaPosAng-RB',
+        'PUModeDpKckrDlyRef-SP',
+        'PUModeDpKckrDlyRef-RB',
+        'PUModeDpKckrKick-SP',
+        'PUModeDpKckrKick-RB',
+        'TargetCurrent-SP',
+        'TargetCurrent-RB',
+        'BucketListStart-SP',
+        'BucketListStart-RB',
+        'BucketListStop-SP',
+        'BucketListStop-RB',
+        'BucketListStep-SP',
+        'BucketListStep-RB',
+        'TopUpState-Sel',
+        'TopUpState-Sts',
+        'TopUpPeriod-SP',
+        'TopUpPeriod-RB',
+        'TopUpHeadStartTime-SP',
+        'TopUpHeadStartTime-RB',
         'TopUpNextInj-Mon',
-        'TopUpNrPulses-SP', 'TopUpNrPulses-RB',
-        'InjSysTurnOn-Cmd', 'InjSysTurnOff-Cmd',
-        'InjSysCmdDone-Mon', 'InjSysCmdSts-Mon',
-        'InjSysTurnOnOrder-SP', 'InjSysTurnOnOrder-RB',
-        'InjSysTurnOffOrder-SP', 'InjSysTurnOffOrder-RB',
-        'RFKillBeam-Cmd', 'RFKillBeam-Mon',
-        'DiagStatus-Mon', 'InjStatus-Mon',
+        'TopUpNrPulses-SP',
+        'TopUpNrPulses-RB',
+        'InjSysTurnOn-Cmd',
+        'InjSysTurnOff-Cmd',
+        'InjSysCmdDone-Mon',
+        'InjSysCmdSts-Mon',
+        'InjSysTurnOnOrder-SP',
+        'InjSysTurnOnOrder-RB',
+        'InjSysTurnOffOrder-SP',
+        'InjSysTurnOffOrder-RB',
+        'RFKillBeam-Cmd',
+        'RFKillBeam-Mon',
+        'DiagStatus-Mon',
+        'InjStatus-Mon',
         #  ----- bias feedback -----
-        'BiasFBLoopState-Sel', 'BiasFBLoopState-Sts',
-        'BiasFBMinVoltage-SP', 'BiasFBMinVoltage-RB',
-        'BiasFBMaxVoltage-SP', 'BiasFBMaxVoltage-RB',
-        'BiasFBModelType-Sel', 'BiasFBModelType-Sts',
-        'BiasFBModelMaxNrPts-SP', 'BiasFBModelMaxNrPts-RB',
+        'BiasFBLoopState-Sel',
+        'BiasFBLoopState-Sts',
+        'BiasFBMinVoltage-SP',
+        'BiasFBMinVoltage-RB',
+        'BiasFBMaxVoltage-SP',
+        'BiasFBMaxVoltage-RB',
+        'BiasFBModelType-Sel',
+        'BiasFBModelType-Sts',
+        'BiasFBModelMaxNrPts-SP',
+        'BiasFBModelMaxNrPts-RB',
         'BiasFBModelNrPts-Mon',
-        'BiasFBModelAutoFitParams-Sel', 'BiasFBModelAutoFitParams-Sts',
-        'BiasFBModelAutoFitEveryNrPts-SP', 'BiasFBModelAutoFitEveryNrPts-RB',
-        'BiasFBModelNrPtsAfterFit-Mon', 'BiasFBModelFitParamsNow-Cmd',
-        'BiasFBModelUpdateData-Sel', 'BiasFBModelUpdateData-Sts',
-        'BiasFBModelDataBias-SP', 'BiasFBModelDataBias-RB',
+        'BiasFBModelAutoFitParams-Sel',
+        'BiasFBModelAutoFitParams-Sts',
+        'BiasFBModelAutoFitEveryNrPts-SP',
+        'BiasFBModelAutoFitEveryNrPts-RB',
+        'BiasFBModelNrPtsAfterFit-Mon',
+        'BiasFBModelFitParamsNow-Cmd',
+        'BiasFBModelUpdateData-Sel',
+        'BiasFBModelUpdateData-Sts',
+        'BiasFBModelDataBias-SP',
+        'BiasFBModelDataBias-RB',
         'BiasFBModelDataBias-Mon',
-        'BiasFBModelDataInjCurr-SP', 'BiasFBModelDataInjCurr-RB',
+        'BiasFBModelDataInjCurr-SP',
+        'BiasFBModelDataInjCurr-RB',
         'BiasFBModelDataInjCurr-Mon',
-        'BiasFBLinModAngCoeff-SP', 'BiasFBLinModAngCoeff-RB',
+        'BiasFBLinModAngCoeff-SP',
+        'BiasFBLinModAngCoeff-RB',
         'BiasFBLinModAngCoeff-Mon',
-        'BiasFBLinModOffCoeff-SP', 'BiasFBLinModOffCoeff-RB',
+        'BiasFBLinModOffCoeff-SP',
+        'BiasFBLinModOffCoeff-RB',
         'BiasFBLinModOffCoeff-Mon',
-        'BiasFBLinModInferenceInjCurr-Mon', 'BiasFBLinModInferenceBias-Mon',
-        'BiasFBLinModPredBias-Mon', 'BiasFBLinModPredInjCurrAvg-Mon',
-        'BiasFBGPModNoiseStd-SP', 'BiasFBGPModNoiseStd-RB',
+        'BiasFBLinModInferenceInjCurr-Mon',
+        'BiasFBLinModInferenceBias-Mon',
+        'BiasFBLinModPredBias-Mon',
+        'BiasFBLinModPredInjCurrAvg-Mon',
+        'BiasFBGPModNoiseStd-SP',
+        'BiasFBGPModNoiseStd-RB',
         'BiasFBGPModNoiseStd-Mon',
-        'BiasFBGPModKernStd-SP', 'BiasFBGPModKernStd-RB',
+        'BiasFBGPModKernStd-SP',
+        'BiasFBGPModKernStd-RB',
         'BiasFBGPModKernStd-Mon',
-        'BiasFBGPModKernLenScl-SP', 'BiasFBGPModKernLenScl-RB',
+        'BiasFBGPModKernLenScl-SP',
+        'BiasFBGPModKernLenScl-RB',
         'BiasFBGPModKernLenScl-Mon',
-        'BiasFBGPModInferenceInjCurr-Mon', 'BiasFBGPModInferenceBias-Mon',
-        'BiasFBGPModPredBias-Mon', 'BiasFBGPModPredInjCurrAvg-Mon',
+        'BiasFBGPModInferenceInjCurr-Mon',
+        'BiasFBGPModInferenceBias-Mon',
+        'BiasFBGPModPredBias-Mon',
+        'BiasFBGPModPredInjCurrAvg-Mon',
         'BiasFBGPModPredInjCurrStd-Mon',
-        )
+    )
 
     class DEVICES:
         """Devices names."""
 
         AS = 'AS-Glob:AP-InjCtrl'
-        ALL = (AS, )
+        ALL = (AS,)
 
     def __init__(self, devname=None, props2init='all'):
         """Init."""
@@ -116,7 +165,7 @@ class InjCtrl(_Device):
         """Wait Mode-Sts to reach `injmode` value."""
         if isinstance(injmode, str):
             injmode = self.InjMode._fields.index(injmode)
-        return self._wait('Mode-Sts', injmode, timeout=timeout)
+        return self.wait('Mode-Sts', injmode, timeout=timeout)
 
     @property
     def injtype(self):
@@ -144,8 +193,7 @@ class InjCtrl(_Device):
 
     def wait_injtype_cmd_finish(self, timeout=None):
         """Wait TypeCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
-            'TypeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait('TypeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
 
     @property
     def bias_volt_sglbun(self):
@@ -172,8 +220,9 @@ class InjCtrl(_Device):
 
     def wait_bias_volt_cmd_finish(self, timeout=None):
         """Wait BiasVoltCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
-            'BiasVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait(
+            'BiasVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout
+        )
 
     @property
     def filacurr_opvalue(self):
@@ -191,8 +240,9 @@ class InjCtrl(_Device):
 
     def wait_filacurr_cmd_finish(self, timeout=None):
         """Wait FilaOpCurrCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
-            'FilaOpCurrCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait(
+            'FilaOpCurrCmdSts-Mon', self.IdleRun.Idle, timeout=timeout
+        )
 
     @property
     def hvolt_opvalue(self):
@@ -210,8 +260,9 @@ class InjCtrl(_Device):
 
     def wait_hvolt_cmd_finish(self, timeout=None):
         """Wait HVOpVoltCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
-            'HVOpVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait(
+            'HVOpVoltCmdSts-Mon', self.IdleRun.Idle, timeout=timeout
+        )
 
     @property
     def pumode_delta_posang(self):
@@ -266,25 +317,28 @@ class InjCtrl(_Device):
 
     def wait_pumode_cmd_finish(self, timeout=None):
         """Wait PUModeCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
-            'PUModeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait(
+            'PUModeCmdSts-Mon', self.IdleRun.Idle, timeout=timeout
+        )
 
     def cmd_change_pumode_to_onaxis(self, timeout=10):
         """Change PUMode to On-Axis injection."""
         self.pumode = self.PUMode.OnAxis
-        return self._wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
+        return self.wait('PUMode-Mon', self.PUModeMon.OnAxis, timeout=timeout)
 
     def cmd_change_pumode_to_accumulation(self, timeout=10):
         """Change PUMode to accumulation."""
         self.pumode = self.PUMode.Accumulation
-        return self._wait(
-            'PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout)
+        return self.wait(
+            'PUMode-Mon', self.PUModeMon.Accumulation, timeout=timeout
+        )
 
     def cmd_change_pumode_to_optimization(self, timeout=10):
         """Change PUMode to optimization."""
         self.pumode = self.PUMode.Optimization
-        return self._wait(
-            'PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout)
+        return self.wait(
+            'PUMode-Mon', self.PUModeMon.Optimization, timeout=timeout
+        )
 
     @property
     def target_current(self):
@@ -629,7 +683,7 @@ class InjCtrl(_Device):
     def injsys_turn_on_order(self):
         """Injection system turn on command order.
 
-        Return
+        Return:
         ------
         str
             A string of a list with the reference of the handlers,
@@ -651,7 +705,7 @@ class InjCtrl(_Device):
     def injsys_turn_off_order(self):
         """Injection system turn on command order.
 
-        Return
+        Return:
         ------
         str
             A string of a list with the reference of the handlers,
@@ -671,8 +725,9 @@ class InjCtrl(_Device):
 
     def wait_injsys_cmd_finish(self, timeout=None):
         """Wait InjSysCmdSts-Mon to reach `Idle` value."""
-        return self._wait(
-            'InjSysCmdSts-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait(
+            'InjSysCmdSts-Mon', self.IdleRun.Idle, timeout=timeout
+        )
 
     def check_injsys_cmd_completed(self):
         """Check whether InjSys command completed succesfully."""
@@ -698,8 +753,7 @@ class InjCtrl(_Device):
 
     def wait_rfkillbeam_cmd_finish(self, timeout=None):
         """Wait RFKillBeam-Mon to reach `Idle` value."""
-        return self._wait(
-            'RFKillBeam-Mon', self.IdleRun.Idle, timeout=timeout)
+        return self.wait('RFKillBeam-Mon', self.IdleRun.Idle, timeout=timeout)
 
     # ----- diagnostics properties -----
 

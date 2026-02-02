@@ -16,6 +16,7 @@ public_interface = (
     'MASearch',
     'OrbIntlkSearch',
     'PSSearch',
+    'RaBPMSearch'
 )
 
 

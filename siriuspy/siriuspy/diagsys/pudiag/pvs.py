@@ -45,6 +45,7 @@ class PUStatusPV:
     INTRLCK_6 = 8
     INTRLCK_7 = 9
     INTRLCK_8 = 10
+    INTRLCK_9 = 11
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PU Status PV."""
@@ -61,7 +62,8 @@ class PUStatusPV:
             not computed_pv.pvs[PUStatusPV.INTRLCK_4].connected or \
             not computed_pv.pvs[PUStatusPV.INTRLCK_5].connected or \
             not computed_pv.pvs[PUStatusPV.INTRLCK_6].connected or \
-            not computed_pv.pvs[PUStatusPV.INTRLCK_7].connected
+            not computed_pv.pvs[PUStatusPV.INTRLCK_7].connected or \
+            not computed_pv.pvs[PUStatusPV.INTRLCK_9].connected
         if 'Sept' not in puname:
             disconnected |= not computed_pv.pvs[PUStatusPV.INTRLCK_8].connected
         if disconnected:
@@ -95,6 +97,7 @@ class PUStatusPV:
         intlk5 = computed_pv.pvs[PUStatusPV.INTRLCK_5].value
         intlk6 = computed_pv.pvs[PUStatusPV.INTRLCK_6].value
         intlk7 = computed_pv.pvs[PUStatusPV.INTRLCK_7].value
+        intlk9 = computed_pv.pvs[PUStatusPV.INTRLCK_9].value
         cond = intlk1 != 1 or intlk1 is None
         cond |= intlk2 != 1 or intlk2 is None
         cond |= intlk3 != 1 or intlk3 is None
@@ -102,6 +105,7 @@ class PUStatusPV:
         cond |= intlk5 != 1 or intlk5 is None
         cond |= intlk6 != 1 or intlk6 is None
         cond |= intlk7 != 1 or intlk7 is None
+        cond |= intlk9 != 1 or intlk9 is None
         if 'Sept' not in puname:
             intlk8 = computed_pv.pvs[PUStatusPV.INTRLCK_8].value
             cond |= intlk8 != 1 or intlk8 is None
