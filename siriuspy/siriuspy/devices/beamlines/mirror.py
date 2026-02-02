@@ -239,12 +239,10 @@ class CAXMirror(MirrorBase):
 
     class DEVICES:
         """."""
-
         CAX_FOE = "CAX"
-
         ALL = (CAX_FOE,)
 
-    def __init__(self, devname, props2init="all", **kwargs):
+    def __init__(self, devname=None, props2init="all", **kwargs):
         """Init."""
         if devname is None:
             devname = self.DEVICES.CAX_FOE
@@ -258,28 +256,31 @@ class CAXMirror(MirrorBase):
         # Real actuators for Ry, Tx, Y1, Y2 and Y3
 
         # X Translation
+        self.PVS.TX      = "A:PB01:m1"        # Motor base name
         self.PVS.TX_SP   = "A:PB01:m1.VAL"    # Setpoint value
-        self.PVS.TX_RBV  = "A:PB01:m1.RBV"    # Readback value
-        self.PVS.TX_HILM  = "A:PB01:m1.HLM"   # High limit
-        self.PVS.TX_LOLM  = "A:PB01:m1.LLM"   # Low limit
+        self.PVS.TX_MON  = "A:PB01:m1.RBV"    # Readback value
+        self.PVS.TX_HILM = "A:PB01:m1.HLM"    # High limit
+        self.PVS.TX_LOLM = "A:PB01:m1.LLM"    # Low limit
         self.PVS.TX_ENBL = "A:PB01:m1.CNEN"   # Enable/Disable
         self.PVS.TX_DMVN = "A:PB01:m1.DMOVN"  # Done moving
         self.PVS.TX_MVN  = "A:PB01:m1.MOVN"   # Motor is moving
         self.PVS.TX_STOP = "A:PB01:m1.STOP"   # Stop command
 
         # Y Rotation
+        self.PVS.RY      = "A:PB01:m2"        # Motor base name
         self.PVS.RY_SP   = "A:PB01:m2.VAL"    # Setpoint value
-        self.PVS.RY_RBV  = "A:PB01:m2.VAL"    # Readback value
-        self.PVS.RY_HILM  = "A:PB01:m2.HLM"   # High limit
-        self.PVS.RY_LOLM  = "A:PB01:m2.LLM"   # Low limit
+        self.PVS.RY_MON  = "A:PB01:m2.RBV"    # Readback value
+        self.PVS.RY_HILM = "A:PB01:m2.HLM"    # High limit
+        self.PVS.RY_LOLM = "A:PB01:m2.LLM"    # Low limit
         self.PVS.RY_ENBL = "A:PB01:m2.CNEN"   # Enable/Disable
         self.PVS.RY_DMVN = "A:PB01:m2.DMOVN"  # Done moving
         self.PVS.RY_MVN  = "A:PB01:m2.MOVN"   # Motor is moving
         self.PVS.RY_STOP = "A:PB01:m2.STOP"   # Stop command
 
         # Called Leveler Z- in the front end.
+        self.PVS.Y1      = "A:PB01:m3"        # Motor base name
         self.PVS.Y1_SP   = "A:PB01:m3.VAL"    # Setpoint value
-        self.PVS.Y1_RBV  = "A:PB01:m3.VAL"    # Readback value
+        self.PVS.Y1_MON  = "A:PB01:m3.RBV"    # Readback value
         self.PVS.Y1_HILM = "A:PB01:m3.HLM"    # High limit
         self.PVS.Y1_LOLM = "A:PB01:m3.LLM"    # Low limit
         self.PVS.Y1_ENBL = "A:PB01:m3.CNEN"   # Enable/Disable
@@ -288,8 +289,9 @@ class CAXMirror(MirrorBase):
         self.PVS.Y1_STOP = "A:PB01:m3.STOP"   # Stop command
 
         # Called Leveler X+ in the front end.
+        self.PVS.Y2      = "A:PB01:m4"        # Motor base name
         self.PVS.Y2_SP   = "A:PB01:m4.VAL"    # Setpoint value
-        self.PVS.Y2_RBV  = "A:PB01:m4.VAL"    # Readback value
+        self.PVS.Y2_MON  = "A:PB01:m4.RBV"    # Readback value
         self.PVS.Y2_HILM = "A:PB01:m4.HLM"    # High limit
         self.PVS.Y2_LOLM = "A:PB01:m4.LLM"    # Low limit
         self.PVS.Y2_ENBL = "A:PB01:m4.CNEN"   # Enable/Disable
@@ -299,8 +301,9 @@ class CAXMirror(MirrorBase):
 
         # Called Leveler Z+ in the front end.
 
+        self.PVS.Y3      = "A:PB01:m5"        # Motor base name
         self.PVS.Y3_SP   = "A:PB01:m5.VAL"    # Setpoint value
-        self.PVS.Y3_RB   = "A:PB01:m5.VAL"    # Readback value
+        self.PVS.Y3_MON  = "A:PB01:m5.RBV"    # Readback value
         self.PVS.Y3_HILM = "A:PB01:m5.HLM"    # High limit
         self.PVS.Y3_LOLM = "A:PB01:m5.LLM"    # Low limit
         self.PVS.Y3_ENBL = "A:PB01:m5.CNEN"   # Enable/Disable
@@ -311,8 +314,9 @@ class CAXMirror(MirrorBase):
         # Kinematic actuators for Rx, Ry, Rz and Ty
 
         # X rotation
+        self.PVS.CS_RX      = "A:PB01:CS1:m1"        # Motor base name
         self.PVS.CS_RX_SP   = "A:PB01:CS1:m1.VAL"    # Setpoint value
-        self.PVS.CS_RX_RBV  = "A:PB01:CS1:m1.RBV"    # Readback value
+        self.PVS.CS_RX_MON  = "A:PB01:CS1:m1.RBV"    # Readback value
         self.PVS.CS_RX_HILM = "A:PB01:CS1:m1.HLM"    # High limit
         self.PVS.CS_RX_LOLM = "A:PB01:CS1:m1.LLM"    # Low limit
         self.PVS.CS_RX_ENBL = "A:PB01:CS1:m1.CNEN"   # Enable/Disable
@@ -321,8 +325,9 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_RX_STOP = "A:PB01:CS1:m1.STOP"   # Stop command
 
         # Y rotation
+        self.PVS.CS_RY      = "A:PB01:CS1:m2"        # Motor base name
         self.PVS.CS_RY_SP   = "A:PB01:CS1:m2.VAL"    # Setpoint value
-        self.PVS.CS_RY_RBV  = "A:PB01:CS1:m2.RBV"    # Readback value
+        self.PVS.CS_RY_MON  = "A:PB01:CS1:m2.RBV"    # Readback value
         self.PVS.CS_RY_HILM = "A:PB01:CS1:m2.HLM"    # High limit
         self.PVS.CS_RY_LOLM = "A:PB01:CS1:m2.LLM"    # Low limit
         self.PVS.CS_RY_ENBL = "A:PB01:CS1:m2.CNEN"   # Enable/Disable
@@ -331,8 +336,9 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_RY_STOP = "A:PB01:CS1:m2.STOP"   # Stop command
 
         # Z rotation
+        self.PVS.CS_RZ      = "A:PB01:CS1:m3"        # Motor base name
         self.PVS.CS_RZ_SP   = "A:PB01:CS1:m3.VAL"    # Setpoint value
-        self.PVS.CS_RZ_RBV  = "A:PB01:CS1:m3.RBV"    # Readback value
+        self.PVS.CS_RZ_MON  = "A:PB01:CS1:m3.RBV"    # Readback value
         self.PVS.CS_RZ_HILM = "A:PB01:CS1:m3.HLM"    # High limit
         self.PVS.CS_RZ_LOLM = "A:PB01:CS1:m3.LLM"    # Low limit
         self.PVS.CS_RZ_ENBL = "A:PB01:CS1:m3.CNEN"   # Enable/Disable
@@ -341,8 +347,9 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_RZ_STOP = "A:PB01:CS1:m3.STOP"   # Stop command
 
         # X translation
+        self.PVS.CS_TX      = "A:PB01:CS1:m7"        # Motor base name
         self.PVS.CS_TX_SP   = "A:PB01:CS1:m7.VAL"    # Setpoint value
-        self.PVS.CS_TX_RBV  = "A:PB01:CS1:m7.RBV"    # Readback value
+        self.PVS.CS_TX_MON  = "A:PB01:CS1:m7.RBV"    # Readback value
         self.PVS.CS_TX_HILM = "A:PB01:CS1:m7.HLM"    # High limit
         self.PVS.CS_TX_LOLM = "A:PB01:CS1:m7.LLM"    # Low limit
         self.PVS.CS_TX_ENBL = "A:PB01:CS1:m7.CNEN"   # Enable/Disable
@@ -351,8 +358,9 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_TX_STOP = "A:PB01:CS1:m7.STOP"   # Stop command
 
         # Y translation
+        self.PVS.CS_TY      = "A:PB01:CS1:m8"        # Motor base name
         self.PVS.CS_TY_SP   = "A:PB01:CS1:m8.VAL"    # Setpoint value
-        self.PVS.CS_TY_RBV  = "A:PB01:CS1:m8.RBV"    # Readback value
+        self.PVS.CS_TY_MON  = "A:PB01:CS1:m8.RBV"    # Readback value
         self.PVS.CS_TY_HILM = "A:PB01:CS1:m8.HLM"    # High limit
         self.PVS.CS_TY_LOLM = "A:PB01:CS1:m8.LLM"    # Low limit
         self.PVS.CS_TY_ENBL = "A:PB01:CS1:m8.CNEN"   # Enable/Disable
