@@ -1,7 +1,7 @@
 """Mirror Control."""
 
-import inspect as _inspect
-import time as _time
+# import inspect as _inspect
+# import time as _time
 from types import SimpleNamespace as _SimpleNamespace
 
 from ..device import Device as _Device
