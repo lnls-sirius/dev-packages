@@ -363,15 +363,18 @@ class ClientArchiver:
             Stop time of the interval to display.
         time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
             reference time used when enabling the diff view.
-        pvoptnrpts : iterable[int]
+        pvoptnrpts : iterable[int] or Int, optional
             Iterable with optimization point counts for each PV (0 or None
-            means no optimization). Must have the same length as `pvnames`.
-        pvcolors : iterable[str or None]
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
             Iterable with hex color strings (e.g. "#00ff00") or None for
-            each PV. Must have the same length as `pvnames`.
-        pvusediff : iterable[bool]
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
             Iterable indicating whether to enable the diff option for each PV.
-            Must have the same length as `pvnames`.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
 
         Returns
         -------
@@ -389,11 +392,9 @@ class ClientArchiver:
         """
         # Thanks to Rafael Lyra for the basis of this implementation!
         archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
-        pvoptnrpts = pvoptnrpts or [0] * len(pvnames)
-        pvcolors = pvcolors or [None] * len(pvnames)
-        if isinstance(pvusediff, bool):
-            pvusediff = [pvusediff] * len(pvnames)
-        # pv_list = zip(pvnames, pvoptnrpts, pvcolors, pvusediff)  # noqa: B905
+        args = ClientArchiver._process_url_link_args(
+            pvnames, pvoptnrpts, pvcolors, pvusediff)
+        pvoptnrpts, pvcolors, pvusediff = args
         pv_search = ''
         for idx in range(len(pvnames)):
             pv_search += 'pv='
@@ -406,14 +407,11 @@ class ClientArchiver:
                 pv_search += f'optimized_{pvopt}({url_pvname})'
             else:
                 pv_search += url_pvname
-
             if time_ref is not None and use_diff:
                 pv_search += '_diff'
-
             if color is not None:
                 pv_search += f'__{color}'
             pv_search += '&'
-
         search_url = pv_search
 
         date_pattern = '%Y-%m-%dT%H:%M:%S.000Z'
@@ -437,6 +435,22 @@ class ClientArchiver:
         return archiver_viewer_url + compressed_data
 
     # ---------- auxiliary methods ----------
+
+    @staticmethod
+    def _process_url_link_args(pvnames, pvoptnrpts, pvcolors, pvusediff):
+        """Process URL link arguments."""
+        if pvoptnrpts is None:
+            pvoptnrpts = [0] * len(pvnames)
+        elif isinstance(pvoptnrpts, int):
+            pvoptnrpts = [pvoptnrpts] * len(pvnames)
+        if pvcolors is None:
+            pvcolors = [None] * len(pvnames)
+        elif isinstance(pvcolors, str):
+            pvcolors = [pvcolors] * len(pvnames)
+        pvcolors = pvcolors or [None] * len(pvnames)
+        if isinstance(pvusediff, bool):
+            pvusediff = [pvusediff] * len(pvnames)
+        return pvoptnrpts, pvcolors, pvusediff
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""

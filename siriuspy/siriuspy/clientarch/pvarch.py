@@ -434,27 +434,26 @@ class PVData(_Base):
 
         Parameters
         ----------
-        pvnames : iterable[str], optional
-            Iterable of PV names to include in the viewer. If None, uses all
-            PVs in the dataset. Defaults to None.
-        time_start : datetime.datetime or siriuspy.clientarch.time.Time,
-            optional Start time of the interval to display.
-            If None, uses the dataset's start time. Defaults to None.
-        time_stop : datetime.datetime or siriuspy.clientarch.time.Time,
-            optional Stop time of the interval to display.
-            If None, uses the dataset's stop time. Defaults to None.
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
         time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
             reference time used when enabling the diff view.
-        pvoptnrpts : iterable[int], optional
+        pvoptnrpts : iterable[int] or Int, optional
             Iterable with optimization point counts for each PV (0 or None
-            means no optimization). Must have the same length as `pvnames`.
-            Defaults to None.
-        pvcolors : iterable[str or None], optional
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
             Iterable with hex color strings (e.g. "#00ff00") or None for
-            each PV. Must have the same length as `pvnames`. Defaults to None.
-        pvusediff : iterable[bool], optional
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
             Iterable indicating whether to enable the diff option for each PV.
-            Must have the same length as `pvnames`. Defaults to False.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
 
         Returns
         -------
@@ -676,27 +675,26 @@ class PVDataSet(_Base):
 
         Parameters
         ----------
-        pvnames : iterable[str], optional
-            Iterable of PV names to include in the viewer. If None, uses all
-            PVs in the dataset. Defaults to None.
-        time_start : datetime.datetime or siriuspy.clientarch.time.Time,
-            optional Start time of the interval to display.
-            If None, uses the dataset's start time. Defaults to None.
-        time_stop : datetime.datetime or siriuspy.clientarch.time.Time,
-            optional Stop time of the interval to display.
-            If None, uses the dataset's stop time. Defaults to None.
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
         time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
             reference time used when enabling the diff view.
-        pvoptnrpts : iterable[int], optional
+        pvoptnrpts : iterable[int] or Int, optional
             Iterable with optimization point counts for each PV (0 or None
-            means no optimization). Must have the same length as `pvnames`.
-            Defaults to None.
-        pvcolors : iterable[str or None], optional
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
             Iterable with hex color strings (e.g. "#00ff00") or None for
-            each PV. Must have the same length as `pvnames`. Defaults to None.
-        pvusediff : iterable[bool], optional
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
             Iterable indicating whether to enable the diff option for each PV.
-            Must have the same length as `pvnames`. Defaults to False.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
 
         Returns
         -------
