@@ -342,7 +342,7 @@ class ClientArchiver:
         self.session = None
 
     @staticmethod
-    def gen_archviewer_link(
+    def gen_archviewer_url_link(
         pvnames,
         time_start,
         time_stop,

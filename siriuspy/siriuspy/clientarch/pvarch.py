@@ -145,7 +145,7 @@ class _Base:
             )
         self._time_stop = new_time
 
-    def gen_archviewer_link(
+    def gen_archviewer_url_link(
         self,
         pvnames,
         time_start,
@@ -186,7 +186,7 @@ class _Base:
         """
         time_start = time_start or self.time_start
         time_stop = time_stop or self.time_stop
-        url = _ClientArchiver.gen_archviewer_link(
+        url = _ClientArchiver.gen_archviewer_url_link(
             pvnames=pvnames,
             time_start=time_start,
             time_stop=time_stop,
@@ -420,7 +420,7 @@ class PVData(_Base):
             return
         self.set_data(**data)
 
-    def gen_archviewer_link(
+    def gen_archviewer_url_link(
         self,
         pvnames=None,
         time_start=None,
@@ -466,7 +466,7 @@ class PVData(_Base):
         pvnames = pvnames or [self._pvname]
         time_start = time_start or self.time_start
         time_stop = time_stop or self.time_stop
-        url = super().gen_archviewer_link(
+        url = super().gen_archviewer_url_link(
             pvnames=pvnames,
             time_start=time_start,
             time_stop=time_stop,
@@ -662,7 +662,7 @@ class PVDataSet(_Base):
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
-    def gen_archviewer_link(
+    def gen_archviewer_url_link(
         self,
         pvnames=None,
         time_start=None,
@@ -708,7 +708,7 @@ class PVDataSet(_Base):
         pvnames = pvnames or self._pvnames
         time_start = time_start or self.time_start
         time_stop = time_stop or self.time_stop
-        url = super().gen_archviewer_link(
+        url = super().gen_archviewer_url_link(
             pvnames=pvnames,
             time_start=time_start,
             time_stop=time_stop,
