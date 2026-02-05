@@ -394,7 +394,7 @@ class _PSDev(_Device):
         elif self._is_fbp:
             properties += _PSDev._properties_fbp
         else:
-            properties += _PSDev._properties_magps
+            properties += _PSDev._properties_basicps
 
         # strength properties
         strength_sp_propty = self._strength_propty + '-SP'
