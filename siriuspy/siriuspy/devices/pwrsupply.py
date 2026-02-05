@@ -16,6 +16,12 @@ from ..search import PSSearch as _PSSearch
 from .device import Device as _Device
 from .timing import Trigger as _Trigger
 
+# TODO: refactor all these classes, adding LinacPS and a factory class to
+# create the correct type of power supply device based on the device name
+# (see SOFB classes). This would make the code more maintainable and easier
+# to understand, avoiding the use of many if-else statements based on
+# power supply type.
+
 
 class _PSDev(_Device):
     """Base Power Supply Device."""
