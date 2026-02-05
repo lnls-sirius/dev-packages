@@ -5,9 +5,12 @@ import numpy as _np
 from .. import util as _util
 from ..magnet.factory import NormalizerFactory as _NormFactory
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..pwrsupply.csdev import Const as _Const, \
-    get_ps_scopesourcemap as _get_ps_scopesourcemap, \
-    MAX_WFMSIZE as _MAX_WFMSIZE, MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
+from ..pwrsupply.csdev import (
+    Const as _Const,
+    get_ps_scopesourcemap as _get_ps_scopesourcemap,
+    MAX_WFMSIZE as _MAX_WFMSIZE,
+    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
+)
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
 from ..search import PSSearch as _PSSearch
 from .device import Device as _Device
@@ -350,8 +353,9 @@ class _PSDev(_Device):
         is_pulsed = devname.dis == 'PU'
         is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
         is_fbp = psmodel == 'FBP'
-        is_basicps = \
+        is_basicps = (
             not is_linac and not is_pulsed and not is_fc and not is_fbp
+        )
         return (
             pstype,
             psmodel,
@@ -432,7 +436,8 @@ class PowerSupply(_PSDev):
                 ])
             )
             self.ScopeSrcAddr = _Const.register(
-                'ScopeSrcAddr', str_, values=vals)
+                'ScopeSrcAddr', str_, values=vals
+            )
 
     @property
     def current(self):
