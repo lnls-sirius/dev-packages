@@ -343,64 +343,67 @@ class ClientArchiver:
 
     @staticmethod
     def gen_archviewer_link(
-        pv_list,
+        pvnames,
         time_start,
         time_stop,
         time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
     ):
-        """Generate compressed archiver viewer link.
+        """Generate a Archiver Viewer URL for the given PVs.
 
         Parameters
         ----------
-        pv_list: list[tuple[str, int, str|None, bool]]
-            List of the configurations to be shown in archiver viewer for
-            each PV. Must contain in each tuple the values:
-            (pvname, optimization_points, color)
-                pvname: str
-                    Name of the PV
-                optimization_points:
-                    Number of points to be plotted in the axis
-                    (If 0, show all the points(no optimization))
-                color: str | None
-                    The color of the trace/axis for the PV
-                    (hexadecimal RGB format: #00aa11,
-                    if None no color is selected)
-                use_diff: bool
-                    If the axis for the PV should enable the diff function.
-        time_start: datetime
-            Date when the data starts.
-        time_stop: datetime
-            Date when the data stops.
-        time_ref: datetime|None (Optional parameter)
-            Date of the diff reference
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int]
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames`.
+        pvcolors : iterable[str or None]
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames`.
+        pvusediff : iterable[bool]
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames`.
 
-        Example:
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
 
-        from siriuspy.clientarch import Time
-        from siriuspy.clientarch import ClientArchiver as ca
-
-        time_start = Time(2025, 10, 23, 8, 3, 13)
-        time_stop  = Time(2025, 10, 23, 9, 3, 13)
-        time_ref = Time(2025, 10, 23, 9, 3, 13)
-
-        pv_list = [
-            ('SI-10C1:DI-BPM-2:PosX-Mon', 10, "#00ff00", False),
-            ('SI-10C1:DI-BPM-1:PosX-Mon', 100, "#0000ff", False),
-            ('SI-10C1:DI-BPM-1:PosY-Mon', 0, "#ff0000", True)
-        ]
-
-        url = ca.gen_archviewer_link(
-            pv_list, time_start, time_stop, time_ref)
-        print(url)
+        Notes
+        -----
+        - PV names and timestamps are URL-encoded and the
+            resulting query string is compressed using LZString
+            (compressToEncodedURIComponent).
+        - The function expects the per-PV arguments (`pvoptnrpts`, `pvcolors`,
+            `pvusediff`) to be iterables aligned with `pvnames`.
         """
         # Thanks to Rafael Lyra for the basis of this implementation!
         archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
+        pvoptnrpts = pvoptnrpts or [0] * len(pvnames)
+        pvcolors = pvcolors or [None] * len(pvnames)
+        if isinstance(pvusediff, bool):
+            pvusediff = [pvusediff] * len(pvnames)
+        # pv_list = zip(pvnames, pvoptnrpts, pvcolors, pvusediff)  # noqa: B905
         pv_search = ''
-        for pvname, optimization_points, color, use_diff in pv_list:
+        for idx in range(len(pvnames)):
             pv_search += 'pv='
+            pvname = pvnames[idx]
+            pvopt = pvoptnrpts[idx]
+            color = pvcolors[idx]
+            use_diff = pvusediff[idx]
             url_pvname = _quote(pvname)
-            if optimization_points > 0:
-                pv_search += f'optimized_{optimization_points}({url_pvname})'
+            if pvopt > 0:
+                pv_search += f'optimized_{pvopt}({url_pvname})'
             else:
                 pv_search += url_pvname
 

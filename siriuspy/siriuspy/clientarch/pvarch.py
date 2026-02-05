@@ -146,38 +146,54 @@ class _Base:
         self._time_stop = new_time
 
     def gen_archviewer_link(
-            self, pv_list, time_start=None, time_stop=None, time_ref=None):
-        """Generate compressed archiver viewer link.
+        self,
+        pvnames,
+        time_start,
+        time_stop,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
 
         Parameters
         ----------
-        pv_list: list[tuple[str, int, str|None, bool]]
-            List of the configurations to be shown in archiver viewer for
-            each PV.
-            Must contain in each tuple the values:
-            (pvname, optimization_points, color)
-                pvname: str
-                    Name of the PV
-                optimization_points:
-                    Number of points to be plotted in the axis
-                    (If 0, show all the points(no optimization))
-                color: str | None
-                    The color of the trace/axis for the PV
-                    (hexadecimal RGB format: #00aa11,
-                    if None no color is selected)
-                use_diff: bool
-                    If the axis for the PV should enable the diff function.
-        time_start: datetime
-            Date when the data starts. if 'None', self.time_start is used.
-        time_stop: datetime
-            Date when the data stops. if 'None', self.time_stop is used.
-        time_ref: datetime|None (Optional parameter)
-            Date of the diff reference
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int], optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames`.
+            Defaults to None.
+        pvcolors : iterable[str or None], optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames`. Defaults to None.
+        pvusediff : iterable[bool], optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames`. Defaults to False.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
         """
         time_start = time_start or self.time_start
         time_stop = time_stop or self.time_stop
         url = _ClientArchiver.gen_archviewer_link(
-            pv_list, time_start, time_stop, time_ref)
+            pvnames=pvnames,
+            time_start=time_start,
+            time_stop=time_stop,
+            time_ref=time_ref,
+            pvoptnrpts=pvoptnrpts,
+            pvcolors=pvcolors,
+            pvusediff=pvusediff)
         return url
 
 
@@ -404,6 +420,62 @@ class PVData(_Base):
             return
         self.set_data(**data)
 
+    def gen_archviewer_link(
+        self,
+        pvnames=None,
+        time_start=None,
+        time_stop=None,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str], optional
+            Iterable of PV names to include in the viewer. If None, uses all
+            PVs in the dataset. Defaults to None.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Start time of the interval to display.
+            If None, uses the dataset's start time. Defaults to None.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Stop time of the interval to display.
+            If None, uses the dataset's stop time. Defaults to None.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int], optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames`.
+            Defaults to None.
+        pvcolors : iterable[str or None], optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames`. Defaults to None.
+        pvusediff : iterable[bool], optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames`. Defaults to False.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+
+        """
+        pvnames = pvnames or [self._pvname]
+        time_start = time_start or self.time_start
+        time_stop = time_stop or self.time_stop
+        url = super().gen_archviewer_link(
+            pvnames=pvnames,
+            time_start=time_start,
+            time_stop=time_stop,
+            time_ref=time_ref,
+            pvoptnrpts=pvoptnrpts,
+            pvcolors=pvcolors,
+            pvusediff=pvusediff)
+        return url
+
     def set_data(self, timestamp, value, status, severity):
         """Auxiliary method to set data. Used by PVDataSet."""
         self._timestamp = self._value = self._status = self._severity = None
@@ -589,6 +661,62 @@ class PVDataSet(_Base):
             data = {pvname: data}
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
+
+    def gen_archviewer_link(
+        self,
+        pvnames=None,
+        time_start=None,
+        time_stop=None,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str], optional
+            Iterable of PV names to include in the viewer. If None, uses all
+            PVs in the dataset. Defaults to None.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Start time of the interval to display.
+            If None, uses the dataset's start time. Defaults to None.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Stop time of the interval to display.
+            If None, uses the dataset's stop time. Defaults to None.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int], optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames`.
+            Defaults to None.
+        pvcolors : iterable[str or None], optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames`. Defaults to None.
+        pvusediff : iterable[bool], optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames`. Defaults to False.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+
+        """
+        pvnames = pvnames or self._pvnames
+        time_start = time_start or self.time_start
+        time_stop = time_stop or self.time_stop
+        url = super().gen_archviewer_link(
+            pvnames=pvnames,
+            time_start=time_start,
+            time_stop=time_stop,
+            time_ref=time_ref,
+            pvoptnrpts=pvoptnrpts,
+            pvcolors=pvcolors,
+            pvusediff=pvusediff)
+        return url
 
     def _init_pvdatas(self, pvnames, connector):
         pvdata = dict()
