@@ -1,6 +1,6 @@
 """Slit Control."""
 
-import inspect as _inspect
+# import inspect as _inspect
 import time as _time
 from types import SimpleNamespace as _SimpleNamespace
 
@@ -80,10 +80,11 @@ class SlitBase(_Device):
         return self._wait(propty, 0, timeout=timeout)
 
     def _move_slit(self, side, value, threshold, max_count, delay):
-        """Moves the slit indicated by 'side' ('left', 'right', 'top', 'bottom')
+        """Moves the slit indicated by 'side'.
+
+        Side is one of ('left', 'right', 'top', 'bottom')
         to the given value, returning True if reached, False on timeout.
         """
-
         if side not in ("left", "right", "top", "bottom"):
             raise ValueError(f"Invalid dide: {side}")
 
@@ -93,25 +94,25 @@ class SlitBase(_Device):
             setattr(self, attr_name, value)
         except Exception as err:
             current = getattr(self, attr_name)
-            raise IOError("PUT error: pv, pos = ({})\n{}".format(current, err))
+            raise IOError(f"PUT error: pv, pos = ({current})\n{err}") from err
 
-        # Check for acknowledgement. Avoid endless loop if command is not properly received.
+        # Check for acknowledgement. Avoid endless loop if command
+        # is not properly received.
         icount = 0
         current_value = getattr(self, attr_name)
         while abs(current_value - value) > threshold:
             _time.sleep(delay)
             current_value = getattr(self, attr_name)
             print(
-                "Slit is Moving... | New pos: {:} | Curr: {:.2f} | Dif: {:}".format(
-                    value, current_value, abs(current_value - value)
-                ),
+                f"Slit is Moving... | New pos: {value}"
+                f" | Curr: {current_value:.2f}"
+                f" | Dif: {abs(current_value - value)}",
                 end="\r",
             )
             if icount >= max_count:
                 print(
-                    "\nWARNING: a lâmina '{:}' não se moveu.\nPosição atual: {:.4f}".format(
-                        side, current_value
-                    )
+                    f"\nWARNING: a lâmina '{side}' não se moveu."
+                    f"\nPosição atual: {current_value:.4f}"
                 )
                 return False
             icount += 1
@@ -121,7 +122,9 @@ class SlitBase(_Device):
     def _move_robust_slit(
         self, side, value, threshold, max_count, delay, trials
     ):
-        """Tries to move the blade indicated by `side` up to `value`, repeating up to `trials` times if it fails, and returns True on success.
+        """Tries to move the blade indicated by `side` up to `value`.
+
+        Repeat up to `trials` times if it fails, and returns True on success.
 
         Args:
             side : 'top', 'bottom', 'left' or 'right'
@@ -156,9 +159,8 @@ class SlitBase(_Device):
             current_value = getattr(self, "{}_pos".format(side))
             if not status:
                 raise Exception(
-                    "WARNING: maximum number of trials to move {} slit reached.\nCurrent position:".format(
-                        side, current_value
-                    )
+                    f"WARNING: maximum number of trials to move {side}"
+                    f" slit reached. \nCurrent position: {current_value}"
                 )
             print("Done!")
             return True
@@ -185,6 +187,7 @@ class SlitBase(_Device):
     def move_top(
         self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY
     ):
+        """."""
         return self._move_slit(
             side="top",
             value=value,
@@ -196,6 +199,7 @@ class SlitBase(_Device):
     def move_bottom(
         self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY
     ):
+        """."""
         return self._move_slit(
             side="bottom",
             value=value,
@@ -207,6 +211,7 @@ class SlitBase(_Device):
     def move_left(
         self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY
     ):
+        """."""
         return self._move_slit(
             side="left",
             value=value,
@@ -218,6 +223,7 @@ class SlitBase(_Device):
     def move_right(
         self, value, threshold=_THRESHOLD, max_count=_COUNT_LIM, delay=_DELAY
     ):
+        """."""
         return self._move_slit(
             side="right",
             value=value,
@@ -234,6 +240,7 @@ class SlitBase(_Device):
         delay=_DELAY,
         trials=_TRIALS,
     ):
+        """."""
         return self._move_robust_slit(
             side="top",
             value=value,
@@ -251,6 +258,7 @@ class SlitBase(_Device):
         delay=_DELAY,
         trials=_TRIALS,
     ):
+        """."""
         return self._move_robust_slit(
             side="bottom",
             value=value,
@@ -268,6 +276,7 @@ class SlitBase(_Device):
         delay=_DELAY,
         trials=_TRIALS,
     ):
+        """."""
         return self._move_robust_slit(
             side="left",
             value=value,
@@ -285,6 +294,7 @@ class SlitBase(_Device):
         delay=_DELAY,
         trials=_TRIALS,
     ):
+        """."""
         return self._move_robust_slit(
             side="right",
             value=value,

@@ -816,6 +816,7 @@ class CAXDtc(DVFImgProc):
             raise ValueError("Wrong value for devname")
 
         super().__init__(devname=devname + ":BASLER01", props2init=props2init)
+        self._motor_devname = devname
         self.PROPERTIES_DEFAULT += (
             "PP01:E.VAL",
             "PP01:E.RBV",
@@ -824,6 +825,17 @@ class CAXDtc(DVFImgProc):
             "PP01:F.RBV",
             "PP01:F.STOP",
         )
+
+    def _get_pvname(self, propty):
+        """Override to handle motor PVs that live under base devname.
+
+        (not BASLER01).
+        """
+        # Motor PVs don't have BASLER01 in their path
+        if "PP01" in propty:
+            return self._motor_devname + ":" + propty
+        # All other PVs follow normal pattern
+        return super()._get_pvname(propty)
 
     @property
     def z_pos(self):
