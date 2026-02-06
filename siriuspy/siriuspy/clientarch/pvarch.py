@@ -338,22 +338,6 @@ class PVData(_Base):
         return url
 
     @property
-    def timestamp_start(self):
-        """Timestamp start."""
-        if not self.time_start:
-            return None
-        return self.time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self.time_start = _Time(timestamp=new_timestamp)
-
-    @property
     def parallel_query_bin_interval(self):
         """Parallel query bin interval."""
         return self._parallel_query_bin_interval
