@@ -10,26 +10,26 @@ class Screen(_DeviceSet):
     class DEVICES:
         """Devices names."""
 
-        TB_1 = "TB-01:DI-Scrn-1"
-        TB_2 = "TB-01:DI-Scrn-2"
-        TB_3 = "TB-02:DI-Scrn-1"
-        TB_4 = "TB-02:DI-Scrn-2"
-        TB_5 = "TB-03:DI-Scrn"
-        TB_6 = "TB-04:DI-Scrn"
-        BO_1 = "BO-01D:DI-Scrn-1"
-        BO_2 = "BO-01D:DI-Scrn-2"
-        BO_3 = "BO-02U:DI-Scrn"
-        TS_1 = "TS-01:DI-Scrn"
-        TS_2 = "TS-02:DI-Scrn"
-        TS_3 = "TS-03:DI-Scrn"
-        TS_4 = "TS-04:DI-Scrn-1"
-        TS_5 = "TS-04:DI-Scrn-2"
-        TS_6 = "TS-04:DI-Scrn-3"
-        LI_1 = "LA-BI:PRF1"
-        LI_2 = "LA-BI:PRF2"
-        LI_3 = "LA-BI:PRF3"
-        LI_4 = "LA-BI:PRF4"
-        LI_5 = "LA-BI:PRF5"
+        TB_1 = 'TB-01:DI-Scrn-1'
+        TB_2 = 'TB-01:DI-Scrn-2'
+        TB_3 = 'TB-02:DI-Scrn-1'
+        TB_4 = 'TB-02:DI-Scrn-2'
+        TB_5 = 'TB-03:DI-Scrn'
+        TB_6 = 'TB-04:DI-Scrn'
+        BO_1 = 'BO-01D:DI-Scrn-1'
+        BO_2 = 'BO-01D:DI-Scrn-2'
+        BO_3 = 'BO-02U:DI-Scrn'
+        TS_1 = 'TS-01:DI-Scrn'
+        TS_2 = 'TS-02:DI-Scrn'
+        TS_3 = 'TS-03:DI-Scrn'
+        TS_4 = 'TS-04:DI-Scrn-1'
+        TS_5 = 'TS-04:DI-Scrn-2'
+        TS_6 = 'TS-04:DI-Scrn-3'
+        LI_1 = 'LA-BI:PRF1'
+        LI_2 = 'LA-BI:PRF2'
+        LI_3 = 'LA-BI:PRF3'
+        LI_4 = 'LA-BI:PRF4'
+        LI_5 = 'LA-BI:PRF5'
         LI = (LI_1, LI_2, LI_3, LI_4, LI_5)
         TB = (TB_1, TB_2, TB_3, TB_4, TB_5, TB_6)
         BO = (BO_1, BO_2, BO_3)
@@ -63,7 +63,7 @@ class Screen(_DeviceSet):
         if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
 
-        if devname.lower().startswith("la"):
+        if devname.lower().startswith('la'):
             return LIScreen(devname)
         else:
             return TBBOTSScreen(devname)
@@ -73,31 +73,31 @@ class LIScreen(_Device):
     """."""
 
     PROPERTIES_DEFAULT = (
-        "RAW:ArrayData",
-        "IMG:ArrayData",
-        "ROI:MaxSizeX_RBV",
-        "ROI:MaxSizeY_RBV",
-        "ROI:SizeX",
-        "ROI:SizeY",
-        "ROI:SizeX_RBV",
-        "ROI:SizeY_RBV",
-        "ROI:MinX_",
-        "ROI:MinY_",
-        "ROI:MinX_RBV",
-        "ROI:MinY_RBV",
-        "X:Gauss:Peak",
-        "Y:Gauss:Peak",
-        "X:Gauss:Sigma",
-        "Y:Gauss:Sigma",
-        "X:Gauss:Coef",
-        "Y:Gauss:Coef",
-        "CAM:Gain",
-        "CAM:Gain_RBV",
-        "CAM:AcquireTime",
-        "CAM:AcquireTime_RBV",
+        'RAW:ArrayData',
+        'IMG:ArrayData',
+        'ROI:MaxSizeX_RBV',
+        'ROI:MaxSizeY_RBV',
+        'ROI:SizeX',
+        'ROI:SizeY',
+        'ROI:SizeX_RBV',
+        'ROI:SizeY_RBV',
+        'ROI:MinX_',
+        'ROI:MinY_',
+        'ROI:MinX_RBV',
+        'ROI:MinY_RBV',
+        'X:Gauss:Peak',
+        'Y:Gauss:Peak',
+        'X:Gauss:Sigma',
+        'Y:Gauss:Sigma',
+        'X:Gauss:Coef',
+        'Y:Gauss:Coef',
+        'CAM:Gain',
+        'CAM:Gain_RBV',
+        'CAM:AcquireTime',
+        'CAM:AcquireTime_RBV',
     )
 
-    def __init__(self, devname, props2init="all"):
+    def __init__(self, devname, props2init='all'):
         """."""
         if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
@@ -106,17 +106,17 @@ class LIScreen(_Device):
     @property
     def image_width(self):
         """."""
-        return self["ROI:MaxSizeX_RBV"]
+        return self['ROI:MaxSizeX_RBV']
 
     @property
     def image_height(self):
         """."""
-        return self["ROI:MaxSizeY_RBV"]
+        return self['ROI:MaxSizeY_RBV']
 
     @property
     def image(self):
         """."""
-        row_image = self["RAW:ArrayData"]
+        row_image = self['RAW:ArrayData']
         h = self.image_height
         w = self.image_width
         return row_image.reshape([h, w])
@@ -124,68 +124,68 @@ class LIScreen(_Device):
     @property
     def centerx(self):
         """."""
-        return self["X:Gauss:Peak"]
+        return self['X:Gauss:Peak']
 
     @property
     def centery(self):
         """."""
-        return self["Y:Gauss:Peak"]
+        return self['Y:Gauss:Peak']
 
     @property
     def sigmax(self):
         """."""
-        return self["X:Gauss:Sigma"]
+        return self['X:Gauss:Sigma']
 
     @property
     def sigmay(self):
         """."""
-        return self["Y:Gauss:Sigma"]
+        return self['Y:Gauss:Sigma']
 
     @property
     def scale_factor_x(self):
         """Pixel to mm."""
-        return self["X:Gauss:Coef"]
+        return self['X:Gauss:Coef']
 
     @property
     def scale_factor_y(self):
         """Pixel to mm."""
-        return self["Y:Gauss:Coef"]
+        return self['Y:Gauss:Coef']
 
     @property
     def roix_size(self):
         """."""
-        return self["ROI:SizeX_RBV"]
+        return self['ROI:SizeX_RBV']
 
     @property
     def roiy_size(self):
         """."""
-        return self["ROI:SizeY_RBV"]
+        return self['ROI:SizeY_RBV']
 
     @property
     def roix_start(self):
         """."""
-        return self["ROI:MinX_RBV"]
+        return self['ROI:MinX_RBV']
 
     @property
     def roiy_start(self):
         """."""
-        return self["ROI:MinY_RBV"]
+        return self['ROI:MinY_RBV']
 
     @property
     def image_roi(self):
         """."""
-        img = self["IMG:ArrayData"]
+        img = self['IMG:ArrayData']
         return img.reshape((self.roix_size, self.roiy_size))
 
     @property
     def cam_exposure(self):
         """."""
-        return self["CAM:AcquireTime_RBV"]
+        return self['CAM:AcquireTime_RBV']
 
     @property
     def cam_gain(self):
         """."""
-        return self["CAM:Gain_RBV"]
+        return self['CAM:Gain_RBV']
 
 
 class TBBOTSScreen(_DeviceSet):
@@ -206,17 +206,17 @@ class TBBOTSScreen(_DeviceSet):
     @property
     def image_width(self):
         """."""
-        return self.screen["ImgROIWidth-RB"]
+        return self.screen['ImgROIWidth-RB']
 
     @property
     def image_height(self):
         """."""
-        return self.screen["ImgROIHeight-RB"]
+        return self.screen['ImgROIHeight-RB']
 
     @property
     def image(self):
         """."""
-        row_image = self.screen["ImgData-Mon"]
+        row_image = self.screen['ImgData-Mon']
         h = self.image_height
         w = self.image_width
         return row_image.reshape([h, w])
@@ -224,47 +224,47 @@ class TBBOTSScreen(_DeviceSet):
     @property
     def centerx(self):
         """."""
-        return self.screen["CenterXDimFei-Mon"]
+        return self.screen['CenterXDimFei-Mon']
 
     @property
     def centery(self):
         """."""
-        return self.screen["CenterYDimFei-Mon"]
+        return self.screen['CenterYDimFei-Mon']
 
     @property
     def sigmax(self):
         """."""
-        return self.screen["SigmaXDimFei-Mon"]
+        return self.screen['SigmaXDimFei-Mon']
 
     @property
     def sigmay(self):
         """."""
-        return self.screen["SigmaYDimFei-Mon"]
+        return self.screen['SigmaYDimFei-Mon']
 
     @property
     def angle(self):
         """."""
-        return self.screen["ThetaDimFei-Mon"]
+        return self.screen['ThetaDimFei-Mon']
 
     @property
     def scale_factor_x(self):
         """Pixel to mm"""
-        return self.screencam["ScaleFactorX-RB"]
+        return self.screencam['ScaleFactorX-RB']
 
     @property
     def scale_factor_y(self):
         """Pixel to mm"""
-        return self.screencam["ScaleFactorY-RB"]
+        return self.screencam['ScaleFactorY-RB']
 
     @property
     def center_offset_x(self):
         """."""
-        return self.screencam["CenterOffsetX-RB"]
+        return self.screencam['CenterOffsetX-RB']
 
     @property
     def center_offset_y(self):
         """."""
-        return self.screencam["CenterOffsetY-RB"]
+        return self.screencam['CenterOffsetY-RB']
 
 
 class _Screen(_Device):
@@ -273,17 +273,17 @@ class _Screen(_Device):
     DEVICES = Screen.DEVICES
 
     PROPERTIES_DEFAULT = (
-        "ImgData-Mon",
-        "CenterXDimFei-Mon",
-        "CenterYDimFei-Mon",
-        "SigmaXDimFei-Mon",
-        "SigmaYDimFei-Mon",
-        "ThetaDimFei-Mon",
-        "ImgROIHeight-RB",
-        "ImgROIWidth-RB",
+        'ImgData-Mon',
+        'CenterXDimFei-Mon',
+        'CenterYDimFei-Mon',
+        'SigmaXDimFei-Mon',
+        'SigmaYDimFei-Mon',
+        'ThetaDimFei-Mon',
+        'ImgROIHeight-RB',
+        'ImgROIWidth-RB',
     )
 
-    def __init__(self, devname, props2init="all"):
+    def __init__(self, devname, props2init='all'):
         """."""
         if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
@@ -296,15 +296,15 @@ class _ScreenCam(_Device):
     DEVICES = Screen.DEVICES
 
     PROPERTIES_DEFAULT = (
-        "ScaleFactorX-RB",
-        "ScaleFactorY-RB",
-        "CenterOffsetX-RB",
-        "CenterOffsetY-RB",
+        'ScaleFactorX-RB',
+        'ScaleFactorY-RB',
+        'CenterOffsetX-RB',
+        'CenterOffsetY-RB',
     )
 
-    def __init__(self, devname, props2init="all"):
+    def __init__(self, devname, props2init='all'):
         """."""
         if devname not in Screen.DEVICES.ALL:
             raise NotImplementedError(devname)
-        devname = _PVName(devname).substitute(dev="ScrnCam")
+        devname = _PVName(devname).substitute(dev='ScrnCam')
         super().__init__(devname, props2init=props2init)
