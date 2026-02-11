@@ -184,8 +184,6 @@ class _Base:
             A full Archiver Viewer URL containing the compressed PV
             configuration.
         """
-        time_start = time_start or self.time_start
-        time_stop = time_stop or self.time_stop
         url = _ClientArchiver.gen_archviewer_url_link(
             pvnames=pvnames,
             time_start=time_start,
@@ -447,8 +445,6 @@ class PVData(_Base):
 
         """
         pvnames = pvnames or [self._pvname]
-        time_start = time_start or self.time_start
-        time_stop = time_stop or self.time_stop
         url = super().gen_archviewer_url_link(
             pvnames=pvnames,
             time_start=time_start,
