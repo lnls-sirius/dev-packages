@@ -1,7 +1,7 @@
 """Mirror Control."""
 
 # import inspect as _inspect
-# import time as _time
+import time as _time
 from types import SimpleNamespace as _SimpleNamespace
 
 from ..device import Device as _Device
@@ -17,6 +17,11 @@ class MirrorBase(_Device):
     """Base Mirror device."""
 
     _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
+    _THRESHOLD_POS = 0.01  # [mm]
+    _THRESHOLD_ANG = 0.01  # [mrad]
+    _COUNT_LIM = 8
+    _DELAY     = 4                # [s]
+    _TRIALS    = 3
 
     # --- PVS ---
     PVS = _PVNames()
@@ -69,7 +74,7 @@ class MirrorBase(_Device):
 
     @property
     def y3_pos(self):
-        """Return the third linear actuator pos Y2 [mm].
+        """Return the third linear vertical actuator pos Y3 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -92,59 +97,24 @@ class MirrorBase(_Device):
         return self[self.PVS.CS_RX_MON]
 
     @property
-    def cs_tx_pos(self):
-        """Return the linear actuator pos related to Tx translation [mm].
+    def cs_ty_pos(self):
+        """Return the linear actuator pos related to Ty translation [mm].
 
         This linear actuator translates directly to the horizontal
         transverse position of the mirror.
         """
-        return self[self.PVS.CS_TX_MON]
+        return self[self.PVS.CS_TY_MON]
 
     @property
-    def cs_rx_pos(self):
-        """Return the first linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in oposite horizontal ends.
-        """
-        return self[self.PVS.Y1_MON]
-
-    @property
-    def y2_pos(self):
-        """Return the second linear vertical actuator pos Y2 [mm].
+    def cs_rz_pos(self):
+        """Return the linear actuator pos related to RZ rotation [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
         longitudinal side of the mirror base whereas Y2 amd Y3 are located in
         the other side, in opposite horizontal ends.
         """
-        return self[self.PVS.Y2_MON]
-
-    @property
-    def y3_pos(self):
-        """Return the third linear actuator pos Y2 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        return self[self.PVS.Y3_MON]
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return self[self.PVS.CS_RZ_MON]
 
     @property
     def photocurrent_signal(self):
@@ -224,7 +194,7 @@ class MirrorBase(_Device):
 
     @y2_pos.setter
     def y2_pos(self, value):
-        """Set the second linear vertical actuator pos Y1 [mm].
+        """Set the second linear vertical actuator pos Y2 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -233,14 +203,9 @@ class MirrorBase(_Device):
         """
         self[self.PVS.Y2_SP] = value
 
-    @temperature_ref.setter
-    def temperature_ref(self, value):
-        """Set M1 temperature reference [°C]."""
-        self[self.PVS.TEMP_SP] = value
-
     @y3_pos.setter
     def y3_pos(self, value):
-        """Set the third linear vertical actuator pos Y1 [mm].
+        """Set the third linear vertical actuator pos Y3 [mm].
 
         Rotations RotX, RotZ and translation Ty are implemented as combinations
         of three vertical independent actuators. Y1 actuator is located in one
@@ -248,6 +213,11 @@ class MirrorBase(_Device):
         the other side, in opposite horizontal ends.
         """
         self[self.PVS.Y3_SP] = value
+
+    @temperature_ref.setter
+    def temperature_ref(self, value):
+        """Set M1 temperature reference [°C]."""
+        self[self.PVS.TEMP_SP] = value
 
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
@@ -273,6 +243,162 @@ class MirrorBase(_Device):
     def cmd_y3_stop(self, timeout=None):
         """Stop linear actuator Y3."""
         return self._cmd_motor_stop(self.PVS.Y3_STOP, timeout)
+
+    def _move_mirror_motor(
+            self, motor, value, threshold, max_count, delay
+            ):
+        """Moves the slit indicated by 'motor'.
+
+        Motor is one of ('tx', 'rx', 'ty', 'ry', 'rz', 'y1', 'y2', 'y3')
+        to the given value, returning True if reached, False on timeout.
+        """
+        if motor not in ("tx", "rx", "ty", "ry", "rz", "y1", "y2", "y3"):
+            raise ValueError(f"Invalid motor: {motor}")
+
+        attr_name = f"{motor}_pos"
+
+        try:
+            setattr(self, attr_name, value)
+        except Exception as err:
+            current = getattr(self, attr_name)
+            raise IOError(f"PUT error: pv, pos = ({current})\n{err}") from err
+
+        # Check for acknowledgement. Avoid endless loop if command
+        # is not properly received.
+        icount = 0
+        current_value = getattr(self, attr_name)
+        while abs(current_value - value) > threshold:
+            _time.sleep(delay)
+            current_value = getattr(self, attr_name)
+            print(
+                f"Slit is Moving... | New pos: {value}"
+                f" | Curr: {current_value:.2f}"
+                f" | Dif: {abs(current_value - value)}",
+                end="\r",
+            )
+            if icount >= max_count:
+                print(
+                    f"\nWARNING: a lâmina '{motor}' não se moveu."
+                    f"\nPosição atual: {current_value:.4f}"
+                )
+                return False
+            icount += 1
+
+        return True
+
+    def _move_robust_mirror_motor(
+        self, motor, value, threshold, max_count, delay, trials
+    ):
+        """Tries to move the blade indicated by `motor` up to `value`.
+
+        Repeat up to `trials` times if it fails, and returns True on success.
+
+        Args:
+            motor      : 'tx', 'rx', 'ty', 'ry', 'rz', 'y1', 'y2' or 'y3'.
+            value      : target position.
+            threshold  : parameters for _move_mirror_motor
+            max_count  : parameters for _move_mirror_motor
+            delay      : parameters for _move_mirror_motor
+            trials     : how many times to restart the movement if it fails
+
+        Returns:
+            bool : True or False.
+        """
+        if motor not in ("tx", "rx", "ty", "ry", "rz", "y1", "y2", "y3"):
+            raise ValueError(f"Invalid motor: {motor}")
+
+        method_name = f"move_{motor}"
+        move_method = getattr(self, method_name)
+        if not callable(move_method):
+            raise AttributeError(f"Method {method_name} doesn't exist.")
+
+        ctrials = 0
+        status = False
+        try:
+            while ctrials < trials and not status:
+                status = move_method(
+                    value=value,
+                    threshold=threshold,
+                    max_count=max_count,
+                    delay=delay,
+                )
+                ctrials += 1
+            current_value = getattr(self, f"{motor}_pos")
+            if not status:
+                raise Exception(
+                    f"WARNING: maximum number of trials to move {motor}"
+                    f" slit reached. \nCurrent position: {current_value}"
+                )
+            print("Done!")
+            return True
+        except Exception:
+            print("Not moved!")
+            return False
+
+    def move_rx(
+        self, value, threshold=_THRESHOLD_ANG,
+        max_count=_COUNT_LIM, delay=_DELAY
+    ):
+        """Moves the 'rx' motor to the given value."""
+        return self._move_mirror_motor(
+            motor="rx",
+            value=value,
+            threshold=threshold,
+            max_count=max_count,
+            delay=delay,
+        )
+
+    def move_ry(
+        self, value, threshold=_THRESHOLD_ANG,
+        max_count=_COUNT_LIM, delay=_DELAY
+    ):
+        """Moves the 'ry' motor to the given value."""
+        return self._move_mirror_motor(
+            motor="ry",
+            value=value,
+            threshold=threshold,
+            max_count=max_count,
+            delay=delay,
+        )
+
+    def move_rz(
+        self, value, threshold=_THRESHOLD_ANG,
+        max_count=_COUNT_LIM, delay=_DELAY
+    ):
+        """Moves the 'rz' motor to the given value."""
+        return self._move_mirror_motor(
+            motor="rz",
+            value=value,
+            threshold=threshold,
+            max_count=max_count,
+            delay=delay,
+        )
+
+    def move_tx(
+        self, value, threshold=_THRESHOLD_POS,
+        max_count=_COUNT_LIM, delay=_DELAY
+    ):
+        """Moves the 'tx' motor to the given value."""
+        return self._move_mirror_motor(
+            motor="tx",
+            value=value,
+            threshold=threshold,
+            max_count=max_count,
+            delay=delay,
+        )
+
+    def move_ty(
+        self, value, threshold=_THRESHOLD_POS,
+        max_count=_COUNT_LIM, delay=_DELAY
+    ):
+        """Moves the 'ty' motor to the given value."""
+        return self._move_mirror_motor(
+            motor="ty",
+            value=value,
+            threshold=threshold,
+            max_count=max_count,
+            delay=delay,
+        )
 
 
 """From the EPICS Motor Record Homepage
@@ -385,15 +511,15 @@ class CAXMirror(MirrorBase):
         pvprefixk = "A:PB01:CS1:"
 
         # X rotation
-        self.PVS.CS_RX      = pvprefixk + "m1"       # Motor base name
-        self.PVS.CS_RX_SP   = pvprefixk + "m1.VAL"   # Setpoint value
-        self.PVS.CS_RX_MON  = pvprefixk + "m1.RBV"   # Readback value
-        self.PVS.CS_RX_HILM = pvprefixk + "m1.HLM"   # High limit
-        self.PVS.CS_RX_LOLM = pvprefixk + "m1.LLM"   # Low limit
-        self.PVS.CS_RX_ENBL = pvprefixk + "m1.CNEN"  # Enable/Disable
-        self.PVS.CS_RX_DMVN = pvprefixk + "m1.DMOVN" # Done moving
-        self.PVS.CS_RX_MVN  = pvprefixk + "m1.MOVN"  # Motor is moving
-        self.PVS.CS_RX_STOP = pvprefixk + "m1.STOP"  # Stop command
+        self.PVS.CS_RX      = pvprefixk + "m1"        # Motor base name
+        self.PVS.CS_RX_SP   = pvprefixk + "m1.VAL"    # Setpoint value
+        self.PVS.CS_RX_MON  = pvprefixk + "m1.RBV"    # Readback value
+        self.PVS.CS_RX_HILM = pvprefixk + "m1.HLM"    # High limit
+        self.PVS.CS_RX_LOLM = pvprefixk + "m1.LLM"    # Low limit
+        self.PVS.CS_RX_ENBL = pvprefixk + "m1.CNEN"   # Enable/Disable
+        self.PVS.CS_RX_DMVN = pvprefixk + "m1.DMOVN"  # Done moving
+        self.PVS.CS_RX_MVN  = pvprefixk + "m1.MOVN"   # Motor is moving
+        self.PVS.CS_RX_STOP = pvprefixk + "m1.STOP"   # Stop command
 
         # Y rotation
         self.PVS.CS_RY      = pvprefixk + "m2"        # Motor base name
