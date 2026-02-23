@@ -821,6 +821,8 @@ class CAXDtc(DVFImgProc):
             "PP01:E.VAL",
             "PP01:E.RBV",
             "PP01:E.STOP",
+            "PP01:E.LLM",
+            "PP01:E.HLM",
             "PP01:F.VAL",
             "PP01:F.RBV",
             "PP01:F.STOP",
@@ -841,6 +843,16 @@ class CAXDtc(DVFImgProc):
     def z_pos(self):
         """Return DVF base motor longitudinal position [mm]."""
         return self["PP01:E.RBV"]
+
+    @property
+    def z_min(self):
+        """Return DVF base motor minimum longitudinal position [mm]."""
+        return self["PP01:E.LLM"]
+
+    @property
+    def z_max(self):
+        """Return DVF base motor maximum longitudinal position [mm]."""
+        return self["PP01:E.HLM"]
 
     @property
     def lens_pos(self):

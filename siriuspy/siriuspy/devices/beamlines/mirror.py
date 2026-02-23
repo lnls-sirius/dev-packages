@@ -152,10 +152,10 @@ class _PVAccessor:
         """
         base = self._motor_base(motor)
         if base is None:
+            mb = sorted(b.lower() for b in self._pvs_motor_bases())
             raise ValueError(
                 f"Motor '{motor}' not found in PVS. "
-                f"Available: {sorted(b.lower()
-                                     for b in self._pvs_motor_bases())}"
+                f"Available: {mb}"
             )
 
         sp_pv   = getattr(self.PVS, f"{base}_SP")
