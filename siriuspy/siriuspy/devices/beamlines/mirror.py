@@ -13,7 +13,273 @@ class _PVNames(_SimpleNamespace):
         return None
 
 
-class MirrorBase(_Device):
+class _PVAccessor:
+    """Dynamic motor PV accessor with robust, retried movement.
+
+    This mixin adds transparent attribute-style access to any motor that is
+    defined in the concrete device's PVS namespace following the convention:
+
+        {BASE}_MON    readback (monitor) PV
+        {BASE}_SP     setpoint PV
+        {BASE}_LOLM   low  hardware limit PV   (optional but recommended)
+        {BASE}_HILM   high hardware limit PV   (optional but recommended)
+
+    The user-facing attribute name is the base name lowercased:
+        PVS.RY_MON / PVS.RY_SP  →  motor name "ry"
+        PVS.CS_RX_MON / …       →  motor name "cs_rx"
+
+    No additional mapping dictionary is required; any motor added to PVS in a
+    subclass becomes immediately accessible here.
+
+    Usage
+    -----
+    Reading:    mirror.ry          → float (current readback)
+    Writing:    mirror.ry = 5.0   → blocks until motor reaches 5 mrad
+
+    The write path calls _move_robust_mirror_motor, which:
+      1. Validates the value against [LOLM, HILM] limits.
+      2. Writes the setpoint.
+      3. Polls the readback until the error is below threshold.
+      4. Retries up to _TRIALS times before giving up.
+
+    Direct setpoint write (no blocking):
+        mirror['A:PB01:m2.VAL'] = 5.0   ← bypass the accessor if needed
+    """
+
+    # Motors whose motion threshold is angular rather than positional.
+    _ANGULAR_MOTORS = frozenset({
+        "rx", "ry", "rz",
+        "cs_rx", "cs_ry", "cs_rz",
+    })
+
+    # ── private helpers ───────────────────────────────────────────────────
+
+    def _pvs_motor_bases(self):
+        """Return the set of PVS base names that have both _MON and _SP.
+
+        Example: if PVS has RY_MON and RY_SP, "RY" is in the result set.
+        """
+        pvs = vars(self.PVS)
+        bases_mon = {k[:-4] for k in pvs if k.endswith("_MON")}
+        bases_sp  = {k[:-3] for k in pvs if k.endswith("_SP")}
+        return bases_mon & bases_sp
+
+    def _motor_base(self, name):
+        """Translate user-facing motor name to its PVS base, or None.
+
+        "ry"    → "RY"
+        "cs_rx" → "CS_RX"
+        Anything not found in PVS → None
+        """
+        candidate = name.upper()
+        pvs = vars(self.PVS)
+        if f"{candidate}_MON" in pvs or f"{candidate}_SP" in pvs:
+            return candidate
+        return None
+
+    def _motor_threshold(self, name):
+        """Return the convergence threshold appropriate for this motor."""
+        return (
+            self._THRESHOLD_ANG
+            if name in self._ANGULAR_MOTORS
+            else self._THRESHOLD_POS
+        )
+
+    # ── attribute interception ────────────────────────────────────────────
+
+    def __getattr__(self, name):
+        """Read from the _MON PV when a motor name is accessed as an attribute.
+
+        Only called when normal lookup (class dict, instance dict) fails.
+        Private / dunder attributes and 'PVS' raise AttributeError immediately
+        to avoid infinite recursion.
+        """
+        if name.startswith("_") or name in ("PVS",):
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
+        base = self._motor_base(name)
+        if base is not None:
+            mon_pv = getattr(self.PVS, f"{base}_MON")
+            if mon_pv is not None:
+                return self[mon_pv]
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
+
+    def __setattr__(self, name, value):
+        """Write to motor via robust movement when a motor name is assigned.
+
+        Non-motor attributes (private, 'PVS', or anything not in PVS) are
+        stored normally via object.__setattr__ so that regular instance
+        attributes (e.g. PROPERTIES_DEFAULT) are unaffected.
+        """
+        if name.startswith("_") or name == "PVS":
+            object.__setattr__(self, name, value)
+            return
+        base = self._motor_base(name)
+        if base is not None:
+            self._move_robust_mirror_motor(
+                motor=name,
+                value=value,
+                threshold=self._motor_threshold(name),
+                max_count=self._COUNT_LIM,
+                delay=self._DELAY,
+                trials=self._TRIALS,
+            )
+            return
+        object.__setattr__(self, name, value)
+
+    # ── motor movement engine ─────────────────────────────────────────────
+
+    def _move_mirror_motor(self, motor, value, threshold, max_count, delay):
+        """Write setpoint and poll readback until convergence or timeout.
+
+        Args:
+            motor     : user-facing motor name ('ry', 'tx', 'cs_rx', …).
+            value     : target position.
+            threshold : convergence criterion (|readback - value| < threshold).
+            max_count : number of polling iterations before giving up.
+            delay     : seconds to wait between iterations.
+
+        Returns:
+            True  if the motor reached the target within max_count iterations.
+            False on timeout.
+
+        Raises:
+            ValueError : if value is outside [LOLM, HILM] limits.
+            IOError    : if the setpoint PUT fails unexpectedly.
+        """
+        base = self._motor_base(motor)
+        if base is None:
+            raise ValueError(
+                f"Motor '{motor}' not found in PVS. "
+                f"Available: {sorted(b.lower()
+                                     for b in self._pvs_motor_bases())}"
+            )
+
+        sp_pv   = getattr(self.PVS, f"{base}_SP")
+        mon_pv  = getattr(self.PVS, f"{base}_MON")
+        lolm_pv = getattr(self.PVS, f"{base}_LOLM")
+        hilm_pv = getattr(self.PVS, f"{base}_HILM")
+
+        # Limit validation — EPICS hardware limits are the source of truth.
+        if lolm_pv is not None and hilm_pv is not None:
+            low, high = self[lolm_pv], self[hilm_pv]
+            if not (low <= value <= high):
+                raise ValueError(
+                    f"'{motor}' target {value} is outside hardware limits "
+                    f"[{low}, {high}]."
+                )
+
+        # Send setpoint.
+        try:
+            self[sp_pv] = value
+        except Exception as err:
+            current = self[mon_pv]
+            raise IOError(
+                f"PUT error for '{motor}': current={current:.4f}\n{err}"
+            ) from err
+
+        # Poll readback.
+        for icount in range(max_count + 1):
+            current = self[mon_pv]
+            diff = abs(current - value)
+            print(
+                f"Moving '{motor}' → {value} | now: {current:.4f}"
+                f" | Δ: {diff:.4f}", end="\r",
+            )
+            if diff <= threshold:
+                return True
+            if icount < max_count:
+                _time.sleep(delay)
+
+        print(
+            f"\nWARNING: '{motor}' did not reach {value}."
+            f" Current: {self[mon_pv]:.4f}"
+        )
+        return False
+
+    def _move_robust_mirror_motor(
+        self, motor, value, threshold, max_count, delay, trials
+    ):
+        """Retry _move_mirror_motor up to *trials* times.
+
+        Args:
+            motor     : user-facing motor name.
+            value     : target position.
+            threshold : convergence criterion.
+            max_count : polling iterations per trial.
+            delay     : seconds between polling iterations.
+            trials    : maximum number of move attempts.
+
+        Returns:
+            True if the motor reached the target; False otherwise.
+        """
+        for attempt in range(1, trials + 1):
+            if self._move_mirror_motor(motor, value, threshold,
+                                       max_count, delay):
+                print(f"\n'{motor}' reached {value}"
+                      f" (attempt {attempt}/{trials}).")
+                return True
+        current = getattr(self, motor)
+        print(
+            f"\n'{motor}' failed after {trials} attempt(s)."
+            f" Current: {current:.4f}"
+        )
+        return False
+
+    def move(self, motor, value, threshold=None, max_count=None, delay=None):
+        """Move *motor* to *value* with full retry logic.
+
+        Generic replacement for the individual move_rx / move_ry / move_tx / …
+        methods.  Those explicit methods may still exist in MirrorBase for
+        backward compatibility, but they all delegate here.
+
+        Args:
+            motor     : user-facing motor name ('ry', 'tx', 'cs_rx', …).
+            value     : target position.
+            threshold : override default threshold (optional).
+            max_count : override _COUNT_LIM (optional).
+            delay     : override _DELAY (optional).
+
+        Returns:
+            True on success, False on failure.
+        """
+        return self._move_robust_mirror_motor(
+            motor=motor,
+            value=value,
+            threshold=(threshold if threshold is not None
+                       else self._motor_threshold(motor)),
+            max_count=max_count if max_count is not None else self._COUNT_LIM,
+            delay=delay if delay is not None else self._DELAY,
+            trials=self._TRIALS,
+        )
+
+    def stop(self, motor, timeout=None):
+        """Send stop command to *motor* and wait for it to finish moving.
+
+        Args:
+            motor   : user-facing motor name ('ry', 'tx', 'y1', …).
+            timeout : seconds to wait for the motor to stop.
+                      Defaults to _DEFAULT_MOTOR_TIMEOUT.
+
+        Returns:
+            True if the motor stopped within timeout; False otherwise.
+        """
+        base = self._motor_base(motor)
+        if base is None:
+            raise ValueError(f"Motor '{motor}' not found in PVS.")
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        stop_pv = getattr(self.PVS, f"{base}_STOP")
+        dmvn_pv = getattr(self.PVS, f"{base}_DMVN")
+        self[stop_pv] = 1
+        if dmvn_pv is not None:
+            return self._wait(dmvn_pv, 0, timeout=timeout)
+        return True
+
+
+class MirrorBase(_PVAccessor, _Device):
     """Base Mirror device."""
 
     _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
@@ -29,92 +295,6 @@ class MirrorBase(_Device):
     def __init__(self, devname=None, props2init="all", **kwargs):
         """Init."""
         super().__init__(devname, props2init=props2init, **kwargs)
-
-    @property
-    def ry_pos(self):
-        """Return the linear actuator pos related to RY rotation [mm].
-
-        RY is performed by a linear actuator in one of
-        longitudinal ends of the mirror. The mirror is pivoted
-        at its longitudinal center and the linear actuator induces
-        a rotation around the Y axis.
-        """
-        return self[self.PVS.RY_MON]
-
-    @property
-    def tx_pos(self):
-        """Return the linear actuator pos related to Tx translation [mm].
-
-        This linear actuator translates directly to the horizontal
-        transverse position of the mirror.
-        """
-        return self[self.PVS.TX_MON]
-
-    @property
-    def y1_pos(self):
-        """Return the first linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in oposite horizontal ends.
-        """
-        return self[self.PVS.Y1_MON]
-
-    @property
-    def y2_pos(self):
-        """Return the second linear vertical actuator pos Y2 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        return self[self.PVS.Y2_MON]
-
-    @property
-    def y3_pos(self):
-        """Return the third linear vertical actuator pos Y3 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        return self[self.PVS.Y3_MON]
-
-    # Methods for kinematic actuators.
-
-    @property
-    def cs_rx_pos(self):
-        """Return the linear actuator pos related to RY rotation [mm].
-
-        RY is performed by a linear actuator in one of
-        longitudinal ends of the mirror. The mirror is pivoted
-        at its longitudinal center and the linear actuator induces
-        a rotation around the Y axis.
-        """
-        return self[self.PVS.CS_RX_MON]
-
-    @property
-    def cs_ty_pos(self):
-        """Return the linear actuator pos related to Ty translation [mm].
-
-        This linear actuator translates directly to the horizontal
-        transverse position of the mirror.
-        """
-        return self[self.PVS.CS_TY_MON]
-
-    @property
-    def cs_rz_pos(self):
-        """Return the linear actuator pos related to RZ rotation [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        return self[self.PVS.CS_RZ_MON]
 
     @property
     def photocurrent_signal(self):
@@ -161,244 +341,10 @@ class MirrorBase(_Device):
         """Return M1 flowmeter 2 value [mL/min]."""
         return self[self.PVS.FLOWMETER2_MON]
 
-    @ry_pos.setter
-    def ry_pos(self, value):
-        """Set the linear actuator pos related to RY rotation [mm].
-
-        RY is performed by a linear actuator in one of
-        longitudinal ends of the mirror. The mirror is pivoted
-        at its longitudinal center and the linear actuator induces
-        a rotation around the Y axis.
-        """
-        self[self.PVS.RY_SP] = value
-
-    @tx_pos.setter
-    def tx_pos(self, value):
-        """Set the linear actuator pos related to Tx translation [mm].
-
-        This linear actuator is directly related to the horizontal
-        transverse position of the mirror.
-        """
-        self[self.PVS.TX_SP] = value
-
-    @y1_pos.setter
-    def y1_pos(self, value):
-        """Set the first linear vertical actuator pos Y1 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self[self.PVS.Y1_SP] = value
-
-    @y2_pos.setter
-    def y2_pos(self, value):
-        """Set the second linear vertical actuator pos Y2 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self[self.PVS.Y2_SP] = value
-
-    @y3_pos.setter
-    def y3_pos(self, value):
-        """Set the third linear vertical actuator pos Y3 [mm].
-
-        Rotations RotX, RotZ and translation Ty are implemented as combinations
-        of three vertical independent actuators. Y1 actuator is located in one
-        longitudinal side of the mirror base whereas Y2 amd Y3 are located in
-        the other side, in opposite horizontal ends.
-        """
-        self[self.PVS.Y3_SP] = value
-
     @temperature_ref.setter
     def temperature_ref(self, value):
         """Set M1 temperature reference [°C]."""
         self[self.PVS.TEMP_SP] = value
-
-    def _cmd_motor_stop(self, propty, timeout):
-        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
-        self[propty] = 1
-        return self._wait(propty, 0, timeout=timeout)
-
-    def cmd_ry_stop(self, timeout=None):
-        """Stop linear actuator for RY rotation."""
-        return self._cmd_motor_stop(self.PVS.RY_STOP, timeout)
-
-    def cmd_tx_stop(self, timeout=None):
-        """Stop linear actuator for Tx translation."""
-        return self._cmd_motor_stop(self.PVS.TX_STOP, timeout)
-
-    def cmd_y1_stop(self, timeout=None):
-        """Stop linear actuator Y1."""
-        return self._cmd_motor_stop(self.PVS.Y1_STOP, timeout)
-
-    def cmd_y2_stop(self, timeout=None):
-        """Stop linear actuator Y2."""
-        return self._cmd_motor_stop(self.PVS.Y2_STOP, timeout)
-
-    def cmd_y3_stop(self, timeout=None):
-        """Stop linear actuator Y3."""
-        return self._cmd_motor_stop(self.PVS.Y3_STOP, timeout)
-
-    def _move_mirror_motor(
-            self, motor, value, threshold, max_count, delay
-            ):
-        """Moves the slit indicated by 'motor'.
-
-        Motor is one of ('tx', 'rx', 'ty', 'ry', 'rz', 'y1', 'y2', 'y3')
-        to the given value, returning True if reached, False on timeout.
-        """
-        if motor not in ("tx", "rx", "ty", "ry", "rz", "y1", "y2", "y3"):
-            raise ValueError(f"Invalid motor: {motor}")
-
-        attr_name = f"{motor}_pos"
-
-        try:
-            setattr(self, attr_name, value)
-        except Exception as err:
-            current = getattr(self, attr_name)
-            raise IOError(f"PUT error: pv, pos = ({current})\n{err}") from err
-
-        # Check for acknowledgement. Avoid endless loop if command
-        # is not properly received.
-        icount = 0
-        current_value = getattr(self, attr_name)
-        while abs(current_value - value) > threshold:
-            _time.sleep(delay)
-            current_value = getattr(self, attr_name)
-            print(
-                f"Slit is Moving... | New pos: {value}"
-                f" | Curr: {current_value:.2f}"
-                f" | Dif: {abs(current_value - value)}",
-                end="\r",
-            )
-            if icount >= max_count:
-                print(
-                    f"\nWARNING: a lâmina '{motor}' não se moveu."
-                    f"\nPosição atual: {current_value:.4f}"
-                )
-                return False
-            icount += 1
-
-        return True
-
-    def _move_robust_mirror_motor(
-        self, motor, value, threshold, max_count, delay, trials
-    ):
-        """Tries to move the blade indicated by `motor` up to `value`.
-
-        Repeat up to `trials` times if it fails, and returns True on success.
-
-        Args:
-            motor      : 'tx', 'rx', 'ty', 'ry', 'rz', 'y1', 'y2' or 'y3'.
-            value      : target position.
-            threshold  : parameters for _move_mirror_motor
-            max_count  : parameters for _move_mirror_motor
-            delay      : parameters for _move_mirror_motor
-            trials     : how many times to restart the movement if it fails
-
-        Returns:
-            bool : True or False.
-        """
-        if motor not in ("tx", "rx", "ty", "ry", "rz", "y1", "y2", "y3"):
-            raise ValueError(f"Invalid motor: {motor}")
-
-        method_name = f"move_{motor}"
-        move_method = getattr(self, method_name)
-        if not callable(move_method):
-            raise AttributeError(f"Method {method_name} doesn't exist.")
-
-        ctrials = 0
-        status = False
-        try:
-            while ctrials < trials and not status:
-                status = move_method(
-                    value=value,
-                    threshold=threshold,
-                    max_count=max_count,
-                    delay=delay,
-                )
-                ctrials += 1
-            current_value = getattr(self, f"{motor}_pos")
-            if not status:
-                raise Exception(
-                    f"WARNING: maximum number of trials to move {motor}"
-                    f" slit reached. \nCurrent position: {current_value}"
-                )
-            print("Done!")
-            return True
-        except Exception:
-            print("Not moved!")
-            return False
-
-    def move_rx(
-        self, value, threshold=_THRESHOLD_ANG,
-        max_count=_COUNT_LIM, delay=_DELAY
-    ):
-        """Moves the 'rx' motor to the given value."""
-        return self._move_mirror_motor(
-            motor="rx",
-            value=value,
-            threshold=threshold,
-            max_count=max_count,
-            delay=delay,
-        )
-
-    def move_ry(
-        self, value, threshold=_THRESHOLD_ANG,
-        max_count=_COUNT_LIM, delay=_DELAY
-    ):
-        """Moves the 'ry' motor to the given value."""
-        return self._move_mirror_motor(
-            motor="ry",
-            value=value,
-            threshold=threshold,
-            max_count=max_count,
-            delay=delay,
-        )
-
-    def move_rz(
-        self, value, threshold=_THRESHOLD_ANG,
-        max_count=_COUNT_LIM, delay=_DELAY
-    ):
-        """Moves the 'rz' motor to the given value."""
-        return self._move_mirror_motor(
-            motor="rz",
-            value=value,
-            threshold=threshold,
-            max_count=max_count,
-            delay=delay,
-        )
-
-    def move_tx(
-        self, value, threshold=_THRESHOLD_POS,
-        max_count=_COUNT_LIM, delay=_DELAY
-    ):
-        """Moves the 'tx' motor to the given value."""
-        return self._move_mirror_motor(
-            motor="tx",
-            value=value,
-            threshold=threshold,
-            max_count=max_count,
-            delay=delay,
-        )
-
-    def move_ty(
-        self, value, threshold=_THRESHOLD_POS,
-        max_count=_COUNT_LIM, delay=_DELAY
-    ):
-        """Moves the 'ty' motor to the given value."""
-        return self._move_mirror_motor(
-            motor="ty",
-            value=value,
-            threshold=threshold,
-            max_count=max_count,
-            delay=delay,
-        )
 
 
 """From the EPICS Motor Record Homepage
@@ -567,13 +513,13 @@ class CAXMirror(MirrorBase):
 
         # SENSORS
         self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
-        self.PVS.TEMP0_MON = "A:RIO01:9226B:temp0"
-        self.PVS.TEMP1_MON = "A:RIO01:9226B:temp1"
-        self.PVS.TEMP2_MON = "A:RIO01:9226B:temp2"
-        self.PVS.TEMP3_MON = "A:RIO01:9226B:temp3"
-        self.PVS.TEMP4_MON = "A:RIO01:9226B:temp4"
-        self.PVS.TEMP_SP = "A:RIO01:M1_CtrltempSp"
-        self.PVS.TEMP_RB = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TEMP0_MON      = "A:RIO01:9226B:temp0"
+        self.PVS.TEMP1_MON      = "A:RIO01:9226B:temp1"
+        self.PVS.TEMP2_MON      = "A:RIO01:9226B:temp2"
+        self.PVS.TEMP3_MON      = "A:RIO01:9226B:temp3"
+        self.PVS.TEMP4_MON      = "A:RIO01:9226B:temp4"
+        self.PVS.TEMP_SP        = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TEMP_RB        = "A:RIO01:M1_CtrltempSp"
 
         # FLOWMETERS
         self.PVS.FLOWMETER1_MON = "F:EPS01:MR1FIT1"
