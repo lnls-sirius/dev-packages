@@ -323,25 +323,25 @@ class CAXSlit(SlitBase):
 
         super().__init__(devname, props2init, **kwargs)
 
-        self.PVS.TOP_SP = "A.VAL"
-        self.PVS.TOP_RB = "A.VAL"  # That doesn't have a RB PV
-        self.PVS.TOP_MON = "A.RBV"  # RBV is not the pv of readback
-        self.PVS.TOP_STOP = "A.STOP"
+        self.PVS.TOP_SP      = "A.VAL"
+        self.PVS.TOP_RB      = "A.VAL"   # That doesn't have a RB PV
+        self.PVS.TOP_MON     = "A.RBV"   # RBV is not the pv of readback
+        self.PVS.TOP_STOP    = "A.STOP"
 
-        self.PVS.BOTTOM_SP = "B.VAL"
-        self.PVS.BOTTOM_RB = "B.VAL"  # That doesn't have a RB PV
-        self.PVS.BOTTOM_MON = "B.RBV"  # RBV is not the pv of readback
+        self.PVS.BOTTOM_SP   = "B.VAL"
+        self.PVS.BOTTOM_RB   = "B.VAL"   # That doesn't have a RB PV
+        self.PVS.BOTTOM_MON  = "B.RBV"   # RBV is not the pv of readback
         self.PVS.BOTTOM_STOP = "B.STOP"
 
-        self.PVS.LEFT_SP = "C.VAL"
-        self.PVS.LEFT_RB = "C.VAL"  # That doesn't have a RB PV
-        self.PVS.LEFT_MON = "C.RBV"  # RBV is not the pv of readback
-        self.PVS.LEFT_STOP = "C.STOP"
+        self.PVS.LEFT_SP     = "C.VAL"
+        self.PVS.LEFT_RB     = "C.VAL"   # That doesn't have a RB PV
+        self.PVS.LEFT_MON    = "C.RBV"   # RBV is not the pv of readback
+        self.PVS.LEFT_STOP   = "C.STOP"
 
-        self.PVS.RIGHT_SP = "D.VAL"
-        self.PVS.RIGHT_RB = "D.VAL"  # That doesn't have a RB PV
-        self.PVS.RIGHT_MON = "D.RBV"  # RBV is not the pv of readback
-        self.PVS.RIGHT_STOP = "D.STOP"
+        self.PVS.RIGHT_SP    = "D.VAL"
+        self.PVS.RIGHT_RB    = "D.VAL"   # That doesn't have a RB PV
+        self.PVS.RIGHT_MON   = "D.RBV"   # RBV is not the pv of readback
+        self.PVS.RIGHT_STOP  = "D.STOP"
 
         self.PROPERTIES_DEFAULT = tuple(
             set(value for key, value in vars(self.PVS).items())

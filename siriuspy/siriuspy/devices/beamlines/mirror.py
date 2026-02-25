@@ -17,24 +17,28 @@ class _PVAccessor:
     """Dynamic motor PV accessor with robust, retried movement.
 
     This mixin adds transparent attribute-style access to any motor that is
-    defined in the concrete device's PVS namespace following the convention:
+    defined in the concrete device's PVS namespace. The convention used is:
 
-        {BASE}_MON    readback (monitor) PV
-        {BASE}_SP     setpoint PV
-        {BASE}_LOLM   low  hardware limit PV   (optional but recommended)
-        {BASE}_HILM   high hardware limit PV   (optional but recommended)
+        {BASE}        motor record base PV  (reads .VAL field by default)
+        {BASE}_MON    readback (monitor) PV (.RBV)
+        {BASE}_SP     setpoint PV           (.VAL)
+        {BASE}_LOLM   low  hardware limit   (.LLM)
+        {BASE}_HILM   high hardware limit   (.HLM)
 
-    The user-facing attribute name is the base name lowercased:
-        PVS.RY_MON / PVS.RY_SP  →  motor name "ry"
-        PVS.CS_RX_MON / …       →  motor name "cs_rx"
+    Any PVS entry is accessible by lowercasing its name:
+        mirror.ry       → self[PVS.RY]       (motor base / VAL)
+        mirror.ry_mon   → self[PVS.RY_MON]   (readback, .RBV)
+        mirror.tx_lolm  → self[PVS.TX_LOLM]  (low limit)
+        mirror.cs_rz    → self[PVS.CS_RZ]
+        mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
 
     No additional mapping dictionary is required; any motor added to PVS in a
     subclass becomes immediately accessible here.
 
     Usage
     -----
-    Reading:    mirror.ry          → float (current readback)
-    Writing:    mirror.ry = 5.0   → blocks until motor reaches 5 mrad
+    Reading:   mirror.ry_mon        → current readback value [mrad]
+    Writing:   mirror.ry = 5.0      → blocks until motor reaches 5 mrad
 
     The write path calls _move_robust_mirror_motor, which:
       1. Validates the value against [LOLM, HILM] limits.
@@ -73,7 +77,7 @@ class _PVAccessor:
         """
         candidate = name.upper()
         pvs = vars(self.PVS)
-        if f"{candidate}_MON" in pvs or f"{candidate}_SP" in pvs:
+        if f"{candidate}" in pvs:
             return candidate
         return None
 
@@ -88,37 +92,47 @@ class _PVAccessor:
     # ── attribute interception ────────────────────────────────────────────
 
     def __getattr__(self, name):
-        """Read from the _MON PV when a motor name is accessed as an attribute.
+        """Read from the corresponding PVS when a motor attribute is accessed.
 
         Only called when normal lookup (class dict, instance dict) fails.
-        Private / dunder attributes and 'PVS' raise AttributeError immediately
-        to avoid infinite recursion.
+        The name is uppercased and looked up verbatim in PVS, so any PVS
+        entry is reachable:
+
+            mirror.ry       → self[PVS.RY]       (motor base / VAL)
+            mirror.ry_mon   → self[PVS.RY_MON]   (readback, .RBV)
+            mirror.ry_sp    → self[PVS.RY_SP]    (setpoint, .VAL)
+            mirror.tx_lolm  → self[PVS.TX_LOLM]  (low limit)
+            mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
         """
-        if name.startswith("_") or name in ("PVS",):
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'"
-            )
+        # Check if this is a motor attribute by looking for its base in PVS.
         base = self._motor_base(name)
         if base is not None:
-            mon_pv = getattr(self.PVS, f"{base}_MON")
-            if mon_pv is not None:
-                return self[mon_pv]
+            pv = getattr(self.PVS, base)
+            if pv is not None:
+                return self[pv]
         raise AttributeError(
             f"'{type(self).__name__}' object has no attribute '{name}'"
         )
 
     def __setattr__(self, name, value):
-        """Write to motor via robust movement when a motor name is assigned.
+        """Write an attribute, routing through the appropriate mechanism.
 
-        Non-motor attributes (private, 'PVS', or anything not in PVS) are
-        stored normally via object.__setattr__ so that regular instance
-        attributes (e.g. PROPERTIES_DEFAULT) are unaffected.
+        Three cases:
+        1. Full motors (PVS has both {BASE}_SP and {BASE}_MON) → robust
+           blocking move via _move_robust_mirror_motor.
+        2. Other PVS entries (limits, enable flags, …) → direct PV write,
+           consistent with how slit.py and dvf.py handle these.
+        3. Anything else → regular instance attribute.
+
+        No special-casing of private names or 'PVS' is needed: _pvs_motor_bases
+        uses the class-level PVS (always present), and _PVNames.__getattr__
+        safely returns None for any undefined attribute, so everything
+        falls through to object.__setattr__ correctly.
         """
-        if name.startswith("_") or name == "PVS":
-            object.__setattr__(self, name, value)
-            return
-        base = self._motor_base(name)
-        if base is not None:
+        base = name.upper()
+
+        # Motor attribute: route through the movement engine.
+        if base in self._pvs_motor_bases():
             self._move_robust_mirror_motor(
                 motor=name,
                 value=value,
@@ -128,6 +142,14 @@ class _PVAccessor:
                 trials=self._TRIALS,
             )
             return
+
+        # Non-motor PVS entry (limit, enable, …): write directly.
+        pv = getattr(self.PVS, base)
+        if pv is not None:
+            self[pv] = value
+            return
+
+        # Regular attribute: set as usual.
         object.__setattr__(self, name, value)
 
     # ── motor movement engine ─────────────────────────────────────────────
