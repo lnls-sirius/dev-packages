@@ -1687,8 +1687,9 @@ class IVU(IDFullMovCtrl):
         """Device names."""
 
         IVU18_08SB = 'SI-08SB:ID-IVU18'
+        IVU18_11SP = "SI-11SP:ID-SIMUL"
         IVU18_14SB = 'SI-14SB:ID-IVU18'
-        ALL = (IVU18_08SB, IVU18_14SB)
+        ALL = (IVU18_08SB, IVU18_11SP, IVU18_14SB)
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
