@@ -180,12 +180,14 @@ class IDSearch:
         {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
     # define IDFF correctors labeling (and ordering)
+    # NOTE: the ordering within each category here follows the ordering of the
+    # correctors in the rack cabinets.
     IDFF_CH_LABELS = ('ch_1', 'ch_2')
     IDFF_CV_LABELS = ('cv_1', 'cv_2')
     IDFF_QS_LABELS = ('qs_1', 'qs_2')
     IDFF_LC_LABELS = ('lch', 'lcv')
     IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
-    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc2_2', 'cc1_2')
+    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2')
 
     _idname_2_idff = {
         'SI-06SB:ID-VPU29':  {
@@ -194,8 +196,8 @@ class IDSearch:
             'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
             IDFF_CC_LABELS[0]: 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-06SB:PS-CC2-1:Current-SP',  # upstream
-            IDFF_CC_LABELS[2]: 'SI-06SB:PS-CC2-2:Current-SP',  # downstream
-            IDFF_CC_LABELS[3]: 'SI-06SB:PS-CC1-2:Current-SP',  # downstream
+            IDFF_CC_LABELS[2]: 'SI-06SB:PS-CC1-2:Current-SP',  # downstream
+            IDFF_CC_LABELS[3]: 'SI-06SB:PS-CC2-2:Current-SP',  # downstream
         },
         'SI-07SP:ID-VPU29':  {
             'polarizations': ('vertical', ),
@@ -203,8 +205,9 @@ class IDSearch:
             'kparameter': 'SI-07SP:ID-VPU29:KParam-Mon',
             IDFF_CC_LABELS[0]: 'SI-07SP:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-07SP:PS-CC2-1:Current-SP',  # upstream
-            IDFF_CC_LABELS[2]: 'SI-07SP:PS-CC2-2:Current-SP',  # downstream
-            IDFF_CC_LABELS[3]: 'SI-07SP:PS-CC1-2:Current-SP',  # downstream
+            IDFF_CC_LABELS[2]: 'SI-07SP:PS-CC1-2:Current-SP',  # downstream
+            IDFF_CC_LABELS[3]: 'SI-07SP:PS-CC2-2:Current-SP',  # downstream
+
         },
         'SI-08SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
