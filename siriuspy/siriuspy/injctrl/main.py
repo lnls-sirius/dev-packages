@@ -65,7 +65,8 @@ class App(_Callback):
         self._bucketlist_start = 1
         self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
-        self._bucketlist_allowed_mask = _np.ones(_Const.MAX_BKT, dtype=bool)
+        self._bucketlist_allowed_mask = self._create_init_bucketlist_mask()
+
         self._isinj_delay = 0
         self._isinj_duration = 300
 
@@ -330,6 +331,8 @@ class App(_Callback):
             'BucketListStop-RB': self._bucketlist_stop,
             'BucketListStep-SP': self._bucketlist_step,
             'BucketListStep-RB': self._bucketlist_step,
+            'BucketListAllowedMask-SP': self._bucketlist_allowed_mask,
+            'BucketListAllowedMask-RB': self._bucketlist_allowed_mask,
             'IsInjecting-Mon': _Const.IdleInjecting.Idle,
             'IsInjDelay-SP': self._isinj_delay,
             'IsInjDelay-RB': self._isinj_delay,
@@ -1356,6 +1359,12 @@ class App(_Callback):
                 return True
         self._update_log('WARN:Could not update BucketList.')
         return False
+
+    def _create_init_bucketlist_mask(self):
+        # initial beam filling gap
+        mask = _np.ones(_Const.MAX_BKT, dtype=bool)
+        mask[417:513] = False  # 96-bucket gap
+        return mask
 
     # --- auxiliary accumulation methods ---
 
