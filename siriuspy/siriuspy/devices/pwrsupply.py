@@ -16,6 +16,12 @@ from ..search import PSSearch as _PSSearch
 from .device import Device as _Device
 from .timing import Trigger as _Trigger
 
+# TODO: refactor all these classes, adding LinacPS and a factory class to
+# create the correct type of power supply device based on the device name
+# (see SOFB classes). This would make the code more maintainable and easier
+# to understand, avoiding the use of many if-else statements based on
+# power supply type.
+
 
 class _PSDev(_Device):
     """Base Power Supply Device."""
@@ -25,7 +31,7 @@ class _PSDev(_Device):
     _default_timeout = 0.5  # [s]
     _properties_common = ('PwrState-Sel', 'PwrState-Sts')
     _properties_linac = ('Current-SP', 'Current-RB', 'Current-Mon')
-    _properties_magps = (
+    _properties_basicps = (
         'Current-SP',
         'Current-RB',
         'Current-Mon',
@@ -58,7 +64,7 @@ class _PSDev(_Device):
         'CycleAuxParam-RB',
         'CycleEnbl-Mon',
     )
-    _properties_fbp = _properties_magps + ('IDFFMode-Sel', 'IDFFMode-Sts')
+    _properties_fbp = _properties_basicps + ('IDFFMode-Sel', 'IDFFMode-Sts')
     _properties_fc = (
         'AlarmsAmp-Mon',
         'OpMode-Sel',
@@ -156,7 +162,7 @@ class _PSDev(_Device):
             self._is_pulsed,
             self._is_fc,
             self._is_fbp,
-            self._is_magps,
+            self._is_basicps,
         ) = _PSDev.get_device_type(devname)
 
         # set attributes
@@ -180,7 +186,8 @@ class _PSDev(_Device):
             else:
                 maname = name
             self._normalizer = _NormFactory.create(maname)
-        except:
+        except:  # noqa: E722
+            # TODO: improve this block to avoid catching all exceptions
             self._normalizer = None
 
     @property
@@ -210,13 +217,18 @@ class _PSDev(_Device):
 
     @property
     def is_fc(self):
-        """Return True if device is a Sirius fast corrector power supply"""
+        """Return True if device is a Sirius fast corrector power supply."""
         return self._is_fc
 
     @property
-    def is_magps(self):
+    def is_basicps(self):
         """Return True if device is a Sirius magnet power supply."""
-        return self._is_pulsed
+        return self._is_basicps
+
+    @property
+    def is_fbp(self):
+        """Return True if device is a Sirius FBP power supply."""
+        return self._is_fbp
 
     @property
     def normalizer(self):
@@ -347,7 +359,9 @@ class _PSDev(_Device):
         is_pulsed = devname.dis == 'PU'
         is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
         is_fbp = psmodel == 'FBP'
-        is_magps = not is_linac and not is_pulsed and not is_fc and not is_fbp
+        is_basicps = (
+            not is_linac and not is_pulsed and not is_fc and not is_fbp
+        )
         return (
             pstype,
             psmodel,
@@ -358,7 +372,7 @@ class _PSDev(_Device):
             is_pulsed,
             is_fc,
             is_fbp,
-            is_magps,
+            is_basicps,
         )
 
     # --- private methods ---
@@ -380,7 +394,7 @@ class _PSDev(_Device):
         elif self._is_fbp:
             properties += _PSDev._properties_fbp
         else:
-            properties += _PSDev._properties_magps
+            properties += _PSDev._properties_basicps
 
         # strength properties
         strength_sp_propty = self._strength_propty + '-SP'
@@ -419,14 +433,17 @@ class PowerSupply(_PSDev):
     def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
         """."""
         super().__init__(devname, auto_monitor_mon, props2init)
-        dic = _get_ps_scopesourcemap(devname)
-        str_, vals = list(
-            zip(*[
-                (k.title().replace(' ', '').split('[')[0], v)
-                for k, v in dic.items()
-            ])
-        )
-        self.ScopeSrcAddr = _Const.register('ScopeSrcAddr', str_, values=vals)
+        if self.is_basicps or self.is_fbp:
+            dic = _get_ps_scopesourcemap(devname)
+            str_, vals = list(
+                zip(*[  # noqa: B905
+                    (k.title().replace(' ', '').split('[')[0], v)
+                    for k, v in dic.items()
+                ])
+            )
+            self.ScopeSrcAddr = _Const.register(
+                'ScopeSrcAddr', str_, values=vals
+            )
 
     @property
     def current(self):
