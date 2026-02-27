@@ -859,6 +859,16 @@ class CAXDtc(DVFImgProc):
         """Return DVF lens position [mm]."""
         return self["PP01:F.RBV"]
 
+    @property
+    def lens_min(self):
+        """Return DVF lens minimum position [mm]."""
+        return self["PP01:F.LLM"]
+
+    @property
+    def lens_max(self):
+        """Return DVF lens maximum position [mm]."""
+        return self["PP01:F.HLM"]
+
     @z_pos.setter
     def z_pos(self, value):
         """Set DVF base motor longitudinal position [mm]."""
