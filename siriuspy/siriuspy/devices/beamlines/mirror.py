@@ -40,7 +40,7 @@ class _PVAccessor:
     Reading:   mirror.ry_mon        → current readback value [mrad]
     Writing:   mirror.ry = 5.0      → blocks until motor reaches 5 mrad
 
-    The write path calls _move_robust_mirror_motor, which:
+    The write path calls _move_robust_device_motor, which:
       1. Validates the value against [LOLM, HILM] limits.
       2. Writes the setpoint.
       3. Polls the readback until the error is below threshold.
@@ -49,6 +49,11 @@ class _PVAccessor:
     Direct setpoint write (no blocking):
         mirror['A:PB01:m2.VAL'] = 5.0   ← bypass the accessor if needed
     """
+    # Default parameters for motor movement;
+    # can be overridden per-motor in move().
+    _COUNT_LIM = 8
+    _DELAY     = 4    # [s]
+    _TRIALS    = 3
 
     # Motors whose motion threshold is angular rather than positional.
     _ANGULAR_MOTORS = frozenset({
@@ -98,10 +103,10 @@ class _PVAccessor:
         The name is uppercased and looked up verbatim in PVS, so any PVS
         entry is reachable:
 
-            mirror.ry       → self[PVS.RY]       (motor base / VAL)
-            mirror.ry_mon   → self[PVS.RY_MON]   (readback, .RBV)
-            mirror.ry_sp    → self[PVS.RY_SP]    (setpoint, .VAL)
-            mirror.tx_lolm  → self[PVS.TX_LOLM]  (low limit)
+            mirror.ry         → self[PVS.RY]       (motor base / VAL)
+            mirror.ry_mon     → self[PVS.RY_MON]   (readback, .RBV)
+            mirror.ry_sp      → self[PVS.RY_SP]    (setpoint, .VAL)
+            mirror.tx_lolm    → self[PVS.TX_LOLM]  (low limit)
             mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
         """
         # Check if this is a motor attribute by looking for its base in PVS.
@@ -119,7 +124,7 @@ class _PVAccessor:
 
         Three cases:
         1. Full motors (PVS has both {BASE}_SP and {BASE}_MON) → robust
-           blocking move via _move_robust_mirror_motor.
+           blocking move via _move_robust_device_motor.
         2. Other PVS entries (limits, enable flags, …) → direct PV write,
            consistent with how slit.py and dvf.py handle these.
         3. Anything else → regular instance attribute.
@@ -133,7 +138,7 @@ class _PVAccessor:
 
         # Motor attribute: route through the movement engine.
         if base in self._pvs_motor_bases():
-            self._move_robust_mirror_motor(
+            self._move_robust_device_motor(
                 motor=name,
                 value=value,
                 threshold=self._motor_threshold(name),
@@ -154,7 +159,7 @@ class _PVAccessor:
 
     # ── motor movement engine ─────────────────────────────────────────────
 
-    def _move_mirror_motor(self, motor, value, threshold, max_count, delay):
+    def _move_device_motor(self, motor, value, threshold, max_count, delay):
         """Write setpoint and poll readback until convergence or timeout.
 
         Args:
@@ -184,6 +189,7 @@ class _PVAccessor:
         mon_pv  = getattr(self.PVS, f"{base}_MON")
         lolm_pv = getattr(self.PVS, f"{base}_LOLM")
         hilm_pv = getattr(self.PVS, f"{base}_HILM")
+        movn_pv = getattr(self.PVS, f"{base}_MVN")
 
         # Limit validation — EPICS hardware limits are the source of truth.
         if lolm_pv is not None and hilm_pv is not None:
@@ -211,7 +217,10 @@ class _PVAccessor:
                 f"Moving '{motor}' → {value} | now: {current:.4f}"
                 f" | Δ: {diff:.4f}", end="\r",
             )
-            if diff <= threshold:
+
+            # Check for convergence. If the motor is still moving
+            # (MOVN == 1), continue loop.
+            if diff <= threshold and self[movn_pv] == 0:
                 return True
             if icount < max_count:
                 _time.sleep(delay)
@@ -222,10 +231,10 @@ class _PVAccessor:
         )
         return False
 
-    def _move_robust_mirror_motor(
+    def _move_robust_device_motor(
         self, motor, value, threshold, max_count, delay, trials
     ):
-        """Retry _move_mirror_motor up to *trials* times.
+        """Retry _move_device_motor up to *trials* times.
 
         Args:
             motor     : user-facing motor name.
@@ -239,7 +248,7 @@ class _PVAccessor:
             True if the motor reached the target; False otherwise.
         """
         for attempt in range(1, trials + 1):
-            if self._move_mirror_motor(motor, value, threshold,
+            if self._move_device_motor(motor, value, threshold,
                                        max_count, delay):
                 print(f"\n'{motor}' reached {value}"
                       f" (attempt {attempt}/{trials}).")
@@ -268,7 +277,7 @@ class _PVAccessor:
         Returns:
             True on success, False on failure.
         """
-        return self._move_robust_mirror_motor(
+        return self._move_robust_device_motor(
             motor=motor,
             value=value,
             threshold=(threshold if threshold is not None
@@ -307,9 +316,6 @@ class MirrorBase(_PVAccessor, _Device):
     _DEFAULT_MOTOR_TIMEOUT = 2.0  # [s]
     _THRESHOLD_POS = 0.01  # [mm]
     _THRESHOLD_ANG = 0.01  # [mrad]
-    _COUNT_LIM = 8
-    _DELAY     = 4                # [s]
-    _TRIALS    = 3
 
     # --- PVS ---
     PVS = _PVNames()
