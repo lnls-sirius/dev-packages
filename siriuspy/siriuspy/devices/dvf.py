@@ -7,7 +7,7 @@ from mathphys.imgproc import Image2D_Fit as _Image2D_Fit
 from mathphys.imgproc import FitGaussianScipy as _FitGaussianScipy
 
 from .device import Device as _Device
-
+from .beamlines.mirror import _PVAccessor, _PVNames
 
 class DVF(_Device):
     """Beam Visualization Device ("Dispositivo de Visualização de Feixe")."""
@@ -798,8 +798,10 @@ class DVFImgProc(DVF):
         return imgfit2d
 
 
-class CAXDtc(DVFImgProc):
+class CAXDtc(DVFImgProc, _PVAccessor):
     """CARCARÁ detector (DVF with motor controls)."""
+
+    _THRESHOLD_POS = 0.01  # [mm] -- PLACEHOLDER
 
     class DEVICES:
         """."""
@@ -807,6 +809,9 @@ class CAXDtc(DVFImgProc):
         CAX_B1 = "CAX:B"
 
         ALL = (CAX_B1,)
+
+    # --- PVS ---
+    PVS = _PVNames()
 
     def __init__(self, devname=None, props2init="all"):
         """Init."""
@@ -828,66 +833,38 @@ class CAXDtc(DVFImgProc):
             "PP01:F.STOP",
         )
 
+        pvprefix = 'PP01:'
+
+        # DVF z translation
+        self.PVS.Z         = pvprefix + "E"          # Motor base name
+        self.PVS.Z_SP      = pvprefix + "E.VAL"      # Setpoint value 
+        self.PVS.Z_MON     = pvprefix + "E.RBV"      # Readback value 
+        self.PVS.Z_HILM    = pvprefix + "E.HLM"      # High limit     
+        self.PVS.Z_LOLM    = pvprefix + "E.LLM"      # Low limit      
+        self.PVS.Z_STOP    = pvprefix + "E.STOP"     # Stop command   
+
+        # DVF lens focus control
+        self.PVS.LENS      = pvprefix + "F"          # Motor base name
+        self.PVS.LENS_SP   = pvprefix + "F.VAL"      # Setpoint value 
+        self.PVS.LENS_MON  = pvprefix + "F.RBV"      # Readback value 
+        self.PVS.LENS_LOLM = pvprefix + "F.LLM"      # High limit     
+        self.PVS.LENS_HILM = pvprefix + "F.HLM"      # Low limit      
+        self.PVS.LENS_STOP = pvprefix + "F.STOP"     # Stop command 
+
+        # Create PROPERTIES_DEFAULT from PVS
+        self.PROPERTIES_DEFAULT = DVFImgProc.PROPERTIES_DEFAULT + tuple(
+            set(vars(self.PVS).values())
+        )  
+
     def _get_pvname(self, propty):
         """Override to handle motor PVs that live under base devname.
 
-        (not BASLER01).
+        (not BASLER01). Overrides siriuspy.devices.Device._get_pvaname
         """
         # Motor PVs don't have BASLER01 in their path
         if "PP01" in propty:
             return self._motor_devname + ":" + propty
         # All other PVs follow normal pattern
         return super()._get_pvname(propty)
+    
 
-    @property
-    def z_pos(self):
-        """Return DVF base motor longitudinal position [mm]."""
-        return self["PP01:E.RBV"]
-
-    @property
-    def z_min(self):
-        """Return DVF base motor minimum longitudinal position [mm]."""
-        return self["PP01:E.LLM"]
-
-    @property
-    def z_max(self):
-        """Return DVF base motor maximum longitudinal position [mm]."""
-        return self["PP01:E.HLM"]
-
-    @property
-    def lens_pos(self):
-        """Return DVF lens position [mm]."""
-        return self["PP01:F.RBV"]
-
-    @property
-    def lens_min(self):
-        """Return DVF lens minimum position [mm]."""
-        return self["PP01:F.LLM"]
-
-    @property
-    def lens_max(self):
-        """Return DVF lens maximum position [mm]."""
-        return self["PP01:F.HLM"]
-
-    @z_pos.setter
-    def z_pos(self, value):
-        """Set DVF base motor longitudinal position [mm]."""
-        self["PP01:E.VAL"] = value
-
-    @lens_pos.setter
-    def lens_pos(self, value):
-        """Set DVF lens position [mm]."""
-        self["PP01:F.VAL"] = value
-
-    def _cmd_motor_stop(self, propty, timeout=None):
-        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
-        self[propty] = 1
-        return self._wait(propty, 0, timeout=timeout)
-
-    def cmd_z_stop(self, timeout=None):
-        """Stop DVF base motor."""
-        return self._cmd_motor_stop(self.devname + "PP01:E.STOP", timeout)
-
-    def cmd_lens_stop(self, timeout=None):
-        """Stop DVF lens motor."""
-        return self._cmd_motor_stop(self.devname + "PP01:F.STOP", timeout)
