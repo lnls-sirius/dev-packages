@@ -3,6 +3,7 @@
 import math as _math
 import operator as _opr
 import time as _time
+from types import SimpleNamespace as _SimpleNamespace
 from functools import partial as _partial
 
 import numpy as _np
@@ -23,6 +24,307 @@ from ..simul import SimPV as _PVSim, Simulation as _Simulation
 _DEF_TIMEOUT = 10  # s
 _TINY_INTERVAL = 0.050  # s
 
+class _PVNames(_SimpleNamespace):
+    def __getattr__(self, name):
+        """."""
+        return None
+
+
+class _PVAccessor:
+    """Dynamic motor PV accessor with robust, retried movement.
+
+    This mixin adds transparent attribute-style access to any motor that is
+    defined in the concrete device's PVS namespace. The convention used is:
+
+        {BASE}        motor record base PV  (reads .VAL field by default)
+        {BASE}_MON    readback (monitor) PV (.RBV)
+        {BASE}_SP     setpoint PV           (.VAL)
+        {BASE}_LOLM   low  hardware limit   (.LLM)
+        {BASE}_HILM   high hardware limit   (.HLM)
+
+    Any PVS entry is accessible by lowercasing its name:
+        mirror.ry       → self[PVS.RY]       (motor base / VAL)
+        mirror.ry_mon   → self[PVS.RY_MON]   (readback, .RBV)
+        mirror.tx_lolm  → self[PVS.TX_LOLM]  (low limit)
+        mirror.cs_rz    → self[PVS.CS_RZ]
+        mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
+
+    No additional mapping dictionary is required; any motor added to PVS in a
+    subclass becomes immediately accessible here.
+
+    Usage
+    -----
+    Reading:   mirror.ry_mon        → current readback value [mrad]
+    Writing:   mirror.ry = 5.0      → blocks until motor reaches 5 mrad
+
+    The write path calls _move_robust_device_motor, which:
+      1. Validates the value against [LOLM, HILM] limits.
+      2. Writes the setpoint.
+      3. Polls the readback until the error is below threshold.
+      4. Retries up to _TRIALS times before giving up.
+
+    Direct setpoint write (no blocking):
+        mirror['A:PB01:m2.VAL'] = 5.0   ← bypass the accessor if needed
+    """
+    # Default parameters for motor movement;
+    # can be overridden per-motor in move().
+    _COUNT_LIM = 8
+    _DELAY     = 4    # [s]
+    _TRIALS    = 3
+
+    # Motors whose motion threshold is angular rather than positional.
+    _ANGULAR_MOTORS = frozenset({
+        "rx", "ry", "rz",
+        "cs_rx", "cs_ry", "cs_rz",
+    })
+
+    # ── private helpers ───────────────────────────────────────────────────
+
+    def _pvs_motor_bases(self):
+        """Return the set of PVS base names that have both _MON and _SP.
+
+        Example: if PVS has RY_MON and RY_SP, "RY" is in the result set.
+        """
+        pvs = vars(self.PVS)
+        bases_mon = {k[:-4] for k in pvs if k.endswith("_MON")}
+        bases_sp  = {k[:-3] for k in pvs if k.endswith("_SP")}
+        return bases_mon & bases_sp
+
+    def _motor_base(self, name):
+        """Translate user-facing motor name to its PVS base, or None.
+
+        "ry"    → "RY"
+        "cs_rx" → "CS_RX"
+        Anything not found in PVS → None
+        """
+        candidate = name.upper()
+        pvs = vars(self.PVS)
+        if f"{candidate}" in pvs:
+            return candidate
+        return None
+
+    def _motor_threshold(self, name):
+        """Return the convergence threshold appropriate for this motor."""
+        return (
+            self._THRESHOLD_ANG
+            if name in self._ANGULAR_MOTORS
+            else self._THRESHOLD_POS
+        )
+
+    # ── attribute interception ────────────────────────────────────────────
+
+    def __getattr__(self, name):
+        """Read from the corresponding PVS when a motor attribute is accessed.
+
+        Only called when normal lookup (class dict, instance dict) fails.
+        The name is uppercased and looked up verbatim in PVS, so any PVS
+        entry is reachable:
+
+            mirror.ry         → self[PVS.RY]       (motor base / VAL)
+            mirror.ry_mon     → self[PVS.RY_MON]   (readback, .RBV)
+            mirror.ry_sp      → self[PVS.RY_SP]    (setpoint, .VAL)
+            mirror.tx_lolm    → self[PVS.TX_LOLM]  (low limit)
+            mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
+        """
+        # Check if this is a motor attribute by looking for its base in PVS.
+        base = self._motor_base(name)
+        if base is not None:
+            pv = getattr(self.PVS, base)
+            if pv is not None:
+                return self[pv]
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
+
+    def __setattr__(self, name, value):
+        """Write an attribute, routing through the appropriate mechanism.
+
+        Three cases:
+        1. Full motors (PVS has both {BASE}_SP and {BASE}_MON) → robust
+           blocking move via _move_robust_device_motor.
+        2. Other PVS entries (limits, enable flags, …) → direct PV write,
+           consistent with how slit.py and dvf.py handle these.
+        3. Anything else → regular instance attribute.
+
+        No special-casing of private names or 'PVS' is needed: _pvs_motor_bases
+        uses the class-level PVS (always present), and _PVNames.__getattr__
+        safely returns None for any undefined attribute, so everything
+        falls through to object.__setattr__ correctly.
+        """
+        base = name.upper()
+
+        # Motor attribute: route through the movement engine.
+        if base in self._pvs_motor_bases():
+            self._move_robust_device_motor(
+                motor=name,
+                value=value,
+                threshold=self._motor_threshold(name),
+                max_count=self._COUNT_LIM,
+                delay=self._DELAY,
+                trials=self._TRIALS,
+            )
+            return
+
+        # Non-motor PVS entry (limit, enable, …): write directly.
+        pv = getattr(self.PVS, base)
+        if pv is not None:
+            self[pv] = value
+            return
+
+        # Regular attribute: set as usual.
+        object.__setattr__(self, name, value)
+
+    # ── motor movement engine ─────────────────────────────────────────────
+
+    def _move_device_motor(self, motor, value, threshold, max_count, delay):
+        """Write setpoint and poll readback until convergence or timeout.
+
+        Args:
+            motor     : user-facing motor name ('ry', 'tx', 'cs_rx', …).
+            value     : target position.
+            threshold : convergence criterion (|readback - value| < threshold).
+            max_count : number of polling iterations before giving up.
+            delay     : seconds to wait between iterations.
+
+        Returns:
+            True  if the motor reached the target within max_count iterations.
+            False on timeout.
+
+        Raises:
+            ValueError : if value is outside [LOLM, HILM] limits.
+            IOError    : if the setpoint PUT fails unexpectedly.
+        """
+        base = self._motor_base(motor)
+        if base is None:
+            mb = sorted(b.lower() for b in self._pvs_motor_bases())
+            raise ValueError(
+                f"Motor '{motor}' not found in PVS. "
+                f"Available: {mb}"
+            )
+
+        sp_pv   = getattr(self.PVS, f"{base}_SP")
+        mon_pv  = getattr(self.PVS, f"{base}_MON")
+        lolm_pv = getattr(self.PVS, f"{base}_LOLM")
+        hilm_pv = getattr(self.PVS, f"{base}_HILM")
+        movn_pv = getattr(self.PVS, f"{base}_MVN")
+
+        # Limit validation — EPICS hardware limits are the source of truth.
+        if lolm_pv is not None and hilm_pv is not None:
+            low, high = self[lolm_pv], self[hilm_pv]
+            if not (low <= value <= high):
+                raise ValueError(
+                    f"'{motor}' target {value} is outside hardware limits "
+                    f"[{low}, {high}]."
+                )
+
+        # Send setpoint.
+        try:
+            self[sp_pv] = value
+        except Exception as err:
+            current = self[mon_pv]
+            raise IOError(
+                f"PUT error for '{motor}': current={current:.4f}\n{err}"
+            ) from err
+
+        # Poll readback.
+        for icount in range(max_count + 1):
+            current = self[mon_pv]
+            diff = abs(current - value)
+            print(
+                f"Moving '{motor}' → {value} | now: {current:.4f}"
+                f" | Δ: {diff:.4f}", end="\r",
+            )
+
+            # Check for convergence. If the motor is still moving
+            # (MOVN == 1), continue loop.
+            if diff <= threshold and self[movn_pv] == 0:
+                return True
+            if icount < max_count:
+                _time.sleep(delay)
+
+        print(
+            f"\nWARNING: '{motor}' did not reach {value}."
+            f" Current: {self[mon_pv]:.4f}"
+        )
+        return False
+
+    def _move_robust_device_motor(
+        self, motor, value, threshold, max_count, delay, trials
+    ):
+        """Retry _move_device_motor up to *trials* times.
+
+        Args:
+            motor     : user-facing motor name.
+            value     : target position.
+            threshold : convergence criterion.
+            max_count : polling iterations per trial.
+            delay     : seconds between polling iterations.
+            trials    : maximum number of move attempts.
+
+        Returns:
+            True if the motor reached the target; False otherwise.
+        """
+        for attempt in range(1, trials + 1):
+            if self._move_device_motor(motor, value, threshold,
+                                       max_count, delay):
+                print(f"\n'{motor}' reached {value}"
+                      f" (attempt {attempt}/{trials}).")
+                return True
+        current = getattr(self, motor)
+        print(
+            f"\n'{motor}' failed after {trials} attempt(s)."
+            f" Current: {current:.4f}"
+        )
+        return False
+
+    def move(self, motor, value, threshold=None, max_count=None, delay=None):
+        """Move *motor* to *value* with full retry logic.
+
+        Generic replacement for the individual move_rx / move_ry / move_tx / …
+        methods.  Those explicit methods may still exist in MirrorBase for
+        backward compatibility, but they all delegate here.
+
+        Args:
+            motor     : user-facing motor name ('ry', 'tx', 'cs_rx', …).
+            value     : target position.
+            threshold : override default threshold (optional).
+            max_count : override _COUNT_LIM (optional).
+            delay     : override _DELAY (optional).
+
+        Returns:
+            True on success, False on failure.
+        """
+        return self._move_robust_device_motor(
+            motor=motor,
+            value=value,
+            threshold=(threshold if threshold is not None
+                       else self._motor_threshold(motor)),
+            max_count=max_count if max_count is not None else self._COUNT_LIM,
+            delay=delay if delay is not None else self._DELAY,
+            trials=self._TRIALS,
+        )
+
+    def stop(self, motor, timeout=None):
+        """Send stop command to *motor* and wait for it to finish moving.
+
+        Args:
+            motor   : user-facing motor name ('ry', 'tx', 'y1', …).
+            timeout : seconds to wait for the motor to stop.
+                      Defaults to _DEFAULT_MOTOR_TIMEOUT.
+
+        Returns:
+            True if the motor stopped within timeout; False otherwise.
+        """
+        base = self._motor_base(motor)
+        if base is None:
+            raise ValueError(f"Motor '{motor}' not found in PVS.")
+        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
+        stop_pv = getattr(self.PVS, f"{base}_STOP")
+        dmvn_pv = getattr(self.PVS, f"{base}_DMVN")
+        self[stop_pv] = 1
+        if dmvn_pv is not None:
+            return self._wait(dmvn_pv, 0, timeout=timeout)
+        return True
 
 class Device:
     """Epics Device.

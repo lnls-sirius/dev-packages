@@ -7,7 +7,7 @@ from mathphys.imgproc import Image2D_Fit as _Image2D_Fit
 from mathphys.imgproc import FitGaussianScipy as _FitGaussianScipy
 
 from .device import Device as _Device
-from .beamlines.mirror import _PVAccessor, _PVNames
+from .device import _PVAccessor, _PVNames
 
 class DVF(_Device):
     """Beam Visualization Device ("Dispositivo de Visualização de Feixe")."""
