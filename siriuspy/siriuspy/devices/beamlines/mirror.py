@@ -127,9 +127,10 @@ class CAXMirror(MirrorBase):
         self.PVS.TX_HILM = pvprefix + "m1.HLM"    # High limit
         self.PVS.TX_LOLM = pvprefix + "m1.LLM"    # Low limit
         self.PVS.TX_ENBL = pvprefix + "m1.CNEN"   # Enable/Disable
-        self.PVS.TX_DMVN = pvprefix + "m1.DMOVN"  # Done moving
+        self.PVS.TX_DMVN = pvprefix + "m1.DMOV"   # Done moving
         self.PVS.TX_MVN  = pvprefix + "m1.MOVN"   # Motor is moving
         self.PVS.TX_STOP = pvprefix + "m1.STOP"   # Stop command
+        self.PVS.TX_DESC = pvprefix + "m1.DESC"   # Description
 
         # Y Rotation
         self.PVS.RY      = pvprefix + "m2"        # Motor base name
@@ -138,9 +139,10 @@ class CAXMirror(MirrorBase):
         self.PVS.RY_HILM = pvprefix + "m2.HLM"    # High limit
         self.PVS.RY_LOLM = pvprefix + "m2.LLM"    # Low limit
         self.PVS.RY_ENBL = pvprefix + "m2.CNEN"   # Enable/Disable
-        self.PVS.RY_DMVN = pvprefix + "m2.DMOVN"  # Done moving
+        self.PVS.RY_DMVN = pvprefix + "m2.DMOV"   # Done moving
         self.PVS.RY_MVN  = pvprefix + "m2.MOVN"   # Motor is moving
         self.PVS.RY_STOP = pvprefix + "m2.STOP"   # Stop command
+        self.PVS.RY_DESC = pvprefix + "m2.DESC"   # Description
 
         # Called Leveler Z- in the front end.
         self.PVS.Y1      = pvprefix + "m3"        # Motor base name
@@ -149,9 +151,10 @@ class CAXMirror(MirrorBase):
         self.PVS.Y1_HILM = pvprefix + "m3.HLM"    # High limit
         self.PVS.Y1_LOLM = pvprefix + "m3.LLM"    # Low limit
         self.PVS.Y1_ENBL = pvprefix + "m3.CNEN"   # Enable/Disable
-        self.PVS.Y1_DMVN = pvprefix + "m3.DMOVN"  # Done moving
+        self.PVS.Y1_DMVN = pvprefix + "m3.DMOV"   # Done moving
         self.PVS.Y1_MVN  = pvprefix + "m3.MOVN"   # Motor is moving
         self.PVS.Y1_STOP = pvprefix + "m3.STOP"   # Stop command
+        self.PVS.Y1_DESC = pvprefix + "m3.DESC"   # Description
 
         # Called Leveler X+ in the front end.
         self.PVS.Y2      = pvprefix + "m4"        # Motor base name
@@ -160,9 +163,10 @@ class CAXMirror(MirrorBase):
         self.PVS.Y2_HILM = pvprefix + "m4.HLM"    # High limit
         self.PVS.Y2_LOLM = pvprefix + "m4.LLM"    # Low limit
         self.PVS.Y2_ENBL = pvprefix + "m4.CNEN"   # Enable/Disable
-        self.PVS.Y2_DMVN = pvprefix + "m4.DMOVN"  # Done moving
+        self.PVS.Y2_DMVN = pvprefix + "m4.DMOV"   # Done moving
         self.PVS.Y2_MVN  = pvprefix + "m4.MOVN"   # Motor is moving
         self.PVS.Y2_STOP = pvprefix + "m4.STOP"   # Stop command
+        self.PVS.Y2_DESC = pvprefix + "m4.DESC"   # Description
 
         # Called Leveler Z+ in the front end.
 
@@ -172,9 +176,10 @@ class CAXMirror(MirrorBase):
         self.PVS.Y3_HILM = pvprefix + "m5.HLM"    # High limit
         self.PVS.Y3_LOLM = pvprefix + "m5.LLM"    # Low limit
         self.PVS.Y3_ENBL = pvprefix + "m5.CNEN"   # Enable/Disable
-        self.PVS.Y3_DMVN = pvprefix + "m5.DMOVN"  # Done moving
+        self.PVS.Y3_DMVN = pvprefix + "m5.DMOV"   # Done moving
         self.PVS.Y3_MVN  = pvprefix + "m5.MOVN"   # Motor is moving
         self.PVS.Y3_STOP = pvprefix + "m5.STOP"   # Stop command
+        self.PVS.Y3_DESC = pvprefix + "m5.DESC"   # Description
 
         # Kinematic actuators for Rx, Ry, Rz and Ty
 
@@ -187,9 +192,10 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_RX_HILM = pvprefixk + "m1.HLM"    # High limit
         self.PVS.CS_RX_LOLM = pvprefixk + "m1.LLM"    # Low limit
         self.PVS.CS_RX_ENBL = pvprefixk + "m1.CNEN"   # Enable/Disable
-        self.PVS.CS_RX_DMVN = pvprefixk + "m1.DMOVN"  # Done moving
+        self.PVS.CS_RX_DMVN = pvprefixk + "m1.DMOV"   # Done moving
         self.PVS.CS_RX_MVN  = pvprefixk + "m1.MOVN"   # Motor is moving
         self.PVS.CS_RX_STOP = pvprefixk + "m1.STOP"   # Stop command
+        self.PVS.CS_RX_DESC = pvprefixk + "m1.DESC"   # Description
 
         # Y rotation
         self.PVS.CS_RY      = pvprefixk + "m2"        # Motor base name
@@ -198,9 +204,10 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_RY_HILM = pvprefixk + "m2.HLM"    # High limit
         self.PVS.CS_RY_LOLM = pvprefixk + "m2.LLM"    # Low limit
         self.PVS.CS_RY_ENBL = pvprefixk + "m2.CNEN"   # Enable/Disable
-        self.PVS.CS_RY_DMVN = pvprefixk + "m2.DMOVN"  # Done moving
+        self.PVS.CS_RY_DMVN = pvprefixk + "m2.DMOV"   # Done moving
         self.PVS.CS_RY_MVN  = pvprefixk + "m2.MOVN"   # Motor is moving
         self.PVS.CS_RY_STOP = pvprefixk + "m2.STOP"   # Stop command
+        self.PVS.CS_RY_DESC = pvprefixk + "m2.DESC"   # Description
 
         # Z rotation
         self.PVS.CS_RZ      = pvprefixk + "m3"        # Motor base name
@@ -209,9 +216,10 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_RZ_HILM = pvprefixk + "m3.HLM"    # High limit
         self.PVS.CS_RZ_LOLM = pvprefixk + "m3.LLM"    # Low limit
         self.PVS.CS_RZ_ENBL = pvprefixk + "m3.CNEN"   # Enable/Disable
-        self.PVS.CS_RZ_DMVN = pvprefixk + "m3.DMOVN"  # Done moving
+        self.PVS.CS_RZ_DMVN = pvprefixk + "m3.DMOV"   # Done moving
         self.PVS.CS_RZ_MVN  = pvprefixk + "m3.MOVN"   # Motor is moving
         self.PVS.CS_RZ_STOP = pvprefixk + "m3.STOP"   # Stop command
+        self.PVS.CS_RZ_DESC = pvprefixk + "m3.DESC"   # Description
 
         # X translation
         self.PVS.CS_TX      = pvprefixk + "m7"        # Motor base name
@@ -220,9 +228,10 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_TX_HILM = pvprefixk + "m7.HLM"    # High limit
         self.PVS.CS_TX_LOLM = pvprefixk + "m7.LLM"    # Low limit
         self.PVS.CS_TX_ENBL = pvprefixk + "m7.CNEN"   # Enable/Disable
-        self.PVS.CS_TX_DMVN = pvprefixk + "m7.DMOVN"  # Done moving
+        self.PVS.CS_TX_DMVN = pvprefixk + "m7.DMOV"   # Done moving
         self.PVS.CS_TX_MVN  = pvprefixk + "m7.MOVN"   # Motor is moving
         self.PVS.CS_TX_STOP = pvprefixk + "m7.STOP"   # Stop command
+        self.PVS.CS_TX_DESC = pvprefixk + "m7.DESC"   # Description
 
         # Y translation
         self.PVS.CS_TY      = pvprefixk + "m8"        # Motor base name
@@ -231,9 +240,10 @@ class CAXMirror(MirrorBase):
         self.PVS.CS_TY_HILM = pvprefixk + "m8.HLM"    # High limit
         self.PVS.CS_TY_LOLM = pvprefixk + "m8.LLM"    # Low limit
         self.PVS.CS_TY_ENBL = pvprefixk + "m8.CNEN"   # Enable/Disable
-        self.PVS.CS_TY_DMVN = pvprefixk + "m8.DMOVN"  # Done moving
+        self.PVS.CS_TY_DMVN = pvprefixk + "m8.DMOV"   # Done moving
         self.PVS.CS_TY_MVN  = pvprefixk + "m8.MOVN"   # Motor is moving
         self.PVS.CS_TY_STOP = pvprefixk + "m8.STOP"   # Stop command
+        self.PVS.CS_TY_DESC = pvprefixk + "m8.DESC"   # Description
 
         # SENSORS
         self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"

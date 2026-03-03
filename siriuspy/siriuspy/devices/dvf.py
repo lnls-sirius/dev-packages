@@ -840,16 +840,24 @@ class CAXDtc(DVFImgProc, _PVAccessor):
         self.PVS.Z_SP      = pvprefix + "E.VAL"      # Setpoint value 
         self.PVS.Z_MON     = pvprefix + "E.RBV"      # Readback value 
         self.PVS.Z_HILM    = pvprefix + "E.HLM"      # High limit     
-        self.PVS.Z_LOLM    = pvprefix + "E.LLM"      # Low limit      
+        self.PVS.Z_LOLM    = pvprefix + "E.LLM"      # Low limit 
+        self.PVS.Z_ENBL    = pvprefix + "E.CNEN"     # Enable/Disable
+        self.PVS.Z_DMVN    = pvprefix + "E.DMOV"    # Done moving
+        self.PVS.Z_MVN     = pvprefix + "E.MOVN"     # Motor is moving
         self.PVS.Z_STOP    = pvprefix + "E.STOP"     # Stop command   
+        self.PVS.Z_DESC    = pvprefix + "E.DESC"     # Description
 
         # DVF lens focus control
         self.PVS.LENS      = pvprefix + "F"          # Motor base name
         self.PVS.LENS_SP   = pvprefix + "F.VAL"      # Setpoint value 
         self.PVS.LENS_MON  = pvprefix + "F.RBV"      # Readback value 
-        self.PVS.LENS_LOLM = pvprefix + "F.LLM"      # High limit     
-        self.PVS.LENS_HILM = pvprefix + "F.HLM"      # Low limit      
-        self.PVS.LENS_STOP = pvprefix + "F.STOP"     # Stop command 
+        self.PVS.LENS_HILM = pvprefix + "F.HLM"      # High limit     
+        self.PVS.LENS_LOLM = pvprefix + "F.LLM"      # Low limit 
+        self.PVS.LENS_ENBL = pvprefix + "F.CNEN"     # Enable/Disable
+        self.PVS.LENS_DMVN = pvprefix + "F.DMOV"    # Done moving
+        self.PVS.LENS_MVN  = pvprefix + "F.MOVN"     # Motor is moving
+        self.PVS.LENS_STOP = pvprefix + "F.STOP"     # Stop command   
+        self.PVS.LENS_DESC = pvprefix + "F.DESC"     # Description
 
         # Create PROPERTIES_DEFAULT from PVS
         self.PROPERTIES_DEFAULT = DVFImgProc.PROPERTIES_DEFAULT + tuple(

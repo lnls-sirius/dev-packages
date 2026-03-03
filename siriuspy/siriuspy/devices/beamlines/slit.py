@@ -56,6 +56,9 @@ class CAXSlit(SlitBase):
         self.PVS.TOP_LOLM    = "A.LLM"
         self.PVS.TOP_HILM    = "A.HLM"
         self.PVS.TOP_ENBL    = "A.CNEN"
+        self.PVS.TOP_DMVN    = "A.DMOV"
+        self.PVS.TOP_MVN     = "A.MOVN"
+        self.PVS.TOP_DESC    = "A.DESC"
 
         self.PVS.BOTTOM      = "B"
         self.PVS.BOTTOM_SP   = "B.VAL"
@@ -64,7 +67,10 @@ class CAXSlit(SlitBase):
         self.PVS.BOTTOM_STOP = "B.STOP"
         self.PVS.BOTTOM_LOLM = "B.LLM"
         self.PVS.BOTTOM_HILM = "B.HLM"
+        self.PVS.BOTTOM_DMVN = "B.DMOV"
+        self.PVS.BOTTOM_MVN  = "B.MOVN"
         self.PVS.BOTTOM_ENBL = "B.CNEN"
+        self.PVS.BOTTOM_DESC = "B.DESC"
 
         self.PVS.LEFT        = "C"
         self.PVS.LEFT_SP     = "C.VAL"
@@ -73,7 +79,10 @@ class CAXSlit(SlitBase):
         self.PVS.LEFT_STOP   = "C.STOP"
         self.PVS.LEFT_LOLM   = "C.LLM"
         self.PVS.LEFT_HILM   = "C.HLM"
+        self.PVS.LEFT_DMVN   = "C.DMOV"
+        self.PVS.LEFT_MVN    = "C.MOVN"
         self.PVS.LEFT_ENBL   = "C.CNEN"
+        self.PVS.LEFT_DESC   = "C.DESC"
 
         self.PVS.RIGHT       = "D"
         self.PVS.RIGHT_SP    = "D.VAL"
@@ -82,7 +91,10 @@ class CAXSlit(SlitBase):
         self.PVS.RIGHT_STOP  = "D.STOP"
         self.PVS.RIGHT_LOLM  = "D.LLM"
         self.PVS.RIGHT_HILM  = "D.HLM"
+        self.PVS.RIGHT_DMVN  = "D.DMOV"
+        self.PVS.RIGHT_MVN   = "D.MOVN"
         self.PVS.RIGHT_ENBL  = "D.CNEN"
+        self.PVS.RIGHT_DESC  = "D.DESC"
 
         self.PROPERTIES_DEFAULT = tuple(
             set(value for key, value in vars(self.PVS).items())
