@@ -2006,8 +2006,8 @@ class Drive(_Device):
 
     @property
     def frequency(self):
-        """."""
-        return self['FREQ_ACT']
+        """Frequency in kHz."""
+        return self['FREQ_ACT'] / 1e3
 
     @frequency.setter
     def frequency(self, value):
