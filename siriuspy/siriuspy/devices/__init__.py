@@ -3,7 +3,7 @@
 from .afc_acq_core import AFCACQLogicalTrigger, AFCPhysicalTrigger
 from .bbb import BunchbyBunch
 from .beamline import CAXCtrl
-from .blm import BLM
+from .blm import BLM, FamBLMs
 from .bpm import BPM
 from .bpm_eq import EqualizeBPMs
 from .bpm_fam import FamBPMs
