@@ -6,6 +6,8 @@ from ..namesys import Filter as _Filter, SiriusPVName as _SiriusPVName
 class GammaMonitorSearch:
     """Gamma Monitor Search Class."""
 
+    # TODO: This mapping should be moved to a configuration file at
+    # control-system-constants, and not hardcoded in the code.
     _gamma2counter = {
         'SI-01M2:CO-Gamma': 'SI-01C2:CO-Counter:Ch1',
         'SI-01C1:CO-Gamma': 'SI-01C2:CO-Counter:Ch2',
