@@ -836,7 +836,7 @@ class CAXDtc(DVFImgProc, _PVAccessor):
         pvprefix = 'PP01:'
 
         # DVF z translation
-        self.PVS.Z         = pvprefix + "E"          # Motor base name
+        self.PVS.Z         = pvprefix + "E"          # Motor base name -> points to sp value
         self.PVS.Z_SP      = pvprefix + "E.VAL"      # Setpoint value 
         self.PVS.Z_MON     = pvprefix + "E.RBV"      # Readback value 
         self.PVS.Z_HILM    = pvprefix + "E.HLM"      # High limit     
@@ -848,7 +848,7 @@ class CAXDtc(DVFImgProc, _PVAccessor):
         self.PVS.Z_DESC    = pvprefix + "E.DESC"     # Description
 
         # DVF lens focus control
-        self.PVS.LENS      = pvprefix + "F"          # Motor base name
+        self.PVS.LENS      = pvprefix + "F"          # Motor base name -> points to sp value
         self.PVS.LENS_SP   = pvprefix + "F.VAL"      # Setpoint value 
         self.PVS.LENS_MON  = pvprefix + "F.RBV"      # Readback value 
         self.PVS.LENS_HILM = pvprefix + "F.HLM"      # High limit     

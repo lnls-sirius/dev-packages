@@ -126,8 +126,13 @@ class _PVAccessor:
             mirror.tx_lolm    → self[PVS.TX_LOLM]  (low limit)
             mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
         """
+        # Backward compatibility: if the user tries to access a {BASE}_POS attribute,
+        # redirect to {BASE} (RBV/MON) if it exists. This allows old code to access via base_pos
+        name = name.replace("_pos", "_mon") if name.endswith("_pos") else name
+        
         # Check if this is a motor attribute by looking for its base in PVS.
         base = self._motor_base(name)
+
         if base is not None:
             pv = getattr(self.PVS, base)
             if pv is not None:
@@ -151,8 +156,11 @@ class _PVAccessor:
         safely returns None for any undefined attribute, so everything
         falls through to object.__setattr__ correctly.
         """
+        # Backward compatibility: if the user tries to set a {BASE}_POS attribute,
+        # redirect to {BASE} motor PV. This allows old code to move using base_pos
+        name = name.replace("_pos", "") if name.endswith("_pos") else name
+        
         base = name.upper()
-
         # Motor attribute: route through the movement engine.
         if base in self._pvs_motor_bases():
             self._move_robust_device_motor(
