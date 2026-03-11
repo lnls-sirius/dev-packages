@@ -2225,6 +2225,155 @@ class VPU(IDFullMovCtrl):
         return self._write_sp(self.PARAM_PVS.MOVE_ABORT, 1, timeout=timeout)
 
 
+class UE44(IDBase):
+    """UE44 Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_10SP = 'SI-11SP:ID-UE44'
+        ALL = (UE44_10SP,)
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    # PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    # PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    # PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    # PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.PPARAM_SP = 'PParam-SP'
+    PARAM_PVS.PPARAM_RB = 'PParam-RB'
+    PARAM_PVS.PPARAM_MON = 'PParam-Mon'
+    # PARAM_PVS.PPARAM_PARKED_CTE = 'PParamParked-Cte'
+    # PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    # PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    # PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
+    # PARAM_PVS.PPARAM_VELO_RB = 'PParamVelo-RB'
+    PARAM_PVS.PPARAM_CHANGE_CMD = 'PParamChange-Cmd'
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    # PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    # PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    # PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    # PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    # PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+    PARAM_PVS.CPARAM_SP = 'CParam-SP'
+    PARAM_PVS.CPARAM_RB = 'CParam-RB'
+    PARAM_PVS.CPARAM_MON = 'CParam-Mon'
+    # PARAM_PVS.CPARAM_VELO_SP = 'CParamVelo-SP'
+    # PARAM_PVS.CPARAM_VELO_RB = 'CParamVelo-RB'
+    # PARAM_PVS.CPARAM_CHANGE_CMD = 'CParamChange-Cmd'
+
+    PARAM_PVS.POL_SEL = 'Pol-Sel'
+    # PARAM_PVS.POL_STS = 'Pol-Sts'
+    PARAM_PVS.POL_MON = 'Pol-Mon'
+    # PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
+
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
+    PROPERTIES_DEFAULT = PROPERTIES_DEFAULT + (
+        'CSDVirtPos-Mon',
+        'CSEVirtPos-Mon',
+        'CIEVirtPos-Mon',
+        'CIDVirtPos-Mon',
+        'IsOperational-Mon',
+        'MotorsEnbld-Mon',
+        'Alarm-Mon',
+        'Intlk-Mon',
+        'IntlkBits-Mon',
+        'IntlkLabels-Cte',
+        'ConsistentSetPoints-Mon',
+        'PLCState-Mon',
+        'Energy-SP',
+        'Energy-RB',
+        'Energy-Mon',
+        'KValue-SP',
+        'KValue-RB',
+        'KValue-Mon',
+    )
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.UE44_10SP
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
+
+    @property
+    def is_operational(self):
+        """Return True if ID is operational."""
+        return self['IsOperational-Mon'] == 0  # 0 : 'OK'
+
+    # --- cassette positions ---
+
+    @property
+    def pos_csd_mon(self):
+        """Return longitudinal position of CSD [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CSDVirtPos-Mon']
+
+    @property
+    def pos_cse_mon(self):
+        """Return longitudinal position of CSE [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CSEVirtPos-Mon']
+
+    @property
+    def pos_cie_mon(self):
+        """Return longitudinal position of CIE [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CIEVirtPos-Mon']
+
+    @property
+    def pos_cid_mon(self):
+        """Return longitudinal position of CID [mm].
+
+        cassette positions x (PParam, KParam):
+            pos_cid = PParam
+            pos_cse = PParam + KParam
+            pos_csd = KParam
+            pos_cie = 0
+        """
+        return self['CIDVirtPos-Mon']
+
+    def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
+        """Estimate moving time for each parameter separately."""
+        pol_mon_str = self.polarization_mon_str
+        if kparam_goal is not None and pol_mon_str == 'circularp':
+            kparam_goal = -kparam_goal
+        return super().calc_move_eta(pparam_goal, kparam_goal)
+
+
 class ID(IDBase):
     """Insertion Device."""
 
