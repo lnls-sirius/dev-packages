@@ -267,6 +267,12 @@ class TBBOTSScreen(_DeviceSet):
         return self.screencam['CenterOffsetY-RB']
 
 
+""" TODO: _Screen and _ScreenCam class could be merged into DVF class, since
+    they seem to implement the same functionalities and originally had the same
+    base IOC code.
+"""
+
+
 class _Screen(_Device):
     """."""
 
