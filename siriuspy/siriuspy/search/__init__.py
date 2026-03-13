@@ -2,6 +2,7 @@
 
 from .blm_search import BLMSearch
 from .bpms_search import BPMSearch
+from .gamma_monitor_search import GammaMonitorSearch
 from .hl_time_search import HLTimeSearch
 from .id_search import IDSearch
 from .ioc_search import IOCSearch
@@ -13,6 +14,7 @@ from .rabpm_search import RaBPMSearch
 
 del blm_search
 del bpms_search
+del gamma_monitor_search
 del hl_time_search
 del id_search
 del ioc_search

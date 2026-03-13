@@ -9,6 +9,7 @@ from siriuspy import search, util
 public_interface = (
     'BLMSearch',
     'BPMSearch',
+    'GammaMonitorSearch',
     'HLTimeSearch',
     'IDSearch',
     'IOCSearch',
