@@ -10,11 +10,14 @@ import asyncio as _asyncio
 import logging as _log
 import ssl as _ssl
 import urllib as _urllib
+from datetime import timedelta as _timedelta
 from threading import Thread as _Thread
+from urllib.parse import quote as _quote
 
 import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
+from lzstring import LZString as _LZString
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
@@ -338,7 +341,116 @@ class ClientArchiver:
         self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
         self.session = None
 
+    @staticmethod
+    def gen_archviewer_url_link(
+        pvnames,
+        time_start,
+        time_stop,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int] or Int, optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+
+        Notes
+        -----
+        - PV names and timestamps are URL-encoded and the
+            resulting query string is compressed using LZString
+            (compressToEncodedURIComponent).
+        - The function expects the per-PV arguments (`pvoptnrpts`, `pvcolors`,
+            `pvusediff`) to be iterables aligned with `pvnames`.
+        """
+        # Thanks to Rafael Lyra for the basis of this implementation!
+        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
+        args = ClientArchiver._process_url_link_args(
+            pvnames, pvoptnrpts, pvcolors, pvusediff)
+        pvoptnrpts, pvcolors, pvusediff = args
+        pv_search = ''
+        for idx in range(len(pvnames)):
+            pv_search += 'pv='
+            pvname = pvnames[idx]
+            pvopt = pvoptnrpts[idx]
+            color = pvcolors[idx]
+            use_diff = pvusediff[idx]
+            url_pvname = _quote(pvname)
+            if pvopt > 0:
+                pv_search += f'optimized_{pvopt}({url_pvname})'
+            else:
+                pv_search += url_pvname
+            if time_ref is not None and use_diff:
+                pv_search += '_diff'
+            if color is not None:
+                pv_search += f'__{color}'
+            pv_search += '&'
+        search_url = pv_search
+
+        date_pattern = '%Y-%m-%dT%H:%M:%S.000Z'
+        time_zone = _timedelta(hours=3)
+
+        start = time_start + time_zone
+        formatted_start = start.strftime(date_pattern)
+        search_url += f'from={_quote(formatted_start)}&'
+
+        stop = time_stop + time_zone
+        formatted_end = stop.strftime(date_pattern)
+        search_url += f'to={_quote(formatted_end)}&'
+
+        if time_ref is not None:
+            ref = time_ref + time_zone
+            formatted_ref = ref.strftime(date_pattern)
+            search_url += f'ref={_quote(formatted_ref)}'
+
+        lz = _LZString()
+        compressed_data = lz.compressToEncodedURIComponent(search_url)
+        return archiver_viewer_url + compressed_data
+
     # ---------- auxiliary methods ----------
+
+    @staticmethod
+    def _process_url_link_args(pvnames, pvoptnrpts, pvcolors, pvusediff):
+        """Process URL link arguments."""
+        if pvoptnrpts is None:
+            pvoptnrpts = [0] * len(pvnames)
+        elif isinstance(pvoptnrpts, int):
+            pvoptnrpts = [pvoptnrpts] * len(pvnames)
+        if pvcolors is None:
+            pvcolors = [None] * len(pvnames)
+        elif isinstance(pvcolors, str):
+            pvcolors = [pvcolors] * len(pvnames)
+        pvcolors = pvcolors or [None] * len(pvnames)
+        if isinstance(pvusediff, bool):
+            pvusediff = [pvusediff] * len(pvnames)
+        return pvoptnrpts, pvcolors, pvusediff
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
