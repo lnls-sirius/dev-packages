@@ -60,12 +60,12 @@ class TuneFrac(_Device):
         self['RevN-SP'] = int(value)
 
     @property
-    def center_frequency_offset(self):
+    def center_frequency(self):
         """Center frequency offset [kHz]."""
         return self['FreqOff-RB']
 
-    @center_frequency_offset.setter
-    def center_frequency_offset(self, value):
+    @center_frequency.setter
+    def center_frequency(self, value):
         self['FreqOff-SP'] = value
 
     @property
