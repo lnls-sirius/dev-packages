@@ -203,7 +203,7 @@ class TBBOTSScreen(_DeviceSet):
     def cmd_do_homing(self, timeout=60):
         """."""
         self.screen['Home-Cmd'] = 1
-        return self.wait(
+        return self.screen.wait(
             'HomeDone-Mon', self.Homing.Finished, timeout=timeout
         )
 
@@ -228,7 +228,7 @@ class TBBOTSScreen(_DeviceSet):
             screen_type, self.ScrnPosition
         )
         self.screen_position = screen_type
-        return self.wait('ScrnType-Sts', screen_type, timeout=timeout)
+        return self.screen.wait('ScrnType-Sts', screen_type, timeout=timeout)
 
     def move_to_calibration(self, timeout=20):
         """."""
@@ -266,12 +266,16 @@ class TBBOTSScreen(_DeviceSet):
     def cmd_enable(self, timeout=1):
         """."""
         self.enabled = self.DsblEnbl.ON
-        return self.wait('Enbl-Sts', self.DsblEnbl.ON, timeout=timeout)
+        return self.screencam.wait(
+            'Enbl-Sts', self.DsblEnbl.ON, timeout=timeout
+        )
 
     def cmd_disable(self, timeout=1):
         """."""
         self.enabled = self.DsblEnbl.OFF
-        return self.wait('Enbl-Sts', self.DsblEnbl.OFF, timeout=timeout)
+        return self.screencam.wait(
+            'Enbl-Sts', self.DsblEnbl.OFF, timeout=timeout
+        )
 
     @property
     def image_width(self):
