@@ -1628,7 +1628,7 @@ class PhaseTracking(_Device):
 
     @property
     def range(self):
-        """Frequency range in kHz."""
+        """Phase tracking frequency range [kHz]."""
         return self['PHTRK_RANGE']
 
     @range.setter
@@ -1673,47 +1673,47 @@ class PhaseTracking(_Device):
 
     @property
     def rate(self):
-        """."""
+        """Phase tracking rate control [kHz]."""
         return self['PHTRK_RATE']
 
     @property
     def bandwidth(self):
-        """."""
+        """Phase tracking bandwidth control [Hz]."""
         return self['PHTRK_BANDWIDTH']
 
     @property
     def magnitude(self):
-        """."""
+        """Phase tracking data magnitude [counts]."""
         return self['PHTRK_MAG']
 
     @property
     def transfer_gain(self):
-        """."""
+        """Phase tracking data transfer gain [dB]."""
         return self['PHTRK_TFGAIN']
 
     @property
     def normalizing_shift(self):
-        """."""
+        """Phase tracking data normalizing shift."""
         return self['PHTRK_SHIFT']
 
     @property
     def phase(self):
-        """Phase monitor in degrees."""
+        """Phase tracking data monitor [deg]."""
         return self['PHTRK_PHASE']
 
     @property
     def error(self):
-        """Error in degrees."""
+        """Phase tracking data error [deg]."""
         return self['PHTRK_ERROR']
 
     @property
     def frequency(self):
-        """."""
+        """Phase tracking data frequency [kHz]."""
         return self['PHTRK_FREQ0']
 
     @property
     def tune(self):
-        """."""
+        """Phase tracking data tune."""
         return self['PHTRK_TUNE']
 
 
