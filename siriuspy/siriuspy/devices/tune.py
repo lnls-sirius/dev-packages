@@ -40,12 +40,11 @@ class TuneFrac(_Device):
 
     @property
     def span(self):
-        """Span."""
+        """Span [kHz]."""
         return self['Span-RB']
 
     @span.setter
     def span(self, value):
-        """Span."""
         self['Span-SP'] = value
 
     @property
@@ -61,13 +60,12 @@ class TuneFrac(_Device):
         self['RevN-SP'] = int(value)
 
     @property
-    def center_frequency(self):
-        """Center frequency."""
+    def center_frequency_offset(self):
+        """Center frequency offset [kHz]."""
         return self['FreqOff-RB']
 
-    @center_frequency.setter
-    def center_frequency(self, value):
-        """Center frequency."""
+    @center_frequency_offset.setter
+    def center_frequency_offset(self, value):
         self['FreqOff-SP'] = value
 
     @property
@@ -158,22 +156,20 @@ class Tune(_DeviceSet):
 
     @property
     def spanx(self):
-        """Span X."""
+        """Span X [kHz]."""
         return self.devices[0].span
 
     @spanx.setter
     def spanx(self, value):
-        """Span X."""
         self.devices[0].span = value
 
     @property
     def spany(self):
-        """Span Y."""
+        """Span Y [kHz]."""
         return self.devices[1].span
 
     @spany.setter
     def spany(self, value):
-        """Span Y."""
         self.devices[1].span = value
 
     @property
@@ -183,7 +179,6 @@ class Tune(_DeviceSet):
 
     @rev_harmonicx.setter
     def rev_harmonicx(self, value):
-        """Revolution harmonic X."""
         self.devices[0].rev_harmonic = value
 
     @property
@@ -203,7 +198,6 @@ class Tune(_DeviceSet):
 
     @center_frequencyx.setter
     def center_frequencyx(self, value):
-        """Center frequency X."""
         self.devices[0].center_frequency = value
 
     @property
@@ -213,7 +207,6 @@ class Tune(_DeviceSet):
 
     @center_frequencyy.setter
     def center_frequencyy(self, value):
-        """Center frequency Y."""
         self.devices[1].center_frequency = value
 
     @property
