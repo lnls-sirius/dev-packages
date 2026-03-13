@@ -24,7 +24,7 @@ class RFGen(_Device):
 
     RF_DELTA_MIN = 0.01  # [Hz]
     RF_DELTA_MAX = 15000.0  # [Hz]
-    RF_DELTA_RMP = 200  # [Hz]
+    RF_DELTA_RMP = 20  # [Hz]
     RF_DELTA_INTVL = 1  # [s]
 
     PHASE_CONTINUOUS = _get_namedtuple('PhaseContinuous', ('OFF', 'ON'))
