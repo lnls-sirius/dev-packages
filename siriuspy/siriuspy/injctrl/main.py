@@ -1363,7 +1363,7 @@ class App(_Callback):
     def _create_init_bucketlist_mask(self):
         # initial beam filling gap
         mask = _np.ones(_Const.MAX_BKT, dtype=bool)
-        mask[417:513] = False  # 96-bucket gap
+        mask[416:512] = False  # 96-bucket gap
         return mask
 
     # --- auxiliary accumulation methods ---
