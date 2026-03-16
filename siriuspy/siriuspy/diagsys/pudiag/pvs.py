@@ -44,8 +44,8 @@ class PUStatusPV:
     INTRLCK_5 = 7
     INTRLCK_6 = 8
     INTRLCK_7 = 9
-    INTRLCK_8 = 10
-    INTRLCK_9 = 11
+    INTRLCK_9 = 10
+    INTRLCK_8 = 11
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PU Status PV."""
