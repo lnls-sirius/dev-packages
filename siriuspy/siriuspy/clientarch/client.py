@@ -17,7 +17,10 @@ from urllib.parse import quote as _quote
 import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
-from lzstring import LZString as _LZString
+try:
+    from lzstring import LZString as _LZString
+except:
+    _LZString = None
 
 from .. import envars as _envars
 from . import exceptions as _exceptions

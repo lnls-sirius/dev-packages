@@ -1687,14 +1687,18 @@ class App(_Callback):
         if not self._state:
             self._update_log('WARN:Orbit interlock is not enabled.')
             return
-        # send soft interlock to RF
-        self._update_log('FATAL:sending soft interlock to LLRF.')
-        # sending interlock for all LLRFs systems, then wait
-        for llrf in self._llrfs:
-            llrf.interlock_manual = 1
-        _time.sleep(1)
-        for llrf in self._llrfs:
-            llrf.interlock_manual = 0
+        # NOTE: The code below was commented to avoid killing the beam over
+        #   false positives (fernando/ximenes,2025/10/14,08:11,lnls449-linux):
+        # # send soft interlock to RF
+        # self._update_log('FATAL:sending soft interlock to LLRF.')
+        # # sending interlock for all LLRFs systems, then wait
+        # for llrf in self._llrfs:
+        #     llrf.interlock_manual = 1
+        # _time.sleep(1)
+        # for llrf in self._llrfs:
+        #     llrf.interlock_manual = 0
+        # NOTE: The code below just warn users about the false positives
+        self._update_log("WARN:not sending soft interlock to LLRF")
 
         if self._is_dry_run:
             # wait a little and rearming FDL acquisition
