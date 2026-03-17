@@ -101,6 +101,18 @@ class RaBPMSearch:
         return cls._mapping[name]["slot"]
 
     @classmethod
+    def conv_devname_2_vslot(cls, name):
+        """Return the virtual slot of the given device name.
+
+        Parameters
+        ----------
+        names : string
+            Desired device name.
+        """
+        cls._get_data()
+        return cls._mapping[name]["virtual_slot"]
+
+    @classmethod
     def conv_devname_2_cratename(cls, name):
         """Return the crate name of the given device name.
 
@@ -174,9 +186,16 @@ class RaBPMSearch:
             crate_num = crate[-2:]
             crate_name = ('IA-20RaBPMTL' if int(crate_num) == 21 else
                           f'IA-{crate_num}RaBPM')
+
+            v_slot = None
+            if not slot.isnumeric():
+                slot, v_slot = slot.split('-')
+                v_slot = int(v_slot)
             mapping[dev] = {
                 "slot": int(slot),
+                "virtual_slot": int(v_slot),
                 "crate_name": crate_name,
                 "crate_number": int(crate_num)}
+
         cls._mapping = mapping
         cls._names = sorted(cls._mapping.keys())
