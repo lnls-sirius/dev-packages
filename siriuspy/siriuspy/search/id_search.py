@@ -22,7 +22,7 @@ class IDSearch:
         'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
         'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
-        'IPE':      'SI-11SP:ID-APU58',  # titular: 2 x APPLE-II
+        'IPE':      'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
@@ -41,6 +41,11 @@ class IDSearch:
         'PPARAM_MAX',  # [mm]
         'PPARAM_PARKED',  # [mm]
         'PPARAM_TOL',  # [mm]
+        'CPARAM_MIN',  # [mm]
+        'CPARAM_MAX',  # [mm]
+        'CPARAM_PARKED',  # [mm]
+        'CPARAM_TOL',  # [mm]
+        'CPARAM_POL_CHANGE',  # [mm]
         )
 
     _idname2params = {
@@ -49,31 +54,36 @@ class IDSearch:
             _idparam_fields, (
                 29,
                 9.7, 80, 80, 80, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-07SP:ID-VPU29': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 29,
                 9.7, 80, 80, 80, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-08SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-08SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 18.5,
                 4.2, 24, 24, 24, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-09SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
@@ -81,49 +91,57 @@ class IDSearch:
             _idparam_fields, (
                 50,
                 +22, +300, +300, +300, 0.1,
-                -25, 25, 0, 0.5)),
+                -25, 25, 0, 0.5,
+                None, None, None, None, None)),
         'SI-10SB:ID-DELTA52': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 52.5,
                 -52.5/2, +52.5/2, 0, 0, 0.020,
-                -52.5/2, +52.5/2, 0, 0.010)),
-        'SI-11SP:ID-APU58': _get_namedtuple(
+                -52.5/2, +52.5/2, 0, 0.010,
+                None, None, None, None, None)),
+        'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 58,
                 0, 29, 29, 0, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 180,
                 49.73, 49.73, 150, 150, 0.1,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-14SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 18.5,
                 4.2, 24, 24, 24, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 50,
                 0, 25, 25, 0, 0.1,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-17SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
         'SI-20SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
-                None, None, None, None)),
+                None, None, None, None,
+                None, None, None, None, None)),
     }
 
     POL_NONE_STR = 'none'
@@ -157,7 +175,7 @@ class IDSearch:
             2: ('circularp', +52.5/4),  # [mm]
             3: ('vertical', -52.5/2),  # [mm]
         },
-        'SI-11SP:ID-APU58': {
+        'SI-11SP:ID-UE44': {
             0: ('horizontal', None),  # [mm]
         },
         'SI-14SB:ID-IVU18': {
@@ -255,7 +273,7 @@ class IDSearch:
             IDFF_QS_LABELS[0]: 'SI-10SB:PS-QS-1:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-10SB:PS-QS-2:Current-SP',
         },
-        'SI-11SP:ID-APU58': None,
+        'SI-11SP:ID-UE44': None,
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
