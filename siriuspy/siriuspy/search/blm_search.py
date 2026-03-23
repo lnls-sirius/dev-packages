@@ -1,7 +1,6 @@
 """BLM Search module."""
 
-from ..namesys import Filter as _Filter
-from ..namesys import SiriusPVName as _SiriusPVName
+from ..namesys import Filter as _Filter, SiriusPVName as _SiriusPVName
 
 
 class BLMSearch:

@@ -253,6 +253,8 @@ class IDFFCtrlBase(_Device):
             iddevname = iddevname.substitute(dev='VPU29')
         elif iddevname.sub in ('10SB',):
             iddevname = iddevname.substitute(dev='DELTA52')
+        elif iddevname.sub in ('11SP',):
+            iddevname = iddevname.substitute(dev='SIMUL')
         else:
             pass
         return iddevname
@@ -408,8 +410,8 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
     PARAM_PVS = IDFFCtrlSoft.PARAM_PVS
     PARAM_PVS.CORRCC1_1CURRENT_MON = 'CorrCC1_1Current-Mon'
     PARAM_PVS.CORRCC2_1CURRENT_MON = 'CorrCC2_1Current-Mon'
-    PARAM_PVS.CORRCC2_2CURRENT_MON = 'CorrCC2_2Current-Mon'
     PARAM_PVS.CORRCC1_2CURRENT_MON = 'CorrCC1_2Current-Mon'
+    PARAM_PVS.CORRCC2_2CURRENT_MON = 'CorrCC2_2Current-Mon'
 
     PROPERTIES_DEFAULT = tuple(
         set(
@@ -482,8 +484,9 @@ class IDFFCtrlHardIVU(IDFFCtrlHard):
         """Device names."""
 
         IVU18_08SB_HARD = 'SI-08SB:BS-IDFF-CHCV'
+        IVU18_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
         IVU18_14SB_HARD = 'SI-14SB:BS-IDFF-CHCV'
-        ALL = (IVU18_08SB_HARD, IVU18_14SB_HARD)
+        ALL = (IVU18_08SB_HARD, IVU18_11SP_HARD, IVU18_14SB_HARD)
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 

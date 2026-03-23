@@ -3,10 +3,8 @@
 from copy import deepcopy as _dcopy
 
 import numpy as _np
-from mathphys.functions import (
-    load_pickle as _load_pickle,
+from mathphys.functions import load_pickle as _load_pickle, \
     save_pickle as _save_pickle
-)
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
@@ -20,6 +18,8 @@ class _Base:
     def __init__(self, connector=None, offline_data=False):
         self._connector = None
         self._offline_data = offline_data
+        self._time_start = None
+        self._time_stop = None
         self.connector = connector
         self.connect()
 
@@ -86,6 +86,113 @@ class _Base:
         """."""
         if self.connector:
             self.connector.switch_to_offline_data()
+
+    @property
+    def timestamp_start(self):
+        """Timestamp start."""
+        if not self._time_start:
+            return None
+        return self._time_start.timestamp()
+
+    @timestamp_start.setter
+    def timestamp_start(self, new_timestamp):
+        if not isinstance(new_timestamp, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_timestamp))
+            )
+        self._time_start = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_start(self):
+        """Time start."""
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time))
+            )
+        self._time_start = new_time
+
+    @property
+    def timestamp_stop(self):
+        """Timestamp stop."""
+        if not self._time_stop:
+            return None
+        return self._time_stop.timestamp()
+
+    @timestamp_stop.setter
+    def timestamp_stop(self, new_timestamp):
+        if not isinstance(new_timestamp, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_timestamp))
+            )
+        self._time_stop = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_stop(self):
+        """Time stop."""
+        return self._time_stop
+
+    @time_stop.setter
+    def time_stop(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time))
+            )
+        self._time_stop = new_time
+
+    def gen_archviewer_url_link(
+        self,
+        pvnames,
+        time_start,
+        time_stop,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time,
+            optional Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int], optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames`.
+            Defaults to None.
+        pvcolors : iterable[str or None], optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames`. Defaults to None.
+        pvusediff : iterable[bool], optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames`. Defaults to False.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+        """
+        url = _ClientArchiver.gen_archviewer_url_link(
+            pvnames=pvnames,
+            time_start=time_start,
+            time_stop=time_stop,
+            time_ref=time_ref,
+            pvoptnrpts=pvoptnrpts,
+            pvcolors=pvcolors,
+            pvusediff=pvusediff)
+        return url
 
 
 class PVDetails(_Base):
@@ -203,8 +310,6 @@ class PVData(_Base):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
         self._pvname = pvname
-        self._time_start = None
-        self._time_stop = None
         self._timestamp = None
         self._value = None
         self._status = None
@@ -224,69 +329,11 @@ class PVData(_Base):
         self.connect()
         url = self.connector.getData(
             self.pvname,
-            self._time_start.get_iso8601(),
-            self._time_stop.get_iso8601(),
+            self.time_start.get_iso8601(),
+            self.time_stop.get_iso8601(),
             get_request_url=True,
         )
         return url
-
-    @property
-    def timestamp_start(self):
-        """Timestamp start."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_start = _Time(timestamp=new_timestamp)
-
-    @property
-    def time_start(self):
-        """Time start."""
-        return self._time_start
-
-    @time_start.setter
-    def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_start = new_time
-
-    @property
-    def timestamp_stop(self):
-        """Timestamp stop."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_stop = _Time(timestamp=new_timestamp)
-
-    @property
-    def time_stop(self):
-        """Time stop."""
-        return self._time_stop
-
-    @time_stop.setter
-    def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_stop = new_time
 
     @property
     def parallel_query_bin_interval(self):
@@ -335,14 +382,14 @@ class PVData(_Base):
         interval = self.parallel_query_bin_interval
         if parallel:
             timestamp_start, timestamp_stop = _get_time_intervals(
-                self._time_start,
-                self._time_stop,
+                self.time_start,
+                self.time_stop,
                 interval,
                 return_isoformat=True,
             )
         else:
-            timestamp_start = self._time_start.get_iso8601()
-            timestamp_stop = self._time_stop.get_iso8601()
+            timestamp_start = self.time_start.get_iso8601()
+            timestamp_stop = self.time_stop.get_iso8601()
 
         data = self.connector.getData(
             self._pvname,
@@ -354,6 +401,59 @@ class PVData(_Base):
         if not data:
             return
         self.set_data(**data)
+
+    def gen_archviewer_url_link(
+        self,
+        pvnames=None,
+        time_start=None,
+        time_stop=None,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int] or Int, optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+
+        """
+        pvnames = pvnames or [self._pvname]
+        url = super().gen_archviewer_url_link(
+            pvnames=pvnames,
+            time_start=time_start,
+            time_stop=time_stop,
+            time_ref=time_ref,
+            pvoptnrpts=pvoptnrpts,
+            pvcolors=pvcolors,
+            pvusediff=pvusediff)
+        return url
 
     def set_data(self, timestamp, value, status, severity):
         """Auxiliary method to set data. Used by PVDataSet."""
@@ -445,8 +545,6 @@ class PVDataSet(_Base):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
         self._pvnames = pvnames
-        self._time_start = None
-        self._time_stop = None
         self._parallel_query_bin_interval = (
             _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
         )
@@ -488,72 +586,6 @@ class PVDataSet(_Base):
         return list(archived)
 
     @property
-    def timestamp_start(self):
-        """Timestamp start."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_start = _Time(timestamp=new_timestamp)
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_start = self._time_start
-
-    @property
-    def time_start(self):
-        """Time start."""
-        return self._time_start
-
-    @time_start.setter
-    def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_start = new_time
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_start = self._time_start
-
-    @property
-    def timestamp_stop(self):
-        """Timestamp stop."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_stop = _Time(timestamp=new_timestamp)
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_stop = self._time_stop
-
-    @property
-    def time_stop(self):
-        """Time stop."""
-        return self._time_stop
-
-    @time_stop.setter
-    def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_stop = new_time
-        for pvname in self._pvnames:
-            self._pvdata[pvname].time_stop = self._time_stop
-
-    @property
     def parallel_query_bin_interval(self):
         """Parallel query bin interval."""
         return self._parallel_query_bin_interval
@@ -584,14 +616,14 @@ class PVDataSet(_Base):
         interval = self.parallel_query_bin_interval
         if parallel:
             timestamp_start, timestamp_stop = _get_time_intervals(
-                self._time_start,
-                self._time_stop,
+                self.time_start,
+                self.time_stop,
                 interval,
                 return_isoformat=True,
             )
         else:
-            timestamp_start = self._time_start.get_iso8601()
-            timestamp_stop = self._time_stop.get_iso8601()
+            timestamp_start = self.time_start.get_iso8601()
+            timestamp_stop = self.time_stop.get_iso8601()
 
         data = self.connector.getData(
             self._pvnames,
@@ -609,6 +641,61 @@ class PVDataSet(_Base):
         for pvname in self._pvnames:
             self._pvdata[pvname].set_data(**data[pvname])
 
+    def gen_archviewer_url_link(
+        self,
+        pvnames=None,
+        time_start=None,
+        time_stop=None,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int] or Int, optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+
+        """
+        pvnames = pvnames or self._pvnames
+        time_start = time_start or self.time_start
+        time_stop = time_stop or self.time_stop
+        url = super().gen_archviewer_url_link(
+            pvnames=pvnames,
+            time_start=time_start,
+            time_stop=time_stop,
+            time_ref=time_ref,
+            pvoptnrpts=pvoptnrpts,
+            pvcolors=pvcolors,
+            pvusediff=pvusediff)
+        return url
+
     def _init_pvdatas(self, pvnames, connector):
         pvdata = dict()
         for pvname in pvnames:
@@ -616,9 +703,9 @@ class PVDataSet(_Base):
             pvdata[
                 pvname
             ].parallel_query_bin_interval = self._parallel_query_bin_interval
-            if self._time_start is not None:
-                pvdata[pvname].time_start = self._time_start
-            if self._time_stop is not None:
+            if self.time_start is not None:
+                pvdata[pvname].time_start = self.time_start
+            if self.time_stop is not None:
                 pvdata[pvname].time_stop = self._time_stop
         return pvdata
 

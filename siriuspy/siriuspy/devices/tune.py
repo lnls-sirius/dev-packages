@@ -15,7 +15,17 @@ class TuneFrac(_Device):
         SI_V = 'SI-Glob:DI-Tune-V'
         ALL = (SI_H, SI_V)
 
-    PROPERTIES_DEFAULT = ('TuneFrac-Mon', 'Enbl-Sel', 'Enbl-Sts')
+    PROPERTIES_DEFAULT = (
+        'TuneFrac-Mon',
+        'Enbl-Sel',
+        'Enbl-Sts',
+        'Span-RB',
+        'Span-SP',
+        'RevN-RB',
+        'RevN-SP',
+        'FreqOff-RB',
+        'FreqOff-SP',
+    )
 
     def __init__(self, devname, props2init='all'):
         """Init."""
@@ -27,6 +37,36 @@ class TuneFrac(_Device):
     def tune(self):
         """Tune Frac."""
         return self['TuneFrac-Mon']
+
+    @property
+    def span(self):
+        """Span [kHz]."""
+        return self['Span-RB']
+
+    @span.setter
+    def span(self, value):
+        self['Span-SP'] = value
+
+    @property
+    def rev_harmonic(self):
+        """Revolution harmonic."""
+        return self['RevN-RB']
+
+    @rev_harmonic.setter
+    def rev_harmonic(self, value):
+        """Revolution harmonic."""
+        if not 0 <= int(value) <= 864:
+            raise ValueError('rev_harmonic must be in range [0, 864]')
+        self['RevN-SP'] = int(value)
+
+    @property
+    def center_frequency(self):
+        """Center frequency offset [kHz]."""
+        return self['FreqOff-RB']
+
+    @center_frequency.setter
+    def center_frequency(self, value):
+        self['FreqOff-SP'] = value
 
     @property
     def enable(self):
@@ -113,6 +153,61 @@ class Tune(_DeviceSet):
     def tuney(self):
         """Tune Frac Y."""
         return self.devices[1].tune
+
+    @property
+    def spanx(self):
+        """Span X [kHz]."""
+        return self.devices[0].span
+
+    @spanx.setter
+    def spanx(self, value):
+        self.devices[0].span = value
+
+    @property
+    def spany(self):
+        """Span Y [kHz]."""
+        return self.devices[1].span
+
+    @spany.setter
+    def spany(self, value):
+        self.devices[1].span = value
+
+    @property
+    def rev_harmonicx(self):
+        """Revolution harmonic X."""
+        return self.devices[0].rev_harmonic
+
+    @rev_harmonicx.setter
+    def rev_harmonicx(self, value):
+        self.devices[0].rev_harmonic = value
+
+    @property
+    def rev_harmonicy(self):
+        """Revolution harmonic Y."""
+        return self.devices[1].rev_harmonic
+
+    @rev_harmonicy.setter
+    def rev_harmonicy(self, value):
+        """Revolution harmonic Y."""
+        self.devices[1].rev_harmonic = value
+
+    @property
+    def center_frequencyx(self):
+        """Center frequency X."""
+        return self.devices[0].center_frequency
+
+    @center_frequencyx.setter
+    def center_frequencyx(self, value):
+        self.devices[0].center_frequency = value
+
+    @property
+    def center_frequencyy(self):
+        """Center frequency Y."""
+        return self.devices[1].center_frequency
+
+    @center_frequencyy.setter
+    def center_frequencyy(self, value):
+        self.devices[1].center_frequency = value
 
     @property
     def tunex_wfm(self):

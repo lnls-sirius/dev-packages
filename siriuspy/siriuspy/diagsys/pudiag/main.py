@@ -27,7 +27,7 @@ class PUDiagApp(_App):
             self.pvs.append(pv)
 
             # DiagStatus-Mon
-            pvs = [None]*11 if 'Sept' not in puname else [None]*10
+            pvs = [None]*12 if 'Sept' not in puname else [None]*11
             pvs[_PUStatusPV.PWRST_STS] = devname + ':PwrState-Sts'
             pvs[_PUStatusPV.PULSE_STS] = devname + ':Pulse-Sts'
             pvs[_PUStatusPV.DIFFVOLTG] = devname + ':DiagVoltageDiff-Mon'
@@ -38,9 +38,9 @@ class PUDiagApp(_App):
             pvs[_PUStatusPV.INTRLCK_5] = devname + ':Intlk5-Mon'
             pvs[_PUStatusPV.INTRLCK_6] = devname + ':Intlk6-Mon'
             pvs[_PUStatusPV.INTRLCK_7] = devname + ':Intlk7-Mon'
+            pvs[_PUStatusPV.INTRLCK_9] = devname + ':Intlk9-Mon'
             if 'Sept' not in puname:
                 pvs[_PUStatusPV.INTRLCK_8] = devname + ':Intlk8-Mon'
-            pvs[_PUStatusPV.INTRLCK_9] = devname + ':Intlk9-Mon'
             pv = _ComputedPV(
                 puname + ':DiagStatus-Mon', _PUStatusPV(), self._queue,
                 pvs, monitor=False)
