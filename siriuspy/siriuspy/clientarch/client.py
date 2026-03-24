@@ -11,9 +11,9 @@ import logging as _log
 import ssl as _ssl
 import urllib as _urllib
 from datetime import timedelta as _timedelta
-from threading import Thread as _Thread
 from urllib.parse import quote as _quote
 
+import nest_asyncio
 import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
@@ -40,7 +40,6 @@ class ClientArchiver:
         self.session = None
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
-        self._ret = None
         self._request_url = None
         # print('urllib3 InsecureRequestWarning disabled!')
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
@@ -97,13 +96,10 @@ class ClientArchiver:
         headers = {'User-Agent': 'Mozilla/5.0'}
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
-        ret = self._run_async_event_loop(
-            self._create_session,
-            url,
-            headers=headers,
-            payload=payload,
-            ssl=False,
+        coro = self._create_session(
+            url, headers=headers, payload=payload, ssl=False
         )
+        ret = self._run_sync_coro(coro)
         if ret is not None:
             self.session, authenticated = ret
             if authenticated:
@@ -119,7 +115,8 @@ class ClientArchiver:
     def logout(self):
         """Close login session."""
         if self.session:
-            resp = self._run_async_event_loop(self._close_session)
+            coro = self._close_session()
+            resp = self._run_sync_coro(coro)
             self.session = None
             return resp
         return None
@@ -458,13 +455,12 @@ class ClientArchiver:
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
         self._request_url = url
-        response = self._run_async_event_loop(
-            self._handle_request,
+        coro = self._handle_request(
             url,
             return_json=return_json,
             need_login=need_login,
         )
-        return response
+        return self._run_sync_coro(coro)
 
     def _create_url(self, method, **kwargs):
         """Create URL."""
@@ -480,40 +476,19 @@ class ClientArchiver:
         return url
 
     # ---------- async methods ----------
-
-    def _run_async_event_loop(self, *args, **kwargs):
-        # NOTE: Run the asyncio commands in a separated Thread to isolate
-        # their EventLoop from the external environment (important for class
-        # to work within jupyter notebook environment).
-        _thread = _Thread(
-            target=self._thread_run_async_event_loop,
-            daemon=True,
-            args=args,
-            kwargs=kwargs,
-        )
-        _thread.start()
-        _thread.join()
-        return self._ret
-
-    def _thread_run_async_event_loop(self, func, *args, **kwargs):
-        """Get event loop."""
-        close = False
+    def _run_sync_coro(self, coro):
+        """Run an async coroutine synchronously, compatible with Jupyter."""
         try:
-            loop = _asyncio.get_event_loop()
-        except RuntimeError as error:
-            if 'no current event loop' in str(error):
-                loop = _asyncio.new_event_loop()
-                _asyncio.set_event_loop(loop)
-                close = True
-            else:
-                raise error
-        try:
-            self._ret = loop.run_until_complete(func(*args, **kwargs))
-        except _asyncio.TimeoutError:
-            raise _exceptions.TimeoutError
-
-        if close:
-            loop.close()
+            loop = _asyncio.get_running_loop()
+            try:
+                return loop.run_until_complete(coro)
+            except RuntimeError:
+                # Event loop already running (typical in Jupyter notebooks).
+                nest_asyncio.apply(loop)
+                return loop.run_until_complete(coro)
+        except RuntimeError:
+            # No running loop, create a new one
+            return _asyncio.run(coro)
 
     async def _handle_request(self, url, return_json=False, need_login=False):
         """Handle request."""
@@ -562,8 +537,8 @@ class ClientArchiver:
                     except ValueError:
                         _log.error(f'Error with URL {response.url}')
                         response = None
-        except _asyncio.TimeoutError as err_msg:
-            raise _exceptions.TimeoutError(err_msg)
+        except _asyncio.TimeoutError as err:
+            raise _exceptions.TimeoutError from err
         return response
 
     async def _create_session(self, url, headers, payload, ssl):
