@@ -8,7 +8,6 @@ See
 
 import asyncio as _asyncio
 import logging as _log
-import ssl as _ssl
 import urllib as _urllib
 from datetime import timedelta as _timedelta
 from threading import Thread as _Thread
@@ -17,6 +16,7 @@ from urllib.parse import quote as _quote
 import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import ClientSession as _ClientSession
+
 try:
     from lzstring import LZString as _LZString
 except:
@@ -34,25 +34,58 @@ class ClientArchiver:
     SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
 
+    def __delete__(self):
+        """Turn off thread when deleting."""
+        self.shutdown()
+
     def __init__(self, server_url=None, timeout=None):
         """Initialize."""
         timeout = timeout or ClientArchiver.DEFAULT_TIMEOUT
         self.session = None
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
-        self._ret = None
         self._request_url = None
-        # print('urllib3 InsecureRequestWarning disabled!')
+        self._thread = self._loop = None
+        self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
+
+    def connect(self):
+        """Starts bg. event loop in a separate thread.
+
+        Raises:
+            RuntimeError: when library is alread connected.
+        """
+        if self._loop_alive():
+            return
+
+        self._loop = _asyncio.new_event_loop()
+        self._thread = _Thread(target=self._run_event_loop, daemon=True)
+        self._thread.start()
+
+    def shutdown(self, timeout=5):
+        """Safely stops the bg. loop and waits for the thread to exit."""
+        if not self._loop_alive():
+            return
+
+        # 1. Cancel all pending tasks in the loop (to avoid ResourceWarnings)
+        self._loop.call_soon_threadsafe(self._cancel_all_tasks)
+
+        # 2. Schedule the loop to stop processing
+        self._loop.call_soon_threadsafe(self._loop.stop)
+
+        # 3. Wait for the thread to actually finish
+        self._thread.join(timeout=timeout)
+        if self._thread.is_alive():
+            print('Warning: Background thread did not stop in time.')
 
     @property
     def connected(self):
         """Connected."""
+        if not self._loop_alive():
+            return False
         try:
-            status = _urllib.request.urlopen(
-                self._url, timeout=self._timeout, context=_ssl.SSLContext()
-            ).status
-            return status == 200
+            resp = self._make_request(self._url, return_json=False)
+            return resp.status == 200
         except _urllib.error.URLError:
             return False
 
@@ -97,13 +130,10 @@ class ClientArchiver:
         headers = {'User-Agent': 'Mozilla/5.0'}
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
-        ret = self._run_async_event_loop(
-            self._create_session,
-            url,
-            headers=headers,
-            payload=payload,
-            ssl=False,
+        coro = self._create_session(
+            url, headers=headers, payload=payload, ssl=False
         )
+        ret = self._run_sync_coro(coro)
         if ret is not None:
             self.session, authenticated = ret
             if authenticated:
@@ -119,7 +149,8 @@ class ClientArchiver:
     def logout(self):
         """Close login session."""
         if self.session:
-            resp = self._run_async_event_loop(self._close_session)
+            coro = self._close_session()
+            resp = self._run_sync_coro(coro)
             self.session = None
             return resp
         return None
@@ -352,7 +383,7 @@ class ClientArchiver:
         time_ref=None,
         pvoptnrpts=None,
         pvcolors=None,
-        pvusediff=False
+        pvusediff=False,
     ):
         """Generate a Archiver Viewer URL for the given PVs.
 
@@ -396,7 +427,8 @@ class ClientArchiver:
         # Thanks to Rafael Lyra for the basis of this implementation!
         archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
         args = ClientArchiver._process_url_link_args(
-            pvnames, pvoptnrpts, pvcolors, pvusediff)
+            pvnames, pvoptnrpts, pvcolors, pvusediff
+        )
         pvoptnrpts, pvcolors, pvusediff = args
         pv_search = ''
         for idx in range(len(pvnames)):
@@ -455,16 +487,38 @@ class ClientArchiver:
             pvusediff = [pvusediff] * len(pvnames)
         return pvoptnrpts, pvcolors, pvusediff
 
+    def _loop_alive(self):
+        """Check if thread is alive and loop is running."""
+        return (
+            self._thread is not None
+            and self._thread.is_alive()
+            and self._loop.is_running()
+        )
+
+    def _cancel_all_tasks(self):
+        """Helper to cancel tasks (must be called from the loop's thread)."""
+        if hasattr(_asyncio, 'all_tasks'):
+            all_tasks = _asyncio.all_tasks(loop=self._loop)
+        else:  # python 3.6
+            all_tasks = _asyncio.Task.all_tasks(loop=self._loop)
+
+        for task in all_tasks:
+            task.cancel()
+
+    def _run_event_loop(self):
+        _asyncio.set_event_loop(self._loop)
+        try:
+            self._loop.run_forever()
+        finally:
+            self._loop.close()
+
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
         self._request_url = url
-        response = self._run_async_event_loop(
-            self._handle_request,
-            url,
-            return_json=return_json,
-            need_login=need_login,
+        coro = self._handle_request(
+            url, return_json=return_json, need_login=need_login
         )
-        return response
+        return self._run_sync_coro(coro)
 
     def _create_url(self, method, **kwargs):
         """Create URL."""
@@ -479,41 +533,14 @@ class ClientArchiver:
             url += '&'.join(['{}={}'.format(k, v) for k, v in kwargs.items()])
         return url
 
+    def _run_sync_coro(self, coro):
+        """Run an async coroutine synchronously, compatible with Jupyter."""
+        if not self._thread.is_alive():
+            raise RuntimeError('Library is shut down')
+        future = _asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return future.result(timeout=self._timeout)
+
     # ---------- async methods ----------
-
-    def _run_async_event_loop(self, *args, **kwargs):
-        # NOTE: Run the asyncio commands in a separated Thread to isolate
-        # their EventLoop from the external environment (important for class
-        # to work within jupyter notebook environment).
-        _thread = _Thread(
-            target=self._thread_run_async_event_loop,
-            daemon=True,
-            args=args,
-            kwargs=kwargs,
-        )
-        _thread.start()
-        _thread.join()
-        return self._ret
-
-    def _thread_run_async_event_loop(self, func, *args, **kwargs):
-        """Get event loop."""
-        close = False
-        try:
-            loop = _asyncio.get_event_loop()
-        except RuntimeError as error:
-            if 'no current event loop' in str(error):
-                loop = _asyncio.new_event_loop()
-                _asyncio.set_event_loop(loop)
-                close = True
-            else:
-                raise error
-        try:
-            self._ret = loop.run_until_complete(func(*args, **kwargs))
-        except _asyncio.TimeoutError:
-            raise _exceptions.TimeoutError
-
-        if close:
-            loop.close()
 
     async def _handle_request(self, url, return_json=False, need_login=False):
         """Handle request."""
@@ -562,8 +589,8 @@ class ClientArchiver:
                     except ValueError:
                         _log.error(f'Error with URL {response.url}')
                         response = None
-        except _asyncio.TimeoutError as err_msg:
-            raise _exceptions.TimeoutError(err_msg)
+        except _asyncio.TimeoutError as err:
+            raise _exceptions.TimeoutError from err
         return response
 
     async def _create_session(self, url, headers, payload, ssl):
