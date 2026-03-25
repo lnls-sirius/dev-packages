@@ -22,7 +22,7 @@ class IDSearch:
         'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
         'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
         'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
-        'IPE':      'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
+        'IPE':      'SI-11SP:ID-UE44',   # titular: UE44 (APU58 prev.)
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
@@ -103,10 +103,10 @@ class IDSearch:
         'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
-                58,
-                0, 29, 29, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                44,
+                0, 22, 22, 22, 0.01,
+                0, 22, 0, 0.01,
+                0, 10.65, 0, 0.01, 0)),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
@@ -176,10 +176,12 @@ class IDSearch:
             3: ('vertical', -52.5/2),  # [mm]
         },
         'SI-11SP:ID-UE44': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-11SP:ID-SIMUL': {
-            0: ('horizontal', None),  # [mm]
+            0: ('circularp', -13.31),  # [mm]
+            1: ('horizontal', 0.00),  # [mm]
+            2: ('circularn', 13.31),  # [mm]
+            3: ('vertical', 22.00),  # [mm]
+            4: ('linear_inclined', None),  # [mm]
+            5: ('variable_angle', None),  # [mm]
         },
         'SI-14SB:ID-IVU18': {
             0: ('horizontal', None),  # [mm]
@@ -213,6 +215,7 @@ class IDSearch:
     _idname_2_idff = {
         'SI-06SB:ID-VPU29':  {
             'polarizations': ('vertical', ),
+            'cparameter': None,
             'pparameter': None,
             'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
             IDFF_CC_LABELS[0]: 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
@@ -279,7 +282,19 @@ class IDSearch:
             IDFF_QS_LABELS[0]: 'SI-10SB:PS-QS-1:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-10SB:PS-QS-2:Current-SP',
         },
-        'SI-11SP:ID-UE44': None,
+        'SI-11SP:ID-UE44': {
+            'polarizations': ('horizontal', ),
+            'cparameter': 'SI-11SP:ID-UE44:CParam-Mon',
+            'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
+            'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
+            IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-11SP:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-11SP:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-11SP:PS-QS-1:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-11SP:PS-QS-2:Current-SP',
+            IDFF_LC_LABELS[0]: 'SI-11SP:PS-LCH:Current-SP',
+            },
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
