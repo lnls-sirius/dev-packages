@@ -349,7 +349,7 @@ class ClientArchiver:
         time_ref=None,
         pvoptnrpts=None,
         pvcolors=None,
-        pvusediff=False
+        pvusediff=False,
     ):
         """Generate a Archiver Viewer URL for the given PVs.
 
@@ -393,7 +393,8 @@ class ClientArchiver:
         # Thanks to Rafael Lyra for the basis of this implementation!
         archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
         args = ClientArchiver._process_url_link_args(
-            pvnames, pvoptnrpts, pvcolors, pvusediff)
+            pvnames, pvoptnrpts, pvcolors, pvusediff
+        )
         pvoptnrpts, pvcolors, pvusediff = args
         pv_search = ''
         for idx in range(len(pvnames)):
@@ -456,9 +457,7 @@ class ClientArchiver:
         """Make request."""
         self._request_url = url
         coro = self._handle_request(
-            url,
-            return_json=return_json,
-            need_login=need_login,
+            url, return_json=return_json, need_login=need_login
         )
         return self._run_sync_coro(coro)
 
