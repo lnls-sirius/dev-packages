@@ -1015,6 +1015,7 @@ def _get_ps_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     dbase = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'Log-Mon': {'type': 'string', 'value': 'Starting...'},
         'TimestampBoot-Cte': {'type': 'float', 'value': 0,
                               'prec': 7, 'unit': 'timestamp'},
         'TimestampUpdate-Mon': {'type': 'float', 'value': 0,
