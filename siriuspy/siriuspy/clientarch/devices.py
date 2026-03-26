@@ -40,7 +40,7 @@ class BaseDevice(_PVDataSet):
         self._times = None
         self._values = None
         super().__init__(pvnames, connector=connector)
-        self._parallel_query_bin_interval = 3600
+        self.query_bin_interval = 3600
 
     @property
     def devnames(self):
@@ -57,9 +57,9 @@ class BaseDevice(_PVDataSet):
         """Return retrieved orbit interpolated values."""
         return self._values
 
-    def update(self, mean_sec=None, parallel=True):
+    def update(self, mean_sec=None):
         """Update state by retrieving data."""
-        super().update(mean_sec=mean_sec, parallel=parallel)
+        super().update(mean_sec=mean_sec)
 
         # interpolate data
         self._times, self._values = self._interpolate_data(mean_sec)
