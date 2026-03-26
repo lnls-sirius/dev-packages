@@ -3,7 +3,7 @@
 from calendar import timegm as _timegm
 from datetime import datetime as _datetime, timedelta as _timedelta
 
-from . import exceptions as _exceptions
+from .exceptions import TypeError as _TypeError
 
 
 class Time(_datetime):
@@ -46,7 +46,7 @@ class Time(_datetime):
     def __new__(cls, *args, **kwargs):
         """New object."""
         if not args and not kwargs:
-            raise _exceptions.TypeError(
+            raise _TypeError(
                 'no arguments found to build Time object'
             )
         if len(args) == 1:
@@ -59,9 +59,10 @@ class Time(_datetime):
                     else Time._DEFAULT_TIMESTAMP_FORMAT
                 )
                 return Time.strptime(args[0], timestamp_format)
-            raise _exceptions.TypeError(
+            raise _TypeError(
                 f'argument of unexpected type {type(args[0])}'
             )
+
         if len(kwargs) == 1:
             if 'timestamp' in kwargs:
                 return Time.fromtimestamp(kwargs['timestamp'])
@@ -70,20 +71,21 @@ class Time(_datetime):
                     kwargs['timestamp_string'], Time._DEFAULT_TIMESTAMP_FORMAT
                 )
             if set(kwargs.keys()) & Time._DATETIME_ARGS:
-                raise _exceptions.TypeError(
+                raise _TypeError(
                     'missing input arguments, verify usage options.'
                 )
-            raise _exceptions.TypeError(f'unexpected key argument {kwargs}')
+            raise _TypeError(f'unexpected key argument {kwargs}')
+
         if len(kwargs) == 2:
             if set(kwargs.keys()) == {'timestamp_string', 'timestamp_format'}:
                 return Time.strptime(
                     kwargs['timestamp_string'], kwargs['timestamp_format']
                 )
             if set(kwargs.keys()) & Time._DATETIME_ARGS:
-                raise _exceptions.TypeError(
+                raise _TypeError(
                     'missing input arguments, verify usage options.'
                 )
-            raise _exceptions.TypeError(
+            raise _TypeError(
                 f'unexpected key arguments {list(kwargs.keys())}'
             )
         return super().__new__(cls, *args, **kwargs)
