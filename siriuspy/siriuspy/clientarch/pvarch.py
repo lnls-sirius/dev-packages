@@ -3,8 +3,10 @@
 from copy import deepcopy as _dcopy
 
 import numpy as _np
-from mathphys.functions import load_pickle as _load_pickle, \
+from mathphys.functions import (
+    load_pickle as _load_pickle,
     save_pickle as _save_pickle
+)
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
@@ -13,7 +15,6 @@ from .time import Time as _Time
 
 
 class _Base:
-
     def __init__(self, connector=None, offline_data=False):
         self._connector = None
         self._offline_data = offline_data
@@ -161,7 +162,7 @@ class _Base:
         time_ref=None,
         pvoptnrpts=None,
         pvcolors=None,
-        pvusediff=False
+        pvusediff=False,
     ):
         """Generate a Archiver Viewer URL for the given PVs.
 
@@ -199,7 +200,8 @@ class _Base:
             time_ref=time_ref,
             pvoptnrpts=pvoptnrpts,
             pvcolors=pvcolors,
-            pvusediff=pvusediff)
+            pvusediff=pvusediff,
+        )
         return url
 
 
@@ -389,7 +391,7 @@ class PVData(_Base):
         time_ref=None,
         pvoptnrpts=None,
         pvcolors=None,
-        pvusediff=False
+        pvusediff=False,
     ):
         """Generate a Archiver Viewer URL for the given PVs.
 
@@ -431,7 +433,8 @@ class PVData(_Base):
             time_ref=time_ref,
             pvoptnrpts=pvoptnrpts,
             pvcolors=pvcolors,
-            pvusediff=pvusediff)
+            pvusediff=pvusediff,
+        )
         return url
 
     def set_data(self, timestamp, value, status, severity):
@@ -595,7 +598,7 @@ class PVDataSet(_Base):
         time_ref=None,
         pvoptnrpts=None,
         pvcolors=None,
-        pvusediff=False
+        pvusediff=False,
     ):
         """Generate a Archiver Viewer URL for the given PVs.
 
@@ -639,7 +642,8 @@ class PVDataSet(_Base):
             time_ref=time_ref,
             pvoptnrpts=pvoptnrpts,
             pvcolors=pvcolors,
-            pvusediff=pvusediff)
+            pvusediff=pvusediff,
+        )
         return url
 
     def _init_pvdatas(self, pvnames, connector):

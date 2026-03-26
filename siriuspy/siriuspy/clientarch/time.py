@@ -56,20 +56,16 @@ class Time(_datetime):
             tzinfo (tzinfo): keyword/positional argument. Defaults to None.
         """
         if not args and not kwargs:
-            raise TypeError(
-                'no arguments found to build Time object'
-            )
+            raise TypeError('no arguments found to build Time object')
         if len(args) == 1:
             arg = args[0]
             dic_ = {
                 'timestamp': (int, float),
-                'timestamp_string': (str, ),
-                'datetime': (_datetime, ),
+                'timestamp_string': (str,),
+                'datetime': (_datetime,),
             }
             if not isinstance(arg, sum(dic_.values(), ())):
-                raise TypeError(
-                    f'Argument of unexpected type {type(arg)}'
-                )
+                raise TypeError(f'Argument of unexpected type {type(arg)}')
 
             for key, typ in dic_.items():
                 if isinstance(arg, typ) and key not in kwargs:

@@ -22,7 +22,7 @@ from aiohttp import (
 
 try:
     from lzstring import LZString as _LZString
-except:
+except ModuleNotFoundError:
     _LZString = None
 
 from .. import envars as _envars
