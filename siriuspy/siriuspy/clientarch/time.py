@@ -3,6 +3,8 @@
 from calendar import timegm as _timegm
 from datetime import datetime as _datetime, timedelta as _timedelta
 
+import numpy as _np
+
 from .exceptions import TypeError as _TypeError
 
 
@@ -123,29 +125,29 @@ class Time(_datetime):
 
 
 def get_time_intervals(
-    time_start, time_stop, interval, return_isoformat=False
+    time_start: Time, time_stop: Time, interval: int, return_isoformat=False
 ):
-    """Return intervals of 'interval' duration from time_start to time_stop."""
-    if time_start + interval >= time_stop:
-        timestamp_start = (
-            time_start.get_iso8601() if return_isoformat else time_start
-        )
-        timestamp_stop = (
-            time_stop.get_iso8601() if return_isoformat else time_stop
-        )
-    else:
-        t_start = time_start
-        t_stop = t_start + interval
-        timestamp_start = [t_start]
-        timestamp_stop = [t_stop]
-        while t_stop < time_stop:
-            t_start += interval
-            t_stop = t_stop + interval
-            if t_stop + interval > time_stop:
-                t_stop = time_stop
-            timestamp_start.append(t_start)
-            timestamp_stop.append(t_stop)
-        if return_isoformat:
-            timestamp_start = [t.get_iso8601() for t in timestamp_start]
-            timestamp_stop = [t.get_iso8601() for t in timestamp_stop]
-    return timestamp_start, timestamp_stop
+    """Break `time_start` to `time_stop` in intervals of `interval` seconds.
+
+    Args:
+        time_start (Time): start time.
+        time_stop (Time): stop time.
+        interval (int): interval duration in seconds.
+        return_isoformat (bool): return in iso8601 format.
+
+    Returns:
+        start_time (Time|str | list[Time|str]): start times.
+        stop_time (Time|str | list[Time|str]): stop times.
+    """
+    t_start = time_start.timestamp()
+    t_stop = time_stop.timestamp()
+    t_start = _np.arange(t_start, t_stop, interval)
+    t_stop = _np.r_[t_start[1:], t_stop]
+    t_start = [Time(t) for t in t_start]
+    t_stop = [Time(t) for t in t_stop]
+    if return_isoformat:
+        t_start = [t.get_iso8601() for t in t_start]
+        t_stop = [t.get_iso8601() for t in t_stop]
+    if len(t_start) == 1:
+        return t_start[0], t_stop[0]
+    return t_start, t_stop
