@@ -105,7 +105,7 @@ class Time(_datetime):
         else:
             tim = super().__new__(cls, *args, **kwargs)
 
-        return tim.replace(kwargs.get('tzinfo', tim.tzinfo))
+        return tim.replace(tzinfo=kwargs.get('tzinfo', tim.tzinfo))
 
     def get_iso8601(self):
         """Get iso8601 format."""

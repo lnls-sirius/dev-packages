@@ -306,10 +306,14 @@ class ClientArchiver:
             tstarts, tstops = _get_time_intervals(
                 tst, tsp, self.query_bin_interval, return_isoformat=True
             )
-            tstamps_start.extend(tstarts)
-            tstamps_stop.extend(tstops)
+            if isinstance(tstarts, (list, tuple)):
+                tstamps_start.extend(tstarts)
+                tstamps_stop.extend(tstops)
+            else:
+                tstamps_start.append(tstarts)
+                tstamps_stop.append(tstops)
 
-        pvname_orig = list(pvname)
+        pvname_orig = list(pvnames)
         if process_type:
             process_str = process_type
             if interval is not None:
