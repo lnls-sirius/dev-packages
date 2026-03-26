@@ -1,21 +1,10 @@
-
-
-
-
-
-
-
-
-
 #!/usr/bin/env python-sirius
 
 """Test the archiver client class."""
-from unittest import TestCase
 import datetime
+from unittest import TestCase
 
-from siriuspy.clientarch.time import Time, get_time_intervals
-
-import siriuspy.util as util
+from siriuspy.clientarch.time import get_time_intervals, Time
 
 
 class TestClientArchTime(TestCase):
@@ -134,32 +123,3 @@ class TestClientArchTime(TestCase):
         )
         self.assertEqual(tst, time_start)
         self.assertEqual(tsp, time_stop)
-
-
-class TestConfigServiceConTimestamp(TestCase):
-    """Test response error handling."""
-
-    def _test_conv_timestamp(self):
-        """Test timestamp conversion."""
-        # TODO: NOT WORKING ON TRAVIS
-        samples = {
-            ("Dec 11, 2017", 1512957600.0),
-            ("12/11/2017", 1512957600.0),
-            ("2017/12/11", 1512957600.0),
-            ("2017-12-11", 1512957600.0),
-            ("Dec 11 2017 14:00:00", 1513008000.0),
-            ("12/11/2017 14:00:00", 1513008000.0),
-            ("2017/12/11 14:00:00", 1513008000.0),
-            ("2017-12-11 14:00:00", 1513008000.0),
-            ("2017-12-11T14:00:00", 1513008000.0),
-            ("2017-12-11 14:00:00+01:00", 1512997200.0),
-            ("2017-12-11T14:00:00+01:00", 1512997200.0),
-            ("2017-12-11T14:00:00.45", 1513008000.45),
-        }
-
-        for sample in samples:
-            date_string = sample[0]
-            timestamp = sample[1]
-            self.assertEqual(
-                ConfigDBClient.conv_timestamp_txt_2_flt(date_string),
-                timestamp)
