@@ -13,7 +13,6 @@ from .time import Time as _Time
 
 
 class _Base:
-    DEF_PARALLEL_QUERY_BIN_INTERVAL = 12 * 60 * 60  # 12h
 
     def __init__(self, connector=None, offline_data=False):
         self._connector = None
@@ -79,7 +78,7 @@ class _Base:
 
     @property
     def query_bin_interval(self):
-        """Parallel query bin interval."""
+        """Query bin interval."""
         return self.connector._query_bin_interval
 
     @query_bin_interval.setter
@@ -323,9 +322,6 @@ class PVData(_Base):
         self._value = None
         self._status = None
         self._severity = None
-        self._parallel_query_bin_interval = (
-            _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
-        )
 
     @property
     def pvname(self):
@@ -528,9 +524,6 @@ class PVDataSet(_Base):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
         self._pvnames = pvnames
-        self._parallel_query_bin_interval = (
-            _Base.DEF_PARALLEL_QUERY_BIN_INTERVAL
-        )
         self._pvdata = self._init_pvdatas(pvnames, self.connector)
 
     @property
@@ -653,9 +646,6 @@ class PVDataSet(_Base):
         pvdata = dict()
         for pvname in pvnames:
             pvdata[pvname] = PVData(pvname, connector)
-            pvdata[
-                pvname
-            ].parallel_query_bin_interval = self._parallel_query_bin_interval
             if self.time_start is not None:
                 pvdata[pvname].time_start = self.time_start
             if self.time_stop is not None:

@@ -127,7 +127,7 @@ class ClientArchiver:
 
     @property
     def query_bin_interval(self):
-        """Parallel query bin interval."""
+        """Query bin interval."""
         return self._query_bin_interval
 
     @query_bin_interval.setter
