@@ -616,7 +616,16 @@ class ClientArchiver:
                         _log.error(f'Error with URL {response.url}')
                         response = None
         except _asyncio.TimeoutError as err:
-            raise _exceptions.TimeoutError from err
+            raise _exceptions.TimeoutError(
+                'Timeout reached. Try to increase `timeout`.'
+            ) from err
+        except _aio_exceptions.ClientPayloadError as err:
+            raise _exceptions.PayloadError(
+                "Payload Error. Increasing `timeout` won't help. "
+                'Try decreasing query_bin_interval, or decrease the'
+                'time interval for the aquisition.'
+            ) from err
+
         return response
 
     async def _create_session(self, url, headers, payload, ssl):
