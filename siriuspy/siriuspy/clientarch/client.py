@@ -282,24 +282,11 @@ class ClientArchiver:
                     process_str += '_' + str(int(stddev))
             pvname = [process_str + '(' + pvn + ')' for pvn in pvname]
 
-        if get_request_url:
-            tstart = _urllib.parse.quote(timestamp_start[0])
-            tstop = _urllib.parse.quote(timestamp_stop[-1])
-            url = [
-                self._create_url(
-                    method='getData.json',
-                    pv=pvn,
-                    **{'from': tstart, 'to': tstop},
-                )
-                for pvn in pvname
-            ]
-            return url[0] if len(pvname) == 1 else url
-
         pvn2idcs = dict()
         all_urls = list()
         for i, pvn in enumerate(pvname):
             urls = []
-            for tstart, tstop in zip(timestamp_start, timestamp_stop):
+            for tstart, tstop in zip(tstamps_start, tstamps_stop):
                 urls.append(
                     self._create_url(
                         method='getData.json',
@@ -314,6 +301,9 @@ class ClientArchiver:
             all_urls.extend(urls)
             end = len(all_urls)
             pvn2idcs[pvname_orig[i]] = _np.arange(ini, end)
+
+        if get_request_url:
+            return all_urls[0] if len(all_urls) == 1 else all_urls
 
         resps = self._make_request(all_urls, return_json=True)
         if not resps:
