@@ -15,7 +15,10 @@ from urllib.parse import quote as _quote
 
 import numpy as _np
 import urllib3 as _urllib3
-from aiohttp import ClientSession as _ClientSession
+from aiohttp import (
+    client_exceptions as _aio_exceptions,
+    ClientSession as _ClientSession
+)
 
 try:
     from lzstring import LZString as _LZString
@@ -24,12 +27,13 @@ except:
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
-from .time import Time as _Time
+from .time import get_time_intervals as _get_time_intervals, Time as _Time
 
 
 class ClientArchiver:
     """Archiver Data Fetcher class."""
 
+    DEF_QUERY_BIN_INTERVAL = 12 * 60 * 60  # 12h
     DEFAULT_TIMEOUT = 5.0  # [s]
     SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
@@ -46,6 +50,7 @@ class ClientArchiver:
         self._url = server_url or self.SERVER_URL
         self._request_url = None
         self._thread = self._loop = None
+        self._query_bin_interval = self.DEF_QUERY_BIN_INTERVAL
         self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
@@ -119,6 +124,20 @@ class ClientArchiver:
         """
         self.logout()
         self._url = url
+
+    @property
+    def query_bin_interval(self):
+        """Parallel query bin interval."""
+        return self._query_bin_interval
+
+    @query_bin_interval.setter
+    def query_bin_interval(self, new_intvl):
+        if not isinstance(new_intvl, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_intvl))
+            )
+        self._query_bin_interval = new_intvl
 
     @property
     def last_requested_url(self):
@@ -261,17 +280,34 @@ class ClientArchiver:
         """
         if isinstance(pvname, str):
             pvname = [pvname]
-        if isinstance(timestamp_start, str):
+
+        if not isinstance(timestamp_start, (list, tuple)):
             timestamp_start = [timestamp_start]
-        if isinstance(timestamp_stop, str):
+        if not isinstance(timestamp_stop, (list, tuple)):
             timestamp_stop = [timestamp_stop]
-        if not isinstance(timestamp_start, (list, tuple)) or not isinstance(
-            timestamp_stop, (list, tuple)
-        ):
-            raise _exceptions.TypeError(
-                "'timestampstart' and 'timestamp_stop' arguments must be "
-                'timestamp strings or iterable.'
+
+        if len(timestamp_start) != len(timestamp_stop):
+            raise _exceptions.IndexError(
+                '`timestamp_start` and `timestamp_stop` must have same length.'
             )
+
+        tstamps_start = []
+        tstamps_stop = []
+        for tst, tsp in zip(timestamp_start, timestamp_stop):  # noqa: B905
+            try:
+                tst = _Time(tst)
+                tsp = _Time(tsp)
+            except (TypeError, ValueError) as err:
+                raise _exceptions.TypeError(
+                    '`timestamp_start` and `timestamp_stop` must be either '
+                    'timestamp string, integer timestamp or Time objects. '
+                    'Or an iterable of these objects.'
+                ) from err
+            tstarts, tstops = _get_time_intervals(
+                tst, tsp, self.query_bin_interval, return_isoformat=True
+            )
+            tstamps_start.extend(tstarts)
+            tstamps_stop.extend(tstops)
 
         pvname_orig = list(pvname)
         if process_type:

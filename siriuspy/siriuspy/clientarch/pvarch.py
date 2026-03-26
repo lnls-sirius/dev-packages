@@ -9,7 +9,7 @@ from mathphys.functions import load_pickle as _load_pickle, \
 from .. import envars as _envars
 from . import exceptions as _exceptions
 from .client import ClientArchiver as _ClientArchiver
-from .time import get_time_intervals as _get_time_intervals, Time as _Time
+from .time import Time as _Time
 
 
 class _Base:
@@ -76,6 +76,15 @@ class _Base:
         if not self.connector:
             return False
         return self.connector.connected
+
+    @property
+    def query_bin_interval(self):
+        """Parallel query bin interval."""
+        return self.connector._query_bin_interval
+
+    @query_bin_interval.setter
+    def query_bin_interval(self, new_intvl):
+        self.connector.query_bin_interval = new_intvl
 
     def switch_to_online_data(self):
         """."""
@@ -336,20 +345,6 @@ class PVData(_Base):
         return url
 
     @property
-    def parallel_query_bin_interval(self):
-        """Parallel query bin interval."""
-        return self._parallel_query_bin_interval
-
-    @parallel_query_bin_interval.setter
-    def parallel_query_bin_interval(self, new_intvl):
-        if not isinstance(new_intvl, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_intvl))
-            )
-        self._parallel_query_bin_interval = new_intvl
-
-    @property
     def timestamp(self):
         """Timestamp data."""
         return self._timestamp
@@ -369,7 +364,7 @@ class PVData(_Base):
         """Severity data."""
         return self._severity
 
-    def update(self, mean_sec=None, parallel=True, timeout=None):
+    def update(self, mean_sec=None, timeout=None):
         """Update."""
         self.connect()
         if timeout is not None:
@@ -379,22 +374,10 @@ class PVData(_Base):
             return
         process_type = 'mean' if mean_sec is not None else ''
 
-        interval = self.parallel_query_bin_interval
-        if parallel:
-            timestamp_start, timestamp_stop = _get_time_intervals(
-                self.time_start,
-                self.time_stop,
-                interval,
-                return_isoformat=True,
-            )
-        else:
-            timestamp_start = self.time_start.get_iso8601()
-            timestamp_stop = self.time_stop.get_iso8601()
-
         data = self.connector.getData(
             self._pvname,
-            timestamp_start,
-            timestamp_stop,
+            self.time_start,
+            self.time_stop,
             process_type=process_type,
             interval=mean_sec,
         )
@@ -585,25 +568,7 @@ class PVDataSet(_Base):
         archived = set(self._pvnames) - set(self.not_archived)
         return list(archived)
 
-    @property
-    def parallel_query_bin_interval(self):
-        """Parallel query bin interval."""
-        return self._parallel_query_bin_interval
-
-    @parallel_query_bin_interval.setter
-    def parallel_query_bin_interval(self, new_intvl):
-        if not isinstance(new_intvl, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_intvl))
-            )
-        self._parallel_query_bin_interval = new_intvl
-        for pvname in self._pvnames:
-            self._pvdata[
-                pvname
-            ].parallel_query_bin_interval = self._parallel_query_bin_interval
-
-    def update(self, mean_sec=None, parallel=True, timeout=None):
+    def update(self, mean_sec=None, timeout=None):
         """Update."""
         self.connect()
         if timeout is not None:
@@ -613,22 +578,10 @@ class PVDataSet(_Base):
             return
         process_type = 'mean' if mean_sec is not None else ''
 
-        interval = self.parallel_query_bin_interval
-        if parallel:
-            timestamp_start, timestamp_stop = _get_time_intervals(
-                self.time_start,
-                self.time_stop,
-                interval,
-                return_isoformat=True,
-            )
-        else:
-            timestamp_start = self.time_start.get_iso8601()
-            timestamp_stop = self.time_stop.get_iso8601()
-
         data = self.connector.getData(
             self._pvnames,
-            timestamp_start,
-            timestamp_stop,
+            self.time_start,
+            self.time_stop,
             process_type=process_type,
             interval=mean_sec,
         )
