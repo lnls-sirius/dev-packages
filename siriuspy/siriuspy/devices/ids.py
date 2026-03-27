@@ -57,6 +57,24 @@ class _ParamPVs:
     KPARAM_TOL_RB = None
     KPARAM_CHANGE_CMD = None
 
+    # --- CPARAM ---
+    CPARAM_SP = None
+    CPARAM_RB = None
+    CPARAM_MON = None
+    CPARAM_PARKED_CTE = None
+    CPARAM_MAXACC_SP = None
+    CPARAM_MAXACC_RB = None
+    CPARAM_MAXVELO_SP = None
+    CPARAM_MAXVELO_RB = None
+    CPARAM_VELO_SP = None
+    CPARAM_VELO_RB = None
+    CPARAM_VELO_MON = None
+    CPARAM_ACC_SP = None
+    CPARAM_ACC_RB = None
+    CPARAM_TOL_SP = None
+    CPARAM_TOL_RB = None
+    CPARAM_CHANGE_CMD = None
+
     # --- POL ---
     POL_SEL = None
     POL_STS = None
@@ -69,17 +87,21 @@ class _ParamPVs:
     CENTER_OFFSET_SP = None
     CENTER_OFFSET_RB = None
     CENTER_OFFSET_MON = None
+
     PITCH_MODE_SEL = None
     PITCH_MODE_STS = None
     PITCH_OFFSET_SP = None
     PITCH_OFFSET_RB = None
     PITCH_OFFSET_MON = None
+
     KPARAM_TAPER_SP = None
     KPARAM_TAPER_RB = None
     KPARAM_TAPER_MON = None
+
     TAPER_VELO_MON = None
     TAPER_MIN_CTE = None
     TAPER_MAX_CTE = None
+
     CENTER_OFFSET_VELO_MON = None
     CENTER_OFFSET_MIN_CTE = None
     CENTER_OFFSET_MAX_CTE = None
@@ -468,6 +490,159 @@ class IDBase(_Device):
                 self.PARAM_PVS.KPARAM_MAXACC_SP, kparam_accel_max, timeout
             )
 
+    # --- cparameter ---
+
+    @property
+    def cparameter_tol(self):
+        """CParameter position tolerance [mm]."""
+        if self.PARAM_PVS.CPARAM_TOL_RB is None:
+            return self.parameters.CPARAM_TOL
+        else:
+            return self[self.PARAM_PVS.CPARAM_TOL_RB]
+
+    @property
+    def cparameter_parked(self):
+        """Return ID parked cparameter value [mm]."""
+        if self.PARAM_PVS.CPARAM_PARKED_CTE in self.properties_all:
+            return self[self.PARAM_PVS.CPARAM_PARKED_CTE]
+        else:
+            return self.parameters.CPARAM_PARKED
+
+    @property
+    def cparameter_speed_max(self):
+        """Return max cparameter speed readback [mm/s]."""
+        if self.PARAM_PVS.CPARAM_MAXVELO_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_MAXVELO_RB]
+
+    @property
+    def cparameter_speed_max_lims(self):
+        """Return max cparameter speed limits."""
+        if self.PARAM_PVS.CPARAM_MAXVELO_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.CPARAM_MAXVELO_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def cparameter_speed(self):
+        """Return cparameter speed readback [mm/s]."""
+        if self.PARAM_PVS.CPARAM_VELO_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_VELO_SP]
+
+    @property
+    def cparameter_speed_mon(self):
+        """Return cparameter speed monitor [mm/s]."""
+        if self.PARAM_PVS.CPARAM_VELO_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_VELO_MON]
+
+    @property
+    def cparameter_accel_max(self):
+        """Return maximum cparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.CPARAM_MAXACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_MAXACC_RB]
+
+    @property
+    def cparameter_accel_max_lims(self):
+        """Return max cparameter accel limits."""
+        if self.PARAM_PVS.CPARAM_MAXACC_RB is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.CPARAM_MAXACC_SP)
+            lims = [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+            return lims
+
+    @property
+    def cparameter_accel(self):
+        """Return cparameter acceleration [mm/s²]."""
+        if self.PARAM_PVS.CPARAM_ACC_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_ACC_RB]
+
+    @property
+    def cparameter_lims(self):
+        """Return ID cparameter lower control limit [mm]."""
+        if self.PARAM_PVS.CPARAM_VELO_SP is None:
+            return None
+        else:
+            ctrl = self.pv_ctrlvars(self.PARAM_PVS.CPARAM_SP)
+            return [ctrl['lower_ctrl_limit'], ctrl['upper_ctrl_limit']]
+
+    @property
+    def cparameter(self):
+        """Return ID cparameter readback [mm]."""
+        if self.PARAM_PVS.CPARAM_RB is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_RB]
+
+    @property
+    def cparameter_mon(self):
+        """Return ID cparameter monitor [mm]."""
+        if self.PARAM_PVS.CPARAM_MON is None:
+            return None
+        else:
+            return self[self.PARAM_PVS.CPARAM_MON]
+
+    @property
+    def cparameter_move_eta(self):
+        """Return estimated moving time to reach cparameter RB position."""
+        # NOTE: the IOC may provide this as PV in the future
+        pparam_eta, _ = self.calc_move_eta(self.cparameter, None)
+        return pparam_eta
+
+    def set_cparameter(self, pparam, timeout=None):
+        """Set ID target cparameter for movement [mm]."""
+        if self.PARAM_PVS.CPARAM_SP is None:
+            return True
+        else:
+            return self._write_sp(self.PARAM_PVS.CPARAM_SP, pparam, timeout)
+
+    def set_cparameter_speed(self, pparam_speed, timeout=None):
+        """Command to set ID cruise cparameterspeed for movement [mm/s]."""
+        if self.PARAM_PVS.CPARAM_VELO_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.CPARAM_VELO_SP, pparam_speed, timeout
+            )
+
+    def set_cparameter_speed_max(self, pparam_speed_max, timeout=None):
+        """Command to set ID max cruise pparam speed for movement [mm/s]."""
+        if self.PARAM_PVS.CPARAM_MAXVELO_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.CPARAM_MAXVELO_SP, pparam_speed_max, timeout
+            )
+
+    def set_cparameter_accel(self, pparam_accel, timeout=None):
+        """Command to set ID pparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.CPARAM_ACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.CPARAM_ACC_SP, pparam_accel, timeout
+            )
+
+    def set_cparameter_accel_max(self, pparam_accel_max, timeout=None):
+        """Command to set ID max cruise pparam accel for movement [mm/s²]."""
+        if self.PARAM_PVS.CPARAM_MAXACC_SP is None:
+            return True
+        else:
+            return self._write_sp(
+                self.PARAM_PVS.CPARAM_MAXACC_SP, pparam_accel_max, timeout
+            )
+
     # --- checks ---
 
     @property
@@ -505,9 +680,13 @@ class IDBase(_Device):
         """Wait for movement to finish."""
         return self.wait('Moving-Mon', 0, timeout)
 
-    def wait_move_config(self, pparam, kparam, timeout):
+    def wait_move_config(self, pparam, cparam, kparam, timeout):
         """."""
-        tol_kparam, tol_pparam = self.kparameter_tol, self.pparameter_tol
+        tol_kparam, tol_pparam, tol_cparam = (
+            self.kparameter_tol,
+            self.pparameter_tol,
+            self.cparameter_tol,
+        )
         # wait for movement within reasonable time
         time_init = _time.time()
         while True:
@@ -521,7 +700,12 @@ class IDBase(_Device):
                 if pparam is None
                 else abs(self.pparameter_mon - pparam) <= tol_pparam
             )
-            if p_pos_ok and k_pos_ok and not self.is_moving:
+            c_pos_ok = (
+                True
+                if cparam is None
+                else abs(self.cparameter_mon - cparam) <= tol_cparam
+            )
+            if p_pos_ok and k_pos_ok and c_pos_ok and not self.is_moving:
                 return True
             if _time.time() - time_init > timeout:
                 print(f'tol_total: {timeout:.3f} s')
@@ -576,6 +760,7 @@ class IDBase(_Device):
         success = True
         success &= self.cmd_move_pparameter_start(timeout=timeout)
         success &= self.cmd_move_kparameter_start(timeout=timeout)
+        success &= self.cmd_move_cparameter_start(timeout=timeout)
         return success
 
     def cmd_move_pparameter_start(self, timeout=None):
@@ -590,16 +775,26 @@ class IDBase(_Device):
             self.PARAM_PVS.KPARAM_CHANGE_CMD, timeout=timeout
         )
 
+    def cmd_move_cparameter_start(self, timeout=None):
+        """Command to start Cparameter movement."""
+        return self._move_start(
+            self.PARAM_PVS.CPARAM_CHANGE_CMD, timeout=timeout
+        )
+
     def cmd_change_polarization_start(self, timeout=None):
         """Change polarization."""
         return self._move_start(self.PARAM_PVS.POL_CHANGE_CMD, timeout=timeout)
 
     def cmd_move_park(self, timeout=None):
         """Move ID to parked config."""
-        pparam, kparam = self.pparameter_parked, self.kparameter_parked
+        pparam, cparam, kparam = (
+            self.pparameter_parked,
+            self.cparameter_parked,
+            self.kparameter_parked,
+        )
         if self.PARAM_PVS.START_PARKING_CMD is None:
             # composed pparam and kparam movement by this class
-            return self.cmd_move(pparam, kparam, timeout)
+            return self.cmd_move(pparam, cparam, kparam, timeout)
         else:
             # composed pparam and kparam movement by IOC
             # first set param RBs for ETA computation and PVs consistency
@@ -607,21 +802,28 @@ class IDBase(_Device):
                 return False
             if not self.set_kparameter(kparam):
                 return False
+            if not self.set_cparameter(cparam):
+                return False
             timeout = self.calc_move_timeout(None, None, timeout)
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
-            return self.wait_move_config(pparam, kparam, timeout)
+            return self.wait_move_config(pparam, cparam, kparam, timeout)
 
     def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
         pparam = self.pparameter if pparam is None else pparam
-        return self.cmd_move(pparam, None, timeout)
+        return self.cmd_move(pparam, None, None, timeout)
 
     def cmd_move_kparameter(self, kparam=None, timeout=None):
         """Command to set and start kparam movement."""
         kparam = self.kparameter if kparam is None else kparam
-        return self.cmd_move(None, kparam, timeout)
+        return self.cmd_move(None, None, kparam, timeout)
 
-    def cmd_move(self, pparam=None, kparam=None, timeout=None):
+    def cmd_move_cparameter(self, cparam=None, timeout=None):
+        """Command to set and start cparam movement."""
+        cparam = self.cparameter if cparam is None else cparam
+        return self.cmd_move(None, cparam, None, timeout)
+
+    def cmd_move(self, pparam=None, cparam=None, kparam=None, timeout=None):
         """Command to set and start pparam and kparam movements.
 
         Args:
@@ -631,6 +833,8 @@ class IDBase(_Device):
         """
         if self.PARAM_PVS.PPARAM_SP is None:
             pparam = None
+        if self.PARAM_PVS.CPARAM_SP is None:
+            cparam = None
 
         # set target pparam and kparam
         t0_ = _time.time()
@@ -640,6 +844,10 @@ class IDBase(_Device):
             return False
         if kparam is not None and not self.set_kparameter(
             kparam, timeout=timeout
+        ):
+            return False
+        if cparam is not None and not self.set_cparameter(
+            cparam, timeout=timeout
         ):
             return False
         t1_ = _time.time()
@@ -656,15 +864,19 @@ class IDBase(_Device):
             timeout=timeout
         ):
             return False
+        if cparam is not None and not self.cmd_move_cparameter_start(
+            timeout=timeout
+        ):
+            return False
         t1_ = _time.time()
         if timeout is not None:
             timeout = max(timeout - (t1_ - t0_), 0)
 
         # calc timeout
-        timeout = self.calc_move_timeout(pparam, kparam, timeout)
+        timeout = self.calc_move_timeout(pparam, cparam, kparam, timeout)
 
         # wait for movement within timeout based on movement ETA
-        return self.wait_move_config(pparam, kparam, timeout)
+        return self.wait_move_config(pparam, cparam, kparam, timeout)
 
     def cmd_change_polarization(self, polarization, timeout=None):
         """."""
@@ -694,7 +906,9 @@ class IDBase(_Device):
             self.PARAM_PVS.POL_MON, polarization, timeout=timeout, comp='eq'
         )
 
-    def calc_move_eta(self, pparam_goal=None, kparam_goal=None):
+    def calc_move_eta(
+        self, pparam_goal=None, cparam_goal=None, kparam_goal=None
+    ):
         """Estimate moving time for each parameter separately."""
         # pparameter
         param_goal, param_val = pparam_goal, self.pparameter_mon
@@ -722,21 +936,40 @@ class IDBase(_Device):
         else:
             kparam_eta = 0.0
 
-        return pparam_eta, kparam_eta
+        # cparameter
+        param_goal, param_val = cparam_goal, self.cparameter_mon
+        param_tol = self.cparameter_tol
+        param_vel, param_acc = self.cparameter_speed, self.cparameter_accel
+        if None not in (param_goal, param_val):
+            dparam = abs(param_goal - param_val)
+            dparam = 0 if dparam < param_tol else dparam
+            cparam_eta = IDBase._calc_move_eta_model(
+                dparam, param_vel, param_acc
+            )
+        else:
+            cparam_eta = 0.0
 
-    def calc_move_eta_composed(self, pparam_eta, kparam_eta):
+        return pparam_eta, cparam_eta, kparam_eta
+
+    def calc_move_eta_composed(self, pparam_eta, cparam_eta, kparam_eta):
         """."""
-        # model: here pparam and kparam as serial in time
-        eta = pparam_eta + kparam_eta
+        # model: here pparam, kparam and cparam as serial in time
+        eta = pparam_eta + kparam_eta + cparam_eta
         return eta
 
     def calc_move_timeout(
-        self, pparam_goal=None, kparam_goal=None, timeout=None
+        self,
+        pparam_goal=None,
+        cparam_goal=None,
+        kparam_goal=None,
+        timeout=None,
     ):
         """."""
         # calc timeout
-        pparam_eta, kparam_eta = self.calc_move_eta(pparam_goal, kparam_goal)
-        eta = self.calc_move_eta_composed(pparam_eta, kparam_eta)
+        pparam_eta, cparam_eta, kparam_eta = self.calc_move_eta(
+            pparam_goal, cparam_goal, kparam_goal
+        )
+        eta = self.calc_move_eta_composed(pparam_eta, cparam_eta, kparam_eta)
         eta = 1.1 * eta + 0.5  # add safety margins
         timeout = eta if timeout is None else eta + timeout
         return timeout
@@ -1991,6 +2224,107 @@ class VPU(IDFullMovCtrl):
     def cmd_abort(self, timeout=None):
         """Command to abort undulator motion."""
         return self._write_sp(self.PARAM_PVS.MOVE_ABORT, 1, timeout=timeout)
+
+
+class UE44(IDBase):
+    """UE44 Insertion Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_10SP = 'SI-11SP:ID-UE44'
+        ALL = (UE44_10SP,)
+
+    # --- PARAM_PVS ---
+    PARAM_PVS = _ParamPVs()
+    PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
+    PARAM_PVS.PPARAM_SP = 'PParam-SP'
+    PARAM_PVS.PPARAM_RB = 'PParam-RB'
+    PARAM_PVS.PPARAM_MON = 'PParam-Mon'
+    PARAM_PVS.PPARAM_PARKED_CTE = 'PParamParked-Cte'
+    PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
+    PARAM_PVS.PPARAM_VELO_RB = 'PParamVelo-RB'
+    PARAM_PVS.PPARAM_CHANGE_CMD = 'PParamChange-Cmd'
+    PARAM_PVS.KPARAM_SP = 'KParam-SP'
+    PARAM_PVS.KPARAM_RB = 'KParam-RB'
+    PARAM_PVS.KPARAM_MON = 'KParam-Mon'
+    PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
+    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
+    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+    PARAM_PVS.CPARAM_SP = 'CParam-SP'
+    PARAM_PVS.CPARAM_RB = 'CParam-RB'
+    PARAM_PVS.CPARAM_MON = 'CParam-Mon'
+    PARAM_PVS.CPARAM_VELO_SP = 'CParamVelo-SP'
+    PARAM_PVS.CPARAM_VELO_RB = 'CParamVelo-RB'
+    PARAM_PVS.CPARAM_CHANGE_CMD = 'CParamChange-Cmd'
+
+    PARAM_PVS.POL_SEL = 'Pol-Sel'
+    # PARAM_PVS.POL_STS = 'Pol-Sts'
+    PARAM_PVS.POL_MON = 'Pol-Mon'
+    PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
+
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
+    PROPERTIES_DEFAULT = PROPERTIES_DEFAULT + (
+        'TIPos-Mon',
+        'TOPos-Mon',
+        'BIPos-Mon',
+        'BOPos-Mon',
+        'Offset-Mon',
+    )
+
+    def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname is None:
+            devname = self.DEVICES.UE44_10SP
+        if devname not in self.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
+
+    # --- cassette positions ---
+
+    @property
+    def pos_ti_mon(self):
+        """Return longitudinal position of TI [mm]."""
+        return self['TIPos-Mon']
+
+    @property
+    def pos_to_mon(self):
+        """Return longitudinal position of TO [mm]."""
+        return self['TOPos-Mon']
+
+    @property
+    def pos_bi_mon(self):
+        """Return longitudinal position of BI [mm]."""
+        return self['BIPos-Mon']
+
+    @property
+    def pos_bo_mon(self):
+        """Return longitudinal position of BO [mm]."""
+        return self['BOPos-Mon']
+
+    @property
+    def offset_mon(self):
+        """Return longitudinal offset of ID [mm]."""
+        return self['Offset-Mon']
 
 
 class ID(IDBase):
