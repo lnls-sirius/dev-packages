@@ -41,6 +41,8 @@ class BaseDevice(_PVDataSet):
         self._values = None
         super().__init__(pvnames, connector=connector)
         self.query_bin_interval = 3600
+        self.processing_type = self.ProcessingTypes.Mean
+        self.processing_type_param1 = 1
 
     @property
     def devnames(self):
@@ -57,12 +59,12 @@ class BaseDevice(_PVDataSet):
         """Return retrieved orbit interpolated values."""
         return self._values
 
-    def update(self, mean_sec=None):
+    def update(self, timeout=None):
         """Update state by retrieving data."""
-        super().update(mean_sec=mean_sec)
+        super().update(timeout=timeout)
 
         # interpolate data
-        self._times, self._values = self._interpolate_data(mean_sec)
+        self._times, self._values = self._interpolate_data()
 
     # --- private methods ---
 
@@ -71,9 +73,10 @@ class BaseDevice(_PVDataSet):
         pvnames = []
         return devnames, pvnames
 
-    def _interpolate_data(self, mean_sec):
+    def _interpolate_data(self):
         # calc mean_sec if not passed
         nr_pvs = len(self._pvdata)
+        mean_sec = self.processing_type_param1
         if mean_sec is None:
             mean_sec = sum(
                 map(

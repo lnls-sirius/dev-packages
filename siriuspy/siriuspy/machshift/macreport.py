@@ -1053,9 +1053,6 @@ class MacReport:
             pvds.time_start = self._time_start
             pvds.time_stop = self._time_stop
 
-        init_bin_interval = self._connector.query_bin_interval
-        bin_interval = (self._time_start - self._time_stop).total_seconds() + 1
-
         self._update_log(
             'Collecting archiver data '
             f'({self.time_start.get_iso8601()} to'
@@ -1065,11 +1062,13 @@ class MacReport:
 
         # current
         _t0 = _time.time()
-        self._connector.query_bin_interval = 60 * 60 * 6
-        self._pvdata[self._current_pv].update(MacReport.QUERY_AVG_TIME)
-        self._update_log(log_msg.format(self._current_pv, _time.time()-_t0))
+        pvd = self._pvdata[self._current_pv]
+        pvd.query_bin_interval = 60 * 60 * 6
+        pvd.processing_type = pvd.ProcessingTypes.Mean
+        pvd.processing_type_param1 = MacReport.QUERY_AVG_TIME
+        pvd.update()
 
-        self._connector.query_bin_interval = bin_interval
+        self._update_log(log_msg.format(self._current_pv, _time.time()-_t0))
 
         # macshift, interlock and stability indicators
         for pvn in self._pvnames:
@@ -1084,9 +1083,8 @@ class MacReport:
             _t0 = _time.time()
             pvdataset.update()
             self._update_log(log_msg.format(
-                'SI PS '+group.capitalize(), _time.time()-_t0))
-
-        self._connector.query_bin_interval = init_bin_interval
+                'SI PS '+group.capitalize(), _time.time()-_t0)
+            )
 
         self._compute_stats()
 

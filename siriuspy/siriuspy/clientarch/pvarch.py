@@ -18,8 +18,6 @@ class _Base:
     def __init__(self, connector=None, offline_data=False):
         self._connector = None
         self._offline_data = offline_data
-        self._time_start = None
-        self._time_stop = None
         self.connector = connector
         self.connect()
 
@@ -27,7 +25,7 @@ class _Base:
     def is_archived(self):
         """Is archived."""
         self.connect()
-        return self.connector.getPVDetails(self.pvname) is not None
+        return self.connector.get_pv_details(self.pvname) is not None
 
     def connect(self):
         """Connect."""
@@ -77,15 +75,6 @@ class _Base:
             return False
         return self.connector.connected
 
-    @property
-    def query_bin_interval(self):
-        """Query bin interval."""
-        return self.connector._query_bin_interval
-
-    @query_bin_interval.setter
-    def query_bin_interval(self, new_intvl):
-        self.connector.query_bin_interval = new_intvl
-
     def switch_to_online_data(self):
         """."""
         if self.connector:
@@ -95,64 +84,6 @@ class _Base:
         """."""
         if self.connector:
             self.connector.switch_to_offline_data()
-
-    @property
-    def timestamp_start(self):
-        """Timestamp start."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_start = _Time(timestamp=new_timestamp)
-
-    @property
-    def time_start(self):
-        """Time start."""
-        return self._time_start
-
-    @time_start.setter
-    def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_start = new_time
-
-    @property
-    def timestamp_stop(self):
-        """Timestamp stop."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_stop = _Time(timestamp=new_timestamp)
-
-    @property
-    def time_stop(self):
-        """Time stop."""
-        return self._time_stop
-
-    @time_stop.setter
-    def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_stop = new_time
 
     def gen_archviewer_url_link(
         self,
@@ -246,24 +177,32 @@ class PVDetails(_Base):
     def request_url(self):
         """."""
         self.connect()
-        url = self.connector.getPVDetails(self.pvname, get_request_url=True)
+        url = self.connector.get_pv_details(self.pvname, get_request_url=True)
         return url
 
     @property
     def is_archived(self):
         """."""
         self.connect()
-        data = self.connector.getPVDetails(self.pvname)
+        data = self.connector.get_pv_details(self.pvname)
         if not data:
             return False
         return True
 
-    def update(self, timeout=None):
+    def update(self, timeout=None):  # noqa: C901
         """."""
         self.connect()
+
         if timeout is not None:
+            timeout0 = self.timeout
             self.timeout = timeout
-        data = self.connector.getPVDetails(self.pvname)
+
+        try:
+            data = self.connector.get_pv_details(self.pvname)
+        finally:
+            if timeout is not None:
+                self.timeout = timeout0
+
         if not data:
             return False
         for datum in data:
@@ -284,6 +223,7 @@ class PVDetails(_Base):
                 self.is_paused = value.lower() == 'yes'
             elif field == 'Is this PV currently connected?':
                 self.is_connected = value.lower() == 'yes'
+
         return True
 
     def __str__(self):
@@ -316,6 +256,8 @@ class PVDetails(_Base):
 class PVData(_Base):
     """Archive PV Data."""
 
+    ProcessingTypes = _ClientArchiver.ProcessingTypes
+
     def __init__(self, pvname, connector=None, offline_data=False):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
@@ -324,6 +266,12 @@ class PVData(_Base):
         self._value = None
         self._status = None
         self._severity = None
+        self._time_start = None
+        self._time_stop = None
+        self._query_bin_interval = self.connector.query_bin_interval
+        self._processing_type = self.ProcessingTypes.None_
+        self._processing_type_param1 = None
+        self._processing_type_param2 = 3.0  # number of sigma
 
     @property
     def pvname(self):
@@ -334,7 +282,7 @@ class PVData(_Base):
     def request_url(self):
         """Request url."""
         self.connect()
-        url = self.connector.getData(
+        url = self.connector.get_data(
             self.pvname,
             self.time_start.get_iso8601(),
             self.time_stop.get_iso8601(),
@@ -362,23 +310,145 @@ class PVData(_Base):
         """Severity data."""
         return self._severity
 
-    def update(self, mean_sec=None, timeout=None):
+    @property
+    def query_bin_interval(self):
+        """Query bin interval."""
+        return self._query_bin_interval
+
+    @query_bin_interval.setter
+    def query_bin_interval(self, new_intvl):
+        self._query_bin_interval = new_intvl
+
+    @property
+    def timestamp_start(self):
+        """Timestamp start."""
+        if not self._time_start:
+            return None
+        return self._time_start.timestamp()
+
+    @timestamp_start.setter
+    def timestamp_start(self, new_timestamp):
+        if not isinstance(new_timestamp, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_timestamp))
+            )
+        self._time_start = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_start(self):
+        """Time start."""
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time))
+            )
+        self._time_start = new_time
+
+    @property
+    def timestamp_stop(self):
+        """Timestamp stop."""
+        if not self._time_stop:
+            return None
+        return self._time_stop.timestamp()
+
+    @timestamp_stop.setter
+    def timestamp_stop(self, new_timestamp):
+        if not isinstance(new_timestamp, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_timestamp))
+            )
+        self._time_stop = _Time(timestamp=new_timestamp)
+
+    @property
+    def time_stop(self):
+        """Time stop."""
+        return self._time_stop
+
+    @time_stop.setter
+    def time_stop(self, new_time):
+        if not isinstance(new_time, _Time):
+            raise _exceptions.TypeError(
+                'expected argument of type Time, got ' + str(type(new_time))
+            )
+        self._time_stop = new_time
+
+    @property
+    def processing_type(self):
+        """Processing type."""
+        return self._processing_type
+
+    @processing_type.setter
+    def processing_type(self, new_type):
+        if not isinstance(new_type, str):
+            raise _exceptions.TypeError(
+                'expected argument of type str, got ' + str(type(new_type))
+            )
+        elif new_type not in self.ProcessingTypes._fields:
+            raise _exceptions.ValueError(
+                f'invalid processing type: {new_type}. Must be one of: '
+                '`self.ProcessingTypes` fields.'
+            )
+        self._processing_type = new_type
+
+    @property
+    def processing_type_param1(self):
+        """Processing type param1."""
+        return self._processing_type_param1
+
+    @processing_type_param1.setter
+    def processing_type_param1(self, new_param):
+        if not isinstance(new_param, (int, float)):
+            raise _exceptions.TypeError(
+                'expected argument of type int or float, got '
+                + str(type(new_param))
+            )
+        self._processing_type_param1 = new_param
+
+    @property
+    def processing_type_param2(self):
+        """Processing type param2."""
+        return self._processing_type_param2
+
+    @processing_type_param2.setter
+    def processing_type_param2(self, new_param):
+        if not isinstance(new_param, (int, float)):
+            raise _exceptions.TypeError(
+                'expected argument of type int or float, got '
+                + str(type(new_param))
+            )
+        self._processing_type_param2 = new_param
+
+    def update(self, timeout=None):
         """Update."""
         self.connect()
+
         if timeout is not None:
+            timeout0 = self.timeout
             self.timeout = timeout
+
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
             return
-        process_type = 'mean' if mean_sec is not None else ''
 
-        data = self.connector.getData(
-            self._pvname,
-            self.time_start,
-            self.time_stop,
-            process_type=process_type,
-            interval=mean_sec,
-        )
+        try:
+            data = self.connector.get_data(
+                self._pvname,
+                self.time_start,
+                self.time_stop,
+                query_bin_interval=self.query_bin_interval,
+                proc_type=self.processing_type,
+                proc_type_param1=self.processing_type_param1,
+                proc_type_param2=self.processing_type_param2,
+            )
+        finally:
+            if timeout is not None:
+                self.timeout = timeout0
+
         if not data:
             return
         self.set_data(**data)
@@ -523,6 +593,8 @@ class PVData(_Base):
 class PVDataSet(_Base):
     """A set of PVData objects."""
 
+    ProcessingTypes = _ClientArchiver.ProcessingTypes
+
     def __init__(self, pvnames, connector=None, offline_data=False):
         """Initialize."""
         super().__init__(connector, offline_data=offline_data)
@@ -540,11 +612,159 @@ class PVDataSet(_Base):
         self._pvdata = self._init_pvdatas(new_pvnames, self.connector)
 
     @property
+    def query_bin_interval(self):
+        """Query bin interval."""
+        qry = [self._pvdata[pvn].query_bin_interval for pvn in self._pvnames]
+        if len(set(qry)) == 1:
+            return qry[0]
+        return qry
+
+    @query_bin_interval.setter
+    def query_bin_interval(self, value):
+        if isinstance(value, int):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].query_bin_interval = val
+
+    @property
+    def time_start(self):
+        """Start time."""
+        tstt = [self._pvdata[pvn].time_start for pvn in self._pvnames]
+        if len(set(tstt)) == 1:
+            return tstt[0]
+        return tstt
+
+    @time_start.setter
+    def time_start(self, value):
+        if isinstance(value, _Time):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].time_start = val
+
+    @property
+    def timestamp_start(self):
+        """Start timestamp."""
+        tstt = [self._pvdata[pvn].timestamp_start for pvn in self._pvnames]
+        if len(set(tstt)) == 1:
+            return tstt[0]
+        return tstt
+
+    @timestamp_start.setter
+    def timestamp_start(self, value):
+        if isinstance(value, (int, float)):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].timestamp_start = val
+
+    @property
+    def time_stop(self):
+        """Stop time."""
+        tstt = [self._pvdata[pvn].time_stop for pvn in self._pvnames]
+        if len(set(tstt)) == 1:
+            return tstt[0]
+        return tstt
+
+    @time_stop.setter
+    def time_stop(self, value):
+        if isinstance(value, _Time):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].time_stop = val
+
+    @property
+    def timestamp_stop(self):
+        """Stop timestamp."""
+        tstt = [self._pvdata[pvn].timestamp_stop for pvn in self._pvnames]
+        if len(set(tstt)) == 1:
+            return tstt[0]
+        return tstt
+
+    @timestamp_stop.setter
+    def timestamp_stop(self, value):
+        if isinstance(value, (int, float)):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].timestamp_stop = val
+
+    @property
+    def processing_type(self):
+        """Processing type."""
+        proc = [self._pvdata[pvn].processing_type for pvn in self._pvnames]
+        if len(set(proc)) == 1:
+            return proc[0]
+        return proc
+
+    @processing_type.setter
+    def processing_type(self, value):
+        if isinstance(value, str):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].processing_type = val
+
+    @property
+    def processing_type_param1(self):
+        """Processing type param1."""
+        param = [
+            self._pvdata[pvn].processing_type_param1 for pvn in self._pvnames
+        ]
+        if len(set(param)) == 1:
+            return param[0]
+        return param
+
+    @processing_type_param1.setter
+    def processing_type_param1(self, value):
+        if value is None or isinstance(value, (int, float)):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].processing_type_param1 = val
+
+    @property
+    def processing_type_param2(self):
+        """Processing type param2."""
+        param = [
+            self._pvdata[pvn].processing_type_param2 for pvn in self._pvnames
+        ]
+        if len(set(param)) == 1:
+            return param[0]
+        return param
+
+    @processing_type_param2.setter
+    def processing_type_param2(self, value):
+        if value is None or isinstance(value, (int, float)):
+            value = len(self._pvnames) * [value]
+        if len(value) != len(self._pvnames):
+            raise ValueError('value must have the same length as pvnames')
+
+        for pvn, val in zip(self._pvnames, value):  # noqa: B905
+            self._pvdata[pvn].processing_type_param2 = val
+
+    @property
     def is_archived(self):
         """Is archived."""
         self.connect()
         for pvn in self._pvnames:
-            if self.connector.getPVDetails(pvn) is None:
+            if self.connector.get_pv_details(pvn) is None:
                 return False
         return True
 
@@ -554,7 +774,7 @@ class PVDataSet(_Base):
         self.connect()
         not_archived = list()
         for pvn in self._pvnames:
-            if self.connector.getPVDetails(pvn) is None:
+            if self.connector.get_pv_details(pvn) is None:
                 not_archived.append(pvn)
         return not_archived
 
@@ -564,22 +784,53 @@ class PVDataSet(_Base):
         archived = set(self._pvnames) - set(self.not_archived)
         return list(archived)
 
-    def update(self, mean_sec=None, timeout=None):
+    def update(self, timeout=None):
         """Update."""
         self.connect()
-        if timeout is not None:
-            self.timeout = timeout
-        if None in (self.timestamp_start, self.timestamp_stop):
-            print('Start and stop timestamps not defined! Aborting.')
-            return
-        process_type = 'mean' if mean_sec is not None else ''
 
-        data = self.connector.getData(
-            self._pvnames,
-            self.time_start,
-            self.time_stop,
-            process_type=process_type,
-            interval=mean_sec,
+        if timeout is not None:
+            timeout0 = self.timeout
+            self.timeout = timeout
+
+        all_urls = []
+        pvn2idcs = dict()
+        for pvn in self._pvnames:
+            pvd = self._pvdata[pvn]
+            if None in (pvd.timestamp_start, pvd.timestamp_stop):
+                print(
+                    f'Start and stop times not defined for PV {pvn}'
+                    '! Aborting.'
+                )
+                if timeout is not None:
+                    self.timeout = timeout0
+                return
+            urls = self.connector.get_request_url_for_get_data(
+                pvn,
+                pvd.time_start,
+                pvd.time_stop,
+                query_bin_interval=pvd.query_bin_interval,
+                proc_type=pvd.processing_type,
+                proc_type_param1=pvd.processing_type_param1,
+                proc_type_param2=pvd.processing_type_param2,
+                return_pv2indcs_dict=False,
+            )
+            urls = [urls] if isinstance(urls, str) else urls
+            ini = len(all_urls)
+            all_urls.extend(urls)
+            end = len(all_urls)
+            pvn2idcs[pvn] = _np.arange(ini, end)
+
+        try:
+            resps = self.connector.make_request(all_urls, return_json=True)
+        finally:
+            if timeout is not None:
+                self.timeout = timeout0
+
+        if not resps:
+            return None
+
+        data = self.connector.process_resquest_of_get_data(
+            self._pvnames, resps, pvn2idcs
         )
 
         if not data:
