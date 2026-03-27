@@ -282,7 +282,21 @@ class IDSearch:
             IDFF_QS_LABELS[0]: 'SI-10SB:PS-QS-1:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-10SB:PS-QS-2:Current-SP',
         },
-        'SI-11SP:ID-UE44': None,
+        'SI-11SP:ID-UE44': {
+            'polarizations': tuple(
+                item[0] for item in
+                _idname2pol_sts['SI-11SP:ID-UE44'].values()),
+            'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
+            'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
+            IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-11SP:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-11SP:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-11SP:PS-QS-1:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-11SP:PS-QS-2:Current-SP',
+            IDFF_LC_LABELS[0]: 'SI-11SP:PS-LCH:Current-SP',
+            IDFF_LC_LABELS[1]: 'SI-11SP:PS-LCV:Current-SP',
+            },
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
