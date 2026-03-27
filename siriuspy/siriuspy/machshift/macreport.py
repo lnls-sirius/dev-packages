@@ -1062,25 +1062,29 @@ class MacReport:
 
         # current
         _t0 = _time.time()
-        self._pvdata[self._current_pv].parallel_query_bin_interval = 60*60*6
-        self._pvdata[self._current_pv].update(MacReport.QUERY_AVG_TIME)
+        pvd = self._pvdata[self._current_pv]
+        pvd.query_bin_interval = 60 * 60 * 6
+        pvd.processing_type = pvd.ProcessingTypes.Mean
+        pvd.processing_type_param1 = MacReport.QUERY_AVG_TIME
+        pvd.update()
+
         self._update_log(log_msg.format(self._current_pv, _time.time()-_t0))
 
         # macshift, interlock and stability indicators
         for pvn in self._pvnames:
             if pvn == self._current_pv:
                 continue
-            interval, parallel = None, False
             _t0 = _time.time()
-            self._pvdata[pvn].update(mean_sec=interval, parallel=parallel)
+            self._pvdata[pvn].update()
             self._update_log(log_msg.format(pvn, _time.time()-_t0))
 
         # ps
         for group, pvdataset in self._pvdataset.items():
             _t0 = _time.time()
-            pvdataset.update(parallel=False)
+            pvdataset.update()
             self._update_log(log_msg.format(
-                'SI PS '+group.capitalize(), _time.time()-_t0))
+                'SI PS '+group.capitalize(), _time.time()-_t0)
+            )
 
         self._compute_stats()
 

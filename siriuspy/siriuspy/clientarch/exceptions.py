@@ -2,6 +2,8 @@
 
 import asyncio as _asyncio
 
+import aiohttp.client_exceptions as _aio_excep
+
 
 class ClientArchError(Exception):
     """ClientArch Abstract Exception."""
@@ -12,6 +14,10 @@ class AuthenticationError(ClientArchError):
 
 
 class TimeoutError(ClientArchError, _asyncio.TimeoutError):
+    """ClientArch Timeout Exception."""
+
+
+class PayloadError(ClientArchError, _aio_excep.ClientPayloadError):
     """ClientArch Timeout Exception."""
 
 
