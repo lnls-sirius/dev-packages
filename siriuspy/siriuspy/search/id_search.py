@@ -176,7 +176,10 @@ class IDSearch:
             3: ('vertical', -52.5/2),  # [mm]
         },
         'SI-11SP:ID-UE44': {
-            0: ('horizontal', None),  # [mm]
+            0: ('circularp', -13.31),  # [mm]
+            1: ('horizontal', 0.00),  # [mm]
+            2: ('circularn', 13.31),  # [mm]
+            3: ('vertical', 22.00),  # [mm]
         },
         'SI-11SP:ID-SIMUL': {
             0: ('horizontal', None),  # [mm]
