@@ -100,13 +100,13 @@ class IDSearch:
                 -52.5/2, +52.5/2, 0, 0, 0.020,
                 -52.5/2, +52.5/2, 0, 0.010,
                 None, None, None, None, None)),
-        'SI-11SP:ID-UE44': _get_namedtuple(
+       'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
-                58,
-                0, 29, 29, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                44,
+                0.5, 21.5, 21.5, 21.5, 0.01,
+                0, 21.5, 0, 0.01,
+                0, 10.65, 0, 0.01, 0)),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
