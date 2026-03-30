@@ -75,11 +75,6 @@ class Time(_datetime):
                 raise TypeError(
                     'Conflicting positional and keyword arguments.'
                 )
-
-            if not {'timestamp', 'timestamp_string'} - kwargs.keys():
-                raise TypeError(
-                    'Conflicting positional and keyword arguments.'
-                )
         elif len(args) == 8:
             if 'tzinfo' in kwargs:
                 raise TypeError(
@@ -88,24 +83,35 @@ class Time(_datetime):
             kwargs['tzinfo'] = args[7]
             args = args[:7]
 
-        tim = None
-        if 'datetime' in kwargs:
-            tim = Time.fromtimestamp(kwargs['datetime'].timestamp())
-        elif 'timestamp' in kwargs:
-            tim = Time.fromtimestamp(kwargs['timestamp'])
-        elif 'timestamp_string' in kwargs:
-            ts_fmt = kwargs.get(
-                'timestamp_format', Time._DEFAULT_TIMESTAMP_FORMAT
+        if not {'timestamp', 'timestamp_string'} - kwargs.keys():
+            raise TypeError(
+                'Conflicting positional and keyword arguments.'
             )
+
+        tz = kwargs.get('tzinfo')
+        tzl = _datetime.now().astimezone().tzinfo
+        if 'datetime' in kwargs:
+            dtim = kwargs['datetime']
+            tz = tz or dtim.tzinfo or tzl
+            return super().fromtimestamp(dtim.timestamp(), tz=tz)
+        elif 'timestamp' in kwargs:
+            return super().fromtimestamp(kwargs['timestamp'], tz=tz or tzl)
+        elif 'timestamp_string' in kwargs:
             ts_str = kwargs['timestamp_string']
             try:
-                tim = Time.strptime(ts_str, ts_fmt)
+                ts_fmt = kwargs.get(
+                    'timestamp_format', Time._DEFAULT_TIMESTAMP_FORMAT
+                )
+                return super().strptime(ts_str, ts_fmt).replace(
+                    tzinfo=tz or tzl
+                )
             except ValueError:
-                return Time.fromisoformat(ts_str)
+                tim = super().fromisoformat(ts_str)
+                tz = tz or tim.tzinfo
+                return super().fromtimestamp(tim.timestamp(), tz=tz)
         else:
-            tim = super().__new__(cls, *args, **kwargs)
-
-        return tim.replace(tzinfo=kwargs.get('tzinfo', tim.tzinfo))
+            kwargs.setdefault('tzinfo', tzl)
+            return super().__new__(cls, *args, **kwargs)
 
     def get_iso8601(self):
         """Get iso8601 format."""
