@@ -18,7 +18,7 @@ import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
-    ClientSession as _ClientSession
+    ClientSession as _ClientSession,
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -36,6 +36,7 @@ class ClientArchiver:
     """Archiver Data Fetcher class."""
 
     DEF_QUERY_BIN_INTERVAL = 12 * 60 * 60  # 12h
+    DEF_QUERY_MAX_CONCURRENCY = 100  # maximum number of concurrent queries
     DEFAULT_TIMEOUT = 5.0  # [s]
     SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
@@ -98,8 +99,9 @@ class ClientArchiver:
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._request_url = None
-        self._thread = self._loop = None
+        self._thread = self._loop = self._semaphore = None
         self._query_bin_interval = self.DEF_QUERY_BIN_INTERVAL
+        self._query_max_concurrency = self.DEF_QUERY_MAX_CONCURRENCY
         self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
@@ -113,6 +115,10 @@ class ClientArchiver:
             return
 
         self._loop = _asyncio.new_event_loop()
+        self._semaphore = _asyncio.Semaphore(
+            self._query_max_concurrency, loop=self._loop
+        )  # limit concurrent requests
+
         self._thread = _Thread(target=self._run_event_loop, daemon=True)
         self._thread.start()
 
@@ -176,7 +182,7 @@ class ClientArchiver:
 
     @property
     def query_bin_interval(self):
-        """Query bin interval."""
+        """Queries larger than this interval will be split."""
         return self._query_bin_interval
 
     @query_bin_interval.setter
@@ -187,6 +193,23 @@ class ClientArchiver:
                 + str(type(new_intvl))
             )
         self._query_bin_interval = new_intvl
+
+    @property
+    def query_max_concurrency(self):
+        """Maximum number of concurrent queries to server."""
+        return self._query_max_concurrency
+
+    @query_max_concurrency.setter
+    def query_max_concurrency(self, new_val):
+        if not isinstance(new_val, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_val))
+            )
+        self._query_max_concurrency = int(new_val)
+        self._semaphore = _asyncio.Semaphore(
+            self._query_max_concurrency, loop=self._loop
+        )
 
     @property
     def last_requested_url(self):
@@ -640,9 +663,9 @@ class ClientArchiver:
                 timestamp = value = status = severity = None
             else:
                 _, _tsidx = _np.unique(_ts, return_index=True)
-                timestamp = _ts[_tsidx],
-                status = _st[_tsidx],
-                severity = _sv[_tsidx],
+                timestamp = _ts[_tsidx]
+                status = _st[_tsidx]
+                severity = _sv[_tsidx]
                 value = [_vs[i] for i in _tsidx]
 
             pvn2resp[pvn] = dict(
@@ -868,9 +891,15 @@ class ClientArchiver:
         """Get request response."""
         url = [url] if isinstance(url, str) else url
         try:
+
+            async def fetch_with_limit(u):
+                async with self._semaphore:
+                    return await session.get(
+                        u, ssl=False, timeout=self._timeout
+                    )
+
             response = await _asyncio.gather(*[
-                session.get(u, ssl=False, timeout=self._timeout)
-                for u in url
+                fetch_with_limit(u) for u in url
             ])
             if any([not r.ok for r in response]):
                 return None
