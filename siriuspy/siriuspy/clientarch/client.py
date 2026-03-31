@@ -460,7 +460,7 @@ class ClientArchiver:
             proc_type=proc_type,
             proc_type_param1=proc_type_param1,
             proc_type_param2=proc_type_param2,
-            return_pv2indcs_dict=True,
+            return_pvn2idcs_dict=True,
         )
         urls = [urls] if isinstance(urls, str) else urls
 

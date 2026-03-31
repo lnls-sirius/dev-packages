@@ -388,10 +388,10 @@ class PVData(_Base):
             raise _exceptions.TypeError(
                 'expected argument of type str, got ' + str(type(new_type))
             )
-        elif new_type not in self.ProcessingTypes._fields:
+        elif new_type not in self.ProcessingTypes:
             raise _exceptions.ValueError(
                 f'invalid processing type: {new_type}. Must be one of: '
-                '`self.ProcessingTypes` fields.'
+                '`self.ProcessingTypes`.'
             )
         self._processing_type = new_type
 
@@ -812,7 +812,7 @@ class PVDataSet(_Base):
                 proc_type=pvd.processing_type,
                 proc_type_param1=pvd.processing_type_param1,
                 proc_type_param2=pvd.processing_type_param2,
-                return_pv2indcs_dict=False,
+                return_pvn2idcs_dict=False,
             )
             urls = [urls] if isinstance(urls, str) else urls
             ini = len(all_urls)
@@ -898,14 +898,7 @@ class PVDataSet(_Base):
         return url
 
     def _init_pvdatas(self, pvnames, connector):
-        pvdata = dict()
-        for pvname in pvnames:
-            pvdata[pvname] = PVData(pvname, connector)
-            if self.time_start is not None:
-                pvdata[pvname].time_start = self.time_start
-            if self.time_stop is not None:
-                pvdata[pvname].time_stop = self._time_stop
-        return pvdata
+        return {pvname: PVData(pvname, connector) for pvname in pvnames}
 
     def __getitem__(self, val):
         """Get item."""
