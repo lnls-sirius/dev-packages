@@ -299,6 +299,37 @@ class ClientArchiver:
             )
             self.make_request(url, need_login=True)
 
+    def get_detailed_appliance_metrics(self):
+        """Get detailed appliance metrics for archiver appliance.
+
+        Returns:
+            response (dict|None): Response of the request.
+        """
+        url = self._create_url(
+            method='getApplianceMetricsForAppliance',
+            appliance='lnls_control_appliance_1'
+        )
+        resp = self.make_request(url, return_json=True)
+        return None if not resp else resp
+
+    def get_process_metrics_for_appliance(self):
+        """Get process metrics for archiver appliance.
+
+        Returns:
+            response (dict|None): Response of the request. The metrics
+                that are returned in case of success are:
+                - system load in %
+                - engine heap in %
+                - etl heap in %
+                - retrieval heap in %
+        """
+        url = self._create_url(
+            method='getProcessMetricsDataForAppliance',
+            appliance='lnls_control_appliance_1'
+        )
+        resp = self.make_request(url, return_json=True)
+        return None if not resp else resp
+
     def get_report(self, report_name='PausedPVs', max_num_pvs=None):
         """Get Paused PVs Report.
 
@@ -890,10 +921,12 @@ class ClientArchiver:
     async def _get_request_response(self, url, session, return_json):
         """Get request response."""
         url = [url] if isinstance(url, str) else url
+        print(f'\nNumber of urls: {len(url)}')
         try:
 
             async def fetch_with_limit(u):
                 async with self._semaphore:
+                    print(u)
                     return await session.get(
                         u, ssl=False, timeout=self._timeout
                     )
