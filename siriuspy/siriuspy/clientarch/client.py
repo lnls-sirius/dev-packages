@@ -224,8 +224,8 @@ class ClientArchiver:
     def use_async(self):
         """Choose between using async or threads for concurrency.
 
-            async --> aiohttp for requests, asyncio for concurrency.
-            threads --> requests for requests, threading for concurrency.
+        async --> aiohttp for requests, asyncio for concurrency.
+        threads --> requests for requests, threading for concurrency.
         """
         return self._use_async
 
@@ -355,7 +355,7 @@ class ClientArchiver:
         """
         url = self._create_url(
             method='getApplianceMetricsForAppliance',
-            appliance='lnls_control_appliance_1'
+            appliance='lnls_control_appliance_1',
         )
         resp = self.make_request(url, return_json=True)
         return None if not resp else resp
@@ -373,7 +373,7 @@ class ClientArchiver:
         """
         url = self._create_url(
             method='getProcessMetricsDataForAppliance',
-            appliance='lnls_control_appliance_1'
+            appliance='lnls_control_appliance_1',
         )
         resp = self.make_request(url, return_json=True)
         return None if not resp else resp
