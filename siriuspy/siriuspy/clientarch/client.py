@@ -143,8 +143,7 @@ class ClientArchiver:
         if not self._loop_alive():
             return False
         try:
-            resp = self.make_request(self._url + '/mgmt')
-            return resp.status == 200
+            return bool(self.make_request(self._url + '/mgmt'))
         except _urllib.error.URLError:
             return False
 
