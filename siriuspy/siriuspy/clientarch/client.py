@@ -262,7 +262,7 @@ class ClientArchiver:
         url = self._create_url(
             method='getPVStatus', pv=wildcards, limit=max_num_pvs
         )
-        resp = self.make_request(url, return_json=True)
+        resp = self.make_request(url)
         return None if not resp else resp
 
     def get_all_pvs(self, wildcards='*', max_num_pvs=-1):
@@ -282,7 +282,7 @@ class ClientArchiver:
         url = self._create_url(
             method='getAllPVs', pv=wildcards, limit=max_num_pvs
         )
-        resp = self.make_request(url, return_json=True)
+        resp = self.make_request(url)
         return None if not resp else resp
 
     def delete_pvs(self, pvnames, delete_data=False):
@@ -307,7 +307,7 @@ class ClientArchiver:
             method='getApplianceMetricsForAppliance',
             appliance='lnls_control_appliance_1',
         )
-        resp = self.make_request(url, return_json=True)
+        resp = self.make_request(url)
         return None if not resp else resp
 
     def get_process_metrics_for_appliance(self):
@@ -325,7 +325,7 @@ class ClientArchiver:
             method='getProcessMetricsDataForAppliance',
             appliance='lnls_control_appliance_1',
         )
-        resp = self.make_request(url, return_json=True)
+        resp = self.make_request(url)
         return None if not resp else resp
 
     def get_report(self, report_name='PausedPVs', max_num_pvs=None):
@@ -347,7 +347,7 @@ class ClientArchiver:
         else:
             url = self._create_url(method=method)
 
-        resp = self.make_request(url, return_json=True)
+        resp = self.make_request(url)
         return None if not resp else resp
 
     def get_recently_modified_pvs(self, max_num_pvs=None, epoch_time=True):
@@ -493,7 +493,7 @@ class ClientArchiver:
         )
         urls = [urls] if isinstance(urls, str) else urls
 
-        resps = self.make_request(urls, return_json=True)
+        resps = self.make_request(urls)
         if not resps:
             return None
 
@@ -713,7 +713,7 @@ class ClientArchiver:
         url = self._create_url(method='getPVDetails', pv=pvname)
         if get_request_url:
             return url
-        resp = self.make_request(url, return_json=True)
+        resp = self.make_request(url)
         return None if not resp else resp
 
     def switch_to_online_data(self):
@@ -726,13 +726,12 @@ class ClientArchiver:
         self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
         self.session = None
 
-    def make_request(self, url, need_login=False, return_json=False):
+    def make_request(self, url, need_login=False):
         """Make request.
 
         Args:
             url (str|list|tuple): url or list of urls to request.
             need_login (bool): whether request requires login.
-            return_json (bool): whether to return json response.
 
         Returns:
             dict: dictionary with response.
@@ -740,9 +739,7 @@ class ClientArchiver:
         self._request_url = url
         _log.debug('Number of urls: %d', len(url))
 
-        coro = self._handle_request_async(
-            url, return_json=return_json, need_login=need_login
-        )
+        coro = self._handle_request_async(url, need_login=need_login)
         return self._run_sync_coro(coro)
 
     @staticmethod
@@ -904,50 +901,24 @@ class ClientArchiver:
 
     # ---------- async methods ----------
 
-    async def _handle_request_async(
-        self, url, return_json=False, need_login=False
-    ):
+    async def _handle_request_async(self, url, need_login=False):
         """Handle request."""
         if self.session is not None:
-            response = await self._get_request_response(
-                url, self.session, return_json
-            )
+            response = await self._get_request_response(url, self.session)
         elif need_login:
             raise _exceptions.AuthenticationError('You need to login first.')
         else:
             async with _ClientSession() as sess:
-                response = await self._get_request_response(
-                    url, sess, return_json
-                )
+                response = await self._get_request_response(url, sess)
         return response
 
-    async def _get_request_response(self, url, session, return_json):
+    async def _get_request_response(self, url, session):
         """Get request response."""
         url = [url] if isinstance(url, str) else url
         try:
-
-            async def fetch_with_limit(u):
-                async with self._semaphore:
-                    _log.debug('Fetching URL: %s', u)
-                    return await session.get(
-                        u, ssl=False, timeout=self._timeout
-                    )
-
             response = await _asyncio.gather(*[
-                fetch_with_limit(u) for u in url
+                self._fetch_url(session, u) for u in url
             ])
-            if any([not r.ok for r in response]):
-                return None
-            if return_json:
-                jsons = list()
-                for res in response:
-                    try:
-                        data = await res.json()
-                        jsons.append(data)
-                    except ValueError:
-                        _log.error('Error with URL %s', res.url)
-                        jsons.append(None)
-                response = jsons
         except _asyncio.TimeoutError as err:
             raise _exceptions.TimeoutError(
                 'Timeout reached. Try to increase `timeout`.'
@@ -955,15 +926,29 @@ class ClientArchiver:
         except _aio_exceptions.ClientPayloadError as err:
             raise _exceptions.PayloadError(
                 "Payload Error. Increasing `timeout` won't help. "
-                'Try:\n - decreasing `query_bin_interval`;\n - decrease the '
-                'time interval for the aquisition;\n - change the '
-                '`query_max_concurrency` parameter\n - or using the '
-                'threaded or serial options for `query_method`.'
+                'Try:\n - decreasing `query_bin_interval`;'
+                '\n - decrease the time interval for the aquisition;'
+                '\n - or changing the `query_max_concurrency` parameter'
             ) from err
 
         if len(url) == 1:
             return response[0]
         return response
+
+    async def _fetch_url(self, session, url):
+        _log.debug('Fetching URL: %s', url)
+        async with self._semaphore:
+            async with session.get(url, timeout=self._timeout) as response:
+                if response.status != 200:
+                    return None
+                try:
+                    return await response.json()
+                except _aio_exceptions.ContentTypeError:
+                    # for cases where response returns html (self.connected).
+                    return await response.text()
+                except ValueError:
+                    _log.error('Error with URL %s', response.url)
+                    return None
 
     async def _create_session(self, url, headers, payload, ssl):
         """Create session and handle login."""
