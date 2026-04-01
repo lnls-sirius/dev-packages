@@ -10,18 +10,15 @@ import asyncio as _asyncio
 import logging as _log
 import math as _math
 import urllib as _urllib
-from concurrent.futures import ThreadPoolExecutor as _ThreadPoolExecutor
 from datetime import timedelta as _timedelta
 from threading import Thread as _Thread
 from urllib.parse import quote as _quote
 
 import numpy as _np
-import requests as _requests
-import requests.exceptions as _requests_exceptions
 import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
-    ClientSession as _ClientSession,
+    ClientSession as _ClientSession
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -90,9 +87,6 @@ class ClientArchiver:
     ProcessingTypes = _get_namedtuple(
         'ProcessingTypes', _PROC_TYPES.keys(), _PROC_TYPES.values()
     )
-    QueryMethods = _get_namedtuple(
-        'QueryMethods', ('Async', 'Threaded', 'Serial')
-    )
 
     def __delete__(self):
         """Turn off thread when deleting."""
@@ -111,15 +105,11 @@ class ClientArchiver:
         self._thread = self._loop = self._semaphore = None
         self._query_bin_interval = self.DEF_QUERY_BIN_INTERVAL
         self._query_max_concurrency = self.DEF_QUERY_MAX_CONCURRENCY
-        self._query_method = self.QueryMethods.Async
         self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
     def connect(self):
         """Starts bg. event loop in a separate thread when in async mode."""
-        if self._query_method != self.QueryMethods.Async:
-            return
-
         if self._loop_alive():
             return
 
@@ -133,9 +123,6 @@ class ClientArchiver:
 
     def shutdown(self, timeout=5):
         """Safely stops the bg. loop and waits for the thread to exit."""
-        if self._query_method != self.QueryMethods.Async:
-            return
-
         if not self._loop_alive():
             return
 
@@ -153,19 +140,12 @@ class ClientArchiver:
     @property
     def connected(self):
         """Connected."""
-        if (
-            self._query_method == self.QueryMethods.Async
-            and not self._loop_alive()
-        ):
+        if not self._loop_alive():
             return False
         try:
-            resp = self.make_request(self._url, return_json=False)
-            return (
-                resp.status_code == 200
-                if hasattr(resp, 'status_code')
-                else resp.status == 200
-            )
-        except (_urllib.error.URLError, _requests_exceptions.RequestException):
+            resp = self.make_request(self._url + '/mgmt')
+            return resp.status == 200
+        except _urllib.error.URLError:
             return False
 
     @property
@@ -200,13 +180,6 @@ class ClientArchiver:
         self._url = url
 
     @property
-    def session(self):
-        """."""
-        if self._query_method == self.QueryMethods.Async:
-            return self._aiohttp_session
-        return self._requests_session
-
-    @property
     def query_bin_interval(self):
         """Queries larger than this interval will be split."""
         return self._query_bin_interval
@@ -238,43 +211,6 @@ class ClientArchiver:
         )
 
     @property
-    def query_method(self):
-        """Define the request method to be used for queries.
-
-        Options are:
-            0: async (aiohttp + asyncio)
-            1: threaded (requests + ThreadPoolExecutor)
-            2: serial (requests, direct, no threads/async)
-        """
-        return self._query_method
-
-    @property
-    def query_method_str(self):
-        """String representation of the query method."""
-        return self.QueryMethods._fields[self._query_method]
-
-    @query_method.setter
-    def query_method(self, value):
-        if isinstance(value, int) and value in self.QueryMethods:
-            pass
-        elif isinstance(value, str) and value in self.QueryMethods._fields:
-            value = getattr(self.QueryMethods, value)
-        else:
-            raise _exceptions.ValueError(
-                '`query_method` must be (0, 1, 2) or (Async, Threaded, Serial)'
-            )
-
-        if self._query_method != value and self.session is not None:
-            self.logout()
-
-        if value == self.QueryMethods.Async:
-            self._query_method = value
-            self.connect()
-        else:
-            self.shutdown()
-            self._query_method = value
-
-    @property
     def last_requested_url(self):
         """."""
         return self._request_url
@@ -285,55 +221,27 @@ class ClientArchiver:
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
 
-        if self._query_method == self.QueryMethods.Async:
-            coro = self._create_session(
-                url, headers=headers, payload=payload, ssl=False
-            )
-            ret = self._run_sync_coro(coro)
-            if ret is not None:
-                self._aiohttp_session, authenticated = ret
-                if authenticated:
-                    print(
-                        'Reminder: close connection after using this '
-                        'session by calling logout method!'
-                    )
-                else:
-                    self.logout()
-                return authenticated
-            return False
-
-        if self._requests_session is not None:
-            self._requests_session.close()
-
-        session = _requests.Session()
-        response = session.post(
-            url,
-            headers=headers,
-            data=payload,
-            verify=False,
-            timeout=self._timeout,
+        coro = self._create_session(
+            url, headers=headers, payload=payload, ssl=False
         )
-        authenticated = b'authenticated' in response.content
-        if authenticated:
-            self._requests_session = session
-            print(
-                'Reminder: close connection after using this '
-                'session by calling logout method!'
-            )
-        else:
-            session.close()
-        return authenticated
+        ret = self._run_sync_coro(coro)
+        if ret is not None:
+            self.session, authenticated = ret
+            if authenticated:
+                print(
+                    'Reminder: close connection after using this '
+                    'session by calling logout method!'
+                )
+            else:
+                self.logout()
+            return authenticated
+        return False
 
     def logout(self):
         """Close login session."""
-        resp = True
-        if self._aiohttp_session:
-            coro = self._close_session()
-            resp = self._run_sync_coro(coro)
-            self._aiohttp_session = None
-        if self._requests_session:
-            self._requests_session.close()
-            self._requests_session = None
+        coro = self._close_session()
+        resp = self._run_sync_coro(coro)
+        self.session = None
         return resp
 
     def get_pvs_info(self, wildcards='*', max_num_pvs=-1):
@@ -832,18 +740,10 @@ class ClientArchiver:
         self._request_url = url
         _log.debug('Number of urls: %d', len(url))
 
-        kwargs = dict(return_json=return_json, need_login=need_login)
-        if self._query_method == self.QueryMethods.Async:
-            coro = self._handle_request_async(url, **kwargs)
-            return self._run_sync_coro(coro)
-        elif self._query_method == self.QueryMethods.Threaded:
-            return self._handle_request_threaded(url, **kwargs)
-        elif self._query_method == self.QueryMethods.Serial:
-            return self._handle_request_serial(url, **kwargs)
-
-        raise _exceptions.ValueError(
-            '`query_method` must be (0, 1, 2) or (Async, Threaded, Serial)'
+        coro = self._handle_request_async(
+            url, return_json=return_json, need_login=need_login
         )
+        return self._run_sync_coro(coro)
 
     @staticmethod
     def gen_archviewer_url_link(
@@ -959,8 +859,6 @@ class ClientArchiver:
 
     def _loop_alive(self):
         """Check if thread is alive and loop is running."""
-        if self._query_method != self.QueryMethods.Async:
-            return False
         return (
             self._thread is not None
             and self._thread.is_alive()
@@ -1080,116 +978,3 @@ class ClientArchiver:
     async def _close_session(self):
         """Close session."""
         return await self.session.close()
-
-    # ---------- threaded methods ----------
-
-    def _handle_request_threaded(
-        self, url, return_json=False, need_login=False
-    ):
-        """Handle request with threads."""
-        if self._requests_session is not None:
-            response = self._get_request_response_threaded(
-                url, self._requests_session, return_json
-            )
-        elif need_login:
-            raise _exceptions.AuthenticationError('You need to login first.')
-        else:
-            with _requests.Session() as sess:
-                response = self._get_request_response_threaded(
-                    url, sess, return_json
-                )
-        return response
-
-    def _get_request_response_threaded(self, url, session, return_json):
-        """Get request response with threads."""
-        url = [url] if isinstance(url, str) else url
-        def fetch(u):
-            _log.debug('Fetching URL: %s', u)
-            return session.get(u, verify=False, timeout=self._timeout)
-
-        try:
-            with _ThreadPoolExecutor(
-                max_workers=self._query_max_concurrency
-            ) as executor:
-                futures = [executor.submit(fetch, u) for u in url]
-
-            responses = []
-            for future in futures:
-                response = future.result(timeout=self._timeout)
-                responses.append(response)
-        except _requests_exceptions.Timeout as err:
-            raise _exceptions.TimeoutError(
-                'Timeout reached. Try to increase `timeout`.'
-            ) from err
-        except Exception as err:
-            _log.exception('Unexpected error in request: %s', err)
-            raise
-
-        if any(not r.ok for r in responses):
-            return None
-        if return_json:
-            jsons = []
-            for res in responses:
-                try:
-                    data = res.json()
-                    jsons.append(data)
-                except ValueError:
-                    _log.error('Error with URL %s', res.url)
-                    jsons.append(None)
-            responses = jsons
-
-        if len(url) == 1:
-            return responses[0]
-        return responses
-
-    # ---------- serial methods ----------
-
-    def _handle_request_serial(self, url, return_json=False, need_login=False):
-        """Handle request sequentially (no threads/async)."""
-        if self._requests_session is not None:
-            response = self._get_request_response_serial(
-                url, self._requests_session, return_json
-            )
-        elif need_login:
-            raise _exceptions.AuthenticationError('You need to login first.')
-        else:
-            with _requests.Session() as sess:
-                response = self._get_request_response_serial(
-                    url, sess, return_json
-                )
-        return response
-
-    def _get_request_response_serial(self, url, session, return_json):
-        """Get request response sequentially with requests."""
-        url = [url] if isinstance(url, str) else url
-        responses = []
-        try:
-            for u in url:
-                _log.debug('Fetching URL: %s', u)
-                responses.append(
-                    session.get(u, verify=False, timeout=self._timeout)
-                )
-        except _requests_exceptions.Timeout as err:
-            raise _exceptions.TimeoutError(
-                'Timeout reached. Try to increase `timeout`.'
-            ) from err
-        except Exception as err:
-            _log.exception('Unexpected error in request: %s', err)
-            raise
-
-        if any(not r.ok for r in responses):
-            return None
-        if return_json:
-            jsons = []
-            for res in responses:
-                try:
-                    data = res.json()
-                    jsons.append(data)
-                except ValueError:
-                    _log.error('Error with URL %s', res.url)
-                    jsons.append(None)
-            responses = jsons
-
-        if len(url) == 1:
-            return responses[0]
-        return responses
