@@ -821,7 +821,7 @@ class PVDataSet(_Base):
             pvn2idcs[pvn] = _np.arange(ini, end)
 
         try:
-            resps = self.connector.make_request(all_urls, return_json=True)
+            resps = self.connector.make_request(all_urls)
         finally:
             if timeout is not None:
                 self.timeout = timeout0
