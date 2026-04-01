@@ -320,6 +320,20 @@ class PVData(_Base):
         self._query_bin_interval = new_intvl
 
     @property
+    def query_max_concurrency(self):
+        """Query max concurrency.
+
+        This is a global setting for the connector, so all PVData objects
+        share it, but we allow it to be set through PVDataSet for convenience.
+
+        """
+        return self.connector.query_max_concurrency
+
+    @query_max_concurrency.setter
+    def query_max_concurrency(self, new_intvl):
+        self.connector.query_max_concurrency = new_intvl
+
+    @property
     def timestamp_start(self):
         """Timestamp start."""
         if not self._time_start:
@@ -628,6 +642,20 @@ class PVDataSet(_Base):
 
         for pvn, val in zip(self._pvnames, value):  # noqa: B905
             self._pvdata[pvn].query_bin_interval = val
+
+    @property
+    def query_max_concurrency(self):
+        """Query max concurrency.
+
+        This is a global setting for the connector, so all PVData objects
+        share it, but we allow it to be set through PVDataSet for convenience.
+
+        """
+        return self.connector.query_max_concurrency
+
+    @query_max_concurrency.setter
+    def query_max_concurrency(self, new_intvl):
+        self.connector.query_max_concurrency = new_intvl
 
     @property
     def time_start(self):
