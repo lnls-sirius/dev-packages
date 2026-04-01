@@ -1,6 +1,7 @@
 """."""
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
+from siriuspy.siriuspy.sofb.correctors import Septum
 
 from ..namesys import SiriusPVName as _PVName
 from .device import Device as _Device, DeviceSet as _DeviceSet
@@ -11,13 +12,15 @@ class Screen(_DeviceSet):
 
     class DEVICES:
         """Devices names."""
-
+        # NOTE: TB-04:DI-Scrn was removed during 2026-03 shutdown due to
+        # Septum activities aimed at avoiding secondary current
+        # loops from its pulsed field.
         TB_1 = 'TB-01:DI-Scrn-1'
         TB_2 = 'TB-01:DI-Scrn-2'
         TB_3 = 'TB-02:DI-Scrn-1'
         TB_4 = 'TB-02:DI-Scrn-2'
         TB_5 = 'TB-03:DI-Scrn'
-        TB_6 = 'TB-04:DI-Scrn'
+        # TB_6 = 'TB-04:DI-Scrn'
         BO_1 = 'BO-01D:DI-Scrn-1'
         BO_2 = 'BO-01D:DI-Scrn-2'
         BO_3 = 'BO-02U:DI-Scrn'
