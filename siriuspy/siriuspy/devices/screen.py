@@ -1,7 +1,6 @@
 """."""
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
-from siriuspy.siriuspy.sofb.correctors import Septum
 
 from ..namesys import SiriusPVName as _PVName
 from .device import Device as _Device, DeviceSet as _DeviceSet
