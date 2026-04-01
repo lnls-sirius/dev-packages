@@ -116,7 +116,7 @@ class Time(_datetime):
 
     def get_iso8601(self):
         """Get iso8601 format."""
-        return self.astimezone().isoformat()
+        return self.astimezone(self.tzinfo).isoformat()
 
     def __add__(self, other):
         """Addition."""
