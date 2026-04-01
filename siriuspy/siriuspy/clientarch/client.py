@@ -372,6 +372,20 @@ class ClientArchiver:
 
         return None if not resp else resp
 
+    def get_pv_type_info(self, pvname: str):
+        """Get PV Type Info.
+
+        Args:
+            pvname (str): Name of the PV to get type info.
+
+        Returns:
+            list: List of dictionary with PVs details.
+
+        """
+        url = self._create_url(method='getPVTypeInfo', pv=pvname)
+        resp = self.make_request(url)
+        return None if not resp else resp
+
     def pause_pvs(self, pvnames):
         """Pause PVs."""
         if not isinstance(pvnames, (list, tuple)):
