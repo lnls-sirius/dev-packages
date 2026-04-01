@@ -582,6 +582,7 @@ class ClientArchiver:
             try:
                 return await response.json()
             except _aio_exceptions.ContentTypeError:
+                # for cases where response returns html (self.connected).
                 return await response.text()
             except ValueError:
                 _log.error('Error with URL %s', response.url)
