@@ -90,32 +90,36 @@ class ClientArchiver:
     ProcessingTypes = _get_namedtuple(
         'ProcessingTypes', _PROC_TYPES.keys(), _PROC_TYPES.values()
     )
+    QueryMethods = _get_namedtuple(
+        'QueryMethods', ('Async', 'Threaded', 'Serial')
+    )
 
     def __delete__(self):
         """Turn off thread when deleting."""
+        self.logout()
         self.shutdown()
 
     def __init__(self, server_url=None, timeout=None):
         """Initialize."""
         timeout = timeout or ClientArchiver.DEFAULT_TIMEOUT
         self.session = None
-        self._threaded_session = None
+        self._aiohttp_session = None
+        self._requests_session = None
         self._timeout = timeout
         self._url = server_url or self.SERVER_URL
         self._request_url = None
         self._thread = self._loop = self._semaphore = None
         self._query_bin_interval = self.DEF_QUERY_BIN_INTERVAL
         self._query_max_concurrency = self.DEF_QUERY_MAX_CONCURRENCY
-        self._use_async = True
+        self._query_method = self.QueryMethods.Async
         self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
     def connect(self):
-        """Starts bg. event loop in a separate thread.
+        """Starts bg. event loop in a separate thread when in async mode."""
+        if self._query_method != self.QueryMethods.Async:
+            return
 
-        Raises:
-            RuntimeError: when library is alread connected.
-        """
         if self._loop_alive():
             return
 
@@ -129,6 +133,9 @@ class ClientArchiver:
 
     def shutdown(self, timeout=5):
         """Safely stops the bg. loop and waits for the thread to exit."""
+        if self._query_method != self.QueryMethods.Async:
+            return
+
         if not self._loop_alive():
             return
 
@@ -146,7 +153,10 @@ class ClientArchiver:
     @property
     def connected(self):
         """Connected."""
-        if self._use_async and not self._loop_alive():
+        if (
+            self._query_method == self.QueryMethods.Async
+            and not self._loop_alive()
+        ):
             return False
         try:
             resp = self.make_request(self._url, return_json=False)
@@ -190,6 +200,13 @@ class ClientArchiver:
         self._url = url
 
     @property
+    def session(self):
+        """."""
+        if self._query_method == self.QueryMethods.Async:
+            return self._aiohttp_session
+        return self._requests_session
+
+    @property
     def query_bin_interval(self):
         """Queries larger than this interval will be split."""
         return self._query_bin_interval
@@ -221,17 +238,41 @@ class ClientArchiver:
         )
 
     @property
-    def use_async(self):
-        """Choose between using async or threads for concurrency.
+    def query_method(self):
+        """Define the request method to be used for queries.
 
-        async --> aiohttp for requests, asyncio for concurrency.
-        threads --> requests for requests, threading for concurrency.
+        Options are:
+            0: async (aiohttp + asyncio)
+            1: threaded (requests + ThreadPoolExecutor)
+            2: serial (requests, direct, no threads/async)
         """
-        return self._use_async
+        return self._query_method
 
-    @use_async.setter
-    def use_async(self, value):
-        self._use_async = bool(value)
+    @property
+    def query_method_str(self):
+        """String representation of the query method."""
+        return self.QueryMethods._fields[self._query_method]
+
+    @query_method.setter
+    def query_method(self, value):
+        if isinstance(value, int) and value in self.QueryMethods:
+            pass
+        elif isinstance(value, str) and value in self.QueryMethods._fields:
+            value = getattr(self.QueryMethods, value)
+        else:
+            raise _exceptions.ValueError(
+                '`query_method` must be (0, 1, 2) or (Async, Threaded, Serial)'
+            )
+
+        if self._query_method != value and self.session is not None:
+            self.logout()
+
+        if value == self.QueryMethods.Async:
+            self._query_method = value
+            self.connect()
+        else:
+            self.shutdown()
+            self._query_method = value
 
     @property
     def last_requested_url(self):
@@ -243,13 +284,14 @@ class ClientArchiver:
         headers = {'User-Agent': 'Mozilla/5.0'}
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
-        if self._use_async:
+
+        if self._query_method == self.QueryMethods.Async:
             coro = self._create_session(
                 url, headers=headers, payload=payload, ssl=False
             )
             ret = self._run_sync_coro(coro)
             if ret is not None:
-                self.session, authenticated = ret
+                self._aiohttp_session, authenticated = ret
                 if authenticated:
                     print(
                         'Reminder: close connection after using this '
@@ -258,41 +300,41 @@ class ClientArchiver:
                 else:
                     self.logout()
                 return authenticated
-        else:
-            session = _requests.Session()
-            response = session.post(
-                url,
-                headers=headers,
-                data=payload,
-                verify=False,
-                timeout=self._timeout,
+            return False
+
+        if self._requests_session is not None:
+            self._requests_session.close()
+
+        session = _requests.Session()
+        response = session.post(
+            url,
+            headers=headers,
+            data=payload,
+            verify=False,
+            timeout=self._timeout,
+        )
+        authenticated = b'authenticated' in response.content
+        if authenticated:
+            self._requests_session = session
+            print(
+                'Reminder: close connection after using this '
+                'session by calling logout method!'
             )
-            authenticated = b'authenticated' in response.content
-            if authenticated:
-                self._threaded_session = session
-                print(
-                    'Reminder: close connection after using this '
-                    'session by calling logout method!'
-                )
-            else:
-                session.close()
-            return authenticated
-        return False
+        else:
+            session.close()
+        return authenticated
 
     def logout(self):
         """Close login session."""
-        if self._use_async:
-            if self.session:
-                coro = self._close_session()
-                resp = self._run_sync_coro(coro)
-                self.session = None
-                return resp
-        else:
-            if self._threaded_session:
-                self._threaded_session.close()
-                self._threaded_session = None
-                return True
-        return None
+        resp = True
+        if self._aiohttp_session:
+            coro = self._close_session()
+            resp = self._run_sync_coro(coro)
+            self._aiohttp_session = None
+        if self._requests_session:
+            self._requests_session.close()
+            self._requests_session = None
+        return resp
 
     def get_pvs_info(self, wildcards='*', max_num_pvs=-1):
         """Get PVs Info.
@@ -788,15 +830,20 @@ class ClientArchiver:
             dict: dictionary with response.
         """
         self._request_url = url
-        if self._use_async:
-            coro = self._handle_request(
-                url, return_json=return_json, need_login=need_login
-            )
+        _log.debug('Number of urls: %d', len(url))
+
+        kwargs = dict(return_json=return_json, need_login=need_login)
+        if self._query_method == self.QueryMethods.Async:
+            coro = self._handle_request_async(url, **kwargs)
             return self._run_sync_coro(coro)
-        else:
-            return self._handle_request_threaded(
-                url, return_json=return_json, need_login=need_login
-            )
+        elif self._query_method == self.QueryMethods.Threaded:
+            return self._handle_request_threaded(url, **kwargs)
+        elif self._query_method == self.QueryMethods.Serial:
+            return self._handle_request_serial(url, **kwargs)
+
+        raise _exceptions.ValueError(
+            '`query_method` must be (0, 1, 2) or (Async, Threaded, Serial)'
+        )
 
     @staticmethod
     def gen_archviewer_url_link(
@@ -912,9 +959,12 @@ class ClientArchiver:
 
     def _loop_alive(self):
         """Check if thread is alive and loop is running."""
+        if self._query_method != self.QueryMethods.Async:
+            return False
         return (
             self._thread is not None
             and self._thread.is_alive()
+            and self._loop is not None
             and self._loop.is_running()
         )
 
@@ -956,7 +1006,9 @@ class ClientArchiver:
 
     # ---------- async methods ----------
 
-    async def _handle_request(self, url, return_json=False, need_login=False):
+    async def _handle_request_async(
+        self, url, return_json=False, need_login=False
+    ):
         """Handle request."""
         if self.session is not None:
             response = await self._get_request_response(
@@ -974,12 +1026,11 @@ class ClientArchiver:
     async def _get_request_response(self, url, session, return_json):
         """Get request response."""
         url = [url] if isinstance(url, str) else url
-        print(f'\nNumber of urls: {len(url)}')
         try:
 
             async def fetch_with_limit(u):
                 async with self._semaphore:
-                    print(u)
+                    _log.debug('Fetching URL: %s', u)
                     return await session.get(
                         u, ssl=False, timeout=self._timeout
                     )
@@ -1006,8 +1057,10 @@ class ClientArchiver:
         except _aio_exceptions.ClientPayloadError as err:
             raise _exceptions.PayloadError(
                 "Payload Error. Increasing `timeout` won't help. "
-                'Try decreasing query_bin_interval, or decrease the'
-                'time interval for the aquisition.'
+                'Try:\n - decreasing `query_bin_interval`;\n - decrease the '
+                'time interval for the aquisition;\n - change the '
+                '`query_max_concurrency` parameter\n - or using the '
+                'threaded or serial options for `query_method`.'
             ) from err
 
         if len(url) == 1:
@@ -1034,9 +1087,9 @@ class ClientArchiver:
         self, url, return_json=False, need_login=False
     ):
         """Handle request with threads."""
-        if self._threaded_session is not None:
+        if self._requests_session is not None:
             response = self._get_request_response_threaded(
-                url, self._threaded_session, return_json
+                url, self._requests_session, return_json
             )
         elif need_login:
             raise _exceptions.AuthenticationError('You need to login first.')
@@ -1050,21 +1103,17 @@ class ClientArchiver:
     def _get_request_response_threaded(self, url, session, return_json):
         """Get request response with threads."""
         url = [url] if isinstance(url, str) else url
-        print(f'\nNumber of urls: {len(url)}')
-
         def fetch(u):
-            print(u)
+            _log.debug('Fetching URL: %s', u)
             return session.get(u, verify=False, timeout=self._timeout)
 
         try:
             with _ThreadPoolExecutor(
                 max_workers=self._query_max_concurrency
             ) as executor:
-                # Submit all tasks and collect futures
                 futures = [executor.submit(fetch, u) for u in url]
-                responses = []
 
-            # Collect results with proper exception handling
+            responses = []
             for future in futures:
                 response = future.result(timeout=self._timeout)
                 responses.append(response)
@@ -1072,12 +1121,57 @@ class ClientArchiver:
             raise _exceptions.TimeoutError(
                 'Timeout reached. Try to increase `timeout`.'
             ) from err
-        except _requests_exceptions.RequestException as err:
-            _log.exception('Request error: %s', err)
-            raise _exceptions.PayloadError(
-                "Request Error. Increasing `timeout` won't help. "
-                'Try decreasing query_bin_interval, or decrease the '
-                'time interval for the acquisition.'
+        except Exception as err:
+            _log.exception('Unexpected error in request: %s', err)
+            raise
+
+        if any(not r.ok for r in responses):
+            return None
+        if return_json:
+            jsons = []
+            for res in responses:
+                try:
+                    data = res.json()
+                    jsons.append(data)
+                except ValueError:
+                    _log.error('Error with URL %s', res.url)
+                    jsons.append(None)
+            responses = jsons
+
+        if len(url) == 1:
+            return responses[0]
+        return responses
+
+    # ---------- serial methods ----------
+
+    def _handle_request_serial(self, url, return_json=False, need_login=False):
+        """Handle request sequentially (no threads/async)."""
+        if self._requests_session is not None:
+            response = self._get_request_response_serial(
+                url, self._requests_session, return_json
+            )
+        elif need_login:
+            raise _exceptions.AuthenticationError('You need to login first.')
+        else:
+            with _requests.Session() as sess:
+                response = self._get_request_response_serial(
+                    url, sess, return_json
+                )
+        return response
+
+    def _get_request_response_serial(self, url, session, return_json):
+        """Get request response sequentially with requests."""
+        url = [url] if isinstance(url, str) else url
+        responses = []
+        try:
+            for u in url:
+                _log.debug('Fetching URL: %s', u)
+                responses.append(
+                    session.get(u, verify=False, timeout=self._timeout)
+                )
+        except _requests_exceptions.Timeout as err:
+            raise _exceptions.TimeoutError(
+                'Timeout reached. Try to increase `timeout`.'
             ) from err
         except Exception as err:
             _log.exception('Unexpected error in request: %s', err)
