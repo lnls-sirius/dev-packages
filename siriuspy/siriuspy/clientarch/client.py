@@ -15,7 +15,10 @@ from urllib.parse import quote as _quote
 
 import numpy as _np
 import urllib3 as _urllib3
-from aiohttp import ClientSession as _ClientSession
+from aiohttp import (
+    client_exceptions as _aio_exceptions,
+    ClientSession as _ClientSession
+)
 
 try:
     from lzstring import LZString as _LZString
@@ -84,8 +87,7 @@ class ClientArchiver:
         if not self._loop_alive():
             return False
         try:
-            resp = self._make_request(self._url, return_json=False)
-            return resp.status == 200
+            return bool(self._make_request(self._url + '/mgmt'))
         except _urllib.error.URLError:
             return False
 
@@ -160,7 +162,7 @@ class ClientArchiver:
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getPVStatus', pv=pvnames)
-        resp = self._make_request(url, return_json=True)
+        resp = self._make_request(url)
         return None if not resp else resp
 
     def getAllPVs(self, pvnames):
@@ -168,7 +170,7 @@ class ClientArchiver:
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getAllPVs', pv=pvnames, limit='-1')
-        resp = self._make_request(url, return_json=True)
+        resp = self._make_request(url)
         return None if not resp else resp
 
     def deletePVs(self, pvnames):
@@ -184,7 +186,7 @@ class ClientArchiver:
     def getPausedPVsReport(self):
         """Get Paused PVs Report."""
         url = self._create_url(method='getPausedPVsReport')
-        resp = self._make_request(url, return_json=True)
+        resp = self._make_request(url)
         return None if not resp else resp
 
     def getRecentlyModifiedPVs(self, limit=None, epoch_time=True):
@@ -198,7 +200,7 @@ class ClientArchiver:
         if limit is not None:
             method += f'?limit={str(limit)}'
         url = self._create_url(method=method)
-        resp = self._make_request(url, return_json=True)
+        resp = self._make_request(url)
 
         # convert to epoch, if the case
         if resp and epoch_time:
@@ -315,7 +317,7 @@ class ClientArchiver:
             end = len(all_urls)
             pvn2idcs[pvname_orig[i]] = _np.arange(ini, end)
 
-        resps = self._make_request(all_urls, return_json=True)
+        resps = self._make_request(all_urls)
         if not resps:
             return None
 
@@ -362,7 +364,7 @@ class ClientArchiver:
         url = self._create_url(method='getPVDetails', pv=pvname)
         if get_request_url:
             return url
-        resp = self._make_request(url, return_json=True)
+        resp = self._make_request(url)
         return None if not resp else resp
 
     def switch_to_online_data(self):
@@ -512,12 +514,10 @@ class ClientArchiver:
         finally:
             self._loop.close()
 
-    def _make_request(self, url, need_login=False, return_json=False):
+    def _make_request(self, url, need_login=False):
         """Make request."""
         self._request_url = url
-        coro = self._handle_request(
-            url, return_json=return_json, need_login=need_login
-        )
+        coro = self._handle_request(url, need_login=need_login)
         return self._run_sync_coro(coro)
 
     def _create_url(self, method, **kwargs):
@@ -542,56 +542,50 @@ class ClientArchiver:
 
     # ---------- async methods ----------
 
-    async def _handle_request(self, url, return_json=False, need_login=False):
+    async def _handle_request(self, url, need_login=False):
         """Handle request."""
         if self.session is not None:
-            response = await self._get_request_response(
-                url, self.session, return_json
-            )
+            response = await self._get_request_response(url, self.session)
         elif need_login:
             raise _exceptions.AuthenticationError('You need to login first.')
         else:
             async with _ClientSession() as sess:
-                response = await self._get_request_response(
-                    url, sess, return_json
-                )
+                response = await self._get_request_response(url, sess)
         return response
 
-    async def _get_request_response(self, url, session, return_json):
+    async def _get_request_response(self, url, session):
         """Get request response."""
+        url = [url] if isinstance(url, str) else url
         try:
-            if isinstance(url, list):
-                response = await _asyncio.gather(*[
-                    session.get(u, ssl=False, timeout=self._timeout)
-                    for u in url
-                ])
-                if any([not r.ok for r in response]):
-                    return None
-                if return_json:
-                    jsons = list()
-                    for res in response:
-                        try:
-                            data = await res.json()
-                            jsons.append(data)
-                        except ValueError:
-                            _log.error(f'Error with URL {res.url}')
-                            jsons.append(None)
-                    response = jsons
-            else:
-                response = await session.get(
-                    url, ssl=False, timeout=self._timeout
-                )
-                if not response.ok:
-                    return None
-                if return_json:
-                    try:
-                        response = await response.json()
-                    except ValueError:
-                        _log.error(f'Error with URL {response.url}')
-                        response = None
+            response = await _asyncio.gather(*[
+                self._fetch_url(session, u) for u in url
+            ])
         except _asyncio.TimeoutError as err:
-            raise _exceptions.TimeoutError from err
+            raise _exceptions.TimeoutError(
+                'Timeout reached. Try to increase `timeout`.'
+            ) from err
+        except _aio_exceptions.ClientPayloadError as err:
+            raise _exceptions.PayloadError(
+                "Payload Error. Increasing `timeout` won't help. "
+                'Try:\n - decreasing `query_bin_interval`;'
+                '\n - or decrease the time interval for the aquisition;'
+            ) from err
+
+        if len(url) == 1:
+            return response[0]
         return response
+
+    async def _fetch_url(self, session, url):
+        async with session.get(url, timeout=self._timeout) as response:
+            if response.status != 200:
+                return None
+            try:
+                return await response.json()
+            except _aio_exceptions.ContentTypeError:
+                return await response.text()
+            except ValueError:
+                _log.error('Error with URL %s', response.url)
+                return None
 
     async def _create_session(self, url, headers, payload, ssl):
         """Create session and handle login."""
