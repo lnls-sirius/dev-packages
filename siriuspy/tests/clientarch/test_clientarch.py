@@ -116,7 +116,8 @@ class TestClientArchTime(TestCase):
 
     def test_get_time_intervals(self):
         """Test get_time_intervals."""
-        time_start = Time(2026, 1, 13, 0, 0, 0, 345)
+        tz_info = datetime.timezone(datetime.timedelta(seconds=-3 * 3600))
+        time_start = Time(2026, 1, 13, 0, 0, 0, 345, tzinfo=tz_info)
         time_stop = time_start + 24 * 3600
         interval = 3600 * 10
 
@@ -131,7 +132,11 @@ class TestClientArchTime(TestCase):
             '2026-01-14T00:00:00.000345-03:00',
         ]
         tst, tsp = get_time_intervals(
-            time_start, time_stop, interval, return_isoformat=True
+            time_start,
+            time_stop,
+            interval,
+            return_isoformat=True,
+            tzinfo=tz_info,
         )
         self.assertEqual(tst, tst_corr)
         self.assertEqual(tsp, tsp_corr)

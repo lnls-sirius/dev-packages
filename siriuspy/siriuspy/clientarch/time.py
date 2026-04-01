@@ -57,6 +57,9 @@ class Time(_datetime):
         """
         if not args and not kwargs:
             raise TypeError('no arguments found to build Time object')
+        if len(args) == 2:
+            kwargs['tzinfo'] = args[1]
+            args = args[:1]
         if len(args) == 1:
             arg = args[0]
             dic_ = {
@@ -84,9 +87,7 @@ class Time(_datetime):
             args = args[:7]
 
         if not {'timestamp', 'timestamp_string'} - kwargs.keys():
-            raise TypeError(
-                'Conflicting positional and keyword arguments.'
-            )
+            raise TypeError('Conflicting positional and keyword arguments.')
 
         tz = kwargs.get('tzinfo')
         tzl = _datetime.now().astimezone().tzinfo
@@ -102,8 +103,8 @@ class Time(_datetime):
                 ts_fmt = kwargs.get(
                     'timestamp_format', Time._DEFAULT_TIMESTAMP_FORMAT
                 )
-                return super().strptime(ts_str, ts_fmt).replace(
-                    tzinfo=tz or tzl
+                return (
+                    super().strptime(ts_str, ts_fmt).replace(tzinfo=tz or tzl)
                 )
             except ValueError:
                 tim = super().fromisoformat(ts_str)
@@ -146,7 +147,11 @@ class Time(_datetime):
 
 
 def get_time_intervals(
-    time_start: Time, time_stop: Time, interval: int, return_isoformat=False
+    time_start: Time,
+    time_stop: Time,
+    interval: int,
+    return_isoformat=False,
+    tzinfo=None,
 ):
     """Break `time_start` to `time_stop` in intervals of `interval` seconds.
 
@@ -155,17 +160,20 @@ def get_time_intervals(
         time_stop (Time): stop time.
         interval (int): interval duration in seconds.
         return_isoformat (bool): return in iso8601 format.
+        tzinfo (tzinfo): timezone info. Defaults to None, which means using
+            the timezone of `time_start`.
 
     Returns:
         start_time (Time|str | list[Time|str]): start times.
         stop_time (Time|str | list[Time|str]): stop times.
     """
+    tzinfo = tzinfo or time_start.tzinfo
     t_start = time_start.timestamp()
     t_stop = time_stop.timestamp()
     t_start = _np.arange(t_start, t_stop, interval)
     t_stop = _np.r_[t_start[1:], t_stop]
-    t_start = [Time(t) for t in t_start]
-    t_stop = [Time(t) for t in t_stop]
+    t_start = [Time(t, tzinfo=tzinfo) for t in t_start]
+    t_stop = [Time(t, tzinfo=tzinfo) for t in t_stop]
     if return_isoformat:
         t_start = [t.get_iso8601() for t in t_start]
         t_stop = [t.get_iso8601() for t in t_stop]
