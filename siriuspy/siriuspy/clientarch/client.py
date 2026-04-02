@@ -114,10 +114,6 @@ class ClientArchiver:
             return
 
         self._loop = _asyncio.new_event_loop()
-        self._semaphore = _asyncio.Semaphore(
-            self._query_max_concurrency, loop=self._loop
-        )  # limit concurrent requests
-
         self._thread = _Thread(target=self._run_event_loop, daemon=True)
         self._thread.start()
 
@@ -205,9 +201,6 @@ class ClientArchiver:
                 + str(type(new_val))
             )
         self._query_max_concurrency = int(new_val)
-        self._semaphore = _asyncio.Semaphore(
-            self._query_max_concurrency, loop=self._loop
-        )
 
     @property
     def last_requested_url(self):
@@ -916,6 +909,7 @@ class ClientArchiver:
 
     async def _handle_request_async(self, url, need_login=False):
         """Handle request."""
+        self._semaphore = _asyncio.Semaphore(self._query_max_concurrency)
         if self.session is not None:
             response = await self._get_request_response(url, self.session)
         elif need_login:
@@ -923,6 +917,7 @@ class ClientArchiver:
         else:
             async with _ClientSession() as sess:
                 response = await self._get_request_response(url, sess)
+        self._semaphore = None
         return response
 
     async def _get_request_response(self, url, session):
