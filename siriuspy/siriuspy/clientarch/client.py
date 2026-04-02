@@ -18,7 +18,7 @@ import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
-    ClientSession as _ClientSession
+    ClientSession as _ClientSession,
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -37,7 +37,7 @@ class ClientArchiver:
 
     DEF_QUERY_BIN_INTERVAL = 12 * 60 * 60  # 12h
     DEF_QUERY_MAX_CONCURRENCY = 100  # maximum number of concurrent queries
-    DEFAULT_TIMEOUT = 5.0  # [s]
+    DEFAULT_QUERY_TIMEOUT = 5.0  # [s]
     SERVER_URL = _envars.SRVURL_ARCHIVER
     ENDPOINT = '/mgmt/bpl'
 
@@ -93,13 +93,13 @@ class ClientArchiver:
         self.logout()
         self.shutdown()
 
-    def __init__(self, server_url=None, timeout=None):
+    def __init__(self, server_url=None, query_timeout=None):
         """Initialize."""
-        timeout = timeout or ClientArchiver.DEFAULT_TIMEOUT
+        query_timeout = query_timeout or ClientArchiver.DEFAULT_QUERY_TIMEOUT
         self.session = None
         self._aiohttp_session = None
         self._requests_session = None
-        self._timeout = timeout
+        self._query_timeout = query_timeout
         self._url = server_url or self.SERVER_URL
         self._request_url = None
         self._thread = self._loop = self._semaphore = None
@@ -148,14 +148,14 @@ class ClientArchiver:
             return False
 
     @property
-    def timeout(self):
-        """Connection timeout."""
-        return self._timeout
+    def query_timeout(self):
+        """Request timeout for each query."""
+        return self._query_timeout
 
-    @timeout.setter
-    def timeout(self, value):
-        """Set connection timeout."""
-        self._timeout = float(value)
+    @query_timeout.setter
+    def query_timeout(self, value):
+        """Set request timeout for each query."""
+        self._query_timeout = float(value)
 
     @property
     def server_url(self):
@@ -939,7 +939,7 @@ class ClientArchiver:
             ) from err
         except _aio_exceptions.ClientPayloadError as err:
             raise _exceptions.PayloadError(
-                "Payload Error. Increasing `timeout` won't help. "
+                "Payload Error. Increasing `query_timeout` won't help. "
                 'Try:\n - decreasing `query_bin_interval`;'
                 '\n - decrease the time interval for the aquisition;'
                 '\n - or changing the `query_max_concurrency` parameter'
@@ -952,23 +952,27 @@ class ClientArchiver:
     async def _fetch_url(self, session, url):
         async with self._semaphore:
             _log.debug('Fetching URL: %s', url)
-            async with session.get(url, timeout=self._timeout) as response:
-                if response.status != 200:
+            async with session.get(url, timeout=self._query_timeout) as resp:
+                if resp.status != 200:
                     return None
                 try:
-                    return await response.json()
+                    return await resp.json()
                 except _aio_exceptions.ContentTypeError:
                     # for cases where response returns html (self.connected).
-                    return await response.text()
+                    return await resp.text()
                 except ValueError:
-                    _log.error('Error with URL %s', response.url)
+                    _log.error('Error with URL %s', resp.url)
                     return None
 
     async def _create_session(self, url, headers, payload, ssl):
         """Create session and handle login."""
         session = _ClientSession()
         async with session.post(
-            url, headers=headers, data=payload, ssl=ssl, timeout=self._timeout
+            url,
+            headers=headers,
+            data=payload,
+            ssl=ssl,
+            timeout=self._query_timeout,
         ) as response:
             content = await response.content.read()
             authenticated = b'authenticated' in content

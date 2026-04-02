@@ -53,7 +53,7 @@ macreports = dict()
 for intvl in intervals:
     macreports[intvl[0]] = MacReport()
     # macreports[intvl[0]].connector.server_url = 'https://archiver-temp.cnpem.br'   # necessary for 2024 and early
-    macreports[intvl[0]].connector.timeout = 30
+    macreports[intvl[0]].connector.query_timeout = 30
     macreports[intvl[0]].time_start = intvl[0]
     macreports[intvl[0]].time_stop = intvl[1]
     macreports[intvl[0]].update()
@@ -136,7 +136,7 @@ report.plot_raw_data().show()
 
 # programmed vs. delivered hours
 macr = MacReport()
-macr.connector.timeout = 300
+macr.connector.query_timeout = 300
 macr.time_start = Time(2024, 1, 1, 0, 0)
 macr.time_stop = Time(2024, 12, 31, 23, 59, 59)
 macr.update()

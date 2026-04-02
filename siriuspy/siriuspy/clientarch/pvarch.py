@@ -5,7 +5,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys.functions import (
     load_pickle as _load_pickle,
-    save_pickle as _save_pickle
+    save_pickle as _save_pickle,
 )
 
 from .. import envars as _envars
@@ -59,14 +59,19 @@ class _Base:
         return self._offline_data
 
     @property
-    def timeout(self):
-        """Connection timeout."""
-        return self.connector.timeout
+    def query_timeout(self):
+        """Request timeout for each query.
 
-    @timeout.setter
-    def timeout(self, value):
-        """Set connection timeout."""
-        self.connector.timeout = float(value)
+        This is a global setting for the connector, so all PVData objects
+        share it, but we allow it to be set through PVDataSet for convenience.
+
+        """
+        return self.connector.query_timeout
+
+    @query_timeout.setter
+    def query_timeout(self, value):
+        """Set request timeout for each query."""
+        self.connector.query_timeout = float(value)
 
     @property
     def connected(self):
@@ -189,19 +194,19 @@ class PVDetails(_Base):
             return False
         return True
 
-    def update(self, timeout=None):  # noqa: C901
+    def update(self, query_timeout=None):  # noqa: C901
         """."""
         self.connect()
 
-        if timeout is not None:
-            timeout0 = self.timeout
-            self.timeout = timeout
+        if query_timeout is not None:
+            query_timeout0 = self.query_timeout
+            self.query_timeout = query_timeout
 
         try:
             data = self.connector.get_pv_details(self.pvname)
         finally:
-            if timeout is not None:
-                self.timeout = timeout0
+            if query_timeout is not None:
+                self.query_timeout = query_timeout0
 
         if not data:
             return False
@@ -280,7 +285,9 @@ class PVData(_Base):
         stg += '    {:<30s}: {:d}\n'.format(
             'query_max_concurrency: ', self.query_max_concurrency
         )
-        stg += '    {:<30s}: {:.1f}\n'.format('timeout [s]', self.timeout)
+        stg += '    {:<30s}: {:.1f}\n'.format(
+            'query_timeout [s]', self.query_timeout
+        )
         stg += '\nPV Data Properties:\n'
 
         tss = self.time_start
@@ -383,20 +390,6 @@ class PVData(_Base):
     @query_max_concurrency.setter
     def query_max_concurrency(self, new_intvl):
         self.connector.query_max_concurrency = new_intvl
-
-    @property
-    def timeout(self):
-        """Connection timeout.
-
-        This is a global setting for the connector, so all PVData objects
-        share it, but we allow it to be set through PVDataSet for convenience.
-
-        """
-        return self.connector.timeout
-
-    @timeout.setter
-    def timeout(self, value):
-        self.connector.timeout = float(value)
 
     @property
     def timestamp_start(self):
@@ -502,13 +495,13 @@ class PVData(_Base):
             )
         self._processing_type_param2 = new_param
 
-    def update(self, timeout=None):
+    def update(self, query_timeout=None):
         """Update."""
         self.connect()
 
-        if timeout is not None:
-            timeout0 = self.timeout
-            self.timeout = timeout
+        if query_timeout is not None:
+            query_timeout0 = self.query_timeout
+            self.query_timeout = query_timeout
 
         if None in (self.timestamp_start, self.timestamp_stop):
             print('Start and stop timestamps not defined! Aborting.')
@@ -525,8 +518,8 @@ class PVData(_Base):
                 proc_type_param2=self.processing_type_param2,
             )
         finally:
-            if timeout is not None:
-                self.timeout = timeout0
+            if query_timeout is not None:
+                self.query_timeout = query_timeout0
 
         if not data:
             return
@@ -687,7 +680,9 @@ class PVDataSet(_Base):
         stg += '    {:<30s}: {:d}\n'.format(
             'query_max_concurrency', self.query_max_concurrency
         )
-        stg += '    {:<30s}: {:.1f}\n'.format('timeout [s]', self.timeout)
+        stg += '    {:<30s}: {:.1f}\n'.format(
+            'query_timeout [s]', self.query_timeout
+        )
         stg += '\nPV Data Properties:\n'
         tmpl = '    {:<30s} {:^30s} {:^30s} {:^15s} '
         tmpl += '{:^12s} {:^10s} {:^10s} {:^10s}\n'
@@ -780,20 +775,6 @@ class PVDataSet(_Base):
     @query_max_concurrency.setter
     def query_max_concurrency(self, new_intvl):
         self.connector.query_max_concurrency = new_intvl
-
-    @property
-    def timeout(self):
-        """Connection timeout.
-
-        This is a global setting for the connector, so all PVData objects
-        share it, but we allow it to be set through PVDataSet for convenience.
-
-        """
-        return self.connector.timeout
-
-    @timeout.setter
-    def timeout(self, value):
-        self.connector.timeout = float(value)
 
     @property
     def time_start(self):
@@ -950,13 +931,13 @@ class PVDataSet(_Base):
         archived = set(self._pvnames) - set(self.not_archived)
         return list(archived)
 
-    def update(self, timeout=None):
+    def update(self, query_timeout=None):
         """Update."""
         self.connect()
 
-        if timeout is not None:
-            timeout0 = self.timeout
-            self.timeout = timeout
+        if query_timeout is not None:
+            query_timeout0 = self.query_timeout
+            self.query_timeout = query_timeout
 
         all_urls = []
         pvn2idcs = dict()
@@ -966,8 +947,8 @@ class PVDataSet(_Base):
                 print(
                     f'Start and stop times not defined for PV {pvn}! Aborting.'
                 )
-                if timeout is not None:
-                    self.timeout = timeout0
+                if query_timeout is not None:
+                    self.query_timeout = query_timeout0
                 return
             urls = self.connector.get_request_url_for_get_data(
                 pvn,
@@ -988,8 +969,8 @@ class PVDataSet(_Base):
         try:
             resps = self.connector.make_request(all_urls)
         finally:
-            if timeout is not None:
-                self.timeout = timeout0
+            if query_timeout is not None:
+                self.query_timeout = query_timeout0
 
         if not resps:
             return None

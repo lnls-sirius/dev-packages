@@ -59,9 +59,9 @@ class BaseDevice(_PVDataSet):
         """Return retrieved orbit interpolated values."""
         return self._values
 
-    def update(self, timeout=None):
+    def update(self, query_timeout=None):
         """Update state by retrieving data."""
-        super().update(timeout=timeout)
+        super().update(query_timeout=query_timeout)
 
         # interpolate data
         self._times, self._values = self._interpolate_data()
