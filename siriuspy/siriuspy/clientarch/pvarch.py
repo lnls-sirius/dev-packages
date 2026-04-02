@@ -276,39 +276,48 @@ class PVData(_Base):
     def __str__(self):
         """."""
         stg = ''
+        stg += 'Connector Properties:\n'
+        stg += '    {:<30s}: {:d}\n'.format(
+            'query_max_concurrency: ', self.query_max_concurrency
+        )
+        stg += '    {:<30s}: {:.1f}\n'.format('timeout [s]', self.timeout)
+        stg += '\nPV Data Properties:\n'
+
         tss = self.time_start
         tss = tss.get_iso8601() if tss else 'Not Defined.'
         tsp = self.time_stop
         tsp = tsp.get_iso8601() if tsp else 'Not Defined.'
-        stg += '{:<30s}: {:}\n'.format('pvname', self.pvname)
-        stg += '{:<30s}: {:}\n'.format('time_start', tss)
-        stg += '{:<30s}: {:}\n'.format('time_stop', tsp)
-        stg += '{:<30s}: {:d}\n'.format(
-            'query_bin_interval', self.query_bin_interval
-        )
-        stg += '{:<30s}: {:}\n'.format(
-            'query_max_concurrency', self.query_max_concurrency
+        stg += '    {:<30s}: {:}\n'.format('pvname', self.pvname)
+        stg += '    {:<30s}: {:}\n'.format('time_start', tss)
+        stg += '    {:<30s}: {:}\n'.format('time_stop', tsp)
+        stg += '    {:<30s}: {:d}\n'.format(
+            'query_bin_interval [s]', self.query_bin_interval
         )
         prty = self.processing_type
         pr1 = self.processing_type_param1
-        stg += '{:<30s}: {:}\n'.format(
+        stg += '    {:<30s}: {:}\n'.format(
             'processing_type', prty if prty else "''"
         )
         if prty == self.ProcessingTypes.SelectByChange:
             pr1 = 'None' if pr1 is None else f'{pr1:.2g}'
-            stg += '{:<30s}: {:}\n'.format('processing_type_param1', pr1)
+            stg += '    {:<30s}: {:}\n'.format(
+                'processing_type_param1 [val. units]', pr1
+            )
         elif prty != self.ProcessingTypes.None_:
             pr1 = 'None' if pr1 is None else f'{pr1:d}'
-            stg += '{:<30s}: {:}\n'.format('processing_type_param1', pr1)
+            stg += '    {:<30s}: {:}\n'.format(
+                'processing_type_param1 [s]', pr1
+            )
         if prty in (
             self.ProcessingTypes.Outliers,
             self.ProcessingTypes.IgnoreOutliers,
         ):
-            stg += '{:<30s}: {:.2g}\n'.format(
-                'processing_type_param2', self.processing_type_param2
+            stg += '    {:<30s}: {:.2g}\n'.format(
+                'processing_type_param2 [std/mean]',
+                self.processing_type_param2,
             )
 
-        stg += '{:<30s}'.format('Data Length: ')
+        stg += '    {:<30s}'.format('Data Length: ')
         if self.timestamp is not None:
             stg += '{:d}\n'.format(len(self.timestamp))
         else:
@@ -674,14 +683,19 @@ class PVDataSet(_Base):
     def __str__(self):
         """."""
         stg = ''
-        tmpl = '{:<30s} {:^30s} {:^30s} {:^15s} {:^15s} '
+        stg += 'Connector Properties:\n'
+        stg += '    {:<30s}: {:d}\n'.format(
+            'query_max_concurrency', self.query_max_concurrency
+        )
+        stg += '    {:<30s}: {:.1f}\n'.format('timeout [s]', self.timeout)
+        stg += '\nPV Data Properties:\n'
+        tmpl = '    {:<30s} {:^30s} {:^30s} {:^15s} '
         tmpl += '{:^12s} {:^10s} {:^10s} {:^10s}\n'
         stg += tmpl.format(
             'PV Name',
             'Time Start',
             'Time Stop',
             'Bin Interval',
-            'Max Concurrency',
             'Proc. Type',
             'Param1',
             'Param2',
@@ -718,7 +732,6 @@ class PVDataSet(_Base):
                 tss,
                 tsp,
                 f'{pvd.query_bin_interval:d}',
-                f'{pvd.query_max_concurrency:d}',
                 prty,
                 pr1s,
                 pr2,
