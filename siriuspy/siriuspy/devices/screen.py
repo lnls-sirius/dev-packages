@@ -36,7 +36,7 @@ class Screen(_DeviceSet):
         LI_4 = 'LA-BI:PRF4'
         LI_5 = 'LA-BI:PRF5'
         LI = (LI_1, LI_2, LI_3, LI_4, LI_5)
-        TB = (TB_1, TB_2, TB_3, TB_4, TB_5, TB_6)
+        TB = (TB_1, TB_2, TB_3, TB_4, TB_5)
         BO = (BO_1, BO_2, BO_3)
         TS = (TS_1, TS_2, TS_3, TS_4, TS_5, TS_6)
         ALL = TB + BO + TS + LI
