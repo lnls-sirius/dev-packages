@@ -910,7 +910,7 @@ class ClientArchiver:
         if not self._thread.is_alive():
             raise RuntimeError('Library is shut down')
         future = _asyncio.run_coroutine_threadsafe(coro, self._loop)
-        return future.result(timeout=self._timeout)
+        return future.result()
 
     # ---------- async methods ----------
 
