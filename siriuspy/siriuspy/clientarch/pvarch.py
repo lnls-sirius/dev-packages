@@ -376,6 +376,20 @@ class PVData(_Base):
         self.connector.query_max_concurrency = new_intvl
 
     @property
+    def timeout(self):
+        """Connection timeout.
+
+        This is a global setting for the connector, so all PVData objects
+        share it, but we allow it to be set through PVDataSet for convenience.
+
+        """
+        return self.connector.timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        self.connector.timeout = float(value)
+
+    @property
     def timestamp_start(self):
         """Timestamp start."""
         if not self._time_start:
@@ -753,6 +767,20 @@ class PVDataSet(_Base):
     @query_max_concurrency.setter
     def query_max_concurrency(self, new_intvl):
         self.connector.query_max_concurrency = new_intvl
+
+    @property
+    def timeout(self):
+        """Connection timeout.
+
+        This is a global setting for the connector, so all PVData objects
+        share it, but we allow it to be set through PVDataSet for convenience.
+
+        """
+        return self.connector.timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        self.connector.timeout = float(value)
 
     @property
     def time_start(self):
