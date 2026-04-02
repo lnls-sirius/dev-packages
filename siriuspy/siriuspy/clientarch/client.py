@@ -950,8 +950,8 @@ class ClientArchiver:
         return response
 
     async def _fetch_url(self, session, url):
-        _log.debug('Fetching URL: %s', url)
         async with self._semaphore:
+            _log.debug('Fetching URL: %s', url)
             async with session.get(url, timeout=self._timeout) as response:
                 if response.status != 200:
                     return None
