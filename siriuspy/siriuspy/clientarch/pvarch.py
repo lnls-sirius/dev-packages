@@ -375,7 +375,7 @@ class PVData(_Base):
 
     @query_bin_interval.setter
     def query_bin_interval(self, new_intvl):
-        self._query_bin_interval = new_intvl
+        self._query_bin_interval = int(new_intvl)
 
     @property
     def query_max_concurrency(self):
@@ -754,8 +754,8 @@ class PVDataSet(_Base):
 
     @query_bin_interval.setter
     def query_bin_interval(self, value):
-        if isinstance(value, int):
-            value = len(self._pvnames) * [value]
+        if isinstance(value, (int, float)):
+            value = len(self._pvnames) * [int(value)]
         if len(value) != len(self._pvnames):
             raise ValueError('value must have the same length as pvnames')
 

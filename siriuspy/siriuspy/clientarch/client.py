@@ -186,7 +186,7 @@ class ClientArchiver:
                 'expected argument of type float or int, got '
                 + str(type(new_intvl))
             )
-        self._query_bin_interval = new_intvl
+        self._query_bin_interval = int(new_intvl)
 
     @property
     def query_max_concurrency(self):
@@ -422,7 +422,7 @@ class ClientArchiver:
             If it is a list or tuple, all PVs will be queried for each of
             the time intervals. In this case, it must have the same length
             as `timestamp_start`.
-        query_bin_interval (float): overwrites `self.query_bin_interval`.
+        query_bin_interval (int): overwrites `self.query_bin_interval`.
             Defaults to `self.query_bin_interval`. Maximum interval for
             queries. If
                 `timestamp_stop - timestamp_start > query_bin_interval`,
@@ -528,7 +528,7 @@ class ClientArchiver:
             If it is a list or tuple, all PVs will be queried for each of
             the time intervals. In this case, it must have the same length
             as `timestamp_start`.
-        query_bin_interval (float): overwrites `self.query_bin_interval`.
+        query_bin_interval (int): overwrites `self.query_bin_interval`.
             Defaults to `self.query_bin_interval`. Maximum interval for
             queries. If
                 `timestamp_stop - timestamp_start > query_bin_interval`,

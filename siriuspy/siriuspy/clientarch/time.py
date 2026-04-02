@@ -170,7 +170,7 @@ def get_time_intervals(
     tzinfo = tzinfo or time_start.tzinfo
     t_start = time_start.timestamp()
     t_stop = time_stop.timestamp()
-    t_start = _np.arange(t_start, t_stop, interval)
+    t_start = _np.arange(t_start, t_stop, int(interval))
     t_stop = _np.r_[t_start[1:], t_stop]
     t_start = [Time(t, tzinfo=tzinfo) for t in t_start]
     t_stop = [Time(t, tzinfo=tzinfo) for t in t_stop]
