@@ -930,7 +930,7 @@ class ClientArchiver:
             ])
         except _asyncio.TimeoutError as err:
             raise _exceptions.TimeoutError(
-                'Timeout reached. Try to increase `timeout`.'
+                'Timeout reached. Try to increase `query_timeout`.'
             ) from err
         except _aio_exceptions.ClientPayloadError as err:
             raise _exceptions.PayloadError(
