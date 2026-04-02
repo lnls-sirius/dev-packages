@@ -927,7 +927,8 @@ class ClientArchiver:
 
     async def _get_request_response(self, url, session):
         """Get request response."""
-        url = [url] if isinstance(url, str) else url
+        single = isinstance(url, str)
+        url = [url] if single else url
         try:
             response = await _asyncio.gather(*[
                 self._fetch_url(session, u) for u in url
@@ -944,7 +945,7 @@ class ClientArchiver:
                 '\n - or changing the `query_max_concurrency` parameter'
             ) from err
 
-        if len(url) == 1:
+        if single:
             return response[0]
         return response
 
