@@ -1070,17 +1070,24 @@ class MacReport:
 
         self._update_log(log_msg.format(self._current_pv, _time.time()-_t0))
 
+        # Set query_bin_interval for the rest of PVs to the total time to
+        # avoid multiple queries and speed up the process.
+        tot = self._time_stop - self._time_start
+        tot = tot.total_seconds() + 1
+
         # macshift, interlock and stability indicators
         for pvn in self._pvnames:
             if pvn == self._current_pv:
                 continue
             _t0 = _time.time()
+            self._pvdata[pvn].query_bin_interval = tot
             self._pvdata[pvn].update()
             self._update_log(log_msg.format(pvn, _time.time()-_t0))
 
         # ps
         for group, pvdataset in self._pvdataset.items():
             _t0 = _time.time()
+            pvdataset.query_bin_interval = tot
             pvdataset.update()
             self._update_log(log_msg.format(
                 'SI PS '+group.capitalize(), _time.time()-_t0)
