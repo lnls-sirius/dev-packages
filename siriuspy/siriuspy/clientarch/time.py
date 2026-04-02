@@ -94,25 +94,47 @@ class Time(_datetime):
         if 'datetime' in kwargs:
             dtim = kwargs['datetime']
             tz = tz or dtim.tzinfo or tzl
-            return super().fromtimestamp(dtim.timestamp(), tz=tz)
+            obj = super().fromtimestamp(dtim.timestamp(), tz=tz)
         elif 'timestamp' in kwargs:
-            return super().fromtimestamp(kwargs['timestamp'], tz=tz or tzl)
+            obj = super().fromtimestamp(kwargs['timestamp'], tz=tz or tzl)
         elif 'timestamp_string' in kwargs:
             ts_str = kwargs['timestamp_string']
             try:
                 ts_fmt = kwargs.get(
                     'timestamp_format', Time._DEFAULT_TIMESTAMP_FORMAT
                 )
-                return (
+                obj = (
                     super().strptime(ts_str, ts_fmt).replace(tzinfo=tz or tzl)
                 )
             except ValueError:
-                tim = super().fromisoformat(ts_str)
+                import sys as _sys
+                if _sys.version_info <= (3, 8):
+                    from dateutil import parser as _dateutil_parser
+                    tim = _dateutil_parser.parse(ts_str)
+                else:
+                    tim = super().fromisoformat(ts_str)
                 tz = tz or tim.tzinfo
-                return super().fromtimestamp(tim.timestamp(), tz=tz)
+                obj = super().fromtimestamp(tim.timestamp(), tz=tz)
         else:
             kwargs.setdefault('tzinfo', tzl)
-            return super().__new__(cls, *args, **kwargs)
+            obj = super().__new__(cls, *args, **kwargs)
+
+        # NOTE: This if is necessary for python versions prior to 3.9.
+        # in this cases, calling super().fromtimestamp with tzinfo returns
+        # an object of datetime class.
+        if not isinstance(obj, cls):
+            return super().__new__(
+                cls,
+                obj.year,
+                obj.month,
+                obj.day,
+                obj.hour,
+                obj.minute,
+                obj.second,
+                obj.microsecond,
+                tzinfo=obj.tzinfo,
+            )
+        return obj
 
     def get_iso8601(self):
         """Get iso8601 format."""
