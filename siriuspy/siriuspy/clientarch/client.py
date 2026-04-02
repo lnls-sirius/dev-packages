@@ -231,6 +231,8 @@ class ClientArchiver:
 
     def logout(self):
         """Close login session."""
+        if self.session is None:
+            return
         coro = self._close_session()
         resp = self._run_sync_coro(coro)
         self.session = None
