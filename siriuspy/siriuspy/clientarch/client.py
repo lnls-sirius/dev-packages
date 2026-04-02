@@ -18,7 +18,8 @@ import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
-    ClientSession as _ClientSession,
+    ClientSession as _ClSession,
+    TCPConnector as _TCPConn
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -917,7 +918,9 @@ class ClientArchiver:
         elif need_login:
             raise _exceptions.AuthenticationError('You need to login first.')
         else:
-            async with _ClientSession() as sess:
+            # NOTE: we need to define a connector with ssl=False so that url
+            # with IP address can be requested without SSL errors.
+            async with _ClSession(connector=_TCPConn(ssl=False)) as sess:
                 response = await self._get_request_response(url, sess)
         self._semaphore = None
         return response
@@ -963,7 +966,9 @@ class ClientArchiver:
 
     async def _create_session(self, url, headers, payload, ssl):
         """Create session and handle login."""
-        session = _ClientSession()
+        # NOTE: we need to define a connector with ssl=False so that url
+        # with IP address can be requested without SSL errors.
+        session = _ClSession(connector=_TCPConn(ssl=False))
         async with session.post(
             url,
             headers=headers,
