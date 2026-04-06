@@ -99,12 +99,10 @@ class ClientArchiver:
         """Initialize."""
         query_timeout = query_timeout or ClientArchiver.DEFAULT_QUERY_TIMEOUT
         self.session = None
-        self._aiohttp_session = None
-        self._requests_session = None
-        self._query_timeout = query_timeout
         self._url = server_url or self.SERVER_URL
         self._request_url = None
         self._thread = self._loop = self._semaphore = None
+        self._query_timeout = query_timeout
         self._query_bin_interval = self.DEF_QUERY_BIN_INTERVAL
         self._query_max_concurrency = self.DEF_QUERY_MAX_CONCURRENCY
         self.connect()
@@ -156,7 +154,7 @@ class ClientArchiver:
     @query_timeout.setter
     def query_timeout(self, value):
         """Set request timeout for each query."""
-        self._query_timeout = float(value)
+        self._query_timeout = max(float(value), 0)
 
     @property
     def query_bin_interval(self):
