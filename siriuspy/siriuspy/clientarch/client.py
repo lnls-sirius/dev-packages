@@ -17,7 +17,8 @@ import numpy as _np
 import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
-    ClientSession as _ClientSession
+    ClientSession as _ClientSession,
+    TCPConnector as _TCPConn
 )
 
 try:
@@ -132,9 +133,7 @@ class ClientArchiver:
         headers = {'User-Agent': 'Mozilla/5.0'}
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
-        coro = self._create_session(
-            url, headers=headers, payload=payload, ssl=False
-        )
+        coro = self._create_session(url, headers=headers, payload=payload)
         ret = self._run_sync_coro(coro)
         if ret is not None:
             self.session, authenticated = ret
@@ -549,7 +548,7 @@ class ClientArchiver:
         elif need_login:
             raise _exceptions.AuthenticationError('You need to login first.')
         else:
-            async with _ClientSession() as sess:
+            async with _ClientSession(connector=_TCPConn(ssl=False)) as sess:
                 response = await self._get_request_response(url, sess)
         return response
 
@@ -588,11 +587,11 @@ class ClientArchiver:
                 _log.error('Error with URL %s', response.url)
                 return None
 
-    async def _create_session(self, url, headers, payload, ssl):
+    async def _create_session(self, url, headers, payload):
         """Create session and handle login."""
-        session = _ClientSession()
+        session = _ClientSession(connector=_TCPConn(ssl=False))
         async with session.post(
-            url, headers=headers, data=payload, ssl=ssl, timeout=self._timeout
+            url, headers=headers, data=payload, timeout=self._timeout
         ) as response:
             content = await response.content.read()
             authenticated = b'authenticated' in content
