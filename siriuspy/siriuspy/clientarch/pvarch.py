@@ -339,15 +339,17 @@ class PVData(_Base):
 
     @property
     def request_url(self):
-        """Request url."""
+        """Get request url."""
         self.connect()
-        url = self.connector.get_data(
-            self.pvname,
-            self.time_start.get_iso8601(),
-            self.time_stop.get_iso8601(),
-            get_request_url=True,
+        return self.connector.get_request_url_for_get_data(
+            self._pvname,
+            self.time_start,
+            self.time_stop,
+            query_bin_interval=self.query_bin_interval,
+            proc_type=self.processing_type,
+            proc_type_param1=self.processing_type_param1,
+            proc_type_param2=self.processing_type_param2,
         )
-        return url
 
     @property
     def timestamp(self):
@@ -668,6 +670,12 @@ class PVData(_Base):
                 pvname (str): the name of the PV.
                 timestamp_start (time.time): start of acquisition time.
                 timestamp_stop (time.time): end of acquisition time.
+                query_bin_interval (int): bin interval for queries.
+                query_max_concurrency (int): max concurrency for queries.
+                query_timeout (float): timeout for queries.
+                processing_type (str): type of processing for queries.
+                processing_type_param1 (float or int): param 1 for processing.
+                processing_type_param2 (float or int): param 2 for processing.
                 data (dict): dictionary with archiver data  with fields:
                     value (numpy.ndarray): values of the PV.
                     timestamp (numpy.ndarray): timestamps of the PV.
@@ -680,6 +688,12 @@ class PVData(_Base):
             pvname=self.pvname,
             timestamp_start=self.timestamp_start,
             timestamp_stop=self.timestamp_stop,
+            query_bin_interval=self.query_bin_interval,
+            query_max_concurrency=self.query_max_concurrency,
+            query_timeout=self.query_timeout,
+            processing_type=self.processing_type,
+            processing_type_param1=self.processing_type_param1,
+            processing_type_param2=self.processing_type_param2,
             data=dict(
                 timestamp=self.timestamp,
                 value=self.value,
@@ -703,6 +717,12 @@ class PVData(_Base):
         pvdata = PVData(infos['pvname'], connector=infos['server_url'])
         pvdata.timestamp_start = infos['timestamp_start']
         pvdata.timestamp_stop = infos['timestamp_stop']
+        pvdata.query_bin_interval = infos['query_bin_interval']
+        pvdata.query_max_concurrency = infos['query_max_concurrency']
+        pvdata.query_timeout = infos['query_timeout']
+        pvdata.processing_type = infos['processing_type']
+        pvdata.processing_type_param1 = infos['processing_type_param1']
+        pvdata.processing_type_param2 = infos['processing_type_param2']
         pvdata.set_data(**infos['data'])
         return pvdata
 
@@ -1203,12 +1223,7 @@ class PVDataSet(_Base):
                     all PVs. Compatible input for PVData.from_dict.
 
         """
-        data = dict(
-            server_url=self.connector.server_url,
-            pvnames=self.pvnames,
-            timestamp_start=self.timestamp_start,
-            timestamp_stop=self.timestamp_stop,
-        )
+        data = dict(server_url=self.connector.server_url, pvnames=self.pvnames)
         data['pvdata_info'] = [self[pvn].to_dict() for pvn in self._pvnames]
         return data
 
@@ -1225,10 +1240,8 @@ class PVDataSet(_Base):
 
         """
         pvdataset = PVDataSet(info['pvnames'], info['server_url'])
-        pvdataset.timestamp_start = info['timestamp_start']
-        pvdataset.timestamp_stop = info['timestamp_stop']
         for i, pvdata in enumerate(pvdataset):
-            pvdata.set_data(**info['pvdata_info'][i]['data'])
+            pvdata.from_dict(**info['pvdata_info'][i])
         return pvdataset
 
     def to_pickle(self, fname, overwrite=False):
