@@ -20,6 +20,7 @@ import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
     ClientSession as _ClSession,
+    CookieJar as _CookieJar,
     TCPConnector as _TCPConn
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -983,9 +984,14 @@ class ClientArchiver:
 
     async def _create_session(self, url, headers, payload, ssl):
         """Create session and handle login."""
-        # NOTE: we need to define a connector with ssl=False so that url
-        # with IP address can be requested without SSL errors.
-        session = _ClSession(connector=_TCPConn(ssl=False))
+        # NOTE: we need to define a connector with ssl=False and explicitly
+        # tell aiohttp to accept unsafe cookies so that url with IP address
+        # can be requested without SSL errors. This is needed in the control
+        # room, where the server is accessed through its IP address and not a
+        # domain name.
+        session = _ClSession(
+            connector=_TCPConn(ssl=False), cookie_jar=_CookieJar(unsafe=True)
+        )
         async with session.post(
             url,
             headers=headers,
