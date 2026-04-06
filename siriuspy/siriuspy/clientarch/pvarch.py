@@ -461,7 +461,55 @@ class PVData(_Base):
 
     @property
     def processing_type(self):
-        """Processing type."""
+        """Data processing type to use for query.
+
+        For details on each operator, please, refer to the section
+        Processing of data of the following page:
+        https://epicsarchiver.readthedocs.io/en/latest/user/userguide.html
+
+        The options implemented here are:
+
+        The options below do not take any aditional parameter:
+            '' --> No processing, raw data is returned.
+            'ncount' --> total number of updates in the whole interval.
+
+        All types of processing below, require an aditional parameter,
+        controlled by the input `processing_type_param1`. Then the
+        refered statistics will be performed within this interval:
+            'mean'
+            'median'
+            'std'
+            'variance'
+            'popvariance' --> population variance.
+            'kurtosis'
+            'skewness'
+            'mini' --> same as min, which is also accepted by the archiver.
+            'maxi' --> same as max, which is also accepted by the archiver.
+            'jitter' --> std / mean for each bin.
+            'count' --> number of updates in each bin.
+            'firstSample'
+            'lastSample'
+            'firstFill' --> see url for difference to `'firstSample'`.
+            'lastFill' --> see url for difference to `'lastSample'`.
+            'linear' --> not sure, look at the archiver docs.
+            'loess' --> not sure, look at the archiver docs.
+
+        The processing below also use an aditional parameter, but its
+        meaning is different from the statistics above:
+            'optimized' --> the parameter means the total number of points
+                            to be returned, instead of the time interval.
+            'optimLastSample' --> close to 'opimized'. See docs for diff.
+            'nth' --> return every nth sample.
+            'deadBand' --> similar to ADEL. Only return when values change
+                by a certain amount.
+
+        For both statistics below a second parameter is needed to configure
+        acquisition, controlled by `processing_type_param2`. This
+        parameter controls the number of standard deviations to consider
+        in the filtering bellow. The default of this parameter is 3.0:
+            'ignoreflyers' --> whether to ignore outliers
+            'flyers' --> only return outliers
+        """
         return self._processing_type
 
     @processing_type.setter
@@ -865,7 +913,55 @@ class PVDataSet(_Base):
 
     @property
     def processing_type(self):
-        """Processing type."""
+        """Data processing type to use for query.
+
+        For details on each operator, please, refer to the section
+        Processing of data of the following page:
+        https://epicsarchiver.readthedocs.io/en/latest/user/userguide.html
+
+        The options implemented here are:
+
+        The options below do not take any aditional parameter:
+            '' --> No processing, raw data is returned.
+            'ncount' --> total number of updates in the whole interval.
+
+        All types of processing below, require an aditional parameter,
+        controlled by the input `proc_type_param1`. Then the
+        refered statistics will be performed within this interval:
+            'mean'
+            'median'
+            'std'
+            'variance'
+            'popvariance' --> population variance.
+            'kurtosis'
+            'skewness'
+            'mini' --> same as min, which is also accepted by the archiver.
+            'maxi' --> same as max, which is also accepted by the archiver.
+            'jitter' --> std / mean for each bin.
+            'count' --> number of updates in each bin.
+            'firstSample'
+            'lastSample'
+            'firstFill' --> see url for difference to `'firstSample'`.
+            'lastFill' --> see url for difference to `'lastSample'`.
+            'linear' --> not sure, look at the archiver docs.
+            'loess' --> not sure, look at the archiver docs.
+
+        The processing below also use an aditional parameter, but its
+        meaning is different from the statistics above:
+            'optimized' --> the parameter means the total number of points
+                            to be returned, instead of the time interval.
+            'optimLastSample' --> close to 'opimized'. See docs for diff.
+            'nth' --> return every nth sample.
+            'deadBand' --> similar to ADEL. Only return when values change
+                by a certain amount.
+
+        For both statistics below a second parameter is needed to configure
+        acquisition, controlled by `proc_type_param2`. This
+        parameter controls the number of standard deviations to consider
+        in the filtering bellow. The default of this parameter is 3.0:
+            'ignoreflyers' --> whether to ignore outliers
+            'flyers' --> only return outliers
+        """
         proc = [self._pvdata[pvn].processing_type for pvn in self._pvnames]
         if len(set(proc)) == 1:
             return proc[0]
