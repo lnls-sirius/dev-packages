@@ -20,7 +20,6 @@ import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
     ClientSession as _ClSession,
-    CookieJar as _CookieJar,
     TCPConnector as _TCPConn
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
@@ -222,8 +221,7 @@ class ClientArchiver:
             bool: True if login was successful, False otherwise.
         """
         if self.session is not None:
-            return True
-        headers = {'User-Agent': 'Mozilla/5.0'}
+            self.logout()
 
         if password is None:
             password = _getpass.getpass(
@@ -232,9 +230,7 @@ class ClientArchiver:
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
 
-        coro = self._create_session(
-            url, headers=headers, payload=payload, ssl=False
-        )
+        coro = self._create_session(url, payload=payload)
         ret = self._run_sync_coro(coro)
         if ret is not None:
             self.session, authenticated = ret
@@ -982,24 +978,23 @@ class ClientArchiver:
                     _log.error('Error with URL %s', resp.url)
                     return None
 
-    async def _create_session(self, url, headers, payload, ssl):
+    async def _create_session(self, url, payload):
         """Create session and handle login."""
-        # NOTE: we need to define a connector with ssl=False and explicitly
-        # tell aiohttp to accept unsafe cookies so that url with IP address
-        # can be requested without SSL errors. This is needed in the control
-        # room, where the server is accessed through its IP address and not a
-        # domain name.
-        session = _ClSession(
-            connector=_TCPConn(ssl=False), cookie_jar=_CookieJar(unsafe=True)
-        )
+        # NOTE: we need to define a connector with ssl=False so that url with
+        # IP address can be requested without SSL errors. This is needed in
+        # the control room, where the server is accessed through its IP
+        # address and not a domain name.
+        headers = {
+            'User-Agent': 'Mozilla/5.0',
+            'Host': 'cnpem.br',  # NOTE: this is required (404 otherwise).
+            'content-type': 'application/x-www-form-urlencoded',
+        }
+
+        session = _ClSession(connector=_TCPConn(ssl=False))
         async with session.post(
-            url,
-            headers=headers,
-            data=payload,
-            ssl=ssl,
-            timeout=self._query_timeout,
+            url, headers=headers, data=payload, timeout=self._query_timeout
         ) as response:
-            content = await response.content.read()
+            content = await response.read()
             authenticated = b'authenticated' in content
         return session, authenticated
 
