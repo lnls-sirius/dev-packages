@@ -130,7 +130,7 @@ class ClientArchiver:
 
     def login(self, username, password):
         """Open login session."""
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {'User-Agent': 'Mozilla/5.0', 'Host': 'cnpem.br'}
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
         coro = self._create_session(url, headers=headers, payload=payload)
