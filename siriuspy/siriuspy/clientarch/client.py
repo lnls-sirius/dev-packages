@@ -7,6 +7,7 @@ See
 """
 
 import asyncio as _asyncio
+import getpass as _getpass
 import logging as _log
 import math as _math
 import urllib as _urllib
@@ -208,9 +209,25 @@ class ClientArchiver:
         """."""
         return self._request_url
 
-    def login(self, username, password):
-        """Open login session."""
+    def login(self, username, password=None):
+        """Login to the Archiver server.
+
+        Args:
+            username (str): Username to login.
+            password (str): Password to login. If not provided, it will be
+                (secretly) prompted in the console.
+
+        Returns:
+            bool: True if login was successful, False otherwise.
+        """
+        if self.session is not None:
+            return True
         headers = {'User-Agent': 'Mozilla/5.0'}
+
+        if password is None:
+            password = _getpass.getpass(
+                prompt=f'Password for user {username}: ', stream=None
+            )
         payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
 
