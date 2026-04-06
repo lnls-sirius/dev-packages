@@ -5,7 +5,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys.functions import (
     load_pickle as _load_pickle,
-    save_pickle as _save_pickle,
+    save_pickle as _save_pickle
 )
 
 from .. import envars as _envars
@@ -17,9 +17,8 @@ from .time import Time as _Time
 class _Base:
     def __init__(self, connector=None, offline_data=False):
         self._connector = None
-        self._offline_data = offline_data
         self.connector = connector
-        self.connect()
+        self.connect(offline_data=offline_data)
 
     @property
     def is_archived(self):
@@ -27,12 +26,12 @@ class _Base:
         self.connect()
         return self.connector.get_pv_details(self.pvname) is not None
 
-    def connect(self):
+    def connect(self, offline_data=False):
         """Connect."""
         if self.connector is None:
             url_off = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
             url_on = _envars.SRVURL_ARCHIVER
-            url = url_off if self._offline_data else url_on
+            url = url_off if offline_data else url_on
             self._connector = _ClientArchiver(server_url=url)
 
     @property
@@ -55,8 +54,17 @@ class _Base:
 
     @property
     def is_offline_data(self):
-        """."""
-        return self._offline_data
+        """Whether server url points to online or offline data.
+
+        Return None in case the url is not recognized as either online or
+        offline.
+        """
+        if self._connector.server_url == _envars.SRVURL_ARCHIVER_OFFLINE_DATA:
+            return True
+        elif self._connector.server_url == _envars.SRVURL_ARCHIVER:
+            return False
+        else:
+            return None
 
     @property
     def query_timeout(self):
