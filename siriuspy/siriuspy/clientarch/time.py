@@ -140,6 +140,16 @@ class Time(_datetime):
         """Get iso8601 format."""
         return self.astimezone(self.tzinfo).isoformat()
 
+    @staticmethod
+    def now(tz=None):
+        """Get current time."""
+        return super().now(tz).astimezone(tz)
+
+    @staticmethod
+    def utcnow():
+        """Get current UTC time."""
+        raise NotImplementedError('utcnow is not implemented for Time class.')
+
     def __add__(self, other):
         """Addition."""
         if isinstance(other, _datetime):
