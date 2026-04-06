@@ -185,15 +185,6 @@ class PVDetails(_Base):
         url = self.connector.get_pv_details(self.pvname, get_request_url=True)
         return url
 
-    @property
-    def is_archived(self):
-        """."""
-        self.connect()
-        data = self.connector.get_pv_details(self.pvname)
-        if not data:
-            return False
-        return True
-
     def update(self, query_timeout=None):  # noqa: C901
         """."""
         self.connect()
@@ -331,6 +322,8 @@ class PVData(_Base):
             stg += 'Not loaded yet.\n'
         return stg
 
+    # -------- PV data properties --------
+
     @property
     def pvname(self):
         """PVName."""
@@ -367,6 +360,8 @@ class PVData(_Base):
     def severity(self):
         """Severity data."""
         return self._severity
+
+    # ------- PV data acquisition and processing properties --------
 
     @property
     def query_bin_interval(self):
@@ -527,7 +522,12 @@ class PVData(_Base):
 
     @property
     def processing_type_param1(self):
-        """Processing type param1."""
+        """Processing type param1.
+
+        For most processing types, this is a time interval in seconds, but for
+        some types, it has a different meaning. Please, refer to the
+        documentation of `processing_type` for details.
+        """
         return self._processing_type_param1
 
     @processing_type_param1.setter
@@ -541,7 +541,12 @@ class PVData(_Base):
 
     @property
     def processing_type_param2(self):
-        """Processing type param2."""
+        """Processing type param2.
+
+        See docs for `processing_type`. For most processing types, this is not
+        used, but for some types, it controls the number of standard
+        deviations to consider in outlier filtering, with a default value of 3.
+        """
         return self._processing_type_param2
 
     @processing_type_param2.setter
@@ -791,6 +796,8 @@ class PVDataSet(_Base):
                 dlen,
             )
         return stg
+
+    # -------- Properties to control data acquisition and processing --------
 
     @property
     def pvnames(self):

@@ -110,34 +110,9 @@ class ClientArchiver:
         self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
-    def connect(self):
-        """Starts bg. event loop in a separate thread when in async mode."""
-        if self._loop_alive():
-            return
-
-        self._loop = _asyncio.new_event_loop()
-        self._thread = _Thread(target=self._run_event_loop, daemon=True)
-        self._thread.start()
-
-    def shutdown(self, timeout=5):
-        """Safely stops the bg. loop and waits for the thread to exit."""
-        if not self._loop_alive():
-            return
-
-        # 1. Cancel all pending tasks in the loop (to avoid ResourceWarnings)
-        self._loop.call_soon_threadsafe(self._cancel_all_tasks)
-
-        # 2. Schedule the loop to stop processing
-        self._loop.call_soon_threadsafe(self._loop.stop)
-
-        # 3. Wait for the thread to actually finish
-        self._thread.join(timeout=timeout)
-        if self._thread.is_alive():
-            print('Warning: Background thread did not stop in time.')
-
     @property
     def connected(self):
-        """Connected."""
+        """Return whether the archiver is connected."""
         if not self._loop_alive():
             return False
         try:
@@ -146,14 +121,9 @@ class ClientArchiver:
             return False
 
     @property
-    def query_timeout(self):
-        """Request timeout for each query."""
-        return self._query_timeout
-
-    @query_timeout.setter
-    def query_timeout(self, value):
-        """Set request timeout for each query."""
-        self._query_timeout = float(value)
+    def last_requested_url(self):
+        """Return the last requested URL or URLs."""
+        return self._request_url
 
     @property
     def server_url(self):
@@ -175,6 +145,18 @@ class ClientArchiver:
         """
         self.logout()
         self._url = url
+
+    # ------------ query related properties --------------
+
+    @property
+    def query_timeout(self):
+        """Request timeout for each query."""
+        return self._query_timeout
+
+    @query_timeout.setter
+    def query_timeout(self, value):
+        """Set request timeout for each query."""
+        self._query_timeout = float(value)
 
     @property
     def query_bin_interval(self):
@@ -209,10 +191,32 @@ class ClientArchiver:
             )
         self._query_max_concurrency = int(new_val)
 
-    @property
-    def last_requested_url(self):
-        """."""
-        return self._request_url
+    # ------------- methods to control client behavior --------------
+
+    def connect(self):
+        """Starts bg. event loop in a separate thread when in async mode."""
+        if self._loop_alive():
+            return
+
+        self._loop = _asyncio.new_event_loop()
+        self._thread = _Thread(target=self._run_event_loop, daemon=True)
+        self._thread.start()
+
+    def shutdown(self, timeout=5):
+        """Safely stops the bg. loop and waits for the thread to exit."""
+        if not self._loop_alive():
+            return
+
+        # 1. Cancel all pending tasks in the loop (to avoid ResourceWarnings)
+        self._loop.call_soon_threadsafe(self._cancel_all_tasks)
+
+        # 2. Schedule the loop to stop processing
+        self._loop.call_soon_threadsafe(self._loop.stop)
+
+        # 3. Wait for the thread to actually finish
+        self._thread.join(timeout=timeout)
+        if self._thread.is_alive():
+            print('Warning: Background thread did not stop in time.')
 
     def login(self, username, password=None):
         """Login to the Archiver server.
@@ -258,8 +262,30 @@ class ClientArchiver:
         self.session = None
         return resp
 
+    def switch_to_online_data(self):
+        """Switch to online data.
+
+        Sets server URL to online data URL and logs out if needed.
+        """
+        self.server_url = _envars.SRVURL_ARCHIVER
+        self.logout()
+
+    def switch_to_offline_data(self):
+        """Switch to offline data.
+
+        Sets server URL to offline data URL and logs out if needed.
+        """
+        self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+        self.logout()
+
+    # ------------- methods to get PVs informations --------------
+
     def get_pvs_info(self, wildcards='*', max_num_pvs=-1):
         """Get PVs Info.
+
+        Call method `getPVStatus` of the Archiver Appliance, which returns a
+        list of PVs matching the wildcards, with some details about each PV,
+        such as its type, connection status, etc.
 
         Args:
             wildcards (str|list|tuple): Wildcards to match.
@@ -282,6 +308,9 @@ class ClientArchiver:
     def get_all_pvs(self, wildcards='*', max_num_pvs=-1):
         """Get All PVs matching wildcards.
 
+        Call method `getAllPVs` of the Archiver Appliance, which returns a
+        list of PVs matching the wildcards.
+
         Args:
             wildcards (str|list|tuple): Wildcards to match.
             max_num_pvs (int): Maximum number of PVs to return.
@@ -299,20 +328,50 @@ class ClientArchiver:
         resp = self.make_request(url)
         return None if not resp else resp
 
-    def delete_pvs(self, pvnames, delete_data=False):
-        """Delete PVs."""
-        if not isinstance(pvnames, (list, tuple)):
-            pvnames = (pvnames,)
+    def get_pv_details(self, pvname, get_request_url=False):
+        """Get PV Details.
 
-        delete_data = 'true' if delete_data else 'false'
-        for pvname in pvnames:
-            url = self._create_url(
-                method='deletePV', pv=pvname, deleteData=delete_data
-            )
-            self.make_request(url, need_login=True)
+        Call method `getPVDetails` of the Archiver Appliance, which returns
+        PVs details regarding its archiving status.
+
+        Args:
+            pvname (str): Name of the PV to get details.
+            get_request_url (bool): Whether to only return request url.
+
+        Returns:
+            list (None | list): List of dictionary with PVs details.
+        """
+        url = self._create_url(method='getPVDetails', pv=pvname)
+        if get_request_url:
+            return url
+        resp = self.make_request(url)
+        return None if not resp else resp
+
+    def get_pv_type_info(self, pvname: str):
+        """Get PV Type Info.
+
+        Call method `getPVTypeInfo` of the Archiver Appliance, which returns
+        Archiving information for a PV, such as its archiving policy.
+
+        Args:
+            pvname (str): Name of the PV to get type info.
+
+        Returns:
+            list: List of dictionary with PVs details.
+
+        """
+        url = self._create_url(method='getPVTypeInfo', pv=pvname)
+        resp = self.make_request(url)
+        return None if not resp else resp
+
+    # ------------- methods to get appliance metrics --------------
 
     def get_detailed_appliance_metrics(self):
         """Get detailed appliance metrics for archiver appliance.
+
+        Call method `getApplianceMetricsForAppliance` of the Archiver
+        Appliance, which returns a list of metrics for the archiver
+        appliance.
 
         Returns:
             response (dict|None): Response of the request.
@@ -326,6 +385,10 @@ class ClientArchiver:
 
     def get_process_metrics_for_appliance(self):
         """Get process metrics for archiver appliance.
+
+        Call method `getProcessMetricsDataForAppliance` of the Archiver
+        Appliance, which returns a list of metrics for the processing consumed
+        by the archiver appliance.
 
         Returns:
             response (dict|None): Response of the request. The metrics
@@ -344,6 +407,26 @@ class ClientArchiver:
 
     def get_report(self, report_name='PausedPVs', max_num_pvs=None):
         """Get Paused PVs Report.
+
+        Call report methods of the Archiver Appliance. Possible reports are:
+            - DisconnectedPVs --> `getCurrentlyDisconnectedPVs`
+            - PausedPVs --> `getPausedPVsReport`
+            - EventRate --> `getEventRateReport`
+            - StorageRate --> `getStorageRateReport`
+            - RecentlyAddedPVs --> `getRecentlyAddedPVs`
+            - RecentlyModifiedPVs --> `getRecentlyModifiedPVs`
+            - LostConnections --> `getLostConnectionsReport`
+            - LastKnownTimestamps --> `getSilentPVsReport`
+            - DroppedEventsWrongTimestamp --> `getPVsByDroppedEventsTimestamp`
+            - DroppedEventsBufferOverflow --> `getPVsByDroppedEventsBuffer`
+            - DroppedEventsTypeChange --> `getPVsByDroppedEventsTypeChange`
+        For details on the content of each report, please, refer to the
+        Archiver Appliance documentation.
+
+        The results of each report will be unprocessed in a json dict.
+        In case you want a processed report, please, refer to the specific
+        methods for each report, such as `get_recently_modified_pvs` for the
+        `RecentlyModifiedPVs` report.
 
         Args:
             report_name (str): Report name. Use self.ReportTypes to get
@@ -369,6 +452,13 @@ class ClientArchiver:
 
         Currently version of the epics archiver appliance returns pvname
         list from oldest to newest modified timestamps.
+
+        Args:
+            max_num_pvs (int): Maximum number of PVs to return.
+            epoch_time (bool): Convert timestamps to epoch.
+
+        Returns:
+            list: List of dictionary with PVs details.
         """
         resp = self.get_report(
             self,
@@ -379,50 +469,104 @@ class ClientArchiver:
         # convert to epoch, if the case
         if resp and epoch_time:
             for item in resp:
-                modtime = item['modificationTime'][
-                    :-7
-                ]  # remove ISO8601 offset
+                modtime = item['modificationTime'][:-7]  # rm. ISO8601 offset
                 epoch_time = _Time.conv_to_epoch(modtime, '%b/%d/%Y %H:%M:%S')
                 item['modificationTime'] = epoch_time
 
         return None if not resp else resp
 
-    def get_pv_type_info(self, pvname: str):
-        """Get PV Type Info.
+    # ------------- Management of PVs methods --------------
+
+    def delete_pvs(self, pvnames, delete_data=False):
+        """Delete PVs.
+
+        Call method `deletePV` of the Archiver Appliance, which deletes PVs.
+
+        This method requires that self.login() is called first.
 
         Args:
-            pvname (str): Name of the PV to get type info.
+            pvnames (str|list|tuple): PVs to delete.
+            delete_data (bool): Delete data associated with the PVs.
 
         Returns:
-            list: List of dictionary with PVs details.
-
+            response (list): Response of the request for each PV.
         """
-        url = self._create_url(method='getPVTypeInfo', pv=pvname)
-        resp = self.make_request(url)
-        return None if not resp else resp
-
-    def pause_pvs(self, pvnames):
-        """Pause PVs."""
         if not isinstance(pvnames, (list, tuple)):
             pvnames = (pvnames,)
+
+        delete_data = 'true' if delete_data else 'false'
+        ret = []
+        for pvname in pvnames:
+            url = self._create_url(
+                method='deletePV', pv=pvname, deleteData=delete_data
+            )
+            ret.append(self.make_request(url, need_login=True))
+        return ret
+
+    def pause_pvs(self, pvnames):
+        """Pause PVs.
+
+        Call method `pauseArchivingPV` of the Archiver Appliance, which pauses
+        archiving for a PV.
+
+        This method requires that self.login() is called first.
+
+        Args:
+            pvnames (list|tuple): List of PVs to pause.
+
+        Returns:
+            response (list): Response of the request for each PV.
+        """
+        if not isinstance(pvnames, (list, tuple)):
+            pvnames = (pvnames,)
+        ret = []
         for pvname in pvnames:
             url = self._create_url(method='pauseArchivingPV', pv=pvname)
-            self.make_request(url, need_login=True)
+            ret.append(self.make_request(url, need_login=True))
+        return ret
 
     def rename_pv(self, oldname, newname):
-        """Rename PVs."""
+        """Rename PVs.
+
+        Call method `renamePV` of the Archiver Appliance, which renames a PV.
+
+        This method requires that self.login() is called first.
+
+        Args:
+            oldname (str): Old PV name.
+            newname (str): New PV name.
+
+        Returns:
+            response (dict|None): Response of the request.
+        """
         url = self._create_url(method='renamePV', pv=oldname, newname=newname)
         return self.make_request(url, need_login=True)
 
     def resume_pvs(self, pvnames):
-        """Resume PVs."""
+        """Resume PVs.
+
+        Call method `resumeArchivingPV` of the Archiver Appliance, which
+        resumes archiving for a PV.
+
+        This method requires that self.login() is called first.
+
+        Args:
+            pvnames (list|tuple): List of PVs to resume.
+
+        Returns:
+            response (list): Response of the request for each PV.
+        """
         if not isinstance(pvnames, (list, tuple)):
             pvnames = (pvnames,)
+        ret = []
         for pvname in pvnames:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
-            self.make_request(url, need_login=True)
+            ret.append(self.make_request(url, need_login=True))
+        return ret
 
-    def get_data(  # noqa: D417
+    # ------------- methods related to get_data --------------
+
+    def get_data(
         self,
         pvnames,
         timestamp_start,
@@ -528,7 +672,7 @@ class ClientArchiver:
 
         return self.process_resquest_of_get_data(pvnames, resps, pvn2idcs)
 
-    def get_request_url_for_get_data(  # noqa: C901, D417
+    def get_request_url_for_get_data(  # noqa: C901
         self,
         pvnames,
         timestamp_start,
@@ -740,23 +884,7 @@ class ClientArchiver:
             return pvn2resp[pvnames[0]]
         return pvn2resp
 
-    def get_pv_details(self, pvname, get_request_url=False):
-        """Get PV Details."""
-        url = self._create_url(method='getPVDetails', pv=pvname)
-        if get_request_url:
-            return url
-        resp = self.make_request(url)
-        return None if not resp else resp
-
-    def switch_to_online_data(self):
-        """."""
-        self.server_url = _envars.SRVURL_ARCHIVER
-        self.session = None
-
-    def switch_to_offline_data(self):
-        """."""
-        self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
-        self.session = None
+    # ------------- General purpose methods --------------
 
     def make_request(self, url, need_login=False):
         """Make request.
