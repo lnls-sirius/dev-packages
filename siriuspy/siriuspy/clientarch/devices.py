@@ -87,7 +87,7 @@ class BaseDevice(_PVDataSet):
             mean_sec /= nr_pvs
 
         # times vector
-        t0_, t1_ = self.timestamp_start, self.timestamp_stop
+        t0_, t1_ = self.time_start.timestamp(), self.time_stop.timestamp()
         times = _np.arange(t0_, t1_, mean_sec)
 
         # builds orbit matrix using interpolation

@@ -282,8 +282,8 @@ class MacReport:
         self._init_connectors()
 
         # query data
-        self._time_start = None
-        self._time_stop = None
+        self._time_start = _Time.now()
+        self._time_stop = self._time_start
 
         # user shift stats
         self._usershift_progmd_time = None
@@ -440,41 +440,14 @@ class MacReport:
                              stream=_sys.stdout)
 
     @property
-    def timestamp_start(self):
-        """Query interval start timestamp."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise TypeError('expected argument of type float or int')
-        self._time_start = _Time(timestamp=new_timestamp)
-
-    @property
     def time_start(self):
         """Time start."""
         return self._time_start
 
     @time_start.setter
     def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise TypeError('expected argument of type Time')
-        self._time_start = new_time
-
-    @property
-    def timestamp_stop(self):
-        """Query interval stop timestamp."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise TypeError('expected argument of type float or int')
-        self._time_stop = _Time(timestamp=new_timestamp)
+        """Accept any value that can be converted to a Time object."""
+        self._time_start = _Time(new_time)
 
     @property
     def time_stop(self):
@@ -483,9 +456,8 @@ class MacReport:
 
     @time_stop.setter
     def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise TypeError('expected argument of type Time')
-        self._time_stop = new_time
+        """Accept any value that can be converted to a Time object."""
+        self._time_stop = _Time(new_time)
 
     # user shift stats
 
@@ -1095,7 +1067,7 @@ class MacReport:
         self._compute_stats()
 
     def plot_raw_data(self):
-        """Plot raw data for period timestamp_start to timestamp_stop."""
+        """Plot raw data for period time_start to time_stop."""
         if not self._raw_data:
             print('No data to display. Call update() to get data.')
             return

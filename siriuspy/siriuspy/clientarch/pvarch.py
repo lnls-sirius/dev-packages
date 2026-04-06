@@ -270,8 +270,8 @@ class PVData(_Base):
         self._value = None
         self._status = None
         self._severity = None
-        self._time_start = None
-        self._time_stop = None
+        self._time_start = _Time.now()
+        self._time_stop = self._time_start
         self._query_bin_interval = self.connector.query_bin_interval
         self._processing_type = self.ProcessingTypes.None_
         self._processing_type_param1 = None
@@ -289,10 +289,8 @@ class PVData(_Base):
         )
         stg += '\nPV Data Properties:\n'
 
-        tss = self.time_start
-        tss = tss.get_iso8601() if tss else 'Not Defined.'
-        tsp = self.time_stop
-        tsp = tsp.get_iso8601() if tsp else 'Not Defined.'
+        tss = self.time_start.get_iso8601()
+        tsp = self.time_stop.get_iso8601()
         stg += '    {:<30s}: {:}\n'.format('pvname', self.pvname)
         stg += '    {:<30s}: {:}\n'.format('time_start', tss)
         stg += '    {:<30s}: {:}\n'.format('time_stop', tsp)
@@ -407,62 +405,30 @@ class PVData(_Base):
         self.connector.query_max_concurrency = new_intvl
 
     @property
-    def timestamp_start(self):
-        """Timestamp start."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_start = _Time(timestamp=new_timestamp)
-
-    @property
     def time_start(self):
-        """Time start."""
+        """Time start.
+
+        Return siriuspy.clientarch.time.Time object.
+        """
         return self._time_start
 
     @time_start.setter
     def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_start = new_time
-
-    @property
-    def timestamp_stop(self):
-        """Timestamp stop."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise _exceptions.TypeError(
-                'expected argument of type float or int, got '
-                + str(type(new_timestamp))
-            )
-        self._time_stop = _Time(timestamp=new_timestamp)
+        """Accept any value that can be converted to a Time object."""
+        self._time_start = _Time(new_time)
 
     @property
     def time_stop(self):
-        """Time stop."""
+        """Time stop.
+
+        Return siriuspy.clientarch.time.Time object.
+        """
         return self._time_stop
 
     @time_stop.setter
     def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise _exceptions.TypeError(
-                'expected argument of type Time, got ' + str(type(new_time))
-            )
-        self._time_stop = new_time
+        """Accept any value that can be converted to a Time object."""
+        self._time_stop = _Time(new_time)
 
     @property
     def processing_type(self):
@@ -576,10 +542,6 @@ class PVData(_Base):
             query_timeout0 = self.query_timeout
             self.query_timeout = query_timeout
 
-        if None in (self.timestamp_start, self.timestamp_stop):
-            print('Start and stop timestamps not defined! Aborting.')
-            return
-
         try:
             data = self.connector.get_data(
                 self._pvname,
@@ -686,8 +648,8 @@ class PVData(_Base):
         return dict(
             server_url=self.connector.server_url,
             pvname=self.pvname,
-            timestamp_start=self.timestamp_start,
-            timestamp_stop=self.timestamp_stop,
+            timestamp_start=self.time_start.timestamp(),
+            timestamp_stop=self.time_stop.timestamp(),
             query_bin_interval=self.query_bin_interval,
             query_max_concurrency=self.query_max_concurrency,
             query_timeout=self.query_timeout,
@@ -715,8 +677,8 @@ class PVData(_Base):
 
         """
         pvdata = PVData(infos['pvname'], connector=infos['server_url'])
-        pvdata.timestamp_start = infos['timestamp_start']
-        pvdata.timestamp_stop = infos['timestamp_stop']
+        pvdata.time_start = infos['timestamp_start']
+        pvdata.time_stop = infos['timestamp_stop']
         pvdata.query_bin_interval = infos['query_bin_interval']
         pvdata.query_max_concurrency = infos['query_max_concurrency']
         pvdata.query_timeout = infos['query_timeout']
@@ -809,14 +771,10 @@ class PVDataSet(_Base):
             if pvd.timestamp is not None:
                 stg += f'{len(pvd.timestamp):d}'
 
-            tss = pvd.time_start
-            tss = tss.get_iso8601() if tss else 'Not Def.'
-            tsp = pvd.time_stop
-            tsp = tsp.get_iso8601() if tsp else 'Not Def.'
             stg += tmpl.format(
                 pvn,
-                tss,
-                tsp,
+                pvd.time_start.get_iso8601(),
+                pvd.time_stop.get_iso8601(),
                 f'{pvd.query_bin_interval:d}',
                 prty,
                 pr1s,
@@ -884,31 +842,17 @@ class PVDataSet(_Base):
 
     @time_start.setter
     def time_start(self, value):
-        if isinstance(value, _Time):
-            value = len(self._pvnames) * [value]
+        """Accept any value that can be converted to a Time object."""
+        try:
+            value = _Time(value)
+            value = [value] * len(self._pvnames)
+        except Exception:  # noqa: S110
+            pass
         if len(value) != len(self._pvnames):
             raise ValueError('value must have the same length as pvnames')
 
         for pvn, val in zip(self._pvnames, value):  # noqa: B905
             self._pvdata[pvn].time_start = val
-
-    @property
-    def timestamp_start(self):
-        """Start timestamp."""
-        tstt = [self._pvdata[pvn].timestamp_start for pvn in self._pvnames]
-        if len(set(tstt)) == 1:
-            return tstt[0]
-        return tstt
-
-    @timestamp_start.setter
-    def timestamp_start(self, value):
-        if isinstance(value, (int, float)):
-            value = len(self._pvnames) * [value]
-        if len(value) != len(self._pvnames):
-            raise ValueError('value must have the same length as pvnames')
-
-        for pvn, val in zip(self._pvnames, value):  # noqa: B905
-            self._pvdata[pvn].timestamp_start = val
 
     @property
     def time_stop(self):
@@ -920,31 +864,17 @@ class PVDataSet(_Base):
 
     @time_stop.setter
     def time_stop(self, value):
-        if isinstance(value, _Time):
-            value = len(self._pvnames) * [value]
+        """Accept any value that can be converted to a Time object."""
+        try:
+            value = _Time(value)
+            value = [value] * len(self._pvnames)
+        except Exception:  # noqa: S110
+            pass
         if len(value) != len(self._pvnames):
             raise ValueError('value must have the same length as pvnames')
 
         for pvn, val in zip(self._pvnames, value):  # noqa: B905
             self._pvdata[pvn].time_stop = val
-
-    @property
-    def timestamp_stop(self):
-        """Stop timestamp."""
-        tstt = [self._pvdata[pvn].timestamp_stop for pvn in self._pvnames]
-        if len(set(tstt)) == 1:
-            return tstt[0]
-        return tstt
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, value):
-        if isinstance(value, (int, float)):
-            value = len(self._pvnames) * [value]
-        if len(value) != len(self._pvnames):
-            raise ValueError('value must have the same length as pvnames')
-
-        for pvn, val in zip(self._pvnames, value):  # noqa: B905
-            self._pvdata[pvn].timestamp_stop = val
 
     @property
     def processing_type(self):
@@ -1089,13 +1019,6 @@ class PVDataSet(_Base):
         pvn2idcs = dict()
         for pvn in self._pvnames:
             pvd = self._pvdata[pvn]
-            if None in (pvd.timestamp_start, pvd.timestamp_stop):
-                print(
-                    f'Start and stop times not defined for PV {pvn}! Aborting.'
-                )
-                if query_timeout is not None:
-                    self.query_timeout = query_timeout0
-                return
             urls = self.connector.get_request_url_for_get_data(
                 pvn,
                 pvd.time_start,
