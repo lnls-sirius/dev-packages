@@ -180,7 +180,8 @@ def get_time_intervals(
     Args:
         time_start (Time): start time.
         time_stop (Time): stop time.
-        interval (int): interval duration in seconds.
+        interval (int|float|None): interval duration in seconds.
+            If <= 0 or None, no splitting will be done.
         return_isoformat (bool): return in iso8601 format.
         tzinfo (tzinfo): timezone info. Defaults to None, which means using
             the timezone of `time_start`.
@@ -192,8 +193,12 @@ def get_time_intervals(
     tzinfo = tzinfo or time_start.tzinfo
     t_start = time_start.timestamp()
     t_stop = time_stop.timestamp()
-    t_start = _np.arange(t_start, t_stop, int(interval))
-    t_stop = _np.r_[t_start[1:], t_stop]
+    if interval is None or interval <= 0:
+        t_start = [t_start]
+        t_stop = [t_stop]
+    else:
+        t_start = _np.arange(t_start, t_stop, int(interval))
+        t_stop = _np.r_[t_start[1:], t_stop]
     t_start = [Time(t, tzinfo=tzinfo) for t in t_start]
     t_stop = [Time(t, tzinfo=tzinfo) for t in t_stop]
     if return_isoformat:

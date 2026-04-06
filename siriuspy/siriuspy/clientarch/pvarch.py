@@ -370,12 +370,22 @@ class PVData(_Base):
 
     @property
     def query_bin_interval(self):
-        """Query bin interval."""
+        """Queries larger than this interval will be split.
+
+        If set to 0 or None, no splitting will be done.
+        """
         return self._query_bin_interval
 
     @query_bin_interval.setter
     def query_bin_interval(self, new_intvl):
-        self._query_bin_interval = int(new_intvl)
+        if new_intvl is None:
+            new_intvl = 0
+        if not isinstance(new_intvl, (float, int)):
+            raise _exceptions.TypeError(
+                'expected argument of type float or int, got '
+                + str(type(new_intvl))
+            )
+        self._query_bin_interval = max(int(new_intvl), 0)
 
     @property
     def query_max_concurrency(self):
@@ -746,7 +756,10 @@ class PVDataSet(_Base):
 
     @property
     def query_bin_interval(self):
-        """Query bin interval."""
+        """Queries larger than this interval will be split.
+
+        If set to 0 or None, no splitting will be done.
+        """
         qry = [self._pvdata[pvn].query_bin_interval for pvn in self._pvnames]
         if len(set(qry)) == 1:
             return qry[0]
@@ -754,6 +767,8 @@ class PVDataSet(_Base):
 
     @query_bin_interval.setter
     def query_bin_interval(self, value):
+        if value is None:
+            value = 0
         if isinstance(value, (int, float)):
             value = len(self._pvnames) * [int(value)]
         if len(value) != len(self._pvnames):

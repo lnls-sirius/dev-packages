@@ -178,17 +178,22 @@ class ClientArchiver:
 
     @property
     def query_bin_interval(self):
-        """Queries larger than this interval will be split."""
+        """Queries larger than this interval will be split.
+
+        If set to 0 or None, no splitting will be done.
+        """
         return self._query_bin_interval
 
     @query_bin_interval.setter
     def query_bin_interval(self, new_intvl):
+        if new_intvl is None:
+            new_intvl = 0
         if not isinstance(new_intvl, (float, int)):
             raise _exceptions.TypeError(
                 'expected argument of type float or int, got '
                 + str(type(new_intvl))
             )
-        self._query_bin_interval = int(new_intvl)
+        self._query_bin_interval = max(int(new_intvl), 0)
 
     @property
     def query_max_concurrency(self):
@@ -443,7 +448,8 @@ class ClientArchiver:
             Defaults to `self.query_bin_interval`. Maximum interval for
             queries. If
                 `timestamp_stop - timestamp_start > query_bin_interval`,
-            it will be split into parallel queries.
+            it will be split into parallel queries. If query_bin_interval<=0,
+            no splitting will be done.
         proc_type (str): data processing type to use for query. Defaults to
             ''. For details on each operator, please, refer to the section
             Processing of data of the following page:
@@ -549,7 +555,8 @@ class ClientArchiver:
             Defaults to `self.query_bin_interval`. Maximum interval for
             queries. If
                 `timestamp_stop - timestamp_start > query_bin_interval`,
-            it will be split into parallel queries.
+            it will be split into parallel queries. If query_bin_interval<=0,
+            no splitting will be done.
         proc_type (str): data processing type to use for query. Defaults to
             ''. For details on each operator, please, refer to the section
             Processing of data of the following page:
@@ -621,7 +628,9 @@ class ClientArchiver:
                 '`timestamp_start` and `timestamp_stop` must have same length.'
             )
 
-        bin_interval = query_bin_interval or self.query_bin_interval
+        inter = self.query_bin_interval
+        if query_bin_interval is not None:
+            inter = query_bin_interval
 
         tstamps_start = []
         tstamps_stop = []
@@ -636,7 +645,7 @@ class ClientArchiver:
                     'Or an iterable of these objects.'
                 ) from err
             tstarts, tstops = _get_time_intervals(
-                tst, tsp, bin_interval, return_isoformat=True
+                tst, tsp, inter, return_isoformat=True
             )
             if isinstance(tstarts, (list, tuple)):
                 tstamps_start.extend(tstarts)
@@ -949,14 +958,16 @@ class ClientArchiver:
             ])
         except _asyncio.TimeoutError as err:
             raise _exceptions.TimeoutError(
-                'Timeout reached. Try to increase `query_timeout`.'
+                'Timeout reached. Try to:\n - increase `query_timeout`;'
+                '\n - decrease `query_bin_interval`;'
+                '\n - decrease the time interval for the aquisition;'
             ) from err
         except _aio_exceptions.ClientPayloadError as err:
             raise _exceptions.PayloadError(
-                "Payload Error. Increasing `query_timeout` won't help. "
-                'Try:\n - decreasing `query_bin_interval`;'
-                '\n - decrease the time interval for the aquisition;'
-                '\n - or changing the `query_max_concurrency` parameter'
+                'Payload Error. This is probably due to some bug in the '
+                'code or some unexpected response from the server.\n'
+                'Please, report this to the developers with the traceback '
+                'and the query url.'
             ) from err
 
         if single:
