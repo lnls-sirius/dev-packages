@@ -37,7 +37,7 @@ from .time import get_time_intervals as _get_time_intervals, Time as _Time
 class ClientArchiver:
     """Archiver Data Fetcher class."""
 
-    DEF_QUERY_BIN_INTERVAL = 12 * 60 * 60  # 12h
+    DEF_QUERY_SPLIT_INTERVAL = 12 * 60 * 60  # 12h
     DEF_QUERY_MAX_CONCURRENCY = 100  # maximum number of concurrent queries
     DEFAULT_QUERY_TIMEOUT = 5.0  # [s]
     SERVER_URL = _envars.SRVURL_ARCHIVER
@@ -103,7 +103,7 @@ class ClientArchiver:
         self._request_url = None
         self._thread = self._loop = self._semaphore = None
         self._query_timeout = query_timeout
-        self._query_bin_interval = self.DEF_QUERY_BIN_INTERVAL
+        self._query_split_interval = self.DEF_QUERY_SPLIT_INTERVAL
         self._query_max_concurrency = self.DEF_QUERY_MAX_CONCURRENCY
         self.connect()
         _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
@@ -157,15 +157,15 @@ class ClientArchiver:
         self._query_timeout = max(float(value), 0)
 
     @property
-    def query_bin_interval(self):
+    def query_split_interval(self):
         """Queries larger than this interval will be split.
 
         If set to 0 or None, no splitting will be done.
         """
-        return self._query_bin_interval
+        return self._query_split_interval
 
-    @query_bin_interval.setter
-    def query_bin_interval(self, new_intvl):
+    @query_split_interval.setter
+    def query_split_interval(self, new_intvl):
         if new_intvl is None:
             new_intvl = 0
         if not isinstance(new_intvl, (float, int)):
@@ -173,7 +173,7 @@ class ClientArchiver:
                 'expected argument of type float or int, got '
                 + str(type(new_intvl))
             )
-        self._query_bin_interval = max(int(new_intvl), 0)
+        self._query_split_interval = max(int(new_intvl), 0)
 
     @property
     def query_max_concurrency(self):
@@ -569,7 +569,7 @@ class ClientArchiver:
         pvnames,
         timestamp_start,
         timestamp_stop,
-        query_bin_interval=None,
+        query_split_interval=None,
         proc_type='',
         proc_type_param1=None,
         proc_type_param2=3.0,
@@ -586,11 +586,11 @@ class ClientArchiver:
             If it is a list or tuple, all PVs will be queried for each of
             the time intervals. In this case, it must have the same length
             as `timestamp_start`.
-        query_bin_interval (int): overwrites `self.query_bin_interval`.
-            Defaults to `self.query_bin_interval`. Maximum interval for
+        query_split_interval (int): overwrites `self.query_split_interval`.
+            Defaults to `self.query_split_interval`. Maximum interval for
             queries. If
-                `timestamp_stop - timestamp_start > query_bin_interval`,
-            it will be split into parallel queries. If query_bin_interval<=0,
+                `timestamp_stop - timestamp_start > query_split_interval`,
+            it will be split into parallel queries. If query_split_interval<=0,
             no splitting will be done.
         proc_type (str): data processing type to use for query. Defaults to
             ''. For details on each operator, please, refer to the section
@@ -656,7 +656,7 @@ class ClientArchiver:
             pvnames,
             timestamp_start,
             timestamp_stop,
-            query_bin_interval=query_bin_interval,
+            query_split_interval=query_split_interval,
             proc_type=proc_type,
             proc_type_param1=proc_type_param1,
             proc_type_param2=proc_type_param2,
@@ -675,7 +675,7 @@ class ClientArchiver:
         pvnames,
         timestamp_start,
         timestamp_stop,
-        query_bin_interval=None,
+        query_split_interval=None,
         proc_type=None,
         proc_type_param1=None,
         proc_type_param2=None,
@@ -693,11 +693,11 @@ class ClientArchiver:
             If it is a list or tuple, all PVs will be queried for each of
             the time intervals. In this case, it must have the same length
             as `timestamp_start`.
-        query_bin_interval (int): overwrites `self.query_bin_interval`.
-            Defaults to `self.query_bin_interval`. Maximum interval for
+        query_split_interval (int): overwrites `self.query_split_interval`.
+            Defaults to `self.query_split_interval`. Maximum interval for
             queries. If
-                `timestamp_stop - timestamp_start > query_bin_interval`,
-            it will be split into parallel queries. If query_bin_interval<=0,
+                `timestamp_stop - timestamp_start > query_split_interval`,
+            it will be split into parallel queries. If query_split_interval<=0,
             no splitting will be done.
         proc_type (str): data processing type to use for query. Defaults to
             ''. For details on each operator, please, refer to the section
@@ -770,9 +770,9 @@ class ClientArchiver:
                 '`timestamp_start` and `timestamp_stop` must have same length.'
             )
 
-        inter = self.query_bin_interval
-        if query_bin_interval is not None:
-            inter = query_bin_interval
+        inter = self.query_split_interval
+        if query_split_interval is not None:
+            inter = query_split_interval
 
         tstamps_start = []
         tstamps_stop = []
@@ -1085,7 +1085,7 @@ class ClientArchiver:
         except _asyncio.TimeoutError as err:
             raise _exceptions.TimeoutError(
                 'Timeout reached. Try to:\n - increase `query_timeout`;'
-                '\n - decrease `query_bin_interval`;'
+                '\n - decrease `query_split_interval`;'
                 '\n - decrease the time interval for the aquisition;'
             ) from err
         except _aio_exceptions.ClientPayloadError as err:

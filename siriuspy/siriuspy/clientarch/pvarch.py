@@ -272,7 +272,7 @@ class PVData(_Base):
         self._severity = None
         self._time_start = _Time.now()
         self._time_stop = self._time_start
-        self._query_bin_interval = self.connector.query_bin_interval
+        self._query_split_interval = self.connector.query_split_interval
         self._processing_type = self.ProcessingTypes.None_
         self._processing_type_param1 = None
         self._processing_type_param2 = 3.0  # number of sigma
@@ -295,7 +295,7 @@ class PVData(_Base):
         stg += '    {:<30s}: {:}\n'.format('time_start', tss)
         stg += '    {:<30s}: {:}\n'.format('time_stop', tsp)
         stg += '    {:<30s}: {:d}\n'.format(
-            'query_bin_interval [s]', self.query_bin_interval
+            'query_split_interval [s]', self.query_split_interval
         )
         prty = self.processing_type
         pr1 = self.processing_type_param1
@@ -343,7 +343,7 @@ class PVData(_Base):
             self._pvname,
             self.time_start,
             self.time_stop,
-            query_bin_interval=self.query_bin_interval,
+            query_split_interval=self.query_split_interval,
             proc_type=self.processing_type,
             proc_type_param1=self.processing_type_param1,
             proc_type_param2=self.processing_type_param2,
@@ -372,15 +372,15 @@ class PVData(_Base):
     # ------- PV data acquisition and processing properties --------
 
     @property
-    def query_bin_interval(self):
+    def query_split_interval(self):
         """Queries larger than this interval will be split.
 
         If set to 0 or None, no splitting will be done.
         """
-        return self._query_bin_interval
+        return self._query_split_interval
 
-    @query_bin_interval.setter
-    def query_bin_interval(self, new_intvl):
+    @query_split_interval.setter
+    def query_split_interval(self, new_intvl):
         if new_intvl is None:
             new_intvl = 0
         if not isinstance(new_intvl, (float, int)):
@@ -388,7 +388,7 @@ class PVData(_Base):
                 'expected argument of type float or int, got '
                 + str(type(new_intvl))
             )
-        self._query_bin_interval = max(int(new_intvl), 0)
+        self._query_split_interval = max(int(new_intvl), 0)
 
     @property
     def query_max_concurrency(self):
@@ -547,7 +547,7 @@ class PVData(_Base):
                 self._pvname,
                 self.time_start,
                 self.time_stop,
-                query_bin_interval=self.query_bin_interval,
+                query_split_interval=self.query_split_interval,
                 proc_type=self.processing_type,
                 proc_type_param1=self.processing_type_param1,
                 proc_type_param2=self.processing_type_param2,
@@ -632,7 +632,7 @@ class PVData(_Base):
                 pvname (str): the name of the PV.
                 timestamp_start (time.time): start of acquisition time.
                 timestamp_stop (time.time): end of acquisition time.
-                query_bin_interval (int): bin interval for queries.
+                query_split_interval (int): interval to split queries.
                 query_max_concurrency (int): max concurrency for queries.
                 query_timeout (float): timeout for queries.
                 processing_type (str): type of processing for queries.
@@ -650,7 +650,7 @@ class PVData(_Base):
             pvname=self.pvname,
             timestamp_start=self.time_start.timestamp(),
             timestamp_stop=self.time_stop.timestamp(),
-            query_bin_interval=self.query_bin_interval,
+            query_split_interval=self.query_split_interval,
             query_max_concurrency=self.query_max_concurrency,
             query_timeout=self.query_timeout,
             processing_type=self.processing_type,
@@ -679,7 +679,7 @@ class PVData(_Base):
         pvdata = PVData(infos['pvname'], connector=infos['server_url'])
         pvdata.time_start = infos['timestamp_start']
         pvdata.time_stop = infos['timestamp_stop']
-        pvdata.query_bin_interval = infos['query_bin_interval']
+        pvdata.query_split_interval = infos['query_split_interval']
         pvdata.query_max_concurrency = infos['query_max_concurrency']
         pvdata.query_timeout = infos['query_timeout']
         pvdata.processing_type = infos['processing_type']
@@ -775,7 +775,7 @@ class PVDataSet(_Base):
                 pvn,
                 pvd.time_start.get_iso8601(),
                 pvd.time_stop.get_iso8601(),
-                f'{pvd.query_bin_interval:d}',
+                f'{pvd.query_split_interval:d}',
                 prty,
                 pr1s,
                 pr2,
@@ -796,18 +796,18 @@ class PVDataSet(_Base):
         self._pvdata = self._init_pvdatas(new_pvnames, self.connector)
 
     @property
-    def query_bin_interval(self):
+    def query_split_interval(self):
         """Queries larger than this interval will be split.
 
         If set to 0 or None, no splitting will be done.
         """
-        qry = [self._pvdata[pvn].query_bin_interval for pvn in self._pvnames]
+        qry = [self._pvdata[pvn].query_split_interval for pvn in self._pvnames]
         if len(set(qry)) == 1:
             return qry[0]
         return qry
 
-    @query_bin_interval.setter
-    def query_bin_interval(self, value):
+    @query_split_interval.setter
+    def query_split_interval(self, value):
         if value is None:
             value = 0
         if isinstance(value, (int, float)):
@@ -816,7 +816,7 @@ class PVDataSet(_Base):
             raise ValueError('value must have the same length as pvnames')
 
         for pvn, val in zip(self._pvnames, value):  # noqa: B905
-            self._pvdata[pvn].query_bin_interval = val
+            self._pvdata[pvn].query_split_interval = val
 
     @property
     def query_max_concurrency(self):
@@ -1023,7 +1023,7 @@ class PVDataSet(_Base):
                 pvn,
                 pvd.time_start,
                 pvd.time_stop,
-                query_bin_interval=pvd.query_bin_interval,
+                query_split_interval=pvd.query_split_interval,
                 proc_type=pvd.processing_type,
                 proc_type_param1=pvd.processing_type_param1,
                 proc_type_param2=pvd.processing_type_param2,

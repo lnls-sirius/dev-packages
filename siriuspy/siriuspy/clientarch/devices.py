@@ -40,7 +40,7 @@ class BaseDevice(_PVDataSet):
         self._times = None
         self._values = None
         super().__init__(pvnames, connector=connector)
-        self.query_bin_interval = 3600
+        self.query_split_interval = 3600
         self.processing_type = self.ProcessingTypes.Mean
         self.processing_type_param1 = 1
 

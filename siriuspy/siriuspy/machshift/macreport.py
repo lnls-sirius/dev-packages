@@ -1035,7 +1035,7 @@ class MacReport:
         # current
         _t0 = _time.time()
         pvd = self._pvdata[self._current_pv]
-        pvd.query_bin_interval = 60 * 60 * 6
+        pvd.query_split_interval = 60 * 60 * 6
         pvd.processing_type = pvd.ProcessingTypes.Mean
         pvd.processing_type_param1 = MacReport.QUERY_AVG_TIME
         pvd.update()
@@ -1047,18 +1047,18 @@ class MacReport:
             if pvn == self._current_pv:
                 continue
             _t0 = _time.time()
-            # Set query_bin_interval for the rest of PVs to 0 to
+            # Set query_split_interval for the rest of PVs to 0 to
             # avoid multiple queries and speed up the process.
-            self._pvdata[pvn].query_bin_interval = 0
+            self._pvdata[pvn].query_split_interval = 0
             self._pvdata[pvn].update()
             self._update_log(log_msg.format(pvn, _time.time()-_t0))
 
         # ps
         for group, pvdataset in self._pvdataset.items():
             _t0 = _time.time()
-            # Set query_bin_interval for the rest of PVs to 0 to
+            # Set query_split_interval for the rest of PVs to 0 to
             # avoid multiple queries and speed up the process.
-            pvdataset.query_bin_interval = 0
+            pvdataset.query_split_interval = 0
             pvdataset.update()
             self._update_log(log_msg.format(
                 'SI PS '+group.capitalize(), _time.time()-_t0)
