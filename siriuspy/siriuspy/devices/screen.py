@@ -11,16 +11,11 @@ class Screen(_DeviceSet):
 
     class DEVICES:
         """Devices names."""
-
-        # NOTE: TB-04:DI-Scrn was removed during the March 2026 shutdown
-        # as part of septum-related modifications to mitigate
-        # secondary current loops induced by its pulsed field.
         TB_1 = 'TB-01:DI-Scrn-1'
         TB_2 = 'TB-01:DI-Scrn-2'
         TB_3 = 'TB-02:DI-Scrn-1'
         TB_4 = 'TB-02:DI-Scrn-2'
         TB_5 = 'TB-03:DI-Scrn'
-        # TB_6 = 'TB-04:DI-Scrn'
         BO_1 = 'BO-01D:DI-Scrn-1'
         BO_2 = 'BO-01D:DI-Scrn-2'
         BO_3 = 'BO-02U:DI-Scrn'
