@@ -11,6 +11,7 @@ class Screen(_DeviceSet):
 
     class DEVICES:
         """Devices names."""
+
         TB_1 = 'TB-01:DI-Scrn-1'
         TB_2 = 'TB-01:DI-Scrn-2'
         TB_3 = 'TB-02:DI-Scrn-1'
