@@ -2232,8 +2232,8 @@ class UE44(IDBase):
     class DEVICES:
         """Device names."""
 
-        UE44_10SP = 'SI-11SP:ID-UE44'
-        ALL = (UE44_10SP,)
+        UE44_11SP = 'SI-11SP:ID-UE44'
+        ALL = (UE44_11SP,)
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
@@ -2290,7 +2290,7 @@ class UE44(IDBase):
         """."""
         # check if device exists
         if devname is None:
-            devname = self.DEVICES.UE44_10SP
+            devname = self.DEVICES.UE44_11SP
         if devname not in self.DEVICES.ALL:
             raise NotImplementedError(devname)
 
