@@ -20,6 +20,8 @@ class _ParamPVs:
     BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     MOVE_ABORT = None
     RESET = None
+    VELO_SP = None
+    VELO_RB = None
 
     # --- PPARAM ---
     PPARAM_SP = None
@@ -2247,8 +2249,8 @@ class UE44(IDBase):
     PARAM_PVS.PPARAM_PARKED_CTE = 'PParamParked-Cte'
     PARAM_PVS.PPARAM_MAXVELO_SP = 'MaxVelo-SP'
     PARAM_PVS.PPARAM_MAXVELO_RB = 'MaxVelo-RB'
-    PARAM_PVS.PPARAM_VELO_SP = 'PParamVelo-SP'
-    PARAM_PVS.PPARAM_VELO_RB = 'PParamVelo-RB'
+    PARAM_PVS.VELO_SP = 'Velo-SP'
+    PARAM_PVS.VELO_RB = 'Velo-RB'
     PARAM_PVS.PPARAM_CHANGE_CMD = 'PParamChange-Cmd'
     PARAM_PVS.KPARAM_SP = 'KParam-SP'
     PARAM_PVS.KPARAM_RB = 'KParam-RB'
@@ -2256,14 +2258,10 @@ class UE44(IDBase):
     PARAM_PVS.KPARAM_PARKED_CTE = 'KParamParked-Cte'
     PARAM_PVS.KPARAM_MAXVELO_SP = 'MaxVelo-SP'
     PARAM_PVS.KPARAM_MAXVELO_RB = 'MaxVelo-RB'
-    PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
-    PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
     PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
     PARAM_PVS.CPARAM_SP = 'CParam-SP'
     PARAM_PVS.CPARAM_RB = 'CParam-RB'
     PARAM_PVS.CPARAM_MON = 'CParam-Mon'
-    PARAM_PVS.CPARAM_VELO_SP = 'CParamVelo-SP'
-    PARAM_PVS.CPARAM_VELO_RB = 'CParamVelo-RB'
     PARAM_PVS.CPARAM_CHANGE_CMD = 'CParamChange-Cmd'
 
     PARAM_PVS.POL_SEL = 'Pol-Sel'
