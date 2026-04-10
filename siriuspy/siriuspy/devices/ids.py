@@ -2377,5 +2377,7 @@ class ID(IDBase):
             return IVU
         elif devname in VPU.DEVICES.ALL:
             return VPU
+        elif devname in UE44.DEVICES.ALL:
+            return UE44
         else:
             return None
