@@ -516,23 +516,48 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     IDFF_CC_LABELS = _IDSearch.IDFF_CC_LABELS
 
 
-class IDFFCtrlHardUE(IDFFCtrlHard):
+class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_CHCV_HARD = 'SI-11SP:BS-IDFF-CHCV'
-        UE44_11SP_QS_HARD = 'SI-11SP:BS-IDFF-QS'
-        UE44_11SP_LC_HARD = 'SI-11SP:BS-IDFF-LC'
-        ALL = (UE44_11SP_CHCV_HARD, UE44_11SP_QS_HARD, UE44_11SP_LC_HARD)
+        UE44_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
+        ALL = (UE44_11SP_HARD, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
     IDFF_CH_LABELS = _IDSearch.IDFF_CH_LABELS
     IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
+
+
+class IDFFCtrlHardUE_QS(IDFFCtrlHard):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD = "SI-11SP:BS-IDFF-QS"
+        ALL = (UE44_11SP_HARD, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
     IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
+
+
+class IDFFCtrlHardUE_LC(IDFFCtrlHard):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD = "SI-11SP:BS-IDFF-LC"
+        ALL = (UE44_11SP_HARD, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
     IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
+
 
 
 class IDFFCtrl(IDFFCtrlBase):
@@ -566,8 +591,12 @@ class IDFFCtrl(IDFFCtrlBase):
             return IDFFCtrlSoftVPU
         elif devname in IDFFCtrlHardVPU.DEVICES.ALL:
             return IDFFCtrlHardVPU
-        elif devname in IDFFCtrlHardUE.DEVICES.ALL:
-            return IDFFCtrlHardUE
+        elif devname in IDFFCtrlHardUE_CHCV.DEVICES.ALL:
+            return IDFFCtrlHardUE_CHCV
+        elif devname in IDFFCtrlHardUE_QS.DEVICES.ALL:
+            return IDFFCtrlHardUE_QS
+        elif devname in IDFFCtrlHardUE_LC.DEVICES.ALL:
+            return IDFFCtrlHardUE_LC
         return None
 
 
