@@ -105,7 +105,7 @@ class IDSearch:
             _idparam_fields, (
                 44,
                 1, 21, 21, 21, 0.01,
-                0, 21.5, 0, 0.01,
+                0, 22, 0, 0.01,
                 0, 10.65, 0, 0.01, 0)),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
