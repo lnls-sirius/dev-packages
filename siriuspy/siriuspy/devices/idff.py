@@ -254,7 +254,7 @@ class IDFFCtrlBase(_Device):
         elif iddevname.sub in ('10SB',):
             iddevname = iddevname.substitute(dev='DELTA52')
         elif iddevname.sub in ('11SP',):
-            iddevname = iddevname.substitute(dev='SIMUL')
+            iddevname = iddevname.substitute(dev='UE44')
         else:
             pass
         return iddevname
@@ -509,6 +509,25 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     IDFF_CC_LABELS = _IDSearch.IDFF_CC_LABELS
 
 
+class IDFFCtrlHardUE(IDFFCtrlHard):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_CHCV_HARD = 'SI-11SP:BS-IDFF-CHCV'
+        UE44_11SP_QS_HARD = 'SI-11SP:BS-IDFF-QS'
+        UE44_11SP_LC_HARD = 'SI-11SP:BS-IDFF-LC'
+        ALL = (UE44_11SP_CHCV_HARD, UE44_11SP_QS_HARD, UE44_11SP_LC_HARD)
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_CH_LABELS = _IDSearch.IDFF_CH_LABELS
+    IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
+    IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
+    IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
+
+
 class IDFFCtrl(IDFFCtrlBase):
     """ID Feedforward Control Device."""
 
@@ -540,6 +559,8 @@ class IDFFCtrl(IDFFCtrlBase):
             return IDFFCtrlSoftVPU
         elif devname in IDFFCtrlHardVPU.DEVICES.ALL:
             return IDFFCtrlHardVPU
+        elif devname in IDFFCtrlHardUE.DEVICES.ALL:
+            return IDFFCtrlHardUE
         return None
 
 
