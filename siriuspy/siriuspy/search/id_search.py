@@ -105,7 +105,7 @@ class IDSearch:
             _idparam_fields, (
                 44,
                 1, 21, 21, 21, 0.01,
-                0, 22, 0, 0.01,
+                -13.3, 22, 0, 0.01,
                 0, 10.65, 0, 0.01, 0)),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
@@ -209,7 +209,7 @@ class IDSearch:
     IDFF_CH_LABELS = ('ch_1', 'ch_2')
     IDFF_CV_LABELS = ('cv_1', 'cv_2')
     IDFF_QS_LABELS = ('qs_1', 'qs_2')
-    IDFF_LC_LABELS = ('lch', 'lcv')
+    IDFF_LC_LABELS = ('lch_1', 'lcv_1', 'lcv_2')
     IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
     IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2')
 
@@ -294,8 +294,9 @@ class IDSearch:
             IDFF_CV_LABELS[1]: 'SI-11SP:PS-CV-2:Current-SP',
             IDFF_QS_LABELS[0]: 'SI-11SP:PS-QS-1:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-11SP:PS-QS-2:Current-SP',
-            IDFF_LC_LABELS[0]: 'SI-11SP:PS-LCH:Current-SP',
-            IDFF_LC_LABELS[1]: 'SI-11SP:PS-LCV:Current-SP',
+            IDFF_LC_LABELS[0]: 'SI-11SP:PS-LCH-1:Current-SP',
+            IDFF_LC_LABELS[1]: 'SI-11SP:PS-LCV-1:Current-SP',
+            IDFF_LC_LABELS[2]: 'SI-11SP:PS-LCV-2:Current-SP',
             },
         'SI-14SB:ID-IVU18': {
             'polarizations': ('horizontal', ),
