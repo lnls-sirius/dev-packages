@@ -2340,6 +2340,7 @@ class ID(IDBase):
         WIG = WIG.DEVICES
         IVU = IVU.DEVICES
         VPU = VPU.DEVICES
+        UE44 = UE44.DEVICES
         ALL = (
             APU.ALL
             + PAPU.ALL
@@ -2348,6 +2349,7 @@ class ID(IDBase):
             + WIG.ALL
             + IVU.ALL
             + VPU.ALL
+            + UE44.ALL
         )
 
     def __new__(cls, devname, **kwargs):
