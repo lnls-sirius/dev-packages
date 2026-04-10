@@ -35,8 +35,9 @@ class _ParamPVs:
     CORRCV_2CURRENT_MON = None
     CORRQS_1CURRENT_MON = None
     CORRQS_2CURRENT_MON = None
-    CORRLCHCURRENT_MON = None
-    CORRLCVCURRENT_MON = None
+    CORRLCH_1CURRENT_MON = None
+    CORRLCV_1CURRENT_MON = None
+    CORRLCV_2CURRENT_MON = None
     CORRQD1_1CURRENT_MON = None
     CORRQF_1CURRENT_MON = None
     CORRQD2_1CURRENT_MON = None
@@ -138,15 +139,21 @@ class IDFFCtrlBase(_Device):
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_lch(self):
+    def calc_corr_current_lch_1(self):
         """Return calculated LCH power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRLCHCURRENT_MON
+        curr_name = self.PARAM_PVS.CORRLCH_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_lcv(self):
+    def calc_corr_current_lcv_1(self):
         """Return calculated LCV power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRLCVCURRENT_MON
+        curr_name = self.PARAM_PVS.CORRLCV_1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_lcv_2(self):
+        """Return calculated LCV power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRLCV_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
