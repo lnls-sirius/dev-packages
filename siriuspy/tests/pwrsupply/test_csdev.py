@@ -14,9 +14,8 @@ PUB_INTERFACE = (
     'MAX_WFMSIZE_FBP',
     'DEF_WFMSIZE_FBP',
     'DEFAULT_WFM_FBP',
-    'MAX_WFMSIZE_OTHERS',
-    'DEF_WFMSIZE_OTHERS',
-    'DEFAULT_WFM_OTHERS',
+    'MAX_WFMSIZE',
+    'DEF_WFMSIZE',
     'DEFAULT_WFM_SELECTED',
     'DEFAULT_WFM_FREQUENCY',
     'DEFAULT_WFM_GAIN',
@@ -126,17 +125,17 @@ class TestPwrSupplyCSDev(TestCase):
         self.assertTrue(csdev.DEF_WFMSIZE_FBP > 0)
         self.assertTrue(csdev.DEF_WFMSIZE_FBP <= csdev.MAX_WFMSIZE_FBP)
 
-    def test_MAX_WFMSIZE_OTHERS(self):
-        """Test MAX_WFMSIZE_OTHERS."""
-        self.assertIsInstance(csdev.MAX_WFMSIZE_OTHERS, int)
-        self.assertTrue(csdev.MAX_WFMSIZE_OTHERS > 0)
+    def test_MAX_WFMSIZE(self):
+        """Test MAX_WFMSIZE."""
+        self.assertIsInstance(csdev.MAX_WFMSIZE, int)
+        self.assertTrue(csdev.MAX_WFMSIZE > 0)
 
-    def test_DEF_WFMSIZE_OTHERS(self):
-        """Test DEF_WFMSIZE_OTHERS."""
-        self.assertIsInstance(csdev.DEF_WFMSIZE_OTHERS, int)
-        self.assertTrue(csdev.DEF_WFMSIZE_OTHERS > 0)
+    def test_DEF_WFMSIZE(self):
+        """Test DEF_WFMSIZE."""
+        self.assertIsInstance(csdev.DEF_WFMSIZE, int)
+        self.assertTrue(csdev.DEF_WFMSIZE > 0)
         self.assertTrue(
-            csdev.DEF_WFMSIZE_OTHERS <= csdev.MAX_WFMSIZE_OTHERS)
+            csdev.DEF_WFMSIZE <= csdev.MAX_WFMSIZE)
 
     def test_DEFAULT_SIGGEN_CONFIG(self):
         """Test DEFAULT_SIGGEN_CONFIG."""

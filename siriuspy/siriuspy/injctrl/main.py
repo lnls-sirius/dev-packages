@@ -1,26 +1,30 @@
 """Main module of Machine Shift Application."""
-import time as _time
 import logging as _log
+import time as _time
+
 import epics as _epics
 import numpy as _np
+from functools import partial as _part
 
-from ..util import update_bit as _updt_bit, get_bit as _get_bit
-from ..namesys import SiriusPVName as _PVName
-from ..epics import PV as _PV
 from ..callbacks import Callback as _Callback
 from ..clientarch import Time as _Time
-
-from ..search import PSSearch as _PSSearch, HLTimeSearch as _HLTimeSearch
+from ..devices import CurrInfoSI, EGun, EVG, HLTiming, InjSysPUModeHandler, \
+    InjSysStandbyHandler, RFKillBeam
 from ..diagsys.lidiag.csdev import Const as _LIDiagConst, ETypes as _LIDiagEnum
 from ..diagsys.psdiag.csdev import ETypes as _PSDiagEnum
 from ..diagsys.rfdiag.csdev import Const as _RFDiagConst
-from ..devices import InjSysStandbyHandler, EVG, EGun, CurrInfoSI, HLTiming, \
-    RFKillBeam, InjSysPUModeHandler
-
+from ..epics import PV as _PV
+from ..namesys import SiriusPVName as _PVName
+from ..search import HLTimeSearch as _HLTimeSearch, PSSearch as _PSSearch
+from ..util import get_bit as _get_bit, update_bit as _updt_bit
+from .bias_feedback import BiasFeedback as _BiasFeedback
 from .csdev import Const as _Const, ETypes as _ETypes, \
     get_injctrl_propty_database as _get_database, \
     get_status_labels as _get_sts_lbls
-from .bias_feedback import BiasFeedback as _BiasFeedback
+
+
+_PU_STBY_NICKS = _Const.TOPUP_STANDBY_PUNICKNAMES
+_PU_STBY_NAMES = _Const.TOPUP_STANDBY_PUNAMES
 
 
 class App(_Callback):
@@ -57,11 +61,12 @@ class App(_Callback):
             },
         }
         self._thread_watdev = None
-        self._target_current = 100.0
+        self._target_current = 200.0
         self._bucketlist_start = 1
         self._bucketlist_stop = _Const.MAX_BKT
         self._bucketlist_step = 29
-        self._bucketlist_allowed_mask = _np.ones(_Const.MAX_BKT, dtype=bool)
+        self._bucketlist_allowed_mask = self._create_init_bucketlist_mask()
+
         self._isinj_delay = 0
         self._isinj_duration = 300
 
@@ -71,26 +76,28 @@ class App(_Callback):
         self._topup_state_sts = _Const.TopUpSts.Off
         self._topup_period = 1*60  # [s]
         self._topup_headstarttime = 2.43  # [s]
-        self._topup_pustandbyenbl = _Const.DsblEnbl.Dsbl
-        self._topup_puwarmuptime = 30
-        self._aspu_standby_state = None
+        pucnt = len(_PU_STBY_NICKS)
+        self._topup_pustandbyenbl = pucnt*[_Const.DsblEnbl.Dsbl]
+        self._topup_puwarmuptime = pucnt*[30]
+        self._aspu_standby_state = pucnt*[None]
         self._topup_liwarmupenbl = _Const.DsblEnbl.Enbl
-        self._topup_liwarmuptime = 30
+        self._topup_liwarmuptime = 10
         self._liti_warmup_state = None
         self._topup_bopsstandbyenbl = _Const.DsblEnbl.Dsbl
         self._topup_bopswarmuptime = 10
         self._bops_standby_state = None
-        self._topup_borfstandbyenbl = _Const.DsblEnbl.Dsbl
-        self._topup_borfwarmuptime = 10
+        self._topup_borfstandbyenbl = _Const.DsblEnbl.Enbl
+        self._topup_borfwarmuptime = 5
         self._borf_standby_state = None
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
         self._topup_job = None
         self._accum_job = None
-        self._stop_topup_job = None
+        self._beamdump_job = None
         self._abort = False
         self._setting_mode = False
+        self._beamdumped = False
 
         self._rfkillbeam_mon = _Const.RFKillBeamMon.Idle
 
@@ -197,16 +204,10 @@ class App(_Callback):
         stored_pvo = self.currinfo_dev.pv_object('StoredEBeam-Mon')
         stored_pvo.add_callback(self._callback_havebeam)
 
-        self._pu_names, self._pu_devs = list(), list()
-        self._pu_refvolt = list()
-        for idx, pun in enumerate(self._injsys_dev.handlers['as_pu'].punames):
-            # NOTE: The voltage of the TB pulsed magnets are used to define
-            # enable conditions of the egun trigger. To avoid changing the
-            # trigger enable status during top-up, we will not include these
-            # magnets in standby/warm up.
-            if pun.startswith('TB'):
-                continue
-            self._pu_names.append(pun)
+        self._pu_devs, self._pu_refvolt = list(), list()
+        for puname in _PU_STBY_NAMES:
+            # reuse connection from injsys_dev
+            idx = self._injsys_dev.handlers['as_pu'].punames.index(puname)
             dev = self._injsys_dev.handlers['as_pu'].pudevices[idx]
             self._pu_devs.append(dev)
             pvo = dev.pv_object('Voltage-SP')
@@ -239,8 +240,6 @@ class App(_Callback):
             'TopUpState-Sel': self.set_topup_state,
             'TopUpPeriod-SP': self.set_topup_period,
             'TopUpHeadStartTime-SP': self.set_topup_headstarttime,
-            'TopUpPUStandbyEnbl-Sel': self.set_topup_pustandbyenbl,
-            'TopUpPUWarmUpTime-SP': self.set_topup_puwarmuptime,
             'TopUpLIWarmUpEnbl-Sel': self.set_topup_liwarmupenbl,
             'TopUpLIWarmUpTime-SP': self.set_topup_liwarmuptime,
             'TopUpBOPSStandbyEnbl-Sel': self.set_topup_bopsstandbyenbl,
@@ -254,6 +253,11 @@ class App(_Callback):
             'InjSysTurnOffOrder-SP': self.set_injsys_off_order,
             'RFKillBeam-Cmd': self.cmd_rfkillbeam,
         }
+        for idx, punick in enumerate(_PU_STBY_NICKS):
+            self.map_pv2write[f'TopUp{punick}StandbyEnbl-Sel'] = \
+                _part(self.set_topup_pustandbyenbl, idx)
+            self.map_pv2write[f'TopUp{punick}WarmUpTime-SP'] = \
+                _part(self.set_topup_puwarmuptime, idx)
 
         # status scanning
         self.quit = False
@@ -291,7 +295,6 @@ class App(_Callback):
 
         # Create object to make bias feedback:
         self._bias_feedback = _BiasFeedback(self)
-        self._pvs_database.update(self._bias_feedback.database)
         for prop, write in self._bias_feedback.map_pv2write.items():
             pvname = _Const.BIASFB_PROPTY_PREFIX + prop
             self.map_pv2write[pvname] = write
@@ -328,6 +331,8 @@ class App(_Callback):
             'BucketListStop-RB': self._bucketlist_stop,
             'BucketListStep-SP': self._bucketlist_step,
             'BucketListStep-RB': self._bucketlist_step,
+            'BucketListAllowedMask-SP': self._bucketlist_allowed_mask,
+            'BucketListAllowedMask-RB': self._bucketlist_allowed_mask,
             'IsInjecting-Mon': _Const.IdleInjecting.Idle,
             'IsInjDelay-SP': self._isinj_delay,
             'IsInjDelay-RB': self._isinj_delay,
@@ -343,10 +348,6 @@ class App(_Callback):
             'TopUpPeriod-RB': self._topup_period/60,
             'TopUpHeadStartTime-SP': self._topup_headstarttime,
             'TopUpHeadStartTime-RB': self._topup_headstarttime,
-            'TopUpPUStandbyEnbl-Sel': self._topup_pustandbyenbl,
-            'TopUpPUStandbyEnbl-Sts': self._topup_pustandbyenbl,
-            'TopUpPUWarmUpTime-SP': self._topup_puwarmuptime,
-            'TopUpPUWarmUpTime-RB': self._topup_puwarmuptime,
             'TopUpLIWarmUpEnbl-Sel': self._topup_liwarmupenbl,
             'TopUpLIWarmUpEnbl-Sts': self._topup_liwarmupenbl,
             'TopUpLIWarmUpTime-SP': self._topup_liwarmuptime,
@@ -355,10 +356,10 @@ class App(_Callback):
             'TopUpBOPSStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
             'TopUpBOPSWarmUpTime-SP': self._topup_bopswarmuptime,
             'TopUpBOPSWarmUpTime-RB': self._topup_bopswarmuptime,
-            'TopUpBORFStandbyEnbl-Sel': self._topup_bopsstandbyenbl,
-            'TopUpBORFStandbyEnbl-Sts': self._topup_bopsstandbyenbl,
-            'TopUpBORFWarmUpTime-SP': self._topup_bopswarmuptime,
-            'TopUpBORFWarmUpTime-RB': self._topup_bopswarmuptime,
+            'TopUpBORFStandbyEnbl-Sel': self._topup_borfstandbyenbl,
+            'TopUpBORFStandbyEnbl-Sts': self._topup_borfstandbyenbl,
+            'TopUpBORFWarmUpTime-SP': self._topup_borfwarmuptime,
+            'TopUpBORFWarmUpTime-RB': self._topup_borfwarmuptime,
             'TopUpNextInj-Mon': self._topup_next,
             'TopUpNrPulses-SP': self._topup_nrpulses,
             'TopUpNrPulses-RB': self._topup_nrpulses,
@@ -373,6 +374,13 @@ class App(_Callback):
             'DiagStatus-Mon': self._status['AS'],
             'InjStatus-Mon': self._injstatus,
         }
+        for idx, nick in enumerate(_PU_STBY_NICKS):
+            pvn2vals.update({
+                f'TopUp{nick}StandbyEnbl-Sel': self._topup_pustandbyenbl[idx],
+                f'TopUp{nick}StandbyEnbl-Sts': self._topup_pustandbyenbl[idx],
+                f'TopUp{nick}WarmUpTime-SP': self._topup_puwarmuptime[idx],
+                f'TopUp{nick}WarmUpTime-RB': self._topup_puwarmuptime[idx],
+            })
         for pvn, val in pvn2vals.items():
             self.run_callbacks(pvn, val)
 
@@ -799,40 +807,46 @@ class App(_Callback):
         self.run_callbacks('TopUpHeadStartTime-RB', self._topup_headstarttime)
 
         minwut = _np.ceil(value+1)
-        self._topup_puwarmuptime = max(minwut, self._topup_puwarmuptime)
         self._topup_liwarmuptime = max(minwut, self._topup_liwarmuptime)
         self._topup_bopswarmuptime = max(minwut, self._topup_bopswarmuptime)
         self._topup_borfwarmuptime = max(minwut, self._topup_borfwarmuptime)
         pvn2val = {
-            'TopUpPUWarmUpTime-': self._topup_puwarmuptime,
             'TopUpLIWarmUpTime-': self._topup_liwarmuptime,
             'TopUpBOPSWarmUpTime-': self._topup_bopswarmuptime,
             'TopUpBORFWarmUpTime-': self._topup_borfwarmuptime,
         }
+        for idx, nick in enumerate(_PU_STBY_NICKS):
+            self._topup_puwarmuptime[idx] = max(minwut, self._topup_puwarmuptime[idx])
+            pvn2val[f'TopUp{nick}WarmUpTime-'] = self._topup_puwarmuptime[idx]
+
         for pvn, val in pvn2val.items():
             self.run_callbacks(pvn+'SP', val)
             self.run_callbacks(pvn+'RB', val)
         return True
 
-    def set_topup_pustandbyenbl(self, value):
+    def set_topup_pustandbyenbl(self, puidx, value):
         """Enable/disable PU standby between top-up injections."""
         if not 0 <= value < len(_ETypes.DSBL_ENBL):
             return False
 
         if value == _Const.DsblEnbl.Dsbl:
-            self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
-        self._topup_pustandbyenbl = value
+            self._handle_aspu_standby_state(puidx, _Const.StandbyInject.Inject)
+        self._topup_pustandbyenbl[puidx] = value
         text = 'En' if value else 'Dis'
-        self._update_log(text+'abled PU standby between injections.')
-        self.run_callbacks('TopUpPUStandbyEnbl-Sts', self._topup_pustandbyenbl)
+        nick = _PU_STBY_NICKS[puidx]
+        self._update_log(f'{text}abled {nick} standby between injections.')
+        self.run_callbacks(
+            f'TopUp{nick}StandbyEnbl-Sts', self._topup_pustandbyenbl[puidx])
         return True
 
-    def set_topup_puwarmuptime(self, value):
+    def set_topup_puwarmuptime(self, puidx, value):
         """Set PU warm up time before top-up injections."""
         if not self._topup_headstarttime+1 <= value < 2*60:
             return False
-        self._topup_puwarmuptime = value
-        self.run_callbacks('TopUpPUWarmUpTime-RB', self._topup_puwarmuptime)
+        self._topup_puwarmuptime[puidx] = value
+        nick = _PU_STBY_NICKS[puidx]
+        self.run_callbacks(
+            f'TopUp{nick}WarmUpTime-RB', self._topup_puwarmuptime[puidx])
         return True
 
     def set_topup_liwarmupenbl(self, value):
@@ -978,6 +992,8 @@ class App(_Callback):
             for item in ret[2]:
                 self._update_log('ERR:'+item)
         else:
+            if ret[1]:
+                self._update_log('WARN:'+ret[1])
             msg = 'Turned '+cmd+' Inj.System.'
             self._update_log(msg)
 
@@ -1149,13 +1165,13 @@ class App(_Callback):
     def _callback_update_pu_refvolt(self, pvname, value, **kws):
         if value is None:
             return
-        # do not update PU reference voltage if standby is enabled
-        if self._topup_pustandbyenbl == _Const.DsblEnbl.Enbl:
-            return
-        if self._aspu_standby_state == _Const.StandbyInject.Standby:
-            return
         devname = _PVName(pvname).device_name
-        index = self._pu_names.index(devname)
+        index = _PU_STBY_NAMES.index(devname)
+        # do not update PU reference voltage if standby is enabled
+        if self._topup_pustandbyenbl[index] == _Const.DsblEnbl.Enbl:
+            return
+        if self._aspu_standby_state[index] == _Const.StandbyInject.Standby:
+            return
         self._pu_refvolt[index] = value
 
     def _callback_is_injecting(self, value, **kws):
@@ -1186,19 +1202,29 @@ class App(_Callback):
         self.run_callbacks('IsInjecting-Mon', _Const.IdleInjecting.Idle)
 
     def _callback_havebeam(self, value, **kws):
+        _ = kws
         if value:
             return
-        if self._mode != _Const.InjMode.TopUp:
+        if self._mode not in [_Const.InjMode.TopUp, _Const.InjMode.Accum]:
             return
-        if self._stop_topup_job is not None and \
-                self._stop_topup_job.is_alive():
+        if self._beamdump_job is not None and self._beamdump_job.is_alive():
             return
-        if self._topup_state_sts != _Const.TopUpSts.Off:
-            self._update_log('FATAL:We do not have stored beam!')
-            self._update_log('FATAL:Opening TopUp loop...')
-            self._stop_topup_job = _epics.ca.CAThread(
-                target=self.set_topup_state, args=[_Const.OffOn.Off, ], daemon=True)
-            self._stop_topup_job.start()
+        self._update_log('FATAL:We do not have stored beam!')
+        self._beamdump_job = _epics.ca.CAThread(
+            target=self._thread_beamdump, daemon=True)
+        self._beamdump_job.start()
+
+    def _thread_beamdump(self):
+        self._beamdumped = True
+        if self._mode == _Const.InjMode.TopUp:
+            if self._topup_state_sts != _Const.TopUpSts.Off:
+                self._update_log('FATAL:Opening TopUp loop...')
+                self.set_topup_state(_Const.OffOn.Off)
+        else:
+            if self._accum_state_sts != _Const.AccumSts.Off:
+                self._update_log('FATAL:Opening Accumulation loop...')
+                self.set_accum_state(_Const.OffOn.Off)
+        self._beamdumped = False
 
     # --- auxiliary injection methods ---
 
@@ -1250,7 +1276,7 @@ class App(_Callback):
         self._update_log('InjectionEvt is on!')
         return True
 
-    def _wait_injection(self):
+    def _wait_injection(self, wait_time=None):
         # wait for injectionevt to be off (done)
         _t0 = _time.time()
         while _time.time() - _t0 < _Const.MAX_INJTIMEOUT:
@@ -1260,6 +1286,8 @@ class App(_Callback):
             if not self._evg_dev.injection_state:
                 break
             _time.sleep(0.02)
+        if wait_time is not None:
+            _time.sleep(wait_time)
         return True
 
     def _stop_injection(self):
@@ -1339,6 +1367,12 @@ class App(_Callback):
         self._update_log('WARN:Could not update BucketList.')
         return False
 
+    def _create_init_bucketlist_mask(self):
+        # initial beam filling gap
+        mask = _np.ones(_Const.MAX_BKT, dtype=bool)
+        mask[416:512] = False  # 96-bucket gap
+        return mask
+
     # --- auxiliary accumulation methods ---
 
     def _launch_accum_job(self):
@@ -1363,7 +1397,8 @@ class App(_Callback):
         # update bucket list according to settings
         self._update_bucket_list(nrpulses=1)
 
-        self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
+        for idx, _ in enumerate(_PU_STBY_NICKS):
+            self._handle_aspu_standby_state(idx, _Const.StandbyInject.Inject)
         self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
         self._handle_bops_standby_state(_Const.StandbyInject.Inject)
         self._handle_borf_standby_state(_Const.StandbyInject.Inject)
@@ -1373,11 +1408,11 @@ class App(_Callback):
             if not self._continue_accum():
                 break
 
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.TurningOn)
+            self._update_accumsts(_Const.AccumSts.TurningOn)
             if not self._start_injection():
                 break
 
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Injecting)
+            self._update_accumsts(_Const.AccumSts.Injecting)
             if not self._wait_injection():
                 break
             self._update_bucket_list(nrpulses=1)
@@ -1385,7 +1420,7 @@ class App(_Callback):
             dt_ = self._accum_period - (_time.time() - t0_)
             if dt_ <= 0:
                 continue
-            self.run_callbacks('AccumState-Sts', _Const.AccumSts.Waiting)
+            self._update_accumsts(_Const.AccumSts.Waiting)
             self._update_log('Waiting for next injection...')
 
             while dt_ > 0:
@@ -1402,10 +1437,10 @@ class App(_Callback):
 
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
 
-        # update top-up status
-        self.run_callbacks('AccumState-Sts', _Const.AccumSts.Off)
+        # update acummulation status
+        self._update_accumsts(_Const.AccumSts.Off)
         self._update_log('Stopped accumulation loop.')
-        if not self._abort or self._setting_mode:
+        if not self._abort or self._setting_mode or self._beamdumped:
             self.run_callbacks('AccumState-Sel', _Const.OffOn.Off)
 
     def _continue_accum(self):
@@ -1481,7 +1516,7 @@ class App(_Callback):
 
                 self._update_topupsts(_Const.TopUpSts.Injecting)
                 self._update_log('Injecting...')
-                if not self._wait_injection():
+                if not self._wait_injection(wait_time=0.5):
                     break
 
                 self._update_bucket_list()
@@ -1490,8 +1525,11 @@ class App(_Callback):
                 self._update_log('Skipping injection...')
                 _time.sleep(2)
 
-            if self._topup_pustandbyenbl:
-                self._handle_aspu_standby_state(_Const.StandbyInject.Standby)
+            for idx, _ in enumerate(_PU_STBY_NICKS):
+                if not self._topup_pustandbyenbl[idx]:
+                    continue
+                self._handle_aspu_standby_state(
+                    idx, _Const.StandbyInject.Standby)
             if self._topup_liwarmupenbl:
                 self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
             if self._topup_bopsstandbyenbl:
@@ -1502,7 +1540,8 @@ class App(_Callback):
             self._topup_next += self._topup_period
             self.run_callbacks('TopUpNextInj-Mon', self._topup_next)
 
-        self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
+        for idx, _ in enumerate(_PU_STBY_NICKS):
+            self._handle_aspu_standby_state(idx, _Const.StandbyInject.Inject)
         self._handle_liti_warmup_state(_Const.StandbyInject.Standby)
         self._handle_bops_standby_state(_Const.StandbyInject.Inject)
         self._handle_borf_standby_state(_Const.StandbyInject.Inject)
@@ -1512,7 +1551,7 @@ class App(_Callback):
         # update top-up status
         self._update_topupsts(_Const.TopUpSts.Off)
         self._update_log('Stopped top-up loop.')
-        if not self._abort or self._setting_mode:
+        if not self._abort or self._setting_mode or self._beamdumped:
             self.run_callbacks('TopUpState-Sel', _Const.OffOn.Off)
 
     def _wait_topup_period(self):
@@ -1528,8 +1567,11 @@ class App(_Callback):
                 _log.info(text)
 
             # prepare subsystems
-            if remaining <= self._topup_puwarmuptime:
-                self._handle_aspu_standby_state(_Const.StandbyInject.Inject)
+            for idx, _ in enumerate(_PU_STBY_NICKS):
+                if remaining > self._topup_puwarmuptime[idx]:
+                    continue
+                self._handle_aspu_standby_state(
+                    idx, _Const.StandbyInject.Inject)
             if remaining <= self._topup_liwarmuptime:
                 self._handle_liti_warmup_state(_Const.StandbyInject.Inject)
             if remaining <= self._topup_bopswarmuptime:
@@ -1543,10 +1585,13 @@ class App(_Callback):
             cond &= not self._bias_feedback.already_set
             if cond and self.currinfo_dev.connected:
                 dcur = self._bias_feedback.get_delta_current_per_pulse(
-                    per=self._topup_period, nrpul=self._topup_nrpulses,
+                    per=self._topup_period,
+                    nrpul=self._topup_nrpulses,
                     curr_avg=self._target_current,
                     curr_now=self.currinfo_dev.current,
-                    ltime=self.currinfo_dev.lifetime)
+                    ltime=self.currinfo_dev.lifetime,
+                    ahead_tim=_Const.BIASFB_AHEADSETIME
+                )
                 self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
@@ -1561,11 +1606,14 @@ class App(_Callback):
 
     def _prepare_topup(self):
         # If remaining time is too short do not put in standby or warmup
-        # PU
         standby = _Const.StandbyInject.Standby
-        if self._topup_pustandbyenbl and \
-                self._topup_next - _time.time() > self._topup_puwarmuptime*2:
-            self._handle_aspu_standby_state(standby)
+        # PU
+        for idx, _ in enumerate(_PU_STBY_NICKS):
+            if not self._topup_pustandbyenbl[idx]:
+                continue
+            if self._topup_next-_time.time() < self._topup_puwarmuptime[idx]*2:
+                continue
+            self._handle_aspu_standby_state(idx, standby)
 
         # LI
         if self._topup_liwarmupenbl and \
@@ -1582,18 +1630,25 @@ class App(_Callback):
                 self._topup_next - _time.time() > self._topup_borfwarmuptime*2:
             self._handle_borf_standby_state(standby)
 
-    def _handle_aspu_standby_state(self, state):
-        if self._aspu_standby_state == state:
+    def _handle_aspu_standby_state(self, puidx, state):
+        if self._aspu_standby_state[puidx] == state:
             return
-        self._aspu_standby_state = state
+        self._aspu_standby_state[puidx] = state
 
-        factor = 1 if state == _Const.StandbyInject.Inject else 0.5
-        self._update_log(f'Setting PU Voltage to {factor*100}%...')
-        for idx, dev in enumerate(self._pu_devs):
-            if not dev.connected:
-                self._update_log('WARN:'+dev.devname+' disconnected.')
-                continue
-            dev.voltage = self._pu_refvolt[idx] * factor
+        # NOTE: The voltage of the TB pulsed septum is used to define
+        # enable conditions of the egun trigger. To avoid changing the
+        # trigger enable status during top-up, we will reduce its standby
+        # voltage by a different factor.
+        new_factor = 0.7 if _PU_STBY_NICKS[puidx] == 'TBInjSept' else 0.5
+
+        factor = 1 if state == _Const.StandbyInject.Inject else new_factor
+        nick = _PU_STBY_NICKS[puidx]
+        self._update_log(f'Setting {nick} Voltage to {factor*100}%...')
+        dev = self._pu_devs[puidx]
+        if not dev.connected:
+            self._update_log(f'WARN:{nick} disconnected.')
+            return
+        dev.voltage = self._pu_refvolt[puidx] * factor
         self._update_log('...done.')
 
     def _handle_liti_warmup_state(self, state):
@@ -1603,9 +1658,11 @@ class App(_Callback):
 
         lirf = self._injsys_dev.handlers['li_rf']
         if state == _Const.StandbyInject.Inject:
-            lirf.change_trigs_to_rmpbo_evt()
+            if not lirf.change_trigs_to_rmpbo_evt()[1]:
+                self._update_log('WARN:Some trigger sources did not change.')
         else:
-            lirf.change_trigs_to_linac_evt()
+            if not lirf.change_trigs_to_linac_evt()[1]:
+                self._update_log('WARN:Some trigger sources did not change.')
         self._update_log('LI timing configured.')
 
     def _handle_bops_standby_state(self, state):
@@ -1675,6 +1732,10 @@ class App(_Callback):
         else:
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
+
+    def _update_accumsts(self, sts):
+        self._accum_state_sts = sts
+        self.run_callbacks('AccumState-Sts', sts)
 
     def _update_topupsts(self, sts):
         self._topup_state_sts = sts

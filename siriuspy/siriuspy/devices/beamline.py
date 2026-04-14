@@ -20,22 +20,38 @@ class CAXCtrl(_Device):
 
     PROPERTIES_DEFAULT = (
         # mirror controls
-        'A:PP01:A', 'A:PP01:A.RBV', 'A:PP01:A.STOP',  # RotY
-        'A:PP01:B', 'A:PP01:B.RBV', 'A:PP01:B.STOP',  # Tx
-        'A:PP01:C', 'A:PP01:C.RBV', 'A:PP01:C.STOP',  # Y1
-        'A:PP01:D', 'A:PP01:D.RBV', 'A:PP01:D.STOP',  # Y2
-        'A:PP01:E', 'A:PP01:E.RBV', 'A:PP01:E.STOP',  # Y3
+        'A:PP01:A',
+        'A:PP01:A.RBV',
+        'A:PP01:A.STOP',  # RotY
+        'A:PP01:B',
+        'A:PP01:B.RBV',
+        'A:PP01:B.STOP',  # Tx
+        'A:PP01:C',
+        'A:PP01:C.RBV',
+        'A:PP01:C.STOP',  # Y1
+        'A:PP01:D',
+        'A:PP01:D.RBV',
+        'A:PP01:D.STOP',  # Y2
+        'A:PP01:E',
+        'A:PP01:E.RBV',
+        'A:PP01:E.STOP',  # Y3
         # mirror photocollector
         'A:RIO01:9215A:ai0',
         # mirror temperatures
         'A:RIO01:M1_CtrltempSp',
-        'A:RIO01:9226B:temp0', 'A:RIO01:9226B:temp1',
-        'A:RIO01:9226B:temp2', 'A:RIO01:9226B:temp3',
+        'A:RIO01:9226B:temp0',
+        'A:RIO01:9226B:temp1',
+        'A:RIO01:9226B:temp2',
+        'A:RIO01:9226B:temp3',
         'A:RIO01:9226B:temp4',
         # dvf motors
-        'B:PP01:E', 'B:PP01:E.RBV', 'B:PP01:E.STOP',  # z pos
-        'B:PP01:F', 'B:PP01:F.RBV', 'B:PP01:F.STOP',  # lens
-        )
+        'B:PP01:E',
+        'B:PP01:E.RBV',
+        'B:PP01:E.STOP',  # z pos
+        'B:PP01:F',
+        'B:PP01:F.RBV',
+        'B:PP01:F.STOP',  # lens
+    )
 
     def __init__(self, devname=None, props2init='all', **kwargs):
         """Init."""
@@ -240,4 +256,4 @@ class CAXCtrl(_Device):
     def _cmd_motor_stop(self, propty, timeout):
         timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
         self[propty] = 1
-        return self._wait(propty, 0, timeout=timeout)
+        return self.wait(propty, 0, timeout=timeout)

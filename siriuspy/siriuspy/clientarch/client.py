@@ -6,15 +6,21 @@ See
     http://slacmshankar.github.io/epicsarchiver_docs/api/mgmt_scriptables.html
 """
 
-from threading import Thread as _Thread
 import asyncio as _asyncio
-import urllib as _urllib
-import ssl as _ssl
 import logging as _log
-import urllib3 as _urllib3
-from aiohttp import ClientSession as _ClientSession
+import ssl as _ssl
+import urllib as _urllib
+from datetime import timedelta as _timedelta
+from threading import Thread as _Thread
+from urllib.parse import quote as _quote
 
 import numpy as _np
+import urllib3 as _urllib3
+from aiohttp import ClientSession as _ClientSession
+try:
+    from lzstring import LZString as _LZString
+except:
+    _LZString = None
 
 from .. import envars as _envars
 from . import exceptions as _exceptions
@@ -44,8 +50,8 @@ class ClientArchiver:
         """Connected."""
         try:
             status = _urllib.request.urlopen(
-                self._url, timeout=self._timeout,
-                context=_ssl.SSLContext()).status
+                self._url, timeout=self._timeout, context=_ssl.SSLContext()
+            ).status
             return status == 200
         except _urllib.error.URLError:
             return False
@@ -88,17 +94,23 @@ class ClientArchiver:
 
     def login(self, username, password):
         """Open login session."""
-        headers = {"User-Agent": "Mozilla/5.0"}
-        payload = {"username": username, "password": password}
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        payload = {'username': username, 'password': password}
         url = self._create_url(method='login')
         ret = self._run_async_event_loop(
             self._create_session,
-            url, headers=headers, payload=payload, ssl=False)
+            url,
+            headers=headers,
+            payload=payload,
+            ssl=False,
+        )
         if ret is not None:
             self.session, authenticated = ret
             if authenticated:
-                print('Reminder: close connection after using this '
-                      'session by calling logout method!')
+                print(
+                    'Reminder: close connection after using this '
+                    'session by calling logout method!'
+                )
             else:
                 self.logout()
             return authenticated
@@ -131,10 +143,11 @@ class ClientArchiver:
     def deletePVs(self, pvnames):
         """Delete PVs."""
         if not isinstance(pvnames, (list, tuple)):
-            pvnames = (pvnames, )
+            pvnames = (pvnames,)
         for pvname in pvnames:
             url = self._create_url(
-                method='deletePV', pv=pvname, deleteData='true')
+                method='deletePV', pv=pvname, deleteData='true'
+            )
             self._make_request(url, need_login=True)
 
     def getPausedPVsReport(self):
@@ -147,7 +160,8 @@ class ClientArchiver:
         """Get list of PVs with recently modified PVTypeInfo.
 
         Currently version of the epics archiver appliance returns pvname
-        list from oldest to newest modified timestamps."""
+        list from oldest to newest modified timestamps.
+        """
         method = 'getRecentlyModifiedPVs'
         # get data
         if limit is not None:
@@ -158,7 +172,9 @@ class ClientArchiver:
         # convert to epoch, if the case
         if resp and epoch_time:
             for item in resp:
-                modtime = item['modificationTime'][:-7]  # remove ISO8601 offset
+                modtime = item['modificationTime'][
+                    :-7
+                ]  # remove ISO8601 offset
                 epoch_time = _Time.conv_to_epoch(modtime, '%b/%d/%Y %H:%M:%S')
                 item['modificationTime'] = epoch_time
 
@@ -167,7 +183,7 @@ class ClientArchiver:
     def pausePVs(self, pvnames):
         """Pause PVs."""
         if not isinstance(pvnames, (list, tuple)):
-            pvnames = (pvnames, )
+            pvnames = (pvnames,)
         for pvname in pvnames:
             url = self._create_url(method='pauseArchivingPV', pv=pvname)
             self._make_request(url, need_login=True)
@@ -180,14 +196,21 @@ class ClientArchiver:
     def resumePVs(self, pvnames):
         """Resume PVs."""
         if not isinstance(pvnames, (list, tuple)):
-            pvnames = (pvnames, )
+            pvnames = (pvnames,)
         for pvname in pvnames:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
             self._make_request(url, need_login=True)
 
-    def getData(self, pvname, timestamp_start, timestamp_stop,
-                process_type='', interval=None, stddev=None,
-                get_request_url=False):
+    def getData(
+        self,
+        pvname,
+        timestamp_start,
+        timestamp_stop,
+        process_type='',
+        interval=None,
+        stddev=None,
+        get_request_url=False,
+    ):
         """Get archiver data.
 
         pvname -- name of pv.
@@ -206,16 +229,18 @@ class ClientArchiver:
                   argument used in processing 'ignoreflyers' and 'flyers'.
         """
         if isinstance(pvname, str):
-            pvname = [pvname, ]
+            pvname = [pvname]
         if isinstance(timestamp_start, str):
-            timestamp_start = [timestamp_start, ]
+            timestamp_start = [timestamp_start]
         if isinstance(timestamp_stop, str):
-            timestamp_stop = [timestamp_stop, ]
-        if not isinstance(timestamp_start, (list, tuple)) or \
-                not isinstance(timestamp_stop, (list, tuple)):
+            timestamp_stop = [timestamp_stop]
+        if not isinstance(timestamp_start, (list, tuple)) or not isinstance(
+            timestamp_stop, (list, tuple)
+        ):
             raise _exceptions.TypeError(
                 "'timestampstart' and 'timestamp_stop' arguments must be "
-                "timestamp strings or iterable.")
+                'timestamp strings or iterable.'
+            )
 
         pvname_orig = list(pvname)
         if process_type:
@@ -224,15 +249,19 @@ class ClientArchiver:
                 process_str += '_' + str(int(interval))
                 if 'flyers' in process_type and stddev is not None:
                     process_str += '_' + str(int(stddev))
-            pvname = [process_str+'('+pvn+')' for pvn in pvname]
+            pvname = [process_str + '(' + pvn + ')' for pvn in pvname]
 
         if get_request_url:
             tstart = _urllib.parse.quote(timestamp_start[0])
             tstop = _urllib.parse.quote(timestamp_stop[-1])
-            url = [self._create_url(
-                method='getData.json', pv=pvn,
-                **{'from': tstart, 'to': tstop})
-                   for pvn in pvname]
+            url = [
+                self._create_url(
+                    method='getData.json',
+                    pv=pvn,
+                    **{'from': tstart, 'to': tstop},
+                )
+                for pvn in pvname
+            ]
             return url[0] if len(pvname) == 1 else url
 
         pvn2idcs = dict()
@@ -240,10 +269,16 @@ class ClientArchiver:
         for i, pvn in enumerate(pvname):
             urls = []
             for tstart, tstop in zip(timestamp_start, timestamp_stop):
-                urls.append(self._create_url(
-                    method='getData.json', pv=pvn,
-                    **{'from': _urllib.parse.quote(tstart),
-                       'to': _urllib.parse.quote(tstop)}))
+                urls.append(
+                    self._create_url(
+                        method='getData.json',
+                        pv=pvn,
+                        **{
+                            'from': _urllib.parse.quote(tstart),
+                            'to': _urllib.parse.quote(tstop),
+                        },
+                    )
+                )
             ini = len(all_urls)
             all_urls.extend(urls)
             end = len(all_urls)
@@ -262,7 +297,9 @@ class ClientArchiver:
                 if not resp:
                     continue
                 data = resp[0]['data']
-                _ts = _np.r_[_ts, [v['secs'] + v['nanos']/1.0e9 for v in data]]
+                _ts = _np.r_[
+                    _ts, [v['secs'] + v['nanos'] / 1.0e9 for v in data]
+                ]
                 for val in data:
                     _vs.append(val['val'])
                 _st = _np.r_[_st, [v['status'] for v in data]]
@@ -271,13 +308,19 @@ class ClientArchiver:
                 timestamp, value, status, severity = [None, None, None, None]
             else:
                 _, _tsidx = _np.unique(_ts, return_index=True)
-                timestamp, status, severity = \
-                    _ts[_tsidx], _st[_tsidx], _sv[_tsidx]
+                timestamp, status, severity = (
+                    _ts[_tsidx],
+                    _st[_tsidx],
+                    _sv[_tsidx],
+                )
                 value = [_vs[i] for i in _tsidx]
 
             pvn2resp[pvn] = dict(
-                timestamp=timestamp, value=value, status=status,
-                severity=severity)
+                timestamp=timestamp,
+                value=value,
+                status=status,
+                severity=severity,
+            )
 
         if len(pvname) == 1:
             return pvn2resp[pvname_orig[0]]
@@ -285,8 +328,7 @@ class ClientArchiver:
 
     def getPVDetails(self, pvname, get_request_url=False):
         """Get PV Details."""
-        url = self._create_url(
-            method='getPVDetails', pv=pvname)
+        url = self._create_url(method='getPVDetails', pv=pvname)
         if get_request_url:
             return url
         resp = self._make_request(url, return_json=True)
@@ -302,14 +344,126 @@ class ClientArchiver:
         self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
         self.session = None
 
+    @staticmethod
+    def gen_archviewer_url_link(
+        pvnames,
+        time_start,
+        time_stop,
+        time_ref=None,
+        pvoptnrpts=None,
+        pvcolors=None,
+        pvusediff=False
+    ):
+        """Generate a Archiver Viewer URL for the given PVs.
+
+        Parameters
+        ----------
+        pvnames : iterable[str]
+            Iterable of PV names to include in the viewer.
+        time_start : datetime.datetime or siriuspy.clientarch.time.Time
+            Start time of the interval to display.
+        time_stop : datetime.datetime or siriuspy.clientarch.time.Time
+            Stop time of the interval to display.
+        time_ref : datetime.datetime or siriuspy.clientarch.time.Time, optional
+            reference time used when enabling the diff view.
+        pvoptnrpts : iterable[int] or Int, optional
+            Iterable with optimization point counts for each PV (0 or None
+            means no optimization). Must have the same length as `pvnames` or
+            be a single integer applied to all PVs.
+        pvcolors : iterable[str or None] or str, optional
+            Iterable with hex color strings (e.g. "#00ff00") or None for
+            each PV. Must have the same length as `pvnames` or be a single
+            string applied to all PVs.
+        pvusediff : iterable[bool] or bool, optional
+            Iterable indicating whether to enable the diff option for each PV.
+            Must have the same length as `pvnames` or
+            be a single bool applied to all PVs.
+
+        Returns
+        -------
+        str
+            A full Archiver Viewer URL containing the compressed PV
+            configuration.
+
+        Notes
+        -----
+        - PV names and timestamps are URL-encoded and the
+            resulting query string is compressed using LZString
+            (compressToEncodedURIComponent).
+        - The function expects the per-PV arguments (`pvoptnrpts`, `pvcolors`,
+            `pvusediff`) to be iterables aligned with `pvnames`.
+        """
+        # Thanks to Rafael Lyra for the basis of this implementation!
+        archiver_viewer_url = _envars.SRVURL_ARCHIVER_VIEWER + '/?pvConfig='
+        args = ClientArchiver._process_url_link_args(
+            pvnames, pvoptnrpts, pvcolors, pvusediff)
+        pvoptnrpts, pvcolors, pvusediff = args
+        pv_search = ''
+        for idx in range(len(pvnames)):
+            pv_search += 'pv='
+            pvname = pvnames[idx]
+            pvopt = pvoptnrpts[idx]
+            color = pvcolors[idx]
+            use_diff = pvusediff[idx]
+            url_pvname = _quote(pvname)
+            if pvopt > 0:
+                pv_search += f'optimized_{pvopt}({url_pvname})'
+            else:
+                pv_search += url_pvname
+            if time_ref is not None and use_diff:
+                pv_search += '_diff'
+            if color is not None:
+                pv_search += f'__{color}'
+            pv_search += '&'
+        search_url = pv_search
+
+        date_pattern = '%Y-%m-%dT%H:%M:%S.000Z'
+        time_zone = _timedelta(hours=3)
+
+        start = time_start + time_zone
+        formatted_start = start.strftime(date_pattern)
+        search_url += f'from={_quote(formatted_start)}&'
+
+        stop = time_stop + time_zone
+        formatted_end = stop.strftime(date_pattern)
+        search_url += f'to={_quote(formatted_end)}&'
+
+        if time_ref is not None:
+            ref = time_ref + time_zone
+            formatted_ref = ref.strftime(date_pattern)
+            search_url += f'ref={_quote(formatted_ref)}'
+
+        lz = _LZString()
+        compressed_data = lz.compressToEncodedURIComponent(search_url)
+        return archiver_viewer_url + compressed_data
+
     # ---------- auxiliary methods ----------
+
+    @staticmethod
+    def _process_url_link_args(pvnames, pvoptnrpts, pvcolors, pvusediff):
+        """Process URL link arguments."""
+        if pvoptnrpts is None:
+            pvoptnrpts = [0] * len(pvnames)
+        elif isinstance(pvoptnrpts, int):
+            pvoptnrpts = [pvoptnrpts] * len(pvnames)
+        if pvcolors is None:
+            pvcolors = [None] * len(pvnames)
+        elif isinstance(pvcolors, str):
+            pvcolors = [pvcolors] * len(pvnames)
+        pvcolors = pvcolors or [None] * len(pvnames)
+        if isinstance(pvusediff, bool):
+            pvusediff = [pvusediff] * len(pvnames)
+        return pvoptnrpts, pvcolors, pvusediff
 
     def _make_request(self, url, need_login=False, return_json=False):
         """Make request."""
         self._request_url = url
         response = self._run_async_event_loop(
             self._handle_request,
-            url, return_json=return_json, need_login=need_login)
+            url,
+            return_json=return_json,
+            need_login=need_login,
+        )
         return response
 
     def _create_url(self, method, **kwargs):
@@ -333,7 +487,10 @@ class ClientArchiver:
         # to work within jupyter notebook environment).
         _thread = _Thread(
             target=self._thread_run_async_event_loop,
-            daemon=True, args=args, kwargs=kwargs)
+            daemon=True,
+            args=args,
+            kwargs=kwargs,
+        )
         _thread.start()
         _thread.join()
         return self._ret
@@ -358,27 +515,29 @@ class ClientArchiver:
         if close:
             loop.close()
 
-    async def _handle_request(
-            self, url, return_json=False, need_login=False):
+    async def _handle_request(self, url, return_json=False, need_login=False):
         """Handle request."""
         if self.session is not None:
             response = await self._get_request_response(
-                url, self.session, return_json)
+                url, self.session, return_json
+            )
         elif need_login:
             raise _exceptions.AuthenticationError('You need to login first.')
         else:
             async with _ClientSession() as sess:
                 response = await self._get_request_response(
-                    url, sess, return_json)
+                    url, sess, return_json
+                )
         return response
 
     async def _get_request_response(self, url, session, return_json):
         """Get request response."""
         try:
             if isinstance(url, list):
-                response = await _asyncio.gather(
-                    *[session.get(u, ssl=False, timeout=self._timeout)
-                      for u in url])
+                response = await _asyncio.gather(*[
+                    session.get(u, ssl=False, timeout=self._timeout)
+                    for u in url
+                ])
                 if any([not r.ok for r in response]):
                     return None
                 if return_json:
@@ -393,7 +552,8 @@ class ClientArchiver:
                     response = jsons
             else:
                 response = await session.get(
-                    url, ssl=False, timeout=self._timeout)
+                    url, ssl=False, timeout=self._timeout
+                )
                 if not response.ok:
                     return None
                 if return_json:
@@ -410,10 +570,10 @@ class ClientArchiver:
         """Create session and handle login."""
         session = _ClientSession()
         async with session.post(
-                url, headers=headers, data=payload, ssl=ssl,
-                timeout=self._timeout) as response:
+            url, headers=headers, data=payload, ssl=ssl, timeout=self._timeout
+        ) as response:
             content = await response.content.read()
-            authenticated = b"authenticated" in content
+            authenticated = b'authenticated' in content
         return session, authenticated
 
     async def _close_session(self):

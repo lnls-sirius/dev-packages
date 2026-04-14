@@ -85,7 +85,7 @@ class RepeaterThread(_Thread):
         super().__init__(daemon=True)
         self.is_cathread = is_cathread
         self.interval = interval
-        if not hasattr(function, '__call__'):
+        if not callable(function):
             raise TypeError('Argument "function" is not callable.')
         self.function = function
         self.args = args
@@ -177,9 +177,10 @@ class _BaseQueueThread(_Queue):
         """Put operation to queue."""
         if not hasattr(operation, '__len__'):
             operation = (operation, )
-        if not hasattr(operation[0], '__call__'):
+        if not callable(operation[0]):
             raise TypeError(
-                'First element of "operation" is not callable.')
+                'First element of "operation" is not callable.'
+            )
 
         with self._changing_queue:
             try:

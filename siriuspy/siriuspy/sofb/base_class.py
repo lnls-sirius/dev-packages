@@ -1,6 +1,7 @@
 """Definition module."""
 import logging as _log
 import math as _math
+import time as _time
 
 import numpy as _np
 
@@ -110,18 +111,17 @@ class BaseTimingConfig(_Callback):
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
         self._config_pvs_sp = {}
+        self._pvs = {}
         self.put_enable = True
 
     @property
     def connected(self):
         """Status connected."""
         conn = True
-        for pv in self._config_pvs_rb.values():
-            if not pv.connected:
-                _log.debug("NOT CONN: " + pv.pvname)
-            conn &= pv.connected
-
-        for pv in self._config_pvs_sp.values():
+        pvs = list(self._config_pvs_rb.values())
+        pvs += list(self._config_pvs_rb.values())
+        pvs += list(self._pvs.values())
+        for pv in pvs:
             if not pv.connected:
                 _log.debug("NOT CONN: " + pv.pvname)
             conn &= pv.connected
@@ -160,6 +160,18 @@ class BaseTimingConfig(_Callback):
         for k, pvo in self._config_pvs_sp.items():
             if k in self._config_ok_vals:
                 pvo.put(self._config_ok_vals[k], wait=False)
+        return True
+
+    def wait_for_connection(self, timeout=10):
+        """."""
+        t0_ = _time.time()
+        pvs = list(self._config_pvs_rb.values())
+        pvs += list(self._config_pvs_rb.values())
+        pvs += list(self._pvs.values())
+        for pv in pvs:
+            tout = timeout - (_time.time() - t0_)
+            if tout <= 0 or not pv.wait_for_connection(tout):
+                return False
         return True
 
 

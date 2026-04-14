@@ -3,11 +3,9 @@
 from copy import deepcopy as _dcopy
 
 import numpy as _np
-
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..search import BPMSearch as _BPMSearch, PSSearch as _PSSearch
-
 from . import exceptions as _exceptions
 from .pvarch import PVDataSet as _PVDataSet
 from .time import Time as _Time
@@ -18,8 +16,8 @@ class BaseDevice(_PVDataSet):
 
     _CONV = 0.001
 
-    DEVICES = _get_namedtuple('Devices', ('a', ))
-    PROPTIES = _get_namedtuple('Propties', ('a', ))
+    DEVICES = _get_namedtuple('Devices', ('a',))
+    PROPTIES = _get_namedtuple('Propties', ('a',))
 
     Time = _Time
 
@@ -77,9 +75,12 @@ class BaseDevice(_PVDataSet):
         # calc mean_sec if not passed
         nr_pvs = len(self._pvdata)
         if mean_sec is None:
-            mean_sec = sum(map(
-                lambda p: p.timestamp[1]-p.timestamp[0],
-                self._pvdata.values()))
+            mean_sec = sum(
+                map(
+                    lambda p: p.timestamp[1] - p.timestamp[0],
+                    self._pvdata.values(),
+                )
+            )
             mean_sec /= nr_pvs
 
         # times vector
@@ -118,11 +119,13 @@ class Orbit(BaseDevice):
     _CONV = 0.001  # [nm -> um]
 
     DEVICES = _get_namedtuple(
-        'Devices', ('TB_BPM', 'TS_BPM', 'BO_BPM', 'SI_BPM', 'SI_PBPM'))
+        'Devices', ('TB_BPM', 'TS_BPM', 'BO_BPM', 'SI_BPM', 'SI_PBPM')
+    )
     PROPTIES = _get_namedtuple(
         'Propties',
         ('PosX', 'PosY', 'PosQ', 'Sum'),
-        ('PosX-Mon', 'PosY-Mon', 'PosQ-Mon', 'Sum-Mon'))
+        ('PosX-Mon', 'PosY-Mon', 'PosQ-Mon', 'Sum-Mon'),
+    )
 
     def __init__(self, devname='SI_BPM', propty='PosX-Mon', connector=None):
         """."""
@@ -132,7 +135,7 @@ class Orbit(BaseDevice):
     def _get_pvnames(self):
         sec, dev = self._devname.split('_')
         devnames = _dcopy(_BPMSearch.get_names({'sec': sec, 'dev': dev}))
-        pvnames = tuple(dev+':'+self._propty for dev in devnames)
+        pvnames = tuple(dev + ':' + self._propty for dev in devnames)
         return devnames, pvnames
 
 
@@ -144,18 +147,41 @@ class Correctors(BaseDevice):
     DEVICES = _get_namedtuple(
         'Devices',
         (
-            'TB_CH', 'TB_CV', 'TS_CH', 'TS_CV',
-            'BO_CH', 'BO_CV', 'SI_CH', 'SI_CV', 'SI_FCH', 'SI_FCV'
-        )
+            'TB_CH',
+            'TB_CV',
+            'TS_CH',
+            'TS_CV',
+            'BO_CH',
+            'BO_CV',
+            'SI_CH',
+            'SI_CV',
+            'SI_FCH',
+            'SI_FCV',
+        ),
     )
     PROPTIES = _get_namedtuple(
         'Propties',
         (
-            'Curr_Mon', 'Curr_Ref', 'Curr_SP', 'Curr_RB',
-            'Kick_Mon', 'Kick_Ref', 'Kick_SP', 'Kick_RB',),
+            'Curr_Mon',
+            'Curr_Ref',
+            'Curr_SP',
+            'Curr_RB',
+            'Kick_Mon',
+            'Kick_Ref',
+            'Kick_SP',
+            'Kick_RB',
+        ),
         (
-            'Current-Mon', 'CurrentRef-Mon', 'Current-SP', 'Current-RB',
-            'Kick-Mon', 'KickRef-Mon', 'Kick-SP', 'Kick-RB'))
+            'Current-Mon',
+            'CurrentRef-Mon',
+            'Current-SP',
+            'Current-RB',
+            'Kick-Mon',
+            'KickRef-Mon',
+            'Kick-SP',
+            'Kick-RB',
+        ),
+    )
 
     def __init__(self, devname='SI_CH', propty='Current-Mon', connector=None):
         """."""
@@ -165,7 +191,7 @@ class Correctors(BaseDevice):
     def _get_pvnames(self):
         sec, dev = self._devname.split('_')
         devnames = _PSSearch.get_psnames({'sec': sec, 'dev': dev})
-        pvnames = tuple(dev+':'+self._propty for dev in devnames)
+        pvnames = tuple(dev + ':' + self._propty for dev in devnames)
         return devnames, pvnames
 
 
@@ -174,16 +200,30 @@ class TrimQuads(BaseDevice):
 
     _CONV = 1  # [urad -> urad]
 
-    DEVICES = _get_namedtuple(
-        'Devices', ('TB_QN', 'TS_QN', 'SI_QN', 'SI_QS'))
+    DEVICES = _get_namedtuple('Devices', ('TB_QN', 'TS_QN', 'SI_QN', 'SI_QS'))
     PROPTIES = _get_namedtuple(
         'Propties',
         (
-            'Curr_Mon', 'Curr_Ref', 'Curr_SP', 'Curr_RB',
-            'KL_Mon', 'KL_Ref', 'KL_SP', 'KL_RB',),
+            'Curr_Mon',
+            'Curr_Ref',
+            'Curr_SP',
+            'Curr_RB',
+            'KL_Mon',
+            'KL_Ref',
+            'KL_SP',
+            'KL_RB',
+        ),
         (
-            'Current-Mon', 'CurrentRef-Mon', 'Current-SP', 'Current-RB',
-            'KL-Mon', 'KLRef-Mon', 'KL-SP', 'KL-RB'))
+            'Current-Mon',
+            'CurrentRef-Mon',
+            'Current-SP',
+            'Current-RB',
+            'KL-Mon',
+            'KLRef-Mon',
+            'KL-SP',
+            'KL-RB',
+        ),
+    )
 
     def __init__(self, devname='SI_QS', propty='Current-Mon', connector=None):
         """."""
@@ -197,5 +237,5 @@ class TrimQuads(BaseDevice):
             devnames = [dev for f in devnames if 'Fam' not in dev]
         else:
             devnames = _PSSearch.get_psnames({'sec': sec, 'dev': dev})
-        pvnames = tuple(dev+':'+self._propty for dev in devnames)
+        pvnames = tuple(dev + ':' + self._propty for dev in devnames)
         return devnames, pvnames

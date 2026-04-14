@@ -40,4 +40,4 @@ class MachShift(_Device):
         """Wait Mode-Sts to reach `mode` value."""
         if isinstance(mode, str):
             mode = MachShift.MODES.index(mode)
-        return self._wait('Mode-Sts', mode, timeout=timeout)
+        return self.wait('Mode-Sts', mode, timeout=timeout)

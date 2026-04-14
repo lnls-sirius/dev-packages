@@ -149,9 +149,9 @@ def generate_bpm_static_table():
     """."""
     disclaimer = \
         "# This file was generated automatically from the data of the files\n"\
-        "# in the subfolder Mapeamento_placas_MicroTCA_vs_BPMs and the\n"\
+        "# in the subfolder microTCA-vs-BPMs-mapping and the\n"\
         "# models of the accelerators in the pymodels repository by the\n"\
-        "# function: \n"\
+        "# function:\n"\
         "#      siriuspy.optics.lattice_survey.generate_bpm_static_table.\n"\
         "#\n"\
         "# If the data in the mentioned subfolder change, please, run the\n"\
@@ -160,7 +160,7 @@ def generate_bpm_static_table():
     filename = 'bpms-data.txt'
     with open(filename, 'w') as f:
         f.write(disclaimer)
-        f.write('\n\n#BPMs data \n')
+        f.write('\n\n#BPMs data\n')
         f.write('#-----------')
 
     all_bpms = _get_all_bpms()
@@ -248,8 +248,8 @@ def _write_to_file(fname, bpms, pos, label):
     with open(fname, 'a') as fil:
         fil.write('\n\n\n# '+label+'\n')
         fil.write('#'+57*'-' + '\n')
-        fil.write("#{bpm:20s} {pos:^15s}\n".format(
+        fil.write("#{bpm:20s} {pos}\n".format(
             bpm='Name', pos='Position [m]'))
         fil.write('#'+57*'-' + '\n')
         for bpm, p in zip(bpms, pos):
-            fil.write(f"{bpm:20s} {p:^15.4f}\n")
+            fil.write(f"{bpm:20s} {p:.4f}\n")

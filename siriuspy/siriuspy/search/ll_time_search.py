@@ -16,6 +16,7 @@ class LLTimeSearch:
     """Get the timing devices connections."""
 
     LLRegExp = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
+    TrigSrcDevs = {'EVR', 'EVE', 'AMCFPGAEVR'}
 
     # defines the relations between input and output of the timing devices.
     In2OutMap = {
@@ -23,8 +24,8 @@ class LLTimeSearch:
             'UPLINK': (
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                ),
-            },
+            ),
+        },
         'EVR': {
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
@@ -34,8 +35,8 @@ class LLTimeSearch:
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 'DIN0', 'DIN1', 'DIN2',
-                ),
-            },
+            ),
+        },
         'EVE': {
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
@@ -45,43 +46,43 @@ class LLTimeSearch:
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 'RFOUT', 'DIN0', 'DIN1', 'DIN2',
-                ),
-            },
+            ),
+        },
         'AMCFPGAEVR': {
             'SFP8': (
                 'FMC1CH1', 'FMC1CH2', 'FMC1CH3', 'FMC1CH4', 'FMC1CH5',
                 'FMC2CH1', 'FMC2CH2', 'FMC2CH3', 'FMC2CH4', 'FMC2CH5',
                 'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
                 'CRT5', 'CRT6', 'CRT7',
-                ),
-            },
+            ),
+        },
         'OEMultSFP': {
             'OE1': ('OUT1', ),
             'OE2': ('OUT2', ),
             'OE3': ('OUT3', ),
             'OE4': ('OUT4', ),
-            },
+        },
         'OEMultPOF': {
             'IN1': ('OUT1', ),
             'IN2': ('OUT2', ),
             'IN3': ('OUT3', ),
             'IN4': ('OUT4', ),
-            },
+        },
         'OESglPOF': {
             'IN': ('OUT', ),
-            },
+        },
         'OESglSFP': {
             'INRX': ('OUT', 'INTX'),
-            },
+        },
         'Fout': {
             'UPLINK': (
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
-                ),
-            },
+            ),
+        },
         'UDC': {
             'SYNCIN': ('BCKPLN', 'SYNCOUT'),
-            },
+        },
         'Crate': {
             'CRT0': ('CRT0', ),
             'CRT1': ('CRT1', ),
@@ -91,10 +92,10 @@ class LLTimeSearch:
             'CRT5': ('CRT5', ),
             'CRT6': ('CRT6', ),
             'CRT7': ('CRT7', ),
-            },
+        },
         'OERFRx': {'OPTICALACP': ('SIGNAL', )},
         'OERFTx': {'SIGNAL': ('OPTICALACP', )},
-        }
+    }
     In2OutMap['DIO'] = {
         'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(110)}
     In2OutMap['DIO'].update({
@@ -526,10 +527,9 @@ class LLTimeSearch:
             cls._devs_twds_evg.keys() - cls._devs_from_evg.keys())
         cls._all_devices = (
             cls._devs_from_evg.keys() | cls._devs_twds_evg.keys())
-        cls._trig_src_devs = set(
-                _get_device_names({'dev': 'EVR'}) +
-                _get_device_names({'dev': 'EVE'}) +
-                _get_device_names({'dev': 'AMCFPGAEVR'}))
+        cls._trig_src_devs = set()
+        for dev in cls.TrigSrcDevs:
+            cls._trig_src_devs.update(_get_device_names({'dev': dev}))
         cls._fout_devs = set(_get_device_names({'dev': 'Fout'}))
         cls._evg_devs = set(_get_device_names({'dev': 'EVG'}))
 

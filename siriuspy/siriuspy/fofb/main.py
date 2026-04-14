@@ -1993,15 +1993,28 @@ class App(_Callback):
             _os.makedirs(path, exist_ok=True)
             _np.savetxt(filename, mat)
         except FileNotFoundError:
-            self._update_log('WARN:Could not save matrix to file.')
+            mtype = filename.split("/")[-1].split(".")[-1]
+            self._update_log(f"WARN:Could not save {mtype}.")
 
     def _load_mat(self, filename):
         if not _os.path.isfile(filename):
             return False
-        self._update_log('Loading matrix from file...')
-        if self.set_respmat(_np.loadtxt(filename)):
-            msg = 'Loaded Matrix!'
+
+        func, mtype = None, ""
+        if filename.endswith("psconfig"):
+            func = self.set_psconfig_mat
+            mtype = "PSConfig"
+        elif filename.endswith("respmat"):
+            func = self.set_respmat
+            mtype = "RespMat"
+
+        if func is not None:
+            self._update_log(f"Loading {mtype}...")
+            if func(_np.loadtxt(filename)):
+                msg = "...done!"
+            else:
+                msg = f"ERR:Problem loading {mtype}."
         else:
-            msg = 'ERR:Problem loading matrix from file.'
+            msg = "WARN:Load matrix function not implemented"
         self._update_log(msg)
-        return 'ERR' not in msg
+        return "ERR" not in msg

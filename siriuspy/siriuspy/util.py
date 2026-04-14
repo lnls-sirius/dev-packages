@@ -9,7 +9,11 @@ import inspect as _inspect
 import subprocess as _sp
 import datetime as _datetime
 
-import epics as _epics
+try:
+    import epics as _epics
+except:
+    _epics = None
+
 
 from mathphys import beam_optics as _beam
 from siriuspy import envars as _envars

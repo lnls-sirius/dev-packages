@@ -62,5 +62,8 @@ SRVURL_ARCHIVER = _os.environ.get(
 SRVURL_ARCHIVER_OFFLINE_DATA = _os.environ.get(
     'SIRIUS_URL_ARCHIVER_OFFLINE_DATA',
     default='https://archiver-temp.cnpem.br')
+SRVURL_ARCHIVER_VIEWER = _os.environ.get(
+    'SIRIUS_URL_ARCHIVER_VIEWER',
+    default='http://archiver-viewer.lnls.br')
 
 VACA_PREFIX = _os.environ.get('VACA_PREFIX', default='')
