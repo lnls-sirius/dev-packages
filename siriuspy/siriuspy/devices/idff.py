@@ -606,7 +606,9 @@ class IDFF(_DeviceSet):
     class DEVICES:
         """Device names."""
 
-        ALL = tuple()
+        ALL = (
+            'SI-11SP:ID-UE44'
+        )
 
     IDFFCtrlBase._add_devices(DEVICES, IDFFCtrl.DEVICES)
 
