@@ -769,7 +769,7 @@ class PVDataSet(_Base):
 
             dlen = 'Not Loaded'
             if pvd.timestamp is not None:
-                stg += f'{len(pvd.timestamp):d}'
+                dlen = f'{len(pvd.timestamp):d}'
 
             stg += tmpl.format(
                 pvn,
