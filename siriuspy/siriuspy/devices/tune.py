@@ -432,13 +432,12 @@ class Tune(_DeviceSet):
 
     def _get_spect(self, dev_proc):
         """."""
-        if self.sector == 'BO':
-            nr_pulses = self.trig_nr_pulses
-            sweep_nrpts = dev_proc.sweep_nrpts
-            data = dev_proc.tune_spect_array
-            data = data[:sweep_nrpts*nr_pulses]
-            spect = data.reshape(nr_pulses, -1)
-            return spect
+        nr_pulses = self.trig_nr_pulses
+        sweep_nrpts = dev_proc.sweep_nrpts
+        data = dev_proc.tune_spect_array
+        data = data[:sweep_nrpts*nr_pulses]
+        spect = data.reshape(nr_pulses, -1)
+        return spect
 
 
 class TuneCorr(_Device):
