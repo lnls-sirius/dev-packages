@@ -226,14 +226,34 @@ class Tune(_DeviceSet):
         super().__init__(devices, devname=devname)
 
     @property
+    def dev_tune_frac_h(self):
+        """."""
+        return self.devices[0]
+
+    @property
+    def dev_tune_frac_v(self):
+        """."""
+        return self.devices[1]
+
+    @property
+    def dev_tune_proc_h(self):
+        """."""
+        return self.devices[2]
+
+    @property
+    def dev_tune_proc_v(self):
+        """."""
+        return self.devices[3]
+
+    @property
     def tunex(self):
         """Tune Frac X."""
-        return self.devices[0].tune
+            return self.dev_tune_frac_h.tune
 
     @property
     def tuney(self):
         """Tune Frac Y."""
-        return self.devices[1].tune
+            return self.dev_tune_frac_v.tune
 
     @property
     def spanx(self):
