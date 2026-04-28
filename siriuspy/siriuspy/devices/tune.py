@@ -319,13 +319,25 @@ class Tune(_DeviceSet):
     def spectx(self):
         """."""
         if self.sector == 'BO':
-            return self._get_spect(self.dev_proc_h)
+            return self._get_spect(self.dev_tune_proc_h)
 
     @property
     def specty(self):
         """."""
         if self.sector == 'BO':
-            return self._get_spect(self.dev_proc_v)
+            return self._get_spect(self.dev_tune_proc_v)
+
+    @property
+    def spectx_acquisition_status(self):
+        """."""
+        if self.sector == 'BO':
+            return self.frame_countx == self.trig_nr_pulses
+
+    @property
+    def specty_acquisition_status(self):
+        """."""
+        if self.sector == 'BO':
+            return self.frame_county == self.trig_nr_pulses
 
     @property
     def spanx(self):
