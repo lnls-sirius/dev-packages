@@ -16,7 +16,8 @@ class TuneFrac(_Device):
         ALL = (SI_H, SI_V)
 
     PROPERTIES_DEFAULT = (
-        'TuneFrac-Mon',
+        'SpecAnaGetSpec-Sel',
+        'SpecAnaGetSpec-Sts',
         'Enbl-Sel',
         'Enbl-Sts',
         'Span-RB',
@@ -69,10 +70,24 @@ class TuneFrac(_Device):
         self['FreqOff-SP'] = value
 
     @property
+    def aquisition_enabled(self):
+        """Return aquisition state."""
+        return self['SpecAnaGetSpec-Sts']
+
     @property
     def excitation_enabled(self):
         """Return excitation state."""
         return self['Enbl-Sts']
+
+    def cmd_acquisition_enable(self, timeout=DEF_TIMEOUT):
+        """Start data acquisition."""
+        self['SpecAnaGetSpec-Sel'] = 1
+        return self.wait('SpecAnaGetSpec-Sts', value=1, timeout=timeout)
+
+    def cmd_acquisition_disable(self, timeout=DEF_TIMEOUT):
+        """Stop data acquisition."""
+        self['SpecAnaGetSpec-Sel'] = 0
+        return self.wait('SpecAnaGetSpec-Sts', value=0, timeout=timeout)
 
     def cmd_excitation_enable(self, timeout=DEF_TIMEOUT):
         """Enable."""
