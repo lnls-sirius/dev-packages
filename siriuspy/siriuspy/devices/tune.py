@@ -117,22 +117,22 @@ class TuneFrac(_Device):
         return self.wait('Enbl-Sts', value=0, timeout=timeout)
 
 
-class TuneProc(_Device):
+class SITuneProc(_Device):
     """Tune Proc device."""
 
     class DEVICES:
         """Devices names."""
 
-        SI_H = 'SI-Glob:DI-TuneProc-H'
-        SI_V = 'SI-Glob:DI-TuneProc-V'
-        ALL = (SI_H, SI_V)
+        H = 'SI-Glob:DI-TuneProc-H'
+        V = 'SI-Glob:DI-TuneProc-V'
+        ALL = (H, V)
 
     PROPERTIES_DEFAULT = ('Trace-Mon',)
 
     def __init__(self, devname, props2init='all'):
         """Init."""
         # check if device exists
-        if devname not in TuneProc.DEVICES.ALL:
+        if devname not in SITuneProc.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
