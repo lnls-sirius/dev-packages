@@ -13,7 +13,9 @@ class TuneFrac(_Device):
 
         SI_H = 'SI-Glob:DI-Tune-H'
         SI_V = 'SI-Glob:DI-Tune-V'
-        ALL = (SI_H, SI_V)
+        BO_H = 'BO-Glob:DI-Tune-H'
+        BO_V = 'BO-Glob:DI-Tune-V'
+        ALL = (SI_H, SI_V, BO_H, BO_V)
 
     PROPERTIES_DEFAULT = (
         'SpecAnaGetSpec-Sel',
@@ -27,16 +29,31 @@ class TuneFrac(_Device):
         'FreqOff-RB',
         'FreqOff-SP',
     )
+    PROPERTIES_DEFAULT_SI = PROPERTIES_DEFAULT + (
+        'TuneFrac-Mon',
+    )
+    PROPERTIES_DEFAULT_BO = PROPERTIES_DEFAULT
 
     def __init__(self, devname, props2init='all'):
         """Init."""
         if devname not in TuneFrac.DEVICES.ALL:
             raise NotImplementedError(devname)
+        self._sector = 'SI' if devname.startswith('SI') else 'BO'
+        if self.sector == 'SI':
+            self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_SI
+        else:
+            self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_BO
         super().__init__(devname, props2init=props2init)
+
+    @property
+    def sector(self):
+        """."""
+        return self._sector
 
     @property
     def tune(self):
         """Tune Frac."""
+        if self.sector == 'SI':
         return self['TuneFrac-Mon']
 
     @property
