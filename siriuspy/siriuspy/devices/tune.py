@@ -69,16 +69,17 @@ class TuneFrac(_Device):
         self['FreqOff-SP'] = value
 
     @property
-    def enable(self):
-        """Enable status."""
+    @property
+    def excitation_enabled(self):
+        """Return excitation state."""
         return self['Enbl-Sts']
 
-    def cmd_enable(self, timeout=DEF_TIMEOUT):
+    def cmd_excitation_enable(self, timeout=DEF_TIMEOUT):
         """Enable."""
         self['Enbl-Sel'] = 1
         return self.wait('Enbl-Sts', value=1, timeout=timeout)
 
-    def cmd_disable(self, timeout=DEF_TIMEOUT):
+    def cmd_excitation_disable(self, timeout=DEF_TIMEOUT):
         """Disable."""
         self['Enbl-Sel'] = 0
         return self.wait('Enbl-Sts', value=0, timeout=timeout)
@@ -229,21 +230,21 @@ class Tune(_DeviceSet):
         """Tune Y enable status."""
         return self.devices[1].enable
 
-    def cmd_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Enable tune X."""
-        return self.devices[0].cmd_enable(timeout=timeout)
+    def cmd_excitation_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune X excitation."""
+        return self.devices[0].cmd_excitation_enable(timeout=timeout)
 
-    def cmd_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Enable tune Y."""
-        return self.devices[1].cmd_enable(timeout=timeout)
+    def cmd_excitation_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune Y excitation."""
+        return self.devices[1].cmd_excitation_enable(timeout=timeout)
 
-    def cmd_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Disable tune X."""
-        return self.devices[0].cmd_disable(timeout=timeout)
+    def cmd_excitation_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune X excitation."""
+        return self.devices[0].cmd_excitation_disable(timeout=timeout)
 
-    def cmd_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Disable tune Y."""
-        return self.devices[1].cmd_disable(timeout=timeout)
+    def cmd_excitation_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune Y excitation."""
+        return self.devices[1].cmd_excitation_disable(timeout=timeout)
 
 
 class TuneCorr(_Device):
