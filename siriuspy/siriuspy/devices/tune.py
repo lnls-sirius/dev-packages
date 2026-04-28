@@ -1,6 +1,7 @@
 """Tune devices."""
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
+from .timing import Trigger as _Trigger
 
 
 class TuneFrac(_Device):
@@ -54,7 +55,7 @@ class TuneFrac(_Device):
     def tune(self):
         """Tune Frac."""
         if self.sector == 'SI':
-        return self['TuneFrac-Mon']
+            return self['TuneFrac-Mon']
 
     @property
     def span(self):
@@ -199,7 +200,8 @@ class Tune(_DeviceSet):
         """Devices names."""
 
         SI = 'SI-Glob:DI-Tune'
-        ALL = (SI,)
+        BO = 'BO-Glob:DI-Tune'
+        ALL = (SI, BO)
 
     def __init__(self, devname=None, props2init='all'):
         """Init."""
@@ -208,6 +210,7 @@ class Tune(_DeviceSet):
             devname = Tune.DEVICES.SI
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
+        self._sector = 'SI' if devname.startswith('SI') else 'BO'
 
         isall = isinstance(props2init, str) and props2init.lower() == 'all'
         if not isall and props2init:
@@ -215,15 +218,46 @@ class Tune(_DeviceSet):
                 "props2init must be 'all' or bool(props2init) == False"
             )
 
-        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H, props2init=props2init)
-        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V, props2init=props2init)
-        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H, props2init=props2init)
-        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V, props2init=props2init)
-
-        devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
+        if self.sector == 'SI':
+            tune_frac_h = TuneFrac(
+                TuneFrac.DEVICES.SI_H, props2init=props2init)
+            tune_frac_v = TuneFrac(
+                TuneFrac.DEVICES.SI_V, props2init=props2init)
+            tune_proc_h = SITuneProc(
+                SITuneProc.DEVICES.H, props2init=props2init)
+            tune_proc_v = SITuneProc(
+                SITuneProc.DEVICES.V, props2init=props2init)
+            devices = (
+                tune_frac_h,
+                tune_frac_v,
+                tune_proc_h,
+                tune_proc_v,
+            )
+        else:
+            tune_frac_h = TuneFrac(
+                TuneFrac.DEVICES.BO_H, props2init=props2init)
+            tune_frac_v = TuneFrac(
+                TuneFrac.DEVICES.BO_V, props2init=props2init)
+            tune_proc_h = BOTuneProc(
+                BOTuneProc.DEVICES.H, props2init=props2init)
+            tune_proc_v = BOTuneProc(
+                BOTuneProc.DEVICES.V, props2init=props2init)
+            trig = _Trigger(trigname='BO-Glob:TI-TuneProc')
+            devices = (
+                tune_frac_h,
+                tune_frac_v,
+                tune_proc_h,
+                tune_proc_v,
+                trig
+            )
 
         # call base class constructor
         super().__init__(devices, devname=devname)
+
+    @property
+    def sector(self):
+        """."""
+        return self._sector
 
     @property
     def dev_tune_frac_h(self):
@@ -246,14 +280,52 @@ class Tune(_DeviceSet):
         return self.devices[3]
 
     @property
+    def dev_trig(self):
+        """."""
+        if self.sector == 'BO':
+            return self.devices[4]
+
+    @property
     def tunex(self):
         """Tune Frac X."""
+        if self.sector == 'SI':
             return self.dev_tune_frac_h.tune
 
     @property
     def tuney(self):
         """Tune Frac Y."""
+        if self.sector == 'SI':
             return self.dev_tune_frac_v.tune
+
+    @property
+    def trig_nr_pulses(self):
+        """."""
+        if self.sector == 'BO':
+            return self.dev_trig.nr_pulses
+
+    @property
+    def frame_countx(self):
+        """."""
+        if self.sector == 'BO':
+            return self.dev_tune_proc_h.frame_count
+
+    @property
+    def frame_county(self):
+        """."""
+        if self.sector == 'BO':
+            return self.dev_tune_proc_v.frame_count
+
+    @property
+    def spectx(self):
+        """."""
+        if self.sector == 'BO':
+            return self._get_spect(self.dev_proc_h)
+
+    @property
+    def specty(self):
+        """."""
+        if self.sector == 'BO':
+            return self._get_spect(self.dev_proc_v)
 
     @property
     def spanx(self):
@@ -345,6 +417,16 @@ class Tune(_DeviceSet):
     def cmd_excitation_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Disable tune Y excitation."""
         return self.devices[1].cmd_excitation_disable(timeout=timeout)
+
+    def _get_spect(self, dev_proc):
+        """."""
+        if self.sector == 'BO':
+            nr_pulses = self.trig_nr_pulses
+            sweep_nrpts = dev_proc.sweep_nrpts
+            data = dev_proc.tune_spect_array
+            data = data[:sweep_nrpts*nr_pulses]
+            spect = data.reshape(nr_pulses, -1)
+            return spect
 
 
 class TuneCorr(_Device):
