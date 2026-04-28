@@ -172,12 +172,12 @@ class BOTuneProc(_Device):
         super().__init__(devname, props2init=props2init)
 
     @property
-    def sweep_nrpts(self):
+    def freq_sweep_nrpts(self):
         """."""
-        return int(self['SwePts-RB'])
+        return int(self['SwePts-RB'])  # type: ignore
 
-    @sweep_nrpts.setter
-    def sweep_nrpts(self, value):
+    @freq_sweep_nrpts.setter
+    def freq_sweep_nrpts(self, value):
         """."""
         self['SwePts-SP'] = value
 
@@ -433,10 +433,12 @@ class Tune(_DeviceSet):
     def _get_spect(self, dev_proc):
         """."""
         nr_pulses = self.trig_nr_pulses
-        sweep_nrpts = dev_proc.sweep_nrpts
+        freq_sweep_nrpts = dev_proc.freq_sweep_nrpts
+        size = freq_sweep_nrpts * nr_pulses
         data = dev_proc.tune_spect_array
-        data = data[:sweep_nrpts*nr_pulses]
+        data = data[:size]
         spect = data.reshape(nr_pulses, -1)
+        spect = spect[::-1, :]
         return spect
 
 
