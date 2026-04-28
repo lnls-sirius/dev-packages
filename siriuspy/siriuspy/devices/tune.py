@@ -144,6 +144,54 @@ class SITuneProc(_Device):
         return self['Trace-Mon']
 
 
+class BOTuneProc(_Device):
+    """Tune Proc device."""
+
+    class DEVICES:
+        """Devices names."""
+
+        H = 'BO-Glob:DI-TuneProc-H'
+        V = 'BO-Glob:DI-TuneProc-V'
+        ALL = (H, V)
+
+    PROPERTIES_DEFAULT = (
+        'SpecArray-Mon',
+        'SwePts-SP',
+        'SwePts-RB',
+        'FrameCount-Mon',
+    )
+
+    def __init__(self, devname, props2init='all'):
+        """Init."""
+        # check if device exists
+        if devname not in BOTuneProc.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, props2init=props2init)
+
+    @property
+    def sweep_nrpts(self):
+        """."""
+        return int(self['SwePts-RB'])
+
+    @sweep_nrpts.setter
+    def sweep_nrpts(self, value):
+        """."""
+        self['SwePts-SP'] = value
+
+    @property
+    def frame_count(self):
+        """."""
+        return self['FrameCount-Mon']
+
+    @property
+    def tune_spect_array(self):
+        """Tune spect array."""
+        spect = self['SpecArray-Mon']
+        return spect
+
+
 class Tune(_DeviceSet):
     """Tune device."""
 

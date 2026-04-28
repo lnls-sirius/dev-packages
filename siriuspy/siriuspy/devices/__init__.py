@@ -88,7 +88,7 @@ from .screen import Screen
 from .sofb import SOFB
 from .syncd import DevicesSync
 from .timing import Event, EVG, HLTiming, Trigger
-from .tune import Tune, TuneCorr, TuneFrac, SITuneProc
+from .tune import Tune, TuneCorr, TuneFrac, SITuneProc, BOTuneProc
 
 del device, bpm, dcct, egun, ict, lillrf, modltr
 del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
