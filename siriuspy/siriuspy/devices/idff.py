@@ -515,7 +515,23 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     IDFF_CC_LABELS = _IDSearch.IDFF_CC_LABELS
 
 
-class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
+class IDFFCtrlHardUE(IDFFCtrlHard):
+    """."""
+
+    PARAM_PVS = _dcopy(IDFFCtrlHard.PARAM_PVS)
+    PARAM_PVS.TABLE_SP = 'Table1-SP'
+    PARAM_PVS.TABLE_RB = 'Table1-RB'
+
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
+
+
+class IDFFCtrlHardUE_CHCV(IDFFCtrlHardUE):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
@@ -530,7 +546,7 @@ class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
     IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
 
 
-class IDFFCtrlHardUE_QS(IDFFCtrlHard):
+class IDFFCtrlHardUE_QS(IDFFCtrlHardUE):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
@@ -544,7 +560,7 @@ class IDFFCtrlHardUE_QS(IDFFCtrlHard):
     IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
 
 
-class IDFFCtrlHardUE_LC(IDFFCtrlHard):
+class IDFFCtrlHardUE_LC(IDFFCtrlHardUE):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
