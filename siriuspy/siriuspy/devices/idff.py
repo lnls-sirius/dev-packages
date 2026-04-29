@@ -521,8 +521,8 @@ class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
-        ALL = (UE44_11SP_HARD, )
+        UE44_11SP_HARD_CHCV = 'SI-11SP:BS-IDFF-CHCV'
+        ALL = (UE44_11SP_HARD_CHCV, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
@@ -536,8 +536,8 @@ class IDFFCtrlHardUE_QS(IDFFCtrlHard):
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_HARD = "SI-11SP:BS-IDFF-QS"
-        ALL = (UE44_11SP_HARD, )
+        UE44_11SP_HARD_QS = "SI-11SP:BS-IDFF-QS"
+        ALL = (UE44_11SP_HARD_QS, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
@@ -550,8 +550,8 @@ class IDFFCtrlHardUE_LC(IDFFCtrlHard):
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_HARD = "SI-11SP:BS-IDFF-LC"
-        ALL = (UE44_11SP_HARD, )
+        UE44_11SP_HARD_LC = "SI-11SP:BS-IDFF-LC"
+        ALL = (UE44_11SP_HARD_LC, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
