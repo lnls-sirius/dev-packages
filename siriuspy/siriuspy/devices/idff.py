@@ -491,9 +491,8 @@ class IDFFCtrlHardIVU(IDFFCtrlHard):
         """Device names."""
 
         IVU18_08SB_HARD = 'SI-08SB:BS-IDFF-CHCV'
-        IVU18_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
         IVU18_14SB_HARD = 'SI-14SB:BS-IDFF-CHCV'
-        ALL = (IVU18_08SB_HARD, IVU18_11SP_HARD, IVU18_14SB_HARD)
+        ALL = (IVU18_08SB_HARD, IVU18_14SB_HARD)
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
