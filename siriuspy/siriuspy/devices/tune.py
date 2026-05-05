@@ -442,8 +442,8 @@ class Tune(_DeviceSet):
         return spect
 
 
-class TuneCorr(_Device):
-    """TuneCorr device."""
+class SITuneCorr(_Device):
+    """SI TuneCorr device."""
 
     class DEVICES:
         """Devices names."""
@@ -463,8 +463,8 @@ class TuneCorr(_Device):
     def __init__(self, devname=None, props2init='all'):
         """Init."""
         if devname is None:
-            devname = TuneCorr.DEVICES.SI
-        if devname not in TuneCorr.DEVICES.ALL:
+            devname = SITuneCorr.DEVICES.SI
+        if devname not in SITuneCorr.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
