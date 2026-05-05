@@ -51,7 +51,7 @@ class TuneFrac(_Device):
 
     @property
     def sector(self):
-        """."""
+        """Sector (BO/SI)."""
         return self._sector
 
     @property
@@ -62,7 +62,7 @@ class TuneFrac(_Device):
 
     @property
     def span(self):
-        """Span [kHz]."""
+        """Frequency Span [kHz]."""
         return self['Span-RB']
 
     @span.setter
@@ -76,10 +76,10 @@ class TuneFrac(_Device):
 
     @rev_harmonic.setter
     def rev_harmonic(self, value):
-        """Revolution harmonic."""
-        if not 0 <= int(value) <= 864:
-            raise ValueError('rev_harmonic must be in range [0, 864]')
-        self['RevN-SP'] = int(value)
+        value = int(value)
+        if value <= 0:
+            raise ValueError('rev_harmonic must be positive')
+        self['RevN-SP'] = value
 
     @property
     def center_frequency(self):
