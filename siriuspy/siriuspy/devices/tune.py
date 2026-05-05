@@ -1,5 +1,7 @@
 """Tune devices."""
 
+from ..optics.constants import SI as _SI, BO as _BO
+
 from .device import Device as _Device, DeviceSet as _DeviceSet
 from .timing import Trigger as _Trigger
 
@@ -39,8 +41,9 @@ class TuneFrac(_Device):
         """Init."""
         if devname not in TuneFrac.DEVICES.ALL:
             raise NotImplementedError(devname)
-        self._sector = 'SI' if devname.startswith('SI') else 'BO'
-        if self.sector == 'SI':
+        is_si = devname.startswith(_SI.sector)
+        self._sector = _SI.sector if is_si else _BO.sector
+        if self.sector == _SI.sector:
             self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_SI
         else:
             self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_BO
@@ -54,7 +57,7 @@ class TuneFrac(_Device):
     @property
     def tune(self):
         """Tune Frac."""
-        if self.sector == 'SI':
+        if self.sector == _SI.sector:
             return self['TuneFrac-Mon']
 
     @property
@@ -210,15 +213,15 @@ class Tune(_DeviceSet):
             devname = Tune.DEVICES.SI
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
-        self._sector = 'SI' if devname.startswith('SI') else 'BO'
-
+        is_si = devname.startswith(_SI.sector)
+        self._sector = _SI.sector if is_si else _BO.sector
         isall = isinstance(props2init, str) and props2init.lower() == 'all'
         if not isall and props2init:
             raise ValueError(
                 "props2init must be 'all' or bool(props2init) == False"
             )
 
-        if self.sector == 'SI':
+        if self.sector == _SI.sector:
             tune_frac_h = TuneFrac(
                 TuneFrac.DEVICES.SI_H, props2init=props2init)
             tune_frac_v = TuneFrac(
@@ -282,61 +285,61 @@ class Tune(_DeviceSet):
     @property
     def dev_trig(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self.devices[4]
 
     @property
     def tunex(self):
         """Tune Frac X."""
-        if self.sector == 'SI':
+        if self.sector == _SI.sector:
             return self.dev_tune_frac_h.tune
 
     @property
     def tuney(self):
         """Tune Frac Y."""
-        if self.sector == 'SI':
+        if self.sector == _SI.sector:
             return self.dev_tune_frac_v.tune
 
     @property
     def trig_nr_pulses(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self.dev_trig.nr_pulses
 
     @property
     def frame_countx(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self.dev_tune_proc_h.frame_count
 
     @property
     def frame_county(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self.dev_tune_proc_v.frame_count
 
     @property
     def spectx(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self._get_spect(self.dev_tune_proc_h)
 
     @property
     def specty(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self._get_spect(self.dev_tune_proc_v)
 
     @property
     def spectx_acquisition_status(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self.frame_countx == self.trig_nr_pulses
 
     @property
     def specty_acquisition_status(self):
         """."""
-        if self.sector == 'BO':
+        if self.sector == _BO.sector:
             return self.frame_county == self.trig_nr_pulses
 
     @property
