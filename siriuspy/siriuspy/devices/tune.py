@@ -414,6 +414,22 @@ class Tune(_DeviceSet):
         """Tune Y enable status."""
         return self.devices[1].enable
 
+    def cmd_acquisition_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune X acquisition."""
+        return self.dev_tune_frac_h.cmd_acquisition_enable(timeout=timeout)
+
+    def cmd_acquisition_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune Y acquisition."""
+        return self.dev_tune_frac_v.cmd_acquisition_enable(timeout=timeout)
+
+    def cmd_acquisition_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune X acquisition."""
+        return self.dev_tune_frac_h.cmd_acquisition_disable(timeout=timeout)
+
+    def cmd_acquisition_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune Y acquisition."""
+        return self.dev_tune_frac_v.cmd_acquisition_disable(timeout=timeout)
+
     def cmd_excitation_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Enable tune X excitation."""
         return self.devices[0].cmd_excitation_enable(timeout=timeout)
