@@ -1,6 +1,11 @@
 """Diagnostic equipments configuration."""
 from copy import deepcopy as _dcopy
 
+from ...optics.constants import SI as _SI
+
+
+SI_HARM_NR = _SI.harmonic_number
+
 
 def get_dict():
     """Return configuration type dictionary."""
@@ -423,7 +428,7 @@ _bpm_propts = [
     [':GENTriggerHwDly-SP', 0, 0.0],
     [':PMTriggerHwDly-SP', 0, 0.0],
     # [':INFOClkFreq-SP', 220910069.0, 0.0],
-    [':INFOHarmonicNumber-SP', 864, 0.0],
+    [':INFOHarmonicNumber-SP', _SI_HARM_NR, 0.0],
     [':INFOTbTRate-SP', 382, 0.0],
     [':INFOFOFBRate-SP', 8786, 0.0],
     [':INFOMONITRate-SP', 21929856, 0.0],

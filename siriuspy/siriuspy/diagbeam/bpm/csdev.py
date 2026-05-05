@@ -3,6 +3,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 
 from ... import csdev as _csdev
+from ...optics.constants import SI as _SI
 
 
 # --- Enumeration Types ---
@@ -79,9 +80,11 @@ class Const(_csdev.Const):
             'INFOFOFBRate-RB': {
                 'type': 'int', 'value': 1910, 'low': 0, 'high': 2**31-1},
             'INFOHarmonicNumber-SP': {
-                'type': 'int', 'value': 864, 'low': 0, 'high': 2**31-1},
+                'type': 'int', 'value': _SI.harmonic_number,
+                'low': 0, 'high': 2**31-1},
             'INFOHarmonicNumber-RB': {
-                'type': 'int', 'value': 864, 'low': 0, 'high': 2**31-1},
+                'type': 'int', 'value': _SI.harmonic_number,
+                'low': 0, 'high': 2**31-1},
             'INFOMONITRate-SP': {
                 'type': 'int', 'value': 21965000, 'low': 0, 'high': 2**31-1},
             'INFOMONITRate-RB': {

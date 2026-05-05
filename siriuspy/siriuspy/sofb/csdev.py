@@ -5,6 +5,7 @@ from copy import deepcopy as _dcopy
 from .. import csdev as _csdev
 from ..diagbeam.bpm.csdev import Const as _CSBPM
 from ..namesys import SiriusPVName as _PVName
+from ..optics.constants import SI as _SI, BO as _BO
 from ..search import BPMSearch as _BPMSearch, LLTimeSearch as _TISearch, \
     MASearch as _MASearch, PSSearch as _PSSearch
 from ..timesys import csdev as _cstiming
@@ -783,9 +784,9 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        self.circum = 496.8  # in meter
-        self.harm_number = 828
-        self.rev_per = self.circum / 299792458  # in seconds
+        self.circum = _BO.circumference  # [m]  # NOTE: 496.8 m -> 496.396 m
+        self.harm_number = _BO.harmonic_number
+        self.rev_per = self.circum / 299792458  # [s]
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
@@ -997,9 +998,9 @@ class SOFBSI(SOFBRings, ConstSI):
         vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
         evts = vals["Src-Sel"]["enums"]
         self.CorrExtEvtSrc = self.register("CorrExtEvtSrc", evts)
-        self.circum = 518.396  # in meter
-        self.harm_number = 864
-        self.rev_per = self.circum / 299792458  # in seconds
+        self.circum = _SI.circumference  # [m]
+        self.harm_number = _SI.harmonic_number
+        self.rev_per = _SI.rev_period  # [s]
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""

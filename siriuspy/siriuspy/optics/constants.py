@@ -20,6 +20,8 @@ class SI(Ring):
 class BO(Ring):
     """BO."""
 
+    sector = 'BO'
+    beam_energy = 0.150  # [GeV] - Low Energy Booster
     length = 496.396  # [m]
     circumference = length
     harmonic_number = 828
