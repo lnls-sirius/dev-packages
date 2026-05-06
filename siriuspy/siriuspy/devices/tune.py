@@ -1,5 +1,6 @@
 """Tune devices."""
 
+from ..namesys import SiriusPVName as _SiriusPVName
 from ..optics.constants import SI as _SI, BO as _BO
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
@@ -41,9 +42,8 @@ class TuneFrac(_Device):
         """Init."""
         if devname not in TuneFrac.DEVICES.ALL:
             raise NotImplementedError(devname)
-        is_si = devname.startswith(_SI.sector)
-        self._sector = _SI.sector if is_si else _BO.sector
-        if self.sector == _SI.sector:
+        devname = _SiriusPVName(devname)
+        if devname.sec == _SI.sector:
             self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_SI
         else:
             self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_BO
@@ -52,7 +52,7 @@ class TuneFrac(_Device):
     @property
     def sector(self):
         """Sector (BO/SI)."""
-        return self._sector
+        return self.devname.sec
 
     @property
     def tune(self):
