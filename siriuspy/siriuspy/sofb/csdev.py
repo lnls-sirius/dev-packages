@@ -784,9 +784,9 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        self.circum = _BO.circumference  # [m]  # NOTE: 496.8 m -> 496.396 m
+        self.circum = _BO.circumference  # [m]  NOTE: 496.8 m -> 496.396 m
         self.harm_number = _BO.harmonic_number
-        self.rev_per = self.circum / 299792458  # [s]
+        self.rev_per = _BO.rev_period
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
