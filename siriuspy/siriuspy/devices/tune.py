@@ -213,15 +213,14 @@ class Tune(_DeviceSet):
             devname = Tune.DEVICES.SI
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
-        is_si = devname.startswith(_SI.sector)
-        self._sector = _SI.sector if is_si else _BO.sector
+        devname = _SiriusPVName(devname)
         isall = isinstance(props2init, str) and props2init.lower() == 'all'
         if not isall and props2init:
             raise ValueError(
                 "props2init must be 'all' or bool(props2init) == False"
             )
 
-        if self.sector == _SI.sector:
+        if devname.sec == _SI.sector:
             tune_frac_h = TuneFrac(
                 TuneFrac.DEVICES.SI_H, props2init=props2init)
             tune_frac_v = TuneFrac(
@@ -260,7 +259,7 @@ class Tune(_DeviceSet):
     @property
     def sector(self):
         """."""
-        return self._sector
+        return self.devname.sec
 
     @property
     def dev_tune_frac_h(self):
