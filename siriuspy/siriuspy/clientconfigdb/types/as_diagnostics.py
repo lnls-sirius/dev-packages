@@ -1,7 +1,7 @@
 """Diagnostic equipments configuration."""
 from copy import deepcopy as _dcopy
 
-from ...optics.constants import SI as _SI
+from siriuspy.optics.constants import SI as _SI
 
 
 SI_HARM_NR = _SI.harmonic_number

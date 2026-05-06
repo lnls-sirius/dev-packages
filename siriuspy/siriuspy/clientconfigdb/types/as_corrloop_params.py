@@ -1,7 +1,7 @@
 """Parameters of the IOCs of the AP discipline."""
 from copy import deepcopy as _dcopy
 
-from ...optics.constants import SI as _SI
+from siriuspy.optics.constants import SI as _SI
 
 
 _SI_HARM_NR = _SI.harmonic_number

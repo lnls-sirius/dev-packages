@@ -3,7 +3,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 
 from ... import csdev as _csdev
-from ...optics.constants import SI as _SI
+from siriuspy.optics.constants import SI as _SI
 
 
 # --- Enumeration Types ---
