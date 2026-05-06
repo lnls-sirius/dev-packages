@@ -453,14 +453,8 @@ class Tune(_DeviceSet):
 
     def _get_spect(self, dev_proc):
         """."""
-        nr_pulses = self.trig_nr_pulses
-        freq_sweep_nrpts = dev_proc.freq_sweep_nrpts
-        size = freq_sweep_nrpts * nr_pulses
-        data = dev_proc.tune_spect_array
-        data = data[:size]
-        spect = data.reshape(nr_pulses, -1)
-        spect = spect[::-1, :]
-        return spect
+        spect = dev_proc.tune_spect_array[:dev_proc.frame_count]
+        return spect[::-1]
 
 
 class SITuneCorr(_Device):
