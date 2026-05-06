@@ -200,7 +200,7 @@ class SOFBTLines(ConstTLines):
         ext = acc.lower() + "respmat"
         self.respmat_fname = _os.path.join(ioc_fol, "respmat." + ext)
 
-        self.trigger_acq_name = self.acc.section + '-Fam:TI-BPM'
+        self.trigger_acq_name = self.acc.sector + '-Fam:TI-BPM'
         if self.acc == _SI:
             self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
             self.evt_cor_name = 'Orb' + self.acc
