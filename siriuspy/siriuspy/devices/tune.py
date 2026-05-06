@@ -193,6 +193,9 @@ class BOTuneProc(_Device):
     def tune_spect_array(self):
         """Tune spect array."""
         spect = self['SpecArray-Mon']
+        swnpts = self.freq_sweep_nrpts
+        siz = (spect.size // swnpts) * swnpts
+        spect = spect[:siz].reshape(-1, swnpts)
         return spect
 
 
