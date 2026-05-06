@@ -38,8 +38,8 @@ class ETypes(_csdev.ETypes):
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     DRIVE_TYPE = ('Sine', 'Square', 'Impulse')
-    TLINES = (_TB.section, _TS.section)
-    RINGS = (_BO.section, _SI.section)
+    TLINES = (_TB.sector, _TS.sector)
+    RINGS = (_BO.sector, _SI.sector)
     ACCELERATORS = TLINES + RINGS
 
     STS_LBLS_CORR_TLINES = (
