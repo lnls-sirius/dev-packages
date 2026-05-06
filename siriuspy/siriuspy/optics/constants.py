@@ -19,6 +19,22 @@ class Accelerator:
     sector = ''
     length = 0.0  # [m]
 
+    @_ClassProperty
+    def beam_rigidity(cls):
+        """Beam ridigity."""
+        brho = _bopts.beam_rigidity(energy=cls.beam_energy)
+        return brho
+
+    @_ClassProperty
+    def velocity(cls):
+        """Beam velocity [m/s]."""
+        _, velocity, *_ = cls.beam_rigidity
+        return velocity
+
+
+class TLine(Accelerator):
+    """Transport line."""
+
 
 class Ring(Accelerator):
     """Ring."""
@@ -29,15 +45,9 @@ class Ring(Accelerator):
         return cls.length
 
     @_ClassProperty
-    def beam_rigidity(cls):
-        """Beam ridigity."""
-        brho = _bopts.beam_rigidity(energy=cls.beam_energy)
-        return brho
-
-    @_ClassProperty
     def rev_period(cls):
         """Return revolution period [s]."""
-        _, velocity, *_ = cls.beam_rigidity
+        velocity = cls.velocity
         return cls.circumference / velocity
 
     @_ClassProperty
@@ -63,3 +73,19 @@ class BO(Ring):
     beam_energy = 0.150  # [GeV] - Low Energy
     length = 496.396  # [m]
     harmonic_number = 828
+
+
+class TB(TLine):
+    """TB."""
+
+    sector = 'TB'
+    beam_energy = 0.150  # [GeV]
+    length = 21.2477  # [m]
+
+
+class TS(TLine):
+    """TS."""
+
+    sector = 'TS'
+    beam_energy = 3  # [GeV]
+    length = 26.8933  # [m]
