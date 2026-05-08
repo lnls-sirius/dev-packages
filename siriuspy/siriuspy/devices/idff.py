@@ -61,6 +61,15 @@ class _ParamPVs:
                 str_ += lstr if str_ == '' else '\n' + lstr
         return str_
 
+    def _properties_default(self):
+        return tuple(
+            set(
+                value
+                for key, value in _inspect.getmembers(self)
+                if not key.startswith('_') and value is not None
+            )
+        )
+
 
 class IDFFCtrlBase(_Device):
     """ID Feedforward Control Device Base."""
@@ -76,13 +85,7 @@ class IDFFCtrlBase(_Device):
 
     PARAM_PVS = _ParamPVs()
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
@@ -296,13 +299,7 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     PARAM_PVS.CORRSTATUS_MON = 'CorrStatus-Mon'
     PARAM_PVS.CORRSTATUSLABELS_CTE = 'CorrStatusLabels-Cte'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     @property
     def configname(self):
@@ -334,13 +331,7 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     PARAM_PVS.CORRQS_1CURRENT_MON = 'CorrQS_1Current-Mon'
     PARAM_PVS.CORRQS_2CURRENT_MON = 'CorrQS_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -379,13 +370,7 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
     PARAM_PVS.CORRQF_2CURRENT_MON = 'CorrQF_2Current-Mon'
     PARAM_PVS.CORRQD2_2CURRENT_MON = 'CorrQD2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -420,13 +405,7 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
     PARAM_PVS.CORRCC1_2CURRENT_MON = 'CorrCC1_2Current-Mon'
     PARAM_PVS.CORRCC2_2CURRENT_MON = 'CorrCC2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -453,13 +432,7 @@ class IDFFCtrlHard(IDFFCtrlBase):
     PARAM_PVS.TABLE_SP = 'Table-SP'
     PARAM_PVS.TABLE_RB = 'Table-RB'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def get_ffwd_table_corr_labels(self):
         """."""
@@ -522,13 +495,7 @@ class IDFFCtrlHardUE(IDFFCtrlHard):
     PARAM_PVS.TABLE_SP = 'Table1-SP'
     PARAM_PVS.TABLE_RB = 'Table1-RB'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
 
 class IDFFCtrlHardUE_CHCV(IDFFCtrlHardUE):
