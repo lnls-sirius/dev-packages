@@ -503,8 +503,8 @@ class IDFFCtrlHardUE(IDFFCtrlHard):
     """."""
 
     PARAM_PVS = _dcopy(IDFFCtrlHard.PARAM_PVS)
-    PARAM_PVS.TABLE_SP = 'Table1-SP'
-    PARAM_PVS.TABLE_RB = 'Table1-RB'
+    PARAM_PVS.TABLE_SP = [f'Table{i}-SP' for i in range(10)]
+    PARAM_PVS.TABLE_RB = [f'Table{i}-RB' for i in range(10)]
 
     PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
