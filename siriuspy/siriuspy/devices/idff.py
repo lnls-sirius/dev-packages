@@ -62,13 +62,15 @@ class _ParamPVs:
         return str_
 
     def _properties_default(self):
-        return tuple(
-            set(
-                value
-                for key, value in _inspect.getmembers(self)
-                if not key.startswith('_') and value is not None
-            )
+        props = set(
+            value
+            for key, value in _inspect.getmembers(self)
+            if not key.startswith('_') and not isinstance(value, list) and value is not None
         )
+        for key, value in _inspect.getmembers(self):
+            if not key.startswith('_') and isinstance(value, list):
+                props.update(set(value))
+        return tuple(props)
 
 
 class IDFFCtrlBase(_Device):
