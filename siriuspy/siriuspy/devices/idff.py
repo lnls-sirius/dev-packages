@@ -447,12 +447,14 @@ class IDFFCtrlHard(IDFFCtrlBase):
         corr_labels += self.IDFF_QN_LABELS
         return corr_labels
 
+    def get_current_table(self):
+        """Return currently active table PV."""
+        # for most hard devices it's just Table-RB
+        return self[self.PARAM_PVS.TABLE_RB]
+
     def get_ffwd_table(self):
         """Return FF table dict."""
-        param_name = self.PARAM_PVS.TABLE_RB
-        if param_name is None:
-            return dict()
-        ff_table = _np.array(self[param_name])
+        ff_table = _np.array(self.get_current_table())
         clabels = self.get_ffwd_table_corr_labels()
         ff_table = ff_table.reshape(len(clabels), -1)
         ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
