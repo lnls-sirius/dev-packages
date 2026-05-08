@@ -20,6 +20,7 @@ class _ParamPVs:
 
     LOOPSTATE_SEL = 'LoopState-Sel'
     LOOPSTATE_STS = 'LoopState-Sts'
+    TABLEIDX_MON = None
     LOG_MON = None
     LOOPFREQ_SP = None
     LOOPFREQ_RB = None
@@ -431,6 +432,7 @@ class IDFFCtrlHard(IDFFCtrlBase):
         # should be added in derived classes
 
     PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
+    PARAM_PVS.TABLEIDX_MON = 'TableIdx-Mon'
     PARAM_PVS.TABLE_SP = 'Table-SP'
     PARAM_PVS.TABLE_RB = 'Table-RB'
 
@@ -449,8 +451,13 @@ class IDFFCtrlHard(IDFFCtrlBase):
 
     def get_current_table(self):
         """Return currently active table PV."""
-        # for most hard devices it's just Table-RB
-        return self[self.PARAM_PVS.TABLE_RB]
+        # for hard devices with a single table, it's just that table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            return self[self.PARAM_PVS.TABLE_RB]
+
+        # otherwise, we need to choose the table based on the hardware state
+        idx = self[self.PARAM_PVS.TABLEIDX_MON]
+        return self[self.PARAM_PVS.TABLE_RB[idx]]
 
     def get_ffwd_table(self):
         """Return FF table dict."""
