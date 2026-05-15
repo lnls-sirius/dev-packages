@@ -35,8 +35,9 @@ class _ParamPVs:
     CORRCV_2CURRENT_MON = None
     CORRQS_1CURRENT_MON = None
     CORRQS_2CURRENT_MON = None
-    CORRLCHCURRENT_MON = None
-    CORRLCVCURRENT_MON = None
+    CORRLCH_1CURRENT_MON = None
+    CORRLCV_1CURRENT_MON = None
+    CORRLCV_2CURRENT_MON = None
     CORRQD1_1CURRENT_MON = None
     CORRQF_1CURRENT_MON = None
     CORRQD2_1CURRENT_MON = None
@@ -138,15 +139,21 @@ class IDFFCtrlBase(_Device):
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_lch(self):
+    def calc_corr_current_lch_1(self):
         """Return calculated LCH power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRLCHCURRENT_MON
+        curr_name = self.PARAM_PVS.CORRLCH_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_lcv(self):
+    def calc_corr_current_lcv_1(self):
         """Return calculated LCV power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRLCVCURRENT_MON
+        curr_name = self.PARAM_PVS.CORRLCV_1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_lcv_2(self):
+        """Return calculated LCV power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRLCV_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
@@ -254,7 +261,7 @@ class IDFFCtrlBase(_Device):
         elif iddevname.sub in ('10SB',):
             iddevname = iddevname.substitute(dev='DELTA52')
         elif iddevname.sub in ('11SP',):
-            iddevname = iddevname.substitute(dev='SIMUL')
+            iddevname = iddevname.substitute(dev='UE44')
         else:
             pass
         return iddevname
@@ -509,6 +516,50 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     IDFF_CC_LABELS = _IDSearch.IDFF_CC_LABELS
 
 
+class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
+        ALL = (UE44_11SP_HARD, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_CH_LABELS = _IDSearch.IDFF_CH_LABELS
+    IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
+
+
+class IDFFCtrlHardUE_QS(IDFFCtrlHard):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD = "SI-11SP:BS-IDFF-QS"
+        ALL = (UE44_11SP_HARD, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
+
+
+class IDFFCtrlHardUE_LC(IDFFCtrlHard):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD = "SI-11SP:BS-IDFF-LC"
+        ALL = (UE44_11SP_HARD, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
+
+
+
 class IDFFCtrl(IDFFCtrlBase):
     """ID Feedforward Control Device."""
 
@@ -540,6 +591,12 @@ class IDFFCtrl(IDFFCtrlBase):
             return IDFFCtrlSoftVPU
         elif devname in IDFFCtrlHardVPU.DEVICES.ALL:
             return IDFFCtrlHardVPU
+        elif devname in IDFFCtrlHardUE_CHCV.DEVICES.ALL:
+            return IDFFCtrlHardUE_CHCV
+        elif devname in IDFFCtrlHardUE_QS.DEVICES.ALL:
+            return IDFFCtrlHardUE_QS
+        elif devname in IDFFCtrlHardUE_LC.DEVICES.ALL:
+            return IDFFCtrlHardUE_LC
         return None
 
 
