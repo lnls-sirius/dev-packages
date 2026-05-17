@@ -403,7 +403,7 @@ class ClientArchiver:
         resp = self.make_request(url)
         return None if not resp else resp
 
-    def get_report(self, report_method=ClientArchiver.ReportType.PausedPVs, max_num_pvs=None):
+    def get_report(self, report_method=ClientArchiver.ReportTypes.PausedPVs, max_num_pvs=None):
         """Get Paused PVs Report.
 
         Call report methods of the Archiver Appliance. Possible reports methods are:
