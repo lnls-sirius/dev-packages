@@ -438,6 +438,9 @@ class ClientArchiver:
         if report_method not in self.ReportTypes:
             raise ValueError('`report_method` should be one of `self.ReportTypes`.')
 
+        if report_method not in self.ReportTypes:
+            raise ValueError('`report_method` should be one of `self.ReportTypes`.')
+            
         if max_num_pvs is not None:
             max_num_pvs = f'{int(max_num_pvs)}'
             url = self._create_url(method=report_method, limit=max_num_pvs)
