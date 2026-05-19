@@ -2,15 +2,7 @@
 
 from mathphys import beam_optics as _bopts
 
-
-class _ClassProperty:
-    """."""
-
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, obj, cls):
-        return self.func(cls)
+from ..util import ClassProperty as _ClassProperty
 
 
 class Accelerator:
