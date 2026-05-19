@@ -405,8 +405,9 @@ class ClientArchiver:
 
     def get_report(
             self,
-            report_method=ClientArchiver.ReportTypes.PausedPVs,
-            max_num_pvs=None):
+            report_method=ReportTypes.PausedPVs,
+            max_num_pvs=None
+        ):
         """Get Paused PVs Report.
 
         Call report methods of the Archiver Appliance.
