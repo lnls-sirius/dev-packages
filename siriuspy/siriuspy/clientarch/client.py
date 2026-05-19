@@ -434,7 +434,7 @@ class ClientArchiver:
 
         Args:
             report_method (str): Report method name.
-            Use self.ReportTypes to get all available reports methods.
+                Use self.ReportTypes to get all available reports methods.
             max_num_pvs (int): Maximum number of PVs to return.
 
         Returns:
