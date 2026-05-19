@@ -210,7 +210,6 @@ class SOFBTLines(ConstTLines):
         self.evt_acq_name = "Linac"
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
-        self.circum = self.acc.length
 
     @property
     def isring(self):
@@ -788,7 +787,6 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        self.circum = 496.8  # in meter
         self.harm_number = 828
 
     def get_sofb_database(self, prefix=""):
@@ -1001,7 +999,6 @@ class SOFBSI(SOFBRings, ConstSI):
         vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
         evts = vals["Src-Sel"]["enums"]
         self.CorrExtEvtSrc = self.register("CorrExtEvtSrc", evts)
-        self.circum = 518.396  # in meter
         self.harm_number = 864
 
     def get_sofb_database(self, prefix=""):
