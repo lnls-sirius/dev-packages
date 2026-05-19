@@ -211,7 +211,6 @@ class SOFBTLines(ConstTLines):
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
         self.circum = self.acc.length
-        self.rev_per = self.circum / self.acc.velocity
 
     @property
     def isring(self):
@@ -791,7 +790,6 @@ class SOFBRings(SOFBTLines, ConstRings):
         SOFBTLines.__init__(self, acc)
         self.circum = 496.8  # in meter
         self.harm_number = 828
-        self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
@@ -1005,7 +1003,6 @@ class SOFBSI(SOFBRings, ConstSI):
         self.CorrExtEvtSrc = self.register("CorrExtEvtSrc", evts)
         self.circum = 518.396  # in meter
         self.harm_number = 864
-        self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
