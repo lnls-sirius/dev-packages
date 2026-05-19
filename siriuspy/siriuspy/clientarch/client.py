@@ -410,19 +410,19 @@ class ClientArchiver:
 
         Call report methods of the Archiver Appliance.
         Possible reports methods are:
-            - ReportType.DisconnectedPVs --> `getCurrentlyDisconnectedPVs`
-            - ReportType.PausedPVs --> `getPausedPVsReport`
-            - ReportType.EventRate --> `getEventRateReport`
-            - ReportType.StorageRate --> `getStorageRateReport`
-            - ReportType.RecentlyAddedPVs --> `getRecentlyAddedPVs`
-            - ReportType.RecentlyModifiedPVs --> `getRecentlyModifiedPVs`
-            - ReportType.LostConnections --> `getLostConnectionsReport`
-            - ReportType.LastKnownTimestamps --> `getSilentPVsReport`
-            - ReportType.DroppedEventsWrongTimestamp -->
+            - ReportTypes.DisconnectedPVs --> `getCurrentlyDisconnectedPVs`
+            - ReportTypes.PausedPVs --> `getPausedPVsReport`
+            - ReportTypes.EventRate --> `getEventRateReport`
+            - ReportTypes.StorageRate --> `getStorageRateReport`
+            - ReportTypes.RecentlyAddedPVs --> `getRecentlyAddedPVs`
+            - ReportTypes.RecentlyModifiedPVs --> `getRecentlyModifiedPVs`
+            - ReportTypes.LostConnections --> `getLostConnectionsReport`
+            - ReportTypes.LastKnownTimestamps --> `getSilentPVsReport`
+            - ReportTypes.DroppedEventsWrongTimestamp -->
                 `getPVsByDroppedEventsTimestamp`
-            - ReportType.DroppedEventsBufferOverflow -->
+            - ReportTypes.DroppedEventsBufferOverflow -->
                 `getPVsByDroppedEventsBuffer`
-            - ReportType.DroppedEventsTypeChange -->
+            - ReportTypes.DroppedEventsTypeChange -->
                 `getPVsByDroppedEventsTypeChange`
         For details on the content of each report, please, refer to the
         Archiver Appliance documentation.
@@ -433,19 +433,14 @@ class ClientArchiver:
         `RecentlyModifiedPVs` report.
 
         Args:
-            report_method (str): Report method name. Use self.ReportTypes to get
-                all available reports methods.
+            report_method (str): Report method name.
+            Use self.ReportTypes to get all available reports methods.
             max_num_pvs (int): Maximum number of PVs to return.
 
         Returns:
             dict: Report results.
 
         """
-        if report_method not in self.ReportTypes:
-            raise ValueError(
-                '`report_method` should be one of `self.ReportTypes`.'
-            )
-
         if report_method not in self.ReportTypes:
             raise ValueError(
                 '`report_method` should be one of `self.ReportTypes`.'
