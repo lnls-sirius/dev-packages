@@ -20,7 +20,7 @@ import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
     ClientSession as _ClSession,
-    TCPConnector as _TCPConn
+    TCPConnector as _TCPConn,
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -403,21 +403,27 @@ class ClientArchiver:
         resp = self.make_request(url)
         return None if not resp else resp
 
-    def get_report(self, report_name='PausedPVs', max_num_pvs=None):
+    def get_report(
+        self, report_method=ReportTypes.PausedPVs, max_num_pvs=None
+    ):
         """Get Paused PVs Report.
 
-        Call report methods of the Archiver Appliance. Possible reports are:
-            - DisconnectedPVs --> `getCurrentlyDisconnectedPVs`
-            - PausedPVs --> `getPausedPVsReport`
-            - EventRate --> `getEventRateReport`
-            - StorageRate --> `getStorageRateReport`
-            - RecentlyAddedPVs --> `getRecentlyAddedPVs`
-            - RecentlyModifiedPVs --> `getRecentlyModifiedPVs`
-            - LostConnections --> `getLostConnectionsReport`
-            - LastKnownTimestamps --> `getSilentPVsReport`
-            - DroppedEventsWrongTimestamp --> `getPVsByDroppedEventsTimestamp`
-            - DroppedEventsBufferOverflow --> `getPVsByDroppedEventsBuffer`
-            - DroppedEventsTypeChange --> `getPVsByDroppedEventsTypeChange`
+        Call report methods of the Archiver Appliance.
+        Possible reports methods are:
+            - ReportTypes.DisconnectedPVs --> `getCurrentlyDisconnectedPVs`
+            - ReportTypes.PausedPVs --> `getPausedPVsReport`
+            - ReportTypes.EventRate --> `getEventRateReport`
+            - ReportTypes.StorageRate --> `getStorageRateReport`
+            - ReportTypes.RecentlyAddedPVs --> `getRecentlyAddedPVs`
+            - ReportTypes.RecentlyModifiedPVs --> `getRecentlyModifiedPVs`
+            - ReportTypes.LostConnections --> `getLostConnectionsReport`
+            - ReportTypes.LastKnownTimestamps --> `getSilentPVsReport`
+            - ReportTypes.DroppedEventsWrongTimestamp -->
+                `getPVsByDroppedEventsTimestamp`
+            - ReportTypes.DroppedEventsBufferOverflow -->
+                `getPVsByDroppedEventsBuffer`
+            - ReportTypes.DroppedEventsTypeChange -->
+                `getPVsByDroppedEventsTypeChange`
         For details on the content of each report, please, refer to the
         Archiver Appliance documentation.
 
@@ -427,20 +433,24 @@ class ClientArchiver:
         `RecentlyModifiedPVs` report.
 
         Args:
-            report_name (str): Report name. Use self.ReportTypes to get
-                all available reports.
+            report_method (str): Report method name.
+                Use self.ReportTypes to get all available reports methods.
             max_num_pvs (int): Maximum number of PVs to return.
 
         Returns:
             dict: Report results.
 
         """
-        method = getattr(self.ReportTypes, report_name)
+        if report_method not in self.ReportTypes:
+            raise ValueError(
+                '`report_method` should be one of `self.ReportTypes`.'
+            )
+
         if max_num_pvs is not None:
             max_num_pvs = f'{int(max_num_pvs)}'
-            url = self._create_url(method=method, limit=max_num_pvs)
+            url = self._create_url(method=report_method, limit=max_num_pvs)
         else:
-            url = self._create_url(method=method)
+            url = self._create_url(method=report_method)
 
         resp = self.make_request(url)
         return None if not resp else resp
@@ -460,7 +470,7 @@ class ClientArchiver:
         """
         resp = self.get_report(
             self,
-            report_name=self.ReportTypes.RecentlyModifiedPVs,
+            report_method=self.ReportTypes.RecentlyModifiedPVs,
             max_num_pvs=max_num_pvs,
         )
 
