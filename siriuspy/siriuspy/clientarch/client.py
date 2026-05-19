@@ -20,7 +20,7 @@ import urllib3 as _urllib3
 from aiohttp import (
     client_exceptions as _aio_exceptions,
     ClientSession as _ClSession,
-    TCPConnector as _TCPConn
+    TCPConnector as _TCPConn,
 )
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
@@ -404,10 +404,8 @@ class ClientArchiver:
         return None if not resp else resp
 
     def get_report(
-            self,
-            report_method=ReportTypes.PausedPVs,
-            max_num_pvs=None
-        ):
+        self, report_method=ReportTypes.PausedPVs, max_num_pvs=None
+    ):
         """Get Paused PVs Report.
 
         Call report methods of the Archiver Appliance.
