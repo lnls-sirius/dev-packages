@@ -403,10 +403,14 @@ class ClientArchiver:
         resp = self.make_request(url)
         return None if not resp else resp
 
-    def get_report(self, report_method=ClientArchiver.ReportTypes.PausedPVs, max_num_pvs=None):
+    def get_report(
+            self,
+            report_method=ClientArchiver.ReportTypes.PausedPVs,
+            max_num_pvs=None):
         """Get Paused PVs Report.
 
-        Call report methods of the Archiver Appliance. Possible reports methods are:
+        Call report methods of the Archiver Appliance.
+        Possible reports methods are:
             - ReportType.DisconnectedPVs --> `getCurrentlyDisconnectedPVs`
             - ReportType.PausedPVs --> `getPausedPVsReport`
             - ReportType.EventRate --> `getEventRateReport`
@@ -415,9 +419,12 @@ class ClientArchiver:
             - ReportType.RecentlyModifiedPVs --> `getRecentlyModifiedPVs`
             - ReportType.LostConnections --> `getLostConnectionsReport`
             - ReportType.LastKnownTimestamps --> `getSilentPVsReport`
-            - ReportType.DroppedEventsWrongTimestamp --> `getPVsByDroppedEventsTimestamp`
-            - ReportType.DroppedEventsBufferOverflow --> `getPVsByDroppedEventsBuffer`
-            - ReportType.DroppedEventsTypeChange --> `getPVsByDroppedEventsTypeChange`
+            - ReportType.DroppedEventsWrongTimestamp -->
+                `getPVsByDroppedEventsTimestamp`
+            - ReportType.DroppedEventsBufferOverflow -->
+                `getPVsByDroppedEventsBuffer`
+            - ReportType.DroppedEventsTypeChange -->
+                `getPVsByDroppedEventsTypeChange`
         For details on the content of each report, please, refer to the
         Archiver Appliance documentation.
 
@@ -436,11 +443,15 @@ class ClientArchiver:
 
         """
         if report_method not in self.ReportTypes:
-            raise ValueError('`report_method` should be one of `self.ReportTypes`.')
+            raise ValueError(
+                '`report_method` should be one of `self.ReportTypes`.'
+            )
 
         if report_method not in self.ReportTypes:
-            raise ValueError('`report_method` should be one of `self.ReportTypes`.')
-            
+            raise ValueError(
+                '`report_method` should be one of `self.ReportTypes`.'
+            )
+
         if max_num_pvs is not None:
             max_num_pvs = f'{int(max_num_pvs)}'
             url = self._create_url(method=report_method, limit=max_num_pvs)
@@ -465,7 +476,7 @@ class ClientArchiver:
         """
         resp = self.get_report(
             self,
-            report_name=self.ReportTypes.RecentlyModifiedPVs,
+            report_method=self.ReportTypes.RecentlyModifiedPVs,
             max_num_pvs=max_num_pvs,
         )
 
