@@ -195,11 +195,21 @@ def get_magnet_family_name(maname):
 
 
 def magnet_class(maname):
-    """Return class of a magnet: Dipole, Normal, Trim, Pulsed."""
+    """Return class of a magnet: Dipole, Normal, Trim, Pulsed, IDs."""
     maname = _SiriusPVName(maname)
     if maname.dis == 'ID':
-        if maname.dev in ('APU22', 'APU58', ):
+        if 'APU' in maname.dev:
             return 'id-apu'
+        elif 'EPU' in maname.dev:
+            return 'id-epu'
+        elif 'DELTA' in maname.dev:
+            return 'id-delta'
+        elif 'IVU' in maname.dev:
+            return 'id-ivu'
+        elif 'VPU' in maname.dev:
+            return 'id-vpu'
+        elif 'UE' in maname.dev:
+            return 'id-ue'
     if maname.dis != 'MA' and maname.dis != 'PM':
         raise ValueError("Cannot classify {}".format(maname))
     if maname.dis == 'PM':
