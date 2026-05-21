@@ -37,7 +37,6 @@ def get_magfunc_2_multipole_dict():
         'quadrupole': {'type': 'normal', 'harmonic': 1},
         'quadrupole-skew': {'type': 'skew', 'harmonic': 1},
         'sextupole': {'type': 'normal', 'harmonic': 2},
-        'id-apu': {'type': 'normal', 'harmonic': 0},
         'lens': {'type': 'normal', 'harmonic': 1},
     }
     return _magfuncs
@@ -198,18 +197,7 @@ def magnet_class(maname):
     """Return class of a magnet: Dipole, Normal, Trim, Pulsed, IDs."""
     maname = _SiriusPVName(maname)
     if maname.dis == 'ID':
-        if 'APU' in maname.dev:
-            return 'id-apu'
-        elif 'EPU' in maname.dev:
-            return 'id-epu'
-        elif 'DELTA' in maname.dev:
-            return 'id-delta'
-        elif 'IVU' in maname.dev:
-            return 'id-ivu'
-        elif 'VPU' in maname.dev:
-            return 'id-vpu'
-        elif 'UE' in maname.dev:
-            return 'id-ue'
+        return 'ids'
     if maname.dis != 'MA' and maname.dis != 'PM':
         raise ValueError("Cannot classify {}".format(maname))
     if maname.dis == 'PM':
