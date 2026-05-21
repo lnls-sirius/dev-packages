@@ -44,17 +44,19 @@ def get_magfunc_2_multipole_dict():
 
 def get_multipole_name(harmonic, suffix=None):
     """Return names of multipoles, given harmonic number."""
-    names = {0: 'dipole',
-             1: 'quadrupole',
-             2: 'sextupole',
-             3: 'octupole',
-             4: 'decapole',
-             5: 'dodecapole', }
+    names = {
+        0: 'dipole',
+        1: 'quadrupole',
+        2: 'sextupole',
+        3: 'octupole',
+        4: 'decapole',
+        5: 'dodecapole',
+    }
     suffix = 'pole' if suffix is None else suffix
     try:
         return names[harmonic].replace('pole', suffix)
     except KeyError:
-        return '{0:d}-pole'.format((harmonic+1)*2).replace('pole', suffix)
+        return '{0:d}-pole'.format((harmonic + 1) * 2).replace('pole', suffix)
 
 
 def get_multipole_si_units(harmonic, power=None, product=None):
@@ -68,21 +70,24 @@ def get_multipole_si_units(harmonic, power=None, product=None):
         return 'T/m'
     else:
         power = '^' if power is None else power
-        return 'T/m{0:s}{1:d}'.format(power, harmonic-1)
+        return 'T/m{0:s}{1:d}'.format(power, harmonic - 1)
 
 
 def linear_interpolation(xvals, xtab, ytab):
     """Return linear interpolation function value."""
     interp = _numpy.interp(
-        xvals, xtab, ytab, left=-_numpy.inf, right=_numpy.inf)
+        xvals, xtab, ytab, left=-_numpy.inf, right=_numpy.inf
+    )
     neg = _numpy.isneginf(interp)
     pos = _numpy.isposinf(interp)
     if neg.any():
         interp[neg] = linear_extrapolation(
-            xvals[neg], xtab[0], xtab[1], ytab[0], ytab[1])
+            xvals[neg], xtab[0], xtab[1], ytab[0], ytab[1]
+        )
     if pos.any():
         interp[pos] = linear_extrapolation(
-            xvals[pos], xtab[-1], xtab[-2], ytab[-1], ytab[-2])
+            xvals[pos], xtab[-1], xtab[-2], ytab[-1], ytab[-2]
+        )
     return interp
 
 
@@ -91,7 +96,7 @@ def linear_extrapolation(x, x1, x2, y1, y2):
     if x2 == x1:
         return min(y1, y2, key=abs)
     else:
-        return y1 + (y2-y1)*(x-x1)/(x2-x1)
+        return y1 + (y2 - y1) * (x - x1) / (x2 - x1)
 
 
 def sum_magnetic_multipoles(*multipoles_list):
@@ -115,16 +120,28 @@ def sum_magnetic_multipoles(*multipoles_list):
 
 # TODO: merge this function with corresponding functions|class in
 # ramp. also, default nrpts should be taken from csdevices!!!
-def get_default_ramp_waveform(interval=500, nrpts=4000,
-                              ti=None, fi=None, forms=None):
+def get_default_ramp_waveform(
+    interval=500, nrpts=4000, ti=None, fi=None, forms=None
+):
     """Generate normalized ramp."""
     time = interval * _numpy.linspace(0, 1.0, nrpts)
     if ti is None:
-        ti = interval * _numpy.array([0, 13, 310,
-                                      322, 330, 342, 480, 500])/500.0
+        ti = (
+            interval
+            * _numpy.array([0, 13, 310, 322, 330, 342, 480, 500])
+            / 500.0
+        )
     if fi is None:
-        fi = _numpy.array([0.01, 0.02625, 1.0339285714,
-                           1.05, 1.05, 1, 0.07, 0.01])
+        fi = _numpy.array([
+            0.01,
+            0.02625,
+            1.0339285714,
+            1.05,
+            1.05,
+            1,
+            0.07,
+            0.01,
+        ])
     if forms is None:
         forms = ['cube', 'injection', 'cube', 'line', 'cube', 'line', 'cube']
 
@@ -137,25 +154,29 @@ def get_default_ramp_waveform(interval=500, nrpts=4000,
 
     # findout the initial derivatives and delta time from the straigth lines
     for i, wfm in enumerate(forms):
-        dti[i] = (ti[i+1]-ti[i])
+        dti[i] = ti[i + 1] - ti[i]
         if wfm.startswith(('l', 'i')) or wfm == 0:
             equal_previous = False
-            va1[i] = (fi[i+1]-fi[i])/dti[i]
-            va1[i+1] = va1[i]
+            va1[i] = (fi[i + 1] - fi[i]) / dti[i]
+            va1[i + 1] = va1[i]
         else:
             equal_previous = True
         if equal_previous:
-            va1[i] = va1[i-1]
+            va1[i] = va1[i - 1]
 
     # calculate the ramp:
     for i, wfm in enumerate(forms):
-        ind = _numpy.bitwise_and(ti[i] <= time, time <= ti[i+1])
+        ind = _numpy.bitwise_and(ti[i] <= time, time <= ti[i + 1])
         dtime = time[ind] - ti[i]
         va2, va3 = 0, 0
         if wfm.startswith(('c', 'i')):
-            va2 = (-3*(fi[i]-fi[i+1]) - dti[i] * (2*va1[i]+va1[i+1]))/dti[i]**2
-            va3 = (2*(fi[i]-fi[i+1]) + dti[i] * (va1[i]+va1[i+1]))/dti[i]**3
-        ramp[ind] = fi[i] + va1[i]*dtime + va2*dtime**2 + va3*dtime**3
+            va2 = (
+                -3 * (fi[i] - fi[i + 1]) - dti[i] * (2 * va1[i] + va1[i + 1])
+            ) / dti[i] ** 2
+            va3 = (
+                2 * (fi[i] - fi[i + 1]) + dti[i] * (va1[i] + va1[i + 1])
+            ) / dti[i] ** 3
+        ramp[ind] = fi[i] + va1[i] * dtime + va2 * dtime**2 + va3 * dtime**3
 
     return ramp
 
@@ -166,9 +187,9 @@ def get_section_dipole_name(maname):
     if _re.match('B.*', maname.dev):
         return None
     elif maname.sec == 'SI':
-        if maname.dev in {"InjDpKckr", "InjNLKckr"}:
+        if maname.dev in {'InjDpKckr', 'InjNLKckr'}:
             return 'TS-Fam:MA-B'
-        return "SI-Fam:MA-B1B2"
+        return 'SI-Fam:MA-B1B2'
     elif maname.sec == 'BO':
         if maname.dev in {'InjKckr', 'EjeKckr'}:
             return 'TB-Fam:MA-B'
@@ -178,17 +199,18 @@ def get_section_dipole_name(maname):
     elif maname.sec == 'TS':
         return 'TS-Fam:MA-B'
     else:
-        raise NotImplementedError(
-            'No section named {}'.format(maname.sec))
+        raise NotImplementedError('No section named {}'.format(maname.sec))
 
 
 def get_magnet_family_name(maname):
     """Return family name associated with a given magnet name."""
     maname = _SiriusPVName(maname)
-    if maname.sec == "SI" and \
-            maname.sub != "Fam" and \
-            _re.match("(?:QD|QF|Q[0-9]).*", maname.dev):
-        return _re.sub("SI-\d{2}\w{2}:", "SI-Fam:", maname)
+    if (
+        maname.sec == 'SI'
+        and maname.sub != 'Fam'
+        and _re.match('(?:QD|QF|Q[0-9]).*', maname.dev)
+    ):
+        return _re.sub('SI-\d{2}\w{2}:', 'SI-Fam:', maname)
     else:
         return None
 
@@ -199,15 +221,17 @@ def magnet_class(maname):
     if maname.dis == 'ID':
         return 'ids'
     if maname.dis != 'MA' and maname.dis != 'PM':
-        raise ValueError("Cannot classify {}".format(maname))
+        raise ValueError('Cannot classify {}'.format(maname))
     if maname.dis == 'PM':
         return 'pulsed'
     if maname.dev.startswith('B'):
         return 'dipole'
-    if 'QS' not in maname.dev and \
-            maname.sec == 'SI' and \
-            maname.dev.startswith('Q') and \
-            maname.sub != 'Fam':
+    if (
+        'QS' not in maname.dev
+        and maname.sec == 'SI'
+        and maname.dev.startswith('Q')
+        and maname.sub != 'Fam'
+    ):
         return 'trim'
 
     return 'normal'

@@ -17,8 +17,7 @@ class NormalizerFactory:
         ma_class = _mutil.magnet_class(maname)
         if ma_class == 'ids':
             return _norm.IDNormalizer(
-                idname=maname,
-                polarization=kwargs['polarization'],
+                idname=maname, polarization=kwargs['polarization']
             )
         # not an ID normalizer
         if ma_class == 'dipole':

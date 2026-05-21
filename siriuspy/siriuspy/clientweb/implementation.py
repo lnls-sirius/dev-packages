@@ -1,4 +1,5 @@
 """Implementation of web server data retrieval functions."""
+
 import re as _re
 import urllib.request as _urllib_request
 
