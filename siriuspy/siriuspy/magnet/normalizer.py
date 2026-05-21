@@ -1,12 +1,12 @@
 """This module contains classes for current normalization."""
 
-import re as _re
 import numpy as _np
 
 import mathphys as _mp
 
 from .. import util as _util
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..search import IDSearch as _IDSearch
 from ..search import PSSearch as _PSSearch
 from ..search import MASearch as _MASearch
 from ..pwrsupply.csdev import get_ps_propty_database as _get_ps_propty_database
@@ -42,7 +42,7 @@ class _MagnetNormalizer:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[-1])
         self._magnet_conv_sign = magnet_conv_sign
-        self._mfmult = _MAGFUNCS[self._magfunc]
+        self._main_func_mult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
 
@@ -88,7 +88,7 @@ class _MagnetNormalizer:
         """Convert strength to current."""
         strengths = self._conv_epicsdb_2_default(strengths)
         intfields = self._conv_strength_2_intfield(strengths, **kwargs)
-        mft = self._mfmult
+        mft = self._main_func_mult
         currents = self._excdata.interp_mult2curr(
             intfields, mft['harmonic'], mft['type'])
         return currents
@@ -113,7 +113,7 @@ class _MagnetNormalizer:
             currents, only_main_harmonic=True)
         if mpoles is None:
             return None
-        mfm = self._mfmult
+        mfm = self._main_func_mult
         intfield = mpoles[mfm['type']][mfm['harmonic']]
         return intfield
 
@@ -345,38 +345,6 @@ class MagnetNormalizer(_MagnetNormalizer):
         return strengths
 
 
-class APUNormalizer(_MagnetNormalizer):
-    """."""
-
-    def _conv_strength_2_intfield(self, strengths, **kwargs):
-        """Convert K parameter to field amplitude.
-
-        For APU, integrated field is just the field amplitude B * lamba [T.m].
-        The strength is the K parameter:
-            K ~ 93.3729/(T.m) * (lambda * B)
-        """
-        _ = kwargs  # throwaway arguments
-        if isinstance(strengths, list):
-            strengths = _np.array(strengths)
-
-        intfields = strengths / _KCOEFF
-        return intfields
-
-    def _conv_intfield_2_strength(self, intfields, **kwargs):
-        """Convert field amplitude to K parameter.
-
-        For APU, integrated field is just the field amplitude B * lamba [T.m].
-        The strength is the K parameter:
-            K ~ 93.3729/(T.m) * (lambda * B)
-        """
-        _ = kwargs  # throwaway arguments
-        if isinstance(intfields, list):
-            intfields = _np.array(intfields)
-
-        strengths = _KCOEFF * intfields
-        return strengths
-
-
 class TrimNormalizer(_MagnetNormalizer):
     """Convert trim magnet current to strength and vice versa."""
 
@@ -407,3 +375,123 @@ class TrimNormalizer(_MagnetNormalizer):
         # its contribution.
         strengths_fam = _np.array(kwargs['strengths_family'])
         return strengths_trim + strengths_fam
+
+
+class IDNormalizer:
+    """Base class for converting magnet properties: current and strength."""
+
+    def __init__(
+            self,
+            idname,
+            polarization,
+        ):
+        """Class constructor."""
+        if idname not in _IDSearch.get_idnames():
+            raise ValueError(f'Invalid ID name: {idname}')
+        self._idname = _SiriusPVName(idname)
+        self._polarizations = _IDSearch.conv_idname_2_polarizations(idname)
+        self.polarization = polarization
+        self._excdata = _IDSearch.conv_idname_2_excdata(idname, polarization)
+
+    @property
+    def idname(self):
+        """Return ID name."""
+        return self._idname
+
+    @property
+    def polarization(self):
+        """Return ID polarization."""
+        return self._polarization
+
+    @polarization.setter
+    def polarization(self, value):
+        if value not in self._polarizations:
+            strf = (
+                f'Invalid polarization {value}.'
+                f' Valid polarizations for ID "{self._idname}" are '
+                f'{self._polarizations}'
+            )
+            raise ValueError(strf)
+        self._polarization = value
+        self._excdata = _IDSearch.conv_idname_2_excdata(
+            self._idname, self._polarization
+        )
+
+    @property
+    def polarizations(self):
+        """Return valid polarizations for this ID."""
+        return self._polarizations
+
+    # --- normalizer interface ---
+
+    def conv_current_2_strength(self, currents, **kwargs):
+        """Convert current to strength."""
+        if currents is None:
+            return None
+        intfields_n, intfields_s = self._conv_current_2_intfield(currents)
+        if intfields_n is None or intfields_s is None:
+            if isinstance(currents, (int, float)):
+                return 0.0
+            else:
+                return [0.0, ] * len(currents)
+        # ---
+        strengths = self._conv_intfield_2_strength(
+            intfields_n,
+            intfields_s,
+            **kwargs
+        )
+        return strengths
+
+    def conv_strength_2_current(self, strengths, **kwargs):
+        """Convert strength to current."""
+        raise NotImplementedError(
+            "Conversion from strength to current is not implemented for IDs."
+        )
+
+    # --- normalizer aux. methods ---
+
+    def _conv_current_2_intfield(self, currents):
+        mpoles = self._conv_current_2_multipoles(
+            currents, only_main_harmonic=True)
+        if mpoles is None:
+            return None, None
+        intfield_normal = mpoles['normal'][0]
+        intfield_skew = mpoles['skew'][0]
+        return intfield_normal, intfield_skew
+
+    def _conv_current_2_multipoles(self, currents, only_main_harmonic=False):
+        if currents is None:
+            return None
+        msum = {}
+        mpoles = self._excdata.interp_curr2mult(currents, only_main_harmonic)
+        msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
+        return msum
+
+    def _conv_strength_2_intfield(self, strengths, **kwargs):
+        """Convert K parameter to field amplitude.
+
+        For APU, integrated field is just the field amplitude B * lamba [T.m].
+        The strength is the K parameter:
+            K ~ 93.3729/(T.m) * (lambda * B)
+        """
+        _ = kwargs  # throwaway arguments
+        if isinstance(strengths, list):
+            strengths = _np.array(strengths)
+
+        intfields = strengths / _KCOEFF
+        return intfields
+
+    def _conv_intfield_2_strength(self, intfields_n, intfields_s, **kwargs):
+        """Convert field amplitude to K parameter.
+
+        For APU, integrated field is just the field amplitude B * lamba [T.m].
+        The strength is the K parameter:
+            K ~ 93.3729/(T.m) * (lambda * B)
+        """
+        _ = kwargs  # throwaway arguments
+        if isinstance(intfields_n, list):
+            intfields_n = _np.array(intfields_n)
+        if isinstance(intfields_s, list):
+            intfields_s = _np.array(intfields_s)
+        strengths = _KCOEFF * _np.sqrt(intfields_n**2 + intfields_s**2)
+        return strengths
