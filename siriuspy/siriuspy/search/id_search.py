@@ -203,15 +203,34 @@ class IDSearch:
     _idname2pol_sts['SI-10SB:ID-DELTA52'].update(
         {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
 
+    IDFF_CorrTypes = _get_namedtuple(
+        'IDFF_CorrTypes', ('ch', 'cv', 'qs', 'lc', 'qn', 'cc')
+    )
+    _type_ch = IDFF_CorrTypes._fields[0]
+    _type_cv = IDFF_CorrTypes._fields[1]
+    _type_qs = IDFF_CorrTypes._fields[2]
+    _type_lc = IDFF_CorrTypes._fields[3]
+    _type_qn = IDFF_CorrTypes._fields[4]
+    _type_cc = IDFF_CorrTypes._fields[5]
+
     # define IDFF correctors labeling (and ordering)
     # NOTE: the ordering within each category here follows the ordering of the
     # correctors in the rack cabinets.
-    IDFF_CH_LABELS = ('ch_1', 'ch_2')
-    IDFF_CV_LABELS = ('cv_1', 'cv_2')
-    IDFF_QS_LABELS = ('qs_1', 'qs_2')
-    IDFF_LC_LABELS = ('lch_1', 'lcv_1', 'lcv_2')
-    IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
-    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2')
+    IDFF_CorrLabels = {
+        _type_ch: ['ch_1', 'ch_2'],
+        _type_cv: ['cv_1', 'cv_2'],
+        _type_qs: ['qs_1', 'qs_2'],
+        _type_lc: ['lch_1', 'lcv_1', 'lcv_2'],
+        _type_qn: ['qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2'],
+        _type_cc: ['cc1_1', 'cc2_1', 'cc1_2', 'cc2_2'],
+    }
+
+    IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
+    IDFF_CH_LABELS = IDFF_CorrLabels[_type_ch]
+    IDFF_CV_LABELS = IDFF_CorrLabels[_type_cv]
+    IDFF_QS_LABELS = IDFF_CorrLabels[_type_qs]
+    IDFF_LC_LABELS = IDFF_CorrLabels[_type_lc]
+    IDFF_QN_LABELS = IDFF_CorrLabels[_type_qn]
 
     _idname_2_idff = {
         'SI-06SB:ID-VPU29':  {
@@ -219,7 +238,7 @@ class IDSearch:
             'pparameter': None,
             'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
             'idffdevs': {
-                'cc': 'SI-06SB:BS-IDFF-CC',
+                _type_cc: 'SI-06SB:BS-IDFF-CC',
             },
             IDFF_CC_LABELS[0]: 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-06SB:PS-CC2-1:Current-SP',  # upstream
@@ -231,7 +250,7 @@ class IDSearch:
             'pparameter': None,
             'kparameter': 'SI-07SP:ID-VPU29:KParam-Mon',
             'idffdevs': {
-                'cc': 'SI-07SP:BS-IDFF-CC',
+                _type_cc: 'SI-07SP:BS-IDFF-CC',
             },
             IDFF_CC_LABELS[0]: 'SI-07SP:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-07SP:PS-CC2-1:Current-SP',  # upstream
@@ -244,9 +263,9 @@ class IDSearch:
             'pparameter': None,
             'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
             'idffdevs': {
-                'ch': 'SI-08SB:BS-IDFF-CHCV',
-                'cv': 'SI-08SB:BS-IDFF-CHCV',
-                'lc': 'SI-08SB:BS-IDFF-CHCV',
+                _type_ch: 'SI-08SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-08SB:BS-IDFF-CHCV',
+                _type_lc: 'SI-08SB:BS-IDFF-CHCV',
             },
             IDFF_CH_LABELS[0]: 'SI-08SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-08SB:PS-CH-2:Current-SP',  # downstream
@@ -262,8 +281,12 @@ class IDSearch:
             IDFF_QN_LABELS[4]: 'SI-08M2:PS-QFB:Current-SP',
             IDFF_QN_LABELS[5]: 'SI-08M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
-                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
+                IDFF_QN_LABELS[0],
+                IDFF_QN_LABELS[1],
+                IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3],
+                IDFF_QN_LABELS[4],
+                IDFF_QN_LABELS[5],
             ],  # [A]
         },
         'SI-09SA:ID-APU22': None,
@@ -287,9 +310,9 @@ class IDSearch:
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
             'idffdevs': {
-                'ch': 'SI-10SB:AP-IDFF',
-                'cv': 'SI-10SB:AP-IDFF',
-                'qs': 'SI-10SB:AP-IDFF',
+                _type_ch: 'SI-10SB:AP-IDFF',
+                _type_cv: 'SI-10SB:AP-IDFF',
+                _type_qs: 'SI-10SB:AP-IDFF',
             },
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-10SB:PS-CH-2:Current-SP',  # downstream
@@ -305,10 +328,10 @@ class IDSearch:
             'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
             'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
             'idffdevs': {
-                'ch': 'SI-11SP:BS-IDFF-CHCV',
-                'cv': 'SI-11SP:BS-IDFF-CHCV',
-                'qs': 'SI-11SP:BS-IDFF-QS',
-                'lc': 'SI-14SB:BS-IDFF-LC',
+                _type_ch: 'SI-11SP:BS-IDFF-CHCV',
+                _type_cv: 'SI-11SP:BS-IDFF-CHCV',
+                _type_qs: 'SI-11SP:BS-IDFF-QS',
+                _type_lc: 'SI-14SB:BS-IDFF-LC',
             },
             IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
@@ -325,9 +348,9 @@ class IDSearch:
             'pparameter': None,
             'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
             'idffdevs': {
-                'ch': 'SI-14SB:BS-IDFF-CHCV',
-                'cv': 'SI-14SB:BS-IDFF-CHCV',
-                'lc': 'SI-14SB:BS-IDFF-LC',
+                _type_ch: 'SI-14SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-14SB:BS-IDFF-CHCV',
+                _type_lc: 'SI-14SB:BS-IDFF-LC',
             },
             IDFF_CH_LABELS[0]: 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-14SB:PS-CH-2:Current-SP',  # downstream
@@ -446,12 +469,17 @@ class IDSearch:
 
     @staticmethod
     def conv_idname_2_idffdevs(idname):
-        """."""
+        """Return the IDFF devices for a given ID name."""
+        addcorr = IDSearch._idffdevs_add_corrector
         idff = IDSearch.conv_idname_2_idff(idname)
-        if idff is None or 'idffdevs' not in idff:
-            return dict()
-        else:
-            return idff['idffdevs']
+        idffdevs = dict()
+        if idff is not None and 'idffdevs' in idff:
+            for corrtype, idffdevname in idff['idffdevs'].items():
+                if idffdevname not in idffdevs:
+                    idffdevs[idffdevname] = dict()
+                idffdevdict = idffdevs[idffdevname]
+                addcorr(idff, corrtype, idffdevdict)
+        return idffdevs
 
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
@@ -555,3 +583,13 @@ class IDSearch:
                 pvname = _SiriusPVName(idff[corr])
                 corrs.append(pvname.device_name)
         return corrs
+
+    # --- aux. methods ---
+
+    @staticmethod
+    def _idffdevs_add_corrector(idff, corrtype, corrdevs):
+        for corrlabel in IDSearch.IDFF_CorrLabels[corrtype]:
+            if corrlabel in idff:
+                if corrtype not in corrdevs:
+                    corrdevs[corrtype] = dict()
+                corrdevs[corrtype][corrlabel] = idff[corrlabel]
