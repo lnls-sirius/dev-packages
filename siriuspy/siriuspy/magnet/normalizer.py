@@ -464,11 +464,37 @@ class IDNormalizer:
 
     def conv_strength_2_current(self, strengths, **kwargs):
         """Convert strength to current."""
-        raise NotImplementedError(
-            'Conversion from strength to current is not implemented for IDs.'
-        )
+        if strengths is None:
+            return None
+
+        intfield_eff = self._conv_strength_2_intfield(strengths)
+        currents = self._interp_mult2curr(intfield_eff)
+
+        return currents
 
     # --- normalizer aux. methods ---
+
+    def _interp_mult2curr(self, multipole):
+        """Interpolate current from a specific multipole value."""
+        # sort correctly tabulated lists
+        intfields_n = _np.array(self._excdata.multipoles['normal'][0])
+        intfields_s = _np.array(self._excdata.multipoles['skew'][0])
+
+        mpole = _np.sqrt(intfields_n**2 + intfields_s**2)
+        curr = self._excdata.currents
+        if mpole[-1] <= mpole[0]:
+            mpole, curr = mpole[::-1], self._excdata.currents[::-1]
+
+        # do conversion
+        if _np.isscalar(multipole):
+            multipole = _np.array([multipole])
+            interp = _mutil.linear_interpolation(multipole, mpole, curr)
+            currents = interp[0]
+        else:
+            multipole = _np.array(multipole)
+            interp = _mutil.linear_interpolation(multipole, mpole, curr)
+            currents = interp
+        return currents
 
     def _conv_current_2_intfield(self, currents):
         mpoles = self._conv_current_2_multipoles(
