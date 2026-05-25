@@ -33,9 +33,7 @@ class TuneFrac(_Device):
         'FreqOff-RB',
         'FreqOff-SP',
     )
-    PROPERTIES_DEFAULT_SI = PROPERTIES_DEFAULT + (
-        'TuneFrac-Mon',
-    )
+    PROPERTIES_DEFAULT_SI = PROPERTIES_DEFAULT + ('TuneFrac-Mon',)
     PROPERTIES_DEFAULT_BO = PROPERTIES_DEFAULT
 
     def __init__(self, devname, props2init='all'):
@@ -236,28 +234,27 @@ class Tune(_DeviceSet):
             tune_proc_v = SITuneProc(
                 SITuneProc.DEVICES.V, props2init=props2init
             )
-            devices = (
-                tune_frac_h,
-                tune_frac_v,
-                tune_proc_h,
-                tune_proc_v,
-            )
+            devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
         else:
             tune_frac_h = TuneFrac(
-                TuneFrac.DEVICES.BO_H, props2init=props2init)
+                TuneFrac.DEVICES.BO_H, props2init=props2init
+            )
             tune_frac_v = TuneFrac(
-                TuneFrac.DEVICES.BO_V, props2init=props2init)
+                TuneFrac.DEVICES.BO_V, props2init=props2init
+            )
             tune_proc_h = BOTuneProc(
-                BOTuneProc.DEVICES.H, props2init=props2init)
+                BOTuneProc.DEVICES.H, props2init=props2init
+            )
             tune_proc_v = BOTuneProc(
-                BOTuneProc.DEVICES.V, props2init=props2init)
+                BOTuneProc.DEVICES.V, props2init=props2init
+            )
             trig = _Trigger(trigname='BO-Glob:TI-TuneProc')
             devices = (
                 tune_frac_h,
                 tune_frac_v,
                 tune_proc_h,
                 tune_proc_v,
-                trig
+                trig,
             )
 
         # call base class constructor
@@ -457,7 +454,7 @@ class Tune(_DeviceSet):
 
     def _get_spect(self, dev_proc):
         """."""
-        spect = dev_proc.tune_spect_array[:dev_proc.frame_count]
+        spect = dev_proc.tune_spect_array[: dev_proc.frame_count]
         return spect[::-1]
 
 
