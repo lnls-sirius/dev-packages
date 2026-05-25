@@ -446,7 +446,6 @@ class IDSearch:
             'idffdevs': {
                 _type_ch: 'SI-08SB:BS-IDFF-CHCV',
                 _type_cv: 'SI-08SB:BS-IDFF-CHCV',
-                _type_lc: 'SI-08SB:BS-IDFF-CHCV',
             },
             IDFF_CH_LABELS[0]: 'SI-08SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-08SB:PS-CH-2:Current-SP',  # downstream
@@ -533,7 +532,6 @@ class IDSearch:
             'idffdevs': {
                 _type_ch: 'SI-14SB:BS-IDFF-CHCV',
                 _type_cv: 'SI-14SB:BS-IDFF-CHCV',
-                _type_lc: 'SI-14SB:BS-IDFF-LC',
             },
             IDFF_CH_LABELS[0]: 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-14SB:PS-CH-2:Current-SP',  # downstream
