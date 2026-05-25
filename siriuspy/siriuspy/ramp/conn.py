@@ -563,7 +563,7 @@ class ConnRF(_EpicsPropsList):
         """Properties names."""
 
         KV_2_V = 1e3
-        DevName = 'BR-RF-DLLRF-01'
+        DevName = 'RA-RaBO01:RF-LLRF'
         Rmp_Enbl = DevName + ':RmpEnbl-Sel'
         Rmp_Ts1 = DevName + ':RmpTs1-SP'
         Rmp_Ts2 = DevName + ':RmpTs2-SP'

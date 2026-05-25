@@ -4,7 +4,11 @@
 # TODO: is this module deprecated?
 
 import numpy as _np
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
+
 from waveform import WaveformParam
 
 

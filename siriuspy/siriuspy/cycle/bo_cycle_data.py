@@ -3,7 +3,7 @@
 import numpy as _np
 from ..pwrsupply.csdev import \
     DEF_WFMSIZE_FBP as _DEF_WFMSIZE_FBP, \
-    DEF_WFMSIZE_OTHERS as _DEF_WFMSIZE_OTHERS
+    DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.search import PSSearch as _PSSearch
 
 # Constants
@@ -2099,7 +2099,7 @@ def bo_get_default_waveform(psname, nrpoints=None, duration=None,
             if 'CH' in psname or 'CV' in psname or 'QS' in psname:
                 nrpoints = _DEF_WFMSIZE_FBP
             else:
-                nrpoints = _DEF_WFMSIZE_OTHERS
+                nrpoints = _DEF_WFMSIZE
         wfm = bo_generate_base_waveform(nrpoints, duration)
         if psname in DEFAULT_RAMP_AMPLITUDE:
             # bypass upper_limit if psname in dictionary

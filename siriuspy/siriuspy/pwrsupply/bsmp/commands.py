@@ -108,9 +108,17 @@ class PSBSMP(_BSMP):
             # not updated!
             read_flag = False
 
+        # NOTE: UDC firmware is erroneously responding with an timeout
+        # error when calling cfg_wfmref. So to avoid unnecessary logging
+        # we are going to suppress any error log from this command.
+        # This became a problem since SOFB sync mode uses waveform mode.
+        if func_id == PSBSMP.CONST.F_CFG_WFMREF:
+            print_error = False
+
         response = super().execute_function(
             func_id=func_id, input_val=input_val,
-            timeout=timeout, read_flag=read_flag)
+            timeout=timeout, read_flag=read_flag,
+            print_error=print_error)
 
         # introduces necessary sleeps
         # TODO: check with ELP if these numbers can be optimized further!

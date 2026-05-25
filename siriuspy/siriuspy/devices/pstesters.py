@@ -330,23 +330,23 @@ class TesterPSFBP(TesterPS):
     """PS FBP Tester."""
 
     PROPERTIES_DEFAULT = TesterPS.PROPERTIES_DEFAULT + \
-        ('SOFBMode-Sel', 'SOFBMode-Sts')
+        ('IDFFMode-Sel', 'IDFFMode-Sts')
 
-    def set_sofbmode(self, state='on'):
-        """Set SOFBMode."""
+    def set_idffmode(self, state='on'):
+        """Set IDFFMode."""
         if state == 'on':
             state = _PSC.OffOn.On
         else:
             state = _PSC.OffOn.Off
-        self['SOFBMode-Sel'] = state
+        self['IDFFMode-Sel'] = state
 
-    def check_sofbmode(self, state='on'):
-        """Check SOFBMode."""
+    def check_idffmode(self, state='on'):
+        """Check IDFFMode."""
         if state == 'on':
             state = _PSC.OffOn.On
         else:
             state = _PSC.OffOn.Off
-        return self['SOFBMode-Sts'] == state
+        return self['IDFFMode-Sts'] == state
 
 
 class TesterPSLinac(_TesterBase):

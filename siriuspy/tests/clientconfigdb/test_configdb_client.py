@@ -31,6 +31,7 @@ class TestConfigDBClient(TestCase):
         'check_valid_configname',
         "conv_timestamp_txt_2_flt",
         "conv_timestamp_flt_2_txt",
+        "compare_configs",
     }
 
     def test_api(self):

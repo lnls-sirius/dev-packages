@@ -10,12 +10,17 @@ class LIEnergy(_Device):
         """Devices names."""
 
         LI = 'LI-Glob:AP-MeasEnergy'
-        ALL = (LI, )
+        ALL = (LI,)
 
     PROPERTIES_DEFAULT = (
-        'Dispersion-SP', 'Dispersion-RB',
-        'IntDipole-Mon', 'Energy-Mon', 'Spread-Mon',
-        'MeasureCtrl-Sel', 'MeasureCtrl-Sts')
+        'Dispersion-SP',
+        'Dispersion-RB',
+        'IntDipole-Mon',
+        'Energy-Mon',
+        'Spread-Mon',
+        'MeasureCtrl-Sel',
+        'MeasureCtrl-Sts',
+    )
 
     def __init__(self, devname=None, props2init='all'):
         """."""
@@ -57,9 +62,9 @@ class LIEnergy(_Device):
     def cmd_turn_on_measurement(self, timeout=10):
         """."""
         self['MeasureCtrl-Sel'] = 1
-        return self._wait('MeasureCtrl-Sts', 1, timeout=timeout)
+        return self.wait('MeasureCtrl-Sts', 1, timeout=timeout)
 
     def cmd_turn_off_measurement(self, timeout=10):
         """."""
         self['MeasureCtrl-Sel'] = 0
-        return self._wait('MeasureCtrl-Sts', 0, timeout=timeout)
+        return self.wait('MeasureCtrl-Sts', 0, timeout=timeout)

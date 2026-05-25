@@ -85,7 +85,7 @@ class RepeaterThread(_Thread):
         super().__init__(daemon=True)
         self.is_cathread = is_cathread
         self.interval = interval
-        if not hasattr(function, '__call__'):
+        if not callable(function):
             raise TypeError('Argument "function" is not callable.')
         self.function = function
         self.args = args
@@ -102,6 +102,8 @@ class RepeaterThread(_Thread):
             _use_initial_context()
 
         self._unpaused.wait()
+        if self._stopped.is_set():
+            return
         self.function(*self.args, **self.kwargs)
         dtime = 0.0
         while ((not self._stopped.wait(self.interval - dtime)) and
@@ -140,8 +142,8 @@ class RepeaterThread(_Thread):
 
     def stop(self):
         """Stop execution."""
-        self._unpaused.set()
         self._stopped.set()
+        self._unpaused.set()
 
 
 class _BaseQueueThread(_Queue):
@@ -175,9 +177,10 @@ class _BaseQueueThread(_Queue):
         """Put operation to queue."""
         if not hasattr(operation, '__len__'):
             operation = (operation, )
-        if not hasattr(operation[0], '__call__'):
+        if not callable(operation[0]):
             raise TypeError(
-                'First element of "operation" is not callable.')
+                'First element of "operation" is not callable.'
+            )
 
         with self._changing_queue:
             try:

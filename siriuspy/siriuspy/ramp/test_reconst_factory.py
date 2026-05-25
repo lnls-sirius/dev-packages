@@ -5,7 +5,10 @@
 from copy import deepcopy as _dcopy
 import argparse as _argparse
 import numpy as _np
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
 
 from siriuspy.clientconfigdb import ConfigDBDocument
 from siriuspy.ramp.ramp import BoosterRamp

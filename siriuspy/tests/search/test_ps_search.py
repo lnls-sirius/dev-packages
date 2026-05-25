@@ -52,6 +52,7 @@ class TestPSSearch(TestCase):
         'conv_bbbname_2_bsmps',
         'conv_bbbname_2_freq',
         'conv_bbbname_2_udc',
+        'conv_bbbname_2_bbbip',
         'conv_udc_2_bbbname',
         'conv_udc_2_bsmps',
         'conv_psname_2_udc',

@@ -6,6 +6,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+from PRUserial485 import EthBridgeClient as _EthBridgeClient
+
 from siriuspy.search import PSSearch
 from siriuspy.pwrsupply.pructrl.udc import UDC
 from siriuspy.pwrsupply.pructrl.pru import PRU
@@ -19,7 +21,7 @@ BBBNAME = 'IA-08RaCtrl:CO-PSCtrl-SI3'
 
 def create_udc(bbbname=BBBNAME, udc_index=None):
     """Create UDC."""
-    pru = PRU(bbbname=bbbname)
+    pru = PRU(ethbridgeclnt_class=_EthBridgeClient, bbbname=bbbname)
     if udc_index is not None:
         udc_list = PSSearch.conv_bbbname_2_udc(bbbname)
         udcname = udc_list[udc_index]
@@ -337,3 +339,13 @@ def test_wfmref_write_rmpwfm():
     print_basic_info(all_ps)
     wfmref_flip(ps5)
     return udc, all_ps
+
+
+# --- bbb ---
+
+
+def update_bbb(bbb):
+    for psname in bbb.psnames:
+        controller = bbb.controllers[psname]
+        pruc = controller.pru_controller
+        pruc.bsmp_update()

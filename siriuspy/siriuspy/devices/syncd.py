@@ -47,7 +47,7 @@ class DevicesSync(_Device):
                 return False
         return True
 
-    def value_get(self, propty):
+    def get_value(self, propty):
         """Return property value."""
         if not self.connected:
             return
@@ -61,7 +61,7 @@ class DevicesSync(_Device):
             return
         return sum(values) / len(values)
 
-    def value_set(self, propty, value):
+    def set_value(self, propty, value):
         """Set property."""
         if not self.connected:
             return

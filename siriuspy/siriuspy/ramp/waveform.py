@@ -5,8 +5,8 @@ import numpy as _np
 from mathphys import constants as _c
 from mathphys import units as _mu
 
-from ..pwrsupply.csdev import DEF_WFMSIZE_OTHERS as \
-    _DEF_WFMSIZE_OTHERS
+from ..pwrsupply.csdev import DEF_WFMSIZE as \
+    _DEF_WFMSIZE
 from ..search import MASearch as _MASearch
 
 from . import util as _ru
@@ -379,7 +379,7 @@ class WaveformParam:
 class _WaveformMagnet:
     """Base class of magnet waveforms."""
 
-    def __init__(self, psname, wfm_nrpoints=_DEF_WFMSIZE_OTHERS):
+    def __init__(self, psname, wfm_nrpoints=_DEF_WFMSIZE):
         maname = _MASearch.conv_psname_2_psmaname(psname)
         self._magnet = _get_magnet(maname)
         self._psname = psname
@@ -453,7 +453,7 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
     _E0 = _c.electron_rest_energy * _mu.joule_2_GeV
 
     def __init__(
-            self, psname='BO-Fam:PS-B-1', wfm_nrpoints=_DEF_WFMSIZE_OTHERS,
+            self, psname='BO-Fam:PS-B-1', wfm_nrpoints=_DEF_WFMSIZE,
             duration=_ru.DEFAULT_PS_RAMP_DURATION,
             start_energy=_ru.DEFAULT_PS_RAMP_START_ENERGY,
             rampup1_start_time=_ru.DEFAULT_PS_RAMP_RAMPUP1_START_TIME,
@@ -702,7 +702,7 @@ class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
 
     def __init__(self, psname, dipole=None, family=None, strengths=None,
-                 currents=None, wfm_nrpoints=_DEF_WFMSIZE_OTHERS):
+                 currents=None, wfm_nrpoints=_DEF_WFMSIZE):
         """Constructor."""
         if dipole is None:
             raise ValueError('{} waveform needs an associated '

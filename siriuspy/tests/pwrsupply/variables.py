@@ -59,4 +59,5 @@ dict_values = {
     'IntlkSoft-Mon': 0,
     'IntlkHard-Mon': 0,
     'Current-Mon': 6.722831726074219,
+    'WfmOffset-RB': 0.0,
     'WfmData-RB': list(range(4000))}

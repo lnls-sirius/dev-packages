@@ -17,10 +17,11 @@ class MeasDVF():
     MIN_ROI_SIZE = 5  # [pixels]
 
     def __init__(
-            self, devname, fwhmx_factor, fwhmy_factor, roi_with_fwhm,
+            self, const, fwhmx_factor, fwhmy_factor, roi_with_fwhm,
             intensity_threshold, use_svd4theta, callback=None):
         """."""
-        self._devname = devname
+        self._const = const
+        self._devname = const.devname
         self._callback = callback
         self._status = MeasDVF.STATUS_SUCCESS
         self._dvf = None
@@ -58,7 +59,7 @@ class MeasDVF():
     @property
     def status_dvf(self):
         """."""
-        status = 0b00000000
+        status = 0 * self._const.DEF_DVFSTATUS
         status |= ((1 if not self.dvf.connected else 0) << 0)
         status |= ((1 if not self.dvf.acquisition_status else 0) << 1)
         return status

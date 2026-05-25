@@ -4,11 +4,8 @@ NormalizerFactory
     used to create magnet normalizers
 """
 
-from ..search import PSSearch as _PSSearch
-from ..search import MASearch as _MASearch
-
-from . import util as _mutil
-from . import normalizer as _norm
+from ..search import MASearch as _MASearch, PSSearch as _PSSearch
+from . import normalizer as _norm, util as _mutil
 
 
 class NormalizerFactory:

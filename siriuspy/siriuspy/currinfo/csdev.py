@@ -5,8 +5,8 @@ import numpy as _np
 
 from .. import csdev as _csdev
 
-
 # --- Enumeration Types ---
+
 
 class ETypes(_csdev.ETypes):
     """Local enumerate types."""
@@ -228,6 +228,8 @@ def get_lifetime_database():
         'Lifetime-Mon': {
             'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
             'scan': 0.5},
+        'LifetimeHour-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'h'},
         'BuffSize-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTot-Mon': {'type': 'int', 'value': 0},
         'BufferValue-Mon': {
@@ -240,6 +242,8 @@ def get_lifetime_database():
         'LifetimeBPM-Mon': {
             'type': 'float', 'value': 0.0, 'prec': 2, 'unit': 's',
             'scan': 0.5},
+        'LifetimeBPMHour-Mon': {
+            'type': 'float', 'value': 0.0, 'prec': 4, 'unit': 'h'},
         'BuffSizeBPM-Mon': {'type': 'int', 'value': 0},
         'BuffSizeTotBPM-Mon': {'type': 'int', 'value': 0},
         'BufferValueBPM-Mon': {

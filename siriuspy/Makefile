@@ -16,8 +16,6 @@ uninstall:
 develop-install: develop-uninstall
 	$(PIP) install --no-deps -e ./
 
-# known issue: It will fail to uninstall scripts
-#  if they were installed in develop mode
 develop-uninstall:
 	$(PIP) uninstall -y $(PACKAGE)
 
@@ -25,7 +23,7 @@ test:
 	pytest tests/
 
 dist: ## Build setuptools dist
-	python setup.py sdist bdist_wheel
+	python -m build
 
 distupload: ## Upload package dist to PyPi
 	python -m twine upload --verbose dist/*

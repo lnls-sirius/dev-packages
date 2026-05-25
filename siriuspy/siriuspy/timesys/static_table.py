@@ -1,11 +1,10 @@
 #!/usr/bin/python-sirius
 
-import sys as _sys
 import logging as _log
+import sys as _sys
 
 from ..namesys import SiriusPVName as PVName
 from ..search import LLTimeSearch
-
 
 _disclaimer = """
 # This file was generated automatically from the data of the
@@ -27,7 +26,8 @@ _NAMES2CONVERT = {
     'LA-MD:H1PPS-1': 'LI-RaMD01:MD-PPS',  # ?
     'LA-MD:H1PPS-2': 'LI-RaMD02:MD-PPS',  # ?
     '?': 'IA-00RaCtrl:CO-DIO',
-    '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE'}
+    '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE',
+}
 
 
 def create_static_table(fname=None, local=False, logfile=None):
@@ -45,8 +45,10 @@ def create_static_table(fname=None, local=False, logfile=None):
     else:
         data = read_data_from_google()
     _log.info(_disclaimer)
-    chans = _get_channels_from_data(data)
-    chans_used, chans_nused = _sort_connection_table(chans)
+    chans_used = _get_channels_from_data(data)
+    chans_used, chans_nused2 = _filter_connection_table(chans_used)
+    chans_used, chans_nused = _sort_connection_table(chans_used)
+    chans_nused = sorted(set(chans_nused + chans_nused2))
     _print_tables(chans_used, chans_nused)
 
 
@@ -56,7 +58,8 @@ def read_data_from_google():
     """
     from googleapiclient.discovery import build
     from httplib2 import Http
-    from oauth2client import file, client, tools
+    from oauth2client import client, file, tools
+
     _log.getLogger('googleapiclient.discovery_cache').setLevel(_log.ERROR)
     _log.getLogger('googleapiclient.discovery').setLevel(_log.ERROR)
     _log.getLogger('oauth2client.transport').setLevel(_log.ERROR)
@@ -70,17 +73,22 @@ def read_data_from_google():
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets(
             '/home/fernando/credentials.json',
-            'https://www.googleapis.com/auth/spreadsheets.readonly')
+            'https://www.googleapis.com/auth/spreadsheets.readonly',
+        )
         creds = tools.run_flow(flow, store)
     service = build('sheets', 'v4', http=creds.authorize(Http()))
 
     # Call the Sheets API
     sheet = service.spreadsheets()
-    result = sheet.values().get(
-        spreadsheetId='19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI',
-        range='Cabos e Fibras').execute()
+    result = (
+        sheet.values()
+        .get(
+            spreadsheetId='19lNNPWxZJv5s-VTrwZRMNWLDMqdHzOQa3ZDIw5neYFI',
+            range='Cabos e Fibras',
+        )
+        .execute()
+    )
     values = result.get('values', [])
-
     if not values:
         raise ValueError('Error loading file from google')
     return values
@@ -88,6 +96,7 @@ def read_data_from_google():
 
 def read_data_from_local_excel_file(fname=None):
     from openpyxl import load_workbook
+
     fname = fname or 'Cabos_e_Fibras_Sirius.xlsx'
     wb = load_workbook(fname, data_only=True)
     ws = wb['Cabos e Fibras']
@@ -134,6 +143,36 @@ def _check_device_and_port(dev, por):
     return _NAMES2CONVERT.get(dev, dev) + ':' + por
 
 
+def _filter_connection_table(chans):
+    entries = []
+    trsrc = LLTimeSearch.TrigSrcDevs
+    in2ou = LLTimeSearch.In2OutMap
+    ou2in = LLTimeSearch.Out2InMap
+    for k1, k2 in chans:
+        if k1.dev in trsrc and k1.propty in (in2ou[k1.dev] | ou2in[k1.dev]):
+            entries.append(k1)
+        if k2.dev in trsrc and k2.propty in (in2ou[k2.dev] | ou2in[k2.dev]):
+            entries.append(k2)
+
+    chans_used = []
+    for entry in entries:
+        mark = list(range(len(chans)))
+        for i, ks in enumerate(chans):
+            k1, k2 = ks
+            if k1 == entry:
+                entries.extend(LLTimeSearch.get_channel_input(k2))
+                chans_used.append((k1, k2))
+                mark.remove(i)
+            if k2 == entry:
+                entries.extend(LLTimeSearch.get_channel_input(k1))
+                chans_used.append((k1, k2))
+                mark.remove(i)
+        chans = [chans[i] for i in mark]
+    chans_used = sorted(set(chans_used))
+    chans_nused = sorted(chans)
+    return chans_used, chans_nused
+
+
 def _sort_connection_table(chans):
     dev = 'EVG'
     for k1, k2 in chans:
@@ -147,7 +186,8 @@ def _sort_connection_table(chans):
         raise KeyError('EVG not Found.')
 
     entries = LLTimeSearch.get_channel_input(
-        PVName(dev.device_name+':'+'UPLINK'))
+        PVName(dev.device_name + ':' + 'UPLINK')
+    )
     chans_used = []
     for entry in entries:
         mark = list(range(len(chans)))
@@ -167,12 +207,12 @@ def _sort_connection_table(chans):
 
 
 def _print_tables(chans_used, chans_nused):
-    _log.info(3*'\n')
+    _log.info(3 * '\n')
     _log.info(f'# {len(chans_used):d}')
     for k1, k2 in chans_used:
         _log.info('{0:35s} {1:35s}'.format(k1, k2))
 
-    _log.info(5*'\n')
+    _log.info(5 * '\n')
     _log.info('# CONNECTIONS NOT USED')
     _log.info(f'# {len(chans_nused):d}')
     for k1, k2 in chans_nused:

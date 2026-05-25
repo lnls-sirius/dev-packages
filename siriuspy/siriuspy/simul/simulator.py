@@ -98,7 +98,7 @@ class Simulator(ABC):
         """Return dict with pvnames and associated values of simulator."""
         vals = dict()
         for pvname in self._pvs:
-            vals[pvname] = self.pv_value_get(pvname)
+            vals[pvname] = self.get_pv_value(pvname)
         return vals
 
     def pv_check(self, pvname):
@@ -109,7 +109,7 @@ class Simulator(ABC):
                 return True
         return False
 
-    def pv_value_get(self, pvname):
+    def get_pv_value(self, pvname):
         """Get SimPV value without invoking simulator callback."""
         return self._pvs[pvname].get_sim()
 

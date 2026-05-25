@@ -3,16 +3,24 @@
 import numpy as _np
 
 from .. import util as _util
-
+from ..magnet.factory import NormalizerFactory as _NormFactory
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..search import PSSearch as _PSSearch
-from ..pwrsupply.csdev import Const as _Const, \
-    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
-    MAX_WFMSIZE_OTHERS as _MAX_WFMSIZE_OTHERS
+from ..pwrsupply.csdev import (
+    Const as _Const,
+    get_ps_scopesourcemap as _get_ps_scopesourcemap,
+    MAX_WFMSIZE as _MAX_WFMSIZE,
+    MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP
+)
 from ..pwrsupply.psctrl.pscstatus import PSCStatus as _PSCStatus
-
+from ..search import PSSearch as _PSSearch
 from .device import Device as _Device
 from .timing import Trigger as _Trigger
+
+# TODO: refactor all these classes, adding LinacPS and a factory class to
+# create the correct type of power supply device based on the device name
+# (see SOFB classes). This would make the code more maintainable and easier
+# to understand, avoiding the use of many if-else statements based on
+# power supply type.
 
 
 class _PSDev(_Device):
@@ -21,61 +29,118 @@ class _PSDev(_Device):
     PWRSTATE = _PSCStatus.PWRSTATE
 
     _default_timeout = 0.5  # [s]
-    _properties_common = (
-        'PwrState-Sel', 'PwrState-Sts',
-    )
-    _properties_linac = (
-        'Current-SP', 'Current-RB', 'Current-Mon',
-    )
-    _properties_magps = (
-        'Current-SP', 'Current-RB', 'Current-Mon', 'CurrentRef-Mon',
-        'OpMode-Sel', 'OpMode-Sts',
-        'WfmUpdateAuto-Sel', 'WfmUpdateAuto-Sts',
-        'CycleType-Sel', 'CycleType-Sts',
-        'CycleNrCycles-SP', 'CycleNrCycles-RB',
-        'Wfm-SP', 'Wfm-RB', 'WfmRef-Mon', 'Wfm-Mon',
-        'ScopeDuration-SP', 'ScopeDuration-RB',
-        'ScopeFreq-SP', 'ScopeFreq-RB',
-        'CycleFreq-SP', 'CycleFreq-RB',
-        'CycleAmpl-SP', 'CycleAmpl-RB',
-        'CycleOffset-SP', 'CycleOffset-RB',
-        'CycleAuxParam-SP', 'CycleAuxParam-RB',
+    _properties_common = ('PwrState-Sel', 'PwrState-Sts')
+    _properties_linac = ('Current-SP', 'Current-RB', 'Current-Mon')
+    _properties_basicps = (
+        'Current-SP',
+        'Current-RB',
+        'Current-Mon',
+        'CurrentRef-Mon',
+        'OpMode-Sel',
+        'OpMode-Sts',
+        'WfmUpdateAuto-Sel',
+        'WfmUpdateAuto-Sts',
+        'CycleType-Sel',
+        'CycleType-Sts',
+        'CycleNrCycles-SP',
+        'CycleNrCycles-RB',
+        'Wfm-SP',
+        'Wfm-RB',
+        'WfmRef-Mon',
+        'Wfm-Mon',
+        'ScopeSrcAddr-SP',
+        'ScopeSrcAddr-RB',
+        'ScopeDuration-SP',
+        'ScopeDuration-RB',
+        'ScopeFreq-SP',
+        'ScopeFreq-RB',
+        'CycleFreq-SP',
+        'CycleFreq-RB',
+        'CycleAmpl-SP',
+        'CycleAmpl-RB',
+        'CycleOffset-SP',
+        'CycleOffset-RB',
+        'CycleAuxParam-SP',
+        'CycleAuxParam-RB',
         'CycleEnbl-Mon',
     )
-    _properties_fbp = _properties_magps + (
-        'SOFBMode-Sel', 'SOFBMode-Sts'
-        )
+    _properties_fbp = _properties_basicps + ('IDFFMode-Sel', 'IDFFMode-Sts')
     _properties_fc = (
-        'AlarmsAmp-Mon', 'OpMode-Sel', 'OpMode-Sts',
-        'CurrLoopKp-RB', 'CurrLoopKp-SP', 'CurrLoopTi-RB', 'CurrLoopTi-SP',
-        'CurrLoopMode-Sts', 'CurrLoopMode-Sel',
-        'CurrGain-RB', 'CurrGain-SP', 'CurrOffset-RB', 'CurrOffset-SP',
-        'Current-RB', 'Current-SP', 'Current-Mon', 'CurrentRef-Mon',
-        'TestLimA-RB', 'TestLimA-SP', 'TestLimB-RB', 'TestLimB-SP',
-        'TestWavePeriod-RB', 'TestWavePeriod-SP',
-        'Voltage-RB', 'Voltage-SP', 'Voltage-Mon',
-        'VoltGain-RB', 'VoltGain-SP', 'VoltOffset-RB', 'VoltOffset-SP',
-        'InvRespMatRowX-SP', 'InvRespMatRowX-RB',
-        'InvRespMatRowY-SP', 'InvRespMatRowY-RB',
-        'FOFBAccGain-SP', 'FOFBAccGain-RB',
-        'FOFBAccFreeze-Sel', 'FOFBAccFreeze-Sts',
+        'AlarmsAmp-Mon',
+        'OpMode-Sel',
+        'OpMode-Sts',
+        'CurrLoopKp-RB',
+        'CurrLoopKp-SP',
+        'CurrLoopKi-RB',
+        'CurrLoopKi-SP',
+        'CurrLoopMode-Sts',
+        'CurrLoopMode-Sel',
+        'CurrGain-RB',
+        'CurrGain-SP',
+        'CurrOffset-RB',
+        'CurrOffset-SP',
+        'Current-RB',
+        'Current-SP',
+        'Current-Mon',
+        'CurrentRef-Mon',
+        'TestLimA-RB',
+        'TestLimA-SP',
+        'TestLimB-RB',
+        'TestLimB-SP',
+        'TestWavePeriod-RB',
+        'TestWavePeriod-SP',
+        'Voltage-RB',
+        'Voltage-SP',
+        'Voltage-Mon',
+        'VoltGain-RB',
+        'VoltGain-SP',
+        'VoltOffset-RB',
+        'VoltOffset-SP',
+        'InvRespMatRowX-SP',
+        'InvRespMatRowX-RB',
+        'InvRespMatRowY-SP',
+        'InvRespMatRowY-RB',
+        'FOFBAccGain-SP',
+        'FOFBAccGain-RB',
+        'FOFBAccFreeze-Sel',
+        'FOFBAccFreeze-Sts',
         'FOFBAccClear-Cmd',
-        'FOFBAccSatMax-SP', 'FOFBAccSatMax-RB',
-        'FOFBAccSatMin-SP', 'FOFBAccSatMin-RB',
+        'FOFBAccSatMax-SP',
+        'FOFBAccSatMax-RB',
+        'FOFBAccSatMin-SP',
+        'FOFBAccSatMin-RB',
         'FOFBAcc-Mon',
-        'FOFBAccDecimation-SP', 'FOFBAccDecimation-RB',
+        'FOFBAccDecimation-SP',
+        'FOFBAccDecimation-RB',
+        'FOFBAccFilter-SP',
+        'FOFBAccFilter-RB',
+        'FOFBAccFilterGain-SP',
+        'FOFBAccFilterGain-RB',
     )
     _properties_pulsed = (
-        'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
-        'Pulse-Sel', 'Pulse-Sts')
-    _properties_pulsed_sept = (
-        'Intlk1-Mon', 'Intlk2-Mon', 'Intlk3-Mon', 'Intlk4-Mon',
-        'Intlk5-Mon', 'Intlk6-Mon', 'Intlk7-Mon',
+        'Voltage-SP',
+        'Voltage-RB',
+        'Voltage-Mon',
+        'Pulse-Sel',
+        'Pulse-Sts',
     )
-    _properties_pulsed_kckr = _properties_pulsed_sept + ('Intlk8-Mon', )
+    _properties_pulsed_sept = (
+        'Intlk1-Mon',
+        'Intlk2-Mon',
+        'Intlk3-Mon',
+        'Intlk4-Mon',
+        'Intlk5-Mon',
+        'Intlk6-Mon',
+        'Intlk7-Mon',
+    )
+    _properties_pulsed_kckr = _properties_pulsed_sept + ('Intlk8-Mon',)
     _properties_pulsed_nlkckr = _properties_pulsed_kckr + (
-        'CCoilHVoltage-SP', 'CCoilHVoltage-RB', 'CCoilHVoltage-Mon',
-        'CCoilVVoltage-SP', 'CCoilVVoltage-RB', 'CCoilVVoltage-Mon',
+        'CCoilHVoltage-SP',
+        'CCoilHVoltage-RB',
+        'CCoilHVoltage-Mon',
+        'CCoilVVoltage-SP',
+        'CCoilVVoltage-RB',
+        'CCoilVVoltage-Mon',
     )
 
     def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
@@ -87,24 +152,43 @@ class _PSDev(_Device):
             raise NotImplementedError(devname)
 
         # power supply type and magnetic function
-        (self._pstype, self._psmodel, self._magfunc,
-         self._strength_propty, self._strength_units,
-         self._is_linac, self._is_pulsed, self._is_fc, self._is_fbp,
-         self._is_magps) = _PSDev.get_device_type(devname)
+        (
+            self._pstype,
+            self._psmodel,
+            self._magfunc,
+            self._strength_propty,
+            self._strength_units,
+            self._is_linac,
+            self._is_pulsed,
+            self._is_fc,
+            self._is_fbp,
+            self._is_basicps,
+        ) = _PSDev.get_device_type(devname)
 
         # set attributes
-        (self._strength_sp_propty,
-         self._strength_rb_propty,
-         self._strength_mon_propty,
-         properties) = self._set_attributes_properties(devname)
+        (
+            self._strength_sp_propty,
+            self._strength_rb_propty,
+            self._strength_mon_propty,
+            properties,
+        ) = self._set_attributes_properties(devname)
 
         if props2init == 'all':
             props2init = properties
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon)
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
 
-        # private attribute with strength setpoint pv object
-        self._strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        try:
+            name = devname.substitute(dis='MA')
+            if name.dev == 'B1B2' or (name.sec == 'BO' and name.dev == 'B'):
+                maname = name.substitute(idx='')
+            else:
+                maname = name
+            self._normalizer = _NormFactory.create(maname)
+        except:  # noqa: E722
+            # TODO: improve this block to avoid catching all exceptions
+            self._normalizer = None
 
     @property
     def pstype(self):
@@ -133,13 +217,23 @@ class _PSDev(_Device):
 
     @property
     def is_fc(self):
-        """Return True if device is a Sirius fast corrector power supply"""
+        """Return True if device is a Sirius fast corrector power supply."""
         return self._is_fc
 
     @property
-    def is_magps(self):
+    def is_basicps(self):
         """Return True if device is a Sirius magnet power supply."""
-        return self._is_pulsed
+        return self._is_basicps
+
+    @property
+    def is_fbp(self):
+        """Return True if device is a Sirius FBP power supply."""
+        return self._is_fbp
+
+    @property
+    def normalizer(self):
+        """Return Normalizer object for current and strength conversions."""
+        return self._normalizer
 
     @property
     def strength_property(self):
@@ -174,42 +268,50 @@ class _PSDev(_Device):
     @property
     def strength_upper_ctrl_limit(self):
         """Return Strength SP upper control limit."""
-        return self._strength_sp_pv.upper_ctrl_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_ctrl_limit
 
     @property
     def strength_lower_ctrl_limit(self):
         """Return Strength SP lower control limit."""
-        return self._strength_sp_pv.lower_ctrl_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_ctrl_limit
 
     @property
     def strength_upper_alarm_limit(self):
         """Return Strength SP upper alarm limit."""
-        return self._strength_sp_pv.upper_alarm_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_alarm_limit
 
     @property
     def strength_lower_alarm_limit(self):
         """Return Strength SP lower alarm limit."""
-        return self._strength_sp_pv.lower_alarm_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_alarm_limit
 
     @property
     def strength_upper_warning_limit(self):
         """Return Strength SP upper warning limit."""
-        return self._strength_sp_pv.upper_warning_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_warning_limit
 
     @property
     def strength_lower_warning_limit(self):
         """Return Strength SP lower warning limit."""
-        return self._strength_sp_pv.lower_warning_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_warning_limit
 
     @property
     def strength_upper_disp_limit(self):
         """Return Strength SP upper display limit."""
-        return self._strength_sp_pv.upper_disp_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.upper_disp_limit
 
     @property
     def strength_lower_disp_limit(self):
         """Return Strength SP lower display limit."""
-        return self._strength_sp_pv.lower_disp_limit
+        strength_sp_pv = self.pv_object(self._strength_sp_propty)
+        return strength_sp_pv.lower_disp_limit
 
     @property
     def pwrstate(self):
@@ -224,19 +326,26 @@ class _PSDev(_Device):
     def set_strength(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set strength and wait until it gets there."""
         self.strength = value
-        pv2wait = self._strength_mon_propty if wait_mon \
-            else self._strength_rb_propty
-        return self._wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+        pv2wait = (
+            self._strength_mon_propty if wait_mon else self._strength_rb_propty
+        )
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+
+    def set_current(self, value, tol=0.2, timeout=10, wait_mon=False):
+        """Set current and wait until it gets there."""
+        self.current = value
+        pv2wait = 'Current-Mon' if wait_mon else 'Current-RB'
+        return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
 
     def cmd_turn_on(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.On
-        return self._wait('PwrState-Sts', self.PWRSTATE.On, timeout=timeout)
+        return self.wait('PwrState-Sts', self.PWRSTATE.On, timeout=timeout)
 
     def cmd_turn_off(self, timeout=_default_timeout):
         """."""
         self.pwrstate = self.PWRSTATE.Off
-        return self._wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
+        return self.wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
 
     @staticmethod
     def get_device_type(devname):
@@ -250,15 +359,25 @@ class _PSDev(_Device):
         is_pulsed = devname.dis == 'PU'
         is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
         is_fbp = psmodel == 'FBP'
-        is_magps = not is_linac and not is_pulsed and not is_fc and not is_fbp
-        return (pstype, psmodel, magfunc,
-                strength_propty, strength_units,
-                is_linac, is_pulsed, is_fc, is_fbp, is_magps)
+        is_basicps = (
+            not is_linac and not is_pulsed and not is_fc and not is_fbp
+        )
+        return (
+            pstype,
+            psmodel,
+            magfunc,
+            strength_propty,
+            strength_units,
+            is_linac,
+            is_pulsed,
+            is_fc,
+            is_fbp,
+            is_basicps,
+        )
 
     # --- private methods ---
 
     def _set_attributes_properties(self, devname):
-
         properties = _PSDev._properties_common
         if self._is_linac:
             properties += _PSDev._properties_linac
@@ -275,7 +394,7 @@ class _PSDev(_Device):
         elif self._is_fbp:
             properties += _PSDev._properties_fbp
         else:
-            properties += _PSDev._properties_magps
+            properties += _PSDev._properties_basicps
 
         # strength properties
         strength_sp_propty = self._strength_propty + '-SP'
@@ -288,11 +407,14 @@ class _PSDev(_Device):
         )
         if not self._is_linac and not self._is_pulsed:
             strengthref_mon_propty = self._strength_propty + 'Ref-Mon'
-            properties += (strengthref_mon_propty, )
+            properties += (strengthref_mon_propty,)
 
         ret = (
-            strength_sp_propty, strength_rb_propty, strength_mon_propty,
-            properties)
+            strength_sp_propty,
+            strength_rb_propty,
+            strength_mon_propty,
+            properties,
+        )
 
         return ret
 
@@ -307,6 +429,21 @@ class PowerSupply(_PSDev):
 
     class DEVICES:
         """Devices names."""
+
+    def __init__(self, devname, auto_monitor_mon=False, props2init='all'):
+        """."""
+        super().__init__(devname, auto_monitor_mon, props2init)
+        if self.is_basicps or self.is_fbp:
+            dic = _get_ps_scopesourcemap(devname)
+            str_, vals = list(
+                zip(*[  # noqa: B905
+                    (k.title().replace(' ', '').split('[')[0], v)
+                    for k, v in dic.items()
+                ])
+            )
+            self.ScopeSrcAddr = _Const.register(
+                'ScopeSrcAddr', str_, values=vals
+            )
 
     @property
     def current(self):
@@ -334,8 +471,7 @@ class PowerSupply(_PSDev):
 
     @opmode.setter
     def opmode(self, value):
-        self._enum_setter(
-            'OpMode-Sel', value, self.OPMODE_SEL)
+        self._enum_setter('OpMode-Sel', value, self.OPMODE_SEL)
 
     @property
     def opmode_str(self):
@@ -344,7 +480,7 @@ class PowerSupply(_PSDev):
 
     def wait_cycle_to_finish(self, timeout=10):
         """."""
-        return self._wait('CycleEnbl-Mon', 0, timeout)
+        return self.wait('CycleEnbl-Mon', 0, timeout)
 
     @property
     def cycle_enabled(self):
@@ -358,8 +494,7 @@ class PowerSupply(_PSDev):
 
     @cycle_type.setter
     def cycle_type(self, value):
-        self._enum_setter(
-            'CycleType-Sel', value, self.CYCLETYPE)
+        self._enum_setter('CycleType-Sel', value, self.CYCLETYPE)
 
     @property
     def cycle_type_str(self):
@@ -538,7 +673,7 @@ class PowerSupply(_PSDev):
     def wfm(self, value):
         """."""
         value = _np.array(value).ravel()
-        max_size = _MAX_WFMSIZE_OTHERS
+        max_size = _MAX_WFMSIZE
         if self.psmodel == 'FBP':
             max_size = _MAX_WFMSIZE_FBP
         self['Wfm-SP'] = value[:max_size]
@@ -566,8 +701,24 @@ class PowerSupply(_PSDev):
     @wfm_update_auto.setter
     def wfm_update_auto(self, value):
         """Set waveform auto update."""
-        self._enum_setter(
-            'WfmUpdateAuto-Sel', value, self.WFMUPDATEAUTO)
+        self._enum_setter('WfmUpdateAuto-Sel', value, self.WFMUPDATEAUTO)
+
+    @property
+    def scope_src_addr(self):
+        """Waveform auto update."""
+        return self['ScopeSrcAddr-RB']
+
+    @property
+    def scope_src_addr_str(self):
+        """Waveform auto update."""
+        return self.ScopeSrcAddr._fields[
+            self.ScopeSrcAddr.index(self['ScopeSrcAddr-RB'])
+        ]
+
+    @scope_src_addr.setter
+    def scope_src_addr(self, value):
+        """Set waveform auto update."""
+        self._enum_setter('ScopeSrcAddr-SP', value, self.ScopeSrcAddr)
 
     @property
     def scope_freq(self):
@@ -592,20 +743,21 @@ class PowerSupply(_PSDev):
     def cmd_slowref(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRef
-        return self._wait(
-            'OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout)
+        return self.wait(
+            'OpMode-Sts', self.OPMODE_STS.SlowRef, timeout=timeout
+        )
 
     def cmd_slowrefsync(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.SlowRefSync
-        return self._wait(
-            'OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout)
+        return self.wait(
+            'OpMode-Sts', self.OPMODE_STS.SlowRefSync, timeout=timeout
+        )
 
     def cmd_cycle(self, timeout=_PSDev._default_timeout):
         """."""
         self['OpMode-Sel'] = self.OPMODE_SEL.Cycle
-        return self._wait(
-            'OpMode-Sts', self.OPMODE_STS.Cycle, timeout=timeout)
+        return self.wait('OpMode-Sts', self.OPMODE_STS.Cycle, timeout=timeout)
 
 
 class PowerSupplyPU(_PSDev):
@@ -631,13 +783,18 @@ class PowerSupplyPU(_PSDev):
         SI_PING_V = 'SI-19C4:PU-PingV'
         ALL = (
             TB_INJ_SEPT,
-            BO_INJ_KCKR, BO_EJE_KCKR,
-            TS_EJE_SEPTF, TS_EJE_SEPTG,
-            TS_INJ_SEPTG_1, TS_INJ_SEPTG_2,
+            BO_INJ_KCKR,
+            BO_EJE_KCKR,
+            TS_EJE_SEPTF,
+            TS_EJE_SEPTG,
+            TS_INJ_SEPTG_1,
+            TS_INJ_SEPTG_2,
             TS_INJ_SEPTF,
-            SI_INJ_DPKCKR, SI_INJ_NLKCKR,
-            SI_PING_H, SI_PING_V,
-            )
+            SI_INJ_DPKCKR,
+            SI_INJ_NLKCKR,
+            SI_PING_H,
+            SI_PING_V,
+        )
 
     _properties_timing = ('Delay-SP', 'Delay-RB', 'DelayRaw-SP', 'DelayRaw-RB')
 
@@ -728,13 +885,12 @@ class PowerSupplyPU(_PSDev):
     def cmd_turn_on_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.On
-        return self._wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
+        return self.wait('Pulse-Sts', value=self.PULSTATE.On, timeout=timeout)
 
     def cmd_turn_off_pulse(self, timeout=DEF_TIMEOUT):
         """."""
         self.pulse = self.PULSTATE.Off
-        return self._wait(
-            'Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
+        return self.wait('Pulse-Sts', value=self.PULSTATE.Off, timeout=timeout)
 
     @property
     def properties(self):
@@ -744,8 +900,7 @@ class PowerSupplyPU(_PSDev):
     @property
     def pvnames(self):
         """Return device PV names."""
-        return set(list(super().pvnames) +
-                   list(self._dev_timing.pvnames))
+        return set(list(super().pvnames) + list(self._dev_timing.pvnames))
 
     @property
     def interlock_ok(self):
@@ -766,8 +921,10 @@ class PowerSupplyPU(_PSDev):
     @property
     def disconnected_pvnames(self):
         """Return list of disconnected device PVs."""
-        return set(list(super().disconnected_pvnames) +
-                   list(self._dev_timing.disconnected_pvnames))
+        return set(
+            list(super().disconnected_pvnames)
+            + list(self._dev_timing.disconnected_pvnames)
+        )
 
     def update(self):
         """Update device properties."""
@@ -908,13 +1065,13 @@ class PowerSupplyFC(_PSDev):
         self['CurrLoopKp-SP'] = value
 
     @property
-    def currloop_ti(self):
-        """Current control loop Ti parameter."""
-        return self['CurrLoopTi-RB']
+    def currloop_ki(self):
+        """Current control loop Ki parameter."""
+        return self['CurrLoopKi-RB']
 
-    @currloop_ti.setter
-    def currloop_ti(self, value):
-        self['CurrLoopTi-SP'] = value
+    @currloop_ki.setter
+    def currloop_ki(self, value):
+        self['CurrLoopKi-SP'] = value
 
     @property
     def currloop_mode(self):
@@ -940,7 +1097,7 @@ class PowerSupplyFC(_PSDev):
 
     def _set_opmode(self, mode, timeout):
         self['OpMode-Sel'] = mode
-        return self._wait('OpMode-Sts', mode, timeout=timeout)
+        return self.wait('OpMode-Sts', mode, timeout=timeout)
 
     @property
     def invrespmat_row_x(self):
@@ -1015,29 +1172,48 @@ class PowerSupplyFC(_PSDev):
         self['FOFBAccClear-Cmd'] = 1
         return True
 
+    @property
+    def fofbacc_filter(self):
+        """FOFB accumulator filter."""
+        return self['FOFBAccFilter-RB']
+
+    @fofbacc_filter.setter
+    def fofbacc_filter(self, value):
+        self['FOFBAccFilter-SP'] = value
+
+    @property
+    def fofbacc_filter_gain(self):
+        """FOFB accumulator filter gain."""
+        return self['FOFBAccFilterGain-RB']
+
+    @fofbacc_filter_gain.setter
+    def fofbacc_filter_gain(self, value):
+        self['FOFBAccFilterGain-SP'] = value
+
 
 class PowerSupplyFBP(PowerSupply):
     """FBP Power Supply Device."""
 
-    SOFBMODE_SEL = _Const.DsblEnbl
-    SOFBMODE_STS = _Const.DsblEnbl
+    IDFFMODE_SEL = _Const.DsblEnbl
+    IDFFMODE_STS = _Const.DsblEnbl
 
     @property
-    def sofbmode(self):
-        """SOFB mode status."""
-        return self['SOFBMode-Sts']
+    def idffmode(self):
+        """IDFF mode status."""
+        return self['IDFFMode-Sts']
 
-    def cmd_sofbmode_enable(self, timeout=_PSDev._default_timeout):
-        """Command to enable SOFBMode. Send command and wait."""
-        return self._cmd_sofbmode(
-            timeout, self.SOFBMODE_SEL.Enbl, self.SOFBMODE_STS.Enbl)
+    def cmd_idffmode_enable(self, timeout=_PSDev._default_timeout):
+        """Command to enable IDFFMode. Send command and wait."""
+        return self._cmd_idffmode(
+            timeout, self.IDFFMODE_SEL.Enbl, self.IDFFMODE_STS.Enbl
+        )
 
-    def cmd_sofbmode_disable(self, timeout=_PSDev._default_timeout):
-        """Command to disable SOFBMode. Send command and wait."""
-        return self._cmd_sofbmode(
-            timeout, self.SOFBMODE_SEL.Dsbl, self.SOFBMODE_STS.Dsbl)
+    def cmd_idffmode_disable(self, timeout=_PSDev._default_timeout):
+        """Command to disable IDFFMode. Send command and wait."""
+        return self._cmd_idffmode(
+            timeout, self.IDFFMODE_SEL.Dsbl, self.IDFFMODE_STS.Dsbl
+        )
 
-    def _cmd_sofbmode(self, timeout, state_sel, state_sts):
-        self['SOFBMode-Sel'] = state_sel
-        return self._wait(
-            'SOFBMode-Sts', state_sts, timeout=timeout)
+    def _cmd_idffmode(self, timeout, state_sel, state_sts):
+        self['IDFFMode-Sel'] = state_sel
+        return self.wait('IDFFMode-Sts', state_sts, timeout=timeout)
