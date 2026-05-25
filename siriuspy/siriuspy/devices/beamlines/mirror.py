@@ -21,6 +21,19 @@ class MirrorBase(_PVAccessor, _Device):
         super().__init__(devname, props2init=props2init, **kwargs)
 
     @property
+    def beamline_enabled(self):
+        """Return beamline enable status."""
+        return self[self.PVS.BEAMLINE_CTRL_ENBL]
+
+    @beamline_enabled.setter
+    def beamline_enabled(self, value):
+        """Set beamline enable status.
+
+        WARNING: enable = 0, disable = 1.
+        """
+        self[self.PVS.BEAMLINE_CTRL_ENBL] = value
+
+    @property
     def photocurrent_signal(self):
         """Return induced voltage in the mirror photocollector [V]."""
         return self[self.PVS.PHOTOCOLLECTOR]
@@ -117,6 +130,9 @@ class CAXMirror(MirrorBase):
 
         # MOTORS
 
+        # Semaphor
+        self.PVS.BEAMLINE_CTRL_ENBL = "A:BeamLineCtrlEnbl-Sel"
+
         # Real actuators for Ry, Tx, Y1, Y2 and Y3
         pvprefix = "A:PB01:"
 
@@ -183,77 +199,104 @@ class CAXMirror(MirrorBase):
 
         # Kinematic actuators for Rx, Ry, Rz and Ty
 
-        pvprefixk = "A:PB01:CS1:"
+        pvk_pfx = "A:PB01:CS1:"
 
         # X rotation
-        self.PVS.CS_RX      = pvprefixk + "m1"        # Motor base name
-        self.PVS.CS_RX_SP   = pvprefixk + "m1.VAL"    # Setpoint value
-        self.PVS.CS_RX_MON  = pvprefixk + "m1.RBV"    # Readback value
-        self.PVS.CS_RX_HILM = pvprefixk + "m1.HLM"    # High limit
-        self.PVS.CS_RX_LOLM = pvprefixk + "m1.LLM"    # Low limit
-        self.PVS.CS_RX_ENBL = pvprefixk + "m1.CNEN"   # Enable/Disable
-        self.PVS.CS_RX_DMVN = pvprefixk + "m1.DMOV"   # Done moving
-        self.PVS.CS_RX_MVN  = pvprefixk + "m1.MOVN"   # Motor is moving
-        self.PVS.CS_RX_STOP = pvprefixk + "m1.STOP"   # Stop command
-        self.PVS.CS_RX_DESC = pvprefixk + "m1.DESC"   # Description
+        self.PVS.CS_RX      = pvk_pfx + "m1"        # Motor base name
+        self.PVS.CS_RX_SP   = pvk_pfx + "m1.VAL"    # Setpoint value
+        self.PVS.CS_RX_MON  = pvk_pfx + "m1.RBV"    # Readback value
+        self.PVS.CS_RX_HILM = pvk_pfx + "m1.HLM"    # High limit
+        self.PVS.CS_RX_LOLM = pvk_pfx + "m1.LLM"    # Low limit
+        self.PVS.CS_RX_ENBL = pvk_pfx + "m1.CNEN"   # Enable/Disable
+        self.PVS.CS_RX_DMVN = pvk_pfx + "m1.DMOV"   # Done moving
+        self.PVS.CS_RX_MVN  = pvk_pfx + "m1.MOVN"   # Motor is moving
+        self.PVS.CS_RX_STOP = pvk_pfx + "m1.STOP"   # Stop command
+        self.PVS.CS_RX_DESC = pvk_pfx + "m1.DESC"   # Description
 
         # Y rotation
-        self.PVS.CS_RY      = pvprefixk + "m2"        # Motor base name
-        self.PVS.CS_RY_SP   = pvprefixk + "m2.VAL"    # Setpoint value
-        self.PVS.CS_RY_MON  = pvprefixk + "m2.RBV"    # Readback value
-        self.PVS.CS_RY_HILM = pvprefixk + "m2.HLM"    # High limit
-        self.PVS.CS_RY_LOLM = pvprefixk + "m2.LLM"    # Low limit
-        self.PVS.CS_RY_ENBL = pvprefixk + "m2.CNEN"   # Enable/Disable
-        self.PVS.CS_RY_DMVN = pvprefixk + "m2.DMOV"   # Done moving
-        self.PVS.CS_RY_MVN  = pvprefixk + "m2.MOVN"   # Motor is moving
-        self.PVS.CS_RY_STOP = pvprefixk + "m2.STOP"   # Stop command
-        self.PVS.CS_RY_DESC = pvprefixk + "m2.DESC"   # Description
+        self.PVS.CS_RY      = pvk_pfx + "m2"        # Motor base name
+        self.PVS.CS_RY_SP   = pvk_pfx + "m2.VAL"    # Setpoint value
+        self.PVS.CS_RY_MON  = pvk_pfx + "m2.RBV"    # Readback value
+        self.PVS.CS_RY_HILM = pvk_pfx + "m2.HLM"    # High limit
+        self.PVS.CS_RY_LOLM = pvk_pfx + "m2.LLM"    # Low limit
+        self.PVS.CS_RY_ENBL = pvk_pfx + "m2.CNEN"   # Enable/Disable
+        self.PVS.CS_RY_DMVN = pvk_pfx + "m2.DMOV"   # Done moving
+        self.PVS.CS_RY_MVN  = pvk_pfx + "m2.MOVN"   # Motor is moving
+        self.PVS.CS_RY_STOP = pvk_pfx + "m2.STOP"   # Stop command
+        self.PVS.CS_RY_DESC = pvk_pfx + "m2.DESC"   # Description
 
         # Z rotation
-        self.PVS.CS_RZ      = pvprefixk + "m3"        # Motor base name
-        self.PVS.CS_RZ_SP   = pvprefixk + "m3.VAL"    # Setpoint value
-        self.PVS.CS_RZ_MON  = pvprefixk + "m3.RBV"    # Readback value
-        self.PVS.CS_RZ_HILM = pvprefixk + "m3.HLM"    # High limit
-        self.PVS.CS_RZ_LOLM = pvprefixk + "m3.LLM"    # Low limit
-        self.PVS.CS_RZ_ENBL = pvprefixk + "m3.CNEN"   # Enable/Disable
-        self.PVS.CS_RZ_DMVN = pvprefixk + "m3.DMOV"   # Done moving
-        self.PVS.CS_RZ_MVN  = pvprefixk + "m3.MOVN"   # Motor is moving
-        self.PVS.CS_RZ_STOP = pvprefixk + "m3.STOP"   # Stop command
-        self.PVS.CS_RZ_DESC = pvprefixk + "m3.DESC"   # Description
+        self.PVS.CS_RZ      = pvk_pfx + "m3"        # Motor base name
+        self.PVS.CS_RZ_SP   = pvk_pfx + "m3.VAL"    # Setpoint value
+        self.PVS.CS_RZ_MON  = pvk_pfx + "m3.RBV"    # Readback value
+        self.PVS.CS_RZ_HILM = pvk_pfx + "m3.HLM"    # High limit
+        self.PVS.CS_RZ_LOLM = pvk_pfx + "m3.LLM"    # Low limit
+        self.PVS.CS_RZ_ENBL = pvk_pfx + "m3.CNEN"   # Enable/Disable
+        self.PVS.CS_RZ_DMVN = pvk_pfx + "m3.DMOV"   # Done moving
+        self.PVS.CS_RZ_MVN  = pvk_pfx + "m3.MOVN"   # Motor is moving
+        self.PVS.CS_RZ_STOP = pvk_pfx + "m3.STOP"   # Stop command
+        self.PVS.CS_RZ_DESC = pvk_pfx + "m3.DESC"   # Description
 
         # X translation
-        self.PVS.CS_TX      = pvprefixk + "m7"        # Motor base name
-        self.PVS.CS_TX_SP   = pvprefixk + "m7.VAL"    # Setpoint value
-        self.PVS.CS_TX_MON  = pvprefixk + "m7.RBV"    # Readback value
-        self.PVS.CS_TX_HILM = pvprefixk + "m7.HLM"    # High limit
-        self.PVS.CS_TX_LOLM = pvprefixk + "m7.LLM"    # Low limit
-        self.PVS.CS_TX_ENBL = pvprefixk + "m7.CNEN"   # Enable/Disable
-        self.PVS.CS_TX_DMVN = pvprefixk + "m7.DMOV"   # Done moving
-        self.PVS.CS_TX_MVN  = pvprefixk + "m7.MOVN"   # Motor is moving
-        self.PVS.CS_TX_STOP = pvprefixk + "m7.STOP"   # Stop command
-        self.PVS.CS_TX_DESC = pvprefixk + "m7.DESC"   # Description
+        self.PVS.CS_TX      = pvk_pfx + "m7"        # Motor base name
+        self.PVS.CS_TX_SP   = pvk_pfx + "m7.VAL"    # Setpoint value
+        self.PVS.CS_TX_MON  = pvk_pfx + "m7.RBV"    # Readback value
+        self.PVS.CS_TX_HILM = pvk_pfx + "m7.HLM"    # High limit
+        self.PVS.CS_TX_LOLM = pvk_pfx + "m7.LLM"    # Low limit
+        self.PVS.CS_TX_ENBL = pvk_pfx + "m7.CNEN"   # Enable/Disable
+        self.PVS.CS_TX_DMVN = pvk_pfx + "m7.DMOV"   # Done moving
+        self.PVS.CS_TX_MVN  = pvk_pfx + "m7.MOVN"   # Motor is moving
+        self.PVS.CS_TX_STOP = pvk_pfx + "m7.STOP"   # Stop command
+        self.PVS.CS_TX_DESC = pvk_pfx + "m7.DESC"   # Description
 
         # Y translation
-        self.PVS.CS_TY      = pvprefixk + "m8"        # Motor base name
-        self.PVS.CS_TY_SP   = pvprefixk + "m8.VAL"    # Setpoint value
-        self.PVS.CS_TY_MON  = pvprefixk + "m8.RBV"    # Readback value
-        self.PVS.CS_TY_HILM = pvprefixk + "m8.HLM"    # High limit
-        self.PVS.CS_TY_LOLM = pvprefixk + "m8.LLM"    # Low limit
-        self.PVS.CS_TY_ENBL = pvprefixk + "m8.CNEN"   # Enable/Disable
-        self.PVS.CS_TY_DMVN = pvprefixk + "m8.DMOV"   # Done moving
-        self.PVS.CS_TY_MVN  = pvprefixk + "m8.MOVN"   # Motor is moving
-        self.PVS.CS_TY_STOP = pvprefixk + "m8.STOP"   # Stop command
-        self.PVS.CS_TY_DESC = pvprefixk + "m8.DESC"   # Description
+        self.PVS.CS_TY      = pvk_pfx + "m8"        # Motor base name
+        self.PVS.CS_TY_SP   = pvk_pfx + "m8.VAL"    # Setpoint value
+        self.PVS.CS_TY_MON  = pvk_pfx + "m8.RBV"    # Readback value
+        self.PVS.CS_TY_HILM = pvk_pfx + "m8.HLM"    # High limit
+        self.PVS.CS_TY_LOLM = pvk_pfx + "m8.LLM"    # Low limit
+        self.PVS.CS_TY_ENBL = pvk_pfx + "m8.CNEN"   # Enable/Disable
+        self.PVS.CS_TY_DMVN = pvk_pfx + "m8.DMOV"   # Done moving
+        self.PVS.CS_TY_MVN  = pvk_pfx + "m8.MOVN"   # Motor is moving
+        self.PVS.CS_TY_STOP = pvk_pfx + "m8.STOP"   # Stop command
+        self.PVS.CS_TY_DESC = pvk_pfx + "m8.DESC"   # Description
 
+        #
         # SENSORS
+        #
+
+        # PHOTOCOLLECTOR
         self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
-        self.PVS.TEMP0_MON      = "A:RIO01:9226B:temp0"
-        self.PVS.TEMP1_MON      = "A:RIO01:9226B:temp1"
-        self.PVS.TEMP2_MON      = "A:RIO01:9226B:temp2"
-        self.PVS.TEMP3_MON      = "A:RIO01:9226B:temp3"
-        self.PVS.TEMP4_MON      = "A:RIO01:9226B:temp4"
-        self.PVS.TEMP_SP        = "A:RIO01:M1_CtrltempSp"
-        self.PVS.TEMP_RB        = "A:RIO01:M1_CtrltempSp"
+
+        # TEMPERATURES
+        pvr_pfx = "A:RIO01:9226B:"
+        self.PVS.TEMP0_MON = pvr_pfx + "temp0"
+        self.PVS.TEMP1_MON = pvr_pfx + "temp1"
+        self.PVS.TEMP2_MON = pvr_pfx + "temp2"
+        self.PVS.TEMP3_MON = pvr_pfx + "temp3"
+        self.PVS.TEMP4_MON = pvr_pfx + "temp4"
+        self.PVS.TEMP_SP   = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TEMP_RB   = "A:RIO01:M1_CtrltempSp"
+
+        # PRESSURE
+        # Ionic pump
+        pva_pfx = "A:A4UHV01:"
+        self.PVS.PR_A1_MON = pva_pfx + "ch1:Pressure-Mon"  # Agilent pump
+        self.PVS.PR_A2_MON = pva_pfx + "ch2:Pressure-Mon"  # Agilent pump
+        self.PVS.PR_A3_MON = pva_pfx + "ch3:Pressure-Mon"  # Agilent pump
+        self.PVS.PR_A4_MON = pva_pfx + "ch4:Pressure-Mon"  # Agilent pump
+
+        # Ionic pump
+        pvq_pfx = "A:QPC4P01:"
+        self.PVS.PR_Q1_MON = pvq_pfx + "getPressure1"      # FOE-BI01
+        self.PVS.PR_Q2_MON = pvq_pfx + "getPressure2"      # FOE-BI02
+        self.PVS.PR_Q3_MON = pvq_pfx + "getPressure3"      # FOE-BI05
+        self.PVS.PR_Q4_MON = pvq_pfx + "getPressure4"      # FOE-BI06
+
+        # Vacuum sensor
+        pvv_pfx = "A:MKS937B01:"
+        self.PVS.PR_V1_MON = pvv_pfx + "getPR1"            # FOE-XBPM1
+        self.PVS.PR_V2_MON = pvv_pfx + "getPR3"            # FOE-XBPM2
 
         # FLOWMETERS
         self.PVS.FLOWMETER1_MON = "F:EPS01:MR1FIT1"
