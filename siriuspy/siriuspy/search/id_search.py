@@ -683,7 +683,7 @@ class IDSearch:
                 if idffdevname not in idffdevs:
                     idffdevs[idffdevname] = dict()
                 idffdevdict = idffdevs[idffdevname]
-                addcorr(idff, corrtype, idffdevdict)
+                IDSearch._idffdevs_add_corrector(idff, corrtype, idffdevdict)
         return idffdevs
 
     @staticmethod
