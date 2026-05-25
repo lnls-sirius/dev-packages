@@ -394,21 +394,41 @@ class IDSearch:
         5: (POL_UNDEF_STR, None),
     })
 
+    IDFF_CorrTypes = _get_namedtuple(
+        'IDFF_CorrTypes', ('ch', 'cv', 'qs', 'lc', 'qn', 'cc')
+    )
+    _type_ch = IDFF_CorrTypes._fields[0]
+    _type_cv = IDFF_CorrTypes._fields[1]
+    _type_qs = IDFF_CorrTypes._fields[2]
+    _type_lc = IDFF_CorrTypes._fields[3]
+    _type_qn = IDFF_CorrTypes._fields[4]
+    _type_cc = IDFF_CorrTypes._fields[5]
+
     # define IDFF correctors labeling (and ordering)
     # NOTE: the ordering within each category here follows the ordering of the
     # correctors in the rack cabinets.
-    IDFF_CH_LABELS = ('ch_1', 'ch_2')
-    IDFF_CV_LABELS = ('cv_1', 'cv_2')
-    IDFF_QS_LABELS = ('qs_1', 'qs_2')
-    IDFF_LC_LABELS = ('lch_1', 'lcv_1', 'lcv_2')
-    IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
-    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2')
+    IDFF_CorrLabels = {
+        _type_ch: ('ch_1', 'ch_2'),
+        _type_cv: ('cv_1', 'cv_2'),
+        _type_qs: ('qs_1', 'qs_2'),
+        _type_lc: ('lch_1', 'lcv_1', 'lcv_2'),
+        _type_qn: ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2'),
+        _type_cc: ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2'),
+    }
+
+    IDFF_CH_LABELS = IDFF_CorrLabels[_type_ch]
+    IDFF_CV_LABELS = IDFF_CorrLabels[_type_cv]
+    IDFF_QS_LABELS = IDFF_CorrLabels[_type_qs]
+    IDFF_LC_LABELS = IDFF_CorrLabels[_type_lc]
+    IDFF_QN_LABELS = IDFF_CorrLabels[_type_qn]
+    IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
 
     _idname_2_idff = {
         'SI-06SB:ID-VPU29': {
             'polarizations': ('vertical',),
             'pparameter': None,
             'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
+            'idffdevs': {_type_cc: 'SI-06SB:BS-IDFF-CC'},
             IDFF_CC_LABELS[0]: 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-06SB:PS-CC2-1:Current-SP',  # upstream
             IDFF_CC_LABELS[2]: 'SI-06SB:PS-CC1-2:Current-SP',  # downstream
@@ -418,6 +438,7 @@ class IDSearch:
             'polarizations': ('vertical',),
             'pparameter': None,
             'kparameter': 'SI-07SP:ID-VPU29:KParam-Mon',
+            'idffdevs': {_type_cc: 'SI-07SP:BS-IDFF-CC'},
             IDFF_CC_LABELS[0]: 'SI-07SP:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-07SP:PS-CC2-1:Current-SP',  # upstream
             IDFF_CC_LABELS[2]: 'SI-07SP:PS-CC1-2:Current-SP',  # downstream
@@ -427,6 +448,10 @@ class IDSearch:
             'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-08SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-08SB:BS-IDFF-CHCV',
+            },
             IDFF_CH_LABELS[0]: 'SI-08SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-08SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-08SB:PS-CV-1:Current-SP',
@@ -471,6 +496,11 @@ class IDSearch:
             ),
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-10SB:AP-IDFF',
+                _type_cv: 'SI-10SB:AP-IDFF',
+                _type_qs: 'SI-10SB:AP-IDFF',
+            },
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-10SB:PS-CV-1:Current-SP',
@@ -484,6 +514,12 @@ class IDSearch:
             ),
             'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
             'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-11SP:BS-IDFF-CHCV',
+                _type_cv: 'SI-11SP:BS-IDFF-CHCV',
+                _type_qs: 'SI-11SP:BS-IDFF-QS',
+                _type_lc: 'SI-14SB:BS-IDFF-LC',
+            },
             IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-11SP:PS-CV-1:Current-SP',
@@ -498,6 +534,10 @@ class IDSearch:
             'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-14SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-14SB:BS-IDFF-CHCV',
+            },
             IDFF_CH_LABELS[0]: 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-14SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-14SB:PS-CV-1:Current-SP',
@@ -650,6 +690,40 @@ class IDSearch:
             return list()
         else:
             return idff['offsets']
+
+    @staticmethod
+    def conv_idname_2_idffdevs(idname):
+        """Return IDFF corrector devices for a given ID name.
+
+        The return value is a dictionary of the form:
+        {
+            corrtype1: {
+                corrlabel1: corrdev1,
+                corrlabel2: corrdev2,
+                ...
+            },
+            corrtype2: {
+                corrlabel3: corrdev3,
+                ...
+            },
+            ...
+        }
+        where corrtype is
+            one of the corrector types defined in IDFF_CorrTypes
+        and corrlabel is
+            one of the corrector labels defined in IDFF_CorrLabels.
+        and corrdev is
+            the device name of the corrector power supply.
+        """
+        idff = IDSearch.conv_idname_2_idff(idname)
+        idffdevs = dict()
+        if idff is not None and 'idffdevs' in idff:
+            for corrtype, idffdevname in idff['idffdevs'].items():
+                if idffdevname not in idffdevs:
+                    idffdevs[idffdevname] = dict()
+                idffdevdict = idffdevs[idffdevname]
+                IDSearch._idffdevs_add_corrector(idff, corrtype, idffdevdict)
+        return idffdevs
 
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
@@ -847,3 +921,13 @@ class IDSearch:
                 idmodel_2_idname_dict[idmodel].append(idname)
             IDSearch._idname_2_idmodel_dict = idname_2_idmodel_dict
             IDSearch._idmodel_2_idname_dict = idmodel_2_idname_dict
+
+    # --- aux. methods ---
+
+    @staticmethod
+    def _idffdevs_add_corrector(idff, corrtype, corrdevs):
+        for corrlabel in IDSearch.IDFF_CorrLabels[corrtype]:
+            if corrlabel in idff:
+                if corrtype not in corrdevs:
+                    corrdevs[corrtype] = dict()
+                corrdevs[corrtype][corrlabel] = idff[corrlabel]
