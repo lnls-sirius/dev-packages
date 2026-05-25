@@ -12,15 +12,9 @@ class Accelerator:
     length = 0.0  # [m]
 
     @_ClassProperty
-    def beam_rigidity(cls):
-        """Beam ridigity."""
-        brho = _bopts.beam_rigidity(energy=cls.beam_energy)
-        return brho
-
-    @_ClassProperty
     def velocity(cls):
         """Beam velocity [m/s]."""
-        _, velocity, *_ = cls.beam_rigidity
+        _, velocity, *_ = _bopts.beam_rigidity(energy=cls.beam_energy)
         return velocity
 
 
@@ -45,7 +39,7 @@ class Ring(Accelerator):
     @_ClassProperty
     def rev_frequency(cls):
         """Return revolution frequency [Hz]."""
-        _, velocity, *_ = cls.beam_rigidity
+        velocity = cls.velocity
         return velocity / cls.circumference  # [Hz]
 
 
