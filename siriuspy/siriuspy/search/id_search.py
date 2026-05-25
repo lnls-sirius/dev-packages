@@ -225,12 +225,12 @@ class IDSearch:
         _type_cc: ['cc1_1', 'cc2_1', 'cc1_2', 'cc2_2'],
     }
 
-    IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
     IDFF_CH_LABELS = IDFF_CorrLabels[_type_ch]
     IDFF_CV_LABELS = IDFF_CorrLabels[_type_cv]
     IDFF_QS_LABELS = IDFF_CorrLabels[_type_qs]
     IDFF_LC_LABELS = IDFF_CorrLabels[_type_lc]
     IDFF_QN_LABELS = IDFF_CorrLabels[_type_qn]
+    IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
 
     _idname_2_idff = {
         'SI-06SB:ID-VPU29':  {
