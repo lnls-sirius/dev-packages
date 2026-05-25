@@ -225,13 +225,17 @@ class Tune(_DeviceSet):
 
         if devname.sec == _SI.sector:
             tune_frac_h = TuneFrac(
-                TuneFrac.DEVICES.SI_H, props2init=props2init)
+                TuneFrac.DEVICES.SI_H, props2init=props2init
+            )
             tune_frac_v = TuneFrac(
-                TuneFrac.DEVICES.SI_V, props2init=props2init)
+                TuneFrac.DEVICES.SI_V, props2init=props2init
+            )
             tune_proc_h = SITuneProc(
-                SITuneProc.DEVICES.H, props2init=props2init)
+                SITuneProc.DEVICES.H, props2init=props2init
+            )
             tune_proc_v = SITuneProc(
-                SITuneProc.DEVICES.V, props2init=props2init)
+                SITuneProc.DEVICES.V, props2init=props2init
+            )
             devices = (
                 tune_frac_h,
                 tune_frac_v,
