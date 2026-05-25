@@ -654,8 +654,28 @@ class IDSearch:
 
     @staticmethod
     def conv_idname_2_idffdevs(idname):
-        """Return the IDFF devices for a given ID name."""
-        addcorr = IDSearch._idffdevs_add_corrector
+        """Return IDFF corrector devices for a given ID name.
+
+        The return value is a dictionary of the form:
+        {
+            corrtype1: {
+                corrlabel1: corrdev1,
+                corrlabel2: corrdev2,
+                ...
+            },
+            corrtype2: {
+                corrlabel3: corrdev3,
+                ...
+            },
+            ...
+        }
+        where corrtype is
+            one of the corrector types defined in IDFF_CorrTypes
+        and corrlabel is
+            one of the corrector labels defined in IDFF_CorrLabels.
+        and corrdev is
+            the device name of the corrector power supply.
+        """
         idff = IDSearch.conv_idname_2_idff(idname)
         idffdevs = dict()
         if idff is not None and 'idffdevs' in idff:
