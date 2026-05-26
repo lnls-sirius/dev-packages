@@ -20,6 +20,7 @@ class _ParamPVs:
 
     LOOPSTATE_SEL = 'LoopState-Sel'
     LOOPSTATE_STS = 'LoopState-Sts'
+    TABLEIDX_MON = None
     LOG_MON = None
     LOOPFREQ_SP = None
     LOOPFREQ_RB = None
@@ -35,8 +36,9 @@ class _ParamPVs:
     CORRCV_2CURRENT_MON = None
     CORRQS_1CURRENT_MON = None
     CORRQS_2CURRENT_MON = None
-    CORRLCHCURRENT_MON = None
-    CORRLCVCURRENT_MON = None
+    CORRLCH_1CURRENT_MON = None
+    CORRLCV_1CURRENT_MON = None
+    CORRLCV_2CURRENT_MON = None
     CORRQD1_1CURRENT_MON = None
     CORRQF_1CURRENT_MON = None
     CORRQD2_1CURRENT_MON = None
@@ -60,6 +62,17 @@ class _ParamPVs:
                 str_ += lstr if str_ == '' else '\n' + lstr
         return str_
 
+    def _properties_default(self):
+        props = set(
+            value
+            for key, value in _inspect.getmembers(self)
+            if not key.startswith('_') and not isinstance(value, list) and value is not None
+        )
+        for key, value in _inspect.getmembers(self):
+            if not key.startswith('_') and isinstance(value, list):
+                props.update(set(value))
+        return tuple(props)
+
 
 class IDFFCtrlBase(_Device):
     """ID Feedforward Control Device Base."""
@@ -75,13 +88,7 @@ class IDFFCtrlBase(_Device):
 
     PARAM_PVS = _ParamPVs()
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
@@ -138,15 +145,21 @@ class IDFFCtrlBase(_Device):
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_lch(self):
+    def calc_corr_current_lch_1(self):
         """Return calculated LCH power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRLCHCURRENT_MON
+        curr_name = self.PARAM_PVS.CORRLCH_1CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
-    def calc_corr_current_lcv(self):
+    def calc_corr_current_lcv_1(self):
         """Return calculated LCV power supply current [A]."""
-        curr_name = self.PARAM_PVS.CORRLCVCURRENT_MON
+        curr_name = self.PARAM_PVS.CORRLCV_1CURRENT_MON
+        return self[curr_name] if curr_name else None
+
+    @property
+    def calc_corr_current_lcv_2(self):
+        """Return calculated LCV power supply current [A]."""
+        curr_name = self.PARAM_PVS.CORRLCV_2CURRENT_MON
         return self[curr_name] if curr_name else None
 
     @property
@@ -254,7 +267,7 @@ class IDFFCtrlBase(_Device):
         elif iddevname.sub in ('10SB',):
             iddevname = iddevname.substitute(dev='DELTA52')
         elif iddevname.sub in ('11SP',):
-            iddevname = iddevname.substitute(dev='SIMUL')
+            iddevname = iddevname.substitute(dev='UE44')
         else:
             pass
         return iddevname
@@ -289,13 +302,7 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     PARAM_PVS.CORRSTATUS_MON = 'CorrStatus-Mon'
     PARAM_PVS.CORRSTATUSLABELS_CTE = 'CorrStatusLabels-Cte'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     @property
     def configname(self):
@@ -327,13 +334,7 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     PARAM_PVS.CORRQS_1CURRENT_MON = 'CorrQS_1Current-Mon'
     PARAM_PVS.CORRQS_2CURRENT_MON = 'CorrQS_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -372,13 +373,7 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
     PARAM_PVS.CORRQF_2CURRENT_MON = 'CorrQF_2Current-Mon'
     PARAM_PVS.CORRQD2_2CURRENT_MON = 'CorrQD2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -413,13 +408,7 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
     PARAM_PVS.CORRCC1_2CURRENT_MON = 'CorrCC1_2Current-Mon'
     PARAM_PVS.CORRCC2_2CURRENT_MON = 'CorrCC2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -443,16 +432,11 @@ class IDFFCtrlHard(IDFFCtrlBase):
         # should be added in derived classes
 
     PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
+    PARAM_PVS.TABLEIDX_MON = 'TableIdx-Mon'
     PARAM_PVS.TABLE_SP = 'Table-SP'
     PARAM_PVS.TABLE_RB = 'Table-RB'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def get_ffwd_table_corr_labels(self):
         """."""
@@ -465,12 +449,19 @@ class IDFFCtrlHard(IDFFCtrlBase):
         corr_labels += self.IDFF_QN_LABELS
         return corr_labels
 
+    def get_current_table(self):
+        """Return currently active table PV."""
+        # for hard devices with a single table, it's just that table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            return self[self.PARAM_PVS.TABLE_RB]
+
+        # otherwise, we need to choose the table based on the hardware state
+        idx = self[self.PARAM_PVS.TABLEIDX_MON]
+        return self[self.PARAM_PVS.TABLE_RB[idx]]
+
     def get_ffwd_table(self):
         """Return FF table dict."""
-        param_name = self.PARAM_PVS.TABLE_RB
-        if param_name is None:
-            return dict()
-        ff_table = _np.array(self[param_name])
+        ff_table = _np.array(self.get_current_table())
         clabels = self.get_ffwd_table_corr_labels()
         ff_table = ff_table.reshape(len(clabels), -1)
         ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
@@ -484,9 +475,8 @@ class IDFFCtrlHardIVU(IDFFCtrlHard):
         """Device names."""
 
         IVU18_08SB_HARD = 'SI-08SB:BS-IDFF-CHCV'
-        IVU18_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
         IVU18_14SB_HARD = 'SI-14SB:BS-IDFF-CHCV'
-        ALL = (IVU18_08SB_HARD, IVU18_11SP_HARD, IVU18_14SB_HARD)
+        ALL = (IVU18_08SB_HARD, IVU18_14SB_HARD)
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
@@ -507,6 +497,60 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
     IDFF_CC_LABELS = _IDSearch.IDFF_CC_LABELS
+
+
+class IDFFCtrlHardUE(IDFFCtrlHard):
+    """."""
+
+    PARAM_PVS = _dcopy(IDFFCtrlHard.PARAM_PVS)
+    PARAM_PVS.TABLE_SP = [f'Table{i}-SP' for i in range(10)]
+    PARAM_PVS.TABLE_RB = [f'Table{i}-RB' for i in range(10)]
+
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
+
+
+class IDFFCtrlHardUE_CHCV(IDFFCtrlHardUE):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD_CHCV = 'SI-11SP:BS-IDFF-CHCV'
+        ALL = (UE44_11SP_HARD_CHCV, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_CH_LABELS = _IDSearch.IDFF_CH_LABELS
+    IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
+
+
+class IDFFCtrlHardUE_QS(IDFFCtrlHardUE):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD_QS = "SI-11SP:BS-IDFF-QS"
+        ALL = (UE44_11SP_HARD_QS, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
+
+
+class IDFFCtrlHardUE_LC(IDFFCtrlHardUE):
+    """ID Feedforward Control UE Device."""
+
+    class DEVICES:
+        """Device names."""
+
+        UE44_11SP_HARD_LC = "SI-11SP:BS-IDFF-LC"
+        ALL = (UE44_11SP_HARD_LC, )
+
+    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
+
+    IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
+
 
 
 class IDFFCtrl(IDFFCtrlBase):
@@ -540,6 +584,12 @@ class IDFFCtrl(IDFFCtrlBase):
             return IDFFCtrlSoftVPU
         elif devname in IDFFCtrlHardVPU.DEVICES.ALL:
             return IDFFCtrlHardVPU
+        elif devname in IDFFCtrlHardUE_CHCV.DEVICES.ALL:
+            return IDFFCtrlHardUE_CHCV
+        elif devname in IDFFCtrlHardUE_QS.DEVICES.ALL:
+            return IDFFCtrlHardUE_QS
+        elif devname in IDFFCtrlHardUE_LC.DEVICES.ALL:
+            return IDFFCtrlHardUE_LC
         return None
 
 

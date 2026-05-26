@@ -39,7 +39,7 @@ from .fpmosc import FPMOsc
 from .gamma_monitor import FamGammaMonitors, GammaCounter, GammaMonitor
 from .ict import ICT, TranspEff
 from .idff import IDFF, IDFFCtrl, IDFFCtrlHard, IDFFCtrlSoft
-from .ids import APU, DELTA, EPU, ID, IDBase, IVU, PAPU, VPU, WIG
+from .ids import APU, DELTA, EPU, ID, IDBase, IVU, PAPU, VPU, WIG, UE44
 from .injctrl import InjCtrl
 from .injsys import (
     BOPSRampStandbyHandler,
