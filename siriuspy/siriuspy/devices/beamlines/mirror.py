@@ -1,313 +1,9 @@
 """Mirror Control."""
 
 # import inspect as _inspect
-import time as _time
-from types import SimpleNamespace as _SimpleNamespace
 
 from ..device import Device as _Device
-
-
-class _PVNames(_SimpleNamespace):
-    def __getattr__(self, name):
-        """."""
-        return None
-
-
-class _PVAccessor:
-    """Dynamic motor PV accessor with robust, retried movement.
-
-    This mixin adds transparent attribute-style access to any motor that is
-    defined in the concrete device's PVS namespace. The convention used is:
-
-        {BASE}        motor record base PV  (reads .VAL field by default)
-        {BASE}_MON    readback (monitor) PV (.RBV)
-        {BASE}_SP     setpoint PV           (.VAL)
-        {BASE}_LOLM   low  hardware limit   (.LLM)
-        {BASE}_HILM   high hardware limit   (.HLM)
-
-    Any PVS entry is accessible by lowercasing its name:
-        mirror.ry       → self[PVS.RY]       (motor base / VAL)
-        mirror.ry_mon   → self[PVS.RY_MON]   (readback, .RBV)
-        mirror.tx_lolm  → self[PVS.TX_LOLM]  (low limit)
-        mirror.cs_rz    → self[PVS.CS_RZ]
-        mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
-
-    No additional mapping dictionary is required; any motor added to PVS in a
-    subclass becomes immediately accessible here.
-
-    Usage
-    -----
-    Reading:   mirror.ry_mon        → current readback value [mrad]
-    Writing:   mirror.ry = 5.0      → blocks until motor reaches 5 mrad
-
-    The write path calls _move_robust_device_motor, which:
-      1. Validates the value against [LOLM, HILM] limits.
-      2. Writes the setpoint.
-      3. Polls the readback until the error is below threshold.
-      4. Retries up to _TRIALS times before giving up.
-
-    Direct setpoint write (no blocking):
-        mirror['A:PB01:m2.VAL'] = 5.0   ← bypass the accessor if needed
-    """
-    # Default parameters for motor movement;
-    # can be overridden per-motor in move().
-    _COUNT_LIM = 8
-    _DELAY     = 4    # [s]
-    _TRIALS    = 3
-
-    # Motors whose motion threshold is angular rather than positional.
-    _ANGULAR_MOTORS = frozenset({
-        "rx", "ry", "rz",
-        "cs_rx", "cs_ry", "cs_rz",
-    })
-
-    # ── private helpers ───────────────────────────────────────────────────
-
-    def _pvs_motor_bases(self):
-        """Return the set of PVS base names that have both _MON and _SP.
-
-        Example: if PVS has RY_MON and RY_SP, "RY" is in the result set.
-        """
-        pvs = vars(self.PVS)
-        bases_mon = {k[:-4] for k in pvs if k.endswith("_MON")}
-        bases_sp  = {k[:-3] for k in pvs if k.endswith("_SP")}
-        return bases_mon & bases_sp
-
-    def _motor_base(self, name):
-        """Translate user-facing motor name to its PVS base, or None.
-
-        "ry"    → "RY"
-        "cs_rx" → "CS_RX"
-        Anything not found in PVS → None
-        """
-        candidate = name.upper()
-        pvs = vars(self.PVS)
-        if f"{candidate}" in pvs:
-            return candidate
-        return None
-
-    def _motor_threshold(self, name):
-        """Return the convergence threshold appropriate for this motor."""
-        return (
-            self._THRESHOLD_ANG
-            if name in self._ANGULAR_MOTORS
-            else self._THRESHOLD_POS
-        )
-
-    # ── attribute interception ────────────────────────────────────────────
-
-    def __getattr__(self, name):
-        """Read from the corresponding PVS when a motor attribute is accessed.
-
-        Only called when normal lookup (class dict, instance dict) fails.
-        The name is uppercased and looked up verbatim in PVS, so any PVS
-        entry is reachable:
-
-            mirror.ry         → self[PVS.RY]       (motor base / VAL)
-            mirror.ry_mon     → self[PVS.RY_MON]   (readback, .RBV)
-            mirror.ry_sp      → self[PVS.RY_SP]    (setpoint, .VAL)
-            mirror.tx_lolm    → self[PVS.TX_LOLM]  (low limit)
-            mirror.cs_rz_hilm → self[PVS.CS_RZ_HILM]
-        """
-        # Check if this is a motor attribute by looking for its base in PVS.
-        base = self._motor_base(name)
-        if base is not None:
-            pv = getattr(self.PVS, base)
-            if pv is not None:
-                return self[pv]
-        raise AttributeError(
-            f"'{type(self).__name__}' object has no attribute '{name}'"
-        )
-
-    def __setattr__(self, name, value):
-        """Write an attribute, routing through the appropriate mechanism.
-
-        Three cases:
-        1. Full motors (PVS has both {BASE}_SP and {BASE}_MON) → robust
-           blocking move via _move_robust_device_motor.
-        2. Other PVS entries (limits, enable flags, …) → direct PV write,
-           consistent with how slit.py and dvf.py handle these.
-        3. Anything else → regular instance attribute.
-
-        No special-casing of private names or 'PVS' is needed: _pvs_motor_bases
-        uses the class-level PVS (always present), and _PVNames.__getattr__
-        safely returns None for any undefined attribute, so everything
-        falls through to object.__setattr__ correctly.
-        """
-        base = name.upper()
-
-        # Motor attribute: route through the movement engine.
-        if base in self._pvs_motor_bases():
-            self._move_robust_device_motor(
-                motor=name,
-                value=value,
-                threshold=self._motor_threshold(name),
-                max_count=self._COUNT_LIM,
-                delay=self._DELAY,
-                trials=self._TRIALS,
-            )
-            return
-
-        # Non-motor PVS entry (limit, enable, …): write directly.
-        pv = getattr(self.PVS, base)
-        if pv is not None:
-            self[pv] = value
-            return
-
-        # Regular attribute: set as usual.
-        object.__setattr__(self, name, value)
-
-    # ── motor movement engine ─────────────────────────────────────────────
-
-    def _move_device_motor(self, motor, value, threshold, max_count, delay):
-        """Write setpoint and poll readback until convergence or timeout.
-
-        Args:
-            motor     : user-facing motor name ('ry', 'tx', 'cs_rx', …).
-            value     : target position.
-            threshold : convergence criterion (|readback - value| < threshold).
-            max_count : number of polling iterations before giving up.
-            delay     : seconds to wait between iterations.
-
-        Returns:
-            True  if the motor reached the target within max_count iterations.
-            False on timeout.
-
-        Raises:
-            ValueError : if value is outside [LOLM, HILM] limits.
-            IOError    : if the setpoint PUT fails unexpectedly.
-        """
-        base = self._motor_base(motor)
-        if base is None:
-            mb = sorted(b.lower() for b in self._pvs_motor_bases())
-            raise ValueError(
-                f"Motor '{motor}' not found in PVS. "
-                f"Available: {mb}"
-            )
-
-        sp_pv   = getattr(self.PVS, f"{base}_SP")
-        mon_pv  = getattr(self.PVS, f"{base}_MON")
-        lolm_pv = getattr(self.PVS, f"{base}_LOLM")
-        hilm_pv = getattr(self.PVS, f"{base}_HILM")
-        movn_pv = getattr(self.PVS, f"{base}_MVN")
-
-        # Limit validation — EPICS hardware limits are the source of truth.
-        if lolm_pv is not None and hilm_pv is not None:
-            low, high = self[lolm_pv], self[hilm_pv]
-            if not (low <= value <= high):
-                raise ValueError(
-                    f"'{motor}' target {value} is outside hardware limits "
-                    f"[{low}, {high}]."
-                )
-
-        # Send setpoint.
-        try:
-            self[sp_pv] = value
-        except Exception as err:
-            current = self[mon_pv]
-            raise IOError(
-                f"PUT error for '{motor}': current={current:.4f}\n{err}"
-            ) from err
-
-        # Poll readback.
-        for icount in range(max_count + 1):
-            current = self[mon_pv]
-            diff = abs(current - value)
-            print(
-                f"Moving '{motor}' → {value} | now: {current:.4f}"
-                f" | Δ: {diff:.4f}", end="\r",
-            )
-
-            # Check for convergence. If the motor is still moving
-            # (MOVN == 1), continue loop.
-            if diff <= threshold and self[movn_pv] == 0:
-                return True
-            if icount < max_count:
-                _time.sleep(delay)
-
-        print(
-            f"\nWARNING: '{motor}' did not reach {value}."
-            f" Current: {self[mon_pv]:.4f}"
-        )
-        return False
-
-    def _move_robust_device_motor(
-        self, motor, value, threshold, max_count, delay, trials
-    ):
-        """Retry _move_device_motor up to *trials* times.
-
-        Args:
-            motor     : user-facing motor name.
-            value     : target position.
-            threshold : convergence criterion.
-            max_count : polling iterations per trial.
-            delay     : seconds between polling iterations.
-            trials    : maximum number of move attempts.
-
-        Returns:
-            True if the motor reached the target; False otherwise.
-        """
-        for attempt in range(1, trials + 1):
-            if self._move_device_motor(motor, value, threshold,
-                                       max_count, delay):
-                print(f"\n'{motor}' reached {value}"
-                      f" (attempt {attempt}/{trials}).")
-                return True
-        current = getattr(self, motor)
-        print(
-            f"\n'{motor}' failed after {trials} attempt(s)."
-            f" Current: {current:.4f}"
-        )
-        return False
-
-    def move(self, motor, value, threshold=None, max_count=None, delay=None):
-        """Move *motor* to *value* with full retry logic.
-
-        Generic replacement for the individual move_rx / move_ry / move_tx / …
-        methods.  Those explicit methods may still exist in MirrorBase for
-        backward compatibility, but they all delegate here.
-
-        Args:
-            motor     : user-facing motor name ('ry', 'tx', 'cs_rx', …).
-            value     : target position.
-            threshold : override default threshold (optional).
-            max_count : override _COUNT_LIM (optional).
-            delay     : override _DELAY (optional).
-
-        Returns:
-            True on success, False on failure.
-        """
-        return self._move_robust_device_motor(
-            motor=motor,
-            value=value,
-            threshold=(threshold if threshold is not None
-                       else self._motor_threshold(motor)),
-            max_count=max_count if max_count is not None else self._COUNT_LIM,
-            delay=delay if delay is not None else self._DELAY,
-            trials=self._TRIALS,
-        )
-
-    def stop(self, motor, timeout=None):
-        """Send stop command to *motor* and wait for it to finish moving.
-
-        Args:
-            motor   : user-facing motor name ('ry', 'tx', 'y1', …).
-            timeout : seconds to wait for the motor to stop.
-                      Defaults to _DEFAULT_MOTOR_TIMEOUT.
-
-        Returns:
-            True if the motor stopped within timeout; False otherwise.
-        """
-        base = self._motor_base(motor)
-        if base is None:
-            raise ValueError(f"Motor '{motor}' not found in PVS.")
-        timeout = self._DEFAULT_MOTOR_TIMEOUT if timeout is None else timeout
-        stop_pv = getattr(self.PVS, f"{base}_STOP")
-        dmvn_pv = getattr(self.PVS, f"{base}_DMVN")
-        self[stop_pv] = 1
-        if dmvn_pv is not None:
-            return self._wait(dmvn_pv, 0, timeout=timeout)
-        return True
+from ..device import _PVAccessor, _PVNames
 
 
 class MirrorBase(_PVAccessor, _Device):
@@ -323,6 +19,19 @@ class MirrorBase(_PVAccessor, _Device):
     def __init__(self, devname=None, props2init="all", **kwargs):
         """Init."""
         super().__init__(devname, props2init=props2init, **kwargs)
+
+    @property
+    def beamline_enabled(self):
+        """Return beamline enable status."""
+        return self[self.PVS.BEAMLINE_CTRL_ENBL]
+
+    @beamline_enabled.setter
+    def beamline_enabled(self, value):
+        """Set beamline enable status.
+
+        WARNING: enable = 0, disable = 1.
+        """
+        self[self.PVS.BEAMLINE_CTRL_ENBL] = value
 
     @property
     def photocurrent_signal(self):
@@ -421,6 +130,9 @@ class CAXMirror(MirrorBase):
 
         # MOTORS
 
+        # Semaphor
+        self.PVS.BEAMLINE_CTRL_ENBL = "A:BeamLineCtrlEnbl-Sel"
+
         # Real actuators for Ry, Tx, Y1, Y2 and Y3
         pvprefix = "A:PB01:"
 
@@ -431,9 +143,10 @@ class CAXMirror(MirrorBase):
         self.PVS.TX_HILM = pvprefix + "m1.HLM"    # High limit
         self.PVS.TX_LOLM = pvprefix + "m1.LLM"    # Low limit
         self.PVS.TX_ENBL = pvprefix + "m1.CNEN"   # Enable/Disable
-        self.PVS.TX_DMVN = pvprefix + "m1.DMOVN"  # Done moving
+        self.PVS.TX_DMVN = pvprefix + "m1.DMOV"   # Done moving
         self.PVS.TX_MVN  = pvprefix + "m1.MOVN"   # Motor is moving
         self.PVS.TX_STOP = pvprefix + "m1.STOP"   # Stop command
+        self.PVS.TX_DESC = pvprefix + "m1.DESC"   # Description
 
         # Y Rotation
         self.PVS.RY      = pvprefix + "m2"        # Motor base name
@@ -442,9 +155,10 @@ class CAXMirror(MirrorBase):
         self.PVS.RY_HILM = pvprefix + "m2.HLM"    # High limit
         self.PVS.RY_LOLM = pvprefix + "m2.LLM"    # Low limit
         self.PVS.RY_ENBL = pvprefix + "m2.CNEN"   # Enable/Disable
-        self.PVS.RY_DMVN = pvprefix + "m2.DMOVN"  # Done moving
+        self.PVS.RY_DMVN = pvprefix + "m2.DMOV"   # Done moving
         self.PVS.RY_MVN  = pvprefix + "m2.MOVN"   # Motor is moving
         self.PVS.RY_STOP = pvprefix + "m2.STOP"   # Stop command
+        self.PVS.RY_DESC = pvprefix + "m2.DESC"   # Description
 
         # Called Leveler Z- in the front end.
         self.PVS.Y1      = pvprefix + "m3"        # Motor base name
@@ -453,9 +167,10 @@ class CAXMirror(MirrorBase):
         self.PVS.Y1_HILM = pvprefix + "m3.HLM"    # High limit
         self.PVS.Y1_LOLM = pvprefix + "m3.LLM"    # Low limit
         self.PVS.Y1_ENBL = pvprefix + "m3.CNEN"   # Enable/Disable
-        self.PVS.Y1_DMVN = pvprefix + "m3.DMOVN"  # Done moving
+        self.PVS.Y1_DMVN = pvprefix + "m3.DMOV"   # Done moving
         self.PVS.Y1_MVN  = pvprefix + "m3.MOVN"   # Motor is moving
         self.PVS.Y1_STOP = pvprefix + "m3.STOP"   # Stop command
+        self.PVS.Y1_DESC = pvprefix + "m3.DESC"   # Description
 
         # Called Leveler X+ in the front end.
         self.PVS.Y2      = pvprefix + "m4"        # Motor base name
@@ -464,9 +179,10 @@ class CAXMirror(MirrorBase):
         self.PVS.Y2_HILM = pvprefix + "m4.HLM"    # High limit
         self.PVS.Y2_LOLM = pvprefix + "m4.LLM"    # Low limit
         self.PVS.Y2_ENBL = pvprefix + "m4.CNEN"   # Enable/Disable
-        self.PVS.Y2_DMVN = pvprefix + "m4.DMOVN"  # Done moving
+        self.PVS.Y2_DMVN = pvprefix + "m4.DMOV"   # Done moving
         self.PVS.Y2_MVN  = pvprefix + "m4.MOVN"   # Motor is moving
         self.PVS.Y2_STOP = pvprefix + "m4.STOP"   # Stop command
+        self.PVS.Y2_DESC = pvprefix + "m4.DESC"   # Description
 
         # Called Leveler Z+ in the front end.
 
@@ -476,78 +192,111 @@ class CAXMirror(MirrorBase):
         self.PVS.Y3_HILM = pvprefix + "m5.HLM"    # High limit
         self.PVS.Y3_LOLM = pvprefix + "m5.LLM"    # Low limit
         self.PVS.Y3_ENBL = pvprefix + "m5.CNEN"   # Enable/Disable
-        self.PVS.Y3_DMVN = pvprefix + "m5.DMOVN"  # Done moving
+        self.PVS.Y3_DMVN = pvprefix + "m5.DMOV"   # Done moving
         self.PVS.Y3_MVN  = pvprefix + "m5.MOVN"   # Motor is moving
         self.PVS.Y3_STOP = pvprefix + "m5.STOP"   # Stop command
+        self.PVS.Y3_DESC = pvprefix + "m5.DESC"   # Description
 
         # Kinematic actuators for Rx, Ry, Rz and Ty
 
-        pvprefixk = "A:PB01:CS1:"
+        pvk_pfx = "A:PB01:CS1:"
 
         # X rotation
-        self.PVS.CS_RX      = pvprefixk + "m1"        # Motor base name
-        self.PVS.CS_RX_SP   = pvprefixk + "m1.VAL"    # Setpoint value
-        self.PVS.CS_RX_MON  = pvprefixk + "m1.RBV"    # Readback value
-        self.PVS.CS_RX_HILM = pvprefixk + "m1.HLM"    # High limit
-        self.PVS.CS_RX_LOLM = pvprefixk + "m1.LLM"    # Low limit
-        self.PVS.CS_RX_ENBL = pvprefixk + "m1.CNEN"   # Enable/Disable
-        self.PVS.CS_RX_DMVN = pvprefixk + "m1.DMOVN"  # Done moving
-        self.PVS.CS_RX_MVN  = pvprefixk + "m1.MOVN"   # Motor is moving
-        self.PVS.CS_RX_STOP = pvprefixk + "m1.STOP"   # Stop command
+        self.PVS.CS_RX      = pvk_pfx + "m1"        # Motor base name
+        self.PVS.CS_RX_SP   = pvk_pfx + "m1.VAL"    # Setpoint value
+        self.PVS.CS_RX_MON  = pvk_pfx + "m1.RBV"    # Readback value
+        self.PVS.CS_RX_HILM = pvk_pfx + "m1.HLM"    # High limit
+        self.PVS.CS_RX_LOLM = pvk_pfx + "m1.LLM"    # Low limit
+        self.PVS.CS_RX_ENBL = pvk_pfx + "m1.CNEN"   # Enable/Disable
+        self.PVS.CS_RX_DMVN = pvk_pfx + "m1.DMOV"   # Done moving
+        self.PVS.CS_RX_MVN  = pvk_pfx + "m1.MOVN"   # Motor is moving
+        self.PVS.CS_RX_STOP = pvk_pfx + "m1.STOP"   # Stop command
+        self.PVS.CS_RX_DESC = pvk_pfx + "m1.DESC"   # Description
 
         # Y rotation
-        self.PVS.CS_RY      = pvprefixk + "m2"        # Motor base name
-        self.PVS.CS_RY_SP   = pvprefixk + "m2.VAL"    # Setpoint value
-        self.PVS.CS_RY_MON  = pvprefixk + "m2.RBV"    # Readback value
-        self.PVS.CS_RY_HILM = pvprefixk + "m2.HLM"    # High limit
-        self.PVS.CS_RY_LOLM = pvprefixk + "m2.LLM"    # Low limit
-        self.PVS.CS_RY_ENBL = pvprefixk + "m2.CNEN"   # Enable/Disable
-        self.PVS.CS_RY_DMVN = pvprefixk + "m2.DMOVN"  # Done moving
-        self.PVS.CS_RY_MVN  = pvprefixk + "m2.MOVN"   # Motor is moving
-        self.PVS.CS_RY_STOP = pvprefixk + "m2.STOP"   # Stop command
+        self.PVS.CS_RY      = pvk_pfx + "m2"        # Motor base name
+        self.PVS.CS_RY_SP   = pvk_pfx + "m2.VAL"    # Setpoint value
+        self.PVS.CS_RY_MON  = pvk_pfx + "m2.RBV"    # Readback value
+        self.PVS.CS_RY_HILM = pvk_pfx + "m2.HLM"    # High limit
+        self.PVS.CS_RY_LOLM = pvk_pfx + "m2.LLM"    # Low limit
+        self.PVS.CS_RY_ENBL = pvk_pfx + "m2.CNEN"   # Enable/Disable
+        self.PVS.CS_RY_DMVN = pvk_pfx + "m2.DMOV"   # Done moving
+        self.PVS.CS_RY_MVN  = pvk_pfx + "m2.MOVN"   # Motor is moving
+        self.PVS.CS_RY_STOP = pvk_pfx + "m2.STOP"   # Stop command
+        self.PVS.CS_RY_DESC = pvk_pfx + "m2.DESC"   # Description
 
         # Z rotation
-        self.PVS.CS_RZ      = pvprefixk + "m3"        # Motor base name
-        self.PVS.CS_RZ_SP   = pvprefixk + "m3.VAL"    # Setpoint value
-        self.PVS.CS_RZ_MON  = pvprefixk + "m3.RBV"    # Readback value
-        self.PVS.CS_RZ_HILM = pvprefixk + "m3.HLM"    # High limit
-        self.PVS.CS_RZ_LOLM = pvprefixk + "m3.LLM"    # Low limit
-        self.PVS.CS_RZ_ENBL = pvprefixk + "m3.CNEN"   # Enable/Disable
-        self.PVS.CS_RZ_DMVN = pvprefixk + "m3.DMOVN"  # Done moving
-        self.PVS.CS_RZ_MVN  = pvprefixk + "m3.MOVN"   # Motor is moving
-        self.PVS.CS_RZ_STOP = pvprefixk + "m3.STOP"   # Stop command
+        self.PVS.CS_RZ      = pvk_pfx + "m3"        # Motor base name
+        self.PVS.CS_RZ_SP   = pvk_pfx + "m3.VAL"    # Setpoint value
+        self.PVS.CS_RZ_MON  = pvk_pfx + "m3.RBV"    # Readback value
+        self.PVS.CS_RZ_HILM = pvk_pfx + "m3.HLM"    # High limit
+        self.PVS.CS_RZ_LOLM = pvk_pfx + "m3.LLM"    # Low limit
+        self.PVS.CS_RZ_ENBL = pvk_pfx + "m3.CNEN"   # Enable/Disable
+        self.PVS.CS_RZ_DMVN = pvk_pfx + "m3.DMOV"   # Done moving
+        self.PVS.CS_RZ_MVN  = pvk_pfx + "m3.MOVN"   # Motor is moving
+        self.PVS.CS_RZ_STOP = pvk_pfx + "m3.STOP"   # Stop command
+        self.PVS.CS_RZ_DESC = pvk_pfx + "m3.DESC"   # Description
 
         # X translation
-        self.PVS.CS_TX      = pvprefixk + "m7"        # Motor base name
-        self.PVS.CS_TX_SP   = pvprefixk + "m7.VAL"    # Setpoint value
-        self.PVS.CS_TX_MON  = pvprefixk + "m7.RBV"    # Readback value
-        self.PVS.CS_TX_HILM = pvprefixk + "m7.HLM"    # High limit
-        self.PVS.CS_TX_LOLM = pvprefixk + "m7.LLM"    # Low limit
-        self.PVS.CS_TX_ENBL = pvprefixk + "m7.CNEN"   # Enable/Disable
-        self.PVS.CS_TX_DMVN = pvprefixk + "m7.DMOVN"  # Done moving
-        self.PVS.CS_TX_MVN  = pvprefixk + "m7.MOVN"   # Motor is moving
-        self.PVS.CS_TX_STOP = pvprefixk + "m7.STOP"   # Stop command
+        self.PVS.CS_TX      = pvk_pfx + "m7"        # Motor base name
+        self.PVS.CS_TX_SP   = pvk_pfx + "m7.VAL"    # Setpoint value
+        self.PVS.CS_TX_MON  = pvk_pfx + "m7.RBV"    # Readback value
+        self.PVS.CS_TX_HILM = pvk_pfx + "m7.HLM"    # High limit
+        self.PVS.CS_TX_LOLM = pvk_pfx + "m7.LLM"    # Low limit
+        self.PVS.CS_TX_ENBL = pvk_pfx + "m7.CNEN"   # Enable/Disable
+        self.PVS.CS_TX_DMVN = pvk_pfx + "m7.DMOV"   # Done moving
+        self.PVS.CS_TX_MVN  = pvk_pfx + "m7.MOVN"   # Motor is moving
+        self.PVS.CS_TX_STOP = pvk_pfx + "m7.STOP"   # Stop command
+        self.PVS.CS_TX_DESC = pvk_pfx + "m7.DESC"   # Description
 
         # Y translation
-        self.PVS.CS_TY      = pvprefixk + "m8"        # Motor base name
-        self.PVS.CS_TY_SP   = pvprefixk + "m8.VAL"    # Setpoint value
-        self.PVS.CS_TY_MON  = pvprefixk + "m8.RBV"    # Readback value
-        self.PVS.CS_TY_HILM = pvprefixk + "m8.HLM"    # High limit
-        self.PVS.CS_TY_LOLM = pvprefixk + "m8.LLM"    # Low limit
-        self.PVS.CS_TY_ENBL = pvprefixk + "m8.CNEN"   # Enable/Disable
-        self.PVS.CS_TY_DMVN = pvprefixk + "m8.DMOVN"  # Done moving
-        self.PVS.CS_TY_MVN  = pvprefixk + "m8.MOVN"   # Motor is moving
-        self.PVS.CS_TY_STOP = pvprefixk + "m8.STOP"   # Stop command
+        self.PVS.CS_TY      = pvk_pfx + "m8"        # Motor base name
+        self.PVS.CS_TY_SP   = pvk_pfx + "m8.VAL"    # Setpoint value
+        self.PVS.CS_TY_MON  = pvk_pfx + "m8.RBV"    # Readback value
+        self.PVS.CS_TY_HILM = pvk_pfx + "m8.HLM"    # High limit
+        self.PVS.CS_TY_LOLM = pvk_pfx + "m8.LLM"    # Low limit
+        self.PVS.CS_TY_ENBL = pvk_pfx + "m8.CNEN"   # Enable/Disable
+        self.PVS.CS_TY_DMVN = pvk_pfx + "m8.DMOV"   # Done moving
+        self.PVS.CS_TY_MVN  = pvk_pfx + "m8.MOVN"   # Motor is moving
+        self.PVS.CS_TY_STOP = pvk_pfx + "m8.STOP"   # Stop command
+        self.PVS.CS_TY_DESC = pvk_pfx + "m8.DESC"   # Description
 
+        #
         # SENSORS
+        #
+
+        # PHOTOCOLLECTOR
         self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
-        self.PVS.TEMP0_MON      = "A:RIO01:9226B:temp0"
-        self.PVS.TEMP1_MON      = "A:RIO01:9226B:temp1"
-        self.PVS.TEMP2_MON      = "A:RIO01:9226B:temp2"
-        self.PVS.TEMP3_MON      = "A:RIO01:9226B:temp3"
-        self.PVS.TEMP4_MON      = "A:RIO01:9226B:temp4"
-        self.PVS.TEMP_SP        = "A:RIO01:M1_CtrltempSp"
-        self.PVS.TEMP_RB        = "A:RIO01:M1_CtrltempSp"
+
+        # TEMPERATURES
+        pvr_pfx = "A:RIO01:9226B:"
+        self.PVS.TEMP0_MON = pvr_pfx + "temp0"
+        self.PVS.TEMP1_MON = pvr_pfx + "temp1"
+        self.PVS.TEMP2_MON = pvr_pfx + "temp2"
+        self.PVS.TEMP3_MON = pvr_pfx + "temp3"
+        self.PVS.TEMP4_MON = pvr_pfx + "temp4"
+        self.PVS.TEMP_SP   = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TEMP_RB   = "A:RIO01:M1_CtrltempSp"
+
+        # PRESSURE
+        # Ionic pump
+        pva_pfx = "A:A4UHV01:"
+        self.PVS.PR_A1_MON = pva_pfx + "ch1:Pressure-Mon"  # Agilent pump
+        self.PVS.PR_A2_MON = pva_pfx + "ch2:Pressure-Mon"  # Agilent pump
+        self.PVS.PR_A3_MON = pva_pfx + "ch3:Pressure-Mon"  # Agilent pump
+        self.PVS.PR_A4_MON = pva_pfx + "ch4:Pressure-Mon"  # Agilent pump
+
+        # Ionic pump
+        pvq_pfx = "A:QPC4P01:"
+        self.PVS.PR_Q1_MON = pvq_pfx + "getPressure1"      # FOE-BI01
+        self.PVS.PR_Q2_MON = pvq_pfx + "getPressure2"      # FOE-BI02
+        self.PVS.PR_Q3_MON = pvq_pfx + "getPressure3"      # FOE-BI05
+        self.PVS.PR_Q4_MON = pvq_pfx + "getPressure4"      # FOE-BI06
+
+        # Vacuum sensor
+        pvv_pfx = "A:MKS937B01:"
+        self.PVS.PR_V1_MON = pvv_pfx + "getPR1"            # FOE-XBPM1
+        self.PVS.PR_V2_MON = pvv_pfx + "getPR3"            # FOE-XBPM2
 
         # FLOWMETERS
         self.PVS.FLOWMETER1_MON = "F:EPS01:MR1FIT1"
