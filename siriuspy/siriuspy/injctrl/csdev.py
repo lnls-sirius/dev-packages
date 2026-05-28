@@ -1,6 +1,7 @@
 """Injection Control App."""
 
 from .. import csdev as _csdev
+from ..optics.constants import SI as _SI
 from ..util import ClassProperty as _classproperty
 from ..search import PSSearch as _PSSearch
 
@@ -68,7 +69,7 @@ class Const(_csdev.Const):
     )
 
     MIN_BKT = 1
-    MAX_BKT = 864
+    MAX_BKT = _SI.harmonic_number
 
     RF_RMP_TIMEOUT = 3*60  # [s]
     TI_INJ_TIMEOUT = 3*60  # [s]
@@ -257,10 +258,12 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 1, 'unit': 'bucket index',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
         'BucketListStop-SP': {
-            'type': 'int', 'value': 864, 'unit': 'bucket index',
+            'type': 'int', 'value': _SI.harmonic_number,
+            'unit': 'bucket index',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT, },
         'BucketListStop-RB': {
-            'type': 'int', 'value': 864, 'unit': 'bucket index',
+            'type': 'int', 'value': _SI.harmonic_number,
+            'unit': 'bucket index',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
         'BucketListStep-SP': {
             'type': 'int', 'value': 29, 'unit': 'buckets',
