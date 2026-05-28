@@ -564,6 +564,7 @@ class IDSearch:
             IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
             IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
+        'SI-20SB:ID-APU22': None,
     }
 
     @staticmethod
