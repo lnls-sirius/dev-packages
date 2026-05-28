@@ -552,7 +552,6 @@ class IDFFCtrlHardUE_LC(IDFFCtrlHardUE):
     IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
 
 
-
 class IDFFCtrl(IDFFCtrlBase):
     """ID Feedforward Control Device."""
 
