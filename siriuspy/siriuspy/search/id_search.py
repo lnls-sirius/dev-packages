@@ -1,9 +1,14 @@
 """ID Search module."""
 
 import copy as _copy
+from threading import Lock as _Lock
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from .. import util as _util
+from .. import clientweb as _web
+
+from ..magnet.excdata import ExcitationData as _ExcitationData
 from ..namesys import Filter as _Filter, SiriusPVName as _SiriusPVName
 
 
@@ -567,12 +572,46 @@ class IDSearch:
         'SI-20SB:ID-APU22': None,
     }
 
+    _idnames_list = list()
+
+    _idtype_dict = dict()
+    _idtype_2_idnames_dict = dict()
+    _idtype_2_excdat_dict = dict()
+    _idname_2_idmodel_dict = dict()
+    _idmodel_2_idname_dict = dict()
+
+    _lock = _Lock()
+
     @staticmethod
     def get_idnames(filters=None):
         """Return a sorted and filtered list of all ID names."""
         idnames_list = list(IDSearch._idname_2_idff.keys())
         idnames = _Filter.process_filters(idnames_list, filters=filters)
         return sorted(idnames)
+
+    @staticmethod
+    def get_idtype_names():
+        """Return sorted list of insertion device types."""
+        with IDSearch._lock:
+            IDSearch._reload_idtype_dict()
+        return sorted(set(IDSearch._idtype_dict.keys()))
+
+    @staticmethod
+    def get_idmodel_names():
+        """Return sorted list of insertion device models."""
+        IDSearch._reload_idname_2_idmodel_dict()
+        return sorted(set(IDSearch._idmodel_2_idname_dict.keys()))
+
+    @staticmethod
+    def get_idtype_dict():
+        """Return idtype dictionary.
+
+        With key,value pairs of insertion device types and corresponding
+        (polarities,mag_function).
+        """
+        with IDSearch._lock:
+            IDSearch._reload_idtype_dict()
+        return _copy.deepcopy(IDSearch._idtype_dict)
 
     @staticmethod
     def get_beamlines(filters=None):
@@ -795,6 +834,94 @@ class IDSearch:
                 pvname = _SiriusPVName(idff[corr])
                 corrs.append(pvname.device_name)
         return corrs
+
+    @staticmethod
+    def conv_idname_2_idtype(idname):
+        """Return the ID type of a given insetion device name."""
+        IDSearch._reload_idtype_2_idnames_dict()
+        for idtype, idnames in IDSearch._idtype_2_idnames_dict.items():
+            if idname in idnames:
+                return idtype
+        raise KeyError('Invalid idname "' + idname + '"!')
+
+    @staticmethod
+    def conv_idname_2_excdata(idname, polarization):
+        """Convert psname to excdata."""
+        idtype = IDSearch.conv_idname_2_idtype(idname)
+        idtype_pol = idtype + '-' + polarization
+        IDSearch._reload_idtype_2_excdat_dict(idtype_pol)
+        return IDSearch._idtype_2_excdat_dict[idtype_pol]
+
+    # --- private methods ---
+
+    @staticmethod
+    def _reload_idtype_dict():
+        """Reload id type dictionary from web server."""
+        if IDSearch._idtype_dict:
+            return
+        if not _web.server_online():
+            raise Exception('could not read idtypes from web server!')
+        text = _web.id_idtypes_names_read()
+        data, _ = _util.read_text_data(text)
+        idtype_dict = dict()
+        for datum in data:
+            name, polarity, magfunc = datum[0], datum[1], datum[2]
+            idtype_dict[name] = (polarity, magfunc)
+        IDSearch._idtype_dict = idtype_dict
+
+    @staticmethod
+    def _reload_idtype_2_idnames_dict():
+        """Reload id type to insertion device names dictionary."""
+        with IDSearch._lock:
+            if IDSearch._idtype_2_idnames_dict:
+                return
+            IDSearch._reload_idtype_dict()
+            idtypes = sorted(set(IDSearch._idtype_dict.keys()))
+            idtype_2_idnames_dict = dict()
+            idnames_list = list()
+            for idtype in idtypes:
+                text = _web.id_idtype_data_read(idtype + '.txt')
+                data, _ = _util.read_text_data(text)
+                idnames = [_SiriusPVName(datum[0]) for datum in data]
+                idtype_2_idnames_dict[idtype] = idnames
+                idnames_list += idnames
+            IDSearch._idtype_2_idnames_dict = idtype_2_idnames_dict
+            IDSearch._idnames_list = sorted(idnames_list)
+
+    @staticmethod
+    def _reload_idtype_2_excdat_dict(idtype_pol):
+        """Load ID conversion data."""
+        with IDSearch._lock:
+            if idtype_pol in IDSearch._idtype_2_excdat_dict:
+                return
+            if not _web.server_online():
+                raise Exception(
+                    'could not read "' + str(idtype_pol) + '" from web server!'
+                )
+            IDSearch._idtype_2_excdat_dict[idtype_pol] = _ExcitationData(
+                filename_web=idtype_pol + '.txt'
+            )
+
+    @staticmethod
+    def _reload_idname_2_idmodel_dict():
+        """Load idmodels by idname to a dict."""
+        with IDSearch._lock:
+            if IDSearch._idname_2_idmodel_dict:
+                return
+            if not _web.server_online():
+                raise Exception('could not read idmodels from web server')
+            id_data, _ = _util.read_text_data(_web.id_idmodels_read())
+            data = id_data
+            idname_2_idmodel_dict = dict()
+            idmodel_2_idname_dict = dict()
+            for datum in data:
+                idname, idmodel = datum
+                idname_2_idmodel_dict[idname] = idmodel
+                if idmodel not in idmodel_2_idname_dict:
+                    idmodel_2_idname_dict[idmodel] = list()
+                idmodel_2_idname_dict[idmodel].append(idname)
+            IDSearch._idname_2_idmodel_dict = idname_2_idmodel_dict
+            IDSearch._idmodel_2_idname_dict = idmodel_2_idname_dict
 
     # --- aux. methods ---
 
