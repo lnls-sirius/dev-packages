@@ -56,32 +56,32 @@ class IDFFConfig(_ConfigDBDocument):
     @property
     def ch_pvnames(self):
         """Return CH corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_CH_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_CH_LABELS)
 
     @property
     def cv_pvnames(self):
         """Return CV corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_CV_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_CV_LABELS)
 
     @property
     def qs_pvnames(self):
         """Return QS corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_QS_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_QS_LABELS)
 
     @property
     def lc_pvnames(self):
         """Return LC corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_LC_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_LC_LABELS)
 
     @property
     def qn_pvnames(self):
         """Return QN corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_QN_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_QN_LABELS)
 
     @property
     def cc_pvnames(self):
         """Return CC corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_CC_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_CC_LABELS)
 
     @property
     def polarizations(self):
