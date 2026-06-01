@@ -477,7 +477,7 @@ class IDFFCtrlHard(IDFFCtrlBase):
         """Table dict of given index or of active polarization state."""
         ff_table = _np.array(self.get_ffwd_table(tableidx))
         clabels = self.get_ffwd_table_corr_labels()
-        ff_table = ff_table.reshape(len(clabels), -1)
+        ff_table = ff_table.reshape(4, -1)
         ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
         return ff_table
 
