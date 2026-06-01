@@ -485,8 +485,10 @@ class IDFFCtrlHard(IDFFCtrlBase):
         """Set table dict for given index or for activate state."""
         clabels = self.get_ffwd_table_corr_labels()
         newtable = _np.empty(0, dtype=_np.float64)
-        for clabel in clabels:
-            newtable = _np.r_[newtable, ffwd_table[clabel]]
+        for i in range(4):
+            values = ffwd_table[clabels[i]] if i < len(
+                clabels) else _np.zeros(len(ffwd_table[clabels[0]]))
+            newtable = _np.r_[newtable, values]
         self.set_ffwd_table(newtable, tableidx)
 
 
