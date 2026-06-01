@@ -223,7 +223,8 @@ class IDFFConfig(_ConfigDBDocument):
         configs = value['polarizations']
         pvnames = {
             key: value for key, value in value['pvnames'].items()
-            if key not in ('pparameter', 'kparameter', 'offsets')}
+            if key not in ('pparameter', 'kparameter', 'offsets',
+                           'idffdevs')}
         corrlabels = set(pvnames.keys())
 
         # check pvnames in configs
@@ -260,7 +261,8 @@ class IDFFConfig(_ConfigDBDocument):
         for polarization, table in configs.items():
             corrtable = {
                 key: value for key, value in table.items()
-                if key not in ('pparameter', 'kparameter', 'offsets')}
+                if key not in ('pparameter', 'kparameter', 'offsets',
+                               'idffdevs')}
 
             # check 'pparameter'
             if 'pparameter' not in table:
