@@ -265,18 +265,21 @@ class CAXMirror(MirrorBase):
         # SENSORS
         #
 
+        # Obs.: Notice the pattern PVS.??_??[_MON].
+
         # PHOTOCOLLECTOR
-        self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
+        # self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
+        self.PVS.PH_CL      = "A:RIO01:9215A:ai0"
 
         # TEMPERATURES
         pvr_pfx = "A:RIO01:9226B:"
-        self.PVS.TEMP0_MON = pvr_pfx + "temp0"
-        self.PVS.TEMP1_MON = pvr_pfx + "temp1"
-        self.PVS.TEMP2_MON = pvr_pfx + "temp2"
-        self.PVS.TEMP3_MON = pvr_pfx + "temp3"
-        self.PVS.TEMP4_MON = pvr_pfx + "temp4"
-        self.PVS.TEMP_SP   = "A:RIO01:M1_CtrltempSp"
-        self.PVS.TEMP_RB   = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TP_00_MON = pvr_pfx + "temp0"
+        self.PVS.TP_01_MON = pvr_pfx + "temp1"
+        self.PVS.TP_02_MON = pvr_pfx + "temp2"
+        self.PVS.TP_03_MON = pvr_pfx + "temp3"
+        self.PVS.TP_04_MON = pvr_pfx + "temp4"
+        self.PVS.TP_SP     = "A:RIO01:M1_CtrltempSp"
+        self.PVS.TP_RB     = "A:RIO01:M1_CtrltempSp"
 
         # PRESSURE
         # Ionic pump
@@ -299,8 +302,8 @@ class CAXMirror(MirrorBase):
         self.PVS.PR_V2_MON = pvv_pfx + "getPR3"            # FOE-XBPM2
 
         # FLOWMETERS
-        self.PVS.FLOWMETER1_MON = "F:EPS01:MR1FIT1"
-        self.PVS.FLOWMETER2_MON = "F:EPS01:MR1FIT2"
+        self.PVS.FM_01_MON = "F:EPS01:MR1FIT1"
+        self.PVS.FM_02_MON = "F:EPS01:MR1FIT2"
 
         self.PROPERTIES_DEFAULT = tuple(
             set(value for key, value in vars(self.PVS).items())
