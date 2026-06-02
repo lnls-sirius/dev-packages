@@ -1806,6 +1806,7 @@ class MacReport:
         if data.timestamp is None:
             times = _np.array([t_start, ])
             values = _np.array([defv, ])
+            _log.warning('Received empty data for %s', pvname)
         else:
             times = _np.array(data.timestamp)
             values = _np.array(data.value)
