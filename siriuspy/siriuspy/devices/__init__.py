@@ -93,6 +93,7 @@ from .rf import (
 from .scraper import ScraperH, ScraperV
 from .screen import Screen
 from .sofb import SOFB
+from .streak_camera import StreakCamera
 from .syncd import DevicesSync
 from .timing import Event, EVG, HLTiming, Trigger
 from .tune import Tune, TuneCorr, TuneFrac, TuneProc
@@ -101,4 +102,4 @@ del device, bpm, dcct, egun, ict, lillrf, modltr
 del pwrsupply, posang, psconv, pssofb, rf, injsys, injctrl
 del screen, tune, sofb, timing, syncd, energy
 del ids, currinfo, bbb, machshift, dvf, lienergy, intlkctrl, scraper
-del blm, beamlines
+del blm, beamlines, streak_camera
