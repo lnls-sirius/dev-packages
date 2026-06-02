@@ -523,7 +523,7 @@ class IDSearch:
                 _type_ch: 'SI-11SP:BS-IDFF-CHCV',
                 _type_cv: 'SI-11SP:BS-IDFF-CHCV',
                 _type_qs: 'SI-11SP:BS-IDFF-QS',
-                _type_lc: 'SI-11SB:BS-IDFF-LC',
+                _type_lc: 'SI-11SP:BS-IDFF-LC',
             },
             IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
