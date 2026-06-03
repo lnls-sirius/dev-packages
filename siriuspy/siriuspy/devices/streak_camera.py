@@ -26,64 +26,66 @@ class StreakCamera(_Device):
 
         super().__init__(devname=devname, props2init=props2init, **kwargs)
 
-        # Streak Camera IOC Prefix
-        pvprefix = 'SC:IMB:'
-
         # General Parameters
-        self.PVS.TIME_RANGE_SP   = pvprefix + 'GenParams:TimeRange-SP'
-        self.PVS.TIME_RANGE_RB   = pvprefix + 'GenParams:TimeRange-RB'
-        self.PVS.MCP_GAIN_SP     = pvprefix + 'GenParams:MCPGain-SP'
-        self.PVS.MCP_GAIN_RB     = pvprefix + 'GenParams:MCPGain-RB'
-        self.PVS.HTRIG_LEV_SP    = pvprefix + 'GenParams:HTrigLevel-SP'
-        self.PVS.HTRIG_LEV_RB    = pvprefix + 'GenParams:HTrigLevel-RB'
-        self.PVS.DELAY_SP        = pvprefix + 'GenParams:Delay-SP'
-        self.PVS.DELAY_RB        = pvprefix + 'GenParams:Delay-RB'
-        self.PVS.FOC_TIMEOVER_SP = pvprefix + 'GenParams:FocusTimeOver-SP'
-        self.PVS.FOC_TIMEOVER_RB = pvprefix + 'GenParams:FocusTimeOver-RB'
-        self.PVS.MODE_SEL        = pvprefix + 'GenParams:Mode-Sel'
-        self.PVS.MODE_STS        = pvprefix + 'GenParams:Mode-Sts'
-        self.PVS.GATE_MODE_SEL   = pvprefix + 'GenParams:GateMode-Sel'
-        self.PVS.GATE_MODE_STS   = pvprefix + 'GenParams:GateMode-Sts'
-        self.PVS.SHUTTER_SEL     = pvprefix + 'GenParams:Shutter-Sel'
-        self.PVS.SHUTTER_STS     = pvprefix + 'GenParams:Shutter-Sts' 
-        self.PVS.BLANK_AMP_SEL   = pvprefix + 'GenParams:BlankingAmp-Sel'
-        self.PVS.BLANK_AMP_STS   = pvprefix + 'GenParams:BlankingAmp-Sts'
-        self.PVS.HTRIG_STS_SEL   = pvprefix + 'GenParams:HTrigStatus-Sel'
-        self.PVS.HTRIG_STS_STS   = pvprefix + 'GenParams:HTrigStatus-Sts'
-        self.PVS.HTRIG_MODE_SEL  = pvprefix + 'GenParams:HTrigMode-Sel'
-        self.PVS.HTRIG_MODE_STS  = pvprefix + 'GenParams:HTrigMode-Sts'
+        pvprefix = 'GenParams:'
+        self.PVS.TIME_RANGE_SP   = pvprefix + 'TimeRange-SP'
+        self.PVS.TIME_RANGE_RB   = pvprefix + 'TimeRange-RB'
+        self.PVS.MCP_GAIN_SP     = pvprefix + 'MCPGain-SP'
+        self.PVS.MCP_GAIN_RB     = pvprefix + 'MCPGain-RB'
+        self.PVS.HTRIG_LEV_SP    = pvprefix + 'HTrigLevel-SP'
+        self.PVS.HTRIG_LEV_RB    = pvprefix + 'HTrigLevel-RB'
+        self.PVS.DELAY_SP        = pvprefix + 'Delay-SP'
+        self.PVS.DELAY_RB        = pvprefix + 'Delay-RB'
+        self.PVS.FOC_TIMEOVER_SP = pvprefix + 'FocusTimeOver-SP'
+        self.PVS.FOC_TIMEOVER_RB = pvprefix + 'FocusTimeOver-RB'
+        self.PVS.MODE_SEL        = pvprefix + 'Mode-Sel'
+        self.PVS.MODE_STS        = pvprefix + 'Mode-Sts'
+        self.PVS.GATE_MODE_SEL   = pvprefix + 'GateMode-Sel'
+        self.PVS.GATE_MODE_STS   = pvprefix + 'GateMode-Sts'
+        self.PVS.SHUTTER_SEL     = pvprefix + 'Shutter-Sel'
+        self.PVS.SHUTTER_STS     = pvprefix + 'Shutter-Sts' 
+        self.PVS.BLANK_AMP_SEL   = pvprefix + 'BlankingAmp-Sel'
+        self.PVS.BLANK_AMP_STS   = pvprefix + 'BlankingAmp-Sts'
+        self.PVS.HTRIG_STS_SEL   = pvprefix + 'HTrigStatus-Sel'
+        self.PVS.HTRIG_MODE_SEL  = pvprefix + 'HTrigMode-Sel'
+        self.PVS.HTRIG_MODE_STS  = pvprefix + 'HTrigMode-Sts'
 
         # Acquisition Commands
-        self.PVS.ACQ_START_SEL = pvprefix + 'AcqParams:Start-Sel'
-        self.PVS.ACQ_START_STS = pvprefix + 'AcqParams:Start-Sts'
+        pvprefix = 'AcqParams:'
+        self.PVS.ACQ_START_SEL = pvprefix + 'Start-Sel'
+        self.PVS.ACQ_START_STS = pvprefix + 'Start-Sts'
 
         # LUT Control
-        self.PVS.LUT_LOW_LIMIT_MON = pvprefix + 'LUT:LowerLimit-RB' #  Get LUT lower limits -> Change suffix to -Mon
-        self.PVS.LUT_UPP_LIMIT_MON = pvprefix + 'LUT:UpperLimit-RB' #  Get LUT upper limits -> Change suffix to -Mon
-        self.PVS.LUT_AUTOSET_CMD   = pvprefix + 'LUT:SetAuto-Cmd'
+        pvprefix = 'LUT:'
+        self.PVS.LUT_LOW_LIMIT_MON = pvprefix + 'LowerLimit-Mon'
+        self.PVS.LUT_UPP_LIMIT_MON = pvprefix + 'UpperLimit-Mon'
+        self.PVS.LUT_AUTOSET_CMD   = pvprefix + 'SetAuto-Cmd'
 
         # Image Parameters
-        self.PVS.ROI_INI_X_SP   = pvprefix + 'ImgParams:RoiIniX-SP'
-        self.PVS.ROI_INI_X_RB   = pvprefix + 'ImgParams:RoiIniX-RB'
-        self.PVS.ROI_INI_Y_SP   = pvprefix + 'ImgParams:RoiIniY-SP'
-        self.PVS.ROI_INI_Y_RB   = pvprefix + 'ImgParams:RoiIniY-RB'
-        self.PVS.ROI_WID_X_SP   = pvprefix + 'ImgParams:RoiWidthX-SP'
-        self.PVS.ROI_WID_X_RB   = pvprefix + 'ImgParams:RoiWidthX-RB'
-        self.PVS.ROI_WID_Y_SP   = pvprefix + 'ImgParams:RoiWidthY-SP'
-        self.PVS.ROI_WID_Y_RB   = pvprefix + 'ImgParams:RoiWidthY-RB'
-        self.PVS.IMG_WIDTH_MON  = pvprefix + 'ImgParams:ImageWidth-Mon'
-        self.PVS.IMG_HEIGHT_MON = pvprefix + 'ImgParams:ImageHeight-Mon'
-        self.PVS.IMG_OPENED_MON = pvprefix + 'ImgParams:ImageOpened-Mon'
-        self.PVS.FWHM_MON       = pvprefix + 'ImgProfile:FWHM-Mon'
+        pvprefix = 'ImgParams:'
+        self.PVS.ROI_INI_X_SP   = pvprefix + 'RoiIniX-SP'
+        self.PVS.ROI_INI_X_RB   = pvprefix + 'RoiIniX-RB'
+        self.PVS.ROI_INI_Y_SP   = pvprefix + 'RoiIniY-SP'
+        self.PVS.ROI_INI_Y_RB   = pvprefix + 'RoiIniY-RB'
+        self.PVS.ROI_WID_X_SP   = pvprefix + 'RoiWidthX-SP'
+        self.PVS.ROI_WID_X_RB   = pvprefix + 'RoiWidthX-RB'
+        self.PVS.ROI_WID_Y_SP   = pvprefix + 'RoiWidthY-SP'
+        self.PVS.ROI_WID_Y_RB   = pvprefix + 'RoiWidthY-RB'
+        self.PVS.IMG_WIDTH_MON  = pvprefix + 'ImageWidth-Mon'
+        self.PVS.IMG_HEIGHT_MON = pvprefix + 'ImageHeight-Mon'
+        self.PVS.IMG_OPENED_MON = pvprefix + 'ImageOpened-Mon'
+        self.PVS.FWHM_MON       = 'ImgProfile:FWHM-Mon'
 
         # Camera Parameters
-        self.PVS.EXPOSURE_SP     = pvprefix + 'CamParams:Exposure-SP'
-        self.PVS.EXPOSURE_RB     = pvprefix + 'CamParams:Exposure-RB'
-        self.PVS.VER_REC_ROI_CMD = pvprefix + 'ImgParams:CreateVerRectRoi-Cmd' # Creates vertical rectagular ROI
+        pvprefix = 'CamParams:'
+        self.PVS.EXPOSURE_SP     = pvprefix + 'Exposure-SP'
+        self.PVS.EXPOSURE_RB     = pvprefix + 'Exposure-RB'
+        self.PVS.VER_REC_ROI_CMD = pvprefix + 'CreateVerRectRoi-Cmd' # Creates vertical rectagular ROI
 
         # App Commands
-        self.PVS.APP_START_CMD = pvprefix + 'App:Start-Cmd'
-        self.PVS.APP_END_CMD   = pvprefix + 'App:End-Cmd'       
+        pvprefix = 'App:'
+        self.PVS.APP_START_CMD = pvprefix + 'Start-Cmd'
+        self.PVS.APP_END_CMD   = pvprefix + 'End-Cmd'       
 
         self.PROPERTIES_DEFAULT = tuple(
             set(value for key, value in vars(self.PVS).items())
