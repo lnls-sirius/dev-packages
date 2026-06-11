@@ -40,7 +40,9 @@ class BaseDevice(_PVDataSet):
         self._times = None
         self._values = None
         super().__init__(pvnames, connector=connector)
-        self._parallel_query_bin_interval = 3600
+        self.query_split_interval = 3600
+        self.processing_type = self.ProcessingTypes.Mean
+        self.processing_type_param1 = 1
 
     @property
     def devnames(self):
@@ -57,12 +59,12 @@ class BaseDevice(_PVDataSet):
         """Return retrieved orbit interpolated values."""
         return self._values
 
-    def update(self, mean_sec=None, parallel=True):
+    def update(self, query_timeout=None):
         """Update state by retrieving data."""
-        super().update(mean_sec=mean_sec, parallel=parallel)
+        super().update(query_timeout=query_timeout)
 
         # interpolate data
-        self._times, self._values = self._interpolate_data(mean_sec)
+        self._times, self._values = self._interpolate_data()
 
     # --- private methods ---
 
@@ -71,9 +73,10 @@ class BaseDevice(_PVDataSet):
         pvnames = []
         return devnames, pvnames
 
-    def _interpolate_data(self, mean_sec):
+    def _interpolate_data(self):
         # calc mean_sec if not passed
         nr_pvs = len(self._pvdata)
+        mean_sec = self.processing_type_param1
         if mean_sec is None:
             mean_sec = sum(
                 map(
@@ -84,7 +87,7 @@ class BaseDevice(_PVDataSet):
             mean_sec /= nr_pvs
 
         # times vector
-        t0_, t1_ = self.timestamp_start, self.timestamp_stop
+        t0_, t1_ = self.time_start.timestamp(), self.time_stop.timestamp()
         times = _np.arange(t0_, t1_, mean_sec)
 
         # builds orbit matrix using interpolation
