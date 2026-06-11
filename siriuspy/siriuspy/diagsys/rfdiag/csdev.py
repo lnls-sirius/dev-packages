@@ -31,8 +31,13 @@ class Const(_csdev.Const):
     """Local constant types."""
 
     BO_DEV = 'BO-05D:RF-P5Cav'
-    SI_DEV = 'SI-02SB:RF-P7Cav'
-    ALL_DEVICES = [BO_DEV, SI_DEV]
+    SIA_DEV = 'SI-03SP:RF-SRFCav-A'
+    SIB_DEV = 'SI-03SP:RF-SRFCav-B'
+    SI_DEVS = {
+        'A': SIA_DEV,
+        'B': SIB_DEV,
+    }
+    ALL_DEVICES = [BO_DEV, SIA_DEV, SIB_DEV]
 
     SI_SL_ERRTOL_AMP = 1  # [mV]
     SI_SL_ERRTOL_PHS = 1e-1  # [DEG]
