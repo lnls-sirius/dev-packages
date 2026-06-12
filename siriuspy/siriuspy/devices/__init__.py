@@ -54,6 +54,7 @@ from .lienergy import LIEnergy
 from .lillrf import DevLILLRF, LILLRF
 from .machshift import MachShift
 from .modltr import LIModltr
+from .orbit_bump import OrbBump
 from .orbit_interlock import (
     BaseOrbitIntlk,
     BPMOrbitIntlk,
