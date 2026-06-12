@@ -358,10 +358,15 @@ class IDSearch:
             3: ('vertical', -52.5 / 2),  # [mm]
         },
         'SI-11SP:ID-UE44': {
-            0: ('circularp', -13.31),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
+            0: ('no-field', None),  # [mm]
+            1: ('vertical', 22.00),  # [mm]
             2: ('circularn', 13.31),  # [mm]
-            3: ('vertical', 22.00),  # [mm]
+            3: ('horizontal', 0.00),  # [mm]
+            4: ('linear-ang-cte', None),  # [mm]
+            5: ('linear-ene-cte', None),  # [mm]
+            6: ('circularp', -13.31),  # [mm]
+            7: ('free', None),  # [mm]
+            8: ('transition', None),  # [mm]
         },
         'SI-11SP:ID-SIMUL': {
             0: ('horizontal', None)  # [mm]
