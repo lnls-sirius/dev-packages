@@ -856,23 +856,30 @@ class IDFF(_DeviceSet):
         if use_ioc_tables:
             if kparameter_value is None:
                 kparameter_value = self.kparameter_mon
+            if pparameter_value is None:
+                pparameter_value = self.pparameter_mon
 
             ff_tables = self.ctrldev.get_ffwd_table_dict()
             setpoints = dict()
 
             idparams = _IDSearch.conv_idname_2_parameters(self.iddevname)
             idff = _IDSearch.conv_idname_2_idff(self.iddevname)
+
+            parameter_value = pparameter_value if self.polarization_mon in (
+                'no-field', 'linear-ene-cte', 'transition'
+            ) else kparameter_value
+
             for corrlabel, ff_table in ff_tables.items():
-                # IOC tables gap zero gap offset!
-                klims = 0 * idparams.KPARAM_MIN, idparams.KPARAM_MAX
-                kparam = _np.linspace(*klims, len(ff_table))
+                # IOC tables parameter limits!
+                lims = idparams.PARAM_TABLE_MIN, idparams.PARAM_TABLE_MAX
+                param = _np.linspace(*lims, len(ff_table))
                 # linear interpolation
-                curr = _np.interp(kparameter_value, kparam, ff_table)
+                curr = _np.interp(parameter_value, param, ff_table)
                 corr_pvname = idff[corrlabel]
                 setpoints[corr_pvname] = curr
             sts = (
                 setpoints, self.polarization_mon,
-                self.pparameter_mon, kparameter_value
+                pparameter_value, kparameter_value
             )
             return sts
 
