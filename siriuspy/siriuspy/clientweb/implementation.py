@@ -1,4 +1,5 @@
 """Implementation of web server data retrieval functions."""
+
 import re as _re
 import urllib.request as _urllib_request
 
@@ -10,8 +11,10 @@ _EXCDAT_FOLDER = '/magnet/excitation-data/'
 _MAGNET_FOLDER = '/magnet/'
 _ORBINTLK_FOLDER = '/orbintlk/'
 _PS_FOLDER = '/pwrsupply/'
+_ID_FOLDER = '/insertion-devices/'
 _BBB_FOLDER = '/beaglebone/'
 _PSTYPES_DATA_FOLDER = '/pwrsupply/pstypes-data/'
+_IDTYPES_DATA_FOLDER = '/insertion-devices/idtypes-data/'
 _DIAG_FOLDER = '/diagnostics/'
 _TIMESYS_FOLDER = '/timesys/'
 _MAC_SCHEDULE_FOLDER = '/macschedule/'
@@ -78,9 +81,21 @@ def ps_pstypes_names_read(timeout=_TIMEOUT):
     return read_url(url, timeout=timeout)
 
 
+def id_idtypes_names_read(timeout=_TIMEOUT):
+    """Return the text of the insertion devices type."""
+    url = _ID_FOLDER + 'idtypes-names.txt'
+    return read_url(url, timeout=timeout)
+
+
 def ps_pstype_data_read(filename, timeout=_TIMEOUT):
     """Return the power supply data."""
     url = _PSTYPES_DATA_FOLDER + filename
+    return read_url(url, timeout=timeout)
+
+
+def id_idtype_data_read(filename, timeout=_TIMEOUT):
+    """Return the isnertion device data."""
+    url = _IDTYPES_DATA_FOLDER + filename
     return read_url(url, timeout=timeout)
 
 
@@ -99,6 +114,12 @@ def pu_pstype_setpoint_limits(timeout=_TIMEOUT):
 def ps_psmodels_read(timeout=_TIMEOUT):
     """Return the psmodels file."""
     url = _PS_FOLDER + 'psmodels.txt'
+    return read_url(url, timeout=timeout)
+
+
+def id_idmodels_read(timeout=_TIMEOUT):
+    """Return the idmodels file."""
+    url = _ID_FOLDER + 'idmodels.txt'
     return read_url(url, timeout=timeout)
 
 
