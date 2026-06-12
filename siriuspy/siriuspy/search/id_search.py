@@ -46,7 +46,9 @@ class IDSearch:
         'CPARAM_PARKED',  # [mm]
         'CPARAM_TOL',  # [mm]
         'CPARAM_POL_CHANGE',  # [mm]
-        )
+        'PARAM_TABLE_MIN',  # [mm]
+        'PARAM_TABLE_MAX',  # [mm]
+    )
 
     _idname2params = {
         'SI-06SB:ID-VPU29': _get_namedtuple(
@@ -55,35 +57,45 @@ class IDSearch:
                 29,
                 9.7, 80, 80, 80, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                9.7, 80,
+            )),
         'SI-07SP:ID-VPU29': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 29,
                 9.7, 80, 80, 80, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                9.7, 80,
+            )),
         'SI-08SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
         'SI-08SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 18.5,
                 4.2, 24, 24, 24, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                4.2, 24,
+            )),
         'SI-09SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
@@ -92,56 +104,72 @@ class IDSearch:
                 50,
                 +22, +300, +300, +300, 0.1,
                 -25, 25, 0, 0.5,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                +22, +300,
+            )),
         'SI-10SB:ID-DELTA52': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 52.5,
                 -52.5/2, +52.5/2, 0, 0, 0.020,
                 -52.5/2, +52.5/2, 0, 0.010,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                -52.5 / 2, +52.5 / 2,
+            )),
        'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 44,
-                1, 21, 21, 21, 0.01,
+                1, 21, 21, 7.5, 0.01,
                 -13.3, 22, 0, 0.01,
-                0, 10.65, 0, 0.01, 0)),
+                0, 10.65, 0, 0.01, 0,
+                -13.313, 22,
+            )),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 180,
                 49.73, 49.73, 150, 150, 0.1,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                49.73, 150,
+            )),
         'SI-14SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 18.5,
                 4.2, 24, 24, 24, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                4.3, 24,
+            )),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 50,
                 0, 25, 25, 0, 0.1,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 25,
+            )),
         'SI-17SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
         'SI-20SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
     }
 
     POL_NONE_STR = 'none'
@@ -523,7 +551,7 @@ class IDSearch:
         if isinstance(pol, int):
             return pols[pol][1]
         elif isinstance(pol, str):
-            for pol_name, pol_pparam in pols.values():
+            for pol_name, pol_pparam in dict(pols).items():
                 if pol == pol_name:
                     return pol_pparam
             raise ValueError(f'Invalid polarization string "{pol}"')
