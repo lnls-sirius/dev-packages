@@ -1,6 +1,7 @@
 """DVF devices."""
 
 import numpy as _np
+
 from mathphys.functions import get_namedtuple as _get_namedtuple
 from mathphys.imgproc import (
     FitGaussianScipy as _FitGaussianScipy,
@@ -25,8 +26,10 @@ class DVF(_Device):
 
     _default_timeout = 10  # [s]
 
+    # should these parameters be moved to csconsts or a DVFSearch?
     _dvfparam_fields = (
-        'MAX_INTENSITY_NR_BITS',
+        'MAX_INTENSITY_NR_BITS',  # [nrbits]
+        'IMAGE_NR_PIXEL_MULTP',  # roi params must be multip. of nr of pixels
         'ACQUISITION_TIME_MIN',  # [s]
         'ACQUISITION_TIME_DEFAULT',  # [s]
         'EXPOSURE_TIME_DEFAULT',  # [s]
@@ -38,19 +41,21 @@ class DVF(_Device):
 
     _dev2params = {
         DEVICES.CAX_DVF1: _get_namedtuple(
+            # Basler acA1300-75gm (version 106755-24)
             'DVFParameters',
             _dvfparam_fields,
-            (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0),
+            (16, 16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0),
         ),
         DEVICES.CAX_DVF2: _get_namedtuple(
             'DVFParameters',
             _dvfparam_fields,
-            (16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0),
+            (16, 16, 0.5, 0.5, 0.100, 2064, 3088, 2.4, 5.0),
         ),
         DEVICES.BO_DVF: _get_namedtuple(
+            # Basler acA1300-75gm (version 106755-13)
             'DVFParameters',
             _dvfparam_fields,
-            (8, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0),
+            (8, 16, 0.5, 0.5, 0.005, 1024, 1280, 4.8, 5.0),
         ),
     }
 
@@ -394,12 +399,20 @@ class DVF(_Device):
 
     def cmd_reset(self, timeout=None):
         """Reset DVF to a standard configuration."""
+        # TODO: is reseting BASLER roi necessary?
+        # if not self.cmd_cam_roi_reset():
+        #     return False
         props_values = {
             'cam1:ArrayCallbacks': 1,  # Enable passing array
             'cam1:ImageMode': 2,  # Continuous
             'cam1:PixelFormat': 1,  # Mono12
             # ROI1 takes images from camera driver
             'ROI1:NDArrayPort': self['cam1:PortName_RBV'],
+            # TODO: check if these properties are necessary to be set on reset
+            # 'cam1:DataType': 1,  # UInt16 (maybe unnecessary)
+            # 'cam1:NumImages': 1,  # number of sequential acquired images
+            # 'cam1:ExposureMode': 0,  # TIMED
+            # 'cam1:TriggerMode': 0,  # Off
             'ROI1:EnableCallbacks': 1,  # Enable getting from NDArrayPort
             'ROI1:MinX': 0,  # [pixel]
             'ROI1:MinY': 0,  # [pixel]
