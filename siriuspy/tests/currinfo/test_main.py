@@ -39,7 +39,7 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
             "siriuspy.currinfo.main._ClientArch", autospec=True)
         self.addCleanup(ca_patcher.stop)
         self.mock_ca = ca_patcher.start()
-        self.mock_ca.return_value.getData.return_value = None
+        self.mock_ca.return_value.get_data.return_value = None
         pv_patcher = mock.patch(
             "siriuspy.currinfo.main._PV", autospec=True)
         self.addCleanup(pv_patcher.stop)
