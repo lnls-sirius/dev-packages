@@ -46,7 +46,9 @@ class IDSearch:
         'CPARAM_PARKED',  # [mm]
         'CPARAM_TOL',  # [mm]
         'CPARAM_POL_CHANGE',  # [mm]
-        )
+        'PARAM_TABLE_MIN',  # [mm]
+        'PARAM_TABLE_MAX',  # [mm]
+    )
 
     _idname2params = {
         'SI-06SB:ID-VPU29': _get_namedtuple(
@@ -55,35 +57,45 @@ class IDSearch:
                 29,
                 9.7, 80, 80, 80, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                9.7, 80,
+            )),
         'SI-07SP:ID-VPU29': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 29,
                 9.7, 80, 80, 80, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                9.7, 80,
+            )),
         'SI-08SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
         'SI-08SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 18.5,
                 4.2, 24, 24, 24, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                4.2, 24,
+            )),
         'SI-09SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
@@ -92,116 +104,153 @@ class IDSearch:
                 50,
                 +22, +300, +300, +300, 0.1,
                 -25, 25, 0, 0.5,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                +22, +300,
+            )),
         'SI-10SB:ID-DELTA52': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 52.5,
                 -52.5/2, +52.5/2, 0, 0, 0.020,
                 -52.5/2, +52.5/2, 0, 0.010,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                -52.5 / 2, +52.5 / 2,
+            )),
        'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 44,
-                1, 21, 21, 21, 0.01,
+                1, 21, 21, 7.5, 0.01,
                 -13.3, 22, 0, 0.01,
-                0, 10.65, 0, 0.01, 0)),
+                0, 10.65, 0, 0.01, 0,
+                -13.313, 22,
+            )),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 180,
                 49.73, 49.73, 150, 150, 0.1,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                49.73, 150,
+            )),
         'SI-14SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 18.5,
                 4.2, 24, 24, 24, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                4.3, 24,
+            )),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 50,
                 0, 25, 25, 0, 0.1,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 25,
+            )),
         'SI-17SA:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
         'SI-20SB:ID-APU22': _get_namedtuple(
             'IDParameters',
             _idparam_fields, (
                 22,
                 0, 11, 11, 0, 0.01,
                 None, None, None, None,
-                None, None, None, None, None)),
+                None, None, None, None, None,
+                0, 11,
+            )),
     }
 
     POL_NONE_STR = 'none'
     POL_UNDEF_STR = 'undef'
 
+    # NOTE: the polarization states ordering has to be compatible with
+    # indices of possible states of the corresponding polarization PV.
     _idname2pol_sel = {
-        'SI-06SB:ID-VPU29': {
-            0: ('vertical', None),  # [mm]
-        },
-        'SI-07SP:ID-VPU29': {
-            0: ('vertical', None),  # [mm]
-        },
-        'SI-08SB:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-08SB:ID-IVU18': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-09SA:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-10SB:ID-EPU50': {
-            0: ('circularn', -16.36),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
-            2: ('circularp', +16.36),  # [mm]
-            3: ('vertical', 25.00),  # [mm]
-        },
-        'SI-10SB:ID-DELTA52': {
-            0: ('circularn', -52.5/4),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
-            2: ('circularp', +52.5/4),  # [mm]
-            3: ('vertical', -52.5/2),  # [mm]
-        },
-        'SI-11SP:ID-UE44': {
-            0: ('circularp', -13.31),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
-            2: ('circularn', 13.31),  # [mm]
-            3: ('vertical', 22.00),  # [mm]
-        },
-        'SI-11SP:ID-SIMUL': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-14SB:ID-IVU18': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-17SA:ID-PAPU50': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-17SA:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-20SB:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
+        'SI-06SB:ID-VPU29': [
+            ('vertical', None)  # [mm]
+        ],
+        'SI-07SP:ID-VPU29': [
+            ('vertical', None)  # [mm]
+        ],
+        'SI-08SB:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-08SB:ID-IVU18': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-09SA:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-10SB:ID-EPU50': [
+            ('circularn', -16.36),  # [mm]
+            ('horizontal', 0.00),  # [mm]
+            ('circularp', +16.36),  # [mm]
+            ('vertical', 25.00),  # [mm]
+        ],
+        'SI-10SB:ID-DELTA52': [
+            ('circularn', -52.5 / 4),  # [mm]
+            ('horizontal', 0.00),  # [mm]
+            ('circularp', +52.5 / 4),  # [mm]
+            ('vertical', -52.5 / 2),  # [mm]
+        ],
+        'SI-11SP:ID-UE44': [
+            ('no-field', None),  # [mm]
+            ('vertical', 22.00),  # [mm]
+            ('circularn', 13.31),  # [mm]
+            ('horizontal', 0.00),  # [mm]
+            ('linear-ang-cte', None),  # [mm]
+            ('linear-ene-cte', None),  # [mm]
+            ('circularp', -13.31),  # [mm]
+            ('free', None),  # [mm]
+            ('transition', None),  # [mm]
+        ],
+        'SI-11SP:ID-SIMUL': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-14SB:ID-IVU18': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-17SA:ID-PAPU50': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-17SA:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-20SB:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
     }
     _idname2pol_sts = _copy.deepcopy(_idname2pol_sel)
-    _idname2pol_sts['SI-10SB:ID-EPU50'].update(
-        {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
-    _idname2pol_sts['SI-10SB:ID-DELTA52'].update(
-        {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
+    _idname2pol_sts['SI-10SB:ID-EPU50'] += [
+        (POL_NONE_STR, None),
+        (POL_UNDEF_STR, None),
+    ]
+    _idname2pol_sts['SI-10SB:ID-DELTA52'] += [
+        (POL_NONE_STR, None),
+        (POL_UNDEF_STR, None),
+    ]
+
+    IDFF_CorrTypes = _get_namedtuple(
+        'IDFF_CorrTypes', ('ch', 'cv', 'qs', 'lc', 'qn', 'cc')
+    )
+    _type_ch = IDFF_CorrTypes._fields[0]
+    _type_cv = IDFF_CorrTypes._fields[1]
+    _type_qs = IDFF_CorrTypes._fields[2]
+    _type_lc = IDFF_CorrTypes._fields[3]
+    _type_qn = IDFF_CorrTypes._fields[4]
+    _type_cc = IDFF_CorrTypes._fields[5]
 
     # define IDFF correctors labeling (and ordering)
     # NOTE: the ordering within each category here follows the ordering of the
@@ -258,8 +307,9 @@ class IDSearch:
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
             'polarizations': tuple(
-                item[0] for item in
-                _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
+                item[0]
+                for item in _idname2pol_sts['SI-10SB:ID-EPU50']
+            ),
             'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
@@ -271,8 +321,9 @@ class IDSearch:
         },
         'SI-10SB:ID-DELTA52': {
             'polarizations': tuple(
-                item[0] for item in
-                _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
+                item[0]
+                for item in _idname2pol_sts['SI-10SB:ID-DELTA52']
+            ),
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
@@ -284,8 +335,8 @@ class IDSearch:
         },
         'SI-11SP:ID-UE44': {
             'polarizations': tuple(
-                item[0] for item in
-                _idname2pol_sts['SI-11SP:ID-UE44'].values()),
+                item[0] for item in _idname2pol_sts['SI-11SP:ID-UE44']
+            ),
             'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
             'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
             IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
@@ -455,15 +506,15 @@ class IDSearch:
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
-        """Return ID polarizations (sel)."""
+        """Return ID polarization names (sel)."""
         pols = IDSearch._idname2pol_sel[idname]
-        return tuple(pol[0] for pol in pols.values())
+        return tuple(pol[0] for pol in pols)
 
     @staticmethod
     def conv_idname_2_polarizations_sts(idname):
-        """Return ID polarizations (sts)."""
+        """Return ID polarization names (sts)."""
         pols = IDSearch._idname2pol_sts[idname]
-        return tuple(pol[0] for pol in pols.values())
+        return tuple(pol[0] for pol in pols)
 
     @staticmethod
     def conv_idname_2_polarization_state(idname, pparameter, kparameter):
@@ -500,7 +551,7 @@ class IDSearch:
         if isinstance(pol, int):
             return pols[pol][1]
         elif isinstance(pol, str):
-            for pol_name, pol_pparam in pols.values():
+            for pol_name, pol_pparam in dict(pols).items():
                 if pol == pol_name:
                     return pol_pparam
             raise ValueError(f'Invalid polarization string "{pol}"')

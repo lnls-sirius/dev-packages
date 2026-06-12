@@ -56,32 +56,32 @@ class IDFFConfig(_ConfigDBDocument):
     @property
     def ch_pvnames(self):
         """Return CH corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_CH_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_CH_LABELS)
 
     @property
     def cv_pvnames(self):
         """Return CV corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_CV_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_CV_LABELS)
 
     @property
     def qs_pvnames(self):
         """Return QS corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_QS_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_QS_LABELS)
 
     @property
     def lc_pvnames(self):
         """Return LC corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_LC_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_LC_LABELS)
 
     @property
     def qn_pvnames(self):
         """Return QN corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_QN_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_QN_LABELS)
 
     @property
     def cc_pvnames(self):
         """Return CC corrector power supply pvnames."""
-        return self._get_corr_pvnames(*_IDSearch.IDFF_CC_LABELS)
+        return self._get_corr_pvnames(_IDSearch.IDFF_CC_LABELS)
 
     @property
     def polarizations(self):
@@ -223,7 +223,8 @@ class IDFFConfig(_ConfigDBDocument):
         configs = value['polarizations']
         pvnames = {
             key: value for key, value in value['pvnames'].items()
-            if key not in ('pparameter', 'kparameter', 'offsets')}
+            if key not in ('pparameter', 'kparameter', 'offsets',
+                           'idffdevs')}
         corrlabels = set(pvnames.keys())
 
         # check pvnames in configs
@@ -260,7 +261,8 @@ class IDFFConfig(_ConfigDBDocument):
         for polarization, table in configs.items():
             corrtable = {
                 key: value for key, value in table.items()
-                if key not in ('pparameter', 'kparameter', 'offsets')}
+                if key not in ('pparameter', 'kparameter', 'offsets',
+                               'idffdevs')}
 
             # check 'pparameter'
             if 'pparameter' not in table:

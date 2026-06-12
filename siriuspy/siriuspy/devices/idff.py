@@ -449,23 +449,47 @@ class IDFFCtrlHard(IDFFCtrlBase):
         corr_labels += self.IDFF_QN_LABELS
         return corr_labels
 
-    def get_current_table(self):
-        """Return currently active table PV."""
-        # for hard devices with a single table, it's just that table
+    def get_current_table_index(self):
+        """Table index for currently active polarization state."""
+        # for hard devices with a single table
         if not isinstance(self.PARAM_PVS.TABLE_RB, list):
-            return self[self.PARAM_PVS.TABLE_RB]
+            return None
 
         # otherwise, we need to choose the table based on the hardware state
         idx = self[self.PARAM_PVS.TABLEIDX_MON]
-        return self[self.PARAM_PVS.TABLE_RB[idx]]
+        return idx
 
-    def get_ffwd_table(self):
-        """Return FF table dict."""
-        ff_table = _np.array(self.get_current_table())
+    def get_ffwd_table(self, tableidx=None):
+        """Table of gifven index or of active polarization state."""
+        idx = tableidx or self.get_current_table_index()
+        params = self.PARAM_PVS
+        propty = params.TABLE_RB if idx is None else params.TABLE_RB[idx]
+        return self[propty]
+
+    def set_ffwd_table(self, value, tableidx=None):
+        """Set table for given index or of activate polarization state."""
+        idx = tableidx or self.get_current_table_index()
+        params = self.PARAM_PVS
+        propty = params.TABLE_SP if idx is None else params.TABLE_SP[idx]
+        self[propty] = value
+
+    def get_ffwd_table_dict(self, tableidx=None):
+        """Table dict of given index or of active polarization state."""
+        ff_table = _np.array(self.get_ffwd_table(tableidx))
         clabels = self.get_ffwd_table_corr_labels()
-        ff_table = ff_table.reshape(len(clabels), -1)
+        ff_table = ff_table.reshape(4, -1)
         ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
         return ff_table
+
+    def set_ffwd_table_dict(self, ffwd_table, tableidx=None):
+        """Set table dict for given index or for activate state."""
+        clabels = self.get_ffwd_table_corr_labels()
+        newtable = _np.empty(0, dtype=_np.float64)
+        for i in range(4):
+            values = ffwd_table[clabels[i]] if i < len(
+                clabels) else _np.zeros(len(ffwd_table[clabels[0]]))
+            newtable = _np.r_[newtable, values]
+        self.set_ffwd_table(newtable, tableidx)
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
@@ -832,23 +856,30 @@ class IDFF(_DeviceSet):
         if use_ioc_tables:
             if kparameter_value is None:
                 kparameter_value = self.kparameter_mon
+            if pparameter_value is None:
+                pparameter_value = self.pparameter_mon
 
-            ff_tables = self.ctrldev.get_ffwd_table()
+            ff_tables = self.ctrldev.get_ffwd_table_dict()
             setpoints = dict()
 
             idparams = _IDSearch.conv_idname_2_parameters(self.iddevname)
             idff = _IDSearch.conv_idname_2_idff(self.iddevname)
+
+            parameter_value = pparameter_value if self.polarization_mon in (
+                'no-field', 'linear-ene-cte', 'transition'
+            ) else kparameter_value
+
             for corrlabel, ff_table in ff_tables.items():
-                # IOC tables gap zero gap offset!
-                klims = 0 * idparams.KPARAM_MIN, idparams.KPARAM_MAX
-                kparam = _np.linspace(*klims, len(ff_table))
+                # IOC tables parameter limits!
+                lims = idparams.PARAM_TABLE_MIN, idparams.PARAM_TABLE_MAX
+                param = _np.linspace(*lims, len(ff_table))
                 # linear interpolation
-                curr = _np.interp(kparameter_value, kparam, ff_table)
+                curr = _np.interp(parameter_value, param, ff_table)
                 corr_pvname = idff[corrlabel]
                 setpoints[corr_pvname] = curr
             sts = (
                 setpoints, self.polarization_mon,
-                self.pparameter_mon, kparameter_value
+                pparameter_value, kparameter_value
             )
             return sts
 
