@@ -268,7 +268,7 @@ class CAXMirror(MirrorBase):
         # Obs.: Notice the pattern PVS.??_??[_MON].
 
         # PHOTOCOLLECTOR
-        # self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
+        self.PVS.PHOTOCOLLECTOR = "A:RIO01:9215A:ai0"
         self.PVS.PH_CL      = "A:RIO01:9215A:ai0"
 
         # TEMPERATURES
