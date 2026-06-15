@@ -1940,7 +1940,10 @@ class IVU(IDFullMovCtrl):
     PARAM_PVS.KPARAM_MON = 'KParam-Mon'
     PARAM_PVS.KPARAM_VELO_SP = 'KParamVelo-SP'
     PARAM_PVS.KPARAM_VELO_RB = 'KParamVelo-RB'
+    PARAM_PVS.KPARAM_MAXVELO_SP = 'KParamMaxVelo-SP'
+    PARAM_PVS.KPARAM_MAXVELO_RB = 'KParamMaxVelo-RB'
     PARAM_PVS.KPARAM_CHANGE_CMD = 'KParamChange-Cmd'
+
 
     # --- OFFSET --
     PARAM_PVS.CENTER_OFFSET_SP = 'CenterOffset-SP'
