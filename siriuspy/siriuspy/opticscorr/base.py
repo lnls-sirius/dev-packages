@@ -11,20 +11,26 @@ from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _PVName
 from ..search import LLTimeSearch as _LLTimeSearch
-from ..clientconfigdb import ConfigDBClient as _ConfigDBClient, \
-    ConfigDBException as _ConfigDBException
+from ..clientconfigdb import (
+    ConfigDBClient as _ConfigDBClient,
+    ConfigDBException as _ConfigDBException,
+)
 from ..pwrsupply.csdev import Const as _PSConst
-from ..timesys.csdev import Const as _TIConst, \
-    get_hl_trigger_database as _get_trig_db
+from ..timesys.csdev import (
+    Const as _TIConst,
+    get_hl_trigger_database as _get_trig_db,
+)
 
 from .opticscorr import OpticsCorr as _OpticsCorr
-from .csdev import Const as _Const, \
-    get_chrom_database as _get_chrom_database, \
-    get_tune_database as _get_tune_database
+from .csdev import (
+    Const as _Const,
+    get_chrom_database as _get_chrom_database,
+    get_tune_database as _get_tune_database,
+)
 from .utils import HandleConfigNameFile as _HandleConfigNameFile
 
 # Constants
-ALLSET = 0x1f
+ALLSET = 0x1F
 ALLCLR_SYNCON = 0x00
 ALLCLR_SYNCOFF = 0x10
 
@@ -61,7 +67,7 @@ class BaseApp(_Callback):
                 self._trigger_name = _PVName('SI-Glob:TI-Mags-Sexts')
                 self._event_name = 'ChromSI'
 
-        self._status = ALLSET if self._acc == 'SI' else 0x0f
+        self._status = ALLSET if self._acc == 'SI' else 0x0F
 
         self._optprm_est = [0.0, 0.0]
 
@@ -80,7 +86,7 @@ class BaseApp(_Callback):
             self._sync_corr = _Const.SyncCorr.Off
 
             self._config_ti_cmd_count = 0
-            self._timing_check_config = 9*[0]
+            self._timing_check_config = 9 * [0]
 
             self._measuring_config = False
             self._meas_config_status = _Const.MeasMon.Idle
@@ -111,7 +117,11 @@ class BaseApp(_Callback):
         # Initialize correction parameters from local file and configdb
         self.cn_handler = _HandleConfigNameFile(self._acc, self._optics_param)
         self.cdb_client = _ConfigDBClient(
-            config_type=self._acc.lower()+'_'+self._optics_param+'corr_params')
+            config_type=self._acc.lower()
+            + '_'
+            + self._optics_param
+            + 'corr_params'
+        )
         [done, corrparams] = self._get_corrparams()
         if done:
             self._config_name = corrparams[0]
@@ -124,10 +134,12 @@ class BaseApp(_Callback):
                 nominal_intstrengths=self._psfam_nom_intstr,
                 nominal_opticsparam=self._nominal_opticsparam,
                 magnetfams_focusing=psfam_focusing,
-                magnetfams_defocusing=psfam_defocusing)
+                magnetfams_defocusing=psfam_defocusing,
+            )
         else:
             raise Exception(
-                "Could not read correction parameters from configdb.")
+                'Could not read correction parameters from configdb.'
+            )
 
         # Connect to Quadrupoles Families
         self._psfam_intstr_sp_pvs = dict()
@@ -138,41 +150,49 @@ class BaseApp(_Callback):
         self._psfam_opmode_sts_pvs = dict()
         self._psfam_ctrlmode_mon_pvs = dict()
         for fam in self._psfams:
-            pss = _PVName(self._acc+'-Fam:PS-'+fam).substitute(
-                prefix=_vaca_prefix)
+            pss = _PVName(self._acc + '-Fam:PS-' + fam).substitute(
+                prefix=_vaca_prefix
+            )
             intstr = 'KL' if self._optics_param == 'tune' else 'SL'
             self._psfam_intstr_sp_pvs[fam] = _PV(
                 pss.substitute(propty_name=intstr, propty_suffix='SP'),
                 connection_callback=self._callback_conn_psfam,
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
 
             self._psfam_pwrstate_sel_pvs[fam] = _PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sel'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._psfam_pwrstate_sts_pvs[fam] = _PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_psfam_pwrstate_sts,
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
 
             self._psfam_opmode_sel_pvs[fam] = _PV(
                 pss.substitute(propty_name='OpMode', propty_suffix='Sel'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._psfam_opmode_sts_pvs[fam] = _PV(
                 pss.substitute(propty_name='OpMode', propty_suffix='Sts'),
                 callback=self._callback_psfam_opmode_sts,
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
 
             self._psfam_ctrlmode_mon_pvs[fam] = _PV(
                 pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
                 callback=self._callback_psfam_ctrlmode_mon,
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
 
         if self._acc == 'SI':
             # Connect to Timing
             evg = _LLTimeSearch.get_evg_name()
             trig_name = self._trigger_name.substitute(prefix=_vaca_prefix)
             evt_name = _PVName(evg).substitute(
-                prefix=_vaca_prefix, propty_name=self._event_name)
+                prefix=_vaca_prefix, propty_name=self._event_name
+            )
             try:
                 trig_db = _get_trig_db(trig_name)
                 self._evt_src_idx = trig_db['Src-Sel']['enums'].index(evt_name)
@@ -181,87 +201,120 @@ class BaseApp(_Callback):
 
             self._trigger_state_sel = _PV(
                 trig_name.substitute(propty='State-Sel'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._trigger_state_sts = _PV(
                 trig_name.substitute(propty='State-Sts'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._trigger_polarity_sel = _PV(
                 trig_name.substitute(propty='Polarity-Sel'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._trigger_polarity_sts = _PV(
                 trig_name.substitute(propty='Polarity-Sts'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._trigger_src_sel = _PV(
-                trig_name.substitute(propty='Src-Sel'),
-                connection_timeout=0.05)
+                trig_name.substitute(propty='Src-Sel'), connection_timeout=0.05
+            )
             self._trigger_src_sts = _PV(
                 trig_name.substitute(propty='Src-Sts'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._trigger_nrpulses_sp = _PV(
                 trig_name.substitute(propty='NrPulses-SP'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._trigger_nrpulses_rb = _PV(
                 trig_name.substitute(propty='NrPulses-RB'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._trigger_duration_sp = _PV(
                 trig_name.substitute(propty='Duration-SP'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._trigger_duration_rb = _PV(
                 trig_name.substitute(propty='Duration-RB'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._trigger_delay_sp = _PV(
                 trig_name.substitute(propty='Delay-SP'),
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
             self._trigger_delay_rb = _PV(
                 trig_name.substitute(propty='Delay-RB'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._event_mode_sel = _PV(
-                evt_name.substitute(propty=evt_name.propty+'Mode-Sel'),
-                connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'Mode-Sel'),
+                connection_timeout=0.05,
+            )
             self._event_mode_sts = _PV(
-                evt_name.substitute(propty=evt_name.propty+'Mode-Sts'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'Mode-Sts'),
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._event_delaytype_sel = _PV(
-                evt_name.substitute(propty=evt_name.propty+'DelayType-Sel'),
-                connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'DelayType-Sel'),
+                connection_timeout=0.05,
+            )
             self._event_delaytype_sts = _PV(
-                evt_name.substitute(propty=evt_name.propty+'DelayType-Sts'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'DelayType-Sts'),
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._event_delay_sp = _PV(
-                evt_name.substitute(propty=evt_name.propty+'Delay-SP'),
-                connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'Delay-SP'),
+                connection_timeout=0.05,
+            )
             self._event_delay_rb = _PV(
-                evt_name.substitute(propty=evt_name.propty+'Delay-RB'),
-                callback=self._callback_timing_state, connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'Delay-RB'),
+                callback=self._callback_timing_state,
+                connection_timeout=0.05,
+            )
 
             self._event_exttrig_cmd = _PV(
-                evt_name.substitute(propty=evt_name.propty+'ExtTrig-Cmd'),
-                connection_timeout=0.05)
+                evt_name.substitute(propty=evt_name.propty + 'ExtTrig-Cmd'),
+                connection_timeout=0.05,
+            )
 
             # Connect to CurrInfo
             self._storedebeam_pv = _PV(
                 _PVName('SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
-                    prefix=_vaca_prefix),
+                    prefix=_vaca_prefix
+                ),
                 callback=self._callback_get_storedebeam,
-                connection_timeout=0.05)
+                connection_timeout=0.05,
+            )
 
             # Connect to Tunes
             self._tune_x_pv = _PV(
                 _PVName('SI-Glob:DI-Tune-H:TuneFrac-Mon').substitute(
-                    prefix=_vaca_prefix),
-                connection_timeout=0.05)
+                    prefix=_vaca_prefix
+                ),
+                connection_timeout=0.05,
+            )
             self._tune_y_pv = _PV(
                 _PVName('SI-Glob:DI-Tune-V:TuneFrac-Mon').substitute(
-                    prefix=_vaca_prefix),
-                connection_timeout=0.05)
+                    prefix=_vaca_prefix
+                ),
+                connection_timeout=0.05,
+            )
 
         # Create map of pv -> write function
         self.map_pv2write = {
@@ -288,7 +341,8 @@ class BaseApp(_Callback):
         if self._optics_param == 'tune':
             for fam in self._psfams:
                 self.run_callbacks(
-                    'RefKL'+fam+'-Mon', self._psfam_refkl[fam])
+                    'RefKL' + fam + '-Mon', self._psfam_refkl[fam]
+                )
             self.run_callbacks('DeltaTuneX-Mon', self._optprm_est[0])
             self.run_callbacks('DeltaTuneY-Mon', self._optprm_est[1])
         else:
@@ -387,21 +441,26 @@ class BaseApp(_Callback):
             if self._config_timing():
                 self._config_ti_cmd_count += 1
                 self.run_callbacks(
-                    'ConfigTiming-Cmd', self._config_ti_cmd_count)
+                    'ConfigTiming-Cmd', self._config_ti_cmd_count
+                )
 
         val = 1
         if (self._status & 0x1) == 0:
             for fam in self._psfams:
-                self._psfam_check_opmode_sts[fam] = \
-                    self._psfam_opmode_sts_pvs[fam].value
+                self._psfam_check_opmode_sts[fam] = self._psfam_opmode_sts_pvs[
+                    fam
+                ].value
 
-            opmode = _PSConst.OpMode.SlowRefSync if value \
+            opmode = (
+                _PSConst.OpMode.SlowRefSync
+                if value
                 else _PSConst.OpMode.SlowRef
-            val = any(op != opmode for op in
-                      self._psfam_check_opmode_sts.values())
+            )
+            val = any(
+                op != opmode for op in self._psfam_check_opmode_sts.values()
+            )
 
-        self._status = _util.update_bit(
-            v=self._status, bit_pos=2, bit_val=val)
+        self._status = _util.update_bit(v=self._status, bit_pos=2, bit_val=val)
 
         self.run_callbacks('Status-Mon', self._status)
         self.run_callbacks('SyncCorr-Sts', self._sync_corr)
@@ -459,7 +518,8 @@ class BaseApp(_Callback):
         elif self._save_corrparams(self._meas_config_name):
             self._meas_config_save_cmd_count += 1
             self.run_callbacks(
-                'MeasConfigSave-Cmd', self._meas_config_save_cmd_count)
+                'MeasConfigSave-Cmd', self._meas_config_save_cmd_count
+            )
 
             self._config_name = _dcopy(self._meas_config_name)
             self.cn_handler.set_config_name(self._config_name)
@@ -536,30 +596,37 @@ class BaseApp(_Callback):
 
     def _config_ps(self):
         """Configurate power supplies."""
-        opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
+        opmode = (
+            _PSConst.OpMode.SlowRefSync
+            if self._sync_corr
             else _PSConst.OpMode.SlowRef
+        )
         for fam in self._psfams:
             if self._psfam_pwrstate_sel_pvs[fam].connected:
                 self._psfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
                 self._psfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self._update_log('ERR:'+fam+' is disconnected.')
+                self._update_log('ERR:' + fam + ' is disconnected.')
                 return False
         self._update_log('Configuration sent to power supplies.')
         return True
 
     def _config_timing(self):
         """Configurate Timing."""
-        conn = not any(pv.connected is False for pv in [
-            self._trigger_state_sel,
-            self._trigger_polarity_sel,
-            self._trigger_src_sel,
-            self._trigger_nrpulses_sp,
-            self._trigger_duration_sp,
-            self._trigger_delay_sp,
-            self._event_mode_sel,
-            self._event_delaytype_sel,
-            self._event_delay_sp])
+        conn = not any(
+            pv.connected is False
+            for pv in [
+                self._trigger_state_sel,
+                self._trigger_polarity_sel,
+                self._trigger_src_sel,
+                self._trigger_nrpulses_sp,
+                self._trigger_duration_sp,
+                self._trigger_delay_sp,
+                self._event_mode_sel,
+                self._event_delaytype_sel,
+                self._event_delay_sp,
+            ]
+        )
         if conn:
             self._trigger_state_sel.put(_TIConst.DsblEnbl.Enbl)
             self._trigger_polarity_sel.put(_TIConst.TrigPol.Normal)
@@ -640,7 +707,8 @@ class BaseApp(_Callback):
         """Reset configuration measurement."""
         if self._measuring_config:
             self._update_log(
-                'WARN: Status not reset, measurement in progress!')
+                'WARN: Status not reset, measurement in progress!'
+            )
             return False
         self._update_log('Reseting measurement status!')
         self._meas_config_status = _Const.MeasMon.Idle
@@ -654,7 +722,8 @@ class BaseApp(_Callback):
 
         respm = _np.zeros((2, len(self._psfams)), dtype=float)
         fams_intstr0 = {
-            fam: self._psfam_intstr_rb[fam] for fam in self._psfams}
+            fam: self._psfam_intstr_rb[fam] for fam in self._psfams
+        }
         fams_intstr = _dcopy(fams_intstr0)
 
         aborted = False
@@ -676,8 +745,9 @@ class BaseApp(_Callback):
             elif self._status != 0:
                 log_msg = 'ERR: Stoping measurement, verify power supplies!'
                 aborted = True
-            elif not self._tune_x_pv.connected or \
-                    not self._tune_y_pv.connected:
+            elif (
+                not self._tune_x_pv.connected or not self._tune_y_pv.connected
+            ):
                 log_msg = 'ERR: Stoping measurement, tune PVs not connected!'
                 aborted = True
 
@@ -685,41 +755,43 @@ class BaseApp(_Callback):
                 break
 
             fam_idx = self._psfams.index(fam)
-            self._update_log('Step: {0:d}/{1:d} --> {2:s}'.format(
-                fam_idx+1, len(self._psfams), fam))
+            self._update_log(
+                'Step: {0:d}/{1:d} --> {2:s}'.format(
+                    fam_idx + 1, len(self._psfams), fam
+                )
+            )
 
             delta = self._get_delta_intstrength(fam)
 
-            fams_intstr[fam] = fams_intstr0[fam] + delta/2
+            fams_intstr[fam] = fams_intstr0[fam] + delta / 2
             self._apply_intstrength(fams_intstr)
             _time.sleep(self._meas_config_wait)
             sts, data = self._get_optics_param()
             if sts:
                 param_pos_x, param_pos_y = data
             else:
-                log_msg = 'ERR: Could not measure '+self._optics_param+'!'
+                log_msg = 'ERR: Could not measure ' + self._optics_param + '!'
                 aborted = True
                 break
 
-            fams_intstr[fam] = fams_intstr0[fam] - delta/2
+            fams_intstr[fam] = fams_intstr0[fam] - delta / 2
             self._apply_intstrength(fams_intstr)
             _time.sleep(self._meas_config_wait)
             sts, data = self._get_optics_param()
             if sts:
                 param_neg_x, param_neg_y = data
             else:
-                log_msg = 'ERR: Could not measure '+self._optics_param+'!'
+                log_msg = 'ERR: Could not measure ' + self._optics_param + '!'
                 aborted = True
                 break
 
-            respm[0, fam_idx] = (param_pos_x-param_neg_x)/delta
-            respm[1, fam_idx] = (param_pos_y-param_neg_y)/delta
+            respm[0, fam_idx] = (param_pos_x - param_neg_x) / delta
+            respm[1, fam_idx] = (param_pos_y - param_neg_y) / delta
 
             fams_intstr[fam] = fams_intstr0[fam]
             self._apply_intstrength(fams_intstr)
 
-        self._update_log(
-            'Ensure power supplies return to initial values...')
+        self._update_log('Ensure power supplies return to initial values...')
         self._apply_intstrength(fams_intstr0)
 
         if aborted:
@@ -767,82 +839,98 @@ class BaseApp(_Callback):
     def _callback_conn_psfam(self, pvname, conn, **kws):
         """Connection callback."""
         if not conn:
-            self._update_log('WARN:'+pvname+' disconnected.')
+            self._update_log('WARN:' + pvname + ' disconnected.')
 
         fam = _PVName(pvname).dev
-        self._psfam_check_connection[fam] = (1 if conn else 0)
+        self._psfam_check_connection[fam] = 1 if conn else 0
 
         # Change the first bit of correction status
         self._status = _util.update_bit(
-            v=self._status, bit_pos=0,
-            bit_val=any(v == 0 for v in self._psfam_check_connection.values()))
+            v=self._status,
+            bit_pos=0,
+            bit_val=any(v == 0 for v in self._psfam_check_connection.values()),
+        )
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_psfam_pwrstate_sts(self, pvname, value, **kws):
         """Callback."""
         if value != _PSConst.PwrStateSts.On:
-            self._update_log('WARN:'+pvname+' is not On.')
+            self._update_log('WARN:' + pvname + ' is not On.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_pwrstate_sts[fam] = value
 
         # Change the second bit of correction status
         self._status = _util.update_bit(
-            v=self._status, bit_pos=1,
-            bit_val=any(v != _PSConst.PwrStateSts.On
-                        for v in self._psfam_check_pwrstate_sts.values()))
+            v=self._status,
+            bit_pos=1,
+            bit_val=any(
+                v != _PSConst.PwrStateSts.On
+                for v in self._psfam_check_pwrstate_sts.values()
+            ),
+        )
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_psfam_opmode_sts(self, pvname, value, **kws):
         """Callback."""
-        self._update_log('WARN:'+pvname+' changed.')
+        self._update_log('WARN:' + pvname + ' changed.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_opmode_sts[fam] = value
 
         # Change the third bit of correction status
-        opmode = _PSConst.States.SlowRefSync if self._sync_corr \
+        opmode = (
+            _PSConst.States.SlowRefSync
+            if self._sync_corr
             else _PSConst.States.SlowRef
+        )
         self._status = _util.update_bit(
-            v=self._status, bit_pos=2,
-            bit_val=any(v != opmode for v in
-                        self._psfam_check_opmode_sts.values()))
+            v=self._status,
+            bit_pos=2,
+            bit_val=any(
+                v != opmode for v in self._psfam_check_opmode_sts.values()
+            ),
+        )
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_psfam_ctrlmode_mon(self, pvname, value, **kws):
         """Callback."""
         if value != _PSConst.Interface.Remote:
-            self._update_log('WARN:'+pvname+' is not Remote.')
+            self._update_log('WARN:' + pvname + ' is not Remote.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_ctrlmode_mon[fam] = value
 
         # Change the fourth bit of correction status
         self._status = _util.update_bit(
-            v=self._status, bit_pos=3,
-            bit_val=any(v != _PSConst.Interface.Remote
-                        for v in self._psfam_check_ctrlmode_mon.values()))
+            v=self._status,
+            bit_pos=3,
+            bit_val=any(
+                v != _PSConst.Interface.Remote
+                for v in self._psfam_check_ctrlmode_mon.values()
+            ),
+        )
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_timing_state(self, pvname, value, **kws):
         """Callback."""
-        if self._trigger_name+':State' in pvname:
-            self._timing_check_config[0] = (value == _TIConst.DsblEnbl.Enbl)
-        elif self._trigger_name+':Polarity' in pvname:
-            self._timing_check_config[1] = (value == _TIConst.TrigPol.Normal)
-        elif self._trigger_name+':Src' in pvname:
-            self._timing_check_config[2] = (value == self._evt_src_idx)
-        elif self._trigger_name+':NrPulses' in pvname:  # 1 pulse
-            self._timing_check_config[3] = (value == 1)
-        elif self._trigger_name+':Duration' in pvname:  # 150us
+        if self._trigger_name + ':State' in pvname:
+            self._timing_check_config[0] = value == _TIConst.DsblEnbl.Enbl
+        elif self._trigger_name + ':Polarity' in pvname:
+            self._timing_check_config[1] = value == _TIConst.TrigPol.Normal
+        elif self._trigger_name + ':Src' in pvname:
+            self._timing_check_config[2] = value == self._evt_src_idx
+        elif self._trigger_name + ':NrPulses' in pvname:  # 1 pulse
+            self._timing_check_config[3] = value == 1
+        elif self._trigger_name + ':Duration' in pvname:  # 150us
             self._timing_check_config[4] = _np.isclose(value, 150, atol=0.1)
-        elif self._trigger_name+':Delay' in pvname:  # 0us
+        elif self._trigger_name + ':Delay' in pvname:  # 0us
             self._timing_check_config[5] = _np.isclose(value, 0, atol=0.1)
-        elif self._event_name+'Mode' in pvname:
+        elif self._event_name + 'Mode' in pvname:
             self._timing_check_config[6] = value == _TIConst.EvtModes.External
-        elif self._event_name+'DelayType' in pvname:
+        elif self._event_name + 'DelayType' in pvname:
             self._timing_check_config[7] = value == _TIConst.EvtDlyTyp.Incr
-        elif self._event_name+'Delay' in pvname:  # 0us
+        elif self._event_name + 'Delay' in pvname:  # 0us
             self._timing_check_config[8] = _np.isclose(value, 0, atol=0.1)
 
         # Change the fifth bit of correction status
@@ -851,7 +939,8 @@ class BaseApp(_Callback):
         else:
             bit_val = any(idx == 0 for idx in self._timing_check_config)
         self._status = _util.update_bit(
-            v=self._status, bit_pos=4, bit_val=bit_val)
+            v=self._status, bit_pos=4, bit_val=bit_val
+        )
         self.run_callbacks('Status-Mon', self._status)
 
     def _callback_get_storedebeam(self, value, **kws):
