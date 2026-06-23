@@ -335,8 +335,7 @@ class BaseApp(_Callback):
                 self._opticscorr.nominal_opticsparam = corrparams[3]
                 self._calc_intstrength()
             except Exception:
-                self.run_callbacks(
-                    'Log-Mon', 'Could not update correction parameters.')
+                self._update_log('Could not update correction parameters.')
                 return False
             else:
                 self._config_name = corrparams[0]
@@ -347,9 +346,9 @@ class BaseApp(_Callback):
                 self._psfam_nom_intstr = corrparams[2]
                 self._nominal_opticsparam = corrparams[3]
                 self.update_corrparams_pvs()
-                self.run_callbacks('Log-Mon', 'Updated correction parameters.')
+                self._update_log('Updated correction parameters.')
                 return True
-        self.run_callbacks('Log-Mon', 'ERR: Config not found in configdb.')
+        self._update_log('ERR: Config not found in configdb.')
         return False
 
     def set_corr_meth(self, value):
@@ -373,8 +372,7 @@ class BaseApp(_Callback):
     def set_sync_corr(self, value):
         """Set SyncCorr."""
         if self._meas_config_status == _Const.MeasMon.Measuring:
-            self.run_callbacks(
-                'Log-Mon', 'ERR: Configuration measurement in progress.')
+            self._update_log('ERR: Configuration measurement in progress.')
             return False
         if value == self._sync_corr:
             return False
@@ -448,7 +446,7 @@ class BaseApp(_Callback):
         if value == self._meas_config_name:
             return False
         if not self.cdb_client.check_valid_configname(value):
-            self.run_callbacks('Log-Mon', 'ERR: Config name not valid!')
+            self._update_log('ERR: Config name not valid!')
             return False
         self._meas_config_name = value
         self.run_callbacks('MeasConfigName-RB', value)
@@ -457,8 +455,7 @@ class BaseApp(_Callback):
     def cmd_meas_config_save(self, value):
         """MeasConfigSave command."""
         if self._meas_config_2_save is None:
-            self.run_callbacks(
-                'Log-Mon', 'ERR: No new data to save in configdb!')
+            self._update_log('ERR: No new data to save in configdb!')
         elif self._save_corrparams(self._meas_config_name):
             self._meas_config_save_cmd_count += 1
             self.run_callbacks(
@@ -472,7 +469,7 @@ class BaseApp(_Callback):
             self.run_callbacks('MeasConfigName-SP', self._meas_config_name)
             self.run_callbacks('MeasConfigName-RB', self._meas_config_name)
 
-            self.run_callbacks('Log-Mon', 'Updated config. name.')
+            self._update_log('Updated config. name.')
         return False
 
     # ---------- auxiliar methods ----------
@@ -509,7 +506,7 @@ class BaseApp(_Callback):
         else:
             self._meas_config_2_save = None
             log_msg = "Saved config. '{}' in configdb!".format(config_name)
-        self.run_callbacks('Log-Mon', log_msg)
+        self._update_log(log_msg)
         return 'ERR' not in log_msg
 
     def _handle_corrparams_2_save(self):
@@ -546,9 +543,9 @@ class BaseApp(_Callback):
                 self._psfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
                 self._psfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self.run_callbacks('Log-Mon', 'ERR:'+fam+' is disconnected.')
+                self._update_log('ERR:'+fam+' is disconnected.')
                 return False
-        self.run_callbacks('Log-Mon', 'Configuration sent to power supplies.')
+        self._update_log('Configuration sent to power supplies.')
         return True
 
     def _config_timing(self):
@@ -574,10 +571,10 @@ class BaseApp(_Callback):
             self._event_delaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
             self._event_delay_sp.put(0)
 
-            self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
+            self._update_log('Configuration sent to TI.')
             return True
         else:
-            self.run_callbacks('Log-Mon', 'ERR:Some TI PV is disconnected.')
+            self._update_log('ERR:Some TI PV is disconnected.')
             return False
 
     def _get_tunes(self):
@@ -621,11 +618,10 @@ class BaseApp(_Callback):
             log_msg = 'ERR: Cannot measure, tune PVs not connected!'
             cont = False
         if not cont:
-            self.run_callbacks('Log-Mon', log_msg)
+            self._update_log(log_msg)
             return False
 
-        self.run_callbacks(
-            'Log-Mon', 'Starting correction config measurement!')
+        self._update_log('Starting correction config measurement!')
         self._measuring_config = True
         thread = _Thread(target=self._meas_config_thread, daemon=True)
         thread.start()
@@ -634,19 +630,19 @@ class BaseApp(_Callback):
     def _stop_meas_config(self):
         """Stop configuration measurement."""
         if not self._measuring_config:
-            self.run_callbacks('Log-Mon', 'ERR: No measurement occuring!')
+            self._update_log('ERR: No measurement occuring!')
             return False
-        self.run_callbacks('Log-Mon', 'Aborting config measurement!')
+        self._update_log('Aborting config measurement!')
         self._measuring_config = False
         return True
 
     def _reset_meas_config(self):
         """Reset configuration measurement."""
         if self._measuring_config:
-            self.run_callbacks(
-                'Log-Mon', 'WARN: Status not reset, measurement in progress!')
+            self._update_log(
+                'WARN: Status not reset, measurement in progress!')
             return False
-        self.run_callbacks('Log-Mon', 'Reseting measurement status!')
+        self._update_log('Reseting measurement status!')
         self._meas_config_status = _Const.MeasMon.Idle
         self.run_callbacks('MeasConfigStatus-Mon', self._meas_config_status)
         return True
@@ -689,9 +685,8 @@ class BaseApp(_Callback):
                 break
 
             fam_idx = self._psfams.index(fam)
-            self.run_callbacks(
-                'Log-Mon', 'Step: {0:d}/{1:d} --> {2:s}'.format(
-                    fam_idx+1, len(self._psfams), fam))
+            self._update_log('Step: {0:d}/{1:d} --> {2:s}'.format(
+                fam_idx+1, len(self._psfams), fam))
 
             delta = self._get_delta_intstrength(fam)
 
@@ -723,8 +718,8 @@ class BaseApp(_Callback):
             fams_intstr[fam] = fams_intstr0[fam]
             self._apply_intstrength(fams_intstr)
 
-        self.run_callbacks(
-            'Log-Mon', 'Ensure power supplies return to initial values...')
+        self._update_log(
+            'Ensure power supplies return to initial values...')
         self._apply_intstrength(fams_intstr0)
 
         if aborted:
@@ -735,7 +730,7 @@ class BaseApp(_Callback):
 
         self.run_callbacks('MeasConfigStatus-Mon', self._meas_config_status)
         self._measuring_config = False
-        self.run_callbacks('Log-Mon', log_msg)
+        self._update_log(log_msg)
 
         # update corrparams
         self._nominal_matrix = respm.flatten().tolist()
@@ -747,11 +742,11 @@ class BaseApp(_Callback):
             self._opticscorr.nominal_intstrengths = self._psfam_nom_intstr
             self._opticscorr.nominal_opticsparam = self._nominal_opticsparam
             self._calc_intstrength()
-            self.run_callbacks('Log-Mon', 'New correction parameters in use.')
+            self._update_log('New correction parameters in use.')
         except Exception:
             self._meas_config_2_save = self._handle_corrparams_2_save()
-            self.run_callbacks('Log-Mon', 'ERR: Could not use new parameters.')
-            self.run_callbacks('Log-Mon', 'ERR: Will not save new parameters.')
+            self._update_log('ERR: Could not use new parameters.')
+            self._update_log('ERR: Will not save new parameters.')
         else:
             if self._save_corrparams(self._meas_config_name):
                 # update configname
@@ -763,12 +758,16 @@ class BaseApp(_Callback):
                 self.run_callbacks('MeasConfigName-SP', self._meas_config_name)
                 self.run_callbacks('MeasConfigName-RB', self._meas_config_name)
 
+    def _update_log(self, value):
+        """Update log."""
+        self.run_callbacks('Log-Mon', value)
+
     # ---------- callbacks ----------
 
     def _callback_conn_psfam(self, pvname, conn, **kws):
         """Connection callback."""
         if not conn:
-            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' disconnected.')
+            self._update_log('WARN:'+pvname+' disconnected.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_connection[fam] = (1 if conn else 0)
@@ -782,7 +781,7 @@ class BaseApp(_Callback):
     def _callback_psfam_pwrstate_sts(self, pvname, value, **kws):
         """Callback."""
         if value != _PSConst.PwrStateSts.On:
-            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not On.')
+            self._update_log('WARN:'+pvname+' is not On.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_pwrstate_sts[fam] = value
@@ -796,7 +795,7 @@ class BaseApp(_Callback):
 
     def _callback_psfam_opmode_sts(self, pvname, value, **kws):
         """Callback."""
-        self.run_callbacks('Log-Mon', 'WARN:'+pvname+' changed.')
+        self._update_log('WARN:'+pvname+' changed.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_opmode_sts[fam] = value
@@ -813,7 +812,7 @@ class BaseApp(_Callback):
     def _callback_psfam_ctrlmode_mon(self, pvname, value, **kws):
         """Callback."""
         if value != _PSConst.Interface.Remote:
-            self.run_callbacks('Log-Mon', 'WARN:'+pvname+' is not Remote.')
+            self._update_log('WARN:'+pvname+' is not Remote.')
 
         fam = _PVName(pvname).dev
         self._psfam_check_ctrlmode_mon[fam] = value
@@ -858,5 +857,5 @@ class BaseApp(_Callback):
     def _callback_get_storedebeam(self, value, **kws):
         """Callback."""
         if value == 0:
-            self.run_callbacks('Log-Mon', 'WARN: There is no stored beam!')
+            self._update_log('WARN: There is no stored beam!')
         self._is_storedebeam = value
