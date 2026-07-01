@@ -242,6 +242,11 @@ class IDSearch:
         (POL_UNDEF_STR, None),
     ]
 
+    # define IDFF correctors labels aand ordering.
+    # NOTE: the ordering between corr types in IDFF_CorrTypes and of
+    # correctors of a given corrector type in IDFF_CorrLabels has to be
+    # compatible with the ordering of correctors within rack cabinets.
+
     IDFF_CorrTypes = _get_namedtuple(
         'IDFF_CorrTypes', ('ch', 'cv', 'qs', 'lc', 'qn', 'cc')
     )
@@ -252,15 +257,21 @@ class IDSearch:
     _type_qn = IDFF_CorrTypes._fields[4]
     _type_cc = IDFF_CorrTypes._fields[5]
 
-    # define IDFF correctors labeling (and ordering)
-    # NOTE: the ordering within each category here follows the ordering of the
-    # correctors in the rack cabinets.
-    IDFF_CH_LABELS = ('ch_1', 'ch_2')
-    IDFF_CV_LABELS = ('cv_1', 'cv_2')
-    IDFF_QS_LABELS = ('qs_1', 'qs_2')
-    IDFF_LC_LABELS = ('lch_1', 'lcv_1', 'lcv_2')
-    IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
-    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2')
+    IDFF_CorrLabels = {
+        _type_ch: ('ch_1', 'ch_2'),
+        _type_cv: ('cv_1', 'cv_2'),
+        _type_qs: ('qs_1', 'qs_2'),
+        _type_lc: ('lch_1', 'lcv_1', 'lcv_2'),
+        _type_qn: ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2'),
+        _type_cc: ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2'),
+    }
+
+    IDFF_CH_LABELS = IDFF_CorrLabels[_type_ch]
+    IDFF_CV_LABELS = IDFF_CorrLabels[_type_cv]
+    IDFF_QS_LABELS = IDFF_CorrLabels[_type_qs]
+    IDFF_LC_LABELS = IDFF_CorrLabels[_type_lc]
+    IDFF_QN_LABELS = IDFF_CorrLabels[_type_qn]
+    IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
 
     _idname_2_idff = {
         'SI-06SB:ID-VPU29':  {
@@ -371,6 +382,15 @@ class IDSearch:
                 IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
             ],  # [A]
         },
+        'SI-17SA:ID-PAPU50': {
+            'polarizations': ('horizontal',),
+            'pparameter': None,
+            'kparameter': 'SI-17SA:ID-PAPU50:Phase-Mon',
+            IDFF_CH_LABELS[0]: 'SI-17SA:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-17SA:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
+        },
         'SI-17SA:ID-APU22': {
             'polarizations': ('horizontal', ),
             'pparameter': None,
@@ -467,6 +487,63 @@ class IDSearch:
             return list()
         else:
             return idff['offsets']
+
+    @staticmethod
+    def conv_idname_2_idffdevs(idname):
+        """Return IDFF corrector devices for a given ID name.
+
+        The return value is a dictionary of the form:
+        {
+            corrtype1: {
+                corrlabel1: corrdev1,
+                corrlabel2: corrdev2,
+                ...
+            },
+            corrtype2: {
+                corrlabel3: corrdev3,
+                ...
+            },
+            ...
+        }
+        where corrtype is
+            one of the corrector types defined in IDFF_CorrTypes
+        and corrlabel is
+            one of the corrector labels defined in IDFF_CorrLabels.
+        and corrdev is
+            the device name of the corrector power supply.
+        """
+        idff = IDSearch.conv_idname_2_idff(idname)
+        idffdevs = dict()
+        if idff is not None and 'idffdevs' in idff:
+            for corrtype, idffdevname in idff['idffdevs'].items():
+                if idffdevname not in idffdevs:
+                    idffdevs[idffdevname] = dict()
+                idffdevdict = idffdevs[idffdevname]
+                IDSearch._idffdevs_add_corrector(idff, corrtype, idffdevdict)
+        return idffdevs
+
+    @staticmethod
+    def conv_idffdev_2_idname(idffdev):
+        """."""
+        for idname in IDSearch._idname_2_idff:
+            idffdevs = IDSearch.conv_idname_2_idffdevs(idname)
+            if idffdev in idffdevs:
+                return idname
+        return None
+
+    @staticmethod
+    def conv_idffdev_2_sorted_corrlabels(idffdev):
+        """."""
+        idname = IDSearch.conv_idffdev_2_idname(idffdev)
+        if idname is None:
+            return list()
+        corrdevs = IDSearch.conv_idname_2_idffdevs(idname)[idffdev]
+        corrlabels = list()
+        for _type in corrdevs:
+            subdict = corrdevs[_type]
+            for corrlabel, _ in subdict.items():
+                corrlabels.append(corrlabel)
+        return corrlabels
 
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
