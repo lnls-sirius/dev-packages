@@ -260,6 +260,11 @@ class IDSearch:
         (POL_UNDEF_STR, None),
     ]
 
+    # define IDFF correctors labels aand ordering.
+    # NOTE: the ordering between corr types in IDFF_CorrTypes and of
+    # correctors of a given corrector type in IDFF_CorrLabels has to be
+    # compatible with the ordering of correctors within rack cabinets.
+
     IDFF_CorrTypes = _get_namedtuple(
         'IDFF_CorrTypes', ('ch', 'cv', 'qs', 'lc', 'qn', 'cc')
     )
@@ -270,9 +275,6 @@ class IDSearch:
     _type_qn = IDFF_CorrTypes._fields[4]
     _type_cc = IDFF_CorrTypes._fields[5]
 
-    # define IDFF correctors labeling (and ordering)
-    # NOTE: the ordering within each category here follows the ordering of the
-    # correctors in the rack cabinets.
     IDFF_CorrLabels = {
         _type_ch: ('ch_1', 'ch_2'),
         _type_cv: ('cv_1', 'cv_2'),
@@ -425,6 +427,15 @@ class IDSearch:
                 IDFF_QN_LABELS[4],
                 IDFF_QN_LABELS[5],
             ],  # [A]
+        },
+        'SI-17SA:ID-PAPU50': {
+            'polarizations': ('horizontal',),
+            'pparameter': None,
+            'kparameter': 'SI-17SA:ID-PAPU50:Phase-Mon',
+            IDFF_CH_LABELS[0]: 'SI-17SA:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-17SA:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
         'SI-17SA:ID-APU22': {
             'polarizations': ('horizontal',),
@@ -591,6 +602,29 @@ class IDSearch:
                 idffdevdict = idffdevs[idffdevname]
                 IDSearch._idffdevs_add_corrector(idff, corrtype, idffdevdict)
         return idffdevs
+
+    @staticmethod
+    def conv_idffdev_2_idname(idffdev):
+        """."""
+        for idname in IDSearch._idname_2_idff:
+            idffdevs = IDSearch.conv_idname_2_idffdevs(idname)
+            if idffdev in idffdevs:
+                return idname
+        return None
+
+    @staticmethod
+    def conv_idffdev_2_sorted_corrlabels(idffdev):
+        """."""
+        idname = IDSearch.conv_idffdev_2_idname(idffdev)
+        if idname is None:
+            return list()
+        corrdevs = IDSearch.conv_idname_2_idffdevs(idname)[idffdev]
+        corrlabels = list()
+        for _type in corrdevs:
+            subdict = corrdevs[_type]
+            for corrlabel, _ in subdict.items():
+                corrlabels.append(corrlabel)
+        return corrlabels
 
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
