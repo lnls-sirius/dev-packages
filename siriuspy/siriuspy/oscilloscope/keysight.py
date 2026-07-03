@@ -34,8 +34,9 @@ class Keysight:
 
     SOCKET_TIMEOUT = 10  # [s]
 
-    def __init__(self, scope=None, scopesignal=None):
+    def __init__(self, scope=None, scopesignal=None, debug=False):
         """."""
+        self._debug = debug
         if scopesignal and isinstance(scopesignal, tuple):
             self.host = scopesignal[0]
             self.port = scopesignal[1]
@@ -73,7 +74,8 @@ class Keysight:
         """Set scope waveform format."""
         self.send_command(b":WAVeform:FORMat WORD\n", get_res=False)
         dataformat = self.send_command(b":WAVeform:FORMat?\n")
-        print('Data format:', dataformat)
+        if self._debug:
+            print('Data format:', dataformat)
         # Set bit order to MSB First
         self.send_command(b":WAVeform:BYTeorder MSBF\n", get_res=False)
         # Acquire
@@ -89,15 +91,18 @@ class Keysight:
 
         # Get the number of waveform points
         points = self.send_command(b":WAVeform:POINts?\n")
-        print('Points:', points)
+        if self._debug:
+            print('Points:', points)
 
         # Get sample rate
         srate = self.send_command(b":ACQuire:SRATe?\n")
-        print('Sample rate:', srate)
+        if self._debug:
+            print('Sample rate:', srate)
 
         # Get bandwidth
         bdw = self.send_command(b":ACQuire:BANDwidth:FRAMe?\n")
-        print('Bandwidth:', bdw)
+        if self._debug:
+            print('Bandwidth:', bdw)
 
         # Set the waveform channel source
         self.send_command(
@@ -108,12 +113,14 @@ class Keysight:
         # Get scales
         xinc = self.send_command(b":WAVeform:XINCrement?\n")
         xinc = float(xinc)
-        print('Horizontal Scale:', xinc)
+        if self._debug:
+            print('Horizontal Scale:', xinc)
         yinc = self.send_command(b":WAVeform:YINCrement?\n")
         yor = self.send_command(b":WAVeform:YORigin?\n")
         yinc = float(yinc)
         yor = float(yor)
-        print('Vertical Scale:', xinc, yor)
+        if self._debug:
+            print('Vertical Scale:', xinc, yor)
 
         # Data aquisition
         self.send_command(b":WAVeform:STReaming OFF\n", get_res=False)
@@ -148,9 +155,11 @@ class Keysight:
             self.wfm_enable()
             self.wfm_config(wait_trigger)
             tini = _time.time()
-            print('Acquiring ' + self.chan)
+            if self._debug:
+                print('Acquiring ' + self.chan)
             wavet, waved, srate1, bdw1 = self.wfm_acquire(channel)
-            print('Total acquisition time:', _time.time() - tini)
+            if self._debug:
+                print('Total acquisition time:', _time.time() - tini)
             # self.send_command(b":WAVeform:STReaming ON\n", get_res=False)
         except Exception:
             print('Close connection by exception')
@@ -179,9 +188,11 @@ class Keysight:
         try:
             self.stats_enable()
             tini = _time.time()
-            print('Acquiring ' + self.chan)
+            if self._debug:
+                print('Acquiring ' + self.chan)
             data = self.stats_acquire()
-            print('Total acquisition time:', _time.time() - tini)
+            if self._debug:
+                print('Total acquisition time:', _time.time() - tini)
         except Exception:
             print('Close connection by exception')
             raise
