@@ -19,10 +19,10 @@ class IDSearch:
     _beamline2idname = {
         'CARNAUBA': 'SI-06SB:ID-VPU29',  # titular: VPU29
         'CATERETE': 'SI-07SP:ID-VPU29',  # titular: VPU29
-        'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
-        'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
-        'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
-        'IPE':      'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
+        'EMA': 'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
+        'MANACA': 'SI-09SA:ID-APU22',  # titular: 2 x APU22
+        'SABIA': 'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
+        'IPE': 'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
@@ -53,123 +53,305 @@ class IDSearch:
     _idname2params = {
         'SI-06SB:ID-VPU29': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 29,
-                9.7, 80, 80, 80, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                9.7, 80,
-            )),
+                9.7,
+                80,
+                80,
+                80,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                9.7,
+                80,
+            ),
+        ),
         'SI-07SP:ID-VPU29': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 29,
-                9.7, 80, 80, 80, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                9.7, 80,
-            )),
+                9.7,
+                80,
+                80,
+                80,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                9.7,
+                80,
+            ),
+        ),
         'SI-08SB:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                0, 11,
-            )),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
         'SI-08SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 18.5,
-                4.2, 24, 24, 24, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                4.2, 24,
-            )),
+                4.2,
+                24,
+                24,
+                24,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                4.2,
+                24,
+            ),
+        ),
         'SI-09SA:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                0, 11,
-            )),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 50,
-                +22, +300, +300, +300, 0.1,
-                -25, 25, 0, 0.5,
-                None, None, None, None, None,
-                +22, +300,
-            )),
+                +22,
+                +300,
+                +300,
+                +300,
+                0.1,
+                -25,
+                25,
+                0,
+                0.5,
+                None,
+                None,
+                None,
+                None,
+                None,
+                22,
+                300,
+            ),
+        ),
         'SI-10SB:ID-DELTA52': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 52.5,
-                -52.5/2, +52.5/2, 0, 0, 0.020,
-                -52.5/2, +52.5/2, 0, 0.010,
-                None, None, None, None, None,
-                -52.5 / 2, +52.5 / 2,
-            )),
-       'SI-11SP:ID-UE44': _get_namedtuple(
+                -52.5 / 2,
+                +52.5 / 2,
+                0,
+                0,
+                0.020,
+                -52.5 / 2,
+                +52.5 / 2,
+                0,
+                0.010,
+                None,
+                None,
+                None,
+                None,
+                None,
+                -52.5 / 2,
+                +52.5 / 2,
+            ),
+        ),
+        'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 44,
-                1, 21, 21, 7.5, 0.01,
-                -13.3, 22, 0, 0.01,
-                0, 10.65, 0, 0.01, 0,
-                -13.313, 22,
-            )),
+                1,
+                21,
+                21,
+                21,
+                0.01,
+                -13.3,
+                22,
+                0,
+                0.01,
+                0,
+                10.65,
+                0,
+                0.01,
+                0,
+                -13.313,
+                22,
+            ),
+        ),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 180,
-                49.73, 49.73, 150, 150, 0.1,
-                None, None, None, None,
-                None, None, None, None, None,
-                49.73, 150,
-            )),
+                49.73,
+                49.73,
+                150,
+                150,
+                0.1,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                49.73,
+                150,
+            ),
+        ),
         'SI-14SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 18.5,
-                4.2, 24, 24, 24, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                4.3, 24,
-            )),
+                4.2,
+                24,
+                24,
+                24,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                4.3,
+                24,
+            ),
+        ),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 50,
-                0, 25, 25, 0, 0.1,
-                None, None, None, None,
-                None, None, None, None, None,
-                0, 25,
-            )),
+                0,
+                25,
+                25,
+                0,
+                0.1,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                25,
+            ),
+        ),
         'SI-17SA:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                0, 11,
-            )),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
         'SI-20SB:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None,
-                0, 11,
-            )),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
     }
 
     POL_NONE_STR = 'none'
@@ -274,29 +456,34 @@ class IDSearch:
     IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
 
     _idname_2_idff = {
-        'SI-06SB:ID-VPU29':  {
-            'polarizations': ('vertical', ),
+        'SI-06SB:ID-VPU29': {
+            'polarizations': ('vertical',),
             'pparameter': None,
             'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
+            'idffdevs': {_type_cc: 'SI-06SB:BS-IDFF-CC'},
             IDFF_CC_LABELS[0]: 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-06SB:PS-CC2-1:Current-SP',  # upstream
             IDFF_CC_LABELS[2]: 'SI-06SB:PS-CC1-2:Current-SP',  # downstream
             IDFF_CC_LABELS[3]: 'SI-06SB:PS-CC2-2:Current-SP',  # downstream
         },
-        'SI-07SP:ID-VPU29':  {
-            'polarizations': ('vertical', ),
+        'SI-07SP:ID-VPU29': {
+            'polarizations': ('vertical',),
             'pparameter': None,
             'kparameter': 'SI-07SP:ID-VPU29:KParam-Mon',
+            'idffdevs': {_type_cc: 'SI-07SP:BS-IDFF-CC'},
             IDFF_CC_LABELS[0]: 'SI-07SP:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-07SP:PS-CC2-1:Current-SP',  # upstream
             IDFF_CC_LABELS[2]: 'SI-07SP:PS-CC1-2:Current-SP',  # downstream
             IDFF_CC_LABELS[3]: 'SI-07SP:PS-CC2-2:Current-SP',  # downstream
-
         },
         'SI-08SB:ID-IVU18': {
-            'polarizations': ('horizontal', ),
+            'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-08SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-08SB:BS-IDFF-CHCV',
+            },
             IDFF_CH_LABELS[0]: 'SI-08SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-08SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-08SB:PS-CV-1:Current-SP',
@@ -311,8 +498,12 @@ class IDSearch:
             IDFF_QN_LABELS[4]: 'SI-08M2:PS-QFB:Current-SP',
             IDFF_QN_LABELS[5]: 'SI-08M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
-                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
+                IDFF_QN_LABELS[0],
+                IDFF_QN_LABELS[1],
+                IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3],
+                IDFF_QN_LABELS[4],
+                IDFF_QN_LABELS[5],
             ],  # [A]
         },
         'SI-09SA:ID-APU22': None,
@@ -337,6 +528,11 @@ class IDSearch:
             ),
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-10SB:AP-IDFF',
+                _type_cv: 'SI-10SB:AP-IDFF',
+                _type_qs: 'SI-10SB:AP-IDFF',
+            },
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-10SB:PS-CV-1:Current-SP',
@@ -350,6 +546,12 @@ class IDSearch:
             ),
             'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
             'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-11SP:BS-IDFF-CHCV',
+                _type_cv: 'SI-11SP:BS-IDFF-CHCV',
+                _type_qs: 'SI-11SP:BS-IDFF-QS',
+                _type_lc: 'SI-11SP:BS-IDFF-LC',
+            },
             IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-11SP:PS-CV-1:Current-SP',
@@ -359,11 +561,15 @@ class IDSearch:
             IDFF_LC_LABELS[0]: 'SI-11SP:PS-LCH-1:Current-SP',
             IDFF_LC_LABELS[1]: 'SI-11SP:PS-LCV-1:Current-SP',
             IDFF_LC_LABELS[2]: 'SI-11SP:PS-LCV-2:Current-SP',
-            },
+        },
         'SI-14SB:ID-IVU18': {
-            'polarizations': ('horizontal', ),
+            'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-14SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-14SB:BS-IDFF-CHCV',
+            },
             IDFF_CH_LABELS[0]: 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-14SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-14SB:PS-CV-1:Current-SP',
@@ -378,8 +584,12 @@ class IDSearch:
             IDFF_QN_LABELS[4]: 'SI-14M2:PS-QFB:Current-SP',
             IDFF_QN_LABELS[5]: 'SI-14M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
-                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
+                IDFF_QN_LABELS[0],
+                IDFF_QN_LABELS[1],
+                IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3],
+                IDFF_QN_LABELS[4],
+                IDFF_QN_LABELS[5],
             ],  # [A]
         },
         'SI-17SA:ID-PAPU50': {
@@ -392,7 +602,7 @@ class IDSearch:
             IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
         'SI-17SA:ID-APU22': {
-            'polarizations': ('horizontal', ),
+            'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-17SA:ID-APU22:Phase-Mon',
             IDFF_CH_LABELS[0]: 'SI-17SA:PS-CH-1:Current-SP',  # upstream
@@ -400,6 +610,7 @@ class IDSearch:
             IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
             IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
+        'SI-20SB:ID-APU22': None,
     }
 
     @staticmethod
@@ -653,3 +864,13 @@ class IDSearch:
                 pvname = _SiriusPVName(idff[corr])
                 corrs.append(pvname.device_name)
         return corrs
+
+    # --- aux. methods ---
+
+    @staticmethod
+    def _idffdevs_add_corrector(idff, corrtype, corrdevs):
+        for corrlabel in IDSearch.IDFF_CorrLabels[corrtype]:
+            if corrlabel in idff:
+                if corrtype not in corrdevs:
+                    corrdevs[corrtype] = dict()
+                corrdevs[corrtype][corrlabel] = idff[corrlabel]

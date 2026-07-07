@@ -767,8 +767,15 @@ class App(_Callback):
 
     def set_topup_period(self, value):
         """Set top-up period [min]."""
-        if not 1 <= value <= 6*60:
+        if not 0.5 <= value <= 6*60:
             return False
+
+        if value < 1:
+            # for period < 1min, only permits 30s
+            value = 0.5
+        else:
+            # for period > 1min, only permits integer periods
+            value = int(value)
 
         sec = value * 60
         if self._topup_state_sts != _Const.TopUpSts.Off:
