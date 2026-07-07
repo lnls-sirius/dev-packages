@@ -1138,6 +1138,42 @@ class IDFF(_DeviceSet):
                 print()
             _time.sleep(time_interval / (nrpts - 1))
 
+    def rampdown_corr_currents(
+        self,
+        nrpts=50,
+        time_interval=10,
+        dry_run=False,
+    ):
+        """."""
+        devcorrs = []
+        devcorrs += self.chdevs
+        devcorrs += self.cvdevs
+        devcorrs += self.qsdevs
+        devcorrs += self.lcdevs
+        devcorrs += self.ccdevs
+        corrs = dict()
+        for devcorr in devcorrs:
+            # TODO: check power supply status
+            curr0 = devcorr.current_mon  # after an interlock, RB <> Mon=0
+            curr1 = 0
+            corrs[devcorr.devname] = (devcorr, curr0, curr1)
+
+        for idx in range(nrpts):
+            delta_ramp = (idx + 1) / nrpts
+            if dry_run:
+                print(f'point {idx + 1}/{nrpts}')
+            for psname in corrs:
+                devcorr, curr0, curr1 = corrs[psname]
+                curr = curr0 + delta_ramp * (curr1 - curr0)
+                if dry_run:
+                    print(f'{psname:<20s}: {curr:+.6f}')
+                else:
+                    devcorr.set_current(curr, wait_mon=True)
+            if dry_run:
+                print()
+            _time.sleep(time_interval / (nrpts - 1))
+
+
     def _create_devices(self, props2init_ctrl, props2init_corrs):
         devctrl = (
             None
