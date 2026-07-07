@@ -272,6 +272,43 @@ class IDFFCtrlBase(_Device):
             pass
         return iddevname
 
+    def get_ffwd_table_corrlabels(self):
+        """."""
+        corrlabels = list()
+        corrlabels += self.IDFF_CH_LABELS
+        corrlabels += self.IDFF_CV_LABELS
+        corrlabels += self.IDFF_CC_LABELS
+        corrlabels += self.IDFF_LC_LABELS
+        corrlabels += self.IDFF_QS_LABELS
+        corrlabels += self.IDFF_QN_LABELS
+        return corrlabels
+
+    def get_ffwd_table_pol_idx(self):
+        """Table index for currently active polarization state."""
+        # for hard devices with a single table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            return None
+
+        # otherwise, we need to choose the table based on the hardware state
+        idx = self[self.PARAM_PVS.TABLEIDX_MON]
+        return idx
+
+    def get_ffwd_table(self, pol_idx=None):
+        """Table of given index or of active polarization state."""
+        raise NotImplementedError
+
+    def set_ffwd_table(self, value, pol_idx=None):
+        """Set table for given index or of activate polarization state."""
+        raise NotImplementedError
+
+    def get_ffwd_table_dict(self, pol_idx=None):
+        """Table dict of given index or of active polarization state."""
+        raise NotImplementedError
+
+    def set_ffwd_table_dict(self, ffwd_table, pol_idx=None):
+        """Set table dict for given index or for activate state."""
+        raise NotImplementedError
+
     @staticmethod
     def _add_devices(devset_base, devset_derived):
         for key, value in _inspect.getmembers(devset_derived):
@@ -438,18 +475,18 @@ class IDFFCtrlHard(IDFFCtrlBase):
 
     PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
-    def get_ffwd_table_corr_labels(self):
+    def get_ffwd_table_corrlabels(self):
         """."""
-        corr_labels = list()
-        corr_labels += self.IDFF_CH_LABELS
-        corr_labels += self.IDFF_CV_LABELS
-        corr_labels += self.IDFF_CC_LABELS
-        corr_labels += self.IDFF_LC_LABELS
-        corr_labels += self.IDFF_QS_LABELS
-        corr_labels += self.IDFF_QN_LABELS
-        return corr_labels
+        corrlabels = list()
+        corrlabels += self.IDFF_CH_LABELS
+        corrlabels += self.IDFF_CV_LABELS
+        corrlabels += self.IDFF_CC_LABELS
+        corrlabels += self.IDFF_LC_LABELS
+        corrlabels += self.IDFF_QS_LABELS
+        corrlabels += self.IDFF_QN_LABELS
+        return corrlabels
 
-    def get_current_table_index(self):
+    def get_ffwd_table_pol_idx(self):
         """Table index for currently active polarization state."""
         # for hard devices with a single table
         if not isinstance(self.PARAM_PVS.TABLE_RB, list):
@@ -459,37 +496,50 @@ class IDFFCtrlHard(IDFFCtrlBase):
         idx = self[self.PARAM_PVS.TABLEIDX_MON]
         return idx
 
-    def get_ffwd_table(self, tableidx=None):
-        """Table of gifven index or of active polarization state."""
-        idx = tableidx or self.get_current_table_index()
+    def get_ffwd_table(self, pol_idx=None):
+        """Table of given index or of active polarization state."""
+        idx = pol_idx or self.get_ffwd_table_pol_idx()
         params = self.PARAM_PVS
         propty = params.TABLE_RB if idx is None else params.TABLE_RB[idx]
         return self[propty]
 
-    def set_ffwd_table(self, value, tableidx=None):
+    def set_ffwd_table(self, value, pol_idx=None):
         """Set table for given index or of activate polarization state."""
-        idx = tableidx or self.get_current_table_index()
+        idx = pol_idx or self.get_ffwd_table_pol_idx()
         params = self.PARAM_PVS
         propty = params.TABLE_SP if idx is None else params.TABLE_SP[idx]
-        self[propty] = value
+        # self[propty] = value
+        return propty, value
 
-    def get_ffwd_table_dict(self, tableidx=None):
+    def get_ffwd_table_dict(self, pol_idx=None):
         """Table dict of given index or of active polarization state."""
-        ff_table = _np.array(self.get_ffwd_table(tableidx))
-        clabels = self.get_ffwd_table_corr_labels()
+        ff_table = _np.array(self.get_ffwd_table(pol_idx))
+        clabels = self.get_ffwd_table_corrlabels()
         ff_table = ff_table.reshape(4, -1)
         ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
         return ff_table
 
-    def set_ffwd_table_dict(self, ffwd_table, tableidx=None):
+    def set_ffwd_table_dict(self, ffwd_table, pol_idx=None):
         """Set table dict for given index or for activate state."""
-        clabels = self.get_ffwd_table_corr_labels()
-        newtable = _np.empty(0, dtype=_np.float64)
-        for i in range(4):
-            values = ffwd_table[clabels[i]] if i < len(
-                clabels) else _np.zeros(len(ffwd_table[clabels[0]]))
-            newtable = _np.r_[newtable, values]
-        self.set_ffwd_table(newtable, tableidx)
+        clabels = self.get_ffwd_table_corrlabels()
+        ffwd_tables = {
+            clabel: ffwd_table[clabel] for clabel in clabels
+            if clabel in ffwd_table
+        }
+        if len(ffwd_tables) != len(clabels):
+            raise ValueError(
+                'ffwd_table is missing waveforms!')
+        if len(set(map(len, ffwd_table.values()))) > 1:
+            raise ValueError(
+                'ffwd_table has to have waveforms of the same size!')
+        clabel = list(ffwd_tables.keys())[0]
+        wfm_len = len(ffwd_table[clabel])
+
+        newtable = _np.zeros(4*wfm_len)
+        for idx, corrlabel in enumerate(clabels):
+            wfm = ffwd_table[corrlabel]
+            newtable[idx*wfm_len:(idx+1)*wfm_len] = wfm
+        return self.set_ffwd_table(newtable, pol_idx)
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
@@ -1122,5 +1172,5 @@ class IDFF(_DeviceSet):
         return devs
 
     def _get_corrnames(self, labels):
-        conv = _IDSearch.conv_idname_labels_2_corrnames
+        conv = _IDSearch.conv_idname_corrlabels_2_corrnames
         return conv(self.iddevname, labels)

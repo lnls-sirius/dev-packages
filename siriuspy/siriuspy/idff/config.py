@@ -107,6 +107,21 @@ class IDFFConfig(_ConfigDBDocument):
         val = self._value
         return val['offsets'] if 'offsets' in val else dict()
 
+    def get_ffwd_table_dict(self, polarization):
+        """."""
+        if self._value:
+            idff = self._value['polarizations'][polarization]
+            setpoints = dict()
+            for corrlabel, table in idff.items():
+                if corrlabel not in ('pparameter', 'kparameter', 'idffdevs'):
+                    # TODO: fix for offstes
+                    # setpoints[corrlabel] = \
+                    # _np.array(table) + _np.array(offsets)
+                    setpoints[corrlabel] = table
+            return setpoints
+        else:
+            raise ValueError('Configuration not defined!')
+
     def calculate_setpoints(
             self, polarization, pparameter_value, kparameter_value):
         """Return correctors setpoints for a particular ID config.
@@ -126,7 +141,7 @@ class IDFFConfig(_ConfigDBDocument):
             setpoints = dict()
             offsets = self.offsets
             for corrlabel, table in idff.items():
-                if corrlabel not in ('pparameter', 'kparameter'):
+                if corrlabel not in ('pparameter', 'kparameter', 'idffdevs'):
                     # linear interpolation
                     curr = _np.interp(param_value, params, table)
                     offset = offsets.get(corrlabel, 0)
