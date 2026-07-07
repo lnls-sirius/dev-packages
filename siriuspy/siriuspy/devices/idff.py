@@ -293,6 +293,10 @@ class IDFFCtrlBase(_Device):
         idx = self[self.PARAM_PVS.TABLEIDX_MON]
         return idx
 
+    def get_ffwd_table_pvname(self, pol_idx=None):
+        """."""
+        raise NotImplementedError
+
     def get_ffwd_table(self, pol_idx=None):
         """Table of given index or of active polarization state."""
         raise NotImplementedError
@@ -496,18 +500,22 @@ class IDFFCtrlHard(IDFFCtrlBase):
         idx = self[self.PARAM_PVS.TABLEIDX_MON]
         return idx
 
+    def get_ffwd_table_pvname(self, is_sp, pol_idx=None):
+        """."""
+        idx = self.get_ffwd_table_pol_idx() if pol_idx is None else pol_idx
+        params = self.PARAM_PVS
+        params_table_sp_rb = params.TABLE_SP if is_sp else params.TABLE_RB
+        pvname = params_table_sp_rb if idx is None else params_table_sp_rb[idx]
+        return pvname
+
     def get_ffwd_table(self, pol_idx=None):
         """Table of given index or of active polarization state."""
-        idx = pol_idx or self.get_ffwd_table_pol_idx()
-        params = self.PARAM_PVS
-        propty = params.TABLE_RB if idx is None else params.TABLE_RB[idx]
+        propty = self.get_ffwd_table_pvname(is_sp=False, pol_idx=pol_idx)
         return self[propty]
 
     def set_ffwd_table(self, value, pol_idx=None):
         """Set table for given index or of activate polarization state."""
-        idx = pol_idx or self.get_ffwd_table_pol_idx()
-        params = self.PARAM_PVS
-        propty = params.TABLE_SP if idx is None else params.TABLE_SP[idx]
+        propty = self.get_ffwd_table_pvname(is_sp=True, pol_idx=pol_idx)
         self[propty] = value
 
     def get_ffwd_table_dict(self, pol_idx=None):
