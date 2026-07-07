@@ -55,8 +55,8 @@ class _CurrInfoApp(_Callback):
     @staticmethod
     def _get_value_from_arch(pvname):
         carch = _ClientArch()
-        datetime = _datetime.now().isoformat() + '-03:00'
-        return carch.getData(pvname, datetime, datetime)
+        datetime = _datetime.now().astimezone().isoformat()
+        return carch.get_data(pvname, datetime, datetime)
 
 
 class _ASCurrInfoApp(_CurrInfoApp):
