@@ -502,6 +502,12 @@ class IDFFCtrlHard(IDFFCtrlBase):
 
     def get_ffwd_table_pvname(self, is_sp, pol_idx=None):
         """."""
+        # for hard devices with a single table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            pvname = self.PARAM_PVS.TABLE_SP if is_sp else \
+                self.PARAM_PVS.TABLE_RB
+            return pvname
+
         idx = self.get_ffwd_table_pol_idx() if pol_idx is None else pol_idx
         params = self.PARAM_PVS
         params_table_sp_rb = params.TABLE_SP if is_sp else params.TABLE_RB
