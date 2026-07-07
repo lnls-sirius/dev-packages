@@ -107,18 +107,22 @@ class IDFFConfig(_ConfigDBDocument):
         val = self._value
         return val['offsets'] if 'offsets' in val else dict()
 
-    def get_ffwd_table_dict(self, polarization):
+    def get_ffwd_table_dict(self, polarization, idff_devname=None):
         """."""
         if self._value:
             idff = self._value['polarizations'][polarization]
-            setpoints = dict()
-            for corrlabel, table in idff.items():
+            table = dict()
+            for corrlabel, wfm in idff.items():
                 if corrlabel not in ('pparameter', 'kparameter', 'idffdevs'):
                     # TODO: fix for offstes
                     # setpoints[corrlabel] = \
                     # _np.array(table) + _np.array(offsets)
-                    setpoints[corrlabel] = table
-            return setpoints
+                    table[corrlabel] = wfm
+            if idff_devname is not None:
+                conv_func = _IDSearch.conv_idffdev_2_sorted_corrlabels
+                clabels = conv_func(idff_devname)
+                table = {corrlabel: table[corrlabel] for corrlabel in clabels}
+            return table
         else:
             raise ValueError('Configuration not defined!')
 
