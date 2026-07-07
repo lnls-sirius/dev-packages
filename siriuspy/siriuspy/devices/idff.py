@@ -633,7 +633,6 @@ class IDFFCtrlHardUE_LC(IDFFCtrlHardUE):
     IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
 
 
-
 class IDFFCtrl(IDFFCtrlBase):
     """ID Feedforward Control Device."""
 
@@ -1172,7 +1171,6 @@ class IDFF(_DeviceSet):
             if dry_run:
                 print()
             _time.sleep(time_interval / (nrpts - 1))
-
 
     def _create_devices(self, props2init_ctrl, props2init_corrs):
         devctrl = (
