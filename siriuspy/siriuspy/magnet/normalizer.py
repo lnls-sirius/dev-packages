@@ -1,12 +1,12 @@
 """This module contains classes for current normalization."""
 
-import re as _re
 import numpy as _np
 
 import mathphys as _mp
 
 from .. import util as _util
 from ..namesys import SiriusPVName as _SiriusPVName
+from ..search import IDSearch as _IDSearch
 from ..search import PSSearch as _PSSearch
 from ..search import MASearch as _MASearch
 from ..pwrsupply.csdev import get_ps_propty_database as _get_ps_propty_database
@@ -20,17 +20,21 @@ if not _BETA_APPROXIMATION:
     _GAMMA_2_GEV = _mp.constants.electron_rest_energy * _mp.units.joule_2_GeV
 
 _MAGFUNCS = _mutil.get_magfunc_2_multipole_dict()
-_KCOEFF = _mp.constants.elementary_charge / \
-          _mp.constants.light_speed / \
-          _mp.constants.electron_mass / \
-          2 / _np.pi  # [1/(T.m)]
+_KCOEFF = (
+    _mp.constants.elementary_charge
+    / _mp.constants.light_speed
+    / _mp.constants.electron_mass
+    / 2
+    / _np.pi
+)  # [1/(T.m)]
 
 
 class _MagnetNormalizer:
     """Base class for converting magnet properties: current and strength."""
 
     def __init__(
-            self, maname, magnet_conv_sign=-1, default_strengths_dipole=None):
+        self, maname, magnet_conv_sign=-1, default_strengths_dipole=None
+    ):
         """Class constructor."""
         self._default_strengths_dipole = None
         self._brho = None
@@ -42,7 +46,7 @@ class _MagnetNormalizer:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psnames[-1])
         self._magnet_conv_sign = magnet_conv_sign
-        self._mfmult = _MAGFUNCS[self._magfunc]
+        self._main_func_mult = _MAGFUNCS[self._magfunc]
         self._psname = self._power_supplies()[0]
         self._calc_conv_coef()
 
@@ -78,7 +82,7 @@ class _MagnetNormalizer:
             if isinstance(currents, (int, float)):
                 return 0.0
             else:
-                return [0.0, ] * len(currents)
+                return [0.0] * len(currents)
         # ---
         strengths = self._conv_intfield_2_strength(intfields, **kwargs)
         strengths = self._conv_default_2_epicsdb(strengths)
@@ -88,9 +92,10 @@ class _MagnetNormalizer:
         """Convert strength to current."""
         strengths = self._conv_epicsdb_2_default(strengths)
         intfields = self._conv_strength_2_intfield(strengths, **kwargs)
-        mft = self._mfmult
+        mft = self._main_func_mult
         currents = self._excdata.interp_mult2curr(
-            intfields, mft['harmonic'], mft['type'])
+            intfields, mft['harmonic'], mft['type']
+        )
         return currents
 
     # --- normalizer aux. methods ---
@@ -103,17 +108,19 @@ class _MagnetNormalizer:
         elif strengths_dipole is None:
             raise ValueError(
                 "Missing input 'strengths_dipole' and no default value is "
-                "set in attribute 'default_strengths_dipole'.")
+                "set in attribute 'default_strengths_dipole'."
+            )
 
         brho, *_ = _util.beam_rigidity(strengths_dipole)
         return brho
 
     def _conv_current_2_intfield(self, currents):
         mpoles = self._conv_current_2_multipoles(
-            currents, only_main_harmonic=True)
+            currents, only_main_harmonic=True
+        )
         if mpoles is None:
             return None
-        mfm = self._mfmult
+        mfm = self._main_func_mult
         intfield = mpoles[mfm['type']][mfm['harmonic']]
         return intfield
 
@@ -124,17 +131,19 @@ class _MagnetNormalizer:
             return None
         msum = {}
         if self._magfunc != 'dipole':
-            mpoles = \
-                self._excdata.interp_curr2mult(currents, only_main_harmonic)
+            mpoles = self._excdata.interp_curr2mult(
+                currents, only_main_harmonic
+            )
             msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         else:
-            mpoles = \
-                self._excdata.interp_curr2mult(currents, only_main_harmonic)
+            mpoles = self._excdata.interp_curr2mult(
+                currents, only_main_harmonic
+            )
             msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
         return msum
 
     def _power_supplies(self):
-        psname = self._maname.replace(":MA", ":PS").replace(':PM', ':PU')
+        psname = self._maname.replace(':MA', ':PS').replace(':PM', ':PU')
         return [psname]
 
     # --- conversion default [rad] to epicsdb [(m|u)rad] values ---
@@ -143,11 +152,11 @@ class _MagnetNormalizer:
         if isinstance(values, (int, float)):
             return coef * values
         elif isinstance(values, tuple):
-            return (coef*v for v in values)
+            return (coef * v for v in values)
         elif isinstance(values, list):
-            return [coef*v for v in values]
+            return [coef * v for v in values]
         elif isinstance(values, _np.ndarray):
-            return coef*values
+            return coef * values
         else:
             raise ValueError()
 
@@ -155,7 +164,7 @@ class _MagnetNormalizer:
         return self._conv_values(values, self._coef_def2edb)
 
     def _conv_epicsdb_2_default(self, values):
-        return self._conv_values(values, 1.0/self._coef_def2edb)
+        return self._conv_values(values, 1.0 / self._coef_def2edb)
 
     def _calc_conv_coef(self):
         dbase = _get_ps_propty_database(self._psmodel, self._pstype)
@@ -205,35 +214,37 @@ class DipoleNormalizer(_MagnetNormalizer):
         ang = DipoleNormalizer._ref_angles
         if self._maname.sec == 'SI':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho, self._ref_beta, self._ref_gamma, *_ = \
+            self._ref_brho, self._ref_beta, self._ref_gamma, *_ = (
                 _util.beam_rigidity(self._ref_energy)
+            )
             # self._ref_bl_bc = - self._ref_brho * ang['SI_BC']
             # self._ref_angle = ang['SI_B1'] + ang['SI_B2']  + ang['SI_BC']
             # self._ref_bl = - self._ref_brho * self._ref_angle \
             #     - self._ref_bl_bc
             self._ref_angle = ang['SI_B1'] + ang['SI_B2']
-            self._ref_bl = - self._ref_brho * self._ref_angle
+            self._ref_bl = -self._ref_brho * self._ref_angle
         elif self._maname.sec == 'BO':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho, self._ref_beta, self._ref_gamma, *_ = \
+            self._ref_brho, self._ref_beta, self._ref_gamma, *_ = (
                 _util.beam_rigidity(self._ref_energy)
+            )
             self._ref_angle = ang['BO']
-            self._ref_bl = - self._ref_brho * self._ref_angle
+            self._ref_bl = -self._ref_brho * self._ref_angle
         elif self._maname.sec == 'TS':
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TS']
-            self._ref_bl = - self._ref_brho * self._ref_angle
+            self._ref_bl = -self._ref_brho * self._ref_angle
         elif self._maname.sec == 'TB':
             self._ref_energy = 0.150  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
-            self._ref_bl = - self._ref_brho * self._ref_angle
+            self._ref_bl = -self._ref_brho * self._ref_angle
         elif self._maname.sec == 'LI':
             self._ref_energy = 0.150  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['LI']
-            self._ref_bl = - self._ref_brho * self._ref_angle
+            self._ref_bl = -self._ref_brho * self._ref_angle
         else:
             raise NotImplementedError
 
@@ -244,22 +255,27 @@ class DipoleNormalizer(_MagnetNormalizer):
         if self._maname.sec == 'SI':
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
-                intfields = (- self._ref_angle *
-                             (self._ref_brho / self._ref_energy) *
-                             strengths)  # - self._ref_bl_bc)
+                intfields = (
+                    -self._ref_angle
+                    * (self._ref_brho / self._ref_energy)
+                    * strengths
+                )  # - self._ref_bl_bc)
             else:
                 # 2. without approximation
                 brho, *_ = _util.beam_rigidity(strengths)
-                intfields = brho * (- self._ref_angle)  # - self._ref_bl_bc
+                intfields = brho * (-self._ref_angle)  # - self._ref_bl_bc
         else:
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
-                intfields = (- self._ref_angle *
-                             (self._ref_brho / self._ref_energy) * strengths)
+                intfields = (
+                    -self._ref_angle
+                    * (self._ref_brho / self._ref_energy)
+                    * strengths
+                )
             else:
                 # 2. without approximation
                 brho, *_ = _util.beam_rigidity(strengths)
-                intfields = brho * (- self._ref_angle)
+                intfields = brho * (-self._ref_angle)
 
         return intfields
 
@@ -270,30 +286,40 @@ class DipoleNormalizer(_MagnetNormalizer):
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
                 total_bl = intfields  # + self._ref_bl_bc
-                strengths = -self._magnet_conv_sign * \
-                    ((self._ref_energy / self._ref_brho) *
-                     (-total_bl) / self._ref_angle)
+                strengths = -self._magnet_conv_sign * (
+                    (self._ref_energy / self._ref_brho)
+                    * (-total_bl)
+                    / self._ref_angle
+                )
             else:
                 # 2. without approximation
                 total_bl = intfields  # + self._ref_bl_bc
                 beam_rigidity = -total_bl / self._ref_angle
-                alpha = (beam_rigidity / self._ref_brho) * \
-                    (self._ref_gamma**2 - 1.0)/(self._ref_gamma)
-                gamma = (alpha/2) + _np.sqrt(1.0 + (alpha/2)**2)
+                alpha = (
+                    (beam_rigidity / self._ref_brho)
+                    * (self._ref_gamma**2 - 1.0)
+                    / (self._ref_gamma)
+                )
+                gamma = (alpha / 2) + _np.sqrt(1.0 + (alpha / 2) ** 2)
                 strengths = gamma * _GAMMA_2_GEV
         else:
             if _BETA_APPROXIMATION:
                 # 1. approximation beta(energy) ~ 1.0
-                strengths = -self._magnet_conv_sign * \
-                    ((self._ref_energy / self._ref_brho) *
-                     (- intfields) / self._ref_angle)
+                strengths = -self._magnet_conv_sign * (
+                    (self._ref_energy / self._ref_brho)
+                    * (-intfields)
+                    / self._ref_angle
+                )
             else:
                 # 2. without approximation
                 total_bl = intfields
                 beam_rigidity = -total_bl / self._ref_angle
-                alpha = (beam_rigidity / self._ref_brho) * \
-                    (self._ref_gamma**2 - 1.0)/(self._ref_gamma)
-                gamma = (alpha/2) + _np.sqrt(1.0 + (alpha/2)**2)
+                alpha = (
+                    (beam_rigidity / self._ref_brho)
+                    * (self._ref_gamma**2 - 1.0)
+                    / (self._ref_gamma)
+                )
+                gamma = (alpha / 2) + _np.sqrt(1.0 + (alpha / 2) ** 2)
                 strengths = gamma * _GAMMA_2_GEV
 
         return strengths
@@ -341,39 +367,7 @@ class MagnetNormalizer(_MagnetNormalizer):
                 strengths = self._magnet_conv_sign * intfields / brho
         if not isinstance(intfields, (int, float)):
             if isinstance(strengths, (int, float)):
-                strengths = [strengths, ] * len(intfields)
-        return strengths
-
-
-class APUNormalizer(_MagnetNormalizer):
-    """."""
-
-    def _conv_strength_2_intfield(self, strengths, **kwargs):
-        """Convert K parameter to field amplitude.
-
-        For APU, integrated field is just the field amplitude B * lamba [T.m].
-        The strength is the K parameter:
-            K ~ 93.3729/(T.m) * (lambda * B)
-        """
-        _ = kwargs  # throwaway arguments
-        if isinstance(strengths, list):
-            strengths = _np.array(strengths)
-
-        intfields = strengths / _KCOEFF
-        return intfields
-
-    def _conv_intfield_2_strength(self, intfields, **kwargs):
-        """Convert field amplitude to K parameter.
-
-        For APU, integrated field is just the field amplitude B * lamba [T.m].
-        The strength is the K parameter:
-            K ~ 93.3729/(T.m) * (lambda * B)
-        """
-        _ = kwargs  # throwaway arguments
-        if isinstance(intfields, list):
-            intfields = _np.array(intfields)
-
-        strengths = _KCOEFF * intfields
+                strengths = [strengths] * len(intfields)
         return strengths
 
 
@@ -407,3 +401,144 @@ class TrimNormalizer(_MagnetNormalizer):
         # its contribution.
         strengths_fam = _np.array(kwargs['strengths_family'])
         return strengths_trim + strengths_fam
+
+
+class IDNormalizer:
+    """Base class for converting magnet properties: current and strength."""
+
+    def __init__(self, idname, polarization):
+        """Class constructor."""
+        if idname not in _IDSearch.get_idnames():
+            raise ValueError(f'Invalid ID name: {idname}')
+        self._idname = _SiriusPVName(idname)
+        self._polarizations = _IDSearch.conv_idname_2_polarizations(idname)
+        self.polarization = polarization
+        self._excdata = _IDSearch.conv_idname_2_excdata(idname, polarization)
+
+    @property
+    def idname(self):
+        """Return ID name."""
+        return self._idname
+
+    @property
+    def polarization(self):
+        """Return ID polarization."""
+        return self._polarization
+
+    @polarization.setter
+    def polarization(self, value):
+        if value not in self._polarizations:
+            strf = (
+                f'Invalid polarization {value}.'
+                f' Valid polarizations for ID "{self._idname}" are '
+                f'{self._polarizations}'
+            )
+            raise ValueError(strf)
+        self._polarization = value
+        self._excdata = _IDSearch.conv_idname_2_excdata(
+            self._idname, self._polarization
+        )
+
+    @property
+    def polarizations(self):
+        """Return valid polarizations for this ID."""
+        return self._polarizations
+
+    # --- normalizer interface ---
+
+    def conv_current_2_strength(self, currents, **kwargs):
+        """Convert current to strength."""
+        if currents is None:
+            return None
+        intfields_n, intfields_s = self._conv_current_2_intfield(currents)
+        if intfields_n is None or intfields_s is None:
+            if isinstance(currents, (int, float)):
+                return 0.0
+            else:
+                return [0.0] * len(currents)
+        # ---
+        strengths = self._conv_intfield_2_strength(
+            intfields_n, intfields_s, **kwargs
+        )
+        return strengths
+
+    def conv_strength_2_current(self, strengths, **kwargs):
+        """Convert strength to current."""
+        if strengths is None:
+            return None
+
+        intfield_eff = self._conv_strength_2_intfield(strengths)
+        currents = self._interp_mult2curr(intfield_eff)
+
+        return currents
+
+    # --- normalizer aux. methods ---
+
+    def _interp_mult2curr(self, multipole):
+        """Interpolate current from a specific multipole value."""
+        # sort correctly tabulated lists
+        intfields_n = _np.array(self._excdata.multipoles['normal'][0])
+        intfields_s = _np.array(self._excdata.multipoles['skew'][0])
+
+        mpole = _np.sqrt(intfields_n**2 + intfields_s**2)
+        curr = self._excdata.currents
+        if mpole[-1] <= mpole[0]:
+            mpole, curr = mpole[::-1], self._excdata.currents[::-1]
+
+        # do conversion
+        if _np.isscalar(multipole):
+            multipole = _np.array([multipole])
+            interp = _mutil.linear_interpolation(multipole, mpole, curr)
+            currents = interp[0]
+        else:
+            multipole = _np.array(multipole)
+            interp = _mutil.linear_interpolation(multipole, mpole, curr)
+            currents = interp
+        return currents
+
+    def _conv_current_2_intfield(self, currents):
+        mpoles = self._conv_current_2_multipoles(
+            currents, only_main_harmonic=True
+        )
+        if mpoles is None:
+            return None, None
+        intfield_normal = mpoles['normal'][0]
+        intfield_skew = mpoles['skew'][0]
+        return intfield_normal, intfield_skew
+
+    def _conv_current_2_multipoles(self, currents, only_main_harmonic=False):
+        if currents is None:
+            return None
+        msum = {}
+        mpoles = self._excdata.interp_curr2mult(currents, only_main_harmonic)
+        msum = _mutil.sum_magnetic_multipoles(msum, mpoles)
+        return msum
+
+    def _conv_strength_2_intfield(self, strengths, **kwargs):
+        """Convert K parameter to field amplitude.
+
+        For APU, integrated field is just the field amplitude B * lamba [T.m].
+        The strength is the K parameter:
+            K ~ 93.3729/(T.m) * (lambda * B)
+        """
+        _ = kwargs  # throwaway arguments
+        if isinstance(strengths, list):
+            strengths = _np.array(strengths)
+
+        intfields = strengths / _KCOEFF
+        return intfields
+
+    def _conv_intfield_2_strength(self, intfields_n, intfields_s, **kwargs):
+        """Convert field amplitude to K parameter.
+
+        For APU, integrated field is just the field amplitude B * lamba [T.m].
+        The strength is the K parameter:
+            K ~ 93.3729/(T.m) * (lambda * B)
+        """
+        _ = kwargs  # throwaway arguments
+        if isinstance(intfields_n, list):
+            intfields_n = _np.array(intfields_n)
+        if isinstance(intfields_s, list):
+            intfields_s = _np.array(intfields_s)
+        strengths = _KCOEFF * _np.sqrt(intfields_n**2 + intfields_s**2)
+        return strengths

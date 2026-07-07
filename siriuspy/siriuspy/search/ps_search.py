@@ -5,10 +5,11 @@ from threading import Lock as _Lock
 
 from .. import util as _util
 from .. import clientweb as _web
+
+from ..magnet.excdata import ExcitationData as _ExcitationData
 from ..namesys import Filter as _Filter
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..pwrsupply.siggen import SigGenFactory as _SigGenFactory
-from ..magnet.excdata import ExcitationData as _ExcitationData
 
 
 class PSSearch:
@@ -34,7 +35,6 @@ class PSSearch:
         'LINAC_PS',
         'FOFB_PS',
     )
-    _ID_UNIT_TYPES = ('APU', )
     _PU_UNIT_TYPES = ('FP_SEPT', 'FP_KCKR', 'FP_KCKRCCOIL', 'FP_PINGER')
 
     _splims_labels = list()
@@ -387,8 +387,6 @@ class PSSearch:
         PSSearch._reload_pstype_2_splims_dict()
         if psmodel in PSSearch._PS_UNIT_TYPES:
             return PSSearch._splims_ps_unit
-        elif psmodel in PSSearch._ID_UNIT_TYPES:
-            return 'mm'
         elif psmodel in PSSearch._PU_UNIT_TYPES:
             return PSSearch._splims_pu_unit
         else:
