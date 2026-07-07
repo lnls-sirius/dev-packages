@@ -629,42 +629,42 @@ class IDSearch:
     @staticmethod
     def conv_idname_2_idff_chnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
             idname, IDSearch.IDFF_CH_LABELS
         )
 
     @staticmethod
     def conv_idname_2_idff_cvnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
             idname, IDSearch.IDFF_CV_LABELS
         )
 
     @staticmethod
     def conv_idname_2_idff_qsnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
             idname, IDSearch.IDFF_QS_LABELS
         )
 
     @staticmethod
     def conv_idname_2_idff_lcnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
             idname, IDSearch.IDFF_LC_LABELS
         )
 
     @staticmethod
     def conv_idname_2_idff_qnnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
             idname, IDSearch.IDFF_QN_LABELS
         )
 
     @staticmethod
     def conv_idname_2_idff_ccnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
             idname, IDSearch.IDFF_CC_LABELS
         )
 
@@ -723,7 +723,7 @@ class IDSearch:
             raise TypeError('Invalid polarization type.')
 
     @staticmethod
-    def conv_idname_labels_2_corrnames(idname, correctors):
+    def conv_idname_corrlabels_2_corrnames(idname, correctors):
         """Return correctors names from idname and corrector labels."""
         corrs = list()
         idff = IDSearch.conv_idname_2_idff(idname)
