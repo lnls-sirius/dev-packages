@@ -10,6 +10,7 @@ try:
 except:
     _plt = None
 
+from ..namesys import SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..clientarch import ClientArchiver as _CltArch, Time as _Time, \
     PVData as _PVData, PVDataSet as _PVDataSet
@@ -1302,6 +1303,13 @@ class MacReport:
                 key = psdesc+' ('+str(idx+1)+'/'+str(len(subs))+')'
                 value = _PSSearch.get_psnames(
                     {'sec': 'SI', 'sub': sub, 'dev': psreg})
+                # ignore IDFF correctors
+                toremove = list()
+                for v in value:
+                    if _PVName(v).sub.endswith(('SA', 'SB', 'SP')):
+                        toremove.append(v)
+                for v in toremove:
+                    value.remove(v)
                 self._psgroup2psname[key] = value
 
         self._pvdataset = dict()
@@ -1780,6 +1788,7 @@ class MacReport:
         if data.timestamp is None:
             times = _np.array([t_start, ])
             values = _np.array([defv, ])
+            _log.warning('Received empty data for %s', pvname)
         else:
             times = _np.array(data.timestamp)
             values = _np.array(data.value)
