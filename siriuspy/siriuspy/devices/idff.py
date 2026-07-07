@@ -508,8 +508,7 @@ class IDFFCtrlHard(IDFFCtrlBase):
         idx = pol_idx or self.get_ffwd_table_pol_idx()
         params = self.PARAM_PVS
         propty = params.TABLE_SP if idx is None else params.TABLE_SP[idx]
-        # self[propty] = value
-        return propty, value
+        self[propty] = value
 
     def get_ffwd_table_dict(self, pol_idx=None):
         """Table dict of given index or of active polarization state."""
@@ -539,7 +538,7 @@ class IDFFCtrlHard(IDFFCtrlBase):
         for idx, corrlabel in enumerate(clabels):
             wfm = ffwd_table[corrlabel]
             newtable[idx*wfm_len:(idx+1)*wfm_len] = wfm
-        return self.set_ffwd_table(newtable, pol_idx)
+        self.set_ffwd_table(newtable, pol_idx)
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
