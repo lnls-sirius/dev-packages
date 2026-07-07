@@ -301,15 +301,19 @@ class IDFFConfig(_ConfigDBDocument):
                     'List of corrlabels in config is not consistent')
 
             # check nrpts in tables
-            param = 'pparameter' if polarization == 'none' else 'kparameter'
+            polkparamfixed = polarization in {'none', 'transition', 'no-field'}
+            param = 'pparameter' if polkparamfixed else 'kparameter'
             nrpts_corrtables = {len(table) for table in corrtable.values()}
             nrpts_kparameter = set([len(table[param]), ])
             symm_diff = nrpts_corrtables ^ nrpts_kparameter
 
             if symm_diff:
+                strf = f'polarization: {polarization}, '
+                strf += f'nrpts_corrtables: {nrpts_corrtables}, '
+                strf += f'nrpts_kparameter: {nrpts_kparameter}, '
                 raise ValueError(
                     'Corrector tables and kparameter list in config '
-                    'are not consistent')
+                    'are not consistent. ' + strf)
         return True
 
     def _get_corr_pvnames(self, corrlabels):
