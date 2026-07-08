@@ -152,9 +152,7 @@ def get_event_database(evt_num=0, prefix=None):
     dic_ = {'type': 'enum', 'enums': _et.FIXED_INCR, 'value': 1}
     dbase[prefix + 'DelayType-Sel'] = _dcopy(dic_)
     dbase[prefix + 'DelayType-Sts'] = dic_
-    dic_ = {'type': 'string', 'value': ''}
-    dbase[prefix + 'Desc-SP'] = _dcopy(dic_)
-    dbase[prefix + 'Desc-RB'] = dic_
+    dbase[prefix + 'Desc-Cte'] = {'type': 'string', 'value': ''}
     dbase[prefix + 'ExtTrig-Cmd'] = {'type': 'int', 'value': 0}
     return dbase
 
