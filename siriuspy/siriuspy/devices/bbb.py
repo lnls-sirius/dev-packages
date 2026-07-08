@@ -810,32 +810,41 @@ class Acquisition(_Device):
         'FREQ',
         'ACQ_MASK',
         'ACQ_PATTERN',
-        'SP_LOW1',
-        'SP_HIGH1',
-        'SP_SEARCH1',
-        'SP_LOW2',
-        'SP_HIGH2',
-        'SP_SEARCH2',
-        'PEAKFREQ1',
-        'PEAK1',
-        'PEAKTUNE1',
-        'PEAKFREQ2',
-        'PEAK2',
-        'PEAKTUNE2',
+        'M1_LOW',
+        'M1_HIGH',
+        'M1_MODE',
+        'M1_FREQ',
+        'M1_PEAK',
+        'M1_TUNE',
+        'M1_INVALID',
+        'M1_SKEW',
+        'M1_SKEWNESS',
+        'M2_LOW',
+        'M2_HIGH',
+        'M2_MODE',
+        'M2_FREQ',
+        'M2_PEAK',
+        'M2_TUNE',
+        'M2_INVALID',
+        'M2_SKEW',
+        'M2_SKEWNESS',
         'MD_ENABLE',
         'MD_SMODE',
         'MD_FTUNE',
         'MD_FSPAN',
         'MD_MSEL',
         'MD_AVG',
-        'MD_SP_LOW',
-        'MD_SP_HIGH',
-        'MD_SP_SEARCH',
         'MD_MAXMODE',
         'MD_MAXVAL',
+        'MD_LOW',
+        'MD_HIGH',
+        'MD_MODE',
         'MD_PEAK',
-        'MD_PEAKFREQ',
-        'MD_PEAKTUNE',
+        'MD_FREQ',
+        'MD_TUNE',
+        'MD_INVALID',
+        'MD_SKEW',
+        'MD_SKEWNESS',
         'MD_MODES',
         'MD_SPEC',
     )
@@ -1082,86 +1091,86 @@ class Acquisition(_Device):
     @property
     def spec_marker1_freq_min(self):
         """."""
-        return self['SP_LOW1']
+        return self['M1_LOW']
 
     @spec_marker1_freq_min.setter
     def spec_marker1_freq_min(self, value):
-        self['SP_LOW1'] = value
+        self['M1_LOW'] = value
 
     @property
     def spec_marker1_freq_max(self):
         """."""
-        return self['SP_HIGH1']
+        return self['M1_HIGH']
 
     @spec_marker1_freq_max.setter
     def spec_marker1_freq_max(self, value):
-        self['SP_HIGH1'] = value
+        self['M1_HIGH'] = value
 
     @property
     def spec_marker1_search_mode(self):
         """."""
-        return self['SP_SEARCH1']
+        return self['M1_MODE']
 
     @spec_marker1_search_mode.setter
     def spec_marker1_search_mode(self, value):
-        self['SP_SEARCH1'] = value
+        self['M1_MODE'] = value
 
     @property
     def spec_marker1_freq(self):
         """."""
-        return self['PEAKFREQ1']
+        return self['M1_FREQ']
 
     @property
     def spec_marker1_tune(self):
         """."""
-        return self['PEAKTUNE1']
+        return self['M1_TUNE']
 
     @property
     def spec_marker1_mag(self):
         """."""
-        return self['PEAK1']
+        return self['M1_PEAK']
 
     @property
     def spec_marker2_freq_min(self):
         """."""
-        return self['SP_LOW2']
+        return self['M2_LOW']
 
     @spec_marker2_freq_min.setter
     def spec_marker2_freq_min(self, value):
-        self['SP_LOW2'] = value
+        self['M2_LOW'] = value
 
     @property
     def spec_marker2_freq_max(self):
         """."""
-        return self['SP_HIGH2']
+        return self['M2_HIGH']
 
     @spec_marker2_freq_max.setter
     def spec_marker2_freq_max(self, value):
-        self['SP_HIGH2'] = value
+        self['M2_HIGH'] = value
 
     @property
     def spec_marker2_search_mode(self):
         """."""
-        return self['SP_SEARCH2']
+        return self['M2_MODE']
 
     @spec_marker2_search_mode.setter
     def spec_marker2_search_mode(self, value):
-        self['SP_SEARCH2'] = value
+        self['M2_MODE'] = value
 
     @property
     def spec_marker2_freq(self):
         """."""
-        return self['PEAKFREQ2']
+        return self['M2_FREQ']
 
     @property
     def spec_marker2_tune(self):
         """."""
-        return self['PEAKTUNE2']
+        return self['M2_TUNE']
 
     @property
     def spec_marker2_mag(self):
         """."""
-        return self['PEAK2']
+        return self['M2_PEAK']
 
     @staticmethod
     def process_acquisition_type(acqtype):
@@ -1232,29 +1241,29 @@ class Acquisition(_Device):
     @property
     def modal_marker_freq_min(self):
         """."""
-        return self['MD_SP_LOW']
+        return self['MD_LOW']
 
     @modal_marker_freq_min.setter
     def modal_marker_freq_min(self, value):
-        self['MD_SP_LOW'] = value
+        self['MD_LOW'] = value
 
     @property
     def modal_marker_freq_max(self):
         """."""
-        return self['MD_SP_HIGH']
+        return self['MD_HIGH']
 
     @modal_marker_freq_max.setter
     def modal_marker_freq_max(self, value):
-        self['MD_SP_HIGH'] = value
+        self['MD_HIGH'] = value
 
     @property
     def modal_marker_search_mode(self):
         """."""
-        return self['MD_SP_SEARCH']
+        return self['MD_MODE']
 
     @modal_marker_search_mode.setter
     def modal_marker_search_mode(self, value):
-        self['MD_SP_SEARCH'] = value
+        self['MD_MODE'] = value
 
     @property
     def modal_maximum_mode(self):
@@ -1269,12 +1278,12 @@ class Acquisition(_Device):
     @property
     def modal_marker_freq(self):
         """."""
-        return self['MD_PEAKFREQ']
+        return self['MD_FREQ']
 
     @property
     def modal_marker_tune(self):
         """."""
-        return self['MD_PEAKTUNE']
+        return self['MD_TUNE']
 
     @property
     def modal_marker_mag(self):
@@ -1325,13 +1334,16 @@ class SingleBunch(_Device):
         'MEANVAL',
         'RMSVAL',
         'AMP_PP',
-        'SP_LOW1',
-        'SP_HIGH1',
-        'PEAKFREQ1',
-        'PEAKTUNE1',
-        'PEAK1',
-        'SP_SEARCH1',
-        'PHASE1',
+        'M1_LOW1',
+        'M1_HIGH1',
+        'M1_FREQ',
+        'M1_TUNE',
+        'M1_PEAK',
+        'M1_MODE',
+        'M1_PHASE',
+        'M1_INVALID',
+        'M1_SKEW',
+        'M1_SKEWNESS',
     )
 
     DEF_TIMEOUT = 10  # [s]
@@ -1529,49 +1541,49 @@ class SingleBunch(_Device):
     @property
     def spec_marker1_freq_min(self):
         """."""
-        return self['SP_LOW1']
+        return self['M1_LOW']
 
     @spec_marker1_freq_min.setter
     def spec_marker1_freq_min(self, value):
-        self['SP_LOW1'] = value
+        self['M1_LOW'] = value
 
     @property
     def spec_marker1_freq_max(self):
         """."""
-        return self['SP_HIGH1']
+        return self['M1_HIGH']
 
     @spec_marker1_freq_max.setter
     def spec_marker1_freq_max(self, value):
-        self['SP_HIGH1'] = value
+        self['M1_HIGH'] = value
 
     @property
     def spec_marker1_search_mode(self):
         """."""
-        return self['SP_SEARCH1']
+        return self['M1_MODE']
 
     @spec_marker1_search_mode.setter
     def spec_marker1_search_mode(self, value):
-        self['SP_SEARCH1'] = value
+        self['M1_MODE'] = value
 
     @property
     def spec_marker1_freq(self):
         """."""
-        return self['PEAKFREQ1']
+        return self['M1_FREQ']
 
     @property
     def spec_marker1_tune(self):
         """."""
-        return self['PEAKTUNE1']
+        return self['M1_TUNE']
 
     @property
     def spec_marker1_mag(self):
         """."""
-        return self['PEAK1']
+        return self['M1_PEAK']
 
     @property
     def spec_marker1_phase(self):
         """."""
-        return self['PHASE1']
+        return self['M1_PHASE']
 
     def cmd_enable_transfer_function(self, timeout=DEF_TIMEOUT):
         """Enable transfer function."""
