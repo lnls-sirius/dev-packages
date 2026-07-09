@@ -110,9 +110,17 @@ class BaseApp(_Callback):
 
         # Initialize correction parameters from local file and configdb
         self.cn_handler = _HandleConfigNameFile(self._acc, self._optics_param)
-        self.cdb_client = _ConfigDBClient(
-            config_type=self._acc.lower()+'_'+self._optics_param+'corr_params')
-        [done, corrparams] = self._get_corrparams()
+        # self.cdb_client = _ConfigDBClient(
+        #     config_type=self._acc.lower()+'_'+self._optics_param+'corr_params')
+        self.cdb_client = None
+        # [done, corrparams] = self._get_corrparams()
+        _np.random.seed(1)
+        [done, corrparams] = [True, [
+            'MyConfig',
+            list(_np.random.rand(2, 8).ravel()),
+            [1.0]*8,
+            [0.0, 0.0]
+        ]]
         if done:
             self._config_name = corrparams[0]
             self._nominal_matrix = corrparams[1]
@@ -169,13 +177,15 @@ class BaseApp(_Callback):
 
         if self._acc == 'SI':
             # Connect to Timing
-            evg = _LLTimeSearch.get_evg_name()
+            # evg = _LLTimeSearch.get_evg_name()
+            evg = 'EVG-A'
             trig_name = self._trigger_name.substitute(prefix=_vaca_prefix)
             evt_name = _PVName(evg).substitute(
                 prefix=_vaca_prefix, propty_name=self._event_name)
             try:
-                trig_db = _get_trig_db(trig_name)
-                self._evt_src_idx = trig_db['Src-Sel']['enums'].index(evt_name)
+                # trig_db = _get_trig_db(trig_name)
+                # self._evt_src_idx = trig_db['Src-Sel']['enums'].index(evt_name)
+                self._evt_src_idx = 1
             except (KeyError, ValueError):
                 self._evt_src_idx = 1
 

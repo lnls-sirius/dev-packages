@@ -14,7 +14,7 @@ uninstall:
 	$(PREFIX) $(PIP) uninstall -y $(PACKAGE)
 
 develop-install: develop-uninstall
-	$(PIP) install --no-deps -e ./
+	$(PIP) install --no-deps -e ./ --config-settings editable_mode=strict
 
 develop-uninstall:
 	$(PIP) uninstall -y $(PACKAGE)
