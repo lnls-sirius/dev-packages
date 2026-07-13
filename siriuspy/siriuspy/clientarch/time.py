@@ -143,7 +143,7 @@ class Time(_datetime):
     @staticmethod
     def now(tz=None):
         """Get current time."""
-        return _datetime.now(tz).astimezone(tz)
+        return Time(_datetime.now(tz).astimezone(tz))
 
     @staticmethod
     def utcnow():
