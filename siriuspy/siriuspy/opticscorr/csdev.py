@@ -319,6 +319,27 @@ def get_tune_database(acc):
             'type': 'float', 'value': 3.0, 'unit': 'Hz',
             'prec': 3, 'lolim': 1e-3, 'hilim': 4.0}
 
+        # Reference Tunes
+        pvs_database['RefTuneX-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['RefTuneX-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['RefTuneY-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['RefTuneY-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['MaxTuneErr-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['MaxTuneErr-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
+            'lolim': 0.0001, 'hilim': 0.4999}
+
+        # PID PVs
         pvs_database['LoopPIDKpX-RB'] = {
             'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
             'lolim': -1000, 'hilim': 1000}
@@ -358,7 +379,13 @@ def get_tune_database(acc):
             'lolim': -1000, 'hilim': 1000}
 
         # Temporary Fake PV
-        pvs_database['FakeTune-Mon'] = {
+        pvs_database['FakeTuneX-Mon'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
+        pvs_database['FakeTuneY-Mon'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
+        pvs_database['SimIDTuneShiftAmp-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
+        pvs_database['SimIDTuneShiftAmp-RB'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)

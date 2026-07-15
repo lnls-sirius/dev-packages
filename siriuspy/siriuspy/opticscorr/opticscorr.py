@@ -372,7 +372,6 @@ class OpticsCorr:
     def _calculate_inverse(self, method, grouping):
         """Calculate inverse of a matrix using SVD."""
         matrix = self._choose_matrix(method, grouping)
-
         try:
             umat, smat, vmat = _np.linalg.svd(matrix, full_matrices=False)
         except _np.linalg.LinAlgError():
@@ -386,6 +385,7 @@ class OpticsCorr:
         return inv
 
     def _choose_matrix(self, method, grouping):
+        matrix = None
         if method == 0:
             if grouping == 'svd':
                 matrix = self.matrix_prop_svd
