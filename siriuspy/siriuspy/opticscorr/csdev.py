@@ -307,7 +307,7 @@ def get_tune_database(acc):
         pvs_database['MeasConfigStatus-Mon'] = {
             'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
 
-        # SI Tune FeedBack
+        # SI Tune FeedBack ####################################################
         pvs_database['LoopState-Sel'] = {
             'type': 'enum', 'enums': _ct.LoopState._fields, 'value': 0}
         pvs_database['LoopState-Sts'] = {
@@ -334,59 +334,63 @@ def get_tune_database(acc):
             'lolim': 0.0001, 'hilim': 0.4999}
         pvs_database['MaxTuneErr-SP'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
-            'lolim': 0.0001, 'hilim': 0.4999}
+            'lolim': 0.001, 'hilim': 100.0}
         pvs_database['MaxTuneErr-RB'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 4,
-            'lolim': 0.0001, 'hilim': 0.4999}
+            'lolim': 0.001, 'hilim': 100.00}
 
         # PID PVs
         pvs_database['LoopPIDKpX-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKpX-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKiX-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKiX-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKdX-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKdX-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
-
+            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKpY-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKpY-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKiY-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKiY-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKdY-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
         pvs_database['LoopPIDKdY-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 3,
-            'lolim': -1000, 'hilim': 1000}
+            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 2,
+            'lolim': -2.0, 'hilim': 2.0}
 
-        # Temporary Fake PV
+        # Temporary Fake/Simulation PVs
         pvs_database['FakeTuneX-Mon'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
         pvs_database['FakeTuneY-Mon'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
-        pvs_database['SimIDTuneShiftAmp-SP'] = {
+        pvs_database['SimNoiseAmp-SP'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
-        pvs_database['SimIDTuneShiftAmp-RB'] = {
+        pvs_database['SimNoiseAmp-RB'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
+        # pvs_database['SimIDQuadShakeKL-SP'] = {
+        #     'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
+        # pvs_database['SimIDQuadShakeKL-RB'] = {
+        #     'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6}
+        #######################################################################
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database

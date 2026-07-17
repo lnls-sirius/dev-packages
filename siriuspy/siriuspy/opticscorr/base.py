@@ -28,6 +28,7 @@ ALLSET = 0x1f
 ALLCLR_SYNCON = 0x00
 ALLCLR_SYNCOFF = 0x10
 
+AT_HOME = False
 
 class BaseApp(_Callback):
     """Main application for handling optics correction."""
@@ -110,20 +111,33 @@ class BaseApp(_Callback):
 
         # Initialize correction parameters from local file and configdb
         self.cn_handler = _HandleConfigNameFile(self._acc, self._optics_param)
-        # self.cdb_client = _ConfigDBClient(
-        #     config_type=self._acc.lower()+'_'+self._optics_param+'corr_params')
-        # [done, corrparams] = self._get_corrparams()
-        ### descomentar: em casa
-        self.cdb_client = None
-        _np.random.seed(1)
-        [done, corrparams] = [True, [
-            'MyConfig',
-            # list(_np.random.rand(2, 8).ravel()),
-            # list(_np.arange(16, dtype=float)),
-            [13.779466911501004, 28.55266515666699, 14.275901506266564, 3.8763986012213536, 7.769886735786713, 14.246758887281885, 3.884805046538986, 7.123179983636874, -6.813557648754909, -11.7381378004211, -5.869144851899932, -16.840741192680753, -33.59577678274661, -14.032346095760317, -16.798194669931377, -7.016250235025723],
-            [1.0]*8,
-            [0.0, 0.0]
-        ]] #### descomentar: em casa
+        if not AT_HOME:
+            self.cdb_client = _ConfigDBClient(
+            config_type=self._acc.lower()+'_'+self._optics_param+'corr_params')
+            [done, corrparams] = self._get_corrparams()
+        else:
+            self.cdb_client = None
+            [done, corrparams] = [True, [
+                'MyConfig',
+                [13.779466911501004,
+                 28.55266515666699,
+                 14.275901506266564,
+                 3.8763986012213536,
+                 7.769886735786713,
+                 14.246758887281885,
+                 3.884805046538986,
+                 7.123179983636874,
+                 -6.813557648754909,
+                 -11.7381378004211,
+                 -5.869144851899932,
+                 -16.840741192680753,
+                 -33.59577678274661,
+                 -14.032346095760317,
+                 -16.798194669931377,
+                 -7.016250235025723],
+                [1.0]*8,
+                [0.0, 0.0]
+            ]]
         if done:
             self._config_name = corrparams[0]
             self._nominal_matrix = corrparams[1]
@@ -180,15 +194,19 @@ class BaseApp(_Callback):
 
         if self._acc == 'SI':
             # Connect to Timing
-            # evg = _LLTimeSearch.get_evg_name()
-            evg = 'EVG-A' #### descomentar: em casa
+            if AT_HOME:
+                evg = 'EVG'
+            else:
+                evg = _LLTimeSearch.get_evg_name()
             trig_name = self._trigger_name.substitute(prefix=_vaca_prefix)
             evt_name = _PVName(evg).substitute(
                 prefix=_vaca_prefix, propty_name=self._event_name)
             try:
-                # trig_db = _get_trig_db(trig_name)
-                # self._evt_src_idx = trig_db['Src-Sel']['enums'].index(evt_name)
-                self._evt_src_idx = 1 #### descomentar: em casa
+                if AT_HOME:
+                    self._evt_src_idx = 1
+                else:
+                    trig_db = _get_trig_db(trig_name)
+                    self._evt_src_idx = trig_db['Src-Sel']['enums'].index(evt_name)
             except (KeyError, ValueError):
                 self._evt_src_idx = 1
 
@@ -338,6 +356,7 @@ class BaseApp(_Callback):
         if self._apply_corr():
             self._apply_corr_cmd_count += 1
             self.run_callbacks('ApplyDelta-Cmd', self._apply_corr_cmd_count)
+            return True
         return False
 
     def set_config_name(self, value):

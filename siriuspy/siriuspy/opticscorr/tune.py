@@ -14,6 +14,12 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from .csdev import Const as _Const, ETypes as _ETypes
 from .base import BaseApp as _BaseApp
 
+import pyaccel as _pyacc
+from pymodels import si as _si
+from apsuite.optics_analysis.tune_correction import TuneCorr
+
+TWOPI = 2 * _np.pi
+
 
 class TuneCorrApp(_BaseApp):
     """Main application for handling tune correction."""
@@ -32,27 +38,12 @@ class TuneCorrApp(_BaseApp):
 
         self._inloop = False
 
-        # kllist = [0.002312133381724278,
-        #     0.005410918928783577,
-        #     0.002705311841611923,
-        #     -0.0032361698526480256,
-        #     -0.006444951374712347,
-        #     0.0005707470671369916,
-        #     -0.0032225964726197813,
-        #     0.00028529427813982477]
-
-        kllist = [ 0.71463554,  1.23452484,  1.23452484, -0.22673566, -0.28094844,
-       -0.47888046, -0.28094844, -0.47888046]
-
-        self._psfam_kl = {fam: j for (fam,j) in zip(self._psfams, kllist)}
-
         if self._acc == 'SI':
             self._meas_config_dkl_qf = 0.020
             self._meas_config_dkl_qd = 0.020
 
         # Connect to Quadrupoles Families
-        # self._psfam_refkl = {fam: 0 for fam in self._psfams}
-        self._psfam_refkl = {fam: j for (fam,j) in zip(self._psfams, kllist)}
+        self._psfam_refkl = {fam: 0 for fam in self._psfams}
 
         self._lastcalc_deltakl = {fam: 0 for fam in self._psfams}
         for fam in self._psfams:
@@ -83,7 +74,7 @@ class TuneCorrApp(_BaseApp):
         """Set DeltaTuneX."""
         if self._inloop:
             self.run_callbacks('Log-Mon',
-                'ERR:Cant set DeltaTuneX while the feedback loop is closed.')
+                'ERR: Cant set DeltaTuneX while the feedback loop is closed.')
             return False
         self._delta_tunex = value
         self.run_callbacks('DeltaTuneX-RB', value)
@@ -94,7 +85,7 @@ class TuneCorrApp(_BaseApp):
         """Set DeltaTuneY."""
         if self._inloop:
             self.run_callbacks('Log-Mon',
-                'ERR:Cant set DeltaTuneY while the feedback loop is closed.')
+                'ERR: Cant set DeltaTuneY while the feedback loop is closed.')
             return False
         self._delta_tuney = value
         self.run_callbacks('DeltaTuneY-RB', value)
@@ -107,6 +98,8 @@ class TuneCorrApp(_BaseApp):
             self._set_new_refkl_cmd_count += 1
             self.run_callbacks(
                 'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
+            return True
+        self.run_callbacks('Log-Mon', f'{self._inloop=}')
         return False
 
     def set_meas_config_dkl_qf(self, value):
@@ -154,7 +147,7 @@ class TuneCorrApp(_BaseApp):
             delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
         if not self._inloop:
-            self.run_callbacks('Log-Mon', f'Calculated KL values. {self._inloop}')
+            self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
         for fam_idx, fam in enumerate(self._psfams):
             self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
@@ -162,22 +155,25 @@ class TuneCorrApp(_BaseApp):
                 'DeltaKL'+fam+'-Mon', self._lastcalc_deltakl[fam])
 
     def _apply_corr(self):
-        if True:# if self._is_status_ok():
-            kls = {fam: self._psfam_kl[fam]+self._lastcalc_deltakl[fam]
-                   for fam in self._psfams}
-            # self._apply_intstrength(kls)
-            for fam in self._psfams:
-                self._psfam_kl[fam] = kls[fam]
-            if not self._inloop:
-                self.run_callbacks('Log-Mon', 'Applied correction.')
-            if self._sync_corr == _Const.SyncCorr.On:
-                self._event_exttrig_cmd.put(0)
+        try:
+            sts = self._sim_apply_corr()
+            return sts
+        except Exception as e:
+            self.run_callbacks('Log-Mon', f'ERR: {e}.')
+            if self._is_status_ok():
+                kls = {fam: self._psfam_refkl[fam]+self._lastcalc_deltakl[fam]
+                    for fam in self._psfams}
+                self._apply_intstrength(kls)
                 if not self._inloop:
-                    self.run_callbacks('Log-Mon', 'Generated trigger.')
-            return True
+                    self.run_callbacks('Log-Mon', 'Applied correction.')
+                if self._sync_corr == _Const.SyncCorr.On:
+                    self._event_exttrig_cmd.put(0)
+                    if not self._inloop:
+                        self.run_callbacks('Log-Mon', 'Generated trigger.')
+                return True
 
-        self.run_callbacks('Log-Mon', 'ERR: ApplyDelta-Cmd failed.')
-        return False
+            self.run_callbacks('Log-Mon', 'ERR: ApplyDelta-Cmd failed.')
+            return False
 
     def _get_optics_param(self):
         """Return optics parameter."""
@@ -194,35 +190,38 @@ class TuneCorrApp(_BaseApp):
         return deltakl/nelm
 
     def _update_ref(self):
-        if (self._status & 0x1) == 0:  # Check connection
-            # update references
-            for fam in self._psfams:
-                value = self._psfam_intstr_rb_pvs[fam].get()
-                if value is None:
+        try:
+            return self._sim_update_ref()
+        except Exception:
+            if (self._status & 0x1) == 0:  # Check connection
+                # update references
+                for fam in self._psfams:
+                    value = self._psfam_intstr_rb_pvs[fam].get()
+                    if value is None:
+                        self.run_callbacks(
+                            'Log-Mon',
+                            'ERR: Received a None value from {}.'.format(fam))
+                        return False
+                    self._psfam_refkl[fam] = value
                     self.run_callbacks(
-                        'Log-Mon',
-                        'ERR: Received a None value from {}.'.format(fam))
-                    return False
-                self._psfam_refkl[fam] = value
-                self.run_callbacks(
-                    'RefKL' + fam + '-Mon', self._psfam_refkl[fam])
+                        'RefKL' + fam + '-Mon', self._psfam_refkl[fam])
 
-                self._lastcalc_deltakl[fam] = 0
-                self.run_callbacks('DeltaKL' + fam + '-Mon', 0)
+                    self._lastcalc_deltakl[fam] = 0
+                    self.run_callbacks('DeltaKL' + fam + '-Mon', 0)
 
-            # the deltas from new kl references are zero
-            self._delta_tunex = 0
-            self._delta_tuney = 0
-            self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
-            self.run_callbacks('DeltaTuneX-RB', self._delta_tunex)
-            self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
-            self.run_callbacks('DeltaTuneY-RB', self._delta_tuney)
+                # the deltas from new kl references are zero
+                self._delta_tunex = 0
+                self._delta_tuney = 0
+                self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
+                self.run_callbacks('DeltaTuneX-RB', self._delta_tunex)
+                self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
+                self.run_callbacks('DeltaTuneY-RB', self._delta_tuney)
 
-            self._estimate_current_deltatune()
+                self._estimate_current_deltatune()
 
-            if not self._inloop:
-                self.run_callbacks('Log-Mon', 'Updated KL references.')
-            return True
+                if not self._inloop:
+                    self.run_callbacks('Log-Mon', 'Updated KL references.')
+                return True
 
         self.run_callbacks(
             'Log-Mon', 'ERR: Some magnet family is disconnected.')
@@ -267,14 +266,23 @@ class SITuneCorrApp(TuneCorrApp):
         """Class constructor."""
         super().__init__(acc='SI')
 
-        zer = _np.zeros(2, dtype=float)
-        self._pid_errs = [zer, zer.copy(), zer.copy()]
+        # True = 1 = UsingDKLs, False = 0 = UsingDTune, -1 = An in Experiment
+        self._using_pid_overdkls = -1
+        if self._using_pid_overdkls == 1:
+            self._pid_errs = [0.0, 0.0, 0.0]
+        elif self._using_pid_overdkls == 0:
+            self._pid_errs = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+        else:
+            self._pid_errs = []
+
         self._pid_gains = dict(
-            x=dict(kp=0.7, ki=0.2, kd=0.1),
-            y=dict(kp=0.7, ki=0.2, kd=0.1),
+            x=dict(kp=1.0, ki=0.0, kd=0.0),
+            y=dict(kp=1.0, ki=0.0, kd=0.0),
         )
-        self._thread_ramp_pid_gain = None
-        self._abort_thread_ramp_pid_gain = False
+        self._thread_ramp_pid_gain = dict(
+            x=dict(kp=None, ki=None, kd=None),
+            y=dict(kp=None, ki=None, kd=None),
+        )
 
         self._loop_state = _Const.LoopState.Open
         self._loop_state_lastsp = _Const.LoopState.Open
@@ -282,7 +290,7 @@ class SITuneCorrApp(TuneCorrApp):
         self._thread_loopstate = None
         self._abort_thread_loopstate = False
 
-        self._max_tune_err = 0.02
+        self._max_tune_err = 99.00
         self._ref_tunex = 0.16
         self._ref_tuney = 0.22
 
@@ -301,20 +309,63 @@ class SITuneCorrApp(TuneCorrApp):
             'RefTuneY-SP': _part(self.set_ref_tune, "y"),
             'MaxTuneErr-SP': self.set_max_tune_err,
 
-            'SimIDTuneShiftAmp-SP': self._set_faketuneshiftamp,
+            # 'SimIDQuadShakeKL-SP': self._set_sim_idquadshakekl,
+            'SimNoiseAmp-SP': self._set_klnoise_amp,
         })
-
-        # self._storedebeam_pv.add_callback(
-        #     self._loop_checkbeam
-        # )
 
         self._thread_fb_quit = False
         self._thread_fb = None
 
-        self._sim_id_tuneshift_x = []
-        self._sim_id_tuneshift_y = []
+        # SIMULATION ##########################################################
+        # model prep
+        _model = _si.create_accelerator()
+        self.SIMQUAD_LENG = 0.1
+
+        _mia = _pyacc.lattice.find_indices(_model, 'fam_name', 'mia')[-1]
+        _mib = _pyacc.lattice.find_indices(_model, 'fam_name', 'mib')[2]
+
+        self._sim_quad_indices = [_mib, _mia]
+
+        for i, idx in enumerate(self._sim_quad_indices):
+            _model.insert(idx+i, _pyacc.elements.quadrupole(
+                f'SimID_{i}', self.SIMQUAD_LENG, 0.0))
+            self._sim_quad_indices[i] = idx + i
+
+        self._sim_tunecorr = TuneCorr(_model, 'SI')
+        self._sim_tunecorr.method = 0 \
+            if self._corr_method == _Const.CorrMeth.Proportional else 1
+        self._sim_tunecorr.grouping = self._corr_group
+        self._sim_tunecorr.correct_parameters(
+            [49+self._ref_tunex, 14+self._ref_tuney])
+        self._psfam_refkl = self._sim_get_intstrength()
+
+        # fake tune prep
+        # self._sim_id_kl = []
         self._faketunex = 0.0
         self._faketuney = 0.0
+
+        self._update_log('INFO: Loading noise data...')
+        self._klnoise_len = 100_000  # possible cut
+        path = '/home/vitor/repos/dev-packages/siriuspy/siriuspy/opticscorr/'
+        self._klnoise = _np.load(path+'klnoise.npy').copy()
+        self._update_log(f'INFO: Loaded {len(self._klnoise)} noise points!')
+        self._klnoise = self._klnoise[:self._klnoise_len]
+        self._klnoise_len = len(self._klnoise)
+        self._klnoise = self._klnoise.tolist()
+        self._klnoise_idx = 0
+        self._klnoise_amp = 1.0
+        # self._rng = _np.random.default_rng(111)
+
+        #######################################################################
+
+        self.tunex_buffer = [0.0, 0.0, 0.0]
+        self.tuney_buffer = [0.0, 0.0, 0.0]
+        self._last_delta_tunex = 0.0
+        self._last_delta_tuney = 0.0
+
+        # self._tune_x_pv.add_callback(self._fill_tunex_buffer)
+        # self._tune_y_pv.add_callback(self._fill_tuney_buffer)
+        # self._storedebeam_pv.add_callback(self._loop_checkbeam)
 
     def _create_feedbackthread(self):
         tgt = self.feedback_loop
@@ -341,14 +392,27 @@ class SITuneCorrApp(TuneCorrApp):
     def set_loop_freq(self, value):
         """Set loop frequency."""
         self._loop_freq = float(value)
+
+        # the tune buffers must be resized
+        # tunes are read at 10 Hz
+        # if the loop freq is 1 Hz, the tune buffer must be resized to 9
+        # if the loop freq is 3 Hz, the tune buffer must be resized to 3
+
+        buffer_size = int(9.5 / self._loop_freq)
+
+        self.tunex_buffer = self.tunex_buffer[-buffer_size:]
+        buffer_current_size = len(self.tunex_buffer)
+        if buffer_current_size < buffer_size:
+            self.tunex_buffer = [0.0] * (buffer_size - buffer_current_size) + \
+                self.tunex_buffer
+
+        self.tuney_buffer = self.tuney_buffer[-buffer_size:]
+        buffer_current_size = len(self.tuney_buffer)
+        if buffer_current_size < buffer_size:
+            self.tuney_buffer = [0.0] * (buffer_size - buffer_current_size) + \
+                self.tuney_buffer
+
         self.run_callbacks('LoopFreq-RB', float(value))
-
-        self._update_log(f'--- FB thread Quit = {self._thread_fb_quit}')
-        self._update_log(f'--- FB thread is None? {self._thread_fb is None}')
-        if self._thread_fb is not None:
-            self._update_log(
-                f'--- FB thread is alive? {self._thread_fb.is_alive()}')
-
         return True
 
     def set_loop_state(self, value, abort=False):
@@ -371,36 +435,27 @@ class SITuneCorrApp(TuneCorrApp):
             return False
 
         self._thread_loopstate = _epics.ca.CAThread(
-            target=self._thread_set_loop_state,
+            target=self._set_loop_state_inthread,
             args=[value, abort], daemon=True)
         self._thread_loopstate.start()
         return True
 
-    def _thread_set_loop_state(self, value, abort):
+    def _set_loop_state_inthread(self, value, abort):
         if value:  # closing the loop
             self._update_log('Closing the loop...')
 
-            # set gains to zero and ramp up
-
+            # set gains to zero
             self._update_log('Setting PID gains to zero...')
             self._inloop = False
+            pid_gains = dict()
             for g in ['x', 'y']:
+                pid_gains[g] = {
+                    'kp': self._pid_gains[g]['kp'],
+                    'ki': self._pid_gains[g]['ki'],
+                    'kd': self._pid_gains[g]['kd']}
                 self.set_pid_gain('kp', g, 0.0)
                 self.set_pid_gain('ki', g, 0.0)
                 self.set_pid_gain('kd', g, 0.0)
-            self._inloop = True
-            _sleep(0.2)
-            self._update_log('PID set to zero...')
-            self._update_log('Ramping up... (fake)')
-            # for g in ['x', 'y']:
-            #     for k in ['kp', 'ki', 'kd']:
-            #         self.set_pid_gain(k, g, self._pid_gains[g][k])
-            #         if self._thread_ramp_pid_gain is not None:
-            #             self._thread_ramp_pid_gain.join()
-
-            # if self._check_abort_thread():
-            #     return
-            self._update_log('Ramp up complete!')
 
             # close the loop
             if self._thread_fb is not None:
@@ -411,26 +466,51 @@ class SITuneCorrApp(TuneCorrApp):
                     self._thread_fb.join()
             self._thread_fb_quit = False
             self._thread_fb = self._create_feedbackthread()
+            self._last_delta_tunex = 0.0
+            self._last_delta_tuney = 0.0
             self._loop_state = value
             self._inloop = True
-
-            _sleep(0.1)
-
             self._thread_fb.start()
+
+            # ramp up pid gains
+            _sleep(0.2)
+            self._update_log('Ramping up PID gains...')
+            for g in ['x', 'y']:
+                for k in ['kp', 'ki', 'kd']:
+                    self.set_pid_gain(k, g, pid_gains[g][k])
+            _sleep(1)
             self.run_callbacks('LoopState-Sts', self._loop_state)
             self._update_log('Loop closed.')
             return
-        else:  # opening the loop
 
-            # do ramp down
+        else:  # opening the loop
+            # ramp down pid gains
+            self._update_log('Ramping down PID gains...')
+            pid_gains = dict()
+            for g in ['x', 'y']:
+                pid_gains[g] = {
+                    'kp': self._pid_gains[g]['kp'],
+                    'ki': self._pid_gains[g]['ki'],
+                    'kd': self._pid_gains[g]['kd']}
+                self.set_pid_gain('kp', g, 0.0)
+                self.set_pid_gain('ki', g, 0.0)
+                self.set_pid_gain('kd', g, 0.0)
 
             # open the loop
+            _sleep(1)
             self._update_log('Opening the loop...')
             self._inloop = False
             self._loop_state = value
-            _sleep(0.1)
+            _sleep(0.2)
+
+            # restore pid gains
+            for g in ['x', 'y']:
+                self.set_pid_gain('kp', g, pid_gains[g]['kp'])
+                self.set_pid_gain('ki', g, pid_gains[g]['ki'])
+                self.set_pid_gain('kd', g, pid_gains[g]['kd'])
+            self._update_log('PID gains restored.')
+
             self.run_callbacks('LoopState-Sts', self._loop_state)
-            # self.run_callbacks('LoopState-Sel', value)
             self._update_log('Loop opened.')
             return
 
@@ -456,33 +536,29 @@ class SITuneCorrApp(TuneCorrApp):
                 "LoopPID" + kparam.title() + plane.upper() + "-RB", float(value)
             )
             return True
-        self._ramp_pid_gain(kparam, plane, value)
-        return True
+        return self._ramp_pid_gain(kparam, plane, value)
 
     def _ramp_pid_gain(self, kparam, plane, value, abort=False):
-        if self._thread_ramp_pid_gain is not None and \
-            self._thread_ramp_pid_gain.is_alive():
-            self._thread_ramp_pid_gain.join()
+        if self._thread_ramp_pid_gain[plane][kparam] is not None and \
+            self._thread_ramp_pid_gain[plane][kparam].is_alive():
+            self._thread_ramp_pid_gain[plane][kparam].join()
 
-        self._thread_ramp_pid_gain = _epics.ca.CAThread(
-            target=self._thread_ramp_pid_gain,
+        self._thread_ramp_pid_gain[plane][kparam] = _epics.ca.CAThread(
+            target=self._ramp_pid_gain_inthread,
             args=[kparam, plane, value, abort], daemon=True)
-        self._thread_ramp_pid_gain.start()
+        self._thread_ramp_pid_gain[plane][kparam].start()
         return True
 
-    def _thread_ramp_pid_gain(self, kparam, plane, value, abort):
-        self._update_log(f'ERR: Ramping up... {kparam} {plane} {value}')
+    def _ramp_pid_gain_inthread(self, kparam, plane, value, abort):
         deltapidgain = value - self._pid_gains[plane][kparam]
-        max_delta_pid_gain_per_step = 0.1
+        max_delta_pid_gain_per_step = 0.15
         pid_gain_ramp_interval = 0.1
         while not _np.isclose(deltapidgain, 0.0):
-
             if abs(deltapidgain) > max_delta_pid_gain_per_step:
                 deltapidgain_step = _np.sign(deltapidgain) * \
                     max_delta_pid_gain_per_step
             else:
                 deltapidgain_step = deltapidgain
-
             self._pid_gains[plane][kparam] += deltapidgain_step
             deltapidgain -= deltapidgain_step
             self.run_callbacks(
@@ -490,77 +566,72 @@ class SITuneCorrApp(TuneCorrApp):
                 self._pid_gains[plane][kparam]
             )
             _sleep(pid_gain_ramp_interval)
-            self._update_log(f'WARN: {kparam} {plane} {self._pid_gains[plane][kparam]}')
 
     def update_corrparams_pvs(self):
         """Set initial correction parameters PVs values."""
         super().update_corrparams_pvs()
+
         self.run_callbacks('LoopState-Sel', self._loop_state)
         self.run_callbacks('LoopState-Sts', self._loop_state)
+
         self.run_callbacks('LoopFreq-SP', self._loop_freq)
         self.run_callbacks('LoopFreq-RB', self._loop_freq)
+
         self.run_callbacks('LoopPIDKpX-SP', self._pid_gains['x']['kp'])
-        self.run_callbacks('LoopPIDKiX-SP', self._pid_gains['x']['ki'])
-        self.run_callbacks('LoopPIDKdX-SP', self._pid_gains['x']['kd'])
-        self.run_callbacks('LoopPIDKpY-SP', self._pid_gains['y']['kp'])
-        self.run_callbacks('LoopPIDKiY-SP', self._pid_gains['y']['ki'])
-        self.run_callbacks('LoopPIDKdY-SP', self._pid_gains['y']['kd'])
         self.run_callbacks('LoopPIDKpX-RB', self._pid_gains['x']['kp'])
+        self.run_callbacks('LoopPIDKiX-SP', self._pid_gains['x']['ki'])
         self.run_callbacks('LoopPIDKiX-RB', self._pid_gains['x']['ki'])
+        self.run_callbacks('LoopPIDKdX-SP', self._pid_gains['x']['kd'])
         self.run_callbacks('LoopPIDKdX-RB', self._pid_gains['x']['kd'])
+
+        self.run_callbacks('LoopPIDKpY-SP', self._pid_gains['y']['kp'])
         self.run_callbacks('LoopPIDKpY-RB', self._pid_gains['y']['kp'])
+        self.run_callbacks('LoopPIDKiY-SP', self._pid_gains['y']['ki'])
         self.run_callbacks('LoopPIDKiY-RB', self._pid_gains['y']['ki'])
+        self.run_callbacks('LoopPIDKdY-SP', self._pid_gains['y']['kd'])
         self.run_callbacks('LoopPIDKdY-RB', self._pid_gains['y']['kd'])
+
         self.run_callbacks('RefTuneX-SP', self._ref_tunex)
-        self.run_callbacks('RefTuneY-SP', self._ref_tuney)
         self.run_callbacks('RefTuneX-RB', self._ref_tunex)
+
+        self.run_callbacks('RefTuneY-SP', self._ref_tuney)
         self.run_callbacks('RefTuneY-RB', self._ref_tuney)
+
         self.run_callbacks('MaxTuneErr-SP', self._max_tune_err)
         self.run_callbacks('MaxTuneErr-RB', self._max_tune_err)
 
+        # SIMULATION ##########################################################
         self.run_callbacks('FakeTuneX-Mon', self._faketunex)
         self.run_callbacks('FakeTuneY-Mon', self._faketuney)
+        self.run_callbacks('SimNoiseAmp-SP', self._klnoise_amp)
+        self.run_callbacks('SimNoiseAmp-RB', self._klnoise_amp)
+        self.run_callbacks('CorrGroup-Sts', self._corr_group)  # needed ?
+        self.run_callbacks('CorrGroup-Sel', self._corr_group)  # needed ?
+        self.run_callbacks('CorrMeth-Sts', self._corr_method)  # needed ?
+        self.run_callbacks('CorrMeth-Sel', self._corr_method)  # needed ?
+        #######################################################################
 
     def process(self, interval):
         """."""
         _t0 = _time()
 
-        try:
-            dx = self._sim_id_tuneshift_x[0]
-            dy = self._sim_id_tuneshift_y[0]
+        # if len(self._sim_id_kl) > 0:
+        #     _k = self._sim_id_kl[0] / self.SIMQUAD_LENG
+        #     self._sim_tunecorr.model[self._sim_id_quad_idx].K = float(+_k)
+        #     del self._sim_id_kl[0]
+        #     if len(self._sim_id_kl) == 0:
+        #         self.run_callbacks('SimIDQuadShakeKL-RB', 0.0)
 
-            if len(self._sim_id_tuneshift_x) > 1:
-                del self._sim_id_tuneshift_x[0]
+        if self._klnoise_idx >= self._klnoise_len:
+            self._klnoise_idx = 0
+        for kl, idx in zip(self._klnoise[self._klnoise_idx], self._sim_quad_indices):  # ruff:ignore[zip-without-explicit-strict, line-too-long]
+            self._sim_tunecorr.model[idx].KL = kl * self._klnoise_amp
+        self._klnoise_idx += 1
 
-            if len(self._sim_id_tuneshift_y) > 1:
-                del self._sim_id_tuneshift_y[0]
-        except:
-            dx = 0
-            dy = 0
-        mat = None
-        try:
-            meth = self._corr_method
-            gp = 'svd' if self._corr_group == 1 else '2knobs'
-            mat = self._opticscorr._choose_matrix(meth, gp)
-        except:
-            pass
+        self._faketunex, self._faketuney = self._sim_get_tunes()
 
-        if mat is not None:
-            est_tunes = [0.0, 0.0]
-            for i, fam in enumerate(self._psfams):
-                est_tunes[0] += mat[0, i] * self._psfam_kl[fam]
-                est_tunes[1] += mat[1, i] * self._psfam_kl[fam]
-            est_tunes[0] -= 48.173
-            est_tunes[1] -= 1.23
-            # self._update_log(f'etunes = {est_tunes}')
-        else:
-            est_tunes = [0.16, 0.22]
-
-        dx += float(str(_t0)[-3:]) * 0.2e-5
-        dy += float(str(_t0)[-4:-1]) * 0.2e-5
-
-        self._faketunex = est_tunes[0] + dx
-        self._faketuney = est_tunes[1] + dy
+        self._fill_tunex_buffer()
+        self._fill_tuney_buffer()
 
         self.run_callbacks('FakeTuneX-Mon', self._faketunex)
         self.run_callbacks('FakeTuneY-Mon', self._faketuney)
@@ -570,18 +641,38 @@ class SITuneCorrApp(TuneCorrApp):
         if sleep_time > 0:
             super().process(sleep_time)
 
-    def _set_faketuneshiftamp(self, value):
-        x = _np.linspace(0, 1.5, 10)
-        y = x**2 + x
-        try:
-            tunex0 = self._sim_id_tuneshift_x[0]
-            tuney0 = self._sim_id_tuneshift_y[0]
-        except:
-            tunex0 = 0
-            tuney0 = 0
-        self._sim_id_tuneshift_x += list(y * float(value) * 0.5 + tunex0)
-        self._sim_id_tuneshift_y += list(y * float(value) * 0.7 + tuney0)
-        self.run_callbacks('SimIDTuneShiftAmp-RB', float(value))
+    def _fill_tunex_buffer(self):
+        # if self._tune_x_pv.connected:
+        if True:
+            # self.tunex_buffer += [self._tune_x_pv.value]
+            self.tunex_buffer += [self._faketunex]
+            del self.tunex_buffer[0]
+            return True
+        return False
+
+    def _fill_tuney_buffer(self):
+        # if self._tune_y_pv.connected:
+        if True:
+            # self.tuney_buffer += [self._tune_y_pv.value]
+            self.tuney_buffer += [self._faketuney]
+            del self.tuney_buffer[0]
+            return True
+        return False
+
+    # def _set_sim_idquadshakekl(self, value):
+    #     pint = int(value)
+    #     pfrac = float(value) - pint
+    #     pint = abs(pint)
+    #     x = _np.linspace(-1, 1, pint)
+    #     y = 1 - x**4
+    #     self._sim_id_kl += ([0.0] + list(y * pfrac) + [0.0])
+    #     self.run_callbacks('SimIDQuadShakeKL-RB', float(value))
+    #     return True
+
+    def _set_klnoise_amp(self, value):
+        self._klnoise_amp = float(value)
+        self.run_callbacks('SimNoiseAmp-RB', float(value))
+        return True
 
     def _update_log(self, msg):
         if 'ERR' in msg:
@@ -607,42 +698,59 @@ class SITuneCorrApp(TuneCorrApp):
             if self._loop_state != _Const.LoopState.Closed:
                 self._do_sleep(_t0, tplanned)
                 continue
+            elif self._thread_loopstate is not None and \
+                self._thread_loopstate.is_alive():
+                self._thread_loopstate.join()
+                self._do_sleep(_t0, tplanned, do_warn=False)
+                continue
 
             # is it really necessary?
             # _update_ref already check the _status
-            if not self._status:
-                self._update_log('WARN: Connection problems.')
-                self._do_sleep(_t0, tplanned)
-                continue
+            # if not self._status:
+            #     self._update_log('WARN: Connection problems.')
+            #     self._do_sleep(_t0, tplanned)
+            #     continue
 
             # sts = self._update_ref()
-            sts = True
+            sts = self._sim_update_ref()
             if not sts:
                 self._update_log('ERR: Could not UPDATE REFERENCE.')
                 self._thread_fb_quit = True
                 self._do_sleep(_t0, tplanned)
                 continue
 
-            ################################
-            # next step: tune buffer and PID
-            # sts, (tunex, tuney) = self._get_and_check_tunes()
-            sts, (tunex, tuney) = True, (self._faketunex, self._faketuney)
+            sts = self._check_tunes()
             if not sts:
-                self._update_log('WARN: Problem with the tunes.')
-                self._do_sleep(_t0, tplanned)
+                self._update_log('ERR: Tunes above limits!')
+                self._thread_fb_quit = True
+                # self._do_sleep(_t0, tplanned)
                 continue
 
-            # sts = self._update_delta_tunes(tunex, tuney)
-            self._delta_tunex = self._ref_tunex - tunex
-            self._delta_tuney = self._ref_tuney - tuney
+            ################################
+            if self._using_pid_overdkls == 1:
+                self._delta_tunex = self._ref_tunex - self.tunex_buffer[-1]
+                self._delta_tuney = self._ref_tuney - self.tuney_buffer[-1]
+                # tunexb = self.tunex_buffer.copy()
+                # tuneyb = self.tuney_buffer.copy()
+                # self._delta_tunex = self._ref_tunex-tunexb[tunexb != 0].mean()
+                # self._delta_tuney = self._ref_tuney-tuneyb[tuneyb != 0].mean()
+                self._calc_intstrength()
+                self._process_pid_overdkls()
 
-            # self._update_log(f'INFO: delta_tunex = {self._delta_tunex}')
-            # self._update_log(f'INFO: delta_tuney = {self._delta_tuney}')
+            elif self._using_pid_overdkls == 0:
+                self._process_pid_overdtune()
+                self._calc_intstrength()
 
-            self._calc_intstrength()
+            else:  # self._using_pid_overdkls == -1
+                self._delta_tunex = self._pid_gains['x']['kp'] * \
+                    (self._ref_tunex - self.tunex_buffer[-1])
+                self._delta_tuney = self._pid_gains['y']['kp'] * \
+                    (self._ref_tuney - self.tuney_buffer[-1])
+                self._calc_intstrength()
             ################################
 
-            sts = self._apply_corr()  # ! #########
+            # sts = self._apply_corr()  # ! #########
+            sts = self._sim_apply_corr()  # ! #########
             # sts = True
             if not sts:
                 self._update_log('ERR: Could not apply the correction.')
@@ -651,31 +759,148 @@ class SITuneCorrApp(TuneCorrApp):
 
             self._do_sleep(_t0, tplanned)
 
+        self._set_loop_state_inthread(_Const.LoopState.Open, False)
         self._thread_fb_quit = False
-        _sleep(1)
-        self._thread_set_loop_state(_Const.LoopState.Open, False)
 
-    def _get_and_check_tunes(self):
+    def _sim_update_ref(self):
+        meankl_per_fam = self._sim_get_intstrength()
+        for fam in self._psfams:
+            self._psfam_refkl[fam] = meankl_per_fam[fam]
+            self.run_callbacks('DeltaKL' + fam + '-Mon', 0)
+            self._lastcalc_deltakl[fam] = 0
+        self._last_delta_tunex = 0.0 + self._delta_tunex
+        self._last_delta_tuney = 0.0 + self._delta_tuney
+        self._delta_tunex = 0
+        self._delta_tuney = 0
+        self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
+        self.run_callbacks('DeltaTuneX-RB', self._delta_tunex)
+        self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
+        self.run_callbacks('DeltaTuneY-RB', self._delta_tuney)
+        return True
+
+    def _sim_apply_corr(self):
+        self._sim_tunecorr.grouping = self._corr_group
+        self._sim_tunecorr.method = 0 \
+            if self._corr_method == _Const.CorrMeth.Proportional else 1
+        kls = {fam: self._psfam_refkl[fam]+self._lastcalc_deltakl[fam]
+                    for fam in self._psfams}
+        self._sim_apply_intstrength(kls)
+        if not self._inloop:
+            self._update_log('Applied correction.')
+        if self._sync_corr == _Const.SyncCorr.On:
+            # self._event_exttrig_cmd.put(0)
+            if not self._inloop:
+                self._update_log('Generated trigger.')
+        return True
+
+    def _sim_get_intstrength(self):
+        return {fam: _np.mean([sum([self._sim_tunecorr.model[seg].KL
+            for seg in mag])
+            for mag in self._sim_tunecorr.fam[fam]['index']])
+            for fam in self._psfams}
+
+    def _sim_apply_intstrength(self, kls):
+        meankl_per_fam = self._sim_get_intstrength()
+        for fam in self._psfams:
+            for mag in self._sim_tunecorr.fam[fam]['index']:
+                newkl = kls[fam] - meankl_per_fam[fam]
+                for seg in mag:
+                    self._sim_tunecorr.model[seg].KL += newkl / len(mag)
+
+    def _sim_get_tunes(self):
+        _ed = _pyacc.optics.calc_edwards_teng(self._sim_tunecorr.model)[0]
+        return _np.array([_ed.mu1[-1]/TWOPI-49, _ed.mu2[-1]/TWOPI-14])
+
+    def _process_pid_overdkls(self):
+        err = _np.array([self._lastcalc_deltakl[f] for f in self._psfams])
+        self._pid_errs.append(err)
+        del self._pid_errs[0]
+
+        interval = 1/self._loop_freq
+
+        kp = self._pid_gains['x']['kp']
+        ki = self._pid_gains['x']['ki'] * interval
+        kd = self._pid_gains['x']['kd'] / interval
+
+        turn_on_pid = 1
+
+        a0 = kp + turn_on_pid * (ki + kd)
+        a1 = turn_on_pid * (-kp - 2*kd)
+        a2 = turn_on_pid * (kd)
+
+        e0 = self._pid_errs[-1]
+        e1 = self._pid_errs[-2]
+        e2 = self._pid_errs[-3]
+
+        u = e0*a0 + a1*e1 + a2*e2
+
+        for i, fam in enumerate(self._psfams):
+            self._lastcalc_deltakl[fam] = u[i]
+
+    def _process_pid_overdtune(self):
+        tunexb = self.tunex_buffer.copy()
+        tuneyb = self.tuney_buffer.copy()
+        errx = self._ref_tunex-tunexb[tunexb != 0].mean()
+        erry = self._ref_tuney-tuneyb[tuneyb != 0].mean()
+        # errx = self._ref_tunex - self.tunex_buffer[-1]
+        # erry = self._ref_tuney - self.tuney_buffer[-1]
+        self._pid_errs.append([errx, erry])
+        del self._pid_errs[0]
+
+        interval = 1/self._loop_freq
+
+        kpx = self._pid_gains['x']['kp']
+        kix = self._pid_gains['x']['ki'] * interval
+        kdx = self._pid_gains['x']['kd'] / interval
+        kpy = self._pid_gains['y']['kp']
+        kiy = self._pid_gains['y']['ki'] * interval
+        kdy = self._pid_gains['y']['kd'] / interval
+
+        a0x = kpx + kix + kdx
+        a1x = -kpx - 2*kdx
+        a2x = kdx
+
+        a0y = kpy + kiy + kdy
+        a1y = -kpy - 2*kdy
+        a2y = kdy
+
+        e0 = self._pid_errs[-1]
+        e1 = self._pid_errs[-2]
+        e2 = self._pid_errs[-3]
+
+        # Update Delta Tunes
+        self._delta_tunex = self._last_delta_tunex + \
+            a0x*e0[0] + a1x*e1[0] + a2x*e2[0]
+        self._delta_tuney = self._last_delta_tuney + \
+            a0y*e0[1] + a1y*e1[1] + a2y*e2[1]
+
+    def _check_tunes(self):
         """."""
-        sts, (tx, ty) = self._get_tunes()
+        last_tunex = self.tunex_buffer[-1]
+        last_tuney = self.tuney_buffer[-1]
+
+        sts = True
+        sts = sts and not _np.isclose(last_tunex, 0, atol=1e-3)
+        sts = sts and not _np.isclose(last_tuney, 0, atol=1e-3)
         if not sts:
             self._update_log('ERR: Could not get tunes.')
-        if sts:
-            # check if tunes are within allowed range
-            sts = sts and (abs(tx - self._ref_tunex) <= self._max_tune_err)
-            if not sts:
-                self._update_log('WARN: Tune X is out of range.')
-            sts = sts and (abs(ty - self._ref_tuney) <= self._max_tune_err)
-            if not sts:
-                self._update_log('WARN: Tune Y is out of range.')
-        return sts, (tx, ty)
+            return sts
 
-    def _do_sleep(self, time0, tplanned):
+        # check if tunes are within allowed range
+        sts = sts and (abs(last_tunex - self._ref_tunex) <= self._max_tune_err)
+        if not sts:
+            self._update_log('WARN: Tune X is out of range.')
+        sts = sts and (abs(last_tuney - self._ref_tuney) <= self._max_tune_err)
+        if not sts:
+            self._update_log('WARN: Tune Y is out of range.')
+        return sts
+
+    def _do_sleep(self, time0, tplanned, do_warn=True):
         ttook = _time() - time0
         tsleep = tplanned - ttook
         if tsleep > 0:
             _sleep(tsleep)
-        else:
+        elif do_warn:
             strf = (
                 f'Feedback step took more than planned... '
                 f'{ttook:.3f}/{tplanned:.3f} s')
