@@ -70,3 +70,5 @@ target/
 
 # FTP configuration file
 .ftpconfig
+
+siriuspy/siriuspy/opticscorr/*.npy
