@@ -410,7 +410,7 @@ class SITuneCorrApp(TuneCorrApp):
         buffer_current_size = len(self.tuney_buffer)
         if buffer_current_size < buffer_size:
             self.tuney_buffer = [0.0] * (buffer_size - buffer_current_size) + \
-                self.tuney_buffer
+            self.tuney_buffer
 
         self.run_callbacks('LoopFreq-RB', float(value))
         return True
