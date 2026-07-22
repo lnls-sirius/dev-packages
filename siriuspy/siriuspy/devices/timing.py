@@ -51,9 +51,19 @@ class EVG(_Device):
         'BucketListSyncStatus-Mon',
     )
 
-    def __init__(self, props2init='all'):
+    def __init__(
+            self,
+            props2init='all',
+            auto_monitor=True,
+            auto_monitor_mon=False,
+        ):
         """."""
-        super().__init__(EVG.DEVNAME, props2init=props2init)
+        super().__init__(
+            EVG.DEVNAME,
+            auto_monitor=auto_monitor,
+            auto_monitor_mon=auto_monitor_mon,
+            props2init=props2init,
+        )
 
     @property
     def nrpulses(self):
