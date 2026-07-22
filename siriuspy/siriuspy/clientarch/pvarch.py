@@ -15,10 +15,10 @@ from .time import Time as _Time
 
 
 class _Base:
-    def __init__(self, connector=None, offline_data=False):
+    def __init__(self, connector=None, beamline_data=False):
         self._connector = None
         self.connector = connector
-        self.connect(offline_data=offline_data)
+        self.connect(beamline_data=beamline_data)
 
     @property
     def is_archived(self):
@@ -26,12 +26,12 @@ class _Base:
         self.connect()
         return self.connector.get_pv_details(self.pvname) is not None
 
-    def connect(self, offline_data=False):
+    def connect(self, beamline_data=False):
         """Connect."""
         if self.connector is None:
-            url_off = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
-            url_on = _envars.SRVURL_ARCHIVER
-            url = url_off if offline_data else url_on
+            url_beamline = _envars.SRVURL_ARCHIVER_BEAMLINE_DATA
+            url_machine = _envars.SRVURL_ARCHIVER
+            url = url_beamline if beamline_data else url_machine
             self._connector = _ClientArchiver(server_url=url)
 
     @property
@@ -53,13 +53,13 @@ class _Base:
             )
 
     @property
-    def is_offline_data(self):
-        """Whether server url points to online or offline data.
+    def is_beamline_data(self):
+        """Whether server url points to machine or beamline data.
 
-        Return None in case the url is not recognized as either online or
-        offline.
+        Return None in case the url is not recognized as either machine or
+        beamline.
         """
-        if self._connector.server_url == _envars.SRVURL_ARCHIVER_OFFLINE_DATA:
+        if self._connector.server_url == _envars.SRVURL_ARCHIVER_BEAMLINE_DATA:
             return True
         elif self._connector.server_url == _envars.SRVURL_ARCHIVER:
             return False
@@ -88,15 +88,15 @@ class _Base:
             return False
         return self.connector.connected
 
-    def switch_to_online_data(self):
+    def switch_to_machine_data(self):
         """."""
         if self.connector:
-            self.connector.switch_to_online_data()
+            self.connector.switch_to_machine_data()
 
-    def switch_to_offline_data(self):
+    def switch_to_beamline_data(self):
         """."""
         if self.connector:
-            self.connector.switch_to_offline_data()
+            self.connector.switch_to_beamline_data()
 
     def gen_archviewer_url_link(
         self,
@@ -262,9 +262,9 @@ class PVData(_Base):
 
     ProcessingTypes = _ClientArchiver.ProcessingTypes
 
-    def __init__(self, pvname, connector=None, offline_data=False):
+    def __init__(self, pvname, connector=None, beamline_data=False):
         """Initialize."""
-        super().__init__(connector, offline_data=offline_data)
+        super().__init__(connector, beamline_data=beamline_data)
         self._pvname = pvname
         self._timestamp = None
         self._value = None
@@ -337,7 +337,7 @@ class PVData(_Base):
 
     @property
     def request_url(self):
-        """Get request url."""
+        """Request url."""
         self.connect()
         return self.connector.get_request_url_for_get_data(
             self._pvname,
@@ -720,9 +720,9 @@ class PVDataSet(_Base):
 
     ProcessingTypes = _ClientArchiver.ProcessingTypes
 
-    def __init__(self, pvnames, connector=None, offline_data=False):
+    def __init__(self, pvnames, connector=None, beamline_data=False):
         """Initialize."""
-        super().__init__(connector, offline_data=offline_data)
+        super().__init__(connector, beamline_data=beamline_data)
         self._pvnames = pvnames
         self._pvdata = self._init_pvdatas(pvnames, self.connector)
 

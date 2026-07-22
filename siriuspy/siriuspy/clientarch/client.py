@@ -260,20 +260,20 @@ class ClientArchiver:
         self.session = None
         return resp
 
-    def switch_to_online_data(self):
-        """Switch to online data.
+    def switch_to_machine_data(self):
+        """Switch to machine data.
 
         Sets server URL to online data URL and logs out if needed.
         """
         self.server_url = _envars.SRVURL_ARCHIVER
         self.logout()
 
-    def switch_to_offline_data(self):
-        """Switch to offline data.
+    def switch_to_beamline_data(self):
+        """Switch to beamline data.
 
-        Sets server URL to offline data URL and logs out if needed.
+        Sets server URL to beamline data URL and logs out if needed.
         """
-        self.server_url = _envars.SRVURL_ARCHIVER_OFFLINE_DATA
+        self.server_url = _envars.SRVURL_ARCHIVER_BEAMLINE_DATA
         self.logout()
 
     # ------------- methods to get PVs informations --------------
