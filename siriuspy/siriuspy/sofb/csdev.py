@@ -5,6 +5,12 @@ from copy import deepcopy as _dcopy
 from .. import csdev as _csdev
 from ..diagbeam.bpm.csdev import Const as _CSBPM
 from ..namesys import SiriusPVName as _PVName
+from ..optics.constants import (
+    SI as _SI,
+    BO as _BO,
+    TB as _TB,
+    TS as _TS
+)
 from ..search import BPMSearch as _BPMSearch, LLTimeSearch as _TISearch, \
     MASearch as _MASearch, PSSearch as _PSSearch
 from ..timesys import csdev as _cstiming
@@ -32,8 +38,8 @@ class ETypes(_csdev.ETypes):
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     DRIVE_TYPE = ('Sine', 'Square', 'Impulse')
-    TLINES = ('TB', 'TS')
-    RINGS = ('BO', 'SI')
+    TLINES = (_TB.sector, _TS.sector)
+    RINGS = (_BO.sector, _SI.sector)
     ACCELERATORS = TLINES + RINGS
 
     STS_LBLS_CORR_TLINES = (
@@ -135,7 +141,7 @@ class SOFBTLines(ConstTLines):
 
     def __init__(self, acc):
         """Init1 method."""
-        self.acc = acc.upper()
+        self.acc = acc
         self.evg_name = _TISearch.get_evg_name()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
 
@@ -145,12 +151,12 @@ class SOFBTLines(ConstTLines):
         # Define correctors:
         filter_ch = dict(sec=acc, dis="PS", dev="CH")
         filter_cv = dict(sec=acc, dis="PS", dev="CV")
-        if self.acc == "SI":
+        if self.acc == _SI:
             filter_ch.update({"sub": "..(M|C)."})
             filter_cv.update({"sub": "..(M|C)."})
         self.ch_names = _PSSearch.get_psnames(filter_ch)
         self.cv_names = _PSSearch.get_psnames(filter_cv)
-        if self.acc == "TS":
+        if self.acc == _TS:
             self.ch_names = [_PVName("TS-01:PU-EjeSeptG")] + self.ch_names
             self.cv_names = [
                 cvn
@@ -162,7 +168,7 @@ class SOFBTLines(ConstTLines):
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
         self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
-        if self.acc == "TS":
+        if self.acc == _TS:
             self.ch_nicknames[0] = "EjeseptG"
 
         # Find their position along the ring:
@@ -194,8 +200,8 @@ class SOFBTLines(ConstTLines):
         ext = acc.lower() + "respmat"
         self.respmat_fname = _os.path.join(ioc_fol, "respmat." + ext)
 
-        self.trigger_acq_name = self.acc + '-Fam:TI-BPM'
-        if self.acc == 'SI':
+        self.trigger_acq_name = self.acc.sector + '-Fam:TI-BPM'
+        if self.acc == _SI:
             self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
             self.evt_cor_name = 'Orb' + self.acc
             self.clk_cor_name = 'Clock3'
@@ -204,8 +210,6 @@ class SOFBTLines(ConstTLines):
         self.evt_acq_name = "Linac"
         self.matrix_size = self.nr_corrs * (2 * self.nr_bpms)
         self.nr_svals = min(self.nr_corrs, 2 * self.nr_bpms)
-        self.circum = 21.2477 if self.acc == "TB" else 26.8933  # in meters
-        self.rev_per = self.circum / 299792458  # in seconds
 
     @property
     def isring(self):
@@ -783,9 +787,7 @@ class SOFBRings(SOFBTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         SOFBTLines.__init__(self, acc)
-        self.circum = 496.8  # in meter
         self.harm_number = 828
-        self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
@@ -997,9 +999,7 @@ class SOFBSI(SOFBRings, ConstSI):
         vals = _cstiming.get_hl_trigger_database(self.trigger_cor_name)
         evts = vals["Src-Sel"]["enums"]
         self.CorrExtEvtSrc = self.register("CorrExtEvtSrc", evts)
-        self.circum = 518.396  # in meter
         self.harm_number = 864
-        self.rev_per = self.circum / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=""):
         """Return SOFB database."""
@@ -1350,8 +1350,8 @@ class SOFBFactory:
     def create(acc):
         """Return appropriate SOFB object."""
         acc = acc.upper()
-        if acc == "SI":
-            return SOFBSI(acc)
+        if acc == _SI.sector:
+            return SOFBSI(_SI)
         elif acc in _et.RINGS:
             return SOFBRings(acc)
         elif acc in _et.TLINES:
