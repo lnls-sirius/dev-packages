@@ -1,8 +1,8 @@
 """Keysight oscilloscope classes."""
 
+import logging as _log
 import socket as _socket
 import time as _time
-import sys as _sys
 import numpy as _np
 
 from . import scopes as _scopes
@@ -34,8 +34,13 @@ class Keysight:
 
     SOCKET_TIMEOUT = 10  # [s]
 
-    def __init__(self, scope=None, scopesignal=None, print_flag=False):
+    def __init__(self, scope=None, scopesignal=None, verbose=False):
         """."""
+        self.logger = _log.getLogger(self.__class__.__name__)
+        if verbose:
+            self.logger.setLevel(_log.INFO)
+        else:
+            self.logger.setLevel(_log.WARNING)
         if scopesignal and isinstance(scopesignal, tuple):
             self.host = scopesignal[0]
             self.port = scopesignal[1]
@@ -46,7 +51,6 @@ class Keysight:
             self.chan = 'CHAN1'
         else:
             raise NotImplementedError
-        self._print_flag = print_flag
         self._socket = None
 
     @property
@@ -74,8 +78,7 @@ class Keysight:
         """Set scope waveform format."""
         self.send_command(b":WAVeform:FORMat WORD\n", get_res=False)
         dataformat = self.send_command(b":WAVeform:FORMat?\n")
-        if self._print_flag:
-            print('Data format:', dataformat)
+        self.logger.info('Data format: %s', dataformat)
         # Set bit order to MSB First
         self.send_command(b":WAVeform:BYTeorder MSBF\n", get_res=False)
         # Acquire
@@ -91,18 +94,15 @@ class Keysight:
 
         # Get the number of waveform points
         points = self.send_command(b":WAVeform:POINts?\n")
-        if self._print_flag:
-            print('Points:', points)
+        self.logger.info('Points: %s', points)
 
         # Get sample rate
         srate = self.send_command(b":ACQuire:SRATe?\n")
-        if self._print_flag:
-            print('Sample rate:', srate)
+        self.logger.info('Sample rate: %s', srate)
 
         # Get bandwidth
         bdw = self.send_command(b":ACQuire:BANDwidth:FRAMe?\n")
-        if self._print_flag:
-            print('Bandwidth:', bdw)
+        self.logger.info('Bandwidth: %s', bdw)
 
         # Set the waveform channel source
         self.send_command(
@@ -113,14 +113,12 @@ class Keysight:
         # Get scales
         xinc = self.send_command(b":WAVeform:XINCrement?\n")
         xinc = float(xinc)
-        if self._print_flag:
-            print('Horizontal Scale:', xinc)
+        self.logger.info('Horizontal Scale: %s', xinc)
         yinc = self.send_command(b":WAVeform:YINCrement?\n")
         yor = self.send_command(b":WAVeform:YORigin?\n")
         yinc = float(yinc)
         yor = float(yor)
-        if self._print_flag:
-            print('Vertical Scale:', xinc, yor)
+        self.logger.info('Vertical Scale: %s, %s', xinc, yor)
 
         # Data aquisition
         self.send_command(b":WAVeform:STReaming OFF\n", get_res=False)
@@ -155,14 +153,12 @@ class Keysight:
             self.wfm_enable()
             self.wfm_config(wait_trigger)
             tini = _time.time()
-            if self._print_flag:
-                print('Acquiring ' + self.chan)
+            self.logger.info('Acquiring ' + self.chan)
             wavet, waved, srate1, bdw1 = self.wfm_acquire(channel)
-            if self._print_flag:
-                print('Total acquisition time:', _time.time() - tini)
+            self.logger.info('Total acquisition time: %s', _time.time() - tini)
             # self.send_command(b":WAVeform:STReaming ON\n", get_res=False)
         except Exception:
-            print('Close connection by exception')
+            self.logger.error('Close connection by exception')
             raise
 
         finally:
@@ -188,13 +184,11 @@ class Keysight:
         try:
             self.stats_enable()
             tini = _time.time()
-            if self._print_flag:
-                print('Acquiring ' + self.chan)
+            self.logger.info('Acquiring ' + self.chan)
             data = self.stats_acquire()
-            if self._print_flag:
-                print('Total acquisition time:', _time.time() - tini)
+            self.logger.info('Total acquisition time: %s', _time.time() - tini)
         except Exception:
-            print('Close connection by exception')
+            self.logger.error('Close connection by exception')
             raise
         finally:
             self.close()
