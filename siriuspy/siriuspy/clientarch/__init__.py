@@ -2,7 +2,7 @@
 
 from ..envars import (
     SRVURL_ARCHIVER as SERVER_URL,
-    SRVURL_ARCHIVER_OFFLINE_DATA as SERVER_OFFLINE_URL
+    SRVURL_ARCHIVER_BEAMLINE_DATA as SERVER_BEAMLINE_URL
 )
 from . import exceptions
 from .client import ClientArchiver
