@@ -1,5 +1,7 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
+import logging as _log
+
 import numpy as _np
 from epics import PV as _PV
 
@@ -28,6 +30,8 @@ class TuneCorrApp(_BaseApp):
         if self._acc == 'SI':
             self._meas_config_dkl_qf = 0.020
             self._meas_config_dkl_qd = 0.020
+            self._loop_state = _Const.LoopState.Open
+            self._loop_freq = _Const.SI_LOOP_FREQ
 
         # Connect to Quadrupoles Families
         self._psfam_refkl = {fam: 0 for fam in self._psfams}
@@ -47,6 +51,8 @@ class TuneCorrApp(_BaseApp):
             'SetNewRefKL-Cmd': self.cmd_set_newref,
             'MeasConfigDeltaKLFamQF-SP': self.set_meas_config_dkl_qf,
             'MeasConfigDeltaKLFamQD-SP': self.set_meas_config_dkl_qd,
+            'LoopState-Sel': self.set_auto_corr,
+            'LoopFreq-SP': self.set_loopfreq,
         })
 
     def update_corrparams_pvs(self):
@@ -92,6 +98,26 @@ class TuneCorrApp(_BaseApp):
             return False
         self._meas_config_dkl_qd = value
         self.run_callbacks('MeasConfigDeltaKLFamQD-RB', value)
+        return True
+
+    def set_auto_corr(self, value):
+        """Set LoopState."""
+        if self._acc != 'SI':
+            msg = "ERR: Cannot close loop for this accelerator."
+            self._update_log(msg)
+            return False
+        if value == self._loop_state:
+            return False
+        self._loop_state = value
+        self.run_callbacks('LoopState-RB', value)
+        return True
+
+    def set_loopfreq(self, value):
+        """Set LoopFreq."""
+        if value == self._loop_freq:
+            return False
+        self._loop_freq = value
+        self.run_callbacks('LoopFreq-RB', value)
         return True
 
     # ---------- auxiliar methods ----------

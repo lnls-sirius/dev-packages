@@ -11,6 +11,7 @@ class ETypes(_csdev.ETypes):
     INDIV_2KNOBS = ('Individual', 'TwoKnobs')
     MEAS_CMD = ('Reset', 'Start', 'Stop')
     MEAS_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
+    OPEN_CLOSED = ('Open', 'Closed')
 
 
 _et = ETypes  # syntactic sugar
@@ -26,6 +27,7 @@ class Const(_csdev.Const):
     SyncCorr = _csdev.Const.register('SyncCorr', _et.OFF_ON)
     MeasCmd = _csdev.Const.register('MeasCmd', _et.MEAS_CMD)
     MeasMon = _csdev.Const.register('MeasMon', _et.MEAS_MON)
+    LoopState = _csdev.Const.register("LoopState", _et.OPEN_CLOSED)
 
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     BO_SFAMS_NELM = (25, 10)
@@ -44,6 +46,7 @@ class Const(_csdev.Const):
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
     SI_QFAMS_NELM = (10, 20, 10,
                      10, 20, 20, 10, 10)
+    SI_LOOP_FREQ = 5  # [Hz]
 
     STATUS_LABELS = ('PS Connection', 'PS PwrState', 'PS OpMode',
                      'PS CtrlMode', 'Timing Config')
@@ -304,6 +307,19 @@ def get_tune_database(acc):
             'type': 'enum', 'enums': _et.MEAS_CMD, 'value': _ct.MeasCmd.Reset}
         pvs_database['MeasConfigStatus-Mon'] = {
             'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
+
+        pvs_database['LoopState-Sel'] = {
+            'type': 'enum', 'enums': _ct.LoopState._fields,
+            'value': _ct.LoopState.Open}
+        pvs_database['LoopState-Sts'] = {
+            'type': 'enum', 'enums': _ct.LoopState._fields,
+            'value': _ct.LoopState.Open}
+        pvs_database['LoopFreq-SP'] = {
+            'type': 'float', 'value': _ct.SI_LOOP_FREQ, 'unit': 'Hz',
+            'prec': 3, 'lolim': 1e-3, 'hilim': 3}
+        pvs_database['LoopFreq-RB'] = {
+            'type': 'float', 'value': _ct.SI_LOOP_FREQ, 'unit': 'Hz',
+            'prec': 3, 'lolim': 1e-3, 'hilim': 3}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
