@@ -259,23 +259,21 @@ class BaseApp(_Callback):
                 evt_name.substitute(propty=evt_name.propty+'ExtTrig-Cmd'),
                 connection_timeout=0.05)
 
-
-            _vaca_prefix_TEST = ''
             # Connect to CurrInfo
             self._storedebeam_pv = _PV(
                 _PVName('SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
-                    prefix=_vaca_prefix_TEST),
+                    prefix=_vaca_prefix),
                 callback=self._callback_get_storedebeam,
                 connection_timeout=0.05)
 
             # Connect to Tunes
             self._tune_x_pv = _PV(
                 _PVName('SI-Glob:DI-Tune-H:TuneFrac-Mon').substitute(
-                    prefix=_vaca_prefix_TEST),
+                    prefix=_vaca_prefix),
                 connection_timeout=0.05)
             self._tune_y_pv = _PV(
                 _PVName('SI-Glob:DI-Tune-V:TuneFrac-Mon').substitute(
-                    prefix=_vaca_prefix_TEST),
+                    prefix=_vaca_prefix),
                 connection_timeout=0.05)
 
         # Create map of pv -> write function
