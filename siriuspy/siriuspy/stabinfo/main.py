@@ -191,7 +191,7 @@ class App(_Callback):
                     calib = getattr(self, '_bbb'+pln.lower()+'_calibfactor')
                     thres = getattr(self, '_bbb'+pln.lower()+'_oscamp_thres')
                     cthres = self._const.CURR_THRES
-                    oscamp_db = dev['SRAM_PEAK1']
+                    oscamp_db = dev['SRAM_M2_PEAK']  # M1 measures tune (notch)
                     if oscamp_db is not None:
                         oscamp_phy = 10**(oscamp_db/20) * harmn / curr / calib
                         self.run_callbacks('BbB'+pln+'OscAmp-Mon', oscamp_phy)

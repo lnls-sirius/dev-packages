@@ -37,23 +37,32 @@ intervals = [
     # [Time(2024, 11, 1, 0, 0), Time(2024, 11, 30, 23, 59, 59)],
     # [Time(2024, 12, 1, 0, 0), Time(2024, 12, 31, 23, 59, 59)],
 
-    [Time(2025, 1, 1, 0, 0), Time(2025, 1, 31, 23, 59, 59)],
-    [Time(2025, 2, 1, 0, 0), Time(2025, 2, 28, 23, 59, 59)],
-    [Time(2025, 3, 1, 0, 0), Time(2025, 3, 31, 23, 59, 59)],
-    [Time(2025, 4, 1, 0, 0), Time(2025, 4, 30, 23, 59, 59)],
-    [Time(2025, 5, 1, 0, 0), Time(2025, 5, 31, 23, 59, 59)],
-    [Time(2025, 6, 1, 0, 0), Time(2025, 6, 30, 23, 59, 59)],
-    [Time(2025, 7, 1, 0, 0), Time(2025, 7, 31, 23, 59, 59)],
-    [Time(2025, 8, 1, 0, 0), Time(2025, 8, 31, 23, 59, 59)],
-    [Time(2025, 9, 1, 0, 0), Time(2025, 9, 30, 23, 59, 59)],
-    [Time(2025, 10, 1, 0, 0), Time(2025, 10, 31, 23, 59, 59)],
+    # [Time(2025, 1, 1, 0, 0), Time(2025, 1, 31, 23, 59, 59)],
+    # [Time(2025, 2, 1, 0, 0), Time(2025, 2, 28, 23, 59, 59)],
+    # [Time(2025, 3, 1, 0, 0), Time(2025, 3, 31, 23, 59, 59)],
+    # [Time(2025, 4, 1, 0, 0), Time(2025, 4, 30, 23, 59, 59)],
+    # [Time(2025, 5, 1, 0, 0), Time(2025, 5, 31, 23, 59, 59)],
+    # [Time(2025, 6, 1, 0, 0), Time(2025, 6, 30, 23, 59, 59)],
+    # [Time(2025, 7, 1, 0, 0), Time(2025, 7, 31, 23, 59, 59)],
+    # [Time(2025, 8, 1, 0, 0), Time(2025, 8, 31, 23, 59, 59)],
+    # [Time(2025, 9, 1, 0, 0), Time(2025, 9, 30, 23, 59, 59)],
+    # [Time(2025, 10, 1, 0, 0), Time(2025, 10, 31, 23, 59, 59)],
+    # [Time(2025, 11, 1, 0, 0), Time(2025, 11, 30, 23, 59, 59)],
+    # [Time(2025, 12, 1, 0, 0), Time(2025, 12, 31, 23, 59, 59)],
+
+    [Time(2026, 1, 1, 0, 0), Time(2026, 1, 31, 23, 59, 59)],
+    [Time(2026, 2, 1, 0, 0), Time(2026, 2, 28, 23, 59, 59)],
+    [Time(2026, 3, 1, 0, 0), Time(2026, 3, 31, 23, 59, 59)],
+    [Time(2026, 4, 1, 0, 0), Time(2026, 4, 30, 23, 59, 59)],
+    [Time(2026, 5, 1, 0, 0), Time(2026, 5, 31, 23, 59, 59)],
+    [Time(2026, 6, 1, 0, 0), Time(2026, 6, 30, 23, 59, 59)],
 ]
 
 macreports = dict()
 for intvl in intervals:
     macreports[intvl[0]] = MacReport()
     # macreports[intvl[0]].connector.server_url = 'https://archiver-temp.cnpem.br'   # necessary for 2024 and early
-    macreports[intvl[0]].connector.timeout = 30
+    macreports[intvl[0]].connector.query_timeout = 30
     macreports[intvl[0]].time_start = intvl[0]
     macreports[intvl[0]].time_stop = intvl[1]
     macreports[intvl[0]].update()
@@ -136,7 +145,7 @@ report.plot_raw_data().show()
 
 # programmed vs. delivered hours
 macr = MacReport()
-macr.connector.timeout = 300
+macr.connector.query_timeout = 300
 macr.time_start = Time(2024, 1, 1, 0, 0)
 macr.time_stop = Time(2024, 12, 31, 23, 59, 59)
 macr.update()

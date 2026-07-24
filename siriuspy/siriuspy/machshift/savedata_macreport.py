@@ -10,7 +10,7 @@ time_stop = Time(2023, 12, 31, 23, 59, 59)
 
 # get data from interval
 macr = MacReport()
-macr.connector.timeout = 300
+macr.connector.query_timeout = 300
 macr.time_start = time_start
 macr.time_stop = time_stop
 macr.update()

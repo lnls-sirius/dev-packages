@@ -1,9 +1,14 @@
 """ID Search module."""
 
 import copy as _copy
+from threading import Lock as _Lock
 
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from .. import util as _util
+from .. import clientweb as _web
+
+from ..magnet.excdata import ExcitationData as _ExcitationData
 from ..namesys import Filter as _Filter, SiriusPVName as _SiriusPVName
 
 
@@ -19,10 +24,10 @@ class IDSearch:
     _beamline2idname = {
         'CARNAUBA': 'SI-06SB:ID-VPU29',  # titular: VPU29
         'CATERETE': 'SI-07SP:ID-VPU29',  # titular: VPU29
-        'EMA':      'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
-        'MANACA':   'SI-09SA:ID-APU22',  # titular: 2 x APU22
-        'SABIA':    'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
-        'IPE':      'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
+        'EMA': 'SI-08SB:ID-IVU18',  # titular: IVU18 (APU22 prev.)
+        'MANACA': 'SI-09SA:ID-APU22',  # titular: 2 x APU22
+        'SABIA': 'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
+        'IPE': 'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
@@ -46,197 +51,444 @@ class IDSearch:
         'CPARAM_PARKED',  # [mm]
         'CPARAM_TOL',  # [mm]
         'CPARAM_POL_CHANGE',  # [mm]
-        )
+        'PARAM_TABLE_MIN',  # [mm]
+        'PARAM_TABLE_MAX',  # [mm]
+    )
 
     _idname2params = {
         'SI-06SB:ID-VPU29': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 29,
-                9.7, 80, 80, 80, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                9.7,
+                80,
+                80,
+                80,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                9.7,
+                80,
+            ),
+        ),
         'SI-07SP:ID-VPU29': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 29,
-                9.7, 80, 80, 80, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                9.7,
+                80,
+                80,
+                80,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                9.7,
+                80,
+            ),
+        ),
         'SI-08SB:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
         'SI-08SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 18.5,
-                4.2, 24, 24, 24, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                4.2,
+                24,
+                24,
+                24,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                4.2,
+                24,
+            ),
+        ),
         'SI-09SA:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
         # NOTE: for EPU50 there is a large discrepancy
         # between RB/SP/Mon phase values
         'SI-10SB:ID-EPU50': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 50,
-                +22, +300, +300, +300, 0.1,
-                -25, 25, 0, 0.5,
-                None, None, None, None, None)),
+                +22,
+                +300,
+                +300,
+                +300,
+                0.1,
+                -25,
+                25,
+                0,
+                0.5,
+                None,
+                None,
+                None,
+                None,
+                None,
+                22,
+                300,
+            ),
+        ),
         'SI-10SB:ID-DELTA52': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 52.5,
-                -52.5/2, +52.5/2, 0, 0, 0.020,
-                -52.5/2, +52.5/2, 0, 0.010,
-                None, None, None, None, None)),
-       'SI-11SP:ID-UE44': _get_namedtuple(
+                -52.5 / 2,
+                +52.5 / 2,
+                0,
+                0,
+                0.020,
+                -52.5 / 2,
+                +52.5 / 2,
+                0,
+                0.010,
+                None,
+                None,
+                None,
+                None,
+                None,
+                -52.5 / 2,
+                +52.5 / 2,
+            ),
+        ),
+        'SI-11SP:ID-UE44': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 44,
-                1, 21, 21, 21, 0.01,
-                -13.3, 22, 0, 0.01,
-                0, 10.65, 0, 0.01, 0)),
+                1,
+                21,
+                21,
+                21,
+                0.01,
+                -13.3,
+                22,
+                0,
+                0.01,
+                0,
+                10.65,
+                0,
+                0.01,
+                0,
+                -13.313,
+                22,
+            ),
+        ),
         'SI-14SB:ID-WIG180': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 180,
-                49.73, 49.73, 150, 150, 0.1,
-                None, None, None, None,
-                None, None, None, None, None)),
+                49.73,
+                49.73,
+                150,
+                150,
+                0.1,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                49.73,
+                150,
+            ),
+        ),
         'SI-14SB:ID-IVU18': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 18.5,
-                4.2, 24, 24, 24, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                4.2,
+                24,
+                24,
+                24,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                4.3,
+                24,
+            ),
+        ),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 50,
-                0, 25, 25, 0, 0.1,
-                None, None, None, None,
-                None, None, None, None, None)),
+                0,
+                25,
+                25,
+                0,
+                0.1,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                25,
+            ),
+        ),
         'SI-17SA:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
         'SI-20SB:ID-APU22': _get_namedtuple(
             'IDParameters',
-            _idparam_fields, (
+            _idparam_fields,
+            (
                 22,
-                0, 11, 11, 0, 0.01,
-                None, None, None, None,
-                None, None, None, None, None)),
+                0,
+                11,
+                11,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                11,
+            ),
+        ),
     }
 
     POL_NONE_STR = 'none'
     POL_UNDEF_STR = 'undef'
 
+    # NOTE: the polarization states ordering has to be compatible with
+    # indices of possible states of the corresponding polarization PV.
     _idname2pol_sel = {
-        'SI-06SB:ID-VPU29': {
-            0: ('vertical', None),  # [mm]
-        },
-        'SI-07SP:ID-VPU29': {
-            0: ('vertical', None),  # [mm]
-        },
-        'SI-08SB:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-08SB:ID-IVU18': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-09SA:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-10SB:ID-EPU50': {
-            0: ('circularn', -16.36),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
-            2: ('circularp', +16.36),  # [mm]
-            3: ('vertical', 25.00),  # [mm]
-        },
-        'SI-10SB:ID-DELTA52': {
-            0: ('circularn', -52.5/4),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
-            2: ('circularp', +52.5/4),  # [mm]
-            3: ('vertical', -52.5/2),  # [mm]
-        },
-        'SI-11SP:ID-UE44': {
-            0: ('circularp', -13.31),  # [mm]
-            1: ('horizontal', 0.00),  # [mm]
-            2: ('circularn', 13.31),  # [mm]
-            3: ('vertical', 22.00),  # [mm]
-        },
-        'SI-11SP:ID-SIMUL': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-14SB:ID-IVU18': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-17SA:ID-PAPU50': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-17SA:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
-        'SI-20SB:ID-APU22': {
-            0: ('horizontal', None),  # [mm]
-        },
+        'SI-06SB:ID-VPU29': [
+            ('vertical', None)  # [mm]
+        ],
+        'SI-07SP:ID-VPU29': [
+            ('vertical', None)  # [mm]
+        ],
+        'SI-08SB:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-08SB:ID-IVU18': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-09SA:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-10SB:ID-EPU50': [
+            ('circularn', -16.36),  # [mm]
+            ('horizontal', 0.00),  # [mm]
+            ('circularp', +16.36),  # [mm]
+            ('vertical', 25.00),  # [mm]
+        ],
+        'SI-10SB:ID-DELTA52': [
+            ('circularn', -52.5 / 4),  # [mm]
+            ('horizontal', 0.00),  # [mm]
+            ('circularp', +52.5 / 4),  # [mm]
+            ('vertical', -52.5 / 2),  # [mm]
+        ],
+        'SI-11SP:ID-UE44': [
+            ('no-field', None),  # [mm]
+            ('vertical', 22.00),  # [mm]
+            ('circularn', 13.31),  # [mm]
+            ('horizontal', 0.00),  # [mm]
+            ('linear-ang-cte', None),  # [mm]
+            ('linear-ene-cte', None),  # [mm]
+            ('circularp', -13.31),  # [mm]
+            ('free', None),  # [mm]
+            ('transition', None),  # [mm]
+        ],
+        'SI-11SP:ID-SIMUL': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-14SB:ID-IVU18': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-17SA:ID-PAPU50': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-17SA:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-20SB:ID-APU22': [
+            ('horizontal', None)  # [mm]
+        ],
     }
     _idname2pol_sts = _copy.deepcopy(_idname2pol_sel)
-    _idname2pol_sts['SI-10SB:ID-EPU50'].update(
-        {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
-    _idname2pol_sts['SI-10SB:ID-DELTA52'].update(
-        {4: (POL_NONE_STR, None), 5: (POL_UNDEF_STR, None)})
+    _idname2pol_sts['SI-10SB:ID-EPU50'] += [
+        (POL_NONE_STR, None),
+        (POL_UNDEF_STR, None),
+    ]
+    _idname2pol_sts['SI-10SB:ID-DELTA52'] += [
+        (POL_NONE_STR, None),
+        (POL_UNDEF_STR, None),
+    ]
 
-    # define IDFF correctors labeling (and ordering)
-    # NOTE: the ordering within each category here follows the ordering of the
-    # correctors in the rack cabinets.
-    IDFF_CH_LABELS = ('ch_1', 'ch_2')
-    IDFF_CV_LABELS = ('cv_1', 'cv_2')
-    IDFF_QS_LABELS = ('qs_1', 'qs_2')
-    IDFF_LC_LABELS = ('lch_1', 'lcv_1', 'lcv_2')
-    IDFF_QN_LABELS = ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2')
-    IDFF_CC_LABELS = ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2')
+    # define IDFF correctors labels aand ordering.
+    # NOTE: the ordering between corr types in IDFF_CorrTypes and of
+    # correctors of a given corrector type in IDFF_CorrLabels has to be
+    # compatible with the ordering of correctors within rack cabinets.
+
+    IDFF_CorrTypes = _get_namedtuple(
+        'IDFF_CorrTypes', ('ch', 'cv', 'qs', 'lc', 'qn', 'cc')
+    )
+    _type_ch = IDFF_CorrTypes._fields[0]
+    _type_cv = IDFF_CorrTypes._fields[1]
+    _type_qs = IDFF_CorrTypes._fields[2]
+    _type_lc = IDFF_CorrTypes._fields[3]
+    _type_qn = IDFF_CorrTypes._fields[4]
+    _type_cc = IDFF_CorrTypes._fields[5]
+
+    IDFF_CorrLabels = {
+        _type_ch: ('ch_1', 'ch_2'),
+        _type_cv: ('cv_1', 'cv_2'),
+        _type_qs: ('qs_1', 'qs_2'),
+        _type_lc: ('lch_1', 'lcv_1', 'lcv_2'),
+        _type_qn: ('qd1_1', 'qf_1', 'qd2_1', 'qd2_2', 'qf_2', 'qd1_2'),
+        _type_cc: ('cc1_1', 'cc2_1', 'cc1_2', 'cc2_2'),
+    }
+
+    IDFF_CH_LABELS = IDFF_CorrLabels[_type_ch]
+    IDFF_CV_LABELS = IDFF_CorrLabels[_type_cv]
+    IDFF_QS_LABELS = IDFF_CorrLabels[_type_qs]
+    IDFF_LC_LABELS = IDFF_CorrLabels[_type_lc]
+    IDFF_QN_LABELS = IDFF_CorrLabels[_type_qn]
+    IDFF_CC_LABELS = IDFF_CorrLabels[_type_cc]
 
     _idname_2_idff = {
-        'SI-06SB:ID-VPU29':  {
-            'polarizations': ('vertical', ),
+        'SI-06SB:ID-VPU29': {
+            'polarizations': ('vertical',),
             'pparameter': None,
             'kparameter': 'SI-06SB:ID-VPU29:KParam-Mon',
+            'idffdevs': {_type_cc: 'SI-06SB:BS-IDFF-CC'},
             IDFF_CC_LABELS[0]: 'SI-06SB:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-06SB:PS-CC2-1:Current-SP',  # upstream
             IDFF_CC_LABELS[2]: 'SI-06SB:PS-CC1-2:Current-SP',  # downstream
             IDFF_CC_LABELS[3]: 'SI-06SB:PS-CC2-2:Current-SP',  # downstream
         },
-        'SI-07SP:ID-VPU29':  {
-            'polarizations': ('vertical', ),
+        'SI-07SP:ID-VPU29': {
+            'polarizations': ('vertical',),
             'pparameter': None,
             'kparameter': 'SI-07SP:ID-VPU29:KParam-Mon',
+            'idffdevs': {_type_cc: 'SI-07SP:BS-IDFF-CC'},
             IDFF_CC_LABELS[0]: 'SI-07SP:PS-CC1-1:Current-SP',  # upstream
             IDFF_CC_LABELS[1]: 'SI-07SP:PS-CC2-1:Current-SP',  # upstream
             IDFF_CC_LABELS[2]: 'SI-07SP:PS-CC1-2:Current-SP',  # downstream
             IDFF_CC_LABELS[3]: 'SI-07SP:PS-CC2-2:Current-SP',  # downstream
-
         },
         'SI-08SB:ID-IVU18': {
-            'polarizations': ('horizontal', ),
+            'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-08SB:ID-IVU18:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-08SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-08SB:BS-IDFF-CHCV',
+            },
             IDFF_CH_LABELS[0]: 'SI-08SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-08SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-08SB:PS-CV-1:Current-SP',
@@ -251,15 +503,20 @@ class IDSearch:
             IDFF_QN_LABELS[4]: 'SI-08M2:PS-QFB:Current-SP',
             IDFF_QN_LABELS[5]: 'SI-08M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
-                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
+                IDFF_QN_LABELS[0],
+                IDFF_QN_LABELS[1],
+                IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3],
+                IDFF_QN_LABELS[4],
+                IDFF_QN_LABELS[5],
             ],  # [A]
         },
         'SI-09SA:ID-APU22': None,
         'SI-10SB:ID-EPU50': {
             'polarizations': tuple(
-                item[0] for item in
-                _idname2pol_sts['SI-10SB:ID-EPU50'].values()),
+                item[0]
+                for item in _idname2pol_sts['SI-10SB:ID-EPU50']
+            ),
             'pparameter': 'SI-10SB:ID-EPU50:Phase-Mon',
             'kparameter': 'SI-10SB:ID-EPU50:Gap-Mon',
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
@@ -271,10 +528,16 @@ class IDSearch:
         },
         'SI-10SB:ID-DELTA52': {
             'polarizations': tuple(
-                item[0] for item in
-                _idname2pol_sts['SI-10SB:ID-DELTA52'].values()),
+                item[0]
+                for item in _idname2pol_sts['SI-10SB:ID-DELTA52']
+            ),
             'pparameter': 'SI-10SB:ID-DELTA52:PParam-Mon',
             'kparameter': 'SI-10SB:ID-DELTA52:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-10SB:AP-IDFF',
+                _type_cv: 'SI-10SB:AP-IDFF',
+                _type_qs: 'SI-10SB:AP-IDFF',
+            },
             IDFF_CH_LABELS[0]: 'SI-10SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-10SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-10SB:PS-CV-1:Current-SP',
@@ -284,10 +547,16 @@ class IDSearch:
         },
         'SI-11SP:ID-UE44': {
             'polarizations': tuple(
-                item[0] for item in
-                _idname2pol_sts['SI-11SP:ID-UE44'].values()),
+                item[0] for item in _idname2pol_sts['SI-11SP:ID-UE44']
+            ),
             'pparameter': 'SI-11SP:ID-UE44:PParam-Mon',
             'kparameter': 'SI-11SP:ID-UE44:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-11SP:BS-IDFF-CHCV',
+                _type_cv: 'SI-11SP:BS-IDFF-CHCV',
+                _type_qs: 'SI-11SP:BS-IDFF-QS',
+                _type_lc: 'SI-11SP:BS-IDFF-LC',
+            },
             IDFF_CH_LABELS[0]: 'SI-11SP:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-11SP:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-11SP:PS-CV-1:Current-SP',
@@ -297,11 +566,15 @@ class IDSearch:
             IDFF_LC_LABELS[0]: 'SI-11SP:PS-LCH-1:Current-SP',
             IDFF_LC_LABELS[1]: 'SI-11SP:PS-LCV-1:Current-SP',
             IDFF_LC_LABELS[2]: 'SI-11SP:PS-LCV-2:Current-SP',
-            },
+        },
         'SI-14SB:ID-IVU18': {
-            'polarizations': ('horizontal', ),
+            'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-14SB:ID-IVU18:KParam-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-14SB:BS-IDFF-CHCV',
+                _type_cv: 'SI-14SB:BS-IDFF-CHCV',
+            },
             IDFF_CH_LABELS[0]: 'SI-14SB:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-14SB:PS-CH-2:Current-SP',  # downstream
             IDFF_CV_LABELS[0]: 'SI-14SB:PS-CV-1:Current-SP',
@@ -316,12 +589,25 @@ class IDSearch:
             IDFF_QN_LABELS[4]: 'SI-14M2:PS-QFB:Current-SP',
             IDFF_QN_LABELS[5]: 'SI-14M2:PS-QDB1:Current-SP',
             'offsets': [
-                IDFF_QN_LABELS[0], IDFF_QN_LABELS[1], IDFF_QN_LABELS[2],
-                IDFF_QN_LABELS[3], IDFF_QN_LABELS[4], IDFF_QN_LABELS[5],
+                IDFF_QN_LABELS[0],
+                IDFF_QN_LABELS[1],
+                IDFF_QN_LABELS[2],
+                IDFF_QN_LABELS[3],
+                IDFF_QN_LABELS[4],
+                IDFF_QN_LABELS[5],
             ],  # [A]
         },
+        'SI-17SA:ID-PAPU50': {
+            'polarizations': ('horizontal',),
+            'pparameter': None,
+            'kparameter': 'SI-17SA:ID-PAPU50:Phase-Mon',
+            IDFF_CH_LABELS[0]: 'SI-17SA:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-17SA:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
+        },
         'SI-17SA:ID-APU22': {
-            'polarizations': ('horizontal', ),
+            'polarizations': ('horizontal',),
             'pparameter': None,
             'kparameter': 'SI-17SA:ID-APU22:Phase-Mon',
             IDFF_CH_LABELS[0]: 'SI-17SA:PS-CH-1:Current-SP',  # upstream
@@ -329,7 +615,18 @@ class IDSearch:
             IDFF_CV_LABELS[0]: 'SI-17SA:PS-CV-1:Current-SP',
             IDFF_CV_LABELS[1]: 'SI-17SA:PS-CV-2:Current-SP',
         },
+        'SI-20SB:ID-APU22': None,
     }
+
+    _idnames_list = list()
+
+    _idtype_dict = dict()
+    _idtype_2_idnames_dict = dict()
+    _idtype_2_excdat_dict = dict()
+    _idname_2_idmodel_dict = dict()
+    _idmodel_2_idname_dict = dict()
+
+    _lock = _Lock()
 
     @staticmethod
     def get_idnames(filters=None):
@@ -337,6 +634,30 @@ class IDSearch:
         idnames_list = list(IDSearch._idname_2_idff.keys())
         idnames = _Filter.process_filters(idnames_list, filters=filters)
         return sorted(idnames)
+
+    @staticmethod
+    def get_idtype_names():
+        """Return sorted list of insertion device types."""
+        with IDSearch._lock:
+            IDSearch._reload_idtype_dict()
+        return sorted(set(IDSearch._idtype_dict.keys()))
+
+    @staticmethod
+    def get_idmodel_names():
+        """Return sorted list of insertion device models."""
+        IDSearch._reload_idname_2_idmodel_dict()
+        return sorted(set(IDSearch._idmodel_2_idname_dict.keys()))
+
+    @staticmethod
+    def get_idtype_dict():
+        """Return idtype dictionary.
+
+        With key,value pairs of insertion device types and corresponding
+        (polarities,mag_function).
+        """
+        with IDSearch._lock:
+            IDSearch._reload_idtype_dict()
+        return _copy.deepcopy(IDSearch._idtype_dict)
 
     @staticmethod
     def get_beamlines(filters=None):
@@ -418,52 +739,115 @@ class IDSearch:
             return idff['offsets']
 
     @staticmethod
+    def conv_idname_2_idffdevs(idname):
+        """Return IDFF corrector devices for a given ID name.
+
+        The return value is a dictionary of the form:
+        {
+            corrtype1: {
+                corrlabel1: corrdev1,
+                corrlabel2: corrdev2,
+                ...
+            },
+            corrtype2: {
+                corrlabel3: corrdev3,
+                ...
+            },
+            ...
+        }
+        where corrtype is
+            one of the corrector types defined in IDFF_CorrTypes
+        and corrlabel is
+            one of the corrector labels defined in IDFF_CorrLabels.
+        and corrdev is
+            the device name of the corrector power supply.
+        """
+        idff = IDSearch.conv_idname_2_idff(idname)
+        idffdevs = dict()
+        if idff is not None and 'idffdevs' in idff:
+            for corrtype, idffdevname in idff['idffdevs'].items():
+                if idffdevname not in idffdevs:
+                    idffdevs[idffdevname] = dict()
+                idffdevdict = idffdevs[idffdevname]
+                IDSearch._idffdevs_add_corrector(idff, corrtype, idffdevdict)
+        return idffdevs
+
+    @staticmethod
+    def conv_idffdev_2_idname(idffdev):
+        """."""
+        for idname in IDSearch._idname_2_idff:
+            idffdevs = IDSearch.conv_idname_2_idffdevs(idname)
+            if idffdev in idffdevs:
+                return idname
+        return None
+
+    @staticmethod
+    def conv_idffdev_2_sorted_corrlabels(idffdev):
+        """."""
+        idname = IDSearch.conv_idffdev_2_idname(idffdev)
+        if idname is None:
+            return list()
+        corrdevs = IDSearch.conv_idname_2_idffdevs(idname)[idffdev]
+        corrlabels = list()
+        for _type in corrdevs:
+            subdict = corrdevs[_type]
+            for corrlabel, _ in subdict.items():
+                corrlabels.append(corrlabel)
+        return corrlabels
+
+    @staticmethod
     def conv_idname_2_idff_chnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
-            idname, IDSearch.IDFF_CH_LABELS)
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
+            idname, IDSearch.IDFF_CH_LABELS
+        )
 
     @staticmethod
     def conv_idname_2_idff_cvnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
-            idname, IDSearch.IDFF_CV_LABELS)
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
+            idname, IDSearch.IDFF_CV_LABELS
+        )
 
     @staticmethod
     def conv_idname_2_idff_qsnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
-            idname, IDSearch.IDFF_QS_LABELS)
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
+            idname, IDSearch.IDFF_QS_LABELS
+        )
 
     @staticmethod
     def conv_idname_2_idff_lcnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
-            idname, IDSearch.IDFF_LC_LABELS)
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
+            idname, IDSearch.IDFF_LC_LABELS
+        )
 
     @staticmethod
     def conv_idname_2_idff_qnnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
-            idname, IDSearch.IDFF_QN_LABELS)
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
+            idname, IDSearch.IDFF_QN_LABELS
+        )
 
     @staticmethod
     def conv_idname_2_idff_ccnames(idname):
         """."""
-        return IDSearch.conv_idname_labels_2_corrnames(
-            idname, IDSearch.IDFF_CC_LABELS)
+        return IDSearch.conv_idname_corrlabels_2_corrnames(
+            idname, IDSearch.IDFF_CC_LABELS
+        )
 
     @staticmethod
     def conv_idname_2_polarizations(idname):
-        """Return ID polarizations (sel)."""
+        """Return ID polarization names (sel)."""
         pols = IDSearch._idname2pol_sel[idname]
-        return tuple(pol[0] for pol in pols.values())
+        return tuple(pol[0] for pol in pols)
 
     @staticmethod
     def conv_idname_2_polarizations_sts(idname):
-        """Return ID polarizations (sts)."""
+        """Return ID polarization names (sts)."""
         pols = IDSearch._idname2pol_sts[idname]
-        return tuple(pol[0] for pol in pols.values())
+        return tuple(pol[0] for pol in pols)
 
     @staticmethod
     def conv_idname_2_polarization_state(idname, pparameter, kparameter):
@@ -500,7 +884,7 @@ class IDSearch:
         if isinstance(pol, int):
             return pols[pol][1]
         elif isinstance(pol, str):
-            for pol_name, pol_pparam in pols.values():
+            for pol_name, pol_pparam in dict(pols).items():
                 if pol == pol_name:
                     return pol_pparam
             raise ValueError(f'Invalid polarization string "{pol}"')
@@ -508,7 +892,7 @@ class IDSearch:
             raise TypeError('Invalid polarization type.')
 
     @staticmethod
-    def conv_idname_labels_2_corrnames(idname, correctors):
+    def conv_idname_corrlabels_2_corrnames(idname, correctors):
         """Return correctors names from idname and corrector labels."""
         corrs = list()
         idff = IDSearch.conv_idname_2_idff(idname)
@@ -519,3 +903,101 @@ class IDSearch:
                 pvname = _SiriusPVName(idff[corr])
                 corrs.append(pvname.device_name)
         return corrs
+
+    @staticmethod
+    def conv_idname_2_idtype(idname):
+        """Return the ID type of a given insetion device name."""
+        IDSearch._reload_idtype_2_idnames_dict()
+        for idtype, idnames in IDSearch._idtype_2_idnames_dict.items():
+            if idname in idnames:
+                return idtype
+        raise KeyError('Invalid idname "' + idname + '"!')
+
+    @staticmethod
+    def conv_idname_2_excdata(idname, polarization):
+        """Convert psname to excdata."""
+        idtype = IDSearch.conv_idname_2_idtype(idname)
+        idtype_pol = idtype + '-' + polarization
+        IDSearch._reload_idtype_2_excdat_dict(idtype_pol)
+        return IDSearch._idtype_2_excdat_dict[idtype_pol]
+
+    # --- private methods ---
+
+    @staticmethod
+    def _reload_idtype_dict():
+        """Reload id type dictionary from web server."""
+        if IDSearch._idtype_dict:
+            return
+        if not _web.server_online():
+            raise Exception('could not read idtypes from web server!')
+        text = _web.id_idtypes_names_read()
+        data, _ = _util.read_text_data(text)
+        idtype_dict = dict()
+        for datum in data:
+            name, polarity, magfunc = datum[0], datum[1], datum[2]
+            idtype_dict[name] = (polarity, magfunc)
+        IDSearch._idtype_dict = idtype_dict
+
+    @staticmethod
+    def _reload_idtype_2_idnames_dict():
+        """Reload id type to insertion device names dictionary."""
+        with IDSearch._lock:
+            if IDSearch._idtype_2_idnames_dict:
+                return
+            IDSearch._reload_idtype_dict()
+            idtypes = sorted(set(IDSearch._idtype_dict.keys()))
+            idtype_2_idnames_dict = dict()
+            idnames_list = list()
+            for idtype in idtypes:
+                text = _web.id_idtype_data_read(idtype + '.txt')
+                data, _ = _util.read_text_data(text)
+                idnames = [_SiriusPVName(datum[0]) for datum in data]
+                idtype_2_idnames_dict[idtype] = idnames
+                idnames_list += idnames
+            IDSearch._idtype_2_idnames_dict = idtype_2_idnames_dict
+            IDSearch._idnames_list = sorted(idnames_list)
+
+    @staticmethod
+    def _reload_idtype_2_excdat_dict(idtype_pol):
+        """Load ID conversion data."""
+        with IDSearch._lock:
+            if idtype_pol in IDSearch._idtype_2_excdat_dict:
+                return
+            if not _web.server_online():
+                raise Exception(
+                    'could not read "' + str(idtype_pol) + '" from web server!'
+                )
+            IDSearch._idtype_2_excdat_dict[idtype_pol] = _ExcitationData(
+                filename_web=idtype_pol + '.txt'
+            )
+
+    @staticmethod
+    def _reload_idname_2_idmodel_dict():
+        """Load idmodels by idname to a dict."""
+        with IDSearch._lock:
+            if IDSearch._idname_2_idmodel_dict:
+                return
+            if not _web.server_online():
+                raise Exception('could not read idmodels from web server')
+            id_data, _ = _util.read_text_data(_web.id_idmodels_read())
+            data = id_data
+            idname_2_idmodel_dict = dict()
+            idmodel_2_idname_dict = dict()
+            for datum in data:
+                idname, idmodel = datum
+                idname_2_idmodel_dict[idname] = idmodel
+                if idmodel not in idmodel_2_idname_dict:
+                    idmodel_2_idname_dict[idmodel] = list()
+                idmodel_2_idname_dict[idmodel].append(idname)
+            IDSearch._idname_2_idmodel_dict = idname_2_idmodel_dict
+            IDSearch._idmodel_2_idname_dict = idmodel_2_idname_dict
+
+    # --- aux. methods ---
+
+    @staticmethod
+    def _idffdevs_add_corrector(idff, corrtype, corrdevs):
+        for corrlabel in IDSearch.IDFF_CorrLabels[corrtype]:
+            if corrlabel in idff:
+                if corrtype not in corrdevs:
+                    corrdevs[corrtype] = dict()
+                corrdevs[corrtype][corrlabel] = idff[corrlabel]

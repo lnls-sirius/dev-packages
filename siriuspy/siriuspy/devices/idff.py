@@ -20,6 +20,7 @@ class _ParamPVs:
 
     LOOPSTATE_SEL = 'LoopState-Sel'
     LOOPSTATE_STS = 'LoopState-Sts'
+    TABLEIDX_MON = None
     LOG_MON = None
     LOOPFREQ_SP = None
     LOOPFREQ_RB = None
@@ -61,6 +62,17 @@ class _ParamPVs:
                 str_ += lstr if str_ == '' else '\n' + lstr
         return str_
 
+    def _properties_default(self):
+        props = set(
+            value
+            for key, value in _inspect.getmembers(self)
+            if not key.startswith('_') and not isinstance(value, list) and value is not None
+        )
+        for key, value in _inspect.getmembers(self):
+            if not key.startswith('_') and isinstance(value, list):
+                props.update(set(value))
+        return tuple(props)
+
 
 class IDFFCtrlBase(_Device):
     """ID Feedforward Control Device Base."""
@@ -76,13 +88,7 @@ class IDFFCtrlBase(_Device):
 
     PARAM_PVS = _ParamPVs()
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname, props2init='all', auto_monitor_mon=True):
         """."""
@@ -266,6 +272,47 @@ class IDFFCtrlBase(_Device):
             pass
         return iddevname
 
+    def get_ffwd_table_corrlabels(self):
+        """."""
+        corrlabels = list()
+        corrlabels += self.IDFF_CH_LABELS
+        corrlabels += self.IDFF_CV_LABELS
+        corrlabels += self.IDFF_CC_LABELS
+        corrlabels += self.IDFF_LC_LABELS
+        corrlabels += self.IDFF_QS_LABELS
+        corrlabels += self.IDFF_QN_LABELS
+        return corrlabels
+
+    def get_ffwd_table_pol_idx(self):
+        """Table index for currently active polarization state."""
+        # for hard devices with a single table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            return None
+
+        # otherwise, we need to choose the table based on the hardware state
+        idx = self[self.PARAM_PVS.TABLEIDX_MON]
+        return idx
+
+    def get_ffwd_table_pvname(self, pol_idx=None):
+        """."""
+        raise NotImplementedError
+
+    def get_ffwd_table(self, pol_idx=None):
+        """Table of given index or of active polarization state."""
+        raise NotImplementedError
+
+    def set_ffwd_table(self, value, pol_idx=None):
+        """Set table for given index or of activate polarization state."""
+        raise NotImplementedError
+
+    def get_ffwd_table_dict(self, pol_idx=None):
+        """Table dict of given index or of active polarization state."""
+        raise NotImplementedError
+
+    def set_ffwd_table_dict(self, ffwd_table, pol_idx=None):
+        """Set table dict for given index or for activate state."""
+        raise NotImplementedError
+
     @staticmethod
     def _add_devices(devset_base, devset_derived):
         for key, value in _inspect.getmembers(devset_derived):
@@ -296,13 +343,7 @@ class IDFFCtrlSoft(IDFFCtrlBase):
     PARAM_PVS.CORRSTATUS_MON = 'CorrStatus-Mon'
     PARAM_PVS.CORRSTATUSLABELS_CTE = 'CorrStatusLabels-Cte'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     @property
     def configname(self):
@@ -334,13 +375,7 @@ class IDFFCtrlSoftDELTA(IDFFCtrlSoft):
     PARAM_PVS.CORRQS_1CURRENT_MON = 'CorrQS_1Current-Mon'
     PARAM_PVS.CORRQS_2CURRENT_MON = 'CorrQS_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -379,13 +414,7 @@ class IDFFCtrlSoftIVU(IDFFCtrlSoft):
     PARAM_PVS.CORRQF_2CURRENT_MON = 'CorrQF_2Current-Mon'
     PARAM_PVS.CORRQD2_2CURRENT_MON = 'CorrQD2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -420,13 +449,7 @@ class IDFFCtrlSoftVPU(IDFFCtrlSoft):
     PARAM_PVS.CORRCC1_2CURRENT_MON = 'CorrCC1_2Current-Mon'
     PARAM_PVS.CORRCC2_2CURRENT_MON = 'CorrCC2_2Current-Mon'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
     def __init__(self, devname=None, props2init='all', auto_monitor_mon=True):
         """."""
@@ -450,38 +473,86 @@ class IDFFCtrlHard(IDFFCtrlBase):
         # should be added in derived classes
 
     PARAM_PVS = _dcopy(IDFFCtrlBase.PARAM_PVS)
+    PARAM_PVS.TABLEIDX_MON = 'TableIdx-Mon'
     PARAM_PVS.TABLE_SP = 'Table-SP'
     PARAM_PVS.TABLE_RB = 'Table-RB'
 
-    PROPERTIES_DEFAULT = tuple(
-        set(
-            value
-            for key, value in _inspect.getmembers(PARAM_PVS)
-            if not key.startswith('_') and value is not None
-        )
-    )
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
 
-    def get_ffwd_table_corr_labels(self):
+    def get_ffwd_table_corrlabels(self):
         """."""
-        corr_labels = list()
-        corr_labels += self.IDFF_CH_LABELS
-        corr_labels += self.IDFF_CV_LABELS
-        corr_labels += self.IDFF_CC_LABELS
-        corr_labels += self.IDFF_LC_LABELS
-        corr_labels += self.IDFF_QS_LABELS
-        corr_labels += self.IDFF_QN_LABELS
-        return corr_labels
+        corrlabels = list()
+        corrlabels += self.IDFF_CH_LABELS
+        corrlabels += self.IDFF_CV_LABELS
+        corrlabels += self.IDFF_CC_LABELS
+        corrlabels += self.IDFF_LC_LABELS
+        corrlabels += self.IDFF_QS_LABELS
+        corrlabels += self.IDFF_QN_LABELS
+        return corrlabels
 
-    def get_ffwd_table(self):
-        """Return FF table dict."""
-        param_name = self.PARAM_PVS.TABLE_RB
-        if param_name is None:
-            return dict()
-        ff_table = _np.array(self[param_name])
-        clabels = self.get_ffwd_table_corr_labels()
-        ff_table = ff_table.reshape(len(clabels), -1)
+    def get_ffwd_table_pol_idx(self):
+        """Table index for currently active polarization state."""
+        # for hard devices with a single table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            return None
+
+        # otherwise, we need to choose the table based on the hardware state
+        idx = self[self.PARAM_PVS.TABLEIDX_MON]
+        return idx
+
+    def get_ffwd_table_pvname(self, is_sp, pol_idx=None):
+        """."""
+        # for hard devices with a single table
+        if not isinstance(self.PARAM_PVS.TABLE_RB, list):
+            pvname = self.PARAM_PVS.TABLE_SP if is_sp else \
+                self.PARAM_PVS.TABLE_RB
+            return pvname
+
+        idx = self.get_ffwd_table_pol_idx() if pol_idx is None else pol_idx
+        params = self.PARAM_PVS
+        params_table_sp_rb = params.TABLE_SP if is_sp else params.TABLE_RB
+        pvname = params_table_sp_rb if idx is None else params_table_sp_rb[idx]
+        return pvname
+
+    def get_ffwd_table(self, pol_idx=None):
+        """Table of given index or of active polarization state."""
+        propty = self.get_ffwd_table_pvname(is_sp=False, pol_idx=pol_idx)
+        return self[propty]
+
+    def set_ffwd_table(self, value, pol_idx=None):
+        """Set table for given index or of activate polarization state."""
+        propty = self.get_ffwd_table_pvname(is_sp=True, pol_idx=pol_idx)
+        self[propty] = value
+
+    def get_ffwd_table_dict(self, pol_idx=None):
+        """Table dict of given index or of active polarization state."""
+        ff_table = _np.array(self.get_ffwd_table(pol_idx))
+        clabels = self.get_ffwd_table_corrlabels()
+        ff_table = ff_table.reshape(4, -1)
         ff_table = {clabels[i]: ff_table[i, :] for i in range(len(clabels))}
         return ff_table
+
+    def set_ffwd_table_dict(self, ffwd_table, pol_idx=None):
+        """Set table dict for given index or for activate state."""
+        clabels = self.get_ffwd_table_corrlabels()
+        ffwd_tables = {
+            clabel: ffwd_table[clabel] for clabel in clabels
+            if clabel in ffwd_table
+        }
+        if len(ffwd_tables) != len(clabels):
+            raise ValueError(
+                'ffwd_table is missing waveforms!')
+        if len(set(map(len, ffwd_table.values()))) > 1:
+            raise ValueError(
+                'ffwd_table has to have waveforms of the same size!')
+        clabel = list(ffwd_tables.keys())[0]
+        wfm_len = len(ffwd_table[clabel])
+
+        newtable = _np.zeros(4*wfm_len)
+        for idx, corrlabel in enumerate(clabels):
+            wfm = ffwd_table[corrlabel]
+            newtable[idx*wfm_len:(idx+1)*wfm_len] = wfm
+        self.set_ffwd_table(newtable, pol_idx)
 
 
 class IDFFCtrlHardIVU(IDFFCtrlHard):
@@ -491,9 +562,8 @@ class IDFFCtrlHardIVU(IDFFCtrlHard):
         """Device names."""
 
         IVU18_08SB_HARD = 'SI-08SB:BS-IDFF-CHCV'
-        IVU18_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
         IVU18_14SB_HARD = 'SI-14SB:BS-IDFF-CHCV'
-        ALL = (IVU18_08SB_HARD, IVU18_11SP_HARD, IVU18_14SB_HARD)
+        ALL = (IVU18_08SB_HARD, IVU18_14SB_HARD)
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
@@ -516,14 +586,24 @@ class IDFFCtrlHardVPU(IDFFCtrlHard):
     IDFF_CC_LABELS = _IDSearch.IDFF_CC_LABELS
 
 
-class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
+class IDFFCtrlHardUE(IDFFCtrlHard):
+    """."""
+
+    PARAM_PVS = _dcopy(IDFFCtrlHard.PARAM_PVS)
+    PARAM_PVS.TABLE_SP = [f'Table{i}-SP' for i in range(10)]
+    PARAM_PVS.TABLE_RB = [f'Table{i}-RB' for i in range(10)]
+
+    PROPERTIES_DEFAULT = PARAM_PVS._properties_default()
+
+
+class IDFFCtrlHardUE_CHCV(IDFFCtrlHardUE):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_HARD = 'SI-11SP:BS-IDFF-CHCV'
-        ALL = (UE44_11SP_HARD, )
+        UE44_11SP_HARD_CHCV = 'SI-11SP:BS-IDFF-CHCV'
+        ALL = (UE44_11SP_HARD_CHCV, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
@@ -531,33 +611,32 @@ class IDFFCtrlHardUE_CHCV(IDFFCtrlHard):
     IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
 
 
-class IDFFCtrlHardUE_QS(IDFFCtrlHard):
+class IDFFCtrlHardUE_QS(IDFFCtrlHardUE):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_HARD = "SI-11SP:BS-IDFF-QS"
-        ALL = (UE44_11SP_HARD, )
+        UE44_11SP_HARD_QS = "SI-11SP:BS-IDFF-QS"
+        ALL = (UE44_11SP_HARD_QS, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
     IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
 
 
-class IDFFCtrlHardUE_LC(IDFFCtrlHard):
+class IDFFCtrlHardUE_LC(IDFFCtrlHardUE):
     """ID Feedforward Control UE Device."""
 
     class DEVICES:
         """Device names."""
 
-        UE44_11SP_HARD = "SI-11SP:BS-IDFF-LC"
-        ALL = (UE44_11SP_HARD, )
+        UE44_11SP_HARD_LC = "SI-11SP:BS-IDFF-LC"
+        ALL = (UE44_11SP_HARD_LC, )
 
     IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
 
     IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
-
 
 
 class IDFFCtrl(IDFFCtrlBase):
@@ -839,23 +918,30 @@ class IDFF(_DeviceSet):
         if use_ioc_tables:
             if kparameter_value is None:
                 kparameter_value = self.kparameter_mon
+            if pparameter_value is None:
+                pparameter_value = self.pparameter_mon
 
-            ff_tables = self.ctrldev.get_ffwd_table()
+            ff_tables = self.ctrldev.get_ffwd_table_dict()
             setpoints = dict()
 
             idparams = _IDSearch.conv_idname_2_parameters(self.iddevname)
             idff = _IDSearch.conv_idname_2_idff(self.iddevname)
+
+            parameter_value = pparameter_value if self.polarization_mon in (
+                'no-field', 'linear-ene-cte', 'transition'
+            ) else kparameter_value
+
             for corrlabel, ff_table in ff_tables.items():
-                # IOC tables gap zero gap offset!
-                klims = 0 * idparams.KPARAM_MIN, idparams.KPARAM_MAX
-                kparam = _np.linspace(*klims, len(ff_table))
+                # IOC tables parameter limits!
+                lims = idparams.PARAM_TABLE_MIN, idparams.PARAM_TABLE_MAX
+                param = _np.linspace(*lims, len(ff_table))
                 # linear interpolation
-                curr = _np.interp(kparameter_value, kparam, ff_table)
+                curr = _np.interp(parameter_value, param, ff_table)
                 corr_pvname = idff[corrlabel]
                 setpoints[corr_pvname] = curr
             sts = (
                 setpoints, self.polarization_mon,
-                self.pparameter_mon, kparameter_value
+                pparameter_value, kparameter_value
             )
             return sts
 
@@ -1057,6 +1143,41 @@ class IDFF(_DeviceSet):
                 print()
             _time.sleep(time_interval / (nrpts - 1))
 
+    def rampdown_corr_currents(
+        self,
+        nrpts=50,
+        time_interval=10,
+        dry_run=False,
+    ):
+        """."""
+        devcorrs = []
+        devcorrs += self.chdevs
+        devcorrs += self.cvdevs
+        devcorrs += self.qsdevs
+        devcorrs += self.lcdevs
+        devcorrs += self.ccdevs
+        corrs = dict()
+        for devcorr in devcorrs:
+            # TODO: check power supply status
+            curr0 = devcorr.current_mon  # after an interlock, RB <> Mon=0
+            curr1 = 0
+            corrs[devcorr.devname] = (devcorr, curr0, curr1)
+
+        for idx in range(nrpts):
+            delta_ramp = (idx + 1) / nrpts
+            if dry_run:
+                print(f'point {idx + 1}/{nrpts}')
+            for psname in corrs:
+                devcorr, curr0, curr1 = corrs[psname]
+                curr = curr0 + delta_ramp * (curr1 - curr0)
+                if dry_run:
+                    print(f'{psname:<20s}: {curr:+.6f}')
+                else:
+                    devcorr.set_current(curr, wait_mon=True)
+            if dry_run:
+                print()
+            _time.sleep(time_interval / (nrpts - 1))
+
     def _create_devices(self, props2init_ctrl, props2init_corrs):
         devctrl = (
             None
@@ -1098,5 +1219,5 @@ class IDFF(_DeviceSet):
         return devs
 
     def _get_corrnames(self, labels):
-        conv = _IDSearch.conv_idname_labels_2_corrnames
+        conv = _IDSearch.conv_idname_corrlabels_2_corrnames
         return conv(self.iddevname, labels)

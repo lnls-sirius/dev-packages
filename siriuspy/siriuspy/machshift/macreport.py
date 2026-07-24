@@ -10,6 +10,7 @@ try:
 except:
     _plt = None
 
+from ..namesys import SiriusPVName as _PVName
 from ..search import PSSearch as _PSSearch
 from ..clientarch import ClientArchiver as _CltArch, Time as _Time, \
     PVData as _PVData, PVDataSet as _PVDataSet
@@ -282,8 +283,8 @@ class MacReport:
         self._init_connectors()
 
         # query data
-        self._time_start = None
-        self._time_stop = None
+        self._time_start = _Time.now()
+        self._time_stop = self._time_start
 
         # user shift stats
         self._usershift_progmd_time = None
@@ -440,41 +441,14 @@ class MacReport:
                              stream=_sys.stdout)
 
     @property
-    def timestamp_start(self):
-        """Query interval start timestamp."""
-        if not self._time_start:
-            return None
-        return self._time_start.timestamp()
-
-    @timestamp_start.setter
-    def timestamp_start(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise TypeError('expected argument of type float or int')
-        self._time_start = _Time(timestamp=new_timestamp)
-
-    @property
     def time_start(self):
         """Time start."""
         return self._time_start
 
     @time_start.setter
     def time_start(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise TypeError('expected argument of type Time')
-        self._time_start = new_time
-
-    @property
-    def timestamp_stop(self):
-        """Query interval stop timestamp."""
-        if not self._time_stop:
-            return None
-        return self._time_stop.timestamp()
-
-    @timestamp_stop.setter
-    def timestamp_stop(self, new_timestamp):
-        if not isinstance(new_timestamp, (float, int)):
-            raise TypeError('expected argument of type float or int')
-        self._time_stop = _Time(timestamp=new_timestamp)
+        """Accept any value that can be converted to a Time object."""
+        self._time_start = _Time(new_time)
 
     @property
     def time_stop(self):
@@ -483,9 +457,8 @@ class MacReport:
 
     @time_stop.setter
     def time_stop(self, new_time):
-        if not isinstance(new_time, _Time):
-            raise TypeError('expected argument of type Time')
-        self._time_stop = new_time
+        """Accept any value that can be converted to a Time object."""
+        self._time_stop = _Time(new_time)
 
     # user shift stats
 
@@ -1062,30 +1035,40 @@ class MacReport:
 
         # current
         _t0 = _time.time()
-        self._pvdata[self._current_pv].parallel_query_bin_interval = 60*60*6
-        self._pvdata[self._current_pv].update(MacReport.QUERY_AVG_TIME)
+        pvd = self._pvdata[self._current_pv]
+        pvd.query_split_interval = 60 * 60 * 6
+        pvd.processing_type = pvd.ProcessingTypes.Mean
+        pvd.processing_type_param1 = MacReport.QUERY_AVG_TIME
+        pvd.update()
+
         self._update_log(log_msg.format(self._current_pv, _time.time()-_t0))
 
         # macshift, interlock and stability indicators
         for pvn in self._pvnames:
             if pvn == self._current_pv:
                 continue
-            interval, parallel = None, False
             _t0 = _time.time()
-            self._pvdata[pvn].update(mean_sec=interval, parallel=parallel)
+            # Set query_split_interval for the rest of PVs to 0 to
+            # avoid multiple queries and speed up the process.
+            self._pvdata[pvn].query_split_interval = 0
+            self._pvdata[pvn].update()
             self._update_log(log_msg.format(pvn, _time.time()-_t0))
 
         # ps
         for group, pvdataset in self._pvdataset.items():
             _t0 = _time.time()
-            pvdataset.update(parallel=False)
+            # Set query_split_interval for the rest of PVs to 0 to
+            # avoid multiple queries and speed up the process.
+            pvdataset.query_split_interval = 0
+            pvdataset.update()
             self._update_log(log_msg.format(
-                'SI PS '+group.capitalize(), _time.time()-_t0))
+                'SI PS '+group.capitalize(), _time.time()-_t0)
+            )
 
         self._compute_stats()
 
     def plot_raw_data(self):
-        """Plot raw data for period timestamp_start to timestamp_stop."""
+        """Plot raw data for period time_start to time_stop."""
         if not self._raw_data:
             print('No data to display. Call update() to get data.')
             return
@@ -1320,6 +1303,13 @@ class MacReport:
                 key = psdesc+' ('+str(idx+1)+'/'+str(len(subs))+')'
                 value = _PSSearch.get_psnames(
                     {'sec': 'SI', 'sub': sub, 'dev': psreg})
+                # ignore IDFF correctors
+                toremove = list()
+                for v in value:
+                    if _PVName(v).sub.endswith(('SA', 'SB', 'SP')):
+                        toremove.append(v)
+                for v in toremove:
+                    value.remove(v)
                 self._psgroup2psname[key] = value
 
         self._pvdataset = dict()
@@ -1798,6 +1788,7 @@ class MacReport:
         if data.timestamp is None:
             times = _np.array([t_start, ])
             values = _np.array([defv, ])
+            _log.warning('Received empty data for %s', pvname)
         else:
             times = _np.array(data.timestamp)
             values = _np.array(data.value)
