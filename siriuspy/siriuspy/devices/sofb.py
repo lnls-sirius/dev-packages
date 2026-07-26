@@ -4,6 +4,14 @@ import time as _time
 
 import numpy as _np
 
+from ..optics.constants import (
+    SI as _SI,
+    BO as _BO,
+    TB as _TB,
+    TS as _TS,
+    accelerators as _accelerators,
+)
+
 from ..sofb.csdev import SOFBFactory
 from ..sofb.utils import si_calculate_bump as _si_calculate_bump
 from .device import Device as _Device
@@ -34,9 +42,10 @@ class SOFB(_Device):
             raise NotImplementedError(devname)
 
         # SOFB object
-        data = SOFBFactory.create(devname[:2])
+        acc = _accelerators.accelerators[devname[:2]]
+        data = SOFBFactory.create(acc)
 
-        if data.acc == 'SI':
+        if acc == _SI:
             return SISOFB(
                 devname,
                 data,
@@ -44,7 +53,7 @@ class SOFB(_Device):
                 auto_monitor=auto_monitor,
                 auto_monitor_mon=auto_monitor_mon,
             )
-        elif data.isring:
+        elif acc == _BO:
             return BOSOFB(
                 devname,
                 data,
@@ -147,7 +156,8 @@ class TLSOFB(_Device):
             raise NotImplementedError(devname)
 
         # SOFB object
-        self._data = data or SOFBFactory.create(devname[:2])
+        acc = _accelerators[devname[:2]]
+        self._data = data or SOFBFactory.create(acc)
         # call base class constructor
         super().__init__(
             devname,
@@ -155,6 +165,11 @@ class TLSOFB(_Device):
             auto_monitor=auto_monitor,
             auto_monitor_mon=auto_monitor_mon,
         )
+
+    @property
+    def acc(self):
+        """Accelerator."""
+        return self._data.acc
 
     @property
     def data(self):
@@ -1018,12 +1033,12 @@ class SISOFB(BOSOFB):
     @property
     def orbx(self):
         """."""
-        return self['SlowOrbX-Mon'] if self._data.isring else None
+        return self['SlowOrbX-Mon'] if self.acc.isring else None
 
     @property
     def orby(self):
         """."""
-        return self['SlowOrbY-Mon'] if self._data.isring else None
+        return self['SlowOrbY-Mon'] if self.acc.isring else None
 
     @property
     def kickrf(self):
@@ -1063,13 +1078,13 @@ class SISOFB(BOSOFB):
     @property
     def rfenbl(self):
         """."""
-        if self._data.acc_idx == self._data.Rings.SI:
+        if self.acc == _SI:
             return bool(self['RFEnbl-Sts'])
 
     @rfenbl.setter
     def rfenbl(self, value):
         """."""
-        if self._data.acc_idx == self._data.Rings.SI:
+        if self.acc == _SI:
             self['RFEnbl-Sel'] = value
 
     @property
