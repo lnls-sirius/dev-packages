@@ -14,7 +14,7 @@ from .correctors import BaseCorrectors as _BaseCorrectors
 from .matrix import BaseMatrix as _BaseMatrix
 from .orbit import BaseOrbit as _BaseOrbit
 
-INTERVAL = 1
+INTERVAL = 1  # [s]
 
 
 class SOFB(_BaseClass):

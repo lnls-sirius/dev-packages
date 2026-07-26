@@ -1,5 +1,7 @@
 """Tune devices."""
 
+from ..optics.constants import SI as _SI
+
 from .device import Device as _Device, DeviceSet as _DeviceSet
 
 
@@ -55,8 +57,9 @@ class TuneFrac(_Device):
     @rev_harmonic.setter
     def rev_harmonic(self, value):
         """Revolution harmonic."""
-        if not 0 <= int(value) <= 864:
-            raise ValueError('rev_harmonic must be in range [0, 864]')
+        hnumber = _SI.harmonic_number
+        if not 0 <= int(value) <= hnumber:
+            raise ValueError(f'rev_harmonic must be in range [0, {hnumber}]')
         self['RevN-SP'] = int(value)
 
     @property

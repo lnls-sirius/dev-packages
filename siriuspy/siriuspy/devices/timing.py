@@ -6,6 +6,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 from mathphys.functions import get_namedtuple as _get_namedtuple
 
+from ..optics.constants import SI as _SI
 from ..search import HLTimeSearch as _HLTimeSearch
 from ..timesys.csdev import (
     Const as _TIConst,
@@ -148,13 +149,13 @@ class EVG(_Device):
     def fill_bucketlist(self, stop, start=1, step=30, timeout=10):
         """Fill bucket list."""
         if (step > 0) and (start > stop):
-            stop += 864
+            stop += _SI.harmonic_number
         if (step < 0) and (stop > start):
-            stop -= 864
+            stop -= _SI.harmonic_number
         value = _np.arange(start, stop, step)
-        value = (value - 1) % 864 + 1
+        value = (value - 1) % _SI.harmonic_number + 1
         self.bucketlist = value
-        rb_value = _np.zeros(864)
+        rb_value = _np.zeros(_SI.harmonic_number)
         rb_value[: len(value)] = value
         return self.wait('BucketList-RB', rb_value, timeout=timeout)
 
