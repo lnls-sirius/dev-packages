@@ -9,8 +9,9 @@ from ..optics.constants import (
     SI as _SI,
     BO as _BO,
     TB as _TB,
-    TS as _TS
+    TS as _TS,
 )
+
 from ..search import BPMSearch as _BPMSearch, LLTimeSearch as _TISearch, \
     MASearch as _MASearch, PSSearch as _PSSearch
 from ..timesys import csdev as _cstiming
@@ -38,8 +39,8 @@ class ETypes(_csdev.ETypes):
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     DRIVE_TYPE = ('Sine', 'Square', 'Impulse')
-    TLINES = (_TB.sector, _TS.sector)
-    RINGS = (_BO.sector, _SI.sector)
+    TLINES = (_CSOPT.TB.sector, _CSOPT.TS.sector)
+    RINGS = (_CSOPT.BO.sector, _CSOPT.SI.sector)
     ACCELERATORS = TLINES + RINGS
 
     STS_LBLS_CORR_TLINES = (
@@ -92,11 +93,6 @@ class ConstTLines(_csdev.Const):
     RespMatMode = _csdev.Const.register("RespMatMode", _et.RESPMAT_MODE)
     MeasRespMatCmd = _csdev.Const.register("MeasRespMatCmd", _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _csdev.Const.register("MeasRespMatMon", _et.MEAS_RMAT_MON)
-    TransportLines = _csdev.Const.register(
-        "TransportLines", _et.TLINES, (0, 1)
-    )
-    Rings = _csdev.Const.register("Rings", _et.RINGS, (2, 3))
-    Accelerators = _csdev.Const.register("Accelerators", _et.ACCELERATORS)
 
     SOFBMode = _csdev.Const.register("SOFBMode", _et.ORB_MODE_TLINES)
     SyncWithInj = _csdev.Const.register("SyncWithInj", _et.OFF_ON)
@@ -143,20 +139,19 @@ class SOFBTLines(ConstTLines):
         """Init1 method."""
         self.acc = acc
         self.evg_name = _TISearch.get_evg_name()
-        self.acc_idx = self.Accelerators._fields.index(self.acc)
 
         # Define the BPMs:
-        self.bpm_names = _BPMSearch.get_names({"sec": acc, "dev": "BPM"})
+        self.bpm_names = _BPMSearch.get_names({"sec": acc.sector, "dev": "BPM"})
 
         # Define correctors:
-        filter_ch = dict(sec=acc, dis="PS", dev="CH")
-        filter_cv = dict(sec=acc, dis="PS", dev="CV")
-        if self.acc == _SI:
+        filter_ch = dict(sec=acc.sector, dis="PS", dev="CH")
+        filter_cv = dict(sec=acc.sector, dis="PS", dev="CV")
+        if self.acc == _CSOPT.SI:
             filter_ch.update({"sub": "..(M|C)."})
             filter_cv.update({"sub": "..(M|C)."})
         self.ch_names = _PSSearch.get_psnames(filter_ch)
         self.cv_names = _PSSearch.get_psnames(filter_cv)
-        if self.acc == _TS:
+        if self.acc == _CSOPT.TS:
             self.ch_names = [_PVName("TS-01:PU-EjeSeptG")] + self.ch_names
             self.cv_names = [
                 cvn
@@ -168,7 +163,7 @@ class SOFBTLines(ConstTLines):
         self.bpm_nicknames = _BPMSearch.get_nicknames(self.bpm_names)
         self.ch_nicknames = _PSSearch.get_psnicknames(self.ch_names)
         self.cv_nicknames = _PSSearch.get_psnicknames(self.cv_names)
-        if self.acc == _TS:
+        if self.acc == _CSOPT.TS:
             self.ch_nicknames[0] = "EjeseptG"
 
         # Find their position along the ring:
@@ -201,9 +196,9 @@ class SOFBTLines(ConstTLines):
         self.respmat_fname = _os.path.join(ioc_fol, "respmat." + ext)
 
         self.trigger_acq_name = self.acc.sector + '-Fam:TI-BPM'
-        if self.acc == _SI:
-            self.trigger_cor_name = self.acc + '-Glob:TI-Mags-Corrs'
-            self.evt_cor_name = 'Orb' + self.acc
+        if self.acc == _CSOPT.SI:
+            self.trigger_cor_name = self.acc.sector + '-Glob:TI-Mags-Corrs'
+            self.evt_cor_name = 'Orb' + self.acc.sector
             self.clk_cor_name = 'Clock3'
             self.evt_rmpbo = 'RmpBO'
 
@@ -214,7 +209,7 @@ class SOFBTLines(ConstTLines):
     @property
     def isring(self):
         """."""
-        return self.acc in self.Rings._fields
+        return self.acc.isring
 
     def get_ioc_database(self, prefix=""):
         """Return IOC database."""
@@ -1349,12 +1344,11 @@ class SOFBFactory:
     @staticmethod
     def create(acc):
         """Return appropriate SOFB object."""
-        acc = acc.upper()
-        if acc == _SI.sector:
-            return SOFBSI(_SI)
-        elif acc in _et.RINGS:
-            return SOFBRings(acc)
-        elif acc in _et.TLINES:
+        if acc == _SI:
+            return SOFBSI(_CSOPT.SI)
+        elif acc == _BO:
+            return SOFBRings(_CSOPT.BO)
+        elif acc in (_TB, _TS):
             return SOFBTLines(acc)
         else:
-            raise ValueError('Invalid accelerator name "{}"'.format(acc))
+            raise ValueError('Invalid accelerator "{}"'.format(acc))
