@@ -331,6 +331,7 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR: Invalid tune source."
             self._update_log(msg)
             return False
+        self._tune_source = value
         pvnames = _ETypes.TUNE_SOURCE_PVS[self._tune_source]
         pvx, pvy = _SiriusPVName(pvnames[0]), _SiriusPVName(pvnames[1])
         self._tune_x_pv = _PV(
