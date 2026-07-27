@@ -258,7 +258,7 @@ class SITuneCorrApp(TuneCorrApp):
         self._loop_state_lastsp = _Const.LoopState.Open
         self._loop_freq = 3.0
 
-        self._tune_source = _Const.TuneSource.TuneSpec
+        self._tune_source = _Const.TuneSrc.TuneSpec
 
         self._max_tune_err = 0.02
         self._ref_tunex = 0.16
@@ -271,7 +271,7 @@ class SITuneCorrApp(TuneCorrApp):
         self.map_pv2write.update({
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
-            'TuneSource-Sel': self.set_tune_source,
+            'TuneSrc-Sel': self.set_tune_source,
             'RefTuneX-SP': _part(self.set_ref_tune, "x"),
             'RefTuneY-SP': _part(self.set_ref_tune, "y"),
             'MaxTuneErr-SP': self.set_max_tune_err,
@@ -327,28 +327,32 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR: Cannot change tune source while the loop is closed."
             self._update_log(msg)
             return False
-        if not 0 <= value < len(_ETypes.TUNE_SOURCE):
+        if not 0 <= value < len(_ETypes.TUNE_SRC):
             msg = "ERR: Invalid tune source."
             self._update_log(msg)
             return False
         self._tune_source = value
-        pvnames = _ETypes.TUNE_SOURCE_PVS[self._tune_source]
+        pvnames = _ETypes.TUNE_SRC_PVS[self._tune_source]
         pvx, pvy = _SiriusPVName(pvnames[0]), _SiriusPVName(pvnames[1])
         self._tune_x_pv = _PV(
             pvx.substitute(prefix=_vaca_prefix),
-            connection_timeout=0.3
+            connection_timeout=0.3,
+            auto_monitor=True,
+            callback=_part(self._callback_update_tunes, 'x')
         )
         self._tune_y_pv = _PV(
             pvy.substitute(prefix=_vaca_prefix),
-            connection_timeout=0.3
+            connection_timeout=0.3,
+            auto_monitor=True,
+            callback=_part(self._callback_update_tunes, 'y')
         )
         msg = "INFO: Tune PVs {}!"
-        status = "connected" if all(
-            [self._tune_x_pv.connected, self._tune_y_pv.connected]
+        status = "connected" if (
+            self._tune_x_pv.connected and self._tune_y_pv.connected
         ) else "not connected"
         self._update_log(msg.format(status))
-        self.run_callbacks('TuneSourcePVList-Mon', (pvx, pvy))
-        self.run_callbacks('TuneSource-Sts', value)
+        self.run_callbacks('TuneSrcPVList-Mon', (pvx, pvy))
+        self.run_callbacks('TuneSrc-Sts', value)
         return True
 
     def set_ref_tune(self, plane, value):
@@ -403,11 +407,11 @@ class SITuneCorrApp(TuneCorrApp):
         self.run_callbacks('MaxTuneErr-SP', self._max_tune_err)
         self.run_callbacks('MaxTuneErr-RB', self._max_tune_err)
 
-        self.run_callbacks('TuneSource-Sel', self._tune_source)
-        self.run_callbacks('TuneSource-Sts', self._tune_source)
+        self.run_callbacks('TuneSrc-Sel', self._tune_source)
+        self.run_callbacks('TuneSrc-Sts', self._tune_source)
         self.run_callbacks(
-            'TuneSourcePVList-Mon',
-            _ETypes.TUNE_SOURCE_PVS[self._tune_source]
+            'TuneSrcPVList-Mon',
+            _ETypes.TUNE_SRC_PVS[self._tune_source]
         )
 
         self.run_callbacks('CorrGroup-Sts', self._corr_group)  # ? needed?
@@ -504,6 +508,16 @@ class SITuneCorrApp(TuneCorrApp):
             self._update_log('FATAL: Opening Tune Feedback loop...')
             self._loop_state = _Const.LoopState.Open
             self._inloop = False
+
+    def _callback_update_tunes(self, plane, pvname, value, **kws):
+        _ = (pvname, kws)
+        if plane == 'x':
+            self.run_callbacks('TuneX-Mon', value)
+            return True
+        elif plane == 'y':
+            self.run_callbacks('TuneY-Mon', value)
+            return True
+        return False
 
     def _get_tunes(self):  # overload (from BaseApp)
         tunex, tuney = 0.0, 0.0

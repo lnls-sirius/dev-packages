@@ -12,13 +12,13 @@ class ETypes(_csdev.ETypes):
     MEAS_CMD = ('Reset', 'Start', 'Stop')
     MEAS_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     OPEN_CLOSED = ('Open', 'Closed')
-    TUNE_SOURCE = (
+    TUNE_SRC = (
         'TuneSpec',
         'BbB_SB_M1',
         'BbB_SRAM_M1',
         'BbB_SRAM_M2',
     )
-    TUNE_SOURCE_PVS = (
+    TUNE_SRC_PVS = (
         ('SI-Glob:DI-Tune-H:TuneFrac-Mon',
          'SI-Glob:DI-Tune-V:TuneFrac-Mon'),
         ('SI-Glob:DI-BbBProc-H:SB_M1_TUNE',
@@ -44,7 +44,7 @@ class Const(_csdev.Const):
     MeasCmd = _csdev.Const.register('MeasCmd', _et.MEAS_CMD)
     MeasMon = _csdev.Const.register('MeasMon', _et.MEAS_MON)
     LoopState = _csdev.Const.register("LoopState", _et.OPEN_CLOSED)
-    TuneSource = _csdev.Const.register("TuneSource", _et.TUNE_SOURCE)
+    TuneSrc = _csdev.Const.register("TuneSrc", _et.TUNE_SRC)
 
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     BO_SFAMS_NELM = (25, 10)
@@ -336,6 +336,14 @@ def get_tune_database(acc):
             'type': 'float', 'value': 3.0, 'unit': 'Hz',
             'prec': 3, 'lolim': 1e-3, 'hilim': 4.0}
 
+        # SI Tune FeedBack: Gotten Tunes
+        pvs_database['TuneX-Mon'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.000001, 'hilim': 0.499999}
+        pvs_database['TuneY-Mon'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.000001, 'hilim': 0.499999}
+
         # SI Tune FeedBack: Reference Tunes
         pvs_database['RefTuneX-SP'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
@@ -377,11 +385,11 @@ def get_tune_database(acc):
             'lolim': -100, 'hilim': 100}
 
         # SI Tune FeedBack: Tune measurement PV selection
-        pvs_database['TuneSource-Sel'] = {
-            'type': 'enum', 'enums': _ct.TuneSource._fields, 'value': 0}
-        pvs_database['TuneSource-Sts'] = {
-            'type': 'enum', 'enums': _ct.TuneSource._fields, 'value': 0}
-        pvs_database['TuneSourcePVList-Mon'] = {
+        pvs_database['TuneSrc-Sel'] = {
+            'type': 'enum', 'enums': _ct.TuneSrc._fields, 'value': 0}
+        pvs_database['TuneSrc-Sts'] = {
+            'type': 'enum', 'enums': _ct.TuneSrc._fields, 'value': 0}
+        pvs_database['TuneSrcPVList-Mon'] = {
             'type': 'string', 'count': 2, 'value': ('', '')}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
