@@ -25,6 +25,8 @@ class TuneCorrApp(_BaseApp):
 
         self._set_new_refkl_cmd_count = 0
 
+        self._inloop = False  # needed for the SI Tune Feedback
+
         if self._acc == 'SI':
             self._meas_config_dkl_qf = 0.020
             self._meas_config_dkl_qd = 0.020
@@ -58,6 +60,10 @@ class TuneCorrApp(_BaseApp):
 
     def set_dtune_x(self, value):
         """Set DeltaTuneX."""
+        if self._inloop:
+            msg = "ERR: Cant set DeltaTuneX while the feedback loop is closed."
+            self.run_callbacks('Log-Mon', msg)
+            return False
         self._delta_tunex = value
         self.run_callbacks('DeltaTuneX-RB', value)
         self._calc_intstrength()
@@ -65,6 +71,10 @@ class TuneCorrApp(_BaseApp):
 
     def set_dtune_y(self, value):
         """Set DeltaTuneY."""
+        if self._inloop:
+            msg = "ERR: Cant set DeltaTuneY while the feedback loop is closed."
+            self.run_callbacks('Log-Mon', msg)
+            return False
         self._delta_tuney = value
         self.run_callbacks('DeltaTuneY-RB', value)
         self._calc_intstrength()
@@ -72,6 +82,10 @@ class TuneCorrApp(_BaseApp):
 
     def cmd_set_newref(self, value):
         """SetNewRefKL command."""
+        if self._inloop:
+            msg = "ERR: Cant update ref. while the feedback loop is closed."
+            self.run_callbacks('Log-Mon', msg)
+            return False
         if self._update_ref():
             self._set_new_refkl_cmd_count += 1
             self.run_callbacks(
@@ -122,7 +136,8 @@ class TuneCorrApp(_BaseApp):
             method=method, grouping=grouping,
             delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
-        self.run_callbacks('Log-Mon', 'Calculated KL values.')
+        if not self._inloop:
+            self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
         for fam_idx, fam in enumerate(self._psfams):
             self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
@@ -134,11 +149,13 @@ class TuneCorrApp(_BaseApp):
             kls = {fam: self._psfam_refkl[fam]+self._lastcalc_deltakl[fam]
                    for fam in self._psfams}
             self._apply_intstrength(kls)
-            self.run_callbacks('Log-Mon', 'Applied correction.')
+            if not self._inloop:
+                self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._event_exttrig_cmd.put(0)
-                self.run_callbacks('Log-Mon', 'Generated trigger.')
+                if not self._inloop:
+                    self.run_callbacks('Log-Mon', 'Generated trigger.')
             return True
 
         self.run_callbacks('Log-Mon', 'ERR: ApplyDelta-Cmd failed.')
@@ -185,7 +202,8 @@ class TuneCorrApp(_BaseApp):
 
             self._estimate_current_deltatune()
 
-            self.run_callbacks('Log-Mon', 'Updated KL references.')
+            if not self._inloop:
+                self.run_callbacks('Log-Mon', 'Updated KL references.')
             return True
 
         self.run_callbacks(
