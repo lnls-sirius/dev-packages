@@ -435,7 +435,7 @@ class SITuneCorrApp(TuneCorrApp):
             if not self._check_tunes(tunex, tuney):
                 break
 
-            self._process_pid()
+            self._process_pid(tunex, tuney)
 
             sts = self._apply_corr()
             if not sts:
