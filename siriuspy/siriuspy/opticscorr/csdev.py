@@ -11,6 +11,23 @@ class ETypes(_csdev.ETypes):
     INDIV_2KNOBS = ('Individual', 'TwoKnobs')
     MEAS_CMD = ('Reset', 'Start', 'Stop')
     MEAS_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
+    OPEN_CLOSED = ('Open', 'Closed')
+    TUNE_SOURCE = (
+        'TuneSpec',
+        'BbB_SB_M1',
+        'BbB_SRAM_M1',
+        'BbB_SRAM_M2',
+    )
+    TUNE_SOURCE_PVS = (
+        ('SI-Glob:DI-Tune-H:TuneFrac-Mon',
+         'SI-Glob:DI-Tune-V:TuneFrac-Mon'),
+        ('SI-Glob:DI-BbBProc-H:SB_M1_TUNE',
+         'SI-Glob:DI-BbBProc-V:SB_M1_TUNE'),
+        ('SI-Glob:DI-BbBProc-H:SRAM_M1_TUNE',
+         'SI-Glob:DI-BbBProc-V:SRAM_M1_TUNE'),
+        ('SI-Glob:DI-BbBProc-H:SRAM_M2_TUNE',
+         'SI-Glob:DI-BbBProc-V:SRAM_M2_TUNE'),
+    )
 
 
 _et = ETypes  # syntactic sugar
@@ -26,6 +43,8 @@ class Const(_csdev.Const):
     SyncCorr = _csdev.Const.register('SyncCorr', _et.OFF_ON)
     MeasCmd = _csdev.Const.register('MeasCmd', _et.MEAS_CMD)
     MeasMon = _csdev.Const.register('MeasMon', _et.MEAS_MON)
+    LoopState = _csdev.Const.register("LoopState", _et.OPEN_CLOSED)
+    TuneSource = _csdev.Const.register("TuneSource", _et.TUNE_SOURCE)
 
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     BO_SFAMS_NELM = (25, 10)
@@ -304,6 +323,66 @@ def get_tune_database(acc):
             'type': 'enum', 'enums': _et.MEAS_CMD, 'value': _ct.MeasCmd.Reset}
         pvs_database['MeasConfigStatus-Mon'] = {
             'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
+
+        # SI Tune FeedBack: Loop settings
+        pvs_database['LoopState-Sel'] = {
+            'type': 'enum', 'enums': _ct.LoopState._fields, 'value': 0}
+        pvs_database['LoopState-Sts'] = {
+            'type': 'enum', 'enums': _ct.LoopState._fields, 'value': 0}
+        pvs_database['LoopFreq-SP'] = {
+            'type': 'float', 'value': 3.0, 'unit': 'Hz',
+            'prec': 3, 'lolim': 1e-3, 'hilim': 4.0}
+        pvs_database['LoopFreq-RB'] = {
+            'type': 'float', 'value': 3.0, 'unit': 'Hz',
+            'prec': 3, 'lolim': 1e-3, 'hilim': 4.0}
+
+        # SI Tune FeedBack: Reference Tunes
+        pvs_database['RefTuneX-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['RefTuneX-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['RefTuneY-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['RefTuneY-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.0001, 'hilim': 0.4999}
+        pvs_database['MaxTuneErr-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.001, 'hilim': 0.4999}
+        pvs_database['MaxTuneErr-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Hz', 'prec': 6,
+            'lolim': 0.001, 'hilim': 0.4999}
+
+        # SI Tune FeedBack: PID PVs
+        pvs_database['LoopPIDKp-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 4,
+            'lolim': -100, 'hilim': 100}
+        pvs_database['LoopPIDKp-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'frac', 'prec': 4,
+            'lolim': -100, 'hilim': 100}
+        pvs_database['LoopPIDKi-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 4,
+            'lolim': -100, 'hilim': 100}
+        pvs_database['LoopPIDKi-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'frac.Hz', 'prec': 4,
+            'lolim': -100, 'hilim': 100}
+        pvs_database['LoopPIDKd-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 4,
+            'lolim': -100, 'hilim': 100}
+        pvs_database['LoopPIDKd-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'frac.s', 'prec': 4,
+            'lolim': -100, 'hilim': 100}
+
+        # SI Tune FeedBack: Tune measurement PV selection
+        pvs_database['TuneSource-Sel'] = {
+            'type': 'enum', 'enums': _ct.TuneSource._fields, 'value': 0}
+        pvs_database['TuneSource-Sts'] = {
+            'type': 'enum', 'enums': _ct.TuneSource._fields, 'value': 0}
+        pvs_database['TuneSourcePVList-Mon'] = {
+            'type': 'string', 'count': 2, 'value': ('', '')}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
