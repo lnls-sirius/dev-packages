@@ -2,7 +2,7 @@
 
 import numpy as _np
 from epics import PV as _PV
-import epics as _epics
+from epics.ca import CAThread as _Thread
 
 import logging as _log
 from time import time as _time, sleep as _sleep
@@ -39,7 +39,7 @@ class TuneCorrApp(_BaseApp):
 
         self._set_new_refkl_cmd_count = 0
 
-        self._inloop = False
+        self._inloop = False  # needed for the SI Tune Feedback
 
         if self._acc == 'SI':
             self._meas_config_dkl_qf = 0.020
@@ -97,12 +97,11 @@ class TuneCorrApp(_BaseApp):
 
     def cmd_set_newref(self, value):
         """SetNewRefKL command."""
-        if self._update_ref() and not self._inloop:
+        if not self._inloop and self._update_ref():
             self._set_new_refkl_cmd_count += 1
             self.run_callbacks(
                 'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
             return True
-        self.run_callbacks('Log-Mon', f'{self._inloop=}')
         return False
 
     def set_meas_config_dkl_qf(self, value):
@@ -159,8 +158,7 @@ class TuneCorrApp(_BaseApp):
 
     def _apply_corr(self):
         try:
-            sts = self._sim_apply_corr()
-            return sts
+            return self._sim_apply_corr()
         except Exception as e:
             self.run_callbacks('Log-Mon', f'ERR: {e}.')
             if self._is_status_ok():
@@ -278,7 +276,7 @@ class SITuneCorrApp(TuneCorrApp):
         self._tune_source = _Const.TuneSource.Fake
         self._tune_aux_device = None
 
-        self._max_tune_err = 99.00
+        self._max_tune_err = 0.02
         self._ref_tunex = 0.16
         self._ref_tuney = 0.22
 
@@ -289,23 +287,15 @@ class SITuneCorrApp(TuneCorrApp):
         self.map_pv2write.update({
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
-
             'TuneSource-Sel': self.set_tune_source,
-
             'RefTuneX-SP': _part(self.set_ref_tune, "x"),
             'RefTuneY-SP': _part(self.set_ref_tune, "y"),
             'MaxTuneErr-SP': self.set_max_tune_err,
-
             'LoopPIDKp-SP': _part(self.set_pid_gain, "kp"),
             'LoopPIDKi-SP': _part(self.set_pid_gain, "ki"),
             'LoopPIDKd-SP': _part(self.set_pid_gain, "kd"),
-
-            'IDKLDriftAmp-SP': self._set_id_kldrift_amp,
-            'FakeNoiseAmp-SP': self._set_fakenoise_amp,
-
         })
 
-        self._thread_fb_quit = False
         self._thread_fb = None
 
         # SIMULATION ##########################################################
@@ -325,10 +315,10 @@ class SITuneCorrApp(TuneCorrApp):
         self._sim_tunecorr.method = 0 \
             if self._corr_method == _Const.CorrMeth.Proportional else 1
         self._sim_tunecorr.grouping = self._corr_group
-        self._sim_tunecorr.correct_parameters(
-            goal_parameters=[49+self._ref_tunex, 14+self._ref_tuney],
-        )
-        self._nominal_matrix = self._sim_tunecorr.calc_jacobian_matrix().ravel().tolist()  # noqa
+        # self._sim_tunecorr.correct_parameters(
+        #     goal_parameters=[49+self._ref_tunex, 14+self._ref_tuney],
+        # )
+        # self._nominal_matrix = self._sim_tunecorr.calc_jacobian_matrix().ravel().tolist()  # noqa
         self._psfam_refkl = self._sim_get_intstrength()
         self._psfam_nom_intstr = [kl for kl in self._psfam_refkl.values()]
         self._opticscorr = _OpticsCorr(
@@ -340,25 +330,25 @@ class SITuneCorrApp(TuneCorrApp):
             magnetfams_defocusing=self._opticscorr.magnetfams_defocusing
         )
 
-        # fake tune prep
         self._faketunex = 0.0
         self._faketuney = 0.0
         self._fakenoise_amp = 0.5
         self._rng = _np.random.default_rng(seed=111)
 
-        self._update_log('INFO: Loading noise data...')
+        self._update_log('INFO: Loading tune drift data...')
         self._id_kldrift_len = 1_000  # possible cut
         path = '/home/vitor/repos/dev-packages/siriuspy/siriuspy/opticscorr/'
         self._id_kldrift = _np.load(path+'klnoise.npy').copy()
         l0 = len(self._id_kldrift)
         self._id_kldrift = self._id_kldrift[:self._id_kldrift_len]
         self._id_kldrift_len = len(self._id_kldrift)
-        self._update_log(f'INFO: Loaded {self._id_kldrift_len}/{l0} data points!')
+        msg = f"INFO: Loaded {self._id_kldrift_len}/{l0} data points!"
+        self._update_log(msg)
         self._id_kldrift = self._id_kldrift.tolist()
         self._id_kldrift_idx = 0
         self._id_kldrift_amp = 0.0
-
         #######################################################################
+
         self._storedebeam_pv.add_callback(self._loop_checkbeam)
 
     def set_tune_source(self, value):
@@ -387,10 +377,6 @@ class SITuneCorrApp(TuneCorrApp):
         self._tune_y_pv = _PV(pvy.substitute(prefix=_vaca_prefix))
         return True
 
-    def _create_feedbackthread(self):
-        tgt = self.feedback_loop
-        return _epics.ca.CAThread(target=tgt, daemon=True)
-
     def set_max_tune_err(self, value):
         """Set max tune error."""
         self._max_tune_err = float(value)
@@ -418,72 +404,40 @@ class SITuneCorrApp(TuneCorrApp):
     def set_loop_state(self, value, abort=False):
         """Set loop state."""
         if not 0 <= value < len(_ETypes.OPEN_CLOSED):
-            self._update_log('ERR: Invalid loop state.')
+            msg = "ERR: Invalid loop state."
+            self._update_log(msg)
             return False
 
-        self._loop_state_lastsp = value
-        # if value and not self._is_storedebeam:
-        #     self._update_log('ERR: Do not have stored beam. Aborted.')
-        #     return False
+        if value == _Const.LoopState.Closed:
+            if self._loop_state == _Const.LoopState.Closed:
+                msg = "ERR: Loop is Already closed."
+                self._update_log(msg)
+                return False
 
-        if self._thread_loopstate is not None and \
-                self._thread_loopstate.is_alive():
-            self._update_log('WARN: Wait until Loop State is set.')
-            # self._abort_thread_loopstate = True
-            self._thread_loopstate.join()
-            return False
+            if value and not self._is_storedebeam:
+                msg = "ERR: Do not have stored beam. Aborted."
+                self._update_log(msg)
+                return False
 
-        self._thread_loopstate = _epics.ca.CAThread(
-            target=self._set_loop_state_inthread,
-            args=[value, abort], daemon=True)
-        self._thread_loopstate.start()
-        self._thread_loopstate.join()
-        return True
+            if self._thread_fb and self._thread_fb.is_alive():
+                msg = 'ERR: Wait the feedback loop to open.'
+                self._update_log(msg)
+                return False
 
-    def _set_loop_state_inthread(self, value, abort):
-        if value:  # closing the loop
-            self._update_log('Closing the loop...')
-
-            self._sim_update_ref()
-            # self._update_ref()
-            self._update_log('Reference updated!')
-
-            # close the loop
-            if self._thread_fb is not None:
-                if self._thread_fb.is_alive():
-                    self._loop_state = _Const.LoopState.Open
-                    self._inloop = False
-                    self._thread_fb_quit = True
-                    self._thread_fb.join()
-            self._thread_fb_quit = False
-            self._thread_fb = self._create_feedbackthread()
-            self._inloop = True
+            msg = "Closing the Loop."
+            self._update_log(msg)
             self._loop_state = value
+            self._inloop = True
+            self._thread_fb = _Thread(target=self._do_auto_corr, daemon=True)
             self._thread_fb.start()
 
-            self.run_callbacks('LoopState-Sts', self._loop_state)
-            self._update_log('Loop closed.')
-            return
-
-        else:  # opening the loop
-            self._update_log('Opening the loop...')
+        elif value == _Const.LoopState.Open:
+            msg = "Opening the Loop."
+            self._update_log(msg)
             self._loop_state = value
-            self._inloop = False
+            self._inloop = True
 
-            self._sim_update_ref()
-            # self._update_ref()
-            self._update_log('Reference updated!')
-
-            self.run_callbacks('LoopState-Sts', self._loop_state)
-            self._update_log('Loop opened.')
-            return
-
-    def _check_abort_thread(self):
-        if self._abort_thread_loopstate:
-            self._update_log('WARN:Set Loop State thread aborted.')
-            self._abort_thread_loopstate = False
-            return True
-        return False
+        return True
 
     def _loop_checkbeam(self, pvname, value, **kws):
         if not value and self._inloop:
@@ -591,36 +545,32 @@ class SITuneCorrApp(TuneCorrApp):
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
 
-    def feedback_loop(self):
+    def _do_auto_corr(self):
         """."""
-        while not self._thread_fb_quit:
+        self.run_callbacks("LoopState-Sts", _Const.LoopState.Closed)
+
+        self._update_ref()
+
+        while self._loop_state == _Const.LoopState.Closed:
             tplanned = 1.0/self._loop_freq
             _t0 = _time()
 
-            if self._loop_state != _Const.LoopState.Closed:
-                self._do_sleep(_t0, tplanned)
-                continue
-            elif self._thread_loopstate is not None and \
-                self._thread_loopstate.is_alive():
-                self._thread_loopstate.join()
-                self._do_sleep(_t0, tplanned, do_warn=False)
-                continue
-
-            # ! # sts = self._update_ref()
-            # ! sts = self._sim_update_ref()
+            # sts = self._update_ref()
             # if not sts:
             #     self._update_log('ERR: Could not UPDATE REFERENCE.')
-            #     self._thread_fb_quit = True
             #     self._do_sleep(_t0, tplanned)
             #     continue
 
-            sts = self._process_pid()
+            sts, (tunex, tuney) = self._get_tunes()
             if not sts:
-                self._thread_fb_quit = True
-                continue
+                break
 
-            # sts = self._apply_corr()
-            sts = self._sim_apply_corr()
+            if not self._check_tunes(tunex, tuney):
+                break
+
+            self._process_pid()
+
+            sts = self._apply_corr()
             if not sts:
                 self._update_log('ERR: Could not apply the correction.')
                 self._do_sleep(_t0, tplanned)
@@ -628,8 +578,14 @@ class SITuneCorrApp(TuneCorrApp):
 
             self._do_sleep(_t0, tplanned)
 
-        self._set_loop_state_inthread(_Const.LoopState.Open, False)
-        self._thread_fb_quit = False
+        if self._loop_state == _Const.LoopState.Closed:
+            self._loop_state = _Const.LoopState.Open
+            self.run_callbacks("LoopState-Sel", _Const.LoopState.Open)
+
+        msg = "Loop opened!"
+        self._update_log(msg)
+        self._update_ref()
+        self.run_callbacks("LoopState-Sts", _Const.LoopState.Open)
 
     def _sim_update_ref(self):
         meankl_per_fam = self._sim_get_intstrength()
@@ -677,19 +633,13 @@ class SITuneCorrApp(TuneCorrApp):
         _ed = _pyacc.optics.calc_edwards_teng(self._sim_tunecorr.model)[0]
         return _np.array([_ed.mu1[-1]/TWOPI-49, _ed.mu2[-1]/TWOPI-14])
 
-    def _process_pid(self):
-        sts, (tunex, tuney) = self._get_tunes()
-        if not sts:
-            return False
-
-        if not self._check_tunes(tunex, tuney):
-            return False
-
+    def _process_pid(self, tunex, tuney):
         self._delta_tunex = self._ref_tunex - tunex
         self._delta_tuney = self._ref_tuney - tuney
 
-        delta_kl_prev = _np.array([self._lastcalc_deltakl[fam]
-            for fam in self._psfams])
+        delta_kl_prev = _np.array([
+            self._lastcalc_deltakl[fam] for fam in self._psfams
+        ])
 
         self._calc_intstrength()
 
@@ -713,8 +663,6 @@ class SITuneCorrApp(TuneCorrApp):
 
         self._pid_errs.append(e0)
         del self._pid_errs[0]
-
-        return True
 
     def _get_tunes(self):
         tunex, tuney = 0.0, 0.0
