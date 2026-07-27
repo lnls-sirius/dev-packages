@@ -342,6 +342,11 @@ class SITuneCorrApp(TuneCorrApp):
             pvy.substitute(prefix=_vaca_prefix),
             connection_timeout=0.3
         )
+        msg = "INFO: Tune PVs {}!"
+        status = "connected" if all(
+            [self._tune_x_pv.connected, self._tune_y_pv.connected]
+        ) else "not connected"
+        self._update_log(msg.format(status))
         self.run_callbacks('TuneSourcePVList-Mon', (pvx, pvy))
         self.run_callbacks('TuneSource-Sts', value)
         return True
@@ -501,14 +506,12 @@ class SITuneCorrApp(TuneCorrApp):
 
     def _get_tunes(self):  # overload (from BaseApp)
         tunex, tuney = 0.0, 0.0
-        if self._tune_x_pv.connected:
+        sts = bool(self._tune_x_pv.connected)
+        if sts:
             tunex = self._tune_x_pv.value
-        else:
-            sts = False
-        if sts and self._tune_y_pv.connected:
+        sts &= self._tune_y_pv.connected
+        if sts:
             tuney = self._tune_y_pv.value
-        else:
-            sts = False
         if not sts:
             self._update_log('ERR: Could not get the tunes!')
         return sts, (tunex, tuney)
