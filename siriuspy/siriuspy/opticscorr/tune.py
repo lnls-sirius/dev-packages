@@ -526,13 +526,13 @@ class SITuneCorrApp(TuneCorrApp):
         return True
 
     def _check_tunes_distortion(self, tunex, tuney):
-        sts = (abs(tunex - self._ref_tunex) <= self._max_tune_err)
-        if not sts:
+        stsx_ok = abs(tunex - self._ref_tunex) <= self._max_tune_err
+        if not stsx_ok:
             self._update_log('WARN: Tune X is out of range.')
-        sts = sts and (abs(tuney - self._ref_tuney) <= self._max_tune_err)
-        if not sts:
+        stsy_ok = abs(tuney - self._ref_tuney) <= self._max_tune_err
+        if not stsy_ok:
             self._update_log('WARN: Tune Y is out of range.')
-        return sts
+        return stsx_ok and stsy_ok
 
     def _do_sleep(self, time0, tplanned, do_warn=True):
         ttook = _time() - time0
