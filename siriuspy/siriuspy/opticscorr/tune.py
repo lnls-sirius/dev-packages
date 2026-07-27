@@ -20,6 +20,8 @@ class TuneCorrApp(_BaseApp):
 
     _optics_param = 'tune'
 
+    _DEF_CONN_TIMEOUT_PSFAM = 0.05  # [s]
+
     def __init__(self, acc):
         """Class constructor."""
         super().__init__(acc)
@@ -46,7 +48,7 @@ class TuneCorrApp(_BaseApp):
                 pvname,
                 callback=[self._callback_init_refkl,
                           self._callback_estimate_deltatune],
-                connection_timeout=0.05)
+                connection_timeout=TuneCorrApp._DEF_CONN_TIMEOUT_PSFAM)
 
         self.map_pv2write.update({
             'DeltaTuneX-SP': self.set_dtune_x,
@@ -250,22 +252,26 @@ class TuneCorrApp(_BaseApp):
 class SITuneCorrApp(TuneCorrApp):
     """Main application for handling SI tune correction and feedback."""
 
+    _DEF_CONN_TIMEOUT_TUNE = 0.3  # [s]
+
     def __init__(self):
         """Class constructor."""
         super().__init__(acc='SI')
 
-        self._loop_state = _Const.LoopState.Open
-        self._loop_state_lastsp = _Const.LoopState.Open
-        self._loop_freq = 3.0
+        self._loop_state = _Const.DEF_LOOPSTATE
+        self._loop_freq = _Const.DEF_LOOPFREQ
+        self._tune_source = _Const.DEF_TUNESRC
 
-        self._tune_source = _Const.TuneSrc.TuneSpec
-
-        self._max_tune_err = 0.02
-        self._ref_tunex = 0.16
-        self._ref_tuney = 0.22
+        self._max_tune_err = _Const.DEF_MAX_TUNE_ERR
+        self._ref_tunex = _Const.DEF_REF_TUNEX
+        self._ref_tuney = _Const.DEF_REF_TUNEY
 
         self._pid_errs = None  # created when feedback thread starts
-        self._pid_gains = dict(kp=0.0, ki=3.0, kd=0.0)
+        self._pid_gains = dict(
+            kp=_Const.DEF_PID_KP,
+            ki=_Const.DEF_PID_KI,
+            kd=_Const.DEF_PID_KD,
+        )
         self._thread_fb = None
 
         self.map_pv2write.update({
@@ -281,6 +287,8 @@ class SITuneCorrApp(TuneCorrApp):
         })
 
         self._storedebeam_pv.add_callback(self._loop_checkbeam)
+        self._tune_x_pv.add_callback(_part(self._callback_update_tunes, 'x'))
+        self._tune_y_pv.add_callback(_part(self._callback_update_tunes, 'y'))
 
     # --- set methods ---
     def set_loop_state(self, value):
@@ -334,23 +342,20 @@ class SITuneCorrApp(TuneCorrApp):
         self._tune_source = value
         pvnames = _ETypes.TUNE_SRC_PVS[self._tune_source]
         pvx, pvy = _SiriusPVName(pvnames[0]), _SiriusPVName(pvnames[1])
+        self._tune_x_pv.clear_callbacks()
+        self._tune_y_pv.clear_callbacks()
         self._tune_x_pv = _PV(
             pvx.substitute(prefix=_vaca_prefix),
-            connection_timeout=0.3,
+            connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
             auto_monitor=True,
             callback=_part(self._callback_update_tunes, 'x')
         )
         self._tune_y_pv = _PV(
             pvy.substitute(prefix=_vaca_prefix),
-            connection_timeout=0.3,
+            connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
             auto_monitor=True,
             callback=_part(self._callback_update_tunes, 'y')
         )
-        msg = "INFO: Tune PVs {}!"
-        status = "connected" if (
-            self._tune_x_pv.connected and self._tune_y_pv.connected
-        ) else "not connected"
-        self._update_log(msg.format(status))
         self.run_callbacks('TuneSrcPVList-Mon', (pvx, pvy))
         self.run_callbacks('TuneSrc-Sts', value)
         return True
