@@ -419,7 +419,8 @@ class SITuneCorrApp(TuneCorrApp):
     def _do_auto_corr(self):
         """."""
         self.run_callbacks("LoopState-Sts", _Const.LoopState.Closed)
-
+        msg = "Loop closed!"
+        self._update_log(msg)
         self._update_ref()
         zer = _np.zeros(len(self._psfams), dtype=float)
         self._pid_errs = [zer, zer.copy(), zer.copy()]
