@@ -429,7 +429,11 @@ class IDSearch:
         (POL_UNDEF_STR, None),
     ]
 
-    # define IDFF correctors labels aand ordering.
+    # [float] maximum size of IDFF table data in memory.
+    # each table is for one polarization state and 4 correctors
+    IDFF_TABLE_MAX_SIZE = 150_000
+
+    # define IDFF correctors labels and ordering.
     # NOTE: the ordering between corr types in IDFF_CorrTypes and of
     # correctors of a given corrector type in IDFF_CorrLabels has to be
     # compatible with the ordering of correctors within rack cabinets.
