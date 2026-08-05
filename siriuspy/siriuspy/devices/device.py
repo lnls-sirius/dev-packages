@@ -120,6 +120,8 @@ class Device:
     @property
     def connected(self):
         """Return PVs connection status."""
+        if len(self._pvs) == 0:
+            return False
         for pvobj in self._pvs.values():
             if not pvobj.connected:
                 return False
