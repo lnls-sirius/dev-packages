@@ -90,12 +90,12 @@ class TuneFrac(_Device):
 
     @property
     def aquisition_enabled(self):
-        """Return aquisition state."""
+        """Aquisition enabled state."""
         return self['SpecAnaGetSpec-Sts']
 
     @property
     def excitation_enabled(self):
-        """Return excitation state."""
+        """Excitation enabled state."""
         return self['Enbl-Sts']
 
     def cmd_acquisition_enable(self, timeout=DEF_TIMEOUT):
@@ -348,77 +348,86 @@ class Tune(_DeviceSet):
     @property
     def spanx(self):
         """Span X [kHz]."""
-        return self.devices[0].span
+        return self.dev_tune_frac_h.span
 
     @spanx.setter
     def spanx(self, value):
-        self.devices[0].span = value
+        self.dev_tune_frac_h.span = value
 
     @property
     def spany(self):
         """Span Y [kHz]."""
-        return self.devices[1].span
+        return self.dev_tune_frac_v.span
 
     @spany.setter
     def spany(self, value):
-        self.devices[1].span = value
+        self.dev_tune_frac_v.span = value
 
     @property
     def rev_harmonicx(self):
         """Revolution harmonic X."""
-        return self.devices[0].rev_harmonic
+        return self.dev_tune_frac_h.rev_harmonic
 
     @rev_harmonicx.setter
     def rev_harmonicx(self, value):
-        self.devices[0].rev_harmonic = value
+        self.dev_tune_frac_h.rev_harmonic = value
 
     @property
     def rev_harmonicy(self):
         """Revolution harmonic Y."""
-        return self.devices[1].rev_harmonic
+        return self.dev_tune_frac_v.rev_harmonic
 
     @rev_harmonicy.setter
     def rev_harmonicy(self, value):
-        """Revolution harmonic Y."""
-        self.devices[1].rev_harmonic = value
+        self.dev_tune_frac_v.rev_harmonic = value
 
     @property
     def center_frequencyx(self):
         """Center frequency X."""
-        return self.devices[0].center_frequency
+        return self.dev_tune_frac_h.center_frequency
 
     @center_frequencyx.setter
     def center_frequencyx(self, value):
-        self.devices[0].center_frequency = value
+        self.dev_tune_frac_h.center_frequency = value
 
     @property
     def center_frequencyy(self):
         """Center frequency Y."""
-        return self.devices[1].center_frequency
+        return self.dev_tune_frac_v.center_frequency
 
     @center_frequencyy.setter
     def center_frequencyy(self, value):
-        self.devices[1].center_frequency = value
+        self.dev_tune_frac_v.center_frequency = value
 
     @property
     def tunex_wfm(self):
         """Tune waveform X."""
-        return self.devices[2].tune_wfm
+        return self.dev_tune_proc_h.tune_wfm
 
     @property
     def tuney_wfm(self):
         """Tune waveform Y."""
-        return self.devices[3].tune_wfm
+        return self.dev_tune_proc_v.tune_wfm
 
     @property
-    def enablex(self):
-        """Tune X enable status."""
-        return self.devices[0].enable
+    def aquisition_enabledx(self):
+        """Tune X acquisition enabled status."""
+        return self.dev_tune_frac_h.acquisition_enabled
 
     @property
-    def enabley(self):
-        """Tune Y enable status."""
-        return self.devices[1].enable
+    def aquisition_enabledy(self):
+        """Tune Y acquisition enabled status."""
+        return self.dev_tune_frac_v.acquisition_enabled
+
+    @property
+    def excitation_enabledx(self):
+        """Tune X excitation enabled status."""
+        return self.dev_tune_frac_h.excitation_enabled
+
+    @property
+    def excitation_enabledy(self):
+        """Tune Y excitation enabled status."""
+        return self.dev_tune_frac_v.excitation_enabled
 
     def cmd_acquisition_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Enable tune X acquisition."""
@@ -438,19 +447,19 @@ class Tune(_DeviceSet):
 
     def cmd_excitation_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Enable tune X excitation."""
-        return self.devices[0].cmd_excitation_enable(timeout=timeout)
+        return self.dev_tune_frac_h.cmd_excitation_enable(timeout=timeout)
 
     def cmd_excitation_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Enable tune Y excitation."""
-        return self.devices[1].cmd_excitation_enable(timeout=timeout)
+        return self.dev_tune_frac_v.cmd_excitation_enable(timeout=timeout)
 
     def cmd_excitation_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Disable tune X excitation."""
-        return self.devices[0].cmd_excitation_disable(timeout=timeout)
+        return self.dev_tune_frac_h.cmd_excitation_disable(timeout=timeout)
 
     def cmd_excitation_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
         """Disable tune Y excitation."""
-        return self.devices[1].cmd_excitation_disable(timeout=timeout)
+        return self.dev_tune_frac_v.cmd_excitation_disable(timeout=timeout)
 
     def _get_spect(self, dev_proc):
         """."""
