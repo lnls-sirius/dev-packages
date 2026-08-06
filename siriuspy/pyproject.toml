@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=44"]
+requires = ["setuptools>=82"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,7 +14,7 @@ maintainers = [
 description = "Development packages for Sirius"
 readme = "README.md"
 dynamic = ["version", "dependencies"]
-requires-python = ">=3.6"
+requires-python = ">=3.12"
 classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python",
