@@ -14,6 +14,9 @@ from ..namesys import SiriusPVName as _SiriusPVName
 from .csdev import Const as _Const, ETypes as _ETypes
 from .base import BaseApp as _BaseApp
 
+from pymodels import si as _si
+import pyaccel as _pyacc
+
 
 class TuneCorrApp(_BaseApp):
     """Main application for handling tune correction."""
@@ -290,6 +293,8 @@ class SITuneCorrApp(TuneCorrApp):
         self._tune_x_pv.add_callback(_part(self._callback_update_tunes, 'x'))
         self._tune_y_pv.add_callback(_part(self._callback_update_tunes, 'y'))
 
+        self.simulator = Simulation(self)
+
     # --- set methods ---
     def set_loop_state(self, value):
         """Set loop state."""
@@ -564,3 +569,129 @@ class SITuneCorrApp(TuneCorrApp):
                 f'Feedback step took more than planned... '
                 f'{ttook:.3f}/{tplanned:.3f} s')
             _log.warning(strf)
+
+
+class Simulation:
+    """."""
+    def __init__(self, main: SITuneCorrApp):
+        """."""
+        self.main = main
+        self.model = _si.create_accelerator()
+        self.fam = _si.families.get_family_data(self.model)
+
+        _mia = _pyacc.lattice.find_indices(self.model, 'fam_name', 'mia')[-1]
+        _mib = _pyacc.lattice.find_indices(self.model, 'fam_name', 'mib')[2]
+        self.quad_indices = [_mib-1, _mia-1]
+
+        for idx in self.quad_indices:
+            self.model[idx].KL = 0
+            self.model[idx].pass_method = 'str_mpole_symplectic4_pass' # noqa
+
+        props = [
+            "_update_ref",
+            "_apply_intstrength",
+            "process",
+            "_is_status_ok",
+        ]
+        for propty in props:
+            prop = getattr(self, propty)
+            setattr(self.main, propty, prop)
+
+        self.rng = _np.random.default_rng(seed=111)
+        self.fakenoise_amp = 1.0
+        self.main.map_pv2write.update({
+            "FakeNoiseAmp-SP": self.set_fakenoise_amp,
+            "StoredEBeam-SP": self.set_havebeam,
+        })
+
+        self.storedbeam_pvname = _SiriusPVName(
+            "SI-Glob:AP-TuneCorr:StoredEBeam-RB"
+        ).substitute(prefix=_vaca_prefix)
+
+        self.update_stored_beam_pv()
+
+    def update_stored_beam_pv(self):
+        """Update StoredEBeam-Mon PV."""
+        self.main._storedebeam_pv.clear_callbacks()
+        self.main._storedebeam_pv = _PV(
+            self.storedbeam_pvname,
+            # auto_monitor=True,
+            connection_timeout=30.0,
+        )
+        self.main._storedebeam_pv.add_callback(
+            self.main._callback_get_storedebeam
+        )
+        self.main._storedebeam_pv.add_callback(self.main._loop_checkbeam)
+
+    def set_fakenoise_amp(self, value):
+        """."""
+        self.fakenoise_amp = float(value)
+        self.main.run_callbacks('FakeNoiseAmp-RB', float(value))
+        return True
+
+    def set_havebeam(self, value):
+        """."""
+        if self.main._storedebeam_pv.pvname != self.storedbeam_pvname:
+            self.update_stored_beam_pv()
+            msg = "StoredEBeam connected ? "
+            msg += f"{self.main._storedebeam_pv.connected}"
+            self.main._update_log(msg)
+
+        self.main.run_callbacks('StoredEBeam-RB', bool(value))
+        return True
+
+    def process(self, interval):
+        """Process simulation step."""
+        _t0 = _time()
+
+        tx, ty = self.get_tunes()
+        fakenoise = self.rng.normal(0, 0.00001, 2) * self.fakenoise_amp
+        self.main.run_callbacks('FakeTuneX-Mon', tx + fakenoise[0])
+        self.main.run_callbacks('FakeTuneY-Mon', ty + fakenoise[1])
+
+        dtime = _time() - _t0
+        sleep_time = interval - dtime
+        if sleep_time > 0:
+            self.main.process(sleep_time)
+
+    def _is_status_ok(self):
+        return True
+
+    def _update_ref(self):
+        meankl_per_fam = self._get_intstrength()
+        for fam in self.main._psfams:
+            self.main._psfam_refkl[fam] = meankl_per_fam[fam]
+            self.main.run_callbacks(
+                'RefKL' + fam + '-Mon', self.main._psfam_refkl[fam]
+            )
+            self.main.run_callbacks('DeltaKL' + fam + '-Mon', 0)
+            self.main._lastcalc_deltakl[fam] = 0
+        self.main._delta_tunex = 0
+        self.main._delta_tuney = 0
+        self.main.run_callbacks('DeltaTuneX-SP', self.main._delta_tunex)
+        self.main.run_callbacks('DeltaTuneX-RB', self.main._delta_tunex)
+        self.main.run_callbacks('DeltaTuneY-SP', self.main._delta_tuney)
+        self.main.run_callbacks('DeltaTuneY-RB', self.main._delta_tuney)
+        if not self.main._inloop:
+            self.main._update_log('Updated KL references.')
+        return True
+
+    def _get_intstrength(self):
+        return {fam: _np.mean([sum([self.model[seg].KL
+            for seg in mag])
+            for mag in self.fam[fam]['index']])
+            for fam in self.main._psfams}
+
+    def _apply_intstrength(self, kls):
+        meankl_per_fam = self._get_intstrength()
+        for fam in self.main._psfams:
+            for mag in self.fam[fam]['index']:
+                newkl = kls[fam] - meankl_per_fam[fam]
+                for seg in mag:
+                    self.model[seg].KL += newkl / len(mag)
+        self.main._update_log("Applied strengths in the model!")
+
+    def get_tunes(self):
+        """Simulated tunes."""
+        _ed = _pyacc.optics.calc_edwards_teng(self.model)[0]
+        return _np.r_[_ed.mu1[-1]/2/_np.pi-49, _ed.mu2[-1]/2/_np.pi-14]

@@ -13,12 +13,15 @@ class ETypes(_csdev.ETypes):
     MEAS_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     OPEN_CLOSED = ('Open', 'Closed')
     TUNE_SRC = (
+        'Fake',
         'TuneSpec',
         'BbB_SRAM_M2',
         'BbB_SB_M1',
         'BbB_SRAM_M1',
     )
     TUNE_SRC_PVS = (
+        ('SI-Glob:AP-TuneCorr:FakeTuneX-Mon',
+         'SI-Glob:AP-TuneCorr:FakeTuneY-Mon'),
         ('SI-Glob:DI-Tune-H:TuneFrac-Mon',
          'SI-Glob:DI-Tune-V:TuneFrac-Mon'),
         ('SI-Glob:DI-BbBProc-H:SRAM_M2_TUNE',
@@ -484,6 +487,18 @@ def get_tune_database(acc):
             'count': 2,
             'value': _et.TUNE_SRC_PVS[_ct.DEF_TUNESRC],
         }
+
+        # Simulation
+        pvs_database['FakeTuneX-Mon'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6}
+        pvs_database['FakeTuneY-Mon'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6}
+        pvs_database['FakeNoiseAmp-SP'] = {
+            'type': 'float', 'value': 1.0, 'unit': 'Tune', 'prec': 6}
+        pvs_database['FakeNoiseAmp-RB'] = {
+            'type': 'float', 'value': 1.0, 'unit': 'Tune', 'prec': 6}
+        pvs_database['StoredEBeam-SP'] = {'type': 'int', 'value': 0}
+        pvs_database['StoredEBeam-RB'] = {'type': 'int', 'value': 0}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
