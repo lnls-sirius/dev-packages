@@ -449,8 +449,7 @@ class SITuneCorrApp(TuneCorrApp):
             sts = self._apply_corr()
             if not sts:
                 self._update_log('ERR: Could not apply the correction.')
-                self._do_sleep(_t0, tplanned)
-                continue
+                break
 
             self._do_sleep(_t0, tplanned)
 
