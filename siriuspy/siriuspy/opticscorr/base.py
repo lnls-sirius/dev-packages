@@ -65,6 +65,7 @@ class BaseApp(_Callback):
 
         self._optprm_est = [0.0, 0.0]
 
+        self._loop_state = _Const.LoopState.Open  # needed for the SI Tune FB
         self._apply_corr_cmd_count = 0
         self._config_ps_cmd_count = 0
 
@@ -320,9 +321,16 @@ class BaseApp(_Callback):
 
     def cmd_apply_corr(self, value):
         """ApplyCorr command."""
+        if self._loop_state == _Const.LoopState.Closed:
+            self.run_callbacks(
+                'Log-Mon',
+                'Can\'t apply correction while the feedback is on.'
+            )
+            return False
         if self._apply_corr():
             self._apply_corr_cmd_count += 1
             self.run_callbacks('ApplyDelta-Cmd', self._apply_corr_cmd_count)
+            return True
         return False
 
     def set_config_name(self, value):
@@ -354,6 +362,12 @@ class BaseApp(_Callback):
 
     def set_corr_meth(self, value):
         """Set CorrMeth."""
+        if self._loop_state == _Const.LoopState.Closed:
+            self.run_callbacks(
+                'Log-Mon',
+                'Can\'t change the corr. method while the feedback is on.'
+            )
+            return False
         if value == self._corr_method:
             return False
         self._corr_method = value
@@ -364,6 +378,12 @@ class BaseApp(_Callback):
     def set_corr_group(self, value):
         """Set CorrGroup."""
         if value == self._corr_group:
+            return False
+        if self._loop_state == _Const.LoopState.Closed:
+            self.run_callbacks(
+                'Log-Mon',
+                'Can\'t change the corr. group while the feedback is on.'
+            )
             return False
         self._corr_group = value
         self.run_callbacks('CorrGroup-Sts', self._corr_group)
@@ -377,6 +397,12 @@ class BaseApp(_Callback):
                 'Log-Mon', 'ERR: Configuration measurement in progress.')
             return False
         if value == self._sync_corr:
+            return False
+        if self._loop_state == _Const.LoopState.Closed:
+            self.run_callbacks(
+                'Log-Mon',
+                'Can\'t change the synchrozization while the feedback is on.'
+            )
             return False
 
         self._sync_corr = value
@@ -411,6 +437,12 @@ class BaseApp(_Callback):
 
     def cmd_config_ps(self, value):
         """ConfigPS command."""
+        if self._loop_state == _Const.LoopState.Closed:
+            self.run_callbacks(
+                'Log-Mon',
+                'Can\'t configure the Power Supplies while the feedback is on.'
+            )
+            return False
         if self._config_ps():
             self._config_ps_cmd_count += 1
             self.run_callbacks('ConfigPS-Cmd', self._config_ps_cmd_count)
@@ -418,6 +450,12 @@ class BaseApp(_Callback):
 
     def cmd_config_ti(self, value):
         """ConfigTiming command."""
+        if self._loop_state == _Const.LoopState.Closed:
+            self.run_callbacks(
+                'Log-Mon',
+                'Can\'t configure the Timing while the feedback is on.'
+            )
+            return False
         if self._config_timing():
             self._config_ti_cmd_count += 1
             self.run_callbacks('ConfigTiming-Cmd', self._config_ti_cmd_count)
@@ -604,6 +642,9 @@ class BaseApp(_Callback):
         cont = True
         if self._sync_corr == _Const.SyncCorr.On:
             log_msg = 'ERR: Turn off syncronized correction!'
+            cont = False
+        elif self._loop_state == _Const.LoopState.Closed:
+            log_msg = 'ERR: Can\'t start meas. while the feedback is on!'
             cont = False
         elif self._meas_config_name == 'UNDEF':
             log_msg = 'ERR: Define a conf.name to save the measure!'
