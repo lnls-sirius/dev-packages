@@ -249,10 +249,15 @@ class BaseApp(_Callback):
 
             # Connect to CurrInfo
             self._storedebeam_pv = _PV(
-                _PVName('SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
-                    prefix=_vaca_prefix),
+                _PVName(
+                    'SI-Glob:AP-CurrInfo:StoredEBeam-Mon'
+                ).substitute(prefix=_vaca_prefix),
+                connection_timeout=0.05
+            )
+            self._storedebeam_pv.add_callback(
                 callback=self._callback_get_storedebeam,
-                connection_timeout=0.05)
+                run_now=True
+            )
 
             # Connect to Tunes
             self._tune_x_pv = _PV(

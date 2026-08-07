@@ -284,7 +284,6 @@ class SITuneCorrApp(TuneCorrApp):
             'LoopPIDKd-SP': _part(self.set_pid_gain, "kd"),
         })
 
-        self._storedebeam_pv.add_callback(self._loop_checkbeam)
         self._tune_x_pv.add_callback(_part(self._callback_update_tunes, 'x'))
         self._tune_y_pv.add_callback(_part(self._callback_update_tunes, 'y'))
 
@@ -434,6 +433,10 @@ class SITuneCorrApp(TuneCorrApp):
             tplanned = 1.0/self._loop_freq
             _t0 = _time()
 
+            if not self._is_storedebeam:
+                self._update_log('ERR: We do not have stored beam!')
+                break
+
             sts, (tunex, tuney) = self._get_tunes()
             if not sts:
                 break
@@ -502,13 +505,6 @@ class SITuneCorrApp(TuneCorrApp):
         else:
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
-
-    def _loop_checkbeam(self, pvname, value, **kws):
-        _ = (pvname, kws)
-        if not value and self._loop_state == _Const.LoopState.Closed:
-            self._update_log('FATAL: Opening Tune Feedback loop...')
-            self._loop_state = _Const.LoopState.Open
-            self._inloop = False
 
     def _callback_update_tunes(self, plane, pvname, value, **kws):
         _ = (pvname, kws)
