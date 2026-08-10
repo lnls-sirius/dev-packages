@@ -659,9 +659,9 @@ class Simulation:
             connection_timeout=30.0,
         )
         self.main._storedebeam_pv.add_callback(
-            self.main._callback_get_storedebeam
+            self.main._callback_get_storedebeam,
+            run_now=True
         )
-        self.main._storedebeam_pv.add_callback(self.main._loop_checkbeam)
 
     def set_fakenoise_amp(self, value):
         """."""
