@@ -663,8 +663,6 @@ class Simulation:
         self.main.run_callbacks('DeltaTuneX-RB', self.main._delta_tunex)
         self.main.run_callbacks('DeltaTuneY-SP', self.main._delta_tuney)
         self.main.run_callbacks('DeltaTuneY-RB', self.main._delta_tuney)
-        if not self.main._inloop:
-            self.main._update_log('Updated KL references.')
         return True
 
     def _get_intstrength(self):
