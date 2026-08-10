@@ -677,7 +677,7 @@ class Simulation:
             self.update_stored_beam_pv()
             msg = "StoredEBeam connected ? "
             msg += f"{self.main._storedebeam_pv.connected}"
-            self.main._update_log(msg)
+            # self.main._update_log(msg)
 
         self.main.run_callbacks('StoredEBeam-RB', bool(value))
         return True
@@ -714,6 +714,7 @@ class Simulation:
         self.main.run_callbacks('DeltaTuneX-RB', self.main._delta_tunex)
         self.main.run_callbacks('DeltaTuneY-SP', self.main._delta_tuney)
         self.main.run_callbacks('DeltaTuneY-RB', self.main._delta_tuney)
+        self.main._update_log('Updated KL references.')
         return True
 
     def _get_intstrength(self):
@@ -729,7 +730,7 @@ class Simulation:
                 newkl = kls[fam] - meankl_per_fam[fam]
                 for seg in mag:
                     self.model[seg].KL += newkl / len(mag)
-        self.main._update_log("Applied strengths in the model!")
+        # self.main._update_log("Applied strengths in the model!")
 
     def get_tunes(self):
         """Simulated tunes."""
