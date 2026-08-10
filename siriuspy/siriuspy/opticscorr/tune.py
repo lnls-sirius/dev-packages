@@ -460,7 +460,8 @@ class SITuneCorrApp(TuneCorrApp):
         self.run_callbacks('TuneYSrc-Sts', self._tuney_source)
         self.run_callbacks(
             'TuneSrcPVList-Mon',
-            _ETypes.TUNE_SRC_PVS[self._tune_source]
+            (_ETypes.TUNE_SRC_PVS[self._tunex_source][0],
+             _ETypes.TUNE_SRC_PVS[self._tuney_source][1])
         )
 
         self.run_callbacks('CorrGroup-Sts', self._corr_group)  # ? needed?
