@@ -402,24 +402,40 @@ def get_tune_database(acc):
             'lolim': 0.0001,
             'hilim': 0.4999,
         }
-        pvs_database['MaxTuneErr-SP'] = {
+        pvs_database['MaxTuneXErr-SP'] = {
             'type': 'float',
             'value': _ct.DEF_MAX_TUNE_ERR,
             'unit': 'Tune',
             'prec': 6,
-            'lolim': 0.001,
-            'hilim': 0.4999,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
         }
-        pvs_database['MaxTuneErr-RB'] = {
+        pvs_database['MaxTuneXErr-RB'] = {
             'type': 'float',
             'value': _ct.DEF_MAX_TUNE_ERR,
             'unit': 'Tune',
             'prec': 6,
-            'lolim': 0.001,
-            'hilim': 0.4999,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
+        }
+        pvs_database['MaxTuneYErr-SP'] = {
+            'type': 'float',
+            'value': _ct.DEF_MAX_TUNE_ERR,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
+        }
+        pvs_database['MaxTuneYErr-RB'] = {
+            'type': 'float',
+            'value': _ct.DEF_MAX_TUNE_ERR,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
         }
         # SI Tune FeedBack: PID PVs
-        pvs_database['LoopPIDKp-SP'] = {
+        pvs_database['LoopPIDKpX-SP'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KP,
             'unit': 'frac',
@@ -427,7 +443,7 @@ def get_tune_database(acc):
             'lolim': -100,
             'hilim': 100,
         }
-        pvs_database['LoopPIDKp-RB'] = {
+        pvs_database['LoopPIDKpX-RB'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KP,
             'unit': 'frac',
@@ -435,7 +451,7 @@ def get_tune_database(acc):
             'lolim': -100,
             'hilim': 100,
         }
-        pvs_database['LoopPIDKi-SP'] = {
+        pvs_database['LoopPIDKiX-SP'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KI,
             'unit': 'frac.Hz',
@@ -443,7 +459,7 @@ def get_tune_database(acc):
             'lolim': -100,
             'hilim': 100,
         }
-        pvs_database['LoopPIDKi-RB'] = {
+        pvs_database['LoopPIDKiX-RB'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KI,
             'unit': 'frac.Hz',
@@ -451,7 +467,7 @@ def get_tune_database(acc):
             'lolim': -100,
             'hilim': 100,
         }
-        pvs_database['LoopPIDKd-SP'] = {
+        pvs_database['LoopPIDKdX-SP'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KD,
             'unit': 'frac.s',
@@ -459,7 +475,55 @@ def get_tune_database(acc):
             'lolim': -100,
             'hilim': 100,
         }
-        pvs_database['LoopPIDKd-RB'] = {
+        pvs_database['LoopPIDKdX-RB'] = {
+            'type': 'float',
+            'value': _ct.DEF_PID_KD,
+            'unit': 'frac.s',
+            'prec': 4,
+            'lolim': -100,
+            'hilim': 100,
+        }
+        pvs_database['LoopPIDKpY-SP'] = {
+            'type': 'float',
+            'value': _ct.DEF_PID_KP,
+            'unit': 'frac',
+            'prec': 4,
+            'lolim': -100,
+            'hilim': 100,
+        }
+        pvs_database['LoopPIDKpY-RB'] = {
+            'type': 'float',
+            'value': _ct.DEF_PID_KP,
+            'unit': 'frac',
+            'prec': 4,
+            'lolim': -100,
+            'hilim': 100,
+        }
+        pvs_database['LoopPIDKiY-SP'] = {
+            'type': 'float',
+            'value': _ct.DEF_PID_KI,
+            'unit': 'frac.Hz',
+            'prec': 4,
+            'lolim': -100,
+            'hilim': 100,
+        }
+        pvs_database['LoopPIDKiY-RB'] = {
+            'type': 'float',
+            'value': _ct.DEF_PID_KI,
+            'unit': 'frac.Hz',
+            'prec': 4,
+            'lolim': -100,
+            'hilim': 100,
+        }
+        pvs_database['LoopPIDKdY-SP'] = {
+            'type': 'float',
+            'value': _ct.DEF_PID_KD,
+            'unit': 'frac.s',
+            'prec': 4,
+            'lolim': -100,
+            'hilim': 100,
+        }
+        pvs_database['LoopPIDKdY-RB'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KD,
             'unit': 'frac.s',
@@ -469,12 +533,22 @@ def get_tune_database(acc):
         }
 
         # SI Tune FeedBack: Tune measurement PV selection
-        pvs_database['TuneSrc-Sel'] = {
+        pvs_database['TuneXSrc-Sel'] = {
             'type': 'enum',
             'enums': _ct.TuneSrc._fields,
             'value': _ct.DEF_TUNESRC,
         }
-        pvs_database['TuneSrc-Sts'] = {
+        pvs_database['TuneXSrc-Sts'] = {
+            'type': 'enum',
+            'enums': _ct.TuneSrc._fields,
+            'value': _ct.DEF_TUNESRC,
+        }
+        pvs_database['TuneYSrc-Sel'] = {
+            'type': 'enum',
+            'enums': _ct.TuneSrc._fields,
+            'value': _ct.DEF_TUNESRC,
+        }
+        pvs_database['TuneYSrc-Sts'] = {
             'type': 'enum',
             'enums': _ct.TuneSrc._fields,
             'value': _ct.DEF_TUNESRC,
