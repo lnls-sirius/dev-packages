@@ -510,7 +510,6 @@ class SITuneCorrApp(TuneCorrApp):
 
         msg = "Loop opened!"
         self._update_log(msg)
-        self._update_ref()
         self.run_callbacks("LoopState-Sts", _Const.LoopState.Open)
 
     def _process_pid(self, tunex, tuney):
