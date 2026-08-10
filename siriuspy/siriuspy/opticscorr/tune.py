@@ -35,8 +35,6 @@ class TuneCorrApp(_BaseApp):
 
         self._set_new_refkl_cmd_count = 0
 
-        self._inloop = False  # needed for the SI Tune Feedback
-
         if self._acc == 'SI':
             self._meas_config_dkl_qf = 0.020
             self._meas_config_dkl_qd = 0.020
@@ -70,7 +68,7 @@ class TuneCorrApp(_BaseApp):
 
     def set_dtune_x(self, value):
         """Set DeltaTuneX."""
-        if self._inloop:
+        if self._loop_state == _Const.LoopState.Closed:
             msg = "ERR: Cant set DeltaTuneX while the feedback loop is closed."
             self.run_callbacks('Log-Mon', msg)
             return False
@@ -81,7 +79,7 @@ class TuneCorrApp(_BaseApp):
 
     def set_dtune_y(self, value):
         """Set DeltaTuneY."""
-        if self._inloop:
+        if self._loop_state == _Const.LoopState.Closed:
             msg = "ERR: Cant set DeltaTuneY while the feedback loop is closed."
             self.run_callbacks('Log-Mon', msg)
             return False
@@ -92,7 +90,7 @@ class TuneCorrApp(_BaseApp):
 
     def cmd_set_newref(self, value):
         """SetNewRefKL command."""
-        if self._inloop:
+        if self._loop_state == _Const.LoopState.Closed:
             msg = "ERR: Cant update ref. while the feedback loop is closed."
             self.run_callbacks('Log-Mon', msg)
             return False
@@ -146,7 +144,7 @@ class TuneCorrApp(_BaseApp):
             method=method, grouping=grouping,
             delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
-        if not self._inloop:
+        if self._loop_state == _Const.LoopState.Open:
             self.run_callbacks('Log-Mon', 'Calculated KL values.')
 
         for fam_idx, fam in enumerate(self._psfams):
@@ -159,12 +157,13 @@ class TuneCorrApp(_BaseApp):
             kls = {fam: self._psfam_refkl[fam]+self._lastcalc_deltakl[fam]
                    for fam in self._psfams}
             self._apply_intstrength(kls)
-            if not self._inloop:
+
+            if self._loop_state == _Const.LoopState.Open:
                 self.run_callbacks('Log-Mon', 'Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._event_exttrig_cmd.put(0)
-                if not self._inloop:
+                if self._loop_state == _Const.LoopState.Open:
                     self.run_callbacks('Log-Mon', 'Generated trigger.')
             return True
 
@@ -212,8 +211,7 @@ class TuneCorrApp(_BaseApp):
 
             self._estimate_current_deltatune()
 
-            if not self._inloop:
-                self.run_callbacks('Log-Mon', 'Updated KL references.')
+            self.run_callbacks('Log-Mon', 'Updated KL references.')
             return True
 
         self.run_callbacks(
@@ -289,7 +287,6 @@ class SITuneCorrApp(TuneCorrApp):
             'LoopPIDKd-SP': _part(self.set_pid_gain, "kd"),
         })
 
-        self._storedebeam_pv.add_callback(self._loop_checkbeam)
         self._tune_x_pv.add_callback(_part(self._callback_update_tunes, 'x'))
         self._tune_y_pv.add_callback(_part(self._callback_update_tunes, 'y'))
 
@@ -318,14 +315,12 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "Closing the Loop."
             self._update_log(msg)
             self._loop_state = value
-            self._inloop = True
             self._thread_fb = _Thread(target=self._do_auto_corr, daemon=True)
             self._thread_fb.start()
         elif value == _Const.LoopState.Open:
             msg = "Opening the Loop."
             self._update_log(msg)
             self._loop_state = value
-            self._inloop = False
         return True
 
     def set_loop_freq(self, value):
@@ -337,7 +332,7 @@ class SITuneCorrApp(TuneCorrApp):
     def set_tune_source(self, value):
         """Set tune source."""
         if self._loop_state == _Const.LoopState.Closed:
-            msg = "ERR: Cannot change tune source while the loop is closed."
+            msg = "ERR: Can\'t change tune source while the feedback is on."
             self._update_log(msg)
             return False
         if not 0 <= value < len(_ETypes.TUNE_SRC):
@@ -443,6 +438,10 @@ class SITuneCorrApp(TuneCorrApp):
             tplanned = 1.0/self._loop_freq
             _t0 = _time()
 
+            if not self._is_storedebeam:
+                self._update_log('ERR: We do not have stored beam!')
+                break
+
             sts, (tunex, tuney) = self._get_tunes()
             if not sts:
                 break
@@ -455,8 +454,7 @@ class SITuneCorrApp(TuneCorrApp):
             sts = self._apply_corr()
             if not sts:
                 self._update_log('ERR: Could not apply the correction.')
-                self._do_sleep(_t0, tplanned)
-                continue
+                break
 
             self._do_sleep(_t0, tplanned)
 
@@ -511,13 +509,6 @@ class SITuneCorrApp(TuneCorrApp):
         else:
             _log.info(msg)
         self.run_callbacks('Log-Mon', msg)
-
-    def _loop_checkbeam(self, pvname, value, **kws):
-        _ = (pvname, kws)
-        if not value and self._loop_state == _Const.LoopState.Closed:
-            self._update_log('FATAL: Opening Tune Feedback loop...')
-            self._loop_state = _Const.LoopState.Open
-            self._inloop = False
 
     def _callback_update_tunes(self, plane, pvname, value, **kws):
         _ = (pvname, kws)
