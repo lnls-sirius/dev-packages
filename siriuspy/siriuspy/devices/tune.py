@@ -1,8 +1,10 @@
 """Tune devices."""
 
-from ..optics.constants import SI as _SI
+from ..namesys import SiriusPVName as _SiriusPVName
+from ..optics.constants import SI as _SI, BO as _BO
 
 from .device import Device as _Device, DeviceSet as _DeviceSet
+from .timing import Trigger as _Trigger
 
 
 class TuneFrac(_Device):
@@ -15,10 +17,13 @@ class TuneFrac(_Device):
 
         SI_H = 'SI-Glob:DI-Tune-H'
         SI_V = 'SI-Glob:DI-Tune-V'
-        ALL = (SI_H, SI_V)
+        BO_H = 'BO-Glob:DI-Tune-H'
+        BO_V = 'BO-Glob:DI-Tune-V'
+        ALL = (SI_H, SI_V, BO_H, BO_V)
 
     PROPERTIES_DEFAULT = (
-        'TuneFrac-Mon',
+        'SpecAnaGetSpec-Sel',
+        'SpecAnaGetSpec-Sts',
         'Enbl-Sel',
         'Enbl-Sts',
         'Span-RB',
@@ -28,21 +33,34 @@ class TuneFrac(_Device):
         'FreqOff-RB',
         'FreqOff-SP',
     )
+    PROPERTIES_DEFAULT_SI = PROPERTIES_DEFAULT + ('TuneFrac-Mon',)
+    PROPERTIES_DEFAULT_BO = PROPERTIES_DEFAULT
 
     def __init__(self, devname, props2init='all'):
         """Init."""
         if devname not in TuneFrac.DEVICES.ALL:
             raise NotImplementedError(devname)
+        devname = _SiriusPVName(devname)
+        if devname.sec == _SI.sector:
+            self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_SI
+        else:
+            self.PROPERTIES_DEFAULT = TuneFrac.PROPERTIES_DEFAULT_BO
         super().__init__(devname, props2init=props2init)
+
+    @property
+    def sector(self):
+        """Sector (BO/SI)."""
+        return self.devname.sec
 
     @property
     def tune(self):
         """Tune Frac."""
-        return self['TuneFrac-Mon']
+        if self.sector == _SI.sector:
+            return self['TuneFrac-Mon']
 
     @property
     def span(self):
-        """Span [kHz]."""
+        """Frequency Span [kHz]."""
         return self['Span-RB']
 
     @span.setter
@@ -57,10 +75,11 @@ class TuneFrac(_Device):
     @rev_harmonic.setter
     def rev_harmonic(self, value):
         """Revolution harmonic."""
+        value = int(value)
         hnumber = _SI.harmonic_number
-        if not 0 <= int(value) <= hnumber:
+        if not 0 <= value <= hnumber:
             raise ValueError(f'rev_harmonic must be in range [0, {hnumber}]')
-        self['RevN-SP'] = int(value)
+        self['RevN-SP'] = value
 
     @property
     def center_frequency(self):
@@ -72,37 +91,52 @@ class TuneFrac(_Device):
         self['FreqOff-SP'] = value
 
     @property
-    def enable(self):
-        """Enable status."""
+    def aquisition_enabled(self):
+        """Aquisition enabled state."""
+        return self['SpecAnaGetSpec-Sts']
+
+    @property
+    def excitation_enabled(self):
+        """Excitation enabled state."""
         return self['Enbl-Sts']
 
-    def cmd_enable(self, timeout=DEF_TIMEOUT):
+    def cmd_acquisition_enable(self, timeout=DEF_TIMEOUT):
+        """Start data acquisition."""
+        self['SpecAnaGetSpec-Sel'] = 1
+        return self.wait('SpecAnaGetSpec-Sts', value=1, timeout=timeout)
+
+    def cmd_acquisition_disable(self, timeout=DEF_TIMEOUT):
+        """Stop data acquisition."""
+        self['SpecAnaGetSpec-Sel'] = 0
+        return self.wait('SpecAnaGetSpec-Sts', value=0, timeout=timeout)
+
+    def cmd_excitation_enable(self, timeout=DEF_TIMEOUT):
         """Enable."""
         self['Enbl-Sel'] = 1
         return self.wait('Enbl-Sts', value=1, timeout=timeout)
 
-    def cmd_disable(self, timeout=DEF_TIMEOUT):
+    def cmd_excitation_disable(self, timeout=DEF_TIMEOUT):
         """Disable."""
         self['Enbl-Sel'] = 0
         return self.wait('Enbl-Sts', value=0, timeout=timeout)
 
 
-class TuneProc(_Device):
+class SITuneProc(_Device):
     """Tune Proc device."""
 
     class DEVICES:
         """Devices names."""
 
-        SI_H = 'SI-Glob:DI-TuneProc-H'
-        SI_V = 'SI-Glob:DI-TuneProc-V'
-        ALL = (SI_H, SI_V)
+        H = 'SI-Glob:DI-TuneProc-H'
+        V = 'SI-Glob:DI-TuneProc-V'
+        ALL = (H, V)
 
     PROPERTIES_DEFAULT = ('Trace-Mon',)
 
     def __init__(self, devname, props2init='all'):
         """Init."""
         # check if device exists
-        if devname not in TuneProc.DEVICES.ALL:
+        if devname not in SITuneProc.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
@@ -114,6 +148,57 @@ class TuneProc(_Device):
         return self['Trace-Mon']
 
 
+class BOTuneProc(_Device):
+    """Tune Proc device."""
+
+    class DEVICES:
+        """Devices names."""
+
+        H = 'BO-Glob:DI-TuneProc-H'
+        V = 'BO-Glob:DI-TuneProc-V'
+        ALL = (H, V)
+
+    PROPERTIES_DEFAULT = (
+        'SpecArray-Mon',
+        'SwePts-SP',
+        'SwePts-RB',
+        'FrameCount-Mon',
+    )
+
+    def __init__(self, devname, props2init='all'):
+        """Init."""
+        # check if device exists
+        if devname not in BOTuneProc.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(devname, props2init=props2init)
+
+    @property
+    def freq_sweep_nrpts(self):
+        """."""
+        return int(self['SwePts-RB'])  # type: ignore
+
+    @freq_sweep_nrpts.setter
+    def freq_sweep_nrpts(self, value):
+        """."""
+        self['SwePts-SP'] = value
+
+    @property
+    def frame_count(self):
+        """."""
+        return self['FrameCount-Mon']
+
+    @property
+    def tune_spect_array(self):
+        """Tune spect array."""
+        spect = self['SpecArray-Mon']
+        swnpts = self.freq_sweep_nrpts
+        siz = (spect.size // swnpts) * swnpts
+        spect = spect[:siz].reshape(-1, swnpts)
+        return spect
+
+
 class Tune(_DeviceSet):
     """Tune device."""
 
@@ -121,7 +206,8 @@ class Tune(_DeviceSet):
         """Devices names."""
 
         SI = 'SI-Glob:DI-Tune'
-        ALL = (SI,)
+        BO = 'BO-Glob:DI-Tune'
+        ALL = (SI, BO)
 
     def __init__(self, devname=None, props2init='all'):
         """Init."""
@@ -130,127 +216,261 @@ class Tune(_DeviceSet):
             devname = Tune.DEVICES.SI
         if devname not in Tune.DEVICES.ALL:
             raise NotImplementedError(devname)
-
+        devname = _SiriusPVName(devname)
         isall = isinstance(props2init, str) and props2init.lower() == 'all'
         if not isall and props2init:
             raise ValueError(
                 "props2init must be 'all' or bool(props2init) == False"
             )
 
-        tune_frac_h = TuneFrac(TuneFrac.DEVICES.SI_H, props2init=props2init)
-        tune_frac_v = TuneFrac(TuneFrac.DEVICES.SI_V, props2init=props2init)
-        tune_proc_h = TuneProc(TuneProc.DEVICES.SI_H, props2init=props2init)
-        tune_proc_v = TuneProc(TuneProc.DEVICES.SI_V, props2init=props2init)
-
-        devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
+        if devname.sec == _SI.sector:
+            tune_frac_h = TuneFrac(
+                TuneFrac.DEVICES.SI_H, props2init=props2init
+            )
+            tune_frac_v = TuneFrac(
+                TuneFrac.DEVICES.SI_V, props2init=props2init
+            )
+            tune_proc_h = SITuneProc(
+                SITuneProc.DEVICES.H, props2init=props2init
+            )
+            tune_proc_v = SITuneProc(
+                SITuneProc.DEVICES.V, props2init=props2init
+            )
+            devices = (tune_frac_h, tune_frac_v, tune_proc_h, tune_proc_v)
+        else:
+            tune_frac_h = TuneFrac(
+                TuneFrac.DEVICES.BO_H, props2init=props2init
+            )
+            tune_frac_v = TuneFrac(
+                TuneFrac.DEVICES.BO_V, props2init=props2init
+            )
+            tune_proc_h = BOTuneProc(
+                BOTuneProc.DEVICES.H, props2init=props2init
+            )
+            tune_proc_v = BOTuneProc(
+                BOTuneProc.DEVICES.V, props2init=props2init
+            )
+            trig = _Trigger(trigname='BO-Glob:TI-TuneProc')
+            devices = (
+                tune_frac_h,
+                tune_frac_v,
+                tune_proc_h,
+                tune_proc_v,
+                trig,
+            )
 
         # call base class constructor
         super().__init__(devices, devname=devname)
 
     @property
+    def sector(self):
+        """."""
+        return self.devname.sec
+
+    @property
+    def dev_tune_frac_h(self):
+        """."""
+        return self.devices[0]
+
+    @property
+    def dev_tune_frac_v(self):
+        """."""
+        return self.devices[1]
+
+    @property
+    def dev_tune_proc_h(self):
+        """."""
+        return self.devices[2]
+
+    @property
+    def dev_tune_proc_v(self):
+        """."""
+        return self.devices[3]
+
+    @property
+    def dev_trig(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self.devices[4]
+
+    @property
     def tunex(self):
         """Tune Frac X."""
-        return self.devices[0].tune
+        if self.sector == _SI.sector:
+            return self.dev_tune_frac_h.tune
 
     @property
     def tuney(self):
         """Tune Frac Y."""
-        return self.devices[1].tune
+        if self.sector == _SI.sector:
+            return self.dev_tune_frac_v.tune
+
+    @property
+    def trig_nr_pulses(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self.dev_trig.nr_pulses
+
+    @property
+    def frame_countx(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self.dev_tune_proc_h.frame_count
+
+    @property
+    def frame_county(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self.dev_tune_proc_v.frame_count
+
+    @property
+    def spectx(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self._get_spect(self.dev_tune_proc_h)
+
+    @property
+    def specty(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self._get_spect(self.dev_tune_proc_v)
+
+    @property
+    def spectx_acquisition_status(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self.frame_countx == self.trig_nr_pulses
+
+    @property
+    def specty_acquisition_status(self):
+        """."""
+        if self.sector == _BO.sector:
+            return self.frame_county == self.trig_nr_pulses
 
     @property
     def spanx(self):
         """Span X [kHz]."""
-        return self.devices[0].span
+        return self.dev_tune_frac_h.span
 
     @spanx.setter
     def spanx(self, value):
-        self.devices[0].span = value
+        self.dev_tune_frac_h.span = value
 
     @property
     def spany(self):
         """Span Y [kHz]."""
-        return self.devices[1].span
+        return self.dev_tune_frac_v.span
 
     @spany.setter
     def spany(self, value):
-        self.devices[1].span = value
+        self.dev_tune_frac_v.span = value
 
     @property
     def rev_harmonicx(self):
         """Revolution harmonic X."""
-        return self.devices[0].rev_harmonic
+        return self.dev_tune_frac_h.rev_harmonic
 
     @rev_harmonicx.setter
     def rev_harmonicx(self, value):
-        self.devices[0].rev_harmonic = value
+        self.dev_tune_frac_h.rev_harmonic = value
 
     @property
     def rev_harmonicy(self):
         """Revolution harmonic Y."""
-        return self.devices[1].rev_harmonic
+        return self.dev_tune_frac_v.rev_harmonic
 
     @rev_harmonicy.setter
     def rev_harmonicy(self, value):
-        """Revolution harmonic Y."""
-        self.devices[1].rev_harmonic = value
+        self.dev_tune_frac_v.rev_harmonic = value
 
     @property
     def center_frequencyx(self):
         """Center frequency X."""
-        return self.devices[0].center_frequency
+        return self.dev_tune_frac_h.center_frequency
 
     @center_frequencyx.setter
     def center_frequencyx(self, value):
-        self.devices[0].center_frequency = value
+        self.dev_tune_frac_h.center_frequency = value
 
     @property
     def center_frequencyy(self):
         """Center frequency Y."""
-        return self.devices[1].center_frequency
+        return self.dev_tune_frac_v.center_frequency
 
     @center_frequencyy.setter
     def center_frequencyy(self, value):
-        self.devices[1].center_frequency = value
+        self.dev_tune_frac_v.center_frequency = value
 
     @property
     def tunex_wfm(self):
         """Tune waveform X."""
-        return self.devices[2].tune_wfm
+        return self.dev_tune_proc_h.tune_wfm
 
     @property
     def tuney_wfm(self):
         """Tune waveform Y."""
-        return self.devices[3].tune_wfm
+        return self.dev_tune_proc_v.tune_wfm
 
     @property
-    def enablex(self):
-        """Tune X enable status."""
-        return self.devices[0].enable
+    def aquisition_enabledx(self):
+        """Tune X acquisition enabled status."""
+        return self.dev_tune_frac_h.acquisition_enabled
 
     @property
-    def enabley(self):
-        """Tune Y enable status."""
-        return self.devices[1].enable
+    def aquisition_enabledy(self):
+        """Tune Y acquisition enabled status."""
+        return self.dev_tune_frac_v.acquisition_enabled
 
-    def cmd_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Enable tune X."""
-        return self.devices[0].cmd_enable(timeout=timeout)
+    @property
+    def excitation_enabledx(self):
+        """Tune X excitation enabled status."""
+        return self.dev_tune_frac_h.excitation_enabled
 
-    def cmd_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Enable tune Y."""
-        return self.devices[1].cmd_enable(timeout=timeout)
+    @property
+    def excitation_enabledy(self):
+        """Tune Y excitation enabled status."""
+        return self.dev_tune_frac_v.excitation_enabled
 
-    def cmd_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Disable tune X."""
-        return self.devices[0].cmd_disable(timeout=timeout)
+    def cmd_acquisition_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune X acquisition."""
+        return self.dev_tune_frac_h.cmd_acquisition_enable(timeout=timeout)
 
-    def cmd_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
-        """Disable tune Y."""
-        return self.devices[1].cmd_disable(timeout=timeout)
+    def cmd_acquisition_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune Y acquisition."""
+        return self.dev_tune_frac_v.cmd_acquisition_enable(timeout=timeout)
+
+    def cmd_acquisition_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune X acquisition."""
+        return self.dev_tune_frac_h.cmd_acquisition_disable(timeout=timeout)
+
+    def cmd_acquisition_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune Y acquisition."""
+        return self.dev_tune_frac_v.cmd_acquisition_disable(timeout=timeout)
+
+    def cmd_excitation_enablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune X excitation."""
+        return self.dev_tune_frac_h.cmd_excitation_enable(timeout=timeout)
+
+    def cmd_excitation_enabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Enable tune Y excitation."""
+        return self.dev_tune_frac_v.cmd_excitation_enable(timeout=timeout)
+
+    def cmd_excitation_disablex(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune X excitation."""
+        return self.dev_tune_frac_h.cmd_excitation_disable(timeout=timeout)
+
+    def cmd_excitation_disabley(self, timeout=TuneFrac.DEF_TIMEOUT):
+        """Disable tune Y excitation."""
+        return self.dev_tune_frac_v.cmd_excitation_disable(timeout=timeout)
+
+    def _get_spect(self, dev_proc):
+        """."""
+        spect = dev_proc.tune_spect_array[: dev_proc.frame_count]
+        return spect[::-1]
 
 
-class TuneCorr(_Device):
-    """TuneCorr device."""
+class SITuneCorr(_Device):
+    """SI TuneCorr device."""
 
     class DEVICES:
         """Devices names."""
@@ -270,8 +490,8 @@ class TuneCorr(_Device):
     def __init__(self, devname=None, props2init='all'):
         """Init."""
         if devname is None:
-            devname = TuneCorr.DEVICES.SI
-        if devname not in TuneCorr.DEVICES.ALL:
+            devname = SITuneCorr.DEVICES.SI
+        if devname not in SITuneCorr.DEVICES.ALL:
             raise NotImplementedError(devname)
 
         # call base class constructor
