@@ -272,6 +272,11 @@ class ClientArchiver:
         """Switch to beamline data.
 
         Sets server URL to beamline data URL and logs out if needed.
+        All Beamline PVs data are accessable from the machine data URL.
+        Nevertheless the PV metadata (such as archiving status, type, etc.)
+        are only available from the beamline data URL.
+        Therefore, it is recommended to use the beamline data URL for
+        PVs metadata queries.
         """
         self.server_url = _envars.SRVURL_ARCHIVER_BEAMLINE_DATA
         self.logout()
