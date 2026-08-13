@@ -95,7 +95,6 @@ class TuneCorrApp(_BaseApp):
             self._set_new_refkl_cmd_count += 1
             self.run_callbacks(
                 'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
-            return True
         return False
 
     def set_meas_config_dkl_qf(self, value):
