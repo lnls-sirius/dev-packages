@@ -335,7 +335,6 @@ class BaseApp(_Callback):
         if self._apply_corr():
             self._apply_corr_cmd_count += 1
             self.run_callbacks('ApplyDelta-Cmd', self._apply_corr_cmd_count)
-            return True
         return False
 
     def set_config_name(self, value):
