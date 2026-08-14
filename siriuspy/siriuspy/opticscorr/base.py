@@ -65,8 +65,6 @@ class BaseApp(_Callback):
 
         self._optprm_est = [0.0, 0.0]
 
-        self._config_ps_cmd_count = 0
-
         self._psfam_check_connection = {fam: 0 for fam in self._psfams}
         self._psfam_check_pwrstate_sts = {fam: 0 for fam in self._psfams}
         self._psfam_check_opmode_sts = {fam: -1 for fam in self._psfams}
@@ -78,7 +76,6 @@ class BaseApp(_Callback):
             self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
 
-            self._config_ti_cmd_count = 0
             self._timing_check_config = 9*[0]
 
             self._measuring_config = False
@@ -376,13 +373,10 @@ class BaseApp(_Callback):
 
         self._sync_corr = value
 
-        if self._config_ps():
-            self.run_callbacks('ConfigPS-Cmd', self._config_ps_cmd_count)
+        self._config_ps()
 
         if value == 1:
-            if self._config_timing():
-                self.run_callbacks(
-                    'ConfigTiming-Cmd', self._config_ti_cmd_count)
+            self._config_timing()
 
         val = 1
         if (self._status & 0x1) == 0:
@@ -533,7 +527,6 @@ class BaseApp(_Callback):
             else:
                 self.run_callbacks('Log-Mon', 'ERR:'+fam+' is disconnected.')
                 return False
-        self._config_ps_cmd_count += 1
         self.run_callbacks('Log-Mon', 'Configuration sent to power supplies.')
         return True
 
@@ -560,7 +553,6 @@ class BaseApp(_Callback):
             self._event_delaytype_sel.put(_TIConst.EvtDlyTyp.Incr)
             self._event_delay_sp.put(0)
 
-            self._config_ti_cmd_count += 1
             self.run_callbacks('Log-Mon', 'Configuration sent to TI.')
             return True
         else:
