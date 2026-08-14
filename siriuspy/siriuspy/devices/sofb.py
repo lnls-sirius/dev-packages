@@ -1155,6 +1155,21 @@ class SISOFB(BOSOFB):
             'DriveState-Sts', self._data.DriveState.Open, timeout=timeout
         )
 
+    def filter_local_distortions(self, corr_idcs, dorb=None, respmat=None):
+        """Filters local distortions.
+        Returns orbit distortion due to local perturbation.
+        """
+        respmat = respmat or self.respmat
+        if dorb is None:
+            orb = _np.concatenate((self.orbx, self.orby))
+            dorb = orb - _np.concatenate((self.refx, self.refy))
+        proj_mat = proj_mat = _np.zeros((respmat.shape[1], respmat.shape[1]))
+        proj_mat[corr_idcs, corr_idcs] = 1
+        kick = _np.linalg.pinv(respmat) @ dorb.T
+        kick_sel = _np.dot(proj_mat, kick)
+        dorb_filtered = (respmat @ kick_sel).T
+        return dorb_filtered
+
     @staticmethod
     def si_calculate_bumps(
         orbx,
