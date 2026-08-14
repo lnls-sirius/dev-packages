@@ -43,6 +43,10 @@ class TestASAPTuneCorrMain(unittest.TestCase):
             "siriuspy.opticscorr.base._PV", autospec=True)
         self.addCleanup(pv_patcher.stop)
         self.mock_pv = pv_patcher.start()
+        tunepv_patcher = mock.patch(
+            "siriuspy.opticscorr.tune._PV", autospec=True)
+        self.addCleanup(tunepv_patcher.stop)
+        self.mock_tunepv = tunepv_patcher.start()
         cnh_patcher = mock.patch(
             "siriuspy.opticscorr.base._HandleConfigNameFile",
             autospec=True)
@@ -126,13 +130,14 @@ class TestASAPTuneCorrMain(unittest.TestCase):
 
     def test_write_ok_SetNewRefKL(self):
         """Test write on SetNewRefKL-Cmd in normal operation."""
-        self.mock_pv.return_value.get.return_value = 0.0
+        self.mock_tunepv.return_value.get.return_value = 1.0
         self.app._status = 0
         self.assertTrue(self.app.write('SetNewRefKL-Cmd', 0))
         self.assertEqual(self.app._delta_tunex, 0)
         self.assertEqual(self.app._delta_tuney, 0)
         for fam in self.qfams:
             self.assertEqual(self.app._lastcalc_deltakl[fam], 0)
+            self.assertEqual(self.app._psfam_refkl[fam], 1.0)
 
     def test_write_err_SetNewRefKL(self):
         """Test write on SetNewRefKL-Cmd on connection error."""

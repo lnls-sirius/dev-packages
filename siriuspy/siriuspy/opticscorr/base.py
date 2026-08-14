@@ -4,7 +4,7 @@ import time as _time
 from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 import numpy as _np
-from epics import PV as _PV
+from ..epics import PV as _PV
 
 from .. import util as _util
 from ..callbacks import Callback as _Callback

@@ -1,7 +1,7 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
 import numpy as _np
-from epics import PV as _PV
+from ..epics import PV as _PV
 
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _SiriusPVName
