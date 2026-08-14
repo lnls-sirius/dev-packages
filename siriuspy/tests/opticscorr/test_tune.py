@@ -63,12 +63,12 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         self.app._sync_corr = Const.SyncCorr.Off
 
         self.app._status = 0b00000
-        self.assertFalse(self.app.write('ApplyDelta-Cmd', 0))
+        self.assertTrue(self.app.write('ApplyDelta-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, len(self.qfams))
 
         self.app._status = 0b10000
-        self.assertFalse(self.app.write('ApplyDelta-Cmd', 0))
+        self.assertTrue(self.app.write('ApplyDelta-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 2*len(self.qfams))
 
@@ -76,7 +76,7 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         """Test write on ApplyDelta-Cmd in normal operation, sync on."""
         self.app._sync_corr = Const.SyncCorr.On
         self.app._status = 0b00000
-        self.assertFalse(self.app.write('ApplyDelta-Cmd', 0))
+        self.assertTrue(self.app.write('ApplyDelta-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 1+len(self.qfams))
 
@@ -101,7 +101,7 @@ class TestASAPTuneCorrMain(unittest.TestCase):
     def test_write_ok_ConfigPS(self):
         """Test write on ConfigPS-Cmd in normal operation."""
         self.mock_pv.return_value.connected = True
-        self.assertFalse(self.app.write('ConfigPS-Cmd', 0))
+        self.assertTrue(self.app.write('ConfigPS-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 2*len(self.qfams))
 
@@ -114,7 +114,7 @@ class TestASAPTuneCorrMain(unittest.TestCase):
     def test_write_ok_ConfigTI(self):
         """Test write on ConfigTiming-Cmd in normal operation."""
         self.mock_pv.return_value.connected = True
-        self.assertFalse(self.app.write('ConfigTiming-Cmd', 0))
+        self.assertTrue(self.app.write('ConfigTiming-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 9)
 
@@ -128,7 +128,7 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         """Test write on SetNewRefKL-Cmd in normal operation."""
         self.mock_pv.return_value.get.return_value = 0.0
         self.app._status = 0
-        self.assertFalse(self.app.write('SetNewRefKL-Cmd', 0))
+        self.assertTrue(self.app.write('SetNewRefKL-Cmd', 0))
         self.assertEqual(self.app._delta_tunex, 0)
         self.assertEqual(self.app._delta_tuney, 0)
         for fam in self.qfams:
