@@ -1195,7 +1195,7 @@ class SISOFB(BOSOFB):
         )
 
     @staticmethod
-    def find_closest_corrs_ss(ss, nr_ch, nr_cv):
+    def find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=False):
         """Find the closest correctors indices to a given sector indices in SOFB matrix."""
         nch = 6
         ncv = 8
