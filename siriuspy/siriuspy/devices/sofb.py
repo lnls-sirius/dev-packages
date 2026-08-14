@@ -1214,6 +1214,8 @@ class SISOFB(BOSOFB):
         idcs_cv = _np.mod(idcs_cv, 160) + 120
 
         idcs_corrs = _np.concatenate((idcs_ch, idcs_cv))
+        if inc_rf:
+            idcs_corrs = _np.r[idcs_corrs, 281]
         return idcs_corrs
 
     @property
