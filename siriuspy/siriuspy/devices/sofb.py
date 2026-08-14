@@ -1163,12 +1163,11 @@ class SISOFB(BOSOFB):
         if dorb is None:
             orb = _np.concatenate((self.orbx, self.orby))
             dorb = orb - _np.concatenate((self.refx, self.refy))
-        proj_mat = proj_mat = _np.zeros((respmat.shape[1], respmat.shape[1]))
-        proj_mat[corr_idcs, corr_idcs] = 1
-        kick = _np.linalg.pinv(respmat) @ dorb.T
-        kick_sel = _np.dot(proj_mat, kick)
-        dorb_filtered = (respmat @ kick_sel).T
-        return dorb_filtered
+        kicks = _np.linalg.lstsq(respmat, dorb, rcond=None)[0]
+        sel = _np.zeros(kicks.shape, dtype=bool)
+        sel[corr_idcs] = True
+        kicks[~sel] = 0
+        return respmat @ kicks
 
     @staticmethod
     def si_calculate_bumps(
