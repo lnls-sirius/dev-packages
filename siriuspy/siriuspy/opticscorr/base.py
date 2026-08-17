@@ -66,8 +66,6 @@ class BaseApp(_Callback):
         self._optprm_est = [0.0, 0.0]
 
         self._loop_state = _Const.LoopState.Open  # needed for the SI Tune FB
-        self._apply_corr_cmd_count = 0
-        self._config_ps_cmd_count = 0
 
         self._psfam_check_connection = {fam: 0 for fam in self._psfams}
         self._psfam_check_pwrstate_sts = {fam: 0 for fam in self._psfams}
