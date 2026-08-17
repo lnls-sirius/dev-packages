@@ -1,7 +1,7 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
 import numpy as _np
-from epics import PV as _PV
+from ..epics import PV as _PV
 from epics.ca import CAThread as _Thread
 
 import logging as _log
@@ -32,8 +32,6 @@ class TuneCorrApp(_BaseApp):
         # consts
         self._delta_tunex = 0.0
         self._delta_tuney = 0.0
-
-        self._set_new_refkl_cmd_count = 0
 
         if self._acc == 'SI':
             self._meas_config_dkl_qf = 0.020
@@ -94,11 +92,7 @@ class TuneCorrApp(_BaseApp):
             msg = "ERR: Cant update ref. while the feedback loop is closed."
             self.run_callbacks('Log-Mon', msg)
             return False
-        if self._update_ref():
-            self._set_new_refkl_cmd_count += 1
-            self.run_callbacks(
-                'SetNewRefKL-Cmd', self._set_new_refkl_cmd_count)
-        return False
+        return self._update_ref()
 
     def set_meas_config_dkl_qf(self, value):
         """Set MeasConfigDeltaKLFamQF."""

@@ -75,12 +75,12 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.app._sync_corr = 0
 
         self.app._status = 0
-        self.assertFalse(self.app.write('ApplyDelta-Cmd', 0))
+        self.assertTrue(self.app.write('ApplyDelta-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, len(self.sfams))
 
         self.app._status = 0b10000
-        self.assertFalse(self.app.write('ApplyDelta-Cmd', 0))
+        self.assertTrue(self.app.write('ApplyDelta-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 2*len(self.sfams))
 
@@ -88,7 +88,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         """Test write on ApplyDelta-Cmd in normal operation, sync mode on."""
         self.app._sync_corr = 1
         self.app._status = 0
-        self.assertFalse(self.app.write('ApplyDelta-Cmd', 0))
+        self.assertTrue(self.app.write('ApplyDelta-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 1+len(self.sfams))
 
@@ -113,7 +113,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
     def test_write_ok_ConfigPS(self):
         """Test write on ConfigPS-Cmd in normal operation."""
         self.mock_pv.return_value.connected = True
-        self.assertFalse(self.app.write('ConfigPS-Cmd', 0))
+        self.assertTrue(self.app.write('ConfigPS-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 2*len(self.sfams))
 
@@ -126,7 +126,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
     def test_write_ok_ConfigTI(self):
         """Test write on ConfigTiming-Cmd in normal operation."""
         self.mock_pv.return_value.connected = True
-        self.assertFalse(self.app.write('ConfigTiming-Cmd', 0))
+        self.assertTrue(self.app.write('ConfigTiming-Cmd', 0))
         count = self.mock_pv.return_value.put.call_count
         self.assertEqual(count, 9)
 
