@@ -1164,7 +1164,7 @@ class SISOFB(BOSOFB):
             orb = _np.concatenate((self.orbx, self.orby))
             dorb = orb - _np.concatenate((self.refx, self.refy))
         kicks = _np.linalg.lstsq(respmat, dorb, rcond=None)[0]
-        sel = _np.zeros(kicks.shape, dtype=bool)
+        sel = _np.zeros(respmat.shape[1], dtype=bool)
         sel[corr_idcs] = True
         kicks[~sel] = 0
         return respmat @ kicks
