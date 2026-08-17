@@ -209,14 +209,14 @@ class BPM(_Device):
     @property
     def rffe_att(self):
         """."""
-        if 'RFFEAtt-RB' not in self._pvs:
+        if _BPMSearch.is_photon_bpm(self.devname):
             return None
         return self['RFFEAtt-RB']
 
     @rffe_att.setter
     def rffe_att(self, val):
         """."""
-        if 'RFFEAtt-SP' in self._pvs:
+        if not _BPMSearch.is_photon_bpm(self.devname):
             self['RFFEAtt-SP'] = val
 
     @property
