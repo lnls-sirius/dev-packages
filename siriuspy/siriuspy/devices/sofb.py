@@ -6,6 +6,8 @@ import numpy as _np
 
 from ..sofb.csdev import SOFBFactory
 from ..sofb.utils import si_calculate_bump as _si_calculate_bump
+from ..sofb.utils import filter_local_distortions as _filter_local_distortions
+from ..sofb.utils import find_closest_corrs_ss as _find_closest_corrs_ss
 from .device import Device as _Device
 
 
@@ -1157,17 +1159,15 @@ class SISOFB(BOSOFB):
 
     def filter_local_distortions(self, corr_idcs, dorb=None, respmat=None):
         """Filters local distortions.
+
         Returns orbit distortion due to local perturbation.
         """
         respmat = respmat or self.respmat
         if dorb is None:
             orb = _np.concatenate((self.orbx, self.orby))
             dorb = orb - _np.concatenate((self.refx, self.refy))
-        kicks = _np.linalg.lstsq(respmat, dorb, rcond=None)[0]
-        sel = _np.zeros(respmat.shape[1], dtype=bool)
-        sel[corr_idcs] = True
-        kicks[~sel] = 0
-        return respmat @ kicks
+        dorb_filtered = _filter_local_distortions(corr_idcs, dorb, respmat)
+        return dorb_filtered
 
     @staticmethod
     def si_calculate_bumps(
@@ -1194,28 +1194,9 @@ class SISOFB(BOSOFB):
             minsingval=minsingval,
         )
 
-    @staticmethod
-    def find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=False):
+    def find_closest_corrs_ssection(self, ss, nr_ch, nr_cv, inc_rf=False):
         """Find the closest correctors indices to a given sector indices in SOFB matrix."""
-        nch = 6
-        ncv = 8
-        idx_upstream = (ss-1)*nch
-        idx_downstream = (ss-1)*nch + 1
-        idcs_ch_up = idx_upstream - _np.arange(int(nr_ch/2))
-        idcs_ch_dw = idx_downstream + _np.arange(int(nr_ch/2))
-        idcs_ch = _np.sort(_np.concatenate((idcs_ch_up, idcs_ch_dw)))
-        idcs_ch = _np.mod(idcs_ch, 120)
-
-        idx_upstream = (ss-1)*ncv
-        idx_downstream = (ss-1)*ncv + 1
-        idcs_cv_up = idx_upstream - _np.arange(int(nr_cv/2))
-        idcs_cv_dw = idx_downstream + _np.arange(int(nr_cv/2))
-        idcs_cv = _np.sort(_np.concatenate((idcs_cv_up, idcs_cv_dw)))
-        idcs_cv = _np.mod(idcs_cv, 160) + 120
-
-        idcs_corrs = _np.concatenate((idcs_ch, idcs_cv))
-        if inc_rf:
-            idcs_corrs = _np.r[idcs_corrs, 281]
+        idcs_corrs = _find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=inc_rf)
         return idcs_corrs
 
     @property
