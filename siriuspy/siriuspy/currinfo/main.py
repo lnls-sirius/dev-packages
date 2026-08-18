@@ -22,6 +22,8 @@ from .csdev import Const as _Const, get_currinfo_database as _get_database
 class _CurrInfoApp(_Callback):
     """."""
 
+    INTERVAL = 0.5  # [s]
+
     def __init__(self):
         """."""
         super().__init__()
@@ -35,9 +37,9 @@ class _CurrInfoApp(_Callback):
         """."""
         return _dcopy(self._pvs_database)
 
-    def process(self, interval):
+    def process(self):
         """."""
-        _time.sleep(interval)
+        _time.sleep(self.INTERVAL)
 
     def read(self, reason):
         """."""
@@ -80,17 +82,18 @@ class _ASCurrInfoApp(_CurrInfoApp):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
+        self._wfm = None
 
         self.osc_obj = _Keysight(scope=self.OSC)
 
-    def process(self, interval):
+    def process(self):
         """."""
         tini = _time.time()
         self._get_measurement()
         self._update_pvs(self.ACC, self.ICT1, self.ICT2)
         dtim = _time.time() - tini
-        if dtim <= interval:
-            _time.sleep(interval - dtim)
+        if dtim <= self.INTERVAL:
+            _time.sleep(self.INTERVAL - dtim)
         else:
             _log.warning(f'IOC took {dtim*1000:.3f} ms in update loop.')
 
@@ -177,6 +180,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
+    INTERVAL = 2.0  # [s]
+
     OSC = _Scopes.AS_DI_FCTDIG
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
@@ -185,6 +190,8 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
+
+    INTERVAL = 2.0  # [s]
 
     OSC_IP = _Scopes.LI_DI_ICTOSC
     ACC = 'LI'
