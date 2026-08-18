@@ -53,7 +53,7 @@ class BPMSearch:
     def is_id_rf_bpm(cls, devname):
         """Check whether BPM is from Insertion Device."""
         devname = _PVName(devname)
-        return devname.sub.endswith('SA', 'SB', 'SP')
+        return devname.sub.endswith(('SA', 'SB', 'SP'))
 
     @classmethod
     def get_mapping(cls):
