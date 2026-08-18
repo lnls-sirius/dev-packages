@@ -22,7 +22,8 @@ def si_calculate_bump(
     agy=0,
     psx=0,
     psy=0,
-    n_bpms_out=3,
+    n_bpms_outx=3,
+    n_bpms_outy=3,
     minsingval=0.2,
 ):
     """Calculate bumps on SA, SB, SP, BC, C2 and C1 subsections.
@@ -56,7 +57,8 @@ def si_calculate_bump(
         _, _, mat_s2r = bump.calc_matrices(
             section_type=section_type,
             section_nr=section_nr,
-            n_bpms_out=n_bpms_out,
+            n_bpms_outx=n_bpms_outx,
+            n_bpms_outy=n_bpms_outy,
             use_ss_tfm=False,
             minsingval=minsingval,
         )

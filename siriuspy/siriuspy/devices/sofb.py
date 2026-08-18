@@ -1164,7 +1164,8 @@ class SISOFB(BOSOFB):
         agy=0,
         psx=0,
         psy=0,
-        n_bpms_out=3,
+        n_bpms_outx=3,
+        n_bpms_outy=3,
         minsingval=0.2,
     ):
         """."""
@@ -1176,7 +1177,8 @@ class SISOFB(BOSOFB):
             agy=agy,
             psx=psx,
             psy=psy,
-            n_bpms_out=n_bpms_out,
+            n_bpms_outx=n_bpms_outx,
+            n_bpms_outy=n_bpms_outy,
             minsingval=minsingval,
         )
 
