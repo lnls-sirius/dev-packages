@@ -96,7 +96,7 @@ def find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=False):
 
     idcs_corrs = _np.concatenate((idcs_ch, idcs_cv))
     if inc_rf:
-        idcs_corrs = _np.r[idcs_corrs, 281]
+        idcs_corrs = _np.r_[idcs_corrs, 281]
     return idcs_corrs
 
 
