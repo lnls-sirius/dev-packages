@@ -162,12 +162,19 @@ class _ASCurrInfoApp(_CurrInfoApp):
             return
 
         if self.ICT_2_CHAN:
-            chan_ict1 = self.ICT_2_CHAN[ict1]
-            chan_ict2 = self.ICT_2_CHAN[ict2]
-
+            ict1_chan = self.ICT_2_CHAN[ict1]
+            ict2_chan = self.ICT_2_CHAN[ict2]
+            ict1_wfm = self.wfms[ict1_chan]
+            ict2_wfm = self.wfms[ict2_chan]
+            osc = self.osc_obj
+            ict1_anl = osc.process_waveform(ict1_wfm, perc=0.02, order=1)
+            ict2_anl = osc.process_waveform(ict2_wfm, perc=0.02, order=1)
+            chgwfm1 = ict1_anl[0] * 1e9
+            chgwfm2 = ict2_anl[0] * 1e9
 
         eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
         effave = 0 if ave1 == 0 else 100 * ave2/ave1
+        effwfm = 0 if chgwfm1 == 0 else min(100 * chgwfm2/chgwfm1, 110)
 
         self.run_callbacks(ict1 + ':Charge-Mon', chg1)
         self.run_callbacks(ict1 + ':ChargeAvg-Mon', ave1)
@@ -175,17 +182,20 @@ class _ASCurrInfoApp(_CurrInfoApp):
         self.run_callbacks(ict1 + ':ChargeMax-Mon', max1)
         self.run_callbacks(ict1 + ':ChargeStd-Mon', std1)
         self.run_callbacks(ict1 + ':PulseCount-Mon', cnt1)
+        self.run_callbacks(ict1 + ':ChargeWfm-Mon', chgwfm1)
         self.run_callbacks(ict2 + ':Charge-Mon', chg2)
         self.run_callbacks(ict2 + ':ChargeAvg-Mon', ave2)
         self.run_callbacks(ict2 + ':ChargeMin-Mon', min2)
         self.run_callbacks(ict2 + ':ChargeMax-Mon', max2)
         self.run_callbacks(ict2 + ':ChargeStd-Mon', std2)
+        self.run_callbacks(ict2 + ':ChargeWfm-Mon', chgwfm2)
         self.run_callbacks(ict2 + ':PulseCount-Mon', cnt2)
         if chg1 <= self.CHARGE_THRESHOLD:
             return
         name = acc + '-Glob:AP-CurrInfo:'
         self.run_callbacks(name + 'TranspEff-Mon', eff)
         self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
+        self.run_callbacks(name + 'TranspEffWfm-Mon', effwfm)
 
 
 class TSCurrInfoApp(_ASCurrInfoApp):
