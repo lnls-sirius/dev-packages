@@ -163,3 +163,58 @@ class WaveformAcquisition:
             )
 
         return status_ok, stat, wfms
+
+    @staticmethod
+    def process_waveform_0(waveform, **kwargs):
+        """."""
+        tim, val = waveform
+
+        max_idx = _np.argmax(val)
+        tim_peak = tim[max_idx]
+        sel = val == val
+
+        pcoeffs = None
+        val_fit = 0 * val
+
+        tim_fix = tim
+        val_fix = val - val_fit
+
+        charge = 1e9 * _np.trapz(val_fix, tim_fix) / 5
+        params = (
+            charge, tim, val, sel, val_fit, tim_fix,
+            val_fix, tim_peak, pcoeffs,
+        )
+        return params
+
+    @staticmethod
+    def process_waveform_1(waveform, perc, order):
+        """."""
+        tim, val = waveform
+
+        indcs = _np.arange(len(val))
+        max_idx = _np.argmax(val)
+        tim_peak = tim[max_idx]
+        sel1 = (val - val[0]) < perc * (val[max_idx] - val[0])
+        sel2 = indcs < max_idx
+        sel = sel1 & sel2
+
+        pcoeffs = _np.polynomial.polynomial.polyfit(tim[sel], val[sel], order)
+        val_fit = _np.polynomial.polynomial.polyval(tim, pcoeffs)
+
+        tim_fix = tim
+        val_fix = val - val_fit
+
+        charge = 1e9 * _np.trapz(val_fix, tim_fix) / 5
+        params = (
+            charge, tim, val, sel, val_fit, tim_fix,
+            val_fix, tim_peak, pcoeffs,
+        )
+        return params
+
+    @staticmethod
+    def process_waveform(waveform, **kwargs):
+        """."""
+        perc = kwargs.pop('perc', 0.02)
+        order = kwargs.pop('order', 1)
+        # return WaveformAcquisition.process_waveform_0(waveform, kwargs)
+        return WaveformAcquisition.process_waveform_1(waveform, perc, order)

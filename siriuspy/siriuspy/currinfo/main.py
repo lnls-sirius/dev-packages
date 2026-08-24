@@ -80,6 +80,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
     ACC = ''
     ICT1 = ''
     ICT2 = ''
+    ICT_2_CHAN = dict()
+
     CHARGE_THRESHOLD = 0.05  # [nC]
 
     def __init__(self):
@@ -159,6 +161,11 @@ class _ASCurrInfoApp(_CurrInfoApp):
             _log.warning('Problem reading data.')
             return
 
+        if self.ICT_2_CHAN:
+            chan_ict1 = self.ICT_2_CHAN[ict1]
+            chan_ict2 = self.ICT_2_CHAN[ict2]
+
+
         eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
         effave = 0 if ave1 == 0 else 100 * ave2/ave1
 
@@ -203,6 +210,12 @@ class LICurrInfoApp(_ASCurrInfoApp):
     LIICT2 = 'LI-01:DI-ICT-2'
     TBICT1 = 'TB-02:DI-ICT'
     TBICT2 = 'TB-04:DI-ICT'
+    ICT_2_CHAN = {
+        LIICT1: 'CHAN1',
+        LIICT2: 'CHAN2',
+        TBICT1: 'CHAN3',
+        TBICT2: 'CHAN4',
+    }
 
     def _update_pvs(self, *args):
         super()._update_pvs('LI', self.LIICT1, self.LIICT2)
