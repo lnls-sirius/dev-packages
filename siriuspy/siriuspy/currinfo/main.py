@@ -14,9 +14,11 @@ from ..clientarch import ClientArchiver as _ClientArch
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
+from ..oscilloscope import WaveformAcquisition as _WaveformAcquisition
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
 from .csdev import Const as _Const, get_currinfo_database as _get_database
+
 
 
 class _CurrInfoApp(_Callback):
@@ -64,6 +66,8 @@ class _CurrInfoApp(_Callback):
 class _ASCurrInfoApp(_CurrInfoApp):
     """."""
 
+    INTERVAL = 2.0  # [s]
+
     INDICES1 = _get_namedtuple(
         'Indices1',
         ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
@@ -81,35 +85,35 @@ class _ASCurrInfoApp(_CurrInfoApp):
     def __init__(self):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
-        self._meas = None
-        self._wfm = None
-
-        self.osc_obj = _Keysight(scope=self.OSC)
+        self.osc_obj = _WaveformAcquisition(
+            keysight=_Keysight(scope=self.OSC)
+        )
+        self.stat = list()
+        self.wfms = dict()
 
     def process(self):
         """."""
         tini = _time.time()
-        self._get_measurement()
+        self.get_measurement()
         self._update_pvs(self.ACC, self.ICT1, self.ICT2)
         dtim = _time.time() - tini
         if dtim <= self.INTERVAL:
             _time.sleep(self.INTERVAL - dtim)
         else:
-            _log.warning(f'IOC took {dtim*1000:.3f} ms in update loop.')
+            lstr = f'IOC took {dtim*1000:.3f} ms in update loop.'
+            _log.warning(lstr)
 
-    def _get_measurement(self):
-        try:
-            self.osc_obj.connect()
-            meas = self.osc_obj.send_command(b":MEASure:RESults?\n")
-            self._meas = meas.split(',')
-        except Exception as err:
-            _log.error(str(err))
-        finally:
-            self.osc_obj.close()
+    def get_measurement(self):
+        status_ok, meas, wfms = self.osc_obj.acquire(
+            acq_meas=True, acq_wfms=True, print_time=False
+        )
+        if status_ok:
+            self.stat = meas
+            self.wfms = wfms
 
     def _update_pvs(self, acc, ict1, ict2):
         """."""
-        meas = self._meas
+        meas = self.stat
         if not meas:
             _log.warning('Measurement list is empty.')
             return
