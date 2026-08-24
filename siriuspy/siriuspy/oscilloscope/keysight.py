@@ -24,7 +24,7 @@ class Keysight:
     from siriuspy.oscilloscope import Keysight, ScopeSignals
     import matplotlib.pyplot as plt
 
-    scope = Keysight(scopesignal=ScopeSignals.SI_FILL_PATTERN)
+    scope = Keysight(scope_signal=ScopeSignals.SI_FILL_PATTERN)
     print(scope.scope_name)
     wavet, waved = scope.wfm_get_data()
     plt.plot(wavet, waved)
@@ -34,17 +34,17 @@ class Keysight:
 
     SOCKET_TIMEOUT = 10  # [s]
 
-    def __init__(self, scope=None, scopesignal=None, verbose=False):
+    def __init__(self, scope=None, scope_signal=None, verbose=False):
         """."""
         self.logger = _log.getLogger(self.__class__.__name__)
         if verbose:
             self.logger.setLevel(_log.INFO)
         else:
             self.logger.setLevel(_log.WARNING)
-        if scopesignal and isinstance(scopesignal, tuple):
-            self.host = scopesignal[0]
-            self.port = scopesignal[1]
-            self.chan = scopesignal[2]
+        if scope_signal and isinstance(scope_signal, tuple):
+            self.host = scope_signal[0]
+            self.port = scope_signal[1]
+            self.chan = scope_signal[2]
         elif scope and isinstance(scope, str):
             self.host = scope
             self.port = 5025  # keysight default?
@@ -56,7 +56,7 @@ class Keysight:
     @property
     def scope_name(self):
         """."""
-        return _scopes.ScopeSignals.get_scope_name(scope_hostname=self.host)
+        return _scopes.ScopeSignals.get_scope(scope=self.host)
 
     def connect(self):
         """."""

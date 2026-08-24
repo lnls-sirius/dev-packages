@@ -32,7 +32,7 @@ class FPMOscApp(_Callback):
         self._fillpat_update_time = 5  # [s]
         self._fillpat_ref = _np.ones(_Const.FP_HARM_NUM) / _Const.FP_HARM_NUM
         self._fillpat_osc = _Keysight(
-            scopesignal=_ScopeSignals.SI_FILL_PATTERN
+            scope_signal=_ScopeSignals.SI_FILL_PATTERN
         )
         self._fillpat_thread = None
 
