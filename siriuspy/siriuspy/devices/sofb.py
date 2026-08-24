@@ -171,6 +171,11 @@ class TLSOFB(_Device):
         self._enum_setter('TrigAcqChan-Sel', value, self._data.TrigAcqChan)
 
     @property
+    def trigchannel_str(self):
+        """."""
+        return self._data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+
+    @property
     def respmat(self):
         """Raw response matrix."""
         return self['RespMat-RB'].reshape(self._data.nr_bpms * 2, -1)
@@ -190,9 +195,9 @@ class TLSOFB(_Device):
         return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms * 2)
 
     @property
-    def trigchannel_str(self):
+    def orbstatus(self):
         """."""
-        return self._data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+        return self['OrbStatus-Mon']
 
     @property
     def sp_trajx(self):
@@ -388,6 +393,11 @@ class TLSOFB(_Device):
     def trigacq(self):
         """."""
         return self['TrigAcqCtrl-Sts']
+
+    @property
+    def trigacq_str(self):
+        """."""
+        return self._data.TrigAcqCtrl._fields[self['TrigAcqCtrl-Sts']]
 
     @property
     def trigsamplepre(self):
