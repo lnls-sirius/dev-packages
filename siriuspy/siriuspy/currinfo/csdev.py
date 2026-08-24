@@ -62,7 +62,7 @@ def get_litbts_currinfo_database(acc):
     def_db = {'type': 'float', 'value': 0.0, 'unit': 'nC', 'prec': 4}
     pvs = [
         'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMin-Mon', 'ChargeMax-Mon',
-        'ChargeStd-Mon']
+        'ChargeStd-Mon', 'ChargeWfm-Mon']
 
     for device in devices[acc]:
         pvs_db.update({device+pv: _dcopy(def_db) for pv in pvs})
@@ -71,6 +71,7 @@ def get_litbts_currinfo_database(acc):
     def_db = {'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 2}
     pvs_db[pref + 'TranspEff-Mon'] = _dcopy(def_db)
     pvs_db[pref + 'TranspEffAvg-Mon'] = _dcopy(def_db)
+    pvs_db[pref + 'TranspEffWfm-Mon'] = _dcopy(def_db)
     pvs_db = _csdev.add_pvslist_cte(pvs_db, prefix=pref)
     return pvs_db
 

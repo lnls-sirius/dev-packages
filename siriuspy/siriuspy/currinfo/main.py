@@ -169,8 +169,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
             osc = self.osc_obj
             ict1_anl = osc.process_waveform(ict1_wfm, perc=0.02, order=1)
             ict2_anl = osc.process_waveform(ict2_wfm, perc=0.02, order=1)
-            chgwfm1 = ict1_anl[0] * 1e9 / 5
-            chgwfm2 = ict2_anl[0] * 1e9 / 5
+            chgwfm1 = ict1_anl[0] * 1e9
+            chgwfm2 = ict2_anl[0] * 1e9
 
         eff = 0 if chg1 == 0 else min(100 * chg2/chg1, 110)
         effave = 0 if ave1 == 0 else 100 * ave2/ave1
