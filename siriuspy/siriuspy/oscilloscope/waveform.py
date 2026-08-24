@@ -179,9 +179,9 @@ class WaveformAcquisition:
         tim_fix = tim
         val_fix = val - val_fit
 
-        charge = 1e9 * _np.trapz(val_fix, tim_fix) / 5
+        currint = _np.trapz(val_fix, tim_fix)
         params = (
-            charge, tim, val, sel, val_fit, tim_fix,
+            currint, tim, val, sel, val_fit, tim_fix,
             val_fix, tim_peak, pcoeffs,
         )
         return params
@@ -204,9 +204,9 @@ class WaveformAcquisition:
         tim_fix = tim
         val_fix = val - val_fit
 
-        charge = 1e9 * _np.trapz(val_fix, tim_fix) / 5
+        currint = _np.trapz(val_fix, tim_fix)
         params = (
-            charge, tim, val, sel, val_fit, tim_fix,
+            currint, tim, val, sel, val_fit, tim_fix,
             val_fix, tim_peak, pcoeffs,
         )
         return params
