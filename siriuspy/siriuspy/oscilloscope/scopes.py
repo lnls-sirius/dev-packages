@@ -33,14 +33,25 @@ class ScopeSignals:
     MODLTR2_PULSE = (Scopes.LI_PU_OSC_MODLTR, 5025, 'CHAN3')
 
     @staticmethod
-    def get_scope_name(scopesignal=None, scope_hostname=None):
+    def get_scope(scope_signal=None, scope=None):
         """."""
-        if scopesignal is not None:
-            if scope_hostname and scopesignal[0] != scope_hostname:
+        if scope_signal is not None:
+            if scope and scope_signal[0] != scope:
                 raise ValueError('Inconsistent inputs!')
-            scope_hostname = scopesignal[0]
+            scope = scope_signal[0]
         for symb in Scopes.__dict__:
-            if symb[:2] in ('AS', 'LI', 'TB', 'BO', 'TS', 'SI'):
+            if symb[:2] in ('AS', 'LI', 'TB', 'TS', 'SI'):
                 host = getattr(Scopes, symb)
-                if host == scope_hostname:
+                if host == scope:
                     return symb
+
+    @staticmethod
+    def get_signals(scope):
+        """."""
+        signals = dict()
+        for symb in ScopeSignals.__dict__:
+            if symb[:2] in ('SI', 'BO', 'TS', 'LI', 'TB', 'MO'):
+                sig = getattr(ScopeSignals, symb)
+                if sig[0] == scope:
+                    signals[symb] = sig
+        return signals
