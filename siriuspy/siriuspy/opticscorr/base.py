@@ -39,7 +39,7 @@ class BaseApp(_Callback):
     """Main application for handling optics correction."""
 
     _optics_param = ''
-    DEF_CONN_TIMEOUT = 0.05
+    _DEF_CONN_TIMEOUT = 0.05  # [s]
 
     def __init__(self, acc):
         """Class constructor."""
@@ -159,33 +159,33 @@ class BaseApp(_Callback):
             self._psfam_intstr_sp_pvs[fam] = _PV(
                 pss.substitute(propty_name=intstr, propty_suffix='SP'),
                 connection_callback=self._callback_conn_psfam,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._psfam_pwrstate_sel_pvs[fam] = _PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._psfam_pwrstate_sts_pvs[fam] = _PV(
                 pss.substitute(propty_name='PwrState', propty_suffix='Sts'),
                 callback=self._callback_psfam_pwrstate_sts,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._psfam_opmode_sel_pvs[fam] = _PV(
                 pss.substitute(propty_name='OpMode', propty_suffix='Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._psfam_opmode_sts_pvs[fam] = _PV(
                 pss.substitute(propty_name='OpMode', propty_suffix='Sts'),
                 callback=self._callback_psfam_opmode_sts,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._psfam_ctrlmode_mon_pvs[fam] = _PV(
                 pss.substitute(propty_name='CtrlMode', propty_suffix='Mon'),
                 callback=self._callback_psfam_ctrlmode_mon,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
         if self._acc == 'SI':
@@ -203,97 +203,97 @@ class BaseApp(_Callback):
 
             self._trigger_state_sel = _PV(
                 trig_name.substitute(propty='State-Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._trigger_state_sts = _PV(
                 trig_name.substitute(propty='State-Sts'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._trigger_polarity_sel = _PV(
                 trig_name.substitute(propty='Polarity-Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._trigger_polarity_sts = _PV(
                 trig_name.substitute(propty='Polarity-Sts'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._trigger_src_sel = _PV(
                 trig_name.substitute(propty='Src-Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._trigger_src_sts = _PV(
                 trig_name.substitute(propty='Src-Sts'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._trigger_nrpulses_sp = _PV(
                 trig_name.substitute(propty='NrPulses-SP'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._trigger_nrpulses_rb = _PV(
                 trig_name.substitute(propty='NrPulses-RB'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._trigger_duration_sp = _PV(
                 trig_name.substitute(propty='Duration-SP'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._trigger_duration_rb = _PV(
                 trig_name.substitute(propty='Duration-RB'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._trigger_delay_sp = _PV(
                 trig_name.substitute(propty='Delay-SP'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._trigger_delay_rb = _PV(
                 trig_name.substitute(propty='Delay-RB'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._event_mode_sel = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'Mode-Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._event_mode_sts = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'Mode-Sts'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._event_delaytype_sel = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'DelayType-Sel'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._event_delaytype_sts = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'DelayType-Sts'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._event_delay_sp = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'Delay-SP'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._event_delay_rb = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'Delay-RB'),
                 callback=self._callback_timing_state,
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             self._event_exttrig_cmd = _PV(
                 evt_name.substitute(propty=evt_name.propty + 'ExtTrig-Cmd'),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
             # Connect to CurrInfo
@@ -301,7 +301,7 @@ class BaseApp(_Callback):
                 _PVName('SI-Glob:AP-CurrInfo:StoredEBeam-Mon').substitute(
                     prefix=_vaca_prefix
                 ),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._storedebeam_pv.add_callback(
                 callback=self._callback_get_storedebeam, run_now=True
@@ -312,13 +312,13 @@ class BaseApp(_Callback):
                 _PVName('SI-Glob:DI-Tune-H:TuneFrac-Mon').substitute(
                     prefix=_vaca_prefix
                 ),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
             self._tune_y_pv = _PV(
                 _PVName('SI-Glob:DI-Tune-V:TuneFrac-Mon').substitute(
                     prefix=_vaca_prefix
                 ),
-                connection_timeout=self.DEF_CONN_TIMEOUT,
+                connection_timeout=self._DEF_CONN_TIMEOUT,
             )
 
         # Create map of pv -> write function

@@ -20,8 +20,6 @@ class TuneCorrApp(_BaseApp):
 
     _optics_param = 'tune'
 
-    _DEF_CONN_TIMEOUT_PSFAM = 0.05  # [s]
-
     def __init__(self, acc):
         """Class constructor."""
         super().__init__(acc)
@@ -46,7 +44,7 @@ class TuneCorrApp(_BaseApp):
                 pvname,
                 callback=[self._callback_init_refkl,
                           self._callback_estimate_deltatune],
-                connection_timeout=TuneCorrApp._DEF_CONN_TIMEOUT_PSFAM)
+                connection_timeout=self._DEF_CONN_TIMEOUT)
 
         self.map_pv2write.update({
             'DeltaTuneX-SP': self.set_dtune_x,

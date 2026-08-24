@@ -50,7 +50,7 @@ class ChromCorrApp(_BaseApp):
             self._psfam_intstr_rb_pvs[fam] = _PV(
                 pvname,
                 callback=self._callback_estimate_chrom,
-                connection_timeout=0.05)
+                connection_timeout=self._DEF_CONN_TIMEOUT)
 
         if self._acc == 'SI':
             # Connect to SI RF
