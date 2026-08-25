@@ -361,10 +361,11 @@ class SITuneCorrApp(TuneCorrApp):
             self._update_log("ERR: Invalid plane.")
             return False
         pv = _SiriusPVName(_ETypes.TUNE_SRC_PVS[value][pln_idx])
+        _prefix = _vaca_prefix if 'Fake' in pv else ''
         if plane == 'X':
             self._tune_x_pv.clear_callbacks()
             self._tune_x_pv = _PV(
-                pv.substitute(prefix=_vaca_prefix),
+                pv.substitute(prefix=_prefix),
                 connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
                 auto_monitor=True,
                 callback=_part(self._callback_update_tunes, 'x')
@@ -372,7 +373,7 @@ class SITuneCorrApp(TuneCorrApp):
         elif plane == 'Y':
             self._tune_y_pv.clear_callbacks()
             self._tune_y_pv = _PV(
-                pv.substitute(prefix=_vaca_prefix),
+                pv.substitute(prefix=_prefix),
                 connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
                 auto_monitor=True,
                 callback=_part(self._callback_update_tunes, 'y')
