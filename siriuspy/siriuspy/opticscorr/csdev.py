@@ -334,7 +334,7 @@ def get_tune_database(acc):
         pvs_database['MeasConfigStatus-Mon'] = {
             'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
 
-        # SI Tune FeedBack: Loop settings
+        # SI Tune Feedback: Loop settings
         pvs_database['LoopState-Sel'] = {
             'type': 'enum',
             'enums': _ct.LoopState._fields,
@@ -361,7 +361,7 @@ def get_tune_database(acc):
             'lolim': 1e-3,
             'hilim': 12.0,
         }
-        # SI Tune FeedBack: Gotten Tunes
+        # SI Tune Feedback: Gotten Tunes
         pvs_database['TuneX-Mon'] = {
             'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6,
             'lolim': 0.000001, 'hilim': 0.499999}
@@ -369,7 +369,7 @@ def get_tune_database(acc):
             'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6,
             'lolim': 0.000001, 'hilim': 0.499999}
 
-        # SI Tune FeedBack: Reference Tunes
+        # SI Tune Feedback: Reference Tunes
         pvs_database['RefTuneX-SP'] = {
             'type': 'float',
             'value': _ct.DEF_REF_TUNEX,
@@ -418,7 +418,7 @@ def get_tune_database(acc):
             'lolim': 0.001,
             'hilim': 0.4999,
         }
-        # SI Tune FeedBack: PID PVs
+        # SI Tune Feedback: PID PVs
         pvs_database['LoopPIDKp-SP'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KP,
@@ -468,7 +468,7 @@ def get_tune_database(acc):
             'hilim': 100,
         }
 
-        # SI Tune FeedBack: Tune measurement PV selection
+        # SI Tune Feedback: Tune measurement PV selection
         pvs_database['TuneSrc-Sel'] = {
             'type': 'enum',
             'enums': _ct.TuneSrc._fields,
