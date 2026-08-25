@@ -151,7 +151,6 @@ class WaveformAcquisition:
             status_ok = True
         except Exception as err:
             _log.error(str(err))
-            raise
         finally:
             self.close()
 
