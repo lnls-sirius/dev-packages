@@ -1,8 +1,8 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
 import numpy as _np
-from epics import PV as _PV
-from epics.ca import CAThread as _Thread
+from ..epics import PV as _PV
+from ..epics.threading import CAThread as _Thread
 
 import logging as _log
 from time import time as _time, sleep as _sleep
