@@ -514,13 +514,11 @@ class SITuneCorrApp(TuneCorrApp):
 
     def _get_tunes(self):  # overload (from BaseApp)
         tunex, tuney = 0.0, 0.0
-        sts = bool(self._tune_x_pv.connected)
+        sts = self._tune_x_pv.connected and self._tune_y_pv.connected
         if sts:
             tunex = self._tune_x_pv.value
-        sts &= self._tune_y_pv.connected
-        if sts:
             tuney = self._tune_y_pv.value
-        if not sts:
+        else:
             self._update_log('ERR: Could not get the tunes!')
         return sts, (tunex, tuney)
 
