@@ -292,28 +292,28 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR: Invalid loop state."
             self._update_log(msg)
             return False
-        if value == _Const.LoopState.Closed:
-            if self._loop_state == _Const.LoopState.Closed:
-                msg = "ERR: Loop is Already closed."
-                self._update_log(msg)
-                return False
-            if value and not self._is_storedebeam:
-                msg = "ERR: Do not have stored beam. Aborted."
-                self._update_log(msg)
-                return False
-            if self._thread_fb and self._thread_fb.is_alive():
-                msg = 'ERR: Wait the feedback loop to open.'
-                self._update_log(msg)
-                return False
-            msg = "Closing the Loop."
-            self._update_log(msg)
-            self._loop_state = value
-            self._thread_fb = _Thread(target=self._do_auto_corr, daemon=True)
-            self._thread_fb.start()
-        elif value == _Const.LoopState.Open:
+        if value == _Const.LoopState.Open:
             msg = "Opening the Loop."
             self._update_log(msg)
             self._loop_state = value
+            return True
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = "ERR: Loop is Already closed."
+            self._update_log(msg)
+            return False
+        if not self._is_storedebeam:
+            msg = "ERR: Do not have stored beam. Aborted."
+            self._update_log(msg)
+            return False
+        if self._thread_fb and self._thread_fb.is_alive():
+            msg = 'ERR: Wait the feedback loop to open.'
+            self._update_log(msg)
+            return False
+        msg = "Closing the Loop."
+        self._update_log(msg)
+        self._loop_state = value
+        self._thread_fb = _Thread(target=self._do_auto_corr, daemon=True)
+        self._thread_fb.start()
         return True
 
     def set_loop_freq(self, value):
