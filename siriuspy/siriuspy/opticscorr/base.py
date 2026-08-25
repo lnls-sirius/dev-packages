@@ -630,9 +630,7 @@ class BaseApp(_Callback):
                 self._psfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
                 self._psfam_opmode_sel_pvs[fam].put(opmode)
             else:
-                self.run_callbacks(
-                    'Log-Mon', 'ERR:' + fam + ' is disconnected.'
-                )
+                self._update_log('ERR:' + fam + ' is disconnected.')
                 return False
         self._update_log('Configuration sent to power supplies.')
         return True
@@ -736,9 +734,8 @@ class BaseApp(_Callback):
     def _reset_meas_config(self):
         """Reset configuration measurement."""
         if self._measuring_config:
-            self.run_callbacks(
-                'Log-Mon', 'WARN: Status not reset, measurement in progress!'
-            )
+            msg = 'WARN:Cant reset status! Meas. running...'
+            self._update_log(msg)
             return False
         self._update_log('Reseting measurement status!')
         self._meas_config_status = _Const.MeasMon.Idle
@@ -767,18 +764,18 @@ class BaseApp(_Callback):
 
         for fam in self._psfams:
             if not self._measuring_config:
-                log_msg = 'Stoped measurement!'
+                log_msg = 'INFO:Stoped measurement!'
                 aborted = True
             elif not self._is_storedebeam:
-                log_msg = 'ERR: Stoping measurement, there is no stored beam!'
+                log_msg = 'ERR:Stoping measurement, there is no stored beam!'
                 aborted = True
             elif self._status != 0:
-                log_msg = 'ERR: Stoping measurement, verify power supplies!'
+                log_msg = 'ERR:Stoping measurement, verify power supplies!'
                 aborted = True
             elif (
                 not self._tune_x_pv.connected or not self._tune_y_pv.connected
             ):
-                log_msg = 'ERR: Stoping measurement, tune PVs not connected!'
+                log_msg = 'ERR:Stoping measurement, tune PVs not connected!'
                 aborted = True
 
             if aborted:
@@ -820,9 +817,7 @@ class BaseApp(_Callback):
             fams_intstr[fam] = fams_intstr0[fam]
             self._apply_intstrength(fams_intstr)
 
-        self.run_callbacks(
-            'Log-Mon', 'Ensure power supplies return to initial values...'
-        )
+        self._update_log('INFO:Ensure PS return to initial values.')
         self._apply_intstrength(fams_intstr0)
 
         if aborted:
@@ -990,4 +985,4 @@ class BaseApp(_Callback):
         else:
             _log.info(msg)
             msg = 'INFO:' + msg
-        self._update_log(msg)
+        self.run_callbacks('Log-Mon', msg)
