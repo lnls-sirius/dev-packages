@@ -4,11 +4,29 @@ import logging as _log
 import time as _time
 
 import numpy as _np
+from mathphys.functions import get_namedtuple as _get_namedtuple
 
 
 class WaveformAcquisition:
     """."""
 
+    _STAT_INDICES1 = ('CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD','COUNT')
+    _STAT_INDICES2 = ('CURR', 'MIN', 'MAX', 'AVG', 'STD','COUNT')
+    STATS = {
+        'TB-ICT1': _STAT_INDICES1,
+        'TB-ICT2': _STAT_INDICES1,
+        'LI-ICT1': _STAT_INDICES1,
+        'LI_ICT2':
+    }
+    STAT_INDICES1 = _get_namedtuple(
+        'Indices1',
+        ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
+    )
+    # Some scopes does not return STT.
+    STAT_INDICES2 = _get_namedtuple(
+        'Indices2',
+        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
+    )
     CHANNELS = ('CHAN1', 'CHAN2', 'CHAN3', 'CHAN4')
 
     def __init__(self, keysight):
@@ -164,39 +182,103 @@ class WaveformAcquisition:
         return status_ok, stat, wfms
 
     @staticmethod
-    def process_waveform_0(waveform, **kwargs):
+    def process_stat(stat):
+        """."""
+        WfmAcqCls = WaveformAcquisition
+        # Check if measurement for each ICT has the length we expect:
+        if not len(stat) % len(WfmAcqCls.STAT_INDICES1):
+            indcs = WfmAcqCls.STAT_INDICES1
+        elif not len(stat) % len(WfmAcqCls.STAT_INDICES2):
+            indcs = WfmAcqCls.STAT_INDICES2
+        else:
+            _log.warning(
+                'Measurement list size does not match required length.')
+            return
+
+        name = acc + '-ICT1'
+        idxict1 = [i for i, val in enumerate(meas) if name in val]
+        if not idxict1:
+            _log.warning(f'Could not find data for {name}.')
+            return
+        idxict1 = idxict1.pop()
+
+        name = acc + '-ICT2'
+        idxict2 = [i for i, val in enumerate(meas) if name in val]
+        if not idxict2:
+            _log.warning(f'Could not find data for {name}.')
+            return
+        idxict2 = idxict2.pop()
+
+        try:
+            chg1 = float(meas[idxict1 + indcs.CURR]) * 1e9
+            ave1 = float(meas[idxict1 + indcs.AVG]) * 1e9
+            min1 = float(meas[idxict1 + indcs.MIN]) * 1e9
+            max1 = float(meas[idxict1 + indcs.MAX]) * 1e9
+            std1 = float(meas[idxict1 + indcs.STD]) * 1e9
+            cnt1 = int(float(meas[idxict1 + indcs.COUNT]))
+            chg2 = float(meas[idxict2 + indcs.CURR]) * 1e9
+            ave2 = float(meas[idxict2 + indcs.AVG]) * 1e9
+            min2 = float(meas[idxict2 + indcs.MIN]) * 1e9
+            max2 = float(meas[idxict2 + indcs.MAX]) * 1e9
+            std2 = float(meas[idxict2 + indcs.STD]) * 1e9
+            cnt2 = int(float(meas[idxict2 + indcs.COUNT]))
+        except IndexError:
+            _log.warning('Problem reading data.')
+            return
+
+    @staticmethod
+    def _process_waveform_basic(waveform):
         """."""
         tim, val = waveform
 
-        max_idx = _np.argmax(val)
-        tim_peak = tim[max_idx]
-        sel = val == val
+        # get time of maximum voltage value
+        peak_idx = _np.argmax(val)
+        peak_tim = tim[peak_idx]
 
-        pcoeffs = None
-        val_fit = 0 * val
+        return tim, val, peak_idx, peak_tim
 
-        tim_fix = tim
-        val_fix = val - val_fit
+    @staticmethod
+    def process_waveform_scope(waveform, **kwargs):
+        """."""
+        params = WaveformAcquisition._process_waveform_basic(waveform)
+        tim, val, peak_idx, peak_tim = params
 
-        currint = _np.trapz(val_fix, tim_fix)
+        # calculate cummulative integral
+        dtim = _np.diff(tim)
+        aval = (val[:-1] + val[1:]) / 2.0
+        areas = dtim * aval
+        cumcurrint = _np.cumsum(areas)
+
+        # scope take peak to peak value fo cummulative integral
+        vpp = max(cumcurrint) - min(cumcurrint)
+
+        # also return total integral
+        currint = cumcurrint[-1]
+
         params = (
-            currint, tim, val, sel, val_fit, tim_fix,
-            val_fix, tim_peak, pcoeffs,
+            vpp,  # Peak to peak range of cummulative integral
+            peak_tim,  # time of peak
+            currint,  # signal integral
+            peak_idx,  # index of voltage peak
         )
         return params
 
     @staticmethod
-    def process_waveform_1(waveform, perc, order):
+    def process_waveform_baseline1(waveform, perc, order):
         """."""
-        tim, val = waveform
+        params = WaveformAcquisition._process_waveform_basic(waveform)
+        tim, val, peak_idx, peak_tim = params
 
+        # selection of waveform that
+        # 1) below a percentage of "height" of signal &
+        # 2) indices are less than peak_idx
+        # create a selection of a baseline before the peak
         indcs = _np.arange(len(val))
-        max_idx = _np.argmax(val)
-        tim_peak = tim[max_idx]
-        sel1 = (val - val[0]) < perc * (val[max_idx] - val[0])
-        sel2 = indcs < max_idx
+        sel1 = (val - val[0]) < perc * (val[peak_idx] - val[0])
+        sel2 = indcs < peak_idx
         sel = sel1 & sel2
 
+        # fit a polynominal to the selected base line
         pcoeffs = _np.polynomial.polynomial.polyfit(tim[sel], val[sel], order)
         val_fit = _np.polynomial.polynomial.polyval(tim, pcoeffs)
 
@@ -205,15 +287,56 @@ class WaveformAcquisition:
 
         currint = _np.trapz(val_fix, tim_fix)
         params = (
-            currint, tim, val, sel, val_fit, tim_fix,
-            val_fix, tim_peak, pcoeffs,
+            currint,  # filtered signal integral
+            peak_tim,  # time of peak
+            sel,  # selection for filter baseline
+            val_fit,  # poly fitted data using baseline
+            val_fix,  # voltage of filtered signal
+            pcoeffs,  # polynomial fit coeffs
+            peak_idx,  # index of voltage peak
         )
         return params
 
     @staticmethod
-    def process_waveform(waveform, **kwargs):
+    def process_waveform_baseline2(waveform, perc, order):
         """."""
-        perc = kwargs.pop('perc', 0.02)
-        order = kwargs.pop('order', 1)
-        # return WaveformAcquisition.process_waveform_0(waveform, kwargs)
-        return WaveformAcquisition.process_waveform_1(waveform, perc, order)
+        params = WaveformAcquisition._process_waveform_basic(waveform)
+        tim, val, peak_idx, peak_tim = params
+
+        # selection
+        indcs = _np.arange(len(val))
+        sel = (indcs < perc * len(val)) & ((indcs > (1-perc) * len(val)))
+
+        # fit a polynominal to the selected base line
+        pcoeffs = _np.polynomial.polynomial.polyfit(tim[sel], val[sel], order)
+        val_fit = _np.polynomial.polynomial.polyval(tim, pcoeffs)
+
+        tim_fix = tim
+        val_fix = val - val_fit
+
+        currint = _np.trapz(val_fix, tim_fix)
+        params = (
+            currint,  # filtered signal integral
+            peak_tim,  # time of peak
+            sel,  # selection for filter baseline
+            val_fit,  # poly fitted data using baseline
+            val_fix,  # voltage of filtered signal
+            pcoeffs,  # polynomial fit coeffs
+            peak_idx,  # index of voltage peak
+        )
+        return params
+
+    @staticmethod
+    def process_waveform(waveform, process_method, **kwargs):
+        """."""
+        WfmAcq = WaveformAcquisition
+        if process_method == 'scope':
+            return WfmAcq.process_waveform_scope(waveform)
+        elif process_method == 'baseline1':
+            perc = kwargs.pop('perc', 0.02)
+            order = kwargs.pop('order', 1)
+            return WfmAcq.process_waveform_baseline1(waveform, perc, order)
+        elif process_method == 'baseline2':
+            perc = kwargs.pop('perc', 0.02)
+            order = kwargs.pop('order', 1)
+            return WfmAcq.process_waveform_baseline2(waveform, perc, order)

@@ -167,7 +167,14 @@ class _ASCurrInfoApp(_CurrInfoApp):
             ict1_wfm = self.wfms[ict1_chan]
             ict2_wfm = self.wfms[ict2_chan]
             osc = self.osc_obj
-            ict1_anl = osc.process_waveform(ict1_wfm, perc=0.02, order=1)
+            if ict1 == 'LI-01:DI-ICT-1':
+                # This signal has a period sinosoidal baseline that whose
+                # area is close to zero. subtracting the baseline spoils
+                # the signal
+                ict1_anl = osc.process_waveform(ict1_wfm, 'scope')
+            else:
+                ict1_anl = osc.process_waveform(
+                    ict1_wfm, 'baseline1', perc=0.02, order=1)
             ict2_anl = osc.process_waveform(ict2_wfm, perc=0.02, order=1)
             chgwfm1 = ict1_anl[0] * 1e9 / 5
             chgwfm2 = ict2_anl[0] * 1e9 / 5
