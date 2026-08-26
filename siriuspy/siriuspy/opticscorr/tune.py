@@ -397,7 +397,7 @@ class SITuneCorrApp(TuneCorrApp):
         return True
 
     def set_loop_max_tune_err(self, plane, value):
-        """Set max tune error."""
+        """."""
         plane = plane.upper()
         if plane == 'X':
             self._loop_max_tunex_err = float(value)
@@ -407,7 +407,7 @@ class SITuneCorrApp(TuneCorrApp):
             self.run_callbacks('LoopMaxTuneYErr-RB', float(value))
         return True
 
-    def set_pid_gain(self, plane, kparam, value):
+    def set_loop_pid_gain(self, plane, kparam, value):
         """."""
         plane = plane.lower()
         kparam = kparam.lower()
