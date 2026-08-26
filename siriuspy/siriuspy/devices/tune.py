@@ -89,8 +89,8 @@ class TuneFrac(_Device):
         self['FreqOff-SP'] = value
 
     @property
-    def aquisition_enabled(self):
-        """Aquisition enabled state."""
+    def acquisition_enabled(self):
+        """Acquisition enabled state."""
         return self['SpecAnaGetSpec-Sts']
 
     @property
@@ -410,12 +410,12 @@ class Tune(_DeviceSet):
         return self.dev_tune_proc_v.tune_wfm
 
     @property
-    def aquisition_enabledx(self):
+    def acquisition_enabledx(self):
         """Tune X acquisition enabled status."""
         return self.dev_tune_frac_h.acquisition_enabled
 
     @property
-    def aquisition_enabledy(self):
+    def acquisition_enabledy(self):
         """Tune Y acquisition enabled status."""
         return self.dev_tune_frac_v.acquisition_enabled
 
