@@ -76,3 +76,51 @@ def si_calculate_bump(
     orby[bpm1] += pos_bpm[2]
     orby[bpm2] += pos_bpm[3]
     return orbx, orby
+
+
+def find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=False):
+    """Find the closest correctors indices to a given sector indices in SOFB matrix."""
+    nch = 6
+    ncv = 8
+    idx_upstream = (ss-1)*nch
+    idx_downstream = (ss-1)*nch + 1
+    idcs_ch_up = idx_upstream - _np.arange(int(nr_ch/2))
+    idcs_ch_dw = idx_downstream + _np.arange(int(nr_ch/2))
+    idcs_ch = _np.sort(_np.concatenate((idcs_ch_up, idcs_ch_dw)))
+    idcs_ch = _np.mod(idcs_ch, 120)
+
+    idx_upstream = (ss-1)*ncv
+    idx_downstream = (ss-1)*ncv + 1
+    idcs_cv_up = idx_upstream - _np.arange(int(nr_cv/2))
+    idcs_cv_dw = idx_downstream + _np.arange(int(nr_cv/2))
+    idcs_cv = _np.sort(_np.concatenate((idcs_cv_up, idcs_cv_dw)))
+    idcs_cv = _np.mod(idcs_cv, 160) + 120
+
+    idcs_corrs = _np.concatenate((idcs_ch, idcs_cv))
+    if inc_rf:
+        idcs_corrs = _np.r_[idcs_corrs, 280]
+    return idcs_corrs
+
+
+def filter_local_distortions(corr_idcs, dorb=None, respmat=None):
+    """Filter local orbit distortions.
+
+    Args:
+        corr_idcs (numpy 1D array or list): Indices of correctors to use.
+        dorb (2D or 1D numpy array, optional): array containing orbit
+         distortions x and y, in the case of a 2D array,
+          the second dimension must have length 320,
+           ie. (npts, 320). Defaults to None.
+        respmat (2D numpy array, optional): Orbit response matrix.
+         Defaults to None.
+
+    Returns:
+        (2D or 1D numpy array): Returns the orbit distortion filtered
+        in an array with the same chape as the dorb array, ie (npts, 320).
+    """
+    kicks = _np.linalg.lstsq(respmat, dorb.T, rcond=None)[0]
+    sel = _np.zeros(respmat.shape[1], dtype=bool)
+    sel[corr_idcs] = True
+    kicks[~sel] = 0
+    dorb_filt = respmat @ kicks
+    return dorb_filt.T
