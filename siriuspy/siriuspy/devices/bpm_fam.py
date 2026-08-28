@@ -159,7 +159,7 @@ class FamBPMs(_DeviceSet):
 
     @staticmethod
     def calc_positions_from_amplitudes(
-        amps, gainx=None, gainy=None, offx=0.0, offy=0.0
+        amps, gainx=None, gainy=None, offx=0.0, offy=0.0, is_adcswap_rate=False
     ):
         """Calculate transverse positions from antennas amplitudes.
 
@@ -189,6 +189,11 @@ class FamBPMs(_DeviceSet):
                 values for each BPM. In this case the gain array must match
                 the shape of the antennas arrays or satisfy the broadcast
                 rules in relation to them.
+            is_adcswap_rate (bool, optional): Set this flag to True if the
+                acquisition rate of the data is ADCSwap. In this case, the
+                code will swap the amplitudes of antennas B and C, due to
+                implementation particularities of the BPM firmware at this
+                acquisition rate. Defaults to False.
 
         Returns:
             posx (numpy.ndarray, (...)): Horizontal position in [um]. Same
@@ -198,6 +203,10 @@ class FamBPMs(_DeviceSet):
 
         """
         a, b, c, d = amps
+        # Need to invert the order if acquisition rate is the ADCSwap.
+        # Se comment in code: siriuspy.sofb.bpms.calc_sp_multiturn_pos
+        if is_adcswap_rate:
+            b, c = c, b
 
         radius = 12e3  # [um]
         gainx = radius / _np.sqrt(2) if gainx is None else gainx
