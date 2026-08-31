@@ -24,7 +24,7 @@ class Keysight:
     from siriuspy.oscilloscope import Keysight, ScopeSignals
     import matplotlib.pyplot as plt
 
-    scope = Keysight(scope_signal=ScopeSignals.SI_FILL_PATTERN)
+    scope = Keysight(scopesignal=ScopeSignals.SI_FILL_PATTERN)
     print(scope.scope_name)
     wavet, waved = scope.wfm_get_data()
     plt.plot(wavet, waved)
@@ -34,29 +34,20 @@ class Keysight:
 
     SOCKET_TIMEOUT = 10  # [s]
 
-    def __init__(self, scope=None, scope_signal=None, verbose=False):
+    def __init__(self, scope, verbose=False):
         """."""
         self.logger = _log.getLogger(self.__class__.__name__)
         if verbose:
             self.logger.setLevel(_log.INFO)
         else:
             self.logger.setLevel(_log.WARNING)
-        if scope_signal and isinstance(scope_signal, tuple):
-            self.host = scope_signal[0]
-            self.port = scope_signal[1]
-            self.chan = scope_signal[2]
-        elif scope and isinstance(scope, str):
-            self.host = scope
-            self.port = 5025  # keysight default?
-            self.chan = 'CHAN1'
-        else:
-            raise NotImplementedError
+        self.scope = scope
         self._socket = None
 
     @property
-    def scope_name(self):
+    def scopename(self):
         """."""
-        return _scopes.ScopeSignals.get_scope(scope=self.host)
+        return self.scope.scopename
 
     def connect(self):
         """."""
@@ -64,7 +55,7 @@ class Keysight:
             _socket.AF_INET,  # Internet
             _socket.SOCK_STREAM)  # TCP
         self._socket.settimeout(Keysight.SOCKET_TIMEOUT)
-        self._socket.connect((self.host, self.port))
+        self._socket.connect((self.scope.ip, self.scope.port))
 
     def close(self):
         """."""
@@ -87,11 +78,8 @@ class Keysight:
         else:
             self.send_command(b':RUN\n', get_res=False)
 
-    def wfm_acquire(self, channel):
+    def wfm_acquire(self, chan):
         """Acquire scope waveform."""
-        if isinstance(channel, tuple):
-            channel = channel[2]
-
         # Get the number of waveform points
         points = self.send_command(b":WAVeform:POINts?\n")
         self.logger.info('Points: %s', points)
@@ -106,9 +94,9 @@ class Keysight:
 
         # Set the waveform channel source
         self.send_command(
-            b":WAVeform:SOURce " + channel.encode('ascii')+b"\n",
+            b":WAVeform:SOURce " + chan.encode('ascii')+b"\n",
             get_res=False)
-        channel = self.send_command(b":WAVeform:SOURce?\n")
+        chan = self.send_command(b":WAVeform:SOURce?\n")
 
         # Get scales
         xinc = self.send_command(b":WAVeform:XINCrement?\n")
@@ -143,9 +131,8 @@ class Keysight:
         datax = _np.arange(datay.size)*xinc
         return datax, datay, srate, bdw
 
-    def wfm_get_data(self, channel=None, wait_trigger=False):
+    def wfm_get_data(self, chan, wait_trigger=False):
         """Enable and get sccope waveform data."""
-        channel = channel or self.chan
         self.connect()
         wavet = None
         waved = None
@@ -153,8 +140,8 @@ class Keysight:
             self.wfm_enable()
             self.wfm_config(wait_trigger)
             tini = _time.time()
-            self.logger.info('Acquiring ' + self.chan)
-            wavet, waved, srate1, bdw1 = self.wfm_acquire(channel)
+            self.logger.info('Acquiring ' + chan)
+            wavet, waved, srate1, bdw1 = self.wfm_acquire(chan)
             self.logger.info('Total acquisition time: %s', _time.time() - tini)
             # self.send_command(b":WAVeform:STReaming ON\n", get_res=False)
         except Exception:
@@ -184,7 +171,7 @@ class Keysight:
         try:
             self.stats_enable()
             tini = _time.time()
-            self.logger.info('Acquiring ' + self.chan)
+            self.logger.info('Acquiring measurements')
             data = self.stats_acquire()
             self.logger.info('Total acquisition time: %s', _time.time() - tini)
         except Exception:

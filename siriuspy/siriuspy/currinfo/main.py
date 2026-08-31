@@ -20,7 +20,6 @@ from ..search import LLTimeSearch as _LLTimeSearch
 from .csdev import Const as _Const, get_currinfo_database as _get_database
 
 
-
 class _CurrInfoApp(_Callback):
     """."""
 
@@ -76,7 +75,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         'Indices2',
         ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
 
-    OSC = _Scopes.LI_DI_ICTOSC
+    OSC = None
     ACC = ''
     ICT1 = ''
     ICT2 = ''
@@ -106,10 +105,12 @@ class _ASCurrInfoApp(_CurrInfoApp):
             _log.warning(lstr)
 
     def get_measurement(self):
-        status_ok, meas, wfms = self.osc_obj.acquire(
+        errormsg, meas, wfms = self.osc_obj.acquire(
             acq_meas=True, acq_wfms=True, print_time=False
         )
-        if status_ok:
+        if errormsg:
+            _log.warning(errormsg)
+        else:
             self.stat = meas
             self.wfms = wfms
 
@@ -221,7 +222,7 @@ class LICurrInfoApp(_ASCurrInfoApp):
 
     INTERVAL = 2.0  # [s]
 
-    OSC_IP = _Scopes.LI_DI_ICTOSC
+    OSC = _Scopes.LI_DI_ICTOSC
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'
@@ -235,6 +236,7 @@ class LICurrInfoApp(_ASCurrInfoApp):
     }
 
     def _update_pvs(self, *args):
+        _ = args
         super()._update_pvs('LI', self.LIICT1, self.LIICT2)
         super()._update_pvs('TB', self.TBICT1, self.TBICT2)
 

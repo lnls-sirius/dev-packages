@@ -1,32 +1,39 @@
 """Waveform acquisition from oscilloscope."""
 
-import logging as _log
 import time as _time
 
 import numpy as _np
-from mathphys.functions import get_namedtuple as _get_namedtuple
+
+
+def _time_method(method):
+    """."""
+    def wrapper(*args, **kwargs):
+        if WaveformAcquisition.DEBUG_FLAG:
+            t0 = _time.perf_counter()
+        res = method(*args, **kwargs)
+        if WaveformAcquisition.DEBUG_FLAG:
+            print(
+                f'{method.__name__:<25s}: '
+                f'{_time.perf_counter()-t0:.3f} s'
+            )
+        return res
+    wrapper.__wrapped__ = method
+    return wrapper
 
 
 class WaveformAcquisition:
     """."""
 
-    _STAT_INDICES1 = ('CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD','COUNT')
-    _STAT_INDICES2 = ('CURR', 'MIN', 'MAX', 'AVG', 'STD','COUNT')
+    DEBUG_FLAG = False
+
+    _STAT_INDICES1 = ('CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
+    _STAT_INDICES2 = ('CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
     STATS = {
         'TB-ICT1': _STAT_INDICES1,
         'TB-ICT2': _STAT_INDICES1,
         'LI-ICT1': _STAT_INDICES1,
-        'LI_ICT2':
+        'LI_ICT2': _STAT_INDICES1,
     }
-    STAT_INDICES1 = _get_namedtuple(
-        'Indices1',
-        ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
-    )
-    # Some scopes does not return STT.
-    STAT_INDICES2 = _get_namedtuple(
-        'Indices2',
-        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
-    )
     CHANNELS = ('CHAN1', 'CHAN2', 'CHAN3', 'CHAN4')
 
     def __init__(self, keysight):
@@ -35,35 +42,36 @@ class WaveformAcquisition:
         self.idn = None
         self.scales = {}
 
+    @_time_method
     def connect(self):
         """Connect to the oscilloscope."""
         self.keysight.connect()
 
+    @_time_method
     def close(self):
         """Close the oscilloscope connection."""
         self.keysight.close()
 
-    def configure_waveforms(self):
+    def wfm_config_acq(self):
         """Configure the oscilloscope for waveform acquisition."""
         self.idn = self.keysight.send_command(b'*IDN?\r\n')
         self.keysight.send_command(b":WAVeform:FORMat WORD\n", get_res=False)
         self.keysight.send_command(b":WAVeform:BYTeorder MSBF\n", get_res=False)
         return self.idn
 
-    def select_channel(self, channel):
+    def channel_select(self, channel):
         """Select the channel for waveform acquisition."""
         self.keysight.send_command(
-            b":WAVeform:SOURce "
-            + channel.encode('ascii')
-            + b"\n",
-            get_res=False)
+            b':WAVeform:SOURce ' + channel.encode('ascii') + b'\n',
+            get_res=False,
+        )
 
-    def read_scales(self, channel):
+    def channel_read_scales(self, channel):
         """Read the scales for the selected channel."""
-        self.select_channel(channel)
+        self.channel_select(channel)
         xinc = float(
-            self.keysight.send_command(
-                b":WAVeform:XINCrement?\n"))
+            self.keysight.send_command(b":WAVeform:XINCrement?\n")
+        )
         yinc = float(
             self.keysight.send_command(
                 b":WAVeform:YINCrement?\n"))
@@ -72,14 +80,21 @@ class WaveformAcquisition:
                 b":WAVeform:YORigin?\n"))
         return xinc, yinc, yor
 
-    def read_all_scales(self):
+    @_time_method
+    def channel_read_all_scales(self):
         """Read the scales for all channels."""
         self.scales = {}
         for ch in self.CHANNELS:
-            self.scales[ch] = self.read_scales(ch)
+            self.scales[ch] = self.channel_read_scales(ch)
         return self.scales
 
-    def read_header(self):
+    def wfm_initialize(self):
+        """Initialize the oscilloscope for waveform acquisition."""
+        self.wfm_config_acq()
+        if not self.scales:
+            self.channel_read_all_scales()
+
+    def wfm_read_header(self):
         """Read the header of the waveform data."""
         marker = self.keysight._socket.recv(1)
         if marker != b'#':
@@ -91,7 +106,7 @@ class WaveformAcquisition:
             self.keysight._socket.recv(num).decode('ascii'))
         return datanum
 
-    def read_waveform_raw(self):
+    def wfm_read_raw(self):
         """Read the raw waveform data from the oscilloscope."""
         self.keysight.send_command(
             b":WAVeform:STReaming OFF\n",
@@ -99,7 +114,7 @@ class WaveformAcquisition:
         self.keysight.send_command(
             b":WAVeform:DATA?\n",
             get_res=False)
-        datanum = self.read_header()
+        datanum = self.wfm_read_header()
         dataraw = b''
         while len(dataraw) < datanum:
             dataraw += self.keysight._socket.recv(
@@ -108,7 +123,7 @@ class WaveformAcquisition:
         self.keysight._socket.recv(1)
         return dataraw
 
-    def process_data(self, dataraw, yinc, yor, xinc):
+    def wfm_process_scales(self, dataraw, yinc, yor, xinc):
         """Process the raw waveform data into x and y arrays."""
         dataraw = dataraw[0:-1]
         va1 = _np.array(list(dataraw)[0::2])
@@ -118,113 +133,51 @@ class WaveformAcquisition:
         datax = _np.arange(datay.size) * xinc
         return datax, datay
 
-    def acquire_channel(self, channel):
-        """Acquire waveform data from a specific channel."""
-        self.select_channel(channel)
-        dataraw = self.read_waveform_raw()
+    @_time_method
+    def wfm_read_channel(self, channel):
+        """Read waveform data from a specific channel."""
+        self.channel_select(channel)
+        dataraw = self.wfm_read_raw()
         xinc, yinc, yor = self.scales[channel]
-        datax, datay = self.process_data(dataraw, yinc, yor, xinc)
+        datax, datay = self.wfm_process_scales(dataraw, yinc, yor, xinc)
         return datax, datay
 
-    def acquire_all_channels(self, print_time=False):
-        """Acquire waveform data from all channels."""
+    @_time_method
+    def meas_read(self):
+        """Get the measurements from the oscilloscope."""
+        meas = self.keysight.send_command(b":MEASure:RESults?\n")
+        meas = meas.split(',')
+        return meas
+
+    def wfm_read(self, channels=None):
+        """Read waveform data from channels."""
+        channels = channels or self.CHANNELS
         waveforms = {}
-        for ch in self.CHANNELS:
-            t0 = _time.perf_counter()
-            datax, datay = self.acquire_channel(ch)
+        for ch in channels:
+            datax, datay = self.wfm_read_channel(ch)
             waveforms[ch] = (datax, datay)
-            if print_time:
-                print(
-                    f'{ch}: '
-                    f'{_time.perf_counter()-t0:.3f} s'
-                )
         return waveforms
 
-    def initialize_waveforms(self):
-        """Initialize the oscilloscope for waveform acquisition."""
-        self.configure_waveforms()
-        if not self.scales:
-            self.read_all_scales()
-
-    def get_measurements(self):
-        """Get the measurements from the oscilloscope."""
-        stat = self.keysight.send_command(b":MEASure:RESults?\n")
-        stat = stat.split(',')
-        return stat
-
-    def acquire(self, acq_meas=True, acq_wfms=True, print_time=False):
+    @_time_method
+    def acquire(self, acq_meas=True, acq_wfms=True):
         """Acquire waveform data from all channels."""
-        t0 = _time.perf_counter()
-
-        stat = list()
+        meas = list()
         wfms = dict()
-        status_ok = False
+        errormsg = ''
         try:
             self.connect()
             if acq_meas:
-                stat = self.get_measurements()
+                meas = self.meas_read()
             if acq_wfms:
-                self.initialize_waveforms()
-                wfms = self.acquire_all_channels(print_time=print_time)
-            status_ok = True
+                self.wfm_initialize()
+                wfms = self.wfm_read()
+            errormsg = ''
         except Exception as err:
-            _log.error(str(err))
+            errormsg = str(err)
         finally:
             self.close()
 
-        if print_time:
-            print('--------------------------')
-            print(
-                f'TOTAL: '
-                f'{_time.perf_counter()-t0:.3f} s'
-            )
-
-        return status_ok, stat, wfms
-
-    @staticmethod
-    def process_stat(stat):
-        """."""
-        WfmAcqCls = WaveformAcquisition
-        # Check if measurement for each ICT has the length we expect:
-        if not len(stat) % len(WfmAcqCls.STAT_INDICES1):
-            indcs = WfmAcqCls.STAT_INDICES1
-        elif not len(stat) % len(WfmAcqCls.STAT_INDICES2):
-            indcs = WfmAcqCls.STAT_INDICES2
-        else:
-            _log.warning(
-                'Measurement list size does not match required length.')
-            return
-
-        name = acc + '-ICT1'
-        idxict1 = [i for i, val in enumerate(meas) if name in val]
-        if not idxict1:
-            _log.warning(f'Could not find data for {name}.')
-            return
-        idxict1 = idxict1.pop()
-
-        name = acc + '-ICT2'
-        idxict2 = [i for i, val in enumerate(meas) if name in val]
-        if not idxict2:
-            _log.warning(f'Could not find data for {name}.')
-            return
-        idxict2 = idxict2.pop()
-
-        try:
-            chg1 = float(meas[idxict1 + indcs.CURR]) * 1e9
-            ave1 = float(meas[idxict1 + indcs.AVG]) * 1e9
-            min1 = float(meas[idxict1 + indcs.MIN]) * 1e9
-            max1 = float(meas[idxict1 + indcs.MAX]) * 1e9
-            std1 = float(meas[idxict1 + indcs.STD]) * 1e9
-            cnt1 = int(float(meas[idxict1 + indcs.COUNT]))
-            chg2 = float(meas[idxict2 + indcs.CURR]) * 1e9
-            ave2 = float(meas[idxict2 + indcs.AVG]) * 1e9
-            min2 = float(meas[idxict2 + indcs.MIN]) * 1e9
-            max2 = float(meas[idxict2 + indcs.MAX]) * 1e9
-            std2 = float(meas[idxict2 + indcs.STD]) * 1e9
-            cnt2 = int(float(meas[idxict2 + indcs.COUNT]))
-        except IndexError:
-            _log.warning('Problem reading data.')
-            return
+        return errormsg, meas, wfms
 
     @staticmethod
     def _process_waveform_basic(waveform):
@@ -238,8 +191,9 @@ class WaveformAcquisition:
         return tim, val, peak_idx, peak_tim
 
     @staticmethod
-    def process_waveform_scope(waveform, **kwargs):
+    def wfm_process_scope(waveform, **kwargs):
         """."""
+        _ = kwargs
         params = WaveformAcquisition._process_waveform_basic(waveform)
         tim, val, peak_idx, peak_tim = params
 
@@ -264,7 +218,7 @@ class WaveformAcquisition:
         return params
 
     @staticmethod
-    def process_waveform_baseline1(waveform, perc, order):
+    def wfm_process_baseline1(waveform, perc, order):
         """."""
         params = WaveformAcquisition._process_waveform_basic(waveform)
         tim, val, peak_idx, peak_tim = params
@@ -298,7 +252,7 @@ class WaveformAcquisition:
         return params
 
     @staticmethod
-    def process_waveform_baseline2(waveform, perc, order):
+    def wfm_process_baseline2(waveform, perc, order):
         """."""
         params = WaveformAcquisition._process_waveform_basic(waveform)
         tim, val, peak_idx, peak_tim = params
@@ -327,16 +281,40 @@ class WaveformAcquisition:
         return params
 
     @staticmethod
-    def process_waveform(waveform, process_method, **kwargs):
+    def meas_process(meas):
         """."""
-        WfmAcq = WaveformAcquisition
+        statusmsg = ''
+        stat_dict = dict()
+
+        wfmacqcls = WaveformAcquisition
+        # Check if measurement for each ICT has the length we expect:
+        if not len(meas) % (1+len(wfmacqcls._STAT_INDICES1)):
+            indcs = wfmacqcls._STAT_INDICES1
+        elif not len(meas) % (1+len(wfmacqcls._STAT_INDICES2)):
+            indcs = wfmacqcls._STAT_INDICES2
+        else:
+            statusmsg = 'Measurement list size does not match required length.'
+            return statusmsg, stat_dict
+
+        nr_stats = len(meas) // (1 + len(indcs))
+        stat_splits = _np.array_split(meas, nr_stats)
+        for stat_split in stat_splits:
+            stat_dict[stat_split[0]] = list(
+                float(val) for val in stat_split[1:]
+            )
+        return statusmsg, stat_dict
+
+    @staticmethod
+    def wfm_process(waveform, process_method, **kwargs):
+        """."""
+        wfmacqcls = WaveformAcquisition
         if process_method == 'scope':
-            return WfmAcq.process_waveform_scope(waveform)
+            return wfmacqcls.wfm_process_scope(waveform)
         elif process_method == 'baseline1':
             perc = kwargs.pop('perc', 0.02)
             order = kwargs.pop('order', 1)
-            return WfmAcq.process_waveform_baseline1(waveform, perc, order)
+            return wfmacqcls.wfm_process_baseline1(waveform, perc, order)
         elif process_method == 'baseline2':
             perc = kwargs.pop('perc', 0.02)
             order = kwargs.pop('order', 1)
-            return WfmAcq.process_waveform_baseline2(waveform, perc, order)
+            return wfmacqcls.wfm_process_baseline2(waveform, perc, order)
