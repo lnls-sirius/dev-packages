@@ -345,7 +345,21 @@ class SiriusPVName(str):
         elif len(th_ssec) == 2:
             return True
         if my_ssec[2] == th_ssec[2]:
-            return my_ssec[3] < th_ssec[3]
+            # TODO: make an appropriate fix (or test this one!)
+            # print(self, other)
+            # failing comparison for the two pvnames below:
+            #   BO-01D03D:MP-Summary:IntlkDesc-Cte
+            #   BO-01D:MP-InjKckr:IntlkDesc-Cte
+            try:
+                return my_ssec[3] < th_ssec[3]
+            except IndexError:
+                my_len, th_len = len(my_ssec), len(th_ssec)
+                for idx in range(3, min(my_len, th_len)):
+                    if my_ssec[idx] < th_ssec[idx]:
+                        return True
+                    elif my_ssec[idx] > th_ssec[idx]:
+                        return False
+                return my_len < th_len
         elif my_ssec[2] == 'C':
             return False
         elif th_ssec[2] == 'C':
@@ -360,6 +374,7 @@ class SiriusPVName(str):
                 return True
             elif my_ssec[2:4] == 'M2':
                 return False
+
 
     @staticmethod
     def is_write_pv(pvname):
