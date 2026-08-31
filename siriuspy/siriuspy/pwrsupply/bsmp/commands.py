@@ -8,11 +8,9 @@ https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 import time as _time
 import numpy as _np
 
+from ...logging import get_logger as _get_logger
 from ...bsmp import constants as _const_bsmp
-from ...bsmp import (
-    BSMP as _BSMP,
-    IOInterface as _IOInterface,
-)
+from ...bsmp import BSMP as _BSMP, IOInterface as _IOInterface
 
 from . import constants as _const_psbsmp
 from . import entities as _etity_psbsmp
@@ -20,6 +18,9 @@ from . entities import EntitiesPS as _EntitiesPS
 
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
+
+
+LOGGER = _get_logger(__name__)
 
 
 class PSBSMP(_BSMP):
@@ -99,7 +100,7 @@ class PSBSMP(_BSMP):
 
     def execute_function(
             self, func_id, input_val=None,
-            timeout=_timeout_execute_function,
+        timeout=_timeout_execute_function,
             read_flag=True, print_error=True):
         """."""
         if func_id in (PSBSMP.CONST.F_SYNC_PULSE,
@@ -133,8 +134,8 @@ class PSBSMP(_BSMP):
             # _time.sleep(self._sleep_select_op_mode)
             pass
         elif func_id in (PSBSMP.CONST.F_TURN_ON,
-                         PSBSMP.CONST.F_TURN_OFF,
-                         PSBSMP.CONST.F_OPEN_LOOP,
+            PSBSMP.CONST.F_TURN_OFF,
+            PSBSMP.CONST.F_OPEN_LOOP,
                          PSBSMP.CONST.F_CLOSE_LOOP):
             _time.sleep(self._sleep_turn_onoff)
 
@@ -294,7 +295,7 @@ class PSBSMP(_BSMP):
         maxsize = self.curve_maxsize(curve_id=0)
         return maxsize
 
-    @ property
+    @property
     def wfmref_pointer_values(self):
         """Return pointer values of currently selected wfmref curve."""
         pointer_ids = self._wfmref_get_pointers_ids_of_selected()
@@ -486,10 +487,13 @@ class PSBSMP(_BSMP):
                 timeout=self._timeout_curve_block)
             # print((hex(ack), data))
             if ack != self.CONST_BSMP.ACK_OK:
-                print(('BSMP response not OK in '
-                       '_curve_bsmp_write: ack = 0x{:02X}!').format(ack))
-                PSBSMP.anomalous_response(
-                    self.CONST_BSMP.CMD_CURVE_BLOCK, ack,
+                logmsg = (
+                    'BSMP response not OK: ack = 0x{:02X}!'
+                ).format(ack)
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
+                self.anomalous_response(
+                    self.CONST_BSMP.CMD_CURVE_BLOCK,
+                    ack,
                     curve_len=len(curve),
                     curve_id=curve_id,
                     block=block,
@@ -611,7 +615,7 @@ class FBP(PSBSMP):
         """."""
         data = self._sofb_read_group_of_variables()
         (self._sofb_ps_setpoint,
-         self._sofb_ps_reference,
+            self._sofb_ps_reference,
          self._sofb_ps_iload) = data
 
     def _sofb_read_group_of_variables(self):
@@ -633,9 +637,13 @@ class FBP(PSBSMP):
         func_resp = ord(func_resp)
         self._sofb_ps_func_return = FBP._ACK_OK + func_resp
         if self.SOFB_PRINT_COMM_ERRORS:
-            sfmt = 'FBP: Anomalous response ' + methodname + \
-                ': ack:0x{:02X}, func_resp:0x{:02X}'
-            print(sfmt.format(ack, func_resp))
+            sfmt = (
+                'FBP Anomalous response, '
+                + methodname
+                + ': ack:0x{:02X}, func_resp:0x{:02X}'
+            )
+            logmsg = sfmt.format(ack, func_resp)
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
 
 
 class FAC_DCDC(PSBSMP):

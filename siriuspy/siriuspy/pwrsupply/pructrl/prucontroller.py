@@ -11,11 +11,15 @@ from threading import Lock as _Lock, Thread as _Thread
 from time import sleep as _sleep, time as _time
 
 from ...bsmp import SerialError as _SerialError
+from ...logging import get_logger as _get_logger
 from ...util import get_timestamp as _get_timestamp
 from ..bsmp.constants import __version__ as _firmware_version_siriuspy, \
     _const_bsmp, ConstPSBSMP as _const_psbsmp
 from .psdevstate import PSDevState as _PSDevState
 from .udc import UDC as _UDC
+
+
+LOGGER = _get_logger(__name__)
 
 
 class PRUController:
@@ -45,9 +49,9 @@ class PRUController:
         """Init."""
         # --- Init structures ---
 
-        print()
-        print('PRUController: struct initialization')
-        print('devices: {}'.format(devices))
+        LOGGER.info('PRUController: struct initialization')
+        logmsg = 'devices: {}'.format(devices)
+        LOGGER.info(logmsg)
 
         # init timetsamp
         self._timestamp_update = _time()
@@ -86,7 +90,8 @@ class PRUController:
 
         # time interval
         t1_ = _time()
-        print('TIMING struct init [{:.3f} ms]'.format(1000*(t1_ - t0_)))
+        logmsg = 'TIMING struct init [{:.3f} ms]'.format(1000*(t1_ - t0_))
+        LOGGER.info(logmsg)
 
         # attributes that control processing flow
         self._queue = prucqueue
@@ -365,8 +370,8 @@ class PRUController:
         """."""
         # --- BSMP communication ---
 
-        print()
-        print('PRUController: bsmp initialization')
+        LOGGER.info('')
+        LOGGER.info('PRUController: bsmp initialization')
         # init time interval
         t0_ = _time()
 
@@ -381,8 +386,10 @@ class PRUController:
 
         # time interval
         t1_ = _time()
-        print('TIMING bsmp init [{:.3f} ms]\n'.format(
-            1000*(t1_ - t0_)))
+        logmsg = 'TIMING bsmp init [{:.3f} ms]\n'.format(
+            1000*(t1_ - t0_)
+        )
+        LOGGER.info(logmsg)
 
         # after all initializations, threads are started
         self._running = True
@@ -403,7 +410,8 @@ class PRUController:
         self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
 
         dt_ = _time() - t0_
-        print(fmt.format('init_threads', 'create structures', 1e3*dt_))
+        logmsg = fmt.format('init_threads', 'create structures', 1e3*dt_)
+        LOGGER.info(logmsg)
 
     @staticmethod
     def _init_udc(pru, psmodel_name, device_ids, freq):
@@ -421,12 +429,13 @@ class PRUController:
         if freq is not None:
             parms.FREQ_SCAN = freq
 
-        # print info on scan frequency
+        # log info on scan frequency
         fstr = ('device_id:{:2d}, scan_freq: {:4.1f} Hz')
         for dev in device_ids:
             freq = 10.0 if freq is None else freq
-            print(fstr.format(dev, parms.FREQ_SCAN))
-        print()
+            logmsg = fstr.format(dev, parms.FREQ_SCAN)
+            LOGGER.info(logmsg)
+        LOGGER.info('')
 
         return udc, parms, psupplies
 
@@ -445,12 +454,15 @@ class PRUController:
                 errmsg = (
                     'PRUController: Incompatible bsmp implementation version '
                     'for device id:{}')
-                print(errmsg.format(dev_id))
+                logmsg = errmsg.format(dev_id)
+                LOGGER.info(logmsg)
                 errmsg = 'lib version: {}'
-                print(errmsg.format(_firmware_version_siriuspy))
+                logmsg = errmsg.format(_firmware_version_siriuspy)
+                LOGGER.info(logmsg)
                 errmsg = 'udc version: {}'
-                print(errmsg.format(_firmware_version_udc))
-                print()
+                logmsg = errmsg.format(_firmware_version_udc)
+                LOGGER.info(logmsg)
+                LOGGER.info('')
                 # raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
@@ -523,20 +535,23 @@ class PRUController:
         for psupply in self._psupplies.values():
             psupply.reset_variables_groups(groups)
         dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_devices', 'reset groups', 1e3*dt_))
+        logmsg = fmt.format('bsmp_init_devices', 'reset groups', 1e3*dt_)
+        LOGGER.info(logmsg)
 
         # update psupply groups
         t0_ = _time()
         for psupply in self._psupplies.values():
             psupply.update_groups(interval=0.0)
         dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_devices', 'update groups', 1e3*dt_))
+        logmsg = fmt.format('bsmp_init_devices', 'update groups', 1e3*dt_)
+        LOGGER.info(logmsg)
 
         # disable DSP from writting to bufsample (uses first device)
         t0_ = _time()
         self._udc.bufsample_disable()
         dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_devices', 'bufsample_disable', 1e3*dt_))
+        logmsg = fmt.format('bsmp_init_devices', 'bufsample_disable', 1e3*dt_)
+        LOGGER.info(logmsg)
 
     def bsmp_update(self):
         """."""
@@ -552,7 +567,8 @@ class PRUController:
                 self.bsmp_update_wfm(dev_id)
 
         except _socket_timeout:
-            print('!!! {} : socket timeout !!!'.format(_get_timestamp()))
+            logmsg = 'Socket timeout!!!'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
 
     def bsmp_update_variables(self, dev_id=None):
         """."""
@@ -568,10 +584,10 @@ class PRUController:
             except _SerialError as err:
                 # no serial connection !
                 dt_ = _time() - t0_
-                print(
-                    f'!!! {_get_timestamp()}: {err}. '
-                    f'it took {dt_*1000:.3f} ms in bsmp_update_variables.'
-                )
+                logmsg = 'SerialError!!!'
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
+                logmsg = f' - it took {dt_*1000:.3f} ms.'
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
 
     def bsmp_update_wfm(self, device_id):
         """Read curve from devices."""
@@ -584,10 +600,10 @@ class PRUController:
         except _SerialError as err:
             # no serial connection !
             dt_ = _time() - t0_
-            print(
-                f'!!! {_get_timestamp()}: {err}. '
-                f'it took {dt_*1000:.3f} ms in bsmp_update_wfm.'
-            )
+            logmsg = 'SerialError!!!'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
+            logmsg = f' - it took {dt_*1000:.3f} ms.'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
 
         # stores updated psupplies dict
         self._psupplies = psupplies  # atomic operation
@@ -605,7 +621,8 @@ class PRUController:
                     psupply.wfmref_rb = curve
                     psupply.update_wfm(interval=0.0)
         except (_SerialError, IndexError):
-            print('PRUController: bsmp_wfmref_write error!')
+            logmsg = 'SerialError!!!'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
             self._serial_error(device_ids)
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
@@ -624,7 +641,8 @@ class PRUController:
                 ack[dev_id], data[dev_id] = resp
                 # check anomalous response
                 # to avoid unnecessary logging we skip error interception for
-                # F_CFG_WFMREF since UDC firmware is returning error code erroneously
+                # F_CFG_WFMREF since UDC firmware is returning error code
+                # erroneously.
                 is_cfg_wfmref = function_id == _const_psbsmp.F_CFG_WFMREF
                 if ack[dev_id] != _const_bsmp.ACK_OK and not is_cfg_wfmref:
                     datum = data[dev_id]
@@ -637,12 +655,18 @@ class PRUController:
         except _SerialError:
             return None
         except TypeError:
-            print('--- PRUController debug ---')
-            print('device_ids  : ', device_ids)
-            print('dev_id      : ', dev_id)
-            print('function_id : ', function_id)
-            print('resp        : ', resp)
-            print('data        : ', data[dev_id])
+            logmsg = 'TypeError!!!'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
+            logmsg = f' - device_ids  : {device_ids}'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
+            logmsg = f' - dev_id      : {dev_id}'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
+            logmsg = f' - function_id : {function_id}'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
+            logmsg = f' - resp        : {resp}'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
+            logmsg = f' - data        : {data[dev_id]}'
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
             raise
 
         # --- check if all function executions succeeded.
@@ -664,19 +688,22 @@ class PRUController:
         t0_ = _time()
         self._bsmp_init_variable_values()
         dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_update', 'variable_values', 1e3*dt_))
+        logmsg = fmt.format('bsmp_init_update', 'variable_values', 1e3*dt_)
+        LOGGER.info(logmsg)
 
         # initialize ps curves
         t0_ = _time()
         self._bsmp_init_wfm()
         dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_update', 'waveform_values', 1e3*dt_))
+        logmsg = fmt.format('bsmp_init_update', 'waveform_values', 1e3*dt_)
+        LOGGER.info(logmsg)
 
         # initialize parameters
         t0_ = _time()
         self._bsmp_init_parameter_values()
         dt_ = _time() - t0_
-        print(fmt.format('bsmp_init_update', 'parameter_values', 1e3*dt_))
+        logmsg = fmt.format('bsmp_init_update', 'parameter_values', 1e3*dt_)
+        LOGGER.info(logmsg)
 
     def _bsmp_init_wfm(self):
 
@@ -720,13 +747,19 @@ class PRUController:
     def _dict2list_vargroups(groups_dict):
         group_ids = sorted(groups_dict.keys())
         if len(group_ids) < 3:  # needs to have all default groups
-            print('PRUController: Incorrect variables group definition: '
-                  'it does not have all three standard groups!')
+            logmsg = (
+                'PRUController: Incorrect variables group definition: '
+                'it does not have all three standard groups!'
+            )
+            LOGGER.exception(logmsg)
             raise ValueError
         for i in range(len(group_ids)):  # consecutive?
             if i not in group_ids:
-                print('PRUController: Incorrect variables group definition: '
-                      'it does not have consecutive group ids!')
+                logmsg = (
+                    'PRUController: Incorrect variables group definition: '
+                    'it does not have consecutive group ids!'
+                )
+                LOGGER.exception(logmsg)
                 raise ValueError
         # create list of variable ids
         groups_list = [groups_dict[gid] for gid in group_ids]
