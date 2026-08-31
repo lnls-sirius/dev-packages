@@ -13,6 +13,7 @@ from ..callbacks import Callback as _Callback
 from ..clientarch import ClientArchiver as _ClientArch
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
+from ..optics.constants import SI as _SI, BO as _BO
 from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
@@ -201,7 +202,7 @@ class LICurrInfoApp(_ASCurrInfoApp):
 class BOCurrInfoApp(_CurrInfoApp):
     """Main Class."""
 
-    HARMNUM = 828
+    HARMNUM = _BO.harmonic_number
     INTCURR_INTVL = 53.5 * 1e-3 / 3600  # [h]
     MAX_CURRENT = 3.0  # [A]
     ENERGY2TIME = {  # energy: time[s]
@@ -376,8 +377,8 @@ class BOCurrInfoApp(_CurrInfoApp):
 class SICurrInfoApp(_CurrInfoApp):
     """Main Class."""
 
-    HARMNUM = 864
-    HARMNUM_RATIO = 864 / 828
+    HARMNUM = _SI.harmonic_number
+    HARMNUM_RATIO = _SI.harmonic_number / _BO.harmonic_number
     CURR_THRESHOLD = 0.02  # [mA]
     MAX_CURRENT = 1.0  # [A]
 

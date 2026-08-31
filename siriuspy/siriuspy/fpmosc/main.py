@@ -12,6 +12,7 @@ import scipy.signal as _scysig
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV
+from ..optics.constants import SI as _SI
 from ..oscilloscope import Keysight as _Keysight, ScopeSignals as _ScopeSignals
 from .csdev import Const as _Const, get_si_fpmosc_database as _get_database
 
@@ -88,7 +89,7 @@ class FPMOscApp(_Callback):
             if not isinstance(value, (_np.ndarray, list, tuple)):
                 return False
             value = _np.array(value)
-            if value.size != 864 or value.min() < 0:
+            if value.size != _SI.harmonic_number or value.min() < 0:
                 return False
             self._fillpat_ref = value / value.sum()
             self.run_callbacks('FillPatternRef-RB', self._fillpat_ref)
