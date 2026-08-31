@@ -4,7 +4,7 @@ import time as _time
 from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 import numpy as _np
-from epics import PV as _PV
+from ..epics import PV as _PV
 
 from .. import util as _util
 from ..callbacks import Callback as _Callback
@@ -65,9 +65,6 @@ class BaseApp(_Callback):
 
         self._optprm_est = [0.0, 0.0]
 
-        self._apply_corr_cmd_count = 0
-        self._config_ps_cmd_count = 0
-
         self._psfam_check_connection = {fam: 0 for fam in self._psfams}
         self._psfam_check_pwrstate_sts = {fam: 0 for fam in self._psfams}
         self._psfam_check_opmode_sts = {fam: -1 for fam in self._psfams}
@@ -79,7 +76,6 @@ class BaseApp(_Callback):
             self._corr_group = _Const.CorrGroup.TwoKnobs
             self._sync_corr = _Const.SyncCorr.Off
 
-            self._config_ti_cmd_count = 0
             self._timing_check_config = 9*[0]
 
             self._measuring_config = False
@@ -88,7 +84,6 @@ class BaseApp(_Callback):
             self._meas_config_wait = 1
             self._meas_config_name = 'UNDEF'
             self._meas_config_2_save = None
-            self._meas_config_save_cmd_count = 0
 
             self._is_storedebeam = 0
         else:
@@ -320,10 +315,7 @@ class BaseApp(_Callback):
 
     def cmd_apply_corr(self, value):
         """ApplyCorr command."""
-        if self._apply_corr():
-            self._apply_corr_cmd_count += 1
-            self.run_callbacks('ApplyDelta-Cmd', self._apply_corr_cmd_count)
-        return False
+        return self._apply_corr()
 
     def set_config_name(self, value):
         """Set configuration name."""
@@ -381,15 +373,10 @@ class BaseApp(_Callback):
 
         self._sync_corr = value
 
-        if self._config_ps():
-            self._config_ps_cmd_count += 1
-            self.run_callbacks('ConfigPS-Cmd', self._config_ps_cmd_count)
+        self._config_ps()
 
         if value == 1:
-            if self._config_timing():
-                self._config_ti_cmd_count += 1
-                self.run_callbacks(
-                    'ConfigTiming-Cmd', self._config_ti_cmd_count)
+            self._config_timing()
 
         val = 1
         if (self._status & 0x1) == 0:
@@ -411,17 +398,11 @@ class BaseApp(_Callback):
 
     def cmd_config_ps(self, value):
         """ConfigPS command."""
-        if self._config_ps():
-            self._config_ps_cmd_count += 1
-            self.run_callbacks('ConfigPS-Cmd', self._config_ps_cmd_count)
-        return False
+        return self._config_ps()
 
     def cmd_config_ti(self, value):
         """ConfigTiming command."""
-        if self._config_timing():
-            self._config_ti_cmd_count += 1
-            self.run_callbacks('ConfigTiming-Cmd', self._config_ti_cmd_count)
-        return False
+        return self._config_timing()
 
     def set_meas_config_wait(self, value):
         """Set MeasConfigWait."""
@@ -459,11 +440,8 @@ class BaseApp(_Callback):
         if self._meas_config_2_save is None:
             self.run_callbacks(
                 'Log-Mon', 'ERR: No new data to save in configdb!')
+            return False
         elif self._save_corrparams(self._meas_config_name):
-            self._meas_config_save_cmd_count += 1
-            self.run_callbacks(
-                'MeasConfigSave-Cmd', self._meas_config_save_cmd_count)
-
             self._config_name = _dcopy(self._meas_config_name)
             self.cn_handler.set_config_name(self._config_name)
             self.run_callbacks('ConfigName-RB', self._config_name)
@@ -473,6 +451,7 @@ class BaseApp(_Callback):
             self.run_callbacks('MeasConfigName-RB', self._meas_config_name)
 
             self.run_callbacks('Log-Mon', 'Updated config. name.')
+            return True
         return False
 
     # ---------- auxiliar methods ----------
