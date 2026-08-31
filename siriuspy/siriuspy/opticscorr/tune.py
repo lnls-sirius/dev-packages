@@ -322,6 +322,10 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR:Do not have stored beam!"
             self._update_log(msg)
             return False
+        if self._measuring_config:
+            msg = "ERR:Measurement in progress!"
+            self._update_log(msg)
+            return False
         if self._loop_thread and self._loop_thread.is_alive():
             msg = 'ERR:Loop still openning...'
             self._update_log(msg)
@@ -418,57 +422,50 @@ class SITuneCorrApp(TuneCorrApp):
         return True
 
     # --- pv initialization ---
-    def update_corrparams_pvs(self):
-        """Set initial correction parameters PVs values."""
-        super().update_corrparams_pvs()
+    def init_database(self):
+        """Set initial PV values."""
+        super().init_database()
+        self.init_feedback_pvs()
 
-        self.run_callbacks('TuneXSrc-Sel', self._tunex_source)
-        self.run_callbacks('TuneXSrc-Sts', self._tunex_source)
-
-        self.run_callbacks('TuneYSrc-Sel', self._tuney_source)
-        self.run_callbacks('TuneYSrc-Sts', self._tuney_source)
-
-        self.run_callbacks(
-            'TuneSrcPVList-Mon',
-            (_ETypes.TUNE_SRC_PVS[self._tunex_source][0],
-             _ETypes.TUNE_SRC_PVS[self._tuney_source][1])
-        )
-
-        self.run_callbacks('RefTuneX-SP', self._ref_tunex)
-        self.run_callbacks('RefTuneX-RB', self._ref_tunex)
-
-        self.run_callbacks('RefTuneY-SP', self._ref_tuney)
-        self.run_callbacks('RefTuneY-RB', self._ref_tuney)
-
+    def init_feedback_pvs(self):
+        """Initialize feedback PVs."""
         self.run_callbacks('LoopState-Sel', self._loop_state)
         self.run_callbacks('LoopState-Sts', self._loop_state)
-
         self.run_callbacks('LoopFreq-SP', self._loop_freq)
         self.run_callbacks('LoopFreq-RB', self._loop_freq)
 
-        self.run_callbacks('LoopMaxTuneXErr-SP', self._loop_max_tunex_err)
-        self.run_callbacks('LoopMaxTuneXErr-RB', self._loop_max_tunex_err)
-
-        self.run_callbacks('LoopMaxTuneYErr-SP', self._loop_max_tuney_err)
-        self.run_callbacks('LoopMaxTuneYErr-RB', self._loop_max_tuney_err)
-
         self.run_callbacks('LoopPIDKpX-SP', self._loop_pid_gains['x']['kp'])
         self.run_callbacks('LoopPIDKpX-RB', self._loop_pid_gains['x']['kp'])
-
         self.run_callbacks('LoopPIDKiX-SP', self._loop_pid_gains['x']['ki'])
         self.run_callbacks('LoopPIDKiX-RB', self._loop_pid_gains['x']['ki'])
-
         self.run_callbacks('LoopPIDKdX-SP', self._loop_pid_gains['x']['kd'])
         self.run_callbacks('LoopPIDKdX-RB', self._loop_pid_gains['x']['kd'])
 
         self.run_callbacks('LoopPIDKpY-SP', self._loop_pid_gains['y']['kp'])
         self.run_callbacks('LoopPIDKpY-RB', self._loop_pid_gains['y']['kp'])
-
         self.run_callbacks('LoopPIDKiY-SP', self._loop_pid_gains['y']['ki'])
         self.run_callbacks('LoopPIDKiY-RB', self._loop_pid_gains['y']['ki'])
-
         self.run_callbacks('LoopPIDKdY-SP', self._loop_pid_gains['y']['kd'])
         self.run_callbacks('LoopPIDKdY-RB', self._loop_pid_gains['y']['kd'])
+
+        self.run_callbacks('LoopMaxTuneXErr-SP', self._loop_max_tunex_err)
+        self.run_callbacks('LoopMaxTuneXErr-RB', self._loop_max_tunex_err)
+        self.run_callbacks('LoopMaxTuneYErr-SP', self._loop_max_tuney_err)
+        self.run_callbacks('LoopMaxTuneYErr-RB', self._loop_max_tuney_err)
+
+        self.run_callbacks('TuneXSrc-Sel', self._tunex_source)
+        self.run_callbacks('TuneXSrc-Sts', self._tunex_source)
+        self.run_callbacks('TuneYSrc-Sel', self._tuney_source)
+        self.run_callbacks('TuneYSrc-Sts', self._tuney_source)
+        self.run_callbacks(
+            'TuneSrcPVList-Mon',
+            (_ETypes.TUNE_SRC_PVS[self._tunex_source][0],
+                _ETypes.TUNE_SRC_PVS[self._tuney_source][1])
+        )
+        self.run_callbacks('RefTuneX-SP', self._ref_tunex)
+        self.run_callbacks('RefTuneX-RB', self._ref_tunex)
+        self.run_callbacks('RefTuneY-SP', self._ref_tuney)
+        self.run_callbacks('RefTuneY-RB', self._ref_tuney)
 
     # --- feedback methods ---
     def _do_auto_corr(self):
