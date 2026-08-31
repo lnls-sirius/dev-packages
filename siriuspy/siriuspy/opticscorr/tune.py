@@ -382,10 +382,13 @@ class SITuneCorrApp(TuneCorrApp):
         return True
 
     # --- pv initialization ---
-    def update_corrparams_pvs(self):
-        """Set initial correction parameters PVs values."""
-        super().update_corrparams_pvs()
+    def init_database(self):
+        """Set initial PV values."""
+        super().init_database()
+        self.init_feedback_pvs()
 
+    def init_feedback_pvs(self):
+        """Initialize feedback PVs."""
         self.run_callbacks('LoopState-Sel', self._loop_state)
         self.run_callbacks('LoopState-Sts', self._loop_state)
         self.run_callbacks('LoopFreq-SP', self._loop_freq)
