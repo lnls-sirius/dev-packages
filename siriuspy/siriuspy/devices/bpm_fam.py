@@ -223,13 +223,13 @@ class FamBPMs(_DeviceSet):
 
     def set_attenuation(self, value=RFFEATT_MAX, timeout=TIMEOUT):
         """."""
-        for bpm in self:
+        for bpm in self.bpms:
             bpm.rffe_att = value
 
         mstr = ''
         okall = True
         t0 = _time.time()
-        for bpm in self:
+        for bpm in self.bpms:
             tout = timeout - (_time.time() - t0)
             if not bpm.wait('RFFEAtt-RB', value, timeout=tout):
                 okall = False
@@ -248,7 +248,7 @@ class FamBPMs(_DeviceSet):
         self, enable=True, mask_beg=None, mask_end=None, timeout=TIMEOUT
     ):
         """."""
-        ndev = len(self.devices)
+        ndev = len(self.bpms)
 
         def _to_array(val, name):
             if val is None:
@@ -281,7 +281,7 @@ class FamBPMs(_DeviceSet):
             msg += ', the number of ADC samples in TbT rate.'
             raise ValueError(msg)
 
-        for i, bpm in enumerate(self):
+        for i, bpm in enumerate(self.bpms):
             if mask_beg is not None:
                 bpm.tbt_mask_beg = mask_beg[i]
             if mask_end is not None:
@@ -292,7 +292,7 @@ class FamBPMs(_DeviceSet):
         okall = True
         t0 = _time.time()
 
-        for i, bpm in enumerate(self):
+        for i, bpm in enumerate(self.bpms):
             tout = max(0, timeout - (_time.time() - t0))
 
             props = {'TbTDataMaskEn-Sel': int(enable)}
@@ -358,7 +358,8 @@ class FamBPMs(_DeviceSet):
             sigs[i] = _np.array(sig).T
         return sigs
 
-    def conv_signal2pvname_format(self, sig):
+    @staticmethod
+    def conv_signal2pvname_format(sig):
         """Convert signal to generate PV name."""
         if sig == 'S':
             sig = 'Sum'
@@ -400,7 +401,7 @@ class FamBPMs(_DeviceSet):
 
         """
         fs_bpms = {
-            dev.get_sampling_frequency(rf_freq, acq_rate) for dev in self.bpms
+            bpm.get_sampling_frequency(rf_freq, acq_rate) for bpm in self.bpms
         }
         if len(fs_bpms) == 1:
             return fs_bpms.pop()
@@ -418,7 +419,7 @@ class FamBPMs(_DeviceSet):
             float: switching frequency.
 
         """
-        fsw_bpms = {dev.get_switching_frequency(rf_freq) for dev in self.bpms}
+        fsw_bpms = {bpm.get_switching_frequency(rf_freq) for bpm in self.bpms}
         if len(fsw_bpms) == 1:
             return fsw_bpms.pop()
         else:
