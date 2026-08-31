@@ -14,7 +14,9 @@ uninstall:
 	$(PREFIX) $(PIP) uninstall -y $(PACKAGE)
 
 develop-install: develop-uninstall
-	$(PIP) install --no-deps -e ./
+    # The flag "editable_mode=strict" is used to allow vscode to identify
+    # package and provide syntax highlighting and completion suggestions.
+	$(PIP) install --no-deps -e ./ --config-settings editable_mode=strict
 
 develop-uninstall:
 	$(PIP) uninstall -y $(PACKAGE)
