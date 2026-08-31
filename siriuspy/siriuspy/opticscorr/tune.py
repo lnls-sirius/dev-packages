@@ -308,6 +308,10 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR:Do not have stored beam!"
             self._update_log(msg)
             return False
+        if self._measuring_config:
+            msg = "ERR:Measurement in progress!"
+            self._update_log(msg)
+            return False
         if self._loop_thread and self._loop_thread.is_alive():
             msg = 'ERR:Loop still openning...'
             self._update_log(msg)
