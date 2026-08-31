@@ -46,6 +46,7 @@ class IDFFConst(_csdev.Const):
                  enbl_qncorrs=False, enbl_cccorrs=False):
         """Init."""
         self.idname = _PVName(idname)
+        self.pols = _IDSearch.conv_idname_2_polarizations(idname)
         self.idffname = 'SI-' + self.idname.sub + ':AP-IDFF'
         cname = '_'.join([self.idname.sec, self.idname.sub, self.idname.dev])
         self.configname = cname.lower()
@@ -64,6 +65,13 @@ class IDFFConst(_csdev.Const):
         self.enbl_qncorrs = enbl_qncorrs and len(qnnames) > 0
         ccnames = _IDSearch.conv_idname_2_idff_ccnames(idname)
         self.enbl_cccorrs = enbl_cccorrs and len(ccnames) > 0
+        self.nr_corrs = 0
+        self.nr_corrs += len(chnames) if self.autosave_fname else 0
+        self.nr_corrs += len(cvnames) if self.autosave_fname else 0
+        self.nr_corrs += len(qsnames) if self.autosave_fname else 0
+        self.nr_corrs += len(lcnames) if self.autosave_fname else 0
+        self.nr_corrs += len(qnnames) if self.autosave_fname else 0
+        self.nr_corrs += len(ccnames) if self.autosave_fname else 0
 
     def get_propty_database(self):
         """Return property database."""
@@ -223,5 +231,22 @@ class IDFFConst(_csdev.Const):
                     'type': 'float', 'value': 0,
                     'unit': 'A', 'prec': self.DEFAULT_CORR_PREC},
             })
+        tablesize = _IDSearch.IDFF_TABLE_MAX_SIZE
+        tabledict = {
+            'type': 'float', 'count': tablesize,
+            'value': [0] * tablesize, 'unit': 'A',
+            'prec': self.DEFAULT_CORR_PREC,
+        }
+        if len(self.pols) < 2:
+            dbase.update({
+                'Table-SP': tabledict.copy(),
+                'Table-RB': tabledict.copy(),
+            })
+        else:
+            for idx in range(len(self.pols)):
+                dbase.update({
+                    f'Table{idx+1}-SP': tabledict.copy(),
+                    f'Table{idx+1}-RB': tabledict.copy(),
+                })
         dbase = _csdev.add_pvslist_cte(dbase)
         return dbase
