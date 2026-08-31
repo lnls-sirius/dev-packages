@@ -257,32 +257,46 @@ class SITuneCorrApp(TuneCorrApp):
         """Class constructor."""
         super().__init__(acc='SI')
 
-        self._tune_source = _Const.DEF_TUNESRC
+        self._tunex_source = _Const.DEF_TUNESRC
+        self._tuney_source = _Const.DEF_TUNESRC
         self._ref_tunex = _Const.DEF_REF_TUNEX
         self._ref_tuney = _Const.DEF_REF_TUNEY
 
         self._loop_thread = None
         self._loop_state = _Const.DEF_LOOPSTATE
         self._loop_freq = _Const.DEF_LOOPFREQ
-        self._loop_max_tune_err = _Const.DEF_MAX_TUNE_ERR
+        self._loop_max_tunex_err = _Const.DEF_MAX_TUNE_ERR
+        self._loop_max_tuney_err = _Const.DEF_MAX_TUNE_ERR
 
         self._loop_pid_errs = None  # created when feedback thread starts
         self._loop_pid_gains = dict(
-            kp=_Const.DEF_PID_KP,
-            ki=_Const.DEF_PID_KI,
-            kd=_Const.DEF_PID_KD,
+            x=dict(
+                kp=_Const.DEF_PID_KP,
+                ki=_Const.DEF_PID_KI,
+                kd=_Const.DEF_PID_KD,
+            ),
+            y=dict(
+                kp=_Const.DEF_PID_KP,
+                ki=_Const.DEF_PID_KI,
+                kd=_Const.DEF_PID_KD,
+            ),
         )
 
         self.map_pv2write.update({
-            'TuneSrc-Sel': self.set_tune_source,
+            'TuneXSrc-Sel': _part(self.set_tune_source, "x"),
+            'TuneYSrc-Sel': _part(self.set_tune_source, "y"),
             'RefTuneX-SP': _part(self.set_ref_tune, "x"),
             'RefTuneY-SP': _part(self.set_ref_tune, "y"),
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
-            'LoopMaxTuneErr-SP': self.set_loop_max_tune_err,
-            'LoopPIDKp-SP': _part(self.set_loop_pid_gain, "kp"),
-            'LoopPIDKi-SP': _part(self.set_loop_pid_gain, "ki"),
-            'LoopPIDKd-SP': _part(self.set_loop_pid_gain, "kd"),
+            'LoopMaxTuneXErr-SP': _part(self.set_loop_max_tune_err, "x"),
+            'LoopMaxTuneYErr-SP': _part(self.set_loop_max_tune_err, "y"),
+            'LoopPIDKpX-SP': _part(self.set_loop_pid_gain, "x", "kp"),
+            'LoopPIDKiX-SP': _part(self.set_loop_pid_gain, "x", "ki"),
+            'LoopPIDKdX-SP': _part(self.set_loop_pid_gain, "x", "kd"),
+            'LoopPIDKpY-SP': _part(self.set_loop_pid_gain, "y", "kp"),
+            'LoopPIDKiY-SP': _part(self.set_loop_pid_gain, "y", "ki"),
+            'LoopPIDKdY-SP': _part(self.set_loop_pid_gain, "y", "kd"),
         })
 
         self._tune_x_pv.add_callback(_part(self._callback_update_tunes, 'x'))
@@ -329,7 +343,7 @@ class SITuneCorrApp(TuneCorrApp):
         self.run_callbacks('LoopFreq-RB', float(value))
         return True
 
-    def set_tune_source(self, value):
+    def set_tune_source(self, plane, value):
         """Set tune source."""
         if self._loop_state == _Const.LoopState.Closed:
             msg = 'ERR:Cant change tune source! FB is on.'
@@ -339,25 +353,39 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR:Invalid tune source!"
             self._update_log(msg)
             return False
-        self._tune_source = value
-        pvnames = _ETypes.TUNE_SRC_PVS[self._tune_source]
-        pvx, pvy = _SiriusPVName(pvnames[0]), _SiriusPVName(pvnames[1])
-        self._tune_x_pv.clear_callbacks()
-        self._tune_y_pv.clear_callbacks()
-        self._tune_x_pv = _PV(
-            pvx.substitute(prefix=_vaca_prefix),
-            connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
-            auto_monitor=True,
-            callback=_part(self._callback_update_tunes, 'x')
-        )
-        self._tune_y_pv = _PV(
-            pvy.substitute(prefix=_vaca_prefix),
-            connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
-            auto_monitor=True,
-            callback=_part(self._callback_update_tunes, 'y')
-        )
-        self.run_callbacks('TuneSrcPVList-Mon', (pvx, pvy))
-        self.run_callbacks('TuneSrc-Sts', value)
+        plane = plane.upper()
+        pln_idx = None
+        if plane == 'X':
+            self._tunex_source = value
+            pln_idx = 0
+        elif plane == 'Y':
+            self._tuney_source = value
+            pln_idx = 1
+        else:
+            self._update_log("ERR: Invalid plane.")
+            return False
+        pv = _SiriusPVName(_ETypes.TUNE_SRC_PVS[value][pln_idx])
+        if plane == 'X':
+            self._tune_x_pv.clear_callbacks()
+            self._tune_x_pv = _PV(
+                pv.substitute(prefix=_vaca_prefix),
+                connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
+                auto_monitor=True,
+                callback=_part(self._callback_update_tunes, 'x')
+            )
+        elif plane == 'Y':
+            self._tune_y_pv.clear_callbacks()
+            self._tune_y_pv = _PV(
+                pv.substitute(prefix=_vaca_prefix),
+                connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
+                auto_monitor=True,
+                callback=_part(self._callback_update_tunes, 'y')
+            )
+        self.run_callbacks('TuneSrcPVList-Mon', (
+            self._tune_x_pv.pvname.substitute(prefix=''),
+            self._tune_y_pv.pvname.substitute(prefix='')
+        ))
+        self.run_callbacks('Tune' + plane + 'Src-Sts', value)
         return True
 
     def set_ref_tune(self, plane, value):
@@ -372,17 +400,25 @@ class SITuneCorrApp(TuneCorrApp):
         self.run_callbacks('RefTune'+plane+'-RB', float(value))
         return True
 
-    def set_loop_max_tune_err(self, value):
-        """Set max tune error."""
-        self._loop_max_tune_err = float(value)
-        self.run_callbacks('LoopMaxTuneErr-RB', float(value))
+    def set_loop_max_tune_err(self, plane, value):
+        """."""
+        plane = plane.upper()
+        if plane == 'X':
+            self._loop_max_tunex_err = float(value)
+            self.run_callbacks('LoopMaxTuneXErr-RB', float(value))
+        elif plane == 'Y':
+            self._loop_max_tuney_err = float(value)
+            self.run_callbacks('LoopMaxTuneYErr-RB', float(value))
         return True
 
-    def set_loop_pid_gain(self, kparam, value):
+    def set_loop_pid_gain(self, plane, kparam, value):
         """."""
+        plane = plane.lower()
         kparam = kparam.lower()
-        self._loop_pid_gains[kparam] = float(value)
-        self.run_callbacks("LoopPID" + kparam.title() + "-RB", float(value))
+        self._loop_pid_gains[plane][kparam] = float(value)
+        self.run_callbacks(
+            "LoopPID" + kparam.title() + plane.upper() + "-RB", float(value)
+        )
         return True
 
     # --- pv initialization ---
@@ -397,20 +433,34 @@ class SITuneCorrApp(TuneCorrApp):
         self.run_callbacks('LoopState-Sts', self._loop_state)
         self.run_callbacks('LoopFreq-SP', self._loop_freq)
         self.run_callbacks('LoopFreq-RB', self._loop_freq)
-        self.run_callbacks('LoopPIDKp-SP', self._loop_pid_gains['kp'])
-        self.run_callbacks('LoopPIDKp-RB', self._loop_pid_gains['kp'])
-        self.run_callbacks('LoopPIDKi-SP', self._loop_pid_gains['ki'])
-        self.run_callbacks('LoopPIDKi-RB', self._loop_pid_gains['ki'])
-        self.run_callbacks('LoopPIDKd-SP', self._loop_pid_gains['kd'])
-        self.run_callbacks('LoopPIDKd-RB', self._loop_pid_gains['kd'])
-        self.run_callbacks('LoopMaxTuneErr-SP', self._loop_max_tune_err)
-        self.run_callbacks('LoopMaxTuneErr-RB', self._loop_max_tune_err)
 
-        self.run_callbacks('TuneSrc-Sel', self._tune_source)
-        self.run_callbacks('TuneSrc-Sts', self._tune_source)
+        self.run_callbacks('LoopPIDKpX-SP', self._loop_pid_gains['x']['kp'])
+        self.run_callbacks('LoopPIDKpX-RB', self._loop_pid_gains['x']['kp'])
+        self.run_callbacks('LoopPIDKiX-SP', self._loop_pid_gains['x']['ki'])
+        self.run_callbacks('LoopPIDKiX-RB', self._loop_pid_gains['x']['ki'])
+        self.run_callbacks('LoopPIDKdX-SP', self._loop_pid_gains['x']['kd'])
+        self.run_callbacks('LoopPIDKdX-RB', self._loop_pid_gains['x']['kd'])
+
+        self.run_callbacks('LoopPIDKpY-SP', self._loop_pid_gains['y']['kp'])
+        self.run_callbacks('LoopPIDKpY-RB', self._loop_pid_gains['y']['kp'])
+        self.run_callbacks('LoopPIDKiY-SP', self._loop_pid_gains['y']['ki'])
+        self.run_callbacks('LoopPIDKiY-RB', self._loop_pid_gains['y']['ki'])
+        self.run_callbacks('LoopPIDKdY-SP', self._loop_pid_gains['y']['kd'])
+        self.run_callbacks('LoopPIDKdY-RB', self._loop_pid_gains['y']['kd'])
+
+        self.run_callbacks('LoopMaxTuneXErr-SP', self._loop_max_tunex_err)
+        self.run_callbacks('LoopMaxTuneXErr-RB', self._loop_max_tunex_err)
+        self.run_callbacks('LoopMaxTuneYErr-SP', self._loop_max_tuney_err)
+        self.run_callbacks('LoopMaxTuneYErr-RB', self._loop_max_tuney_err)
+
+        self.run_callbacks('TuneXSrc-Sel', self._tunex_source)
+        self.run_callbacks('TuneXSrc-Sts', self._tunex_source)
+        self.run_callbacks('TuneYSrc-Sel', self._tuney_source)
+        self.run_callbacks('TuneYSrc-Sts', self._tuney_source)
         self.run_callbacks(
             'TuneSrcPVList-Mon',
-            _ETypes.TUNE_SRC_PVS[self._tune_source]
+            (_ETypes.TUNE_SRC_PVS[self._tunex_source][0],
+                _ETypes.TUNE_SRC_PVS[self._tuney_source][1])
         )
         self.run_callbacks('RefTuneX-SP', self._ref_tunex)
         self.run_callbacks('RefTuneX-RB', self._ref_tunex)
@@ -420,11 +470,11 @@ class SITuneCorrApp(TuneCorrApp):
     # --- feedback methods ---
     def _do_auto_corr(self):
         """."""
+        self._update_ref()
         self.run_callbacks("LoopState-Sts", _Const.LoopState.Closed)
         msg = "INFO:Loop closed!"
         self._update_log(msg)
-        self._update_ref()
-        zer = _np.zeros(len(self._psfams), dtype=float)
+        zer = _np.zeros(2, dtype=float)
         self._loop_pid_errs = [zer, zer.copy(), zer.copy()]
 
         while self._loop_state == _Const.LoopState.Closed:
@@ -462,32 +512,32 @@ class SITuneCorrApp(TuneCorrApp):
         self.run_callbacks("LoopState-Sts", _Const.LoopState.Open)
 
     def _process_pid(self, tunex, tuney):
-        self._delta_tunex = self._ref_tunex - tunex
-        self._delta_tuney = self._ref_tuney - tuney
-
-        delta_kl_prev = _np.array([
-            self._lastcalc_deltakl[fam] for fam in self._psfams
-        ])
-
-        self._calc_intstrength()
-
-        e0 = _np.array([self._lastcalc_deltakl[fam] for fam in self._psfams])
+        e0 = _np.array([self._ref_tunex - tunex, self._ref_tuney - tuney])
         e1 = self._loop_pid_errs[-1]
         e2 = self._loop_pid_errs[-2]
 
         interval = 1.0 / self._loop_freq
 
-        kp = self._loop_pid_gains['kp']
-        ki = self._loop_pid_gains['ki'] * interval
-        kd = self._loop_pid_gains['kd'] / interval
+        kpx = self._loop_pid_gains['x']['kp']
+        kix = self._loop_pid_gains['x']['ki'] * interval
+        kdx = self._loop_pid_gains['x']['kd'] / interval
 
-        a0 = kp + ki + kd
-        a1 = -kp - 2*kd
-        a2 = kd
+        kpy = self._loop_pid_gains['y']['kp']
+        kiy = self._loop_pid_gains['y']['ki'] * interval
+        kdy = self._loop_pid_gains['y']['kd'] / interval
 
-        delta_kl = delta_kl_prev + a0*e0 + a1*e1 + a2*e2
-        for i, fam in enumerate(self._psfams):
-            self._lastcalc_deltakl[fam] = delta_kl[i]
+        a0x = kpx + kix + kdx
+        a1x = -kpx - 2*kdx
+        a2x = kdx
+
+        a0y = kpy + kiy + kdy
+        a1y = -kpy - 2*kdy
+        a2y = kdy
+
+        self._delta_tunex += a0x*e0[0] + a1x*e1[0] + a2x*e2[0]
+        self._delta_tuney += a0y*e0[1] + a1y*e1[1] + a2y*e2[1]
+
+        self._calc_intstrength()
 
         self._loop_pid_errs.append(e0)
         del self._loop_pid_errs[0]
@@ -522,11 +572,11 @@ class SITuneCorrApp(TuneCorrApp):
         return True
 
     def _check_tunes_distortion(self, tunex, tuney):
-        stsx_ok = abs(tunex - self._ref_tunex) <= self._loop_max_tune_err
+        stsx_ok = abs(tunex - self._ref_tunex) <= self._loop_max_tunex_err
         if not stsx_ok:
             msg = 'WARN:Tune X is out of range!'
             self._update_log(msg)
-        stsy_ok = abs(tuney - self._ref_tuney) <= self._loop_max_tune_err
+        stsy_ok = abs(tuney - self._ref_tuney) <= self._loop_max_tuney_err
         if not stsy_ok:
             msg = 'WARN:Tune Y is out of range!'
             self._update_log(msg)
