@@ -315,6 +315,10 @@ class SITuneCorrApp(TuneCorrApp):
             msg = "ERR:Do not have stored beam!"
             self._update_log(msg)
             return False
+        if self._measuring_config:
+            msg = "ERR:Measurement in progress!"
+            self._update_log(msg)
+            return False
         if self._loop_thread and self._loop_thread.is_alive():
             msg = 'ERR:Loop still openning...'
             self._update_log(msg)
@@ -422,10 +426,13 @@ class SITuneCorrApp(TuneCorrApp):
         return True
 
     # --- pv initialization ---
-    def update_corrparams_pvs(self):
-        """Set initial correction parameters PVs values."""
-        super().update_corrparams_pvs()
+    def init_database(self):
+        """Set initial PV values."""
+        super().init_database()
+        self.init_feedback_pvs()
 
+    def init_feedback_pvs(self):
+        """Initialize feedback PVs."""
         self.run_callbacks('LoopState-Sel', self._loop_state)
         self.run_callbacks('LoopState-Sts', self._loop_state)
         self.run_callbacks('LoopFreq-SP', self._loop_freq)

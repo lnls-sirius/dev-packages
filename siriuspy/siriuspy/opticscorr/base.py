@@ -355,6 +355,13 @@ class BaseApp(_Callback):
             self.run_callbacks('ChromX-Mon', self._optprm_est[0])
             self.run_callbacks('ChromY-Mon', self._optprm_est[1])
 
+        self.run_callbacks('CorrMeth-Sel', self._corr_method)
+        self.run_callbacks('CorrMeth-Sts', self._corr_method)
+        self.run_callbacks('CorrGroup-Sel', self._corr_group)
+        self.run_callbacks('CorrGroup-Sts', self._corr_group)
+        self.run_callbacks('SyncCorr-Sel', self._sync_corr)
+        self.run_callbacks('SyncCorr-Sts', self._sync_corr)
+
     def update_corrparams_pvs(self):
         """Set initial correction parameters PVs values."""
         raise NotImplementedError
