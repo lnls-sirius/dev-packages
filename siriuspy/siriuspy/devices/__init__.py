@@ -85,6 +85,7 @@ from .rf import (
 )
 from .scraper import ScraperH, ScraperV
 from .screen import Screen
+from .slit import SlitH, SlitV
 from .sofb import SOFB
 from .syncd import DevicesSync
 from .timing import Event, EVG, HLTiming, Trigger
