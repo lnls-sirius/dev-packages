@@ -263,7 +263,7 @@ class ClientArchiver:
     def switch_to_machine_data(self):
         """Switch to machine data.
 
-        Sets server URL to online data URL and logs out if needed.
+        Sets server URL to machine data URL and logs out if needed.
         """
         self.server_url = _envars.SRVURL_ARCHIVER
         self.logout()
