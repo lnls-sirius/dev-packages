@@ -273,10 +273,17 @@ class SITuneCorrApp(TuneCorrApp):
             kd=_Const.DEF_PID_KD,
         )
 
+        # Wait for machine-applications PR #330 'Update OpticsCorr drivers'
+        # Link: https://github.com/lnls-sirius/machine-applications/pull/330
+        # and its companion: dev-packages PR #1268
+        # Link: https://github.com/lnls-sirius/dev-packages/pull/1268
+        self._calc_delta_cmd_count = 0
+
         self.map_pv2write.update({
             'TuneSrc-Sel': self.set_tune_source,
             'RefTuneX-SP': _part(self.set_ref_tune, "x"),
             'RefTuneY-SP': _part(self.set_ref_tune, "y"),
+            'CalcDelta-Cmd': self.calc_correction,
             'LoopState-Sel': self.set_loop_state,
             'LoopFreq-SP': self.set_loop_freq,
             'LoopMaxTuneErr-SP': self.set_loop_max_tune_err,
@@ -371,6 +378,42 @@ class SITuneCorrApp(TuneCorrApp):
             return False
         self.run_callbacks('RefTune'+plane+'-RB', float(value))
         return True
+
+    def calc_correction(self, value):
+        """."""
+        _ = value
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = 'ERR:Cant calculate correction! FB is on.'
+            self._update_log(msg)
+            return False
+        # nr_pts = 3
+        # tune_buffer = []
+        # for _ in range(nr_pts):
+        #     sts, (tunex, tuney) = self._get_tunes()
+        #     if not sts:
+        #         return False
+        #     tune_buffer.append([tunex, tuney])
+        #     if len(tune_buffer) != nr_pts:
+        #         _sleep(0.1)
+        # tunex, tuney = _np.nanmean(tune_buffer, axis=0)
+        sts, (tunex, tuney) = self._get_tunes()
+        if not sts:
+            return False
+        self._delta_tunex += self._ref_tunex - tunex
+        self._delta_tuney += self._ref_tuney - tuney
+        self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
+        self.run_callbacks('DeltaTuneX-RB', self._delta_tunex)
+        self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
+        self.run_callbacks('DeltaTuneY-RB', self._delta_tuney)
+        self._calc_intstrength()
+
+        # Wait for machine-applications PR #330 'Update OpticsCorr drivers'
+        # Link: https://github.com/lnls-sirius/machine-applications/pull/330
+        # and its companion: dev-packages PR #1268
+        # Link: https://github.com/lnls-sirius/dev-packages/pull/1268
+        self._calc_delta_cmd_count += 1
+        self.run_callbacks('CalcDelta-Cmd', self._calc_delta_cmd_count)
+        return False  # True
 
     def set_loop_max_tune_err(self, value):
         """Set max tune error."""
