@@ -386,18 +386,21 @@ class SITuneCorrApp(TuneCorrApp):
             msg = 'ERR:Cant calculate correction! FB is on.'
             self._update_log(msg)
             return False
-        nr_pts = 3
-        tune_buffer = []
-        for _ in range(nr_pts):
-            sts, (tunex, tuney) = self._get_tunes()
-            if not sts:
-                return False
-            tune_buffer.append([tunex, tuney])
-            if len(tune_buffer) != nr_pts:
-                _sleep(0.1)
-        tunex, tuney = _np.mean(tune_buffer, axis=0)
-        self._delta_tunex = self._ref_tunex - tunex
-        self._delta_tuney = self._ref_tuney - tuney
+        # nr_pts = 3
+        # tune_buffer = []
+        # for _ in range(nr_pts):
+        #     sts, (tunex, tuney) = self._get_tunes()
+        #     if not sts:
+        #         return False
+        #     tune_buffer.append([tunex, tuney])
+        #     if len(tune_buffer) != nr_pts:
+        #         _sleep(0.1)
+        # tunex, tuney = _np.nanmean(tune_buffer, axis=0)
+        sts, (tunex, tuney) = self._get_tunes()
+        if not sts:
+            return False
+        self._delta_tunex += self._ref_tunex - tunex
+        self._delta_tuney += self._ref_tuney - tuney
         self.run_callbacks('DeltaTuneX-SP', self._delta_tunex)
         self.run_callbacks('DeltaTuneX-RB', self._delta_tunex)
         self.run_callbacks('DeltaTuneY-SP', self._delta_tuney)
