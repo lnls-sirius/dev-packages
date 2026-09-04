@@ -594,52 +594,6 @@ class Keysight(Scope):
             get_res=False,
         )
 
-    @_ensure_connection
-    def setup_save_to_file(self, filename):
-        """Connect, save the current setup to a file, and disconnect.
-
-        Saves to a file on the oscilloscope's own local storage,
-        using ':DISK:SAVE:SETup'. Opens and closes the connection
-        itself.
-
-        Args:
-            filename (str): Name of the file to save the setup to.
-                If no extension is given, the oscilloscope appends
-                its default setup file extension.
-
-        Raises:
-            ValueError: If filename contains a double quote.
-        """
-        if '"' in filename:
-            raise ValueError('filename must not contain a double quote')
-        cmd = f':DISK:SAVE:SETup "{filename}"\n'.encode('ascii')
-        self._cmd_send(cmd, get_res=False)
-
-    @_ensure_connection
-    def setup_load_from_file(self, filename):
-        """Connect, load a setup from a file, and disconnect.
-
-        NOT YET IMPLEMENTED. The exact SCPI command to load a setup
-        file on this Infiniium oscilloscope (analogous to
-        ':DISK:SAVE:SETup' for saving) has not been confirmed
-        against the Programmer's Guide for this instrument's
-        firmware (this module was written against firmware
-        06.74.01101). Confirm the correct command (see Help >
-        Programmer's Guide on the oscilloscope itself) before
-        implementing this method.
-
-        Args:
-            filename (str): Name of the setup file to load.
-
-        Raises:
-            NotImplementedError: Always, until the command is
-                confirmed.
-        """
-        raise NotImplementedError(
-            'setup_load_from_file: SCPI command not yet confirmed '
-            'for this Infiniium firmware.'
-        )
-
     # --- private methods ---
 
     def _read_block_header(self):
