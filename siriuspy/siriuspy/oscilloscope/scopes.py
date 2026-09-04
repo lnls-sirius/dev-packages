@@ -1,7 +1,11 @@
 """Oscilloscopes and scope signals."""
 
 
+import base64 as _base64
+import functools as _functools
+import lzma as _lzma
 import socket as _socket
+
 
 import numpy as _np
 
@@ -97,6 +101,30 @@ class ScopeSignals:
         return scopesignal[2] if scopesignal else None
 
 
+class ScopeModels:
+    """Oscilloscope model names."""
+    INFINNIUM1 = (
+        'Keysight DSOS104A Infiniium, '
+        'Softare version 06.74.01101, '
+        'Firmware version V29120001'
+    )
+
+
+def _ensure_connection(func):
+    """Ensure the socket is connected before executing the method."""
+    @_functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        was_connected = self._socket is not None
+        if not was_connected:
+            self.connect()
+        try:
+            return func(self, *args, **kwargs)
+        finally:
+            if not was_connected:
+                self.disconnect()
+    return wrapper
+
+
 class Scope:
     """Configuration for an oscilloscope.
 
@@ -111,6 +139,7 @@ class Scope:
         hostname,
         port,
         scopename=None,
+        model=None,
         channel1=None,
         channel2=None,
         channel3=None,
@@ -129,6 +158,8 @@ class Scope:
             port (int): Port used to connect to the oscilloscope.
             scopename (str, optional): Name of the scope, used to
                 automatically map channel1..4 from ScopeSignals.
+                Defaults to None.
+            model (str, optional): Model name of the oscilloscope.
                 Defaults to None.
             channel1 (str, optional): Name of the signal connected to
                 channel 1. Overrides the automatic mapping, if
@@ -149,6 +180,7 @@ class Scope:
         self.hostname = hostname
         self.port = port
         self.scopename = scopename
+        self.model = model
         (
             self.channel1,
             self.channel2,
@@ -167,16 +199,32 @@ class Scope:
             hostname, port, channel1..4 and stats_fields.
         """
         strs = ''
-        strs += f'{"scopename":<10s}: {self.scopename}'
-        strs += f'\n{"ipaddr":<10s}: {self.ipaddr}'
-        strs += f'\n{"hostname":<10s}: {self.hostname}'
-        strs += f'\n{"port":<10s}: {self.port}'
-        strs += f'\n{"channel1":<10s}: {self.channel1}'
-        strs += f'\n{"channel2":<10s}: {self.channel2}'
-        strs += f'\n{"channel3":<10s}: {self.channel3}'
-        strs += f'\n{"channel4":<10s}: {self.channel4}'
-        strs += f'\n{"stats":<10s}: {self.stats_fields}'
+        strs += f'{"scopename":<15s}: {self.scopename}'
+        strs += f'\n{"model":<15s}: {self.model}'
+        strs += f'\n{"ipaddr":<15s}: {self.ipaddr}'
+        strs += f'\n{"hostname":<15s}: {self.hostname}'
+        strs += f'\n{"port":<15s}: {self.port}'
+        strs += f'\n{"channel1":<15s}: {self.channel1}'
+        strs += f'\n{"channel2":<15s}: {self.channel2}'
+        strs += f'\n{"channel3":<15s}: {self.channel3}'
+        strs += f'\n{"channel4":<15s}: {self.channel4}'
+        strs += f'\n{"stats_fields":<15s}: {self.stats_fields}'
         return strs
+
+    @staticmethod
+    def setup_compress(dataraw):
+        """Compress a raw setup block for storage or transmission."""
+        if isinstance(dataraw, str):
+            dataraw = dataraw.encode()
+        dataraw_compressed = _base64.b64encode(
+            _lzma.compress(dataraw, preset=9)
+        ).decode()
+        return dataraw_compressed
+
+    @staticmethod
+    def setup_decompress(dataraw_compressed):
+        """Decompress a compressed setup block."""
+        return _lzma.decompress(_base64.b64decode(dataraw_compressed))
 
     def _configure_channels(self, channel1, channel2, channel3, channel4):
         """Resolve channel1..4, combining explicit values with ScopeSignals.
@@ -308,23 +356,7 @@ class Keysight(Scope):
             self._socket.close()
             self._socket = None
 
-    def meas_read(self):
-        """Query and parse the measurement statistics from the oscilloscope.
-
-        Assumes a connection is already open (see connect()).
-
-        Returns:
-            dict or None: Parsed measurement statistics (see
-            Scope._process_meas), or None if the oscilloscope
-            returned no data.
-        """
-        meas = self._cmd_send(b":MEASure:RESults?\n")
-        if meas:
-            meas = self._process_meas(meas)
-            return meas
-        else:
-            return None
-
+    @_ensure_connection
     def channel_select(self, channel):
         """Select the channel to be used for waveform acquisition.
 
@@ -339,12 +371,10 @@ class Keysight(Scope):
         """
         if channel not in self.valid_channels:
             raise ValueError('Invalid channel name "{}"'.format(channel))
-        chan = channel.replace('channel', 'CHAN')
-        self._cmd_send(
-            b':WAVeform:SOURce ' + chan.encode('ascii') + b'\n',
-            get_res=False,
-        )
+        chan = channel.replace('channel', 'CHAN').encode('ascii')
+        self._cmd_send(b':WAVeform:SOURce ' + chan + b'\n', get_res=False)
 
+    @_ensure_connection
     def scales_read(self, channel):
         """Read the x/y scaling factors for the given channel.
 
@@ -355,6 +385,8 @@ class Keysight(Scope):
 
         Args:
             channel (str): Channel name, e.g. 'channel1'.
+            force_update_scale (bool, optional): If True, re-reads the
+                scaling factors for this channel even if already cached.
 
         Returns:
             tuple: (xinc, yinc, yor), the x increment, y increment
@@ -374,19 +406,10 @@ class Keysight(Scope):
         scales = (xinc, yinc, yor)
         if None in scales:
             raise ValueError('None returned in read_all_channel_scales')
+        self.channels_scales[channel] = scales
         return scales
 
-    def scales_update(self, channel):
-        """Read and store the x/y scales for the given channel.
-
-        Assumes a connection is already open (see connect()).
-
-        Args:
-            channel (str): Channel name, e.g. 'channel1'.
-        """
-        scales = self.scales_read(channel)
-        self.channels_scales[channel] = scales
-
+    @_ensure_connection
     def scales_update_all(self):
         """Read and store the x/y scales for all valid channels.
 
@@ -394,8 +417,9 @@ class Keysight(Scope):
         """
         self.channels_scales = {}
         for channel in self.valid_channels:
-            self.scales_update(channel)
+            self.scales_read(channel)
 
+    @_ensure_connection
     def wfm_config(self):
         """Configure the oscilloscope for waveform data acquisition.
 
@@ -407,21 +431,209 @@ class Keysight(Scope):
             str: The instrument identification string (*IDN?)
             response.
         """
-        idn = self._cmd_send(b'*IDN?\r\n')  # needed ?
         self._cmd_send(b":WAVeform:FORMat WORD\n", get_res=False)
         self._cmd_send(b":WAVeform:BYTeorder MSBF\n", get_res=False)
-        return idn
 
-    def wfm_init(self):
-        """Prepare the oscilloscope for waveform acquisition.
+    @_ensure_connection
+    def wfm_read_raw(self):
+        """Read the raw waveform data block from the oscilloscope.
 
-        Configures the acquisition format and, if not already done,
-        updates the x/y scales for all valid channels. Assumes a
-        connection is already open (see connect()).
+        Assumes a connection is already open (see connect()).
+
+        Returns:
+            bytes: Raw waveform data, as returned by the
+            oscilloscope (16-bit words, MSB-first).
         """
-        self.wfm_config()
-        if not self.channels_scales:
-            self.scales_update_all()
+        self._cmd_send(b":WAVeform:STReaming OFF\n", get_res=False)
+        self._cmd_send(b":WAVeform:DATA?\n", get_res=False)
+        datanum = self._read_block_header()
+        dataraw = b''
+        while len(dataraw) < datanum:
+            datasize = datanum - len(dataraw)
+            dataraw += self._cmd_recv(datasize)
+        self._cmd_recv(1)
+        return dataraw
+
+    @_ensure_connection
+    def wfm_read_channel(self, channel, force_update_scale=False):
+        """Read and scale waveform data for a specific channel.
+
+        Assumes a connection is already open (see connect()).
+
+        Args:
+            channel (str): Channel name, e.g. 'channel1'.
+            force_update_scale (bool, optional): If True, re-reads the
+                scaling factors for this channel even if already cached.
+
+        Returns:
+            tuple: (datax, datay), the time and amplitude arrays for
+            the channel, scaled to physical units.
+        """
+        self.channel_select(channel)
+
+        if channel not in self.channels_scales or force_update_scale:
+            self.scales_read(channel)
+
+        dataraw = self.wfm_read_raw()
+        xinc, yinc, yor = self.channels_scales[channel]
+        datax, datay = self._wfm_process_scales(dataraw, yinc, yor, xinc)
+        return datax, datay
+
+    @_ensure_connection
+    def wfm_read(self, channels=None):
+        """Read waveform data from one or more channels.
+
+        Assumes a connection is already open (see connect()).
+
+        Args:
+            channels (list of str, optional): Channel names to
+                read. Defaults to self.valid_channels.
+
+        Returns:
+            dict: Mapping of signal name (as configured for each
+            channel) to a (datax, datay) tuple.
+        """
+        channels = channels or self.valid_channels
+        waveforms = {}
+        for channel in channels:
+            datax, datay = self.wfm_read_channel(channel)
+            signal = getattr(self, channel)
+            waveforms[signal] = (datax, datay)
+        return waveforms
+
+    @_ensure_connection
+    def meas_read(self):
+        """Query and parse the measurement statistics from the oscilloscope.
+
+        Assumes a connection is already open (see connect()).
+
+        Returns:
+            dict or None: Parsed measurement statistics (see
+            Scope._process_meas), or None if the oscilloscope
+            returned no data.
+        """
+        meas = self._cmd_send(b":MEASure:RESults?\n")
+        if meas:
+            meas = self._process_meas(meas)
+            return meas
+        else:
+            return None
+
+    @_ensure_connection
+    def acquire(self, acq_meas=False, acq_wfms=False):
+        """Connect, acquire data, and disconnect from the oscilloscope.
+
+        Args:
+            acq_meas (bool, optional): If True, read measurement
+                statistics. Defaults to False.
+            acq_wfms (bool, optional): If True, read waveform data
+                from all valid channels. Defaults to False.
+
+        Returns:
+            tuple: (meas, wfms), where meas is the result of
+            meas_read (or an empty list if acq_meas is False) and
+            wfms is the result of wfm_read (or an empty dict if
+            acq_wfms is False).
+        """
+        meas = list()
+        wfms = dict()
+        if acq_meas:
+            meas = self.meas_read()
+        if acq_wfms:
+            self.wfm_config()
+            wfms = self.wfm_read()
+        return meas, wfms
+
+    @_ensure_connection
+    def setup_fetch(self):
+        """Connect, read the current setup, and disconnect.
+
+        Queries ':SYSTem:SETup?' and reads back the resulting
+        definite-length binary block, which encodes the
+        oscilloscope's entire current configuration. Opens and
+        closes the connection itself.
+
+        On Infiniium oscilloscopes, the returned block is an XML
+        document; use setup_to_text to inspect it.
+
+        Returns:
+            bytes: Raw setup data. Can be passed to setup_apply
+            later to restore this configuration.
+        """
+        self._cmd_send(b':SYSTem:SETup?\n', get_res=False)
+        datanum = self._read_block_header()
+        dataraw = b''
+        while len(dataraw) < datanum:
+            datasize = datanum - len(dataraw)
+            dataraw += self._cmd_recv(datasize)
+        self._cmd_recv(1)  # consome '\n' final
+        return dataraw
+
+    @_ensure_connection
+    def setup_apply(self, dataraw):
+        """Connect, apply a previously fetched setup, and disconnect.
+
+        Sends dataraw back to the oscilloscope via ':SYSTem:SETup',
+        restoring the configuration it was read from. Opens and
+        closes the connection itself.
+
+        Args:
+            dataraw (bytes): Setup data, as returned by
+                setup_fetch.
+        """
+        header = f'#{len(str(len(dataraw)))}{len(dataraw)}'.encode('ascii')
+        self._cmd_send(
+            b':SYSTem:SETup ' + header + dataraw + b'\n',
+            get_res=False,
+        )
+
+    @_ensure_connection
+    def setup_save_to_file(self, filename):
+        """Connect, save the current setup to a file, and disconnect.
+
+        Saves to a file on the oscilloscope's own local storage,
+        using ':DISK:SAVE:SETup'. Opens and closes the connection
+        itself.
+
+        Args:
+            filename (str): Name of the file to save the setup to.
+                If no extension is given, the oscilloscope appends
+                its default setup file extension.
+
+        Raises:
+            ValueError: If filename contains a double quote.
+        """
+        if '"' in filename:
+            raise ValueError('filename must not contain a double quote')
+        cmd = f':DISK:SAVE:SETup "{filename}"\n'.encode('ascii')
+        self._cmd_send(cmd, get_res=False)
+
+    @_ensure_connection
+    def setup_load_from_file(self, filename):
+        """Connect, load a setup from a file, and disconnect.
+
+        NOT YET IMPLEMENTED. The exact SCPI command to load a setup
+        file on this Infiniium oscilloscope (analogous to
+        ':DISK:SAVE:SETup' for saving) has not been confirmed
+        against the Programmer's Guide for this instrument's
+        firmware (this module was written against firmware
+        06.74.01101). Confirm the correct command (see Help >
+        Programmer's Guide on the oscilloscope itself) before
+        implementing this method.
+
+        Args:
+            filename (str): Name of the setup file to load.
+
+        Raises:
+            NotImplementedError: Always, until the command is
+                confirmed.
+        """
+        raise NotImplementedError(
+            'setup_load_from_file: SCPI command not yet confirmed '
+            'for this Infiniium firmware.'
+        )
+
+    # --- private methods ---
 
     def _read_block_header(self):
         """Read and parse an SCPI definite-length binary block header.
@@ -451,223 +663,24 @@ class Keysight(Scope):
         datanum = int(self._cmd_recv(num).decode('ascii'))
         return datanum
 
-    def wfm_read_raw(self):
-        """Read the raw waveform data block from the oscilloscope.
-
-        Assumes a connection is already open (see connect()).
-
-        Returns:
-            bytes: Raw waveform data, as returned by the
-            oscilloscope (16-bit words, MSB-first).
-        """
-        self._cmd_send(b":WAVeform:STReaming OFF\n", get_res=False)
-        self._cmd_send(b":WAVeform:DATA?\n", get_res=False)
-        datanum = self._read_block_header()
-        dataraw = b''
-        while len(dataraw) < datanum:
-            datasize = datanum - len(dataraw)
-            dataraw += self._cmd_recv(datasize)
-        # consome '\n' final
-        self._cmd_recv(1)
-        return dataraw
-
-    def wfm_read_channel(self, channel):
-        """Read and scale waveform data for a specific channel.
-
-        Assumes a connection is already open (see connect()).
-
-        Args:
-            channel (str): Channel name, e.g. 'channel1'.
-
-        Returns:
-            tuple: (datax, datay), the time and amplitude arrays for
-            the channel, scaled to physical units.
-        """
-        self.channel_select(channel)
-        dataraw = self.wfm_read_raw()
-        xinc, yinc, yor = self.channels_scales[channel]
-        datax, datay = self._wfm_process_scales(dataraw, yinc, yor, xinc)
-        return datax, datay
-
-    def wfm_read(self, channels=None):
-        """Read waveform data from one or more channels.
-
-        Assumes a connection is already open (see connect()).
-
-        Args:
-            channels (list of str, optional): Channel names to
-                read. Defaults to self.valid_channels.
-
-        Returns:
-            dict: Mapping of signal name (as configured for each
-            channel) to a (datax, datay) tuple.
-        """
-        channels = channels or self.valid_channels
-        waveforms = {}
-        for channel in channels:
-            datax, datay = self.wfm_read_channel(channel)
-            signal = getattr(self, channel)
-            waveforms[signal] = (datax, datay)
-        return waveforms
-
-    def setup_fetch(self):
-        """Connect, read the current setup, and disconnect.
-
-        Queries ':SYSTem:SETup?' and reads back the resulting
-        definite-length binary block, which encodes the
-        oscilloscope's entire current configuration. Opens and
-        closes the connection itself.
-
-        Returns:
-            bytes: Raw setup data. Can be passed to setup_apply
-            later to restore this configuration.
-        """
-        try:
-            self.connect()
-            self._cmd_send(b':SYSTem:SETup?\n', get_res=False)
-            datanum = self._read_block_header()
-            dataraw = b''
-            while len(dataraw) < datanum:
-                datasize = datanum - len(dataraw)
-                dataraw += self._cmd_recv(datasize)
-            self._cmd_recv(1)  # consome '\n' final
-        finally:
-            self.disconnect()
-        return dataraw
-
-    def setup_apply(self, dataraw):
-        """Connect, apply a previously fetched setup, and disconnect.
-
-        Sends dataraw back to the oscilloscope via ':SYSTem:SETup',
-        restoring the configuration it was read from. Opens and
-        closes the connection itself.
-
-        Args:
-            dataraw (bytes): Setup data, as returned by
-                setup_fetch.
-        """
-        header = f'#{len(str(len(dataraw)))}{len(dataraw)}'.encode('ascii')
-        try:
-            self.connect()
-            self._cmd_send(
-                b':SYSTem:SETup ' + header + dataraw + b'\n',
-                get_res=False,
-            )
-        finally:
-            self.disconnect()
-
-    def setup_save_to_file(self, filename):
-        """Connect, save the current setup to a file, and disconnect.
-
-        Saves to a file on the oscilloscope's own local storage.
-        Opens and closes the connection itself.
-
-        Args:
-            filename (str): Name of the file to save the setup to.
-                If an extension is given, it must be ".scp".
-
-        Raises:
-            ValueError: If filename contains a double quote.
-        """
-        if '"' in filename:
-            raise ValueError('filename must not contain a double quote')
-        cmd = f':SAVE:SETup "{filename}"\n'.encode('ascii')
-        try:
-            self.connect()
-            self._cmd_send(cmd, get_res=False)
-        finally:
-            self.disconnect()
-
-    def setup_load_from_file(self, filename):
-        """Connect, load a setup from a file, and disconnect.
-
-        Loads a file previously saved with setup_save_to_file, from
-        the oscilloscope's own local storage. Opens and closes the
-        connection itself.
-
-        Args:
-            filename (str): Name of the setup file to load.
-
-        Raises:
-            ValueError: If filename contains a double quote.
-        """
-        if '"' in filename:
-            raise ValueError('filename must not contain a double quote')
-        cmd = f':RECall:SETup "{filename}"\n'.encode('ascii')
-        try:
-            self.connect()
-            self._cmd_send(cmd, get_res=False)
-        finally:
-            self.disconnect()
-
-    def acquire(self, acq_meas=False, acq_wfms=False):
-        """Connect, acquire data, and disconnect from the oscilloscope.
-
-        Args:
-            acq_meas (bool, optional): If True, read measurement
-                statistics. Defaults to False.
-            acq_wfms (bool, optional): If True, read waveform data
-                from all valid channels. Defaults to False.
-
-        Returns:
-            tuple: (meas, wfms), where meas is the result of
-            meas_read (or an empty list if acq_meas is False) and
-            wfms is the result of wfm_read (or an empty dict if
-            acq_wfms is False).
-        """
-        meas = list()
-        wfms = dict()
-        try:
-            self.connect()
-            if acq_meas:
-                meas = self.meas_read()
-            if acq_wfms:
-                self.wfm_init()
-                wfms = self.wfm_read()
-        finally:
-            self.disconnect()
-
-        return meas, wfms
-
-    @staticmethod
-    def _wfm_process_scales(dataraw, yinc, yor, xinc):
-        """Convert raw 16-bit waveform samples into physical x/y arrays.
-
-        Args:
-            dataraw (bytes): Raw waveform bytes, as returned by
-                wfm_read_raw (16-bit samples, MSB-first).
-            yinc (float): Y-axis (amplitude) increment per ADC
-                count.
-            yor (float): Y-axis (amplitude) origin/offset.
-            xinc (float): X-axis (time) increment per sample.
-
-        Returns:
-            tuple: (datax, datay), the time and amplitude arrays.
-        """
-        dataraw = dataraw[0:-1]
-        va1 = _np.array(list(dataraw)[0::2])
-        va0 = _np.array(list(dataraw)[1::2])
-        va1 = va1[:va0.size]
-        datay = ((va1 << 8) + va0 - 2**16*(va1 >> 7)) * yinc + yor
-        datax = _np.arange(datay.size) * xinc
-        return datax, datay
+    def _cmd_recv_until(self, terminator=b'\n'):
+        """Read from socket until terminator is reached."""
+        buf = bytearray()
+        while True:
+            chunk = self._socket.recv(1)
+            if not chunk:
+                break
+            buf.extend(chunk)
+            if buf.endswith(terminator):
+                break
+        return bytes(buf)
 
     def _cmd_send(self, cmd, get_res=True):
-        """Send a SCPI command to the oscilloscope and optionally read the reply.
-
-        Args:
-            cmd (bytes): SCPI command to send.
-            get_res (bool, optional): If True, read and return the
-                response. Defaults to True.
-
-        Returns:
-            str or None: The decoded response, if get_res is True
-            and the socket is connected; otherwise None.
-        """
         if self._socket:
             self._socket.sendall(cmd)
             if get_res:
-                return self._cmd_recv(1024).decode('ascii')
+                res = self._cmd_recv_until(b'\n')
+                return res.decode('ascii').strip()
         return None
 
     def _cmd_recv(self, nrbytes):
@@ -687,70 +700,119 @@ class Keysight(Scope):
         else:
             raise ValueError('Communication socket is None!')
 
+    # @staticmethod
+    # def _wfm_process_scales(dataraw, yinc, yor, xinc):
+    #     """Convert raw 16-bit waveform samples into physical x/y arrays.
+
+    #     Args:
+    #         dataraw (bytes): Raw waveform bytes, as returned by
+    #             wfm_read_raw (16-bit samples, MSB-first).
+    #         yinc (float): Y-axis (amplitude) increment per ADC
+    #             count.
+    #         yor (float): Y-axis (amplitude) origin/offset.
+    #         xinc (float): X-axis (time) increment per sample.
+
+    #     Returns:
+    #         tuple: (datax, datay), the time and amplitude arrays.
+    #     """
+    #     dataraw = dataraw[0:-1]
+    #     va1 = _np.array(list(dataraw)[0::2])
+    #     va0 = _np.array(list(dataraw)[1::2])
+    #     va1 = va1[:va0.size]
+    #     datay = ((va1 << 8) + va0 - 2**16*(va1 >> 7)) * yinc + yor
+    #     datax = _np.arange(datay.size) * xinc
+    #     return datax, datay
+
+    @staticmethod
+    def _wfm_process_scales(dataraw, yinc, yor, xinc):
+        """Convert raw 16-bit waveform samples into physical x/y arrays.
+
+        Args:
+            dataraw (bytes): Raw waveform bytes, as returned by
+                wfm_read_raw (16-bit samples, MSB-first).
+            yinc (float): Y-axis (amplitude) increment per ADC
+                count.
+            yor (float): Y-axis (amplitude) origin/offset.
+            xinc (float): X-axis (time) increment per sample.
+
+        Returns:
+            tuple: (datax, datay), the time and amplitude arrays.
+        """
+        if len(dataraw) % 2 != 0:
+            dataraw = dataraw[:-1]
+
+        # >i2: Big-endian (MSBF), 16-bit signed integer
+        data = _np.frombuffer(dataraw, dtype='>i2')
+
+        datay = data * yinc + yor
+        datax = _np.arange(datay.size, dtype=float) * xinc
+        return datax, datay
+
 
 class Scopes:
-    """Keysight oscilloscopes names and IPs."""
+    """Oscilloscopes names and IPs."""
 
-    AS_DI_FCTDIG = Scope(
+    AS_DI_FCTDIG = Keysight(
         ipaddr='10.128.150.22',
         hostname='AS-DI-FCTDig.lnls-sirius.com.br',
         port=5025,
         scopename='AS_DI_FCTDIG',
         stats_fields=None,
     )
-    AS_DI_FPMDIG = Scope(
-            ipaddr='10.128.150.21',
-            hostname='AS-DI-FPMDig.lnls-sirius.com.br',
-            port=5025,
-            scopename='AS_DI_FPMDIG',
-            stats_fields=None,
+    AS_DI_FPMDIG = Keysight(
+        ipaddr='10.128.150.21',
+        hostname='AS-DI-FPMDig.lnls-sirius.com.br',
+        port=5025,
+        scopename='AS_DI_FPMDIG',
+        stats_fields=None,
     )
     LI_DI_ICTOSC = Keysight(
         ipaddr='10.128.1.150',
         hostname='li-di-ictosc.lnls-sirius.com.br',
         port=5025,
         scopename='LI_DI_ICTOSC',
+        model=ScopeModels.INFINNIUM1,
         stats_fields=Keysight.STATS_FIELDS1,
     )
-    LI_PU_OSC_MODLTR = Scope(
-            ipaddr='10.128.150.20',
-            hostname='KEYSIGH-QQI8MNR.abtlus.org.br',
-            port=5025,
-            scopename='LI_PU_OSC_MODLTR',
-            stats_fields=None,
+    LI_PU_OSC_MODLTR = Keysight(
+        ipaddr='10.128.150.20',
+        hostname='KEYSIGH-QQI8MNR.abtlus.org.br',
+        port=5025,
+        scopename='LI_PU_OSC_MODLTR',
+        stats_fields=None,
     )
-    TB_PU_OSC_INJBO = Scope(
+    TB_PU_OSC_INJBO = Keysight(
         ipaddr='10.128.101.70',
         hostname='TB-PU-Osc-InjBO.abtlus.org.br',
         port=5025,
         scopename='TB_PU_OSC_INJBO',
         stats_fields=None,
     )
-    TS_PU_OSC_EJEBO = Scope(
+    TS_PU_OSC_EJEBO = Keysight(
         ipaddr='10.128.120.70',
         hostname='TS-PU-Osc-EjeBO.abtlus.org.br',
         port=5025,
         scopename='TS_PU_OSC_EJEBO',
         stats_fields=None,
     )
-    SI_PU_OSC_INJSI = Scope(
-            ipaddr='10.128.101.71',
-            hostname='SI-PU-Osc-InjSI.abtlus.org.br',
-            port=5025,
-            scopename='SI_PU_OSC_INJSI',
-            stats_fields=None,
+    SI_PU_OSC_INJSI = Keysight(
+        ipaddr='10.128.101.71',
+        hostname='SI-PU-Osc-InjSI.abtlus.org.br',
+        port=5025,
+        scopename='SI_PU_OSC_INJSI',
+        stats_fields=None,
     )
 
     @staticmethod
     def get_scope(scopesignal):
-        """Return the Scope instance associated with a scope signal.
+        """Return the Keysight instance associated with a scope signal.
 
         Args:
             scopesignal (str or tuple): Signal name (as defined in
                 ScopeSignals) or an already-resolved signal tuple.
 
         Returns:
-            Scope: The Scope (or Keysight) instance whose scopename
+            Keysight: The Keysight instance whose scopename
             matches the signal.
         """
         if isinstance(scopesignal, str):
