@@ -13,26 +13,33 @@ import numpy as _np
 class ScopeSignals:
     """Mapping of physical signals to scope channels."""
 
-    SI_FILL_PATTERN = ('SI_FILL_PATTERN', 'AS_DI_FPMDIG', 'channel1')
-    BO_FILL_PATTERN = ('BO_FILL_PATTERN', 'AS_DI_FPMDIG', 'channel4')
+    TB_FCT = ('TB_FCT', 'AS_DI_FCT', 'channel1')
+    TS_FCT = ('TS_FCT', 'AS_DI_FCT', 'channel2')
+    TS_ICT1 = ('TS_ICT1', 'AS_DI_FCT', 'channel3')
+    TS_ICT2 = ('TS_ICT2', 'AS_DI_FCT', 'channel4')
 
-    TS_EJESEPTG_PULSE = ('TS_EJESEPTG_PULSE', 'TS_PU_OSC_EJEBO', 'channel1')
-    TS_EJESEPTF_PULSE = ('TS_EJESEPTF_PULSE', 'TS_PU_OSC_EJEBO', 'channel2')
-    BO_EJEKCKR_PULSE = ('BO_EJEKCKR_PULSE', 'TS_PU_OSC_EJEBO', 'channel3')
-    SI_PINGV_PULSE = ('SI_PINGV_PULSE', 'TS_PU_OSC_EJEBO', 'channel4')
+    SI_FILL = ('SI_FILL', 'AS_DI_FPM', 'channel1')
+    BO_FILL = ('BO_FILL', 'AS_DI_FPM', 'channel4')
 
-    LI_ICT1 = ('LI_ICT1', 'LI_DI_ICTOSC', 'channel1')
-    LI_ICT2 = ('LI_ICT2', 'LI_DI_ICTOSC', 'channel2')
-    TB_ICT1 = ('TB_ICT1', 'LI_DI_ICTOSC', 'channel3')
-    TB_ICT2 = ('TB_ICT2', 'LI_DI_ICTOSC', 'channel4')
+    LI_ICT1 = ('LI_ICT1', 'LI_DI_ICT', 'channel1')
+    LI_ICT2 = ('LI_ICT2', 'LI_DI_ICT', 'channel2')
+    TB_ICT1 = ('TB_ICT1', 'LI_DI_ICT', 'channel3')
+    TB_ICT2 = ('TB_ICT2', 'LI_DI_ICT', 'channel4')
 
-    TB_FCT = ('TB_FCT', 'AS_DI_FCTDIG', 'channel1')
-    TS_FCT = ('TS_FCT', 'AS_DI_FCTDIG', 'channel2')
-    TS_ICT1 = ('TS_ICT1', 'AS_DI_FCTDIG', 'channel3')
-    TS_ICT2 = ('TS_ICT2', 'AS_DI_FCTDIG', 'channel4')
+    LI_MODLTR1 = ('LI_MODLTR1', 'LI_PU_MODLTR', 'channel1')
+    LI_MODLTR2 = ('LI_MODLTR2', 'LI_PU_MODLTR', 'channel3')
 
-    MODLTR1_PULSE = ('MODLTR1_PULSE', 'LI_PU_OSC_MODLTR', 'channel1')
-    MODLTR2_PULSE = ('MODLTR2_PULSE', 'LI_PU_OSC_MODLTR', 'channel3')
+    TB_INJSEPT = ('TB_INJSEPT', 'TB_PU_INJBO', 'channel1')
+    BO_INJKCKR = ('BO_INJKCKR', 'TB_PU_INJBO', 'channel3')
+
+    TS_EJESEPTG = ('TS_EJESEPTG', 'TS_PU_EJEBO', 'channel1')
+    TS_EJESEPTF = ('TS_EJESEPTF', 'TS_PU_EJEBO', 'channel2')
+    BO_EJEKCKR = ('BO_EJEKCKR', 'TS_PU_EJEBO', 'channel3')
+    SI_PINGERV = ('SI_PINGERV', 'TS_PU_EJEBO', 'channel4')
+
+    SI_INJSEPG2 = ('SI_INJSEPG2', 'SI_PU_INJBO', 'channel1')
+    SI_INJSEPG1 = ('SI_INJSEPG1', 'SI_PU_INJBO', 'channel2')
+    SI_INJSEPF = ('SI_INJSEPF', 'SI_PU_INJBO', 'channel3')
 
     @staticmethod
     def get_scopesignal(scopesignal):
@@ -78,7 +85,7 @@ class ScopeSignals:
 
         Returns:
             str or None: The scope name (second element of the
-            tuple, e.g. 'LI_DI_ICTOSC'), or None if the signal could
+            tuple, e.g. 'LI_DI_ICT'), or None if the signal could
             not be resolved.
         """
         scopesignal = ScopeSignals.get_scopesignal(scopesignal)
@@ -99,15 +106,6 @@ class ScopeSignals:
         """
         scopesignal = ScopeSignals.get_scopesignal(scopesignal)
         return scopesignal[2] if scopesignal else None
-
-
-class ScopeModels:
-    """Oscilloscope model names."""
-    INFINNIUM1 = (
-        'Keysight DSOS104A Infiniium, '
-        'Softare version 06.74.01101, '
-        'Firmware version V29120001'
-    )
 
 
 def _ensure_connection(func):
@@ -200,7 +198,6 @@ class Scope:
         """
         strs = ''
         strs += f'{"scopename":<15s}: {self.scopename}'
-        strs += f'\n{"model":<15s}: {self.model}'
         strs += f'\n{"ipaddr":<15s}: {self.ipaddr}'
         strs += f'\n{"hostname":<15s}: {self.hostname}'
         strs += f'\n{"port":<15s}: {self.port}'
@@ -327,8 +324,7 @@ class Keysight(Scope):
 
     SOCKET_TIMEOUT = 10  # [s]
 
-    STATS_FIELDS1 = ('CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
-    STATS_FIELDS2 = ('CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT')
+    STATS_FIELDS1 = ('CURR', 'MEAN', 'MIN', 'MAX', 'RANGE', 'STD', 'COUNT')
 
     def __init__(self, *args, **kwargs):
         """Initialize the Keysight instance.
@@ -355,6 +351,17 @@ class Keysight(Scope):
         if self._socket:
             self._socket.close()
             self._socket = None
+
+    @_ensure_connection
+    def get_identification(self):
+        """Query and return the identification string (*IDN?) from the scope.
+
+        Returns:
+            str or None: Instrument identification response (e.g.
+            'KEYSIGHT TECHNOLOGIES,DSOS104A,MY12345678,06.74.01101'),
+            or None if no response was received.
+        """
+        return self._cmd_send(b"*IDN?\n")
 
     @_ensure_connection
     def channel_select(self, channel):
@@ -700,29 +707,6 @@ class Keysight(Scope):
         else:
             raise ValueError('Communication socket is None!')
 
-    # @staticmethod
-    # def _wfm_process_scales(dataraw, yinc, yor, xinc):
-    #     """Convert raw 16-bit waveform samples into physical x/y arrays.
-
-    #     Args:
-    #         dataraw (bytes): Raw waveform bytes, as returned by
-    #             wfm_read_raw (16-bit samples, MSB-first).
-    #         yinc (float): Y-axis (amplitude) increment per ADC
-    #             count.
-    #         yor (float): Y-axis (amplitude) origin/offset.
-    #         xinc (float): X-axis (time) increment per sample.
-
-    #     Returns:
-    #         tuple: (datax, datay), the time and amplitude arrays.
-    #     """
-    #     dataraw = dataraw[0:-1]
-    #     va1 = _np.array(list(dataraw)[0::2])
-    #     va0 = _np.array(list(dataraw)[1::2])
-    #     va1 = va1[:va0.size]
-    #     datay = ((va1 << 8) + va0 - 2**16*(va1 >> 7)) * yinc + yor
-    #     datax = _np.arange(datay.size) * xinc
-    #     return datax, datay
-
     @staticmethod
     def _wfm_process_scales(dataraw, yinc, yor, xinc):
         """Convert raw 16-bit waveform samples into physical x/y arrays.
@@ -752,55 +736,61 @@ class Keysight(Scope):
 class Scopes:
     """Oscilloscopes names and IPs."""
 
-    AS_DI_FCTDIG = Keysight(
+    AS_DI_FCT = Keysight(
         ipaddr='10.128.150.22',
         hostname='AS-DI-FCTDig.lnls-sirius.com.br',
         port=5025,
-        scopename='AS_DI_FCTDIG',
-        stats_fields=None,
+        scopename='AS_DI_FCT',
+        stats_fields=Keysight.STATS_FIELDS1,
     )
-    AS_DI_FPMDIG = Keysight(
+    AS_DI_FPM = Keysight(
         ipaddr='10.128.150.21',
         hostname='AS-DI-FPMDig.lnls-sirius.com.br',
         port=5025,
-        scopename='AS_DI_FPMDIG',
+        scopename='AS_DI_FPM',
         stats_fields=None,
     )
-    LI_DI_ICTOSC = Keysight(
+    LI_DI_ICT = Keysight(
         ipaddr='10.128.1.150',
         hostname='li-di-ictosc.lnls-sirius.com.br',
         port=5025,
-        scopename='LI_DI_ICTOSC',
-        model=ScopeModels.INFINNIUM1,
+        scopename='LI_DI_ICT',
         stats_fields=Keysight.STATS_FIELDS1,
     )
-    LI_PU_OSC_MODLTR = Keysight(
+    LI_PU_MODLTR = Keysight(
         ipaddr='10.128.150.20',
         hostname='KEYSIGH-QQI8MNR.abtlus.org.br',
         port=5025,
-        scopename='LI_PU_OSC_MODLTR',
-        stats_fields=None,
+        scopename='LI_PU_MODLTR',
+        stats_fields=Keysight.STATS_FIELDS1,
     )
-    TB_PU_OSC_INJBO = Keysight(
+    TB_PU_INJBO = Keysight(
         ipaddr='10.128.101.70',
         hostname='TB-PU-Osc-InjBO.abtlus.org.br',
         port=5025,
-        scopename='TB_PU_OSC_INJBO',
+        scopename='TB_PU_INJBO',
         stats_fields=None,
     )
-    TS_PU_OSC_EJEBO = Keysight(
+    TS_PU_EJEBO = Keysight(
         ipaddr='10.128.120.70',
         hostname='TS-PU-Osc-EjeBO.abtlus.org.br',
         port=5025,
-        scopename='TS_PU_OSC_EJEBO',
-        stats_fields=None,
+        scopename='TS_PU_EJEBO',
+        stats_fields=Keysight.STATS_FIELDS1,
     )
-    SI_PU_OSC_INJSI = Keysight(
+    TS_PU_INJSI = Keysight(
+        ipaddr='10.128.101.72',
+        hostname='TS-PU-Osc-InjSI.abtlus.org.br',
+        port=5025,
+        scopename='TS_PU_INJSI',
+        stats_fields=Keysight.STATS_FIELDS1,
+    )
+    SI_PU_INJSI = Keysight(
         ipaddr='10.128.101.71',
         hostname='SI-PU-Osc-InjSI.abtlus.org.br',
         port=5025,
-        scopename='SI_PU_OSC_INJSI',
-        stats_fields=None,
+        scopename='SI_PU_INJSI',
+        stats_fields=Keysight.STATS_FIELDS1,
     )
 
     @staticmethod

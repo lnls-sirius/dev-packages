@@ -1,3 +1,3 @@
 """Oscilloscope subpackage."""
 
-from .scopes import ScopeSignals, ScopeModels, Keysight, Scopes
+from .scopes import ScopeSignals, Keysight, Scopes
