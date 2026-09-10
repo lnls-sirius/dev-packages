@@ -3,7 +3,10 @@
 
 import base64 as _base64
 import functools as _functools
-import lzma as _lzma
+try:
+    import lzma as _lzma
+except ModuleNotFoundError:
+    pass
 import socket as _socket
 
 
