@@ -176,6 +176,7 @@ class Scope:
                 provided. Defaults to None.
             stats_fields (tuple, optional): Measurement statistics to
                 be collected. Defaults to None.
+
         """
         self.ipaddr = ipaddr
         self.hostname = hostname
@@ -335,9 +336,11 @@ class Keysight(Scope):
         Args:
             *args: Positional arguments forwarded to Scope.__init__.
             **kwargs: Keyword arguments forwarded to Scope.__init__.
+
         """
         Scope.__init__(self, *args, **kwargs)
         self._socket = None
+        self._wfm_configured = False
         self.channels_scales = {}
 
     def connect(self):
@@ -363,6 +366,7 @@ class Keysight(Scope):
             str or None: Instrument identification response (e.g.
             'KEYSIGHT TECHNOLOGIES,DSOS104A,MY12345678,06.74.01101'),
             or None if no response was received.
+
         """
         return self._cmd_send(b"*IDN?\n")
 
@@ -378,6 +382,7 @@ class Keysight(Scope):
 
         Raises:
             ValueError: If channel is not in self.valid_channels.
+
         """
         if channel not in self.valid_channels:
             raise ValueError('Invalid channel name "{}"'.format(channel))
@@ -405,6 +410,7 @@ class Keysight(Scope):
         Raises:
             ValueError: If any of xinc, yinc or yor could not be
                 read.
+
         """
         self.channel_select(channel)
         xinc = self._cmd_send(b":WAVeform:XINCrement?\n")
@@ -440,9 +446,12 @@ class Keysight(Scope):
         Returns:
             str: The instrument identification string (*IDN?)
             response.
+
         """
-        self._cmd_send(b":WAVeform:FORMat WORD\n", get_res=False)
-        self._cmd_send(b":WAVeform:BYTeorder MSBF\n", get_res=False)
+        if not self._wfm_configured:
+            self._cmd_send(b":WAVeform:FORMat WORD\n", get_res=False)
+            self._cmd_send(b":WAVeform:BYTeorder MSBF\n", get_res=False)
+            self._wfm_configured = True
 
     @_ensure_connection
     def wfm_read_raw(self):
@@ -453,6 +462,7 @@ class Keysight(Scope):
         Returns:
             bytes: Raw waveform data, as returned by the
             oscilloscope (16-bit words, MSB-first).
+
         """
         self._cmd_send(b":WAVeform:STReaming OFF\n", get_res=False)
         self._cmd_send(b":WAVeform:DATA?\n", get_res=False)
@@ -478,7 +488,9 @@ class Keysight(Scope):
         Returns:
             tuple: (datax, datay), the time and amplitude arrays for
             the channel, scaled to physical units.
+
         """
+        self.wfm_config()
         self.channel_select(channel)
 
         if channel not in self.channels_scales or force_update_scale:
@@ -502,7 +514,9 @@ class Keysight(Scope):
         Returns:
             dict: Mapping of signal name (as configured for each
             channel) to a (datax, datay) tuple.
+
         """
+        self.wfm_config()
         channels = channels or self.valid_channels
         waveforms = {}
         for channel in channels:
@@ -521,6 +535,7 @@ class Keysight(Scope):
             dict or None: Parsed measurement statistics (see
             Scope._process_meas), or None if the oscilloscope
             returned no data.
+
         """
         meas = self._cmd_send(b":MEASure:RESults?\n")
         if meas:
@@ -544,6 +559,7 @@ class Keysight(Scope):
             meas_read (or an empty list if acq_meas is False) and
             wfms is the result of wfm_read (or an empty dict if
             acq_wfms is False).
+
         """
         meas = list()
         wfms = dict()
@@ -569,6 +585,7 @@ class Keysight(Scope):
         Returns:
             bytes: Raw setup data. Can be passed to setup_apply
             later to restore this configuration.
+
         """
         self._cmd_send(b':SYSTem:SETup?\n', get_res=False)
         datanum = self._read_block_header()
@@ -590,6 +607,7 @@ class Keysight(Scope):
         Args:
             dataraw (bytes): Setup data, as returned by
                 setup_fetch.
+
         """
         header = f'#{len(str(len(dataraw)))}{len(dataraw)}'.encode('ascii')
         self._cmd_send(
@@ -616,6 +634,7 @@ class Keysight(Scope):
             ValueError: If the socket is not connected.
             RuntimeError: If the expected '#' marker is not
                 received.
+
         """
         if not self._socket:
             raise ValueError('socket is None')
@@ -658,6 +677,7 @@ class Keysight(Scope):
 
         Raises:
             ValueError: If the socket is not connected.
+
         """
         if self._socket:
             return self._socket.recv(nrbytes)
@@ -678,6 +698,7 @@ class Keysight(Scope):
 
         Returns:
             tuple: (datax, datay), the time and amplitude arrays.
+
         """
         if len(dataraw) % 2 != 0:
             dataraw = dataraw[:-1]
