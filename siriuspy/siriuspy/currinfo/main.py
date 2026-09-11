@@ -13,7 +13,7 @@ from ..callbacks import Callback as _Callback
 from ..clientarch import ClientArchiver as _ClientArch
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
-from ..oscilloscope import Keysight as _Keysight, Scopes as _Scopes
+from ..oscilloscope import Scopes as _Scopes
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
 from .csdev import Const as _Const, get_currinfo_database as _get_database
@@ -62,15 +62,7 @@ class _CurrInfoApp(_Callback):
 class _ASCurrInfoApp(_CurrInfoApp):
     """."""
 
-    INDICES1 = _get_namedtuple(
-        'Indices1',
-        ('NAME', 'CURR', 'STT', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
-    # Some scopes does not return STT.
-    INDICES2 = _get_namedtuple(
-        'Indices2',
-        ('NAME', 'CURR', 'MIN', 'MAX', 'AVG', 'STD', 'COUNT'))
-
-    OSC = _Scopes.LI_DI_ICTOSC
+    OSC = _Scopes.LI_DI_ICT
     ACC = ''
     ICT1 = ''
     ICT2 = ''
@@ -81,7 +73,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
 
-        self.osc_obj = _Keysight(scope=self.OSC)
+        self.osc_obj = self.OSC
 
     def process(self, interval):
         """."""
@@ -96,58 +88,32 @@ class _ASCurrInfoApp(_CurrInfoApp):
 
     def _get_measurement(self):
         try:
-            self.osc_obj.connect()
-            meas = self.osc_obj.send_command(b":MEASure:RESults?\n")
-            self._meas = meas.split(',')
+            self._meas = self.osc_obj.meas_read()
         except Exception as err:
             _log.error(str(err))
-        finally:
-            self.osc_obj.close()
 
     def _update_pvs(self, acc, ict1, ict2):
         """."""
         meas = self._meas
-        if not meas:
+        if not meas or meas is None:
             _log.warning('Measurement list is empty.')
             return
 
-        # Check if measurement for each ICT has the length we expect:
-        if not len(meas) % len(self.INDICES1):
-            indcs = self.INDICES1
-        elif not len(meas) % len(self.INDICES2):
-            indcs = self.INDICES2
-        else:
-            _log.warning(
-                'Measurement list size does not match required length.')
-            return
-
-        name = acc + '-ICT1'
-        idxict1 = [i for i, val in enumerate(meas) if name in val]
-        if not idxict1:
-            _log.warning(f'Could not find data for {name}.')
-            return
-        idxict1 = idxict1.pop()
-
-        name = acc + '-ICT2'
-        idxict2 = [i for i, val in enumerate(meas) if name in val]
-        if not idxict2:
-            _log.warning(f'Could not find data for {name}.')
-            return
-        idxict2 = idxict2.pop()
-
+        ict1key = [key for key in meas if acc in key and '1' in key][0]
+        ict2key = [key for key in meas if acc in key and '2' in key][0]
         try:
-            chg1 = float(meas[idxict1 + indcs.CURR]) * 1e9
-            ave1 = float(meas[idxict1 + indcs.AVG]) * 1e9
-            min1 = float(meas[idxict1 + indcs.MIN]) * 1e9
-            max1 = float(meas[idxict1 + indcs.MAX]) * 1e9
-            std1 = float(meas[idxict1 + indcs.STD]) * 1e9
-            cnt1 = int(float(meas[idxict1 + indcs.COUNT]))
-            chg2 = float(meas[idxict2 + indcs.CURR]) * 1e9
-            ave2 = float(meas[idxict2 + indcs.AVG]) * 1e9
-            min2 = float(meas[idxict2 + indcs.MIN]) * 1e9
-            max2 = float(meas[idxict2 + indcs.MAX]) * 1e9
-            std2 = float(meas[idxict2 + indcs.STD]) * 1e9
-            cnt2 = int(float(meas[idxict2 + indcs.COUNT]))
+            chg1 = meas[ict1key]['CURR'] * 1e9
+            ave1 = meas[ict1key]['MEAN'] * 1e9
+            min1 = meas[ict1key]['MIN'] * 1e9
+            max1 = meas[ict1key]['MAX'] * 1e9
+            std1 = meas[ict1key]['STD'] * 1e9
+            cnt1 = meas[ict1key]['COUNT']
+            chg2 = meas[ict2key]['CURR'] * 1e9
+            ave2 = meas[ict2key]['MEAN'] * 1e9
+            min2 = meas[ict2key]['MIN'] * 1e9
+            max2 = meas[ict2key]['MAX'] * 1e9
+            std2 = meas[ict2key]['STD'] * 1e9
+            cnt2 = meas[ict2key]['COUNT']
         except IndexError:
             _log.warning('Problem reading data.')
             return
@@ -177,7 +143,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
 class TSCurrInfoApp(_ASCurrInfoApp):
     """."""
 
-    OSC = _Scopes.AS_DI_FCTDIG
+    OSC = _Scopes.AS_DI_FCT
     ACC = 'TS'
     ICT1 = 'TS-01:DI-ICT'
     ICT2 = 'TS-04:DI-ICT'
@@ -186,7 +152,7 @@ class TSCurrInfoApp(_ASCurrInfoApp):
 class LICurrInfoApp(_ASCurrInfoApp):
     """Linac IOC will Also provide TB PVs."""
 
-    OSC_IP = _Scopes.LI_DI_ICTOSC
+    OSC_IP = _Scopes.LI_DI_ICT
     ACC = 'LI'
     LIICT1 = 'LI-01:DI-ICT-1'
     LIICT2 = 'LI-01:DI-ICT-2'

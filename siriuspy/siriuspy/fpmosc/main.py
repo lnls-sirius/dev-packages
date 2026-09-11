@@ -12,7 +12,7 @@ import scipy.signal as _scysig
 from ..callbacks import Callback as _Callback
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV
-from ..oscilloscope import Keysight as _Keysight, ScopeSignals as _ScopeSignals
+from ..oscilloscope import Scopes as _Scopes, ScopeSignals as _ScopeSignals
 from .csdev import Const as _Const, get_si_fpmosc_database as _get_database
 
 
@@ -31,9 +31,7 @@ class FPMOscApp(_Callback):
         self._fillpat_fid_offset = 0
         self._fillpat_update_time = 5  # [s]
         self._fillpat_ref = _np.ones(_Const.FP_HARM_NUM) / _Const.FP_HARM_NUM
-        self._fillpat_osc = _Keysight(
-            scopesignal=_ScopeSignals.SI_FILL_PATTERN
-        )
+        self._fillpat_osc = _Scopes.AS_DI_FPM
         self._fillpat_thread = None
 
         # pvs
@@ -120,7 +118,8 @@ class FPMOscApp(_Callback):
         bun_spacing = _np.arange(1, _Const.FP_HARM_NUM + 1) / frf * 1e9  # [ns]
 
         try:
-            tim, fill = self._fillpat_osc.wfm_get_data()
+            channel = _ScopeSignals.get_channel(_ScopeSignals.SI_FILL)
+            tim, fill = self._fillpat_osc.wfm_read_channel(channel)
             tim = tim[:_Const.FP_MAX_ARR_SIZE]
             fill = fill[:_Const.FP_MAX_ARR_SIZE]
         except Exception:
