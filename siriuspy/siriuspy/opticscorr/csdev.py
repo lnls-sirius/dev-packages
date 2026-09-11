@@ -337,7 +337,84 @@ def get_tune_database(acc):
         pvs_database['MeasConfigStatus-Mon'] = {
             'type': 'enum', 'enums': _et.MEAS_MON, 'value': _ct.MeasMon.Idle}
 
-        # SI Tune FeedBack: Loop settings
+        # Tune Measurement
+        pvs_database['TuneXSrc-Sel'] = {
+            'type': 'enum',
+            'enums': _ct.TuneSrc._fields,
+            'value': _ct.DEF_TUNESRC,
+        }
+        pvs_database['TuneXSrc-Sts'] = {
+            'type': 'enum',
+            'enums': _ct.TuneSrc._fields,
+            'value': _ct.DEF_TUNESRC,
+        }
+        pvs_database['TuneYSrc-Sel'] = {
+            'type': 'enum',
+            'enums': _ct.TuneSrc._fields,
+            'value': _ct.DEF_TUNESRC,
+        }
+        pvs_database['TuneYSrc-Sts'] = {
+            'type': 'enum',
+            'enums': _ct.TuneSrc._fields,
+            'value': _ct.DEF_TUNESRC,
+        }
+        pvs_database['TuneSrcPVList-Mon'] = {
+            'type': 'string',
+            'count': 2,
+            'value': _et.TUNE_SRC_PVS[_ct.DEF_TUNESRC],
+        }
+        pvs_database['TuneX-Mon'] = {
+            'type': 'float',
+            'value': 0.0,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999
+        }
+        pvs_database['TuneY-Mon'] = {
+            'type': 'float',
+            'value': 0.0,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999
+        }
+
+        # Reference Tunes
+        pvs_database['RefTuneX-SP'] = {
+            'type': 'float',
+            'value': _ct.DEF_REF_TUNEX,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
+        }
+        pvs_database['RefTuneX-RB'] = {
+            'type': 'float',
+            'value': _ct.DEF_REF_TUNEX,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
+        }
+        pvs_database['RefTuneY-SP'] = {
+            'type': 'float',
+            'value': _ct.DEF_REF_TUNEY,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
+        }
+        pvs_database['RefTuneY-RB'] = {
+            'type': 'float',
+            'value': _ct.DEF_REF_TUNEY,
+            'unit': 'Tune',
+            'prec': 6,
+            'lolim': 0.000001,
+            'hilim': 0.499999,
+        }
+
+        # Feedback: Loop settings
         pvs_database['LoopState-Sel'] = {
             'type': 'enum',
             'enums': _ct.LoopState._fields,
@@ -353,7 +430,7 @@ def get_tune_database(acc):
             'value': _ct.DEF_LOOPFREQ,
             'unit': 'Hz',
             'prec': 3,
-            'lolim': 1e-3,
+            'lolim': 0.001,
             'hilim': 12.0,
         }
         pvs_database['LoopFreq-RB'] = {
@@ -361,51 +438,10 @@ def get_tune_database(acc):
             'value': _ct.DEF_LOOPFREQ,
             'unit': 'Hz',
             'prec': 3,
-            'lolim': 1e-3,
+            'lolim': 0.001,
             'hilim': 12.0,
         }
-        # SI Tune FeedBack: Gotten Tunes
-        pvs_database['TuneX-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6,
-            'lolim': 0.000001, 'hilim': 0.499999}
-        pvs_database['TuneY-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6,
-            'lolim': 0.000001, 'hilim': 0.499999}
-
-        # SI Tune FeedBack: Reference Tunes
-        pvs_database['RefTuneX-SP'] = {
-            'type': 'float',
-            'value': _ct.DEF_REF_TUNEX,
-            'unit': 'Tune',
-            'prec': 6,
-            'lolim': 0.0001,
-            'hilim': 0.4999,
-        }
-        pvs_database['RefTuneX-RB'] = {
-            'type': 'float',
-            'value': _ct.DEF_REF_TUNEX,
-            'unit': 'Tune',
-            'prec': 6,
-            'lolim': 0.0001,
-            'hilim': 0.4999,
-        }
-        pvs_database['RefTuneY-SP'] = {
-            'type': 'float',
-            'value': _ct.DEF_REF_TUNEY,
-            'unit': 'Tune',
-            'prec': 6,
-            'lolim': 0.0001,
-            'hilim': 0.4999,
-        }
-        pvs_database['RefTuneY-RB'] = {
-            'type': 'float',
-            'value': _ct.DEF_REF_TUNEY,
-            'unit': 'Tune',
-            'prec': 6,
-            'lolim': 0.0001,
-            'hilim': 0.4999,
-        }
-        pvs_database['MaxTuneXErr-SP'] = {
+        pvs_database['LoopMaxTuneXErr-SP'] = {
             'type': 'float',
             'value': _ct.DEF_MAX_TUNE_ERR,
             'unit': 'Tune',
@@ -413,7 +449,7 @@ def get_tune_database(acc):
             'lolim': 0.000001,
             'hilim': 0.499999,
         }
-        pvs_database['MaxTuneXErr-RB'] = {
+        pvs_database['LoopMaxTuneXErr-RB'] = {
             'type': 'float',
             'value': _ct.DEF_MAX_TUNE_ERR,
             'unit': 'Tune',
@@ -421,7 +457,7 @@ def get_tune_database(acc):
             'lolim': 0.000001,
             'hilim': 0.499999,
         }
-        pvs_database['MaxTuneYErr-SP'] = {
+        pvs_database['LoopMaxTuneYErr-SP'] = {
             'type': 'float',
             'value': _ct.DEF_MAX_TUNE_ERR,
             'unit': 'Tune',
@@ -429,7 +465,7 @@ def get_tune_database(acc):
             'lolim': 0.000001,
             'hilim': 0.499999,
         }
-        pvs_database['MaxTuneYErr-RB'] = {
+        pvs_database['LoopMaxTuneYErr-RB'] = {
             'type': 'float',
             'value': _ct.DEF_MAX_TUNE_ERR,
             'unit': 'Tune',
@@ -437,7 +473,7 @@ def get_tune_database(acc):
             'lolim': 0.000001,
             'hilim': 0.499999,
         }
-        # SI Tune FeedBack: PID PVs
+        # Feedback: PID
         pvs_database['LoopPIDKpX-SP'] = {
             'type': 'float',
             'value': _ct.DEF_PID_KP,
@@ -534,45 +570,6 @@ def get_tune_database(acc):
             'lolim': -100,
             'hilim': 100,
         }
-
-        # SI Tune FeedBack: Tune measurement PV selection
-        pvs_database['TuneXSrc-Sel'] = {
-            'type': 'enum',
-            'enums': _ct.TuneSrc._fields,
-            'value': _ct.DEF_TUNESRC,
-        }
-        pvs_database['TuneXSrc-Sts'] = {
-            'type': 'enum',
-            'enums': _ct.TuneSrc._fields,
-            'value': _ct.DEF_TUNESRC,
-        }
-        pvs_database['TuneYSrc-Sel'] = {
-            'type': 'enum',
-            'enums': _ct.TuneSrc._fields,
-            'value': _ct.DEF_TUNESRC,
-        }
-        pvs_database['TuneYSrc-Sts'] = {
-            'type': 'enum',
-            'enums': _ct.TuneSrc._fields,
-            'value': _ct.DEF_TUNESRC,
-        }
-        pvs_database['TuneSrcPVList-Mon'] = {
-            'type': 'string',
-            'count': 2,
-            'value': _et.TUNE_SRC_PVS[_ct.DEF_TUNESRC],
-        }
-
-        # Simulation
-        pvs_database['FakeTuneX-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6}
-        pvs_database['FakeTuneY-Mon'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'Tune', 'prec': 6}
-        pvs_database['FakeNoiseAmp-SP'] = {
-            'type': 'float', 'value': 1.0, 'unit': 'Tune', 'prec': 6}
-        pvs_database['FakeNoiseAmp-RB'] = {
-            'type': 'float', 'value': 1.0, 'unit': 'Tune', 'prec': 6}
-        pvs_database['StoredEBeam-SP'] = {'type': 'int', 'value': 0}
-        pvs_database['StoredEBeam-RB'] = {'type': 'int', 'value': 0}
 
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database

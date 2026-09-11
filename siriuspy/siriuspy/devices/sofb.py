@@ -6,6 +6,8 @@ import numpy as _np
 
 from ..sofb.csdev import SOFBFactory
 from ..sofb.utils import si_calculate_bump as _si_calculate_bump
+from ..sofb.utils import filter_local_distortions as _filter_local_distortions
+from ..sofb.utils import find_closest_corrs_ss as _find_closest_corrs_ss
 from .device import Device as _Device
 
 
@@ -171,6 +173,11 @@ class TLSOFB(_Device):
         self._enum_setter('TrigAcqChan-Sel', value, self._data.TrigAcqChan)
 
     @property
+    def trigchannel_str(self):
+        """."""
+        return self._data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+
+    @property
     def respmat(self):
         """Raw response matrix."""
         return self['RespMat-RB'].reshape(self._data.nr_bpms * 2, -1)
@@ -190,9 +197,9 @@ class TLSOFB(_Device):
         return self['InvRespMat-Mon'].reshape(-1, self._data.nr_bpms * 2)
 
     @property
-    def trigchannel_str(self):
+    def orbstatus(self):
         """."""
-        return self._data.TrigAcqChan._fields[self['TrigAcqChan-Sts']]
+        return self['OrbStatus-Mon']
 
     @property
     def sp_trajx(self):
@@ -388,6 +395,11 @@ class TLSOFB(_Device):
     def trigacq(self):
         """."""
         return self['TrigAcqCtrl-Sts']
+
+    @property
+    def trigacq_str(self):
+        """."""
+        return self._data.TrigAcqCtrl._fields[self['TrigAcqCtrl-Sts']]
 
     @property
     def trigsamplepre(self):
@@ -1155,6 +1167,18 @@ class SISOFB(BOSOFB):
             'DriveState-Sts', self._data.DriveState.Open, timeout=timeout
         )
 
+    def filter_local_distortions(self, corr_idcs, dorb=None, respmat=None):
+        """Filters local distortions.
+
+        Returns orbit distortion due to local perturbation.
+        """
+        respmat = respmat or self.respmat
+        if dorb is None:
+            orb = _np.concatenate((self.orbx, self.orby))
+            dorb = orb - _np.concatenate((self.refx, self.refy))
+        dorb_filtered = _filter_local_distortions(corr_idcs, dorb, respmat)
+        return dorb_filtered
+
     @staticmethod
     def si_calculate_bumps(
         orbx,
@@ -1164,7 +1188,8 @@ class SISOFB(BOSOFB):
         agy=0,
         psx=0,
         psy=0,
-        n_bpms_out=3,
+        n_bpms_outx=3,
+        n_bpms_outy=3,
         minsingval=0.2,
     ):
         """."""
@@ -1176,9 +1201,15 @@ class SISOFB(BOSOFB):
             agy=agy,
             psx=psx,
             psy=psy,
-            n_bpms_out=n_bpms_out,
+            n_bpms_outx=n_bpms_outx,
+            n_bpms_outy=n_bpms_outy,
             minsingval=minsingval,
         )
+
+    def find_closest_corrs_ssection(self, ss, nr_ch, nr_cv, inc_rf=False):
+        """Find the closest correctors indices to a given sector indices in SOFB matrix."""
+        idcs_corrs = _find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=inc_rf)
+        return idcs_corrs
 
     @property
     def trajx(self):
