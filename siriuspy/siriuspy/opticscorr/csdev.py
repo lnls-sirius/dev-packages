@@ -573,5 +573,31 @@ def get_tune_database(acc):
             'hilim': 100,
         }
 
+    # Simulation PVs
+    pvs_database['FakeTuneX-Mon'] = {
+        'type': 'float',
+        'value': 0.0,
+        'unit': 'Tune',
+        'prec': 6,
+        'lolim': 0.000001,
+        'hilim': 0.499999
+    }
+    pvs_database['FakeTuneY-Mon'] = {
+        'type': 'float',
+        'value': 0.0,
+        'unit': 'Tune',
+        'prec': 6,
+        'lolim': 0.000001,
+        'hilim': 0.499999
+    }
+    pvs_database['StoredEBeam-SP'] = {
+        'type': 'int',
+        'value': 1,
+    }
+    pvs_database['StoredEBeam-RB'] = {
+        'type': 'int',
+        'value': 1,
+    }
+
     pvs_database = _csdev.add_pvslist_cte(pvs_database)
     return pvs_database
