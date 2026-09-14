@@ -641,7 +641,7 @@ class Keysight(Scope):
         marker = self._cmd_recv(1)
         if marker != b'#':
             raise RuntimeError(
-                f'Esperava "#", recebi {repr(marker)}')
+                f'Expected "#", but received "{repr(marker)}"')
         num = int(self._cmd_recv(1).decode('ascii'))
         datanum = int(self._cmd_recv(num).decode('ascii'))
         return datanum
@@ -736,7 +736,7 @@ class Scopes:
         stats_fields=Keysight.STATS_FIELDS1,
     )
     LI_PU_MODLTR = Keysight(
-        ipaddr='10.128.150.20',
+        ipaddr='10.128.150.150',
         hostname='KEYSIGH-QQI8MNR.abtlus.org.br',
         port=5025,
         scopename='LI_PU_MODLTR',

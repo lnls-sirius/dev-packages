@@ -10,10 +10,9 @@ class WfmProcess:
         """."""
         self._tim = tim
         self._wfm = wfm
-        (
-            self._wfm_maxmin,
-            (self._domain_tim, self._domain_idx)
-        ) = WfmProcess.calc_basic_params(self._tim, self._wfm)
+        (self._wfm_maxmin, (self._domain_tim, self._domain_idx)) = (
+            WfmProcess.calc_basic_params(self._tim, self._wfm)
+        )
 
     @property
     def tim(self):
