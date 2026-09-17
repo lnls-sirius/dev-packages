@@ -27,15 +27,20 @@ class Slit(_Device):
         # Negative edge
         'NegativeEdgePos-RB',
         'NegativeEdgePos-SP',
-        'NegativeEdgeCenter-RB',
-        'NegativeEdgeCenter-SP',
+        'NegEdgeInnerLim-RB',
+        'NegEdgeInnerLim-SP',
         'NegativeDoneMov-Mon',
         # Positive edge
         'PositiveEdgePos-RB',
         'PositiveEdgePos-SP',
-        'PositiveEdgeCenter-RB',
-        'PositiveEdgeCenter-SP',
+        'PosEdgeInnerLim-RB',
+        'PosEdgeInnerLim-SP',
         'PositiveDoneMov-Mon',
+        # Global limits
+        'LowOuterLim-RB',
+        'LowOuterLim-SP',
+        'HighOuterLim-RB',
+        'HighOuterLim-SP',
     )
 
     def __init__(self, devname, props2init='all'):
@@ -104,7 +109,7 @@ class Slit(_Device):
         return self['Width-SP']
 
     # ------------------------------------------------------------------
-    # Edge positions [mm]
+    # Edge positions and limits [mm]
     # ------------------------------------------------------------------
 
     @property
@@ -136,6 +141,36 @@ class Slit(_Device):
     def positive_edge_position_setpoint(self):
         """."""
         return self['PositiveEdgePos-SP']
+
+    @property
+    def low_outer_limit(self):
+        """Low outer limit readback [mm]."""
+        return self['LowOuterLim-RB']
+
+    @low_outer_limit.setter
+    def low_outer_limit(self, value):
+        """Set low outer limit [mm]."""
+        if value >= self.negative_edge_inner_limit:
+            text = 'Low outer limit must be smaller than the '
+            text += 'negative edge inner limit.'
+            raise ValueError(text)
+
+        self['LowOuterLim-SP'] = value
+
+    @property
+    def high_outer_limit(self):
+        """."""
+        return self['HighOuterLim-RB']
+
+    @high_outer_limit.setter
+    def high_outer_limit(self, value):
+        """."""
+        if value <= self.positive_edge_inner_limit:
+            text = 'High outer limit must be greater than the '
+            text += 'positive edge inner limit.'
+            raise ValueError(text)
+
+        self['HighOuterLim-SP'] = value
 
     def move_negative_edge(self, value):
         """."""
@@ -169,30 +204,6 @@ class Slit(_Device):
 
         if width is not None:
             self.width = width
-
-    # ------------------------------------------------------------------
-    # Edge center properties [mm]
-    # ------------------------------------------------------------------
-
-    @property
-    def negative_edge_center(self):
-        """."""
-        return self['NegativeEdgeCenter-RB']
-
-    @negative_edge_center.setter
-    def negative_edge_center(self, value):
-        """."""
-        self['NegativeEdgeCenter-SP'] = value
-
-    @property
-    def positive_edge_center(self):
-        """."""
-        return self['PositiveEdgeCenter-RB']
-
-    @positive_edge_center.setter
-    def positive_edge_center(self, value):
-        """."""
-        self['PositiveEdgeCenter-SP'] = value
 
     # ------------------------------------------------------------------
     # Home and motion synchronization
