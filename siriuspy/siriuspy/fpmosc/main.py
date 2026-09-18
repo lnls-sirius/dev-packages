@@ -31,6 +31,9 @@ class FPMOscApp(_Callback):
         self._fillpat_fid_offset = 0
         self._fillpat_update_time = 5  # [s]
         self._fillpat_ref = _np.ones(_Const.FP_HARM_NUM) / _Const.FP_HARM_NUM
+        self._fillpat_osc_chan = _ScopeSignals.get_channel(
+            _ScopeSignals.SI_FILL
+        )
         self._fillpat_osc = _Scopes.AS_DI_FPM
         self._fillpat_thread = None
 
@@ -118,7 +121,7 @@ class FPMOscApp(_Callback):
         bun_spacing = _np.arange(1, _Const.FP_HARM_NUM + 1) / frf * 1e9  # [ns]
 
         try:
-            channel = _ScopeSignals.get_channel(_ScopeSignals.SI_FILL)
+            channel = self._fillpat_osc_chan
             tim, fill = self._fillpat_osc.wfm_read_channel(channel)
             tim = tim[:_Const.FP_MAX_ARR_SIZE]
             fill = fill[:_Const.FP_MAX_ARR_SIZE]
