@@ -50,7 +50,7 @@ class ChromCorrApp(_BaseApp):
             self._psfam_intstr_rb_pvs[fam] = _PV(
                 pvname,
                 callback=self._callback_estimate_chrom,
-                connection_timeout=0.05)
+                connection_timeout=self._DEF_CONN_TIMEOUT)
 
         if self._acc == 'SI':
             # Connect to SI RF
@@ -226,28 +226,27 @@ class ChromCorrApp(_BaseApp):
         for fam_idx, fam in enumerate(self._psfams):
             sl_now = self._psfam_intstr_rb_pvs[fam].get()
             if sl_now is None:
-                self.run_callbacks(
-                    'Log-Mon',
-                    'ERR: Received a None value from {}'.format(fam))
+                msg = 'ERR:Received a None value from {}'.format(fam)
+                self._update_log(msg)
                 return False
             self._lastcalc_sl[fam] = sl_now + lastcalc_deltasl[fam_idx]
             self.run_callbacks('SL'+fam+'-Mon', self._lastcalc_sl[fam])
         self._estimate_calc_chrom()
 
-        self.run_callbacks('Log-Mon', 'Calculated SL values.')
+        self._update_log('INFO:Calculated SL values.')
         return True
 
     def _apply_corr(self):
         if self._is_status_ok():
             self._apply_intstrength(self._lastcalc_sl)
-            self.run_callbacks('Log-Mon', 'Applied correction.')
+            self._update_log('INFO:Applied correction.')
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._event_exttrig_cmd.put(0)
-                self.run_callbacks('Log-Mon', 'Generated trigger.')
+                self._update_log('INFO:Generated trigger.')
             return True
 
-        self.run_callbacks('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
+        self._update_log('ERR:ApplyDelta-Cmd failed.')
         return False
 
     def _get_optics_param(self):
@@ -274,19 +273,19 @@ class ChromCorrApp(_BaseApp):
         """Start chromaticity measurement."""
         cont = True
         if self._measuring_chrom:
-            log_msg = 'ERR: Chrom measurement already in progress!'
+            log_msg = 'ERR:Chrom measurement already in progress!'
             cont = False
         elif not self._tune_x_pv.connected or not self._tune_y_pv.connected:
-            log_msg = 'ERR: Cannot measure, tune PVs not connected!'
+            log_msg = 'ERR:Cannot measure, tune PVs not connected!'
             cont = False
         elif not self._rf_conn.connected:
-            log_msg = 'ERR: Cannot measure, RF PVs not connected!'
+            log_msg = 'ERR:Cannot measure, RF PVs not connected!'
             cont = False
         elif not self._is_storedebeam:
-            log_msg = 'ERR: Cannot measure, there is no stored beam!'
+            log_msg = 'ERR:Cannot measure, there is no stored beam!'
             cont = False
         if not cont:
-            self.run_callbacks('Log-Mon', log_msg)
+            self._update_log(log_msg)
             return False
 
         thread = _Thread(target=self._meas_chrom, daemon=True)
@@ -296,21 +295,18 @@ class ChromCorrApp(_BaseApp):
     def _stop_meas_chrom(self):
         """Stop chromaticity measurement."""
         if not self._measuring_chrom:
-            self.run_callbacks(
-                'Log-Mon', 'ERR: No chrom measurement occuring!')
+            self._update_log('ERR:No chrom measurement occuring!')
             return False
-        self.run_callbacks('Log-Mon', 'Aborting chrom measurement!')
+        self._update_log('INFO:Aborting chrom measurement!')
         self._measuring_chrom = False
         return True
 
     def _reset_meas_chrom(self):
         """Reset chromaticity measurement."""
         if self._measuring_chrom:
-            self.run_callbacks(
-                'Log-Mon', 'ERR: Status not reset, measure in progress!')
+            self._update_log('ERR:Status not reset, measure in progress!')
             return False
-        self.run_callbacks(
-            'Log-Mon', 'Reseting chrom measurement status!')
+        self._update_log('INFO:Reseting chrom measurement status!')
         self._meas_chrom_status = _Const.MeasMon.Idle
         self.run_callbacks('MeasChromStatus-Mon', self._meas_chrom_status)
         return True
@@ -321,7 +317,7 @@ class ChromCorrApp(_BaseApp):
         self.run_callbacks('MeasChromStatus-Mon', self._meas_chrom_status)
 
         self._measuring_chrom = True
-        self.run_callbacks('Log-Mon', 'Starting chrom measurement!')
+        self._update_log('Starting chrom measurement!')
 
         _, data = self._get_tunes()
         tunex0, tuney0 = data
@@ -340,16 +336,16 @@ class ChromCorrApp(_BaseApp):
                 log_msg = 'Stoped chrom measurement!'
                 aborted = True
             elif not self._is_storedebeam:
-                log_msg = 'ERR: Stoping chrom measurement, '\
+                log_msg = 'ERR:Stoping chrom measurement, '\
                           'there is no stored beam!'
                 aborted = True
             elif not self._tune_x_pv.connected or \
                     not self._tune_y_pv.connected:
-                log_msg = 'ERR: Stoping chrom measurement, '\
+                log_msg = 'ERR:Stoping chrom measurement, '\
                           'tune PVs not connected!'
                 aborted = True
             elif not self._rf_conn.connected:
-                log_msg = 'ERR: Stoping chrom measurement, '\
+                log_msg = 'ERR:Stoping chrom measurement, '\
                           'RF PVs not connected!'
                 aborted = True
             if aborted:
@@ -358,8 +354,8 @@ class ChromCorrApp(_BaseApp):
             self._rf_conn.frequency = value
             freq = self._get_rf_freq()
             freq_list.append(freq)
-            self.run_callbacks(
-                'Log-Mon', 'Delta RF: {} Hz'.format((freq-freq0)))
+            msg = 'INFO:Delta RF: {} Hz'.format((freq-freq0))
+            self._update_log(msg)
 
             _time.sleep(self._meas_chrom_wait_tune)
             sts, data = self._get_tunes()
@@ -367,20 +363,18 @@ class ChromCorrApp(_BaseApp):
                 tunex, tuney = data
                 tunex_list.append(tunex)
                 tuney_list.append(tuney)
-                self.run_callbacks(
-                    'Log-Mon', 'Delta Tune X: {}'.format(
-                        (tunex_list[-1]-tunex0)))
-                self.run_callbacks(
-                    'Log-Mon', 'Delta Tune Y: {}'.format(
-                        (tuney_list[-1]-tuney0)))
+                msg = f'INFO:Delta Tune X: {tunex_list[-1]-tunex0}'
+                self._update_log(msg)
+                msg = f'INFO:Delta Tune Y: {tuney_list[-1]-tuney0}'
+                self._update_log(msg)
             else:
-                log_msg = 'ERR: Could not measure tune!'
+                log_msg = 'ERR:Could not measure tune!'
                 aborted = True
                 break
 
-        self.run_callbacks('Log-Mon', 'Restoring RF frequency...')
+        self._update_log('INFO:Restoring RF frequency...')
         self._rf_conn.frequency = freq0
-        self.run_callbacks('Log-Mon', 'RF frequency restored!')
+        self._update_log('INFO:RF frequency restored!')
 
         if aborted:
             self._meas_chrom_status = _Const.MeasMon.Aborted
@@ -403,7 +397,7 @@ class ChromCorrApp(_BaseApp):
 
         self.run_callbacks('MeasChromStatus-Mon', self._meas_chrom_status)
         self._measuring_chrom = False
-        self.run_callbacks('Log-Mon', log_msg)
+        self._update_log(log_msg)
         return not aborted
 
     def _estimate_calc_chrom(self):
