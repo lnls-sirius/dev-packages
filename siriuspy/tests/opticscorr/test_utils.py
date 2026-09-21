@@ -9,6 +9,7 @@ from siriuspy.opticscorr.utils import HandleConfigNameFile
 
 
 PUB_INTERFACE = (
+    'FOLDER_LOGS',
     'HandleConfigNameFile',
     'get_default_config_name'
 )

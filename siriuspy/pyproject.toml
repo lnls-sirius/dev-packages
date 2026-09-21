@@ -59,6 +59,7 @@ fix = true
 
 [tool.ruff.format]
 skip-magic-trailing-comma = true
+quote-style = "single"
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false

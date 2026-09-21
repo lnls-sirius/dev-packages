@@ -2,6 +2,9 @@
 import os as _os
 
 
+FOLDER_LOGS = '/home/sirius/iocs-log/'
+
+
 class HandleConfigNameFile:
     """Class to handle config_name file."""
 
@@ -14,7 +17,7 @@ class HandleConfigNameFile:
                 "'opticsparam' must be 'tune' or 'chrom' instance.")
         self.acc = acc.lower()
         self.opticsparam = opticsparam
-        self.fpath = '/home/sirius/iocs-log/' + self.acc + '-ap-' + \
+        self.fpath = FOLDER_LOGS + self.acc + '-ap-' + \
             opticsparam+'corr/'
         self.fname = self.fpath + self.acc + '-' + opticsparam + 'corr.txt'
 
