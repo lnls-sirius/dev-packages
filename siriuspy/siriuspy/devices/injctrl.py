@@ -127,6 +127,17 @@ class InjCtrl(_Device):
         'BiasFBGPModPredBias-Mon',
         'BiasFBGPModPredInjCurrAvg-Mon',
         'BiasFBGPModPredInjCurrStd-Mon',
+        #  ----- topup standby & warmup -----
+        'TopUpLIWarmUpEnbl-Sel',
+        'TopUpLIWarmUpEnbl-Sts',
+        'TopUpBORFStandbyEnbl-Sel',
+        'TopUpBORFStandbyEnbl-Sts',
+        'TopUpBOInjKckrStandbyEnbl-Sel',
+        'TopUpBOInjKckrStandbyEnbl-Sts',
+        'TopUpBOEjeKckrStandbyEnbl-Sel',
+        'TopUpBOEjeKckrStandbyEnbl-Sts',
+        'TopUpTBInjSeptStandbyEnbl-Sel',
+        'TopUpTBInjSeptStandbyEnbl-Sts',
     )
 
     class DEVICES:
@@ -671,6 +682,53 @@ class InjCtrl(_Device):
     def biasfb_gpmodel_predct_bias(self):
         """Bias for bias FB GB model prediction."""
         return self['BiasFBGPModPredBias-Mon']
+
+    # ----- topup standby & warmup properties -----
+
+    @property
+    def topup_warmup_li_rf(self):
+        """LI PU/RF warm up."""
+        return self['TopUpLIWarmUpEnbl-Sts']
+
+    @topup_warmup_li_rf.setter
+    def topup_warmup_li_rf(self, value):
+        self._enum_setter('TopUpLIWarmUpEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_bo_rf(self):
+        """BO RF standby."""
+        return self['TopUpBORFStandbyEnbl-Sts']
+
+    @topup_standby_bo_rf.setter
+    def topup_standby_bo_rf(self, value):
+        self._enum_setter('TopUpBORFStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_bo_injkckr(self):
+        """BO InjKckcr standby."""
+        return self['TopUpBOInjKckrStandbyEnbl-Sts']
+
+    @topup_standby_bo_injkckr.setter
+    def topup_standby_bo_injkckr(self, value):
+        self._enum_setter('TopUpBOInjKckrStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_bo_ejekckr(self):
+        """BO EjeKckcr standby."""
+        return self['TopUpBOEjeKckrStandbyEnbl-Sts']
+
+    @topup_standby_bo_ejekckr.setter
+    def topup_standby_bo_ejekckr(self, value):
+        self._enum_setter('TopUpBOEjeKckrStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_tb_injsept(self):
+        """TB InjSept standby."""
+        return self['TopUpTBInjSeptStandbyEnbl-Sts']
+
+    @topup_standby_tb_injsept.setter
+    def topup_standby_tb_injsept(self, value):
+        self._enum_setter('TopUpTBInjSeptStandbyEnbl-Sel', value, self.OffOn)
 
     # ----- injection system properties -----
 
