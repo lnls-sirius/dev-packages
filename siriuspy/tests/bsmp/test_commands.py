@@ -16,7 +16,25 @@ from siriuspy.bsmp import (
     Variable,
     VariablesGroup,
 )
-from siriuspy.util import check_public_interface_namespace
+
+from siriuspy.bsmp import commands
+from siriuspy import util
+# from siriuspy.util import check_public_interface_namespace
+
+
+PUB_INTERFACE = (
+    'LOGGER',
+    'BSMP',
+)
+
+
+class TestModule(TestCase):
+    """Test module interface."""
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface_namespace(commands, PUB_INTERFACE)
+        self.assertTrue(valid)
 
 
 class TestBSMPAPI(TestCase):
@@ -50,7 +68,7 @@ class TestBSMPAPI(TestCase):
 
     def test_api(self):
         """Test API."""
-        self.assertTrue(check_public_interface_namespace(BSMP, self.api))
+        self.assertTrue(util.check_public_interface_namespace(BSMP, self.api))
 
 
 class TestBSMP0x0(TestCase):

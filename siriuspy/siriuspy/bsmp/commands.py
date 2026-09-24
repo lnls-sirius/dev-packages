@@ -1,6 +1,7 @@
 """BSMP protocol implementation."""
-import typing
+import typing as _typing
 
+from ..logging import get_logger as _get_logger
 from . import constants as _const
 from .entities import Entities as _Entities
 from .exceptions import SerialAnomResp as _SerialAnomResp
@@ -8,6 +9,9 @@ from .exceptions import SerialError as _SerialError
 from .serial import Channel as _Channel
 from .serial import IOInterface as _IOInterface
 from .serial import Message as _Message
+
+
+LOGGER = _get_logger()
 
 
 class BSMP:
@@ -41,14 +45,14 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def query_list_of_group_of_variables(self, timeout: float) -> typing.Tuple[int, typing.Optional[typing.List[typing.Tuple[bool, int]]]]:
+    def query_list_of_group_of_variables(self, timeout: float) -> _typing.Tuple[int, _typing.Optional[_typing.List[_typing.Tuple[bool, int]]]]:
         """Consult groups list. Command 0x04."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_LIST_OF_GROUP_OF_VARIABLES, \
             _const.CMD_LIST_OF_GROUP_OF_VARIABLES
 
         # build payload
-        payload: typing.List[str] = []
+        payload: _typing.List[str] = []
 
         # send request package
         try:
@@ -59,7 +63,7 @@ class BSMP:
 
         # expected response
         if res.cmd == ack:
-            groupdata: typing.List[typing.Tuple[bool, int]] = []
+            groupdata: _typing.List[_typing.Tuple[bool, int]] = []
             for groupchar in res.payload:
                 byte = ord(groupchar)
                 waccess = (byte & 0b10000000) > 0
@@ -74,7 +78,7 @@ class BSMP:
         self,
         group_id: int,
         timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[int]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[int]]]:
         """Return id of the variables in the given group."""
         # command and expected response
         cmd, ack = _const.CMD_QUERY_GROUP_OF_VARIABLES, \
@@ -114,7 +118,7 @@ class BSMP:
         self,
         var_id: int,
         timeout: float
-    ) -> typing.Union[typing.Tuple[None, None], typing.Tuple[int, typing.Any]]:
+    ) -> _typing.Union[_typing.Tuple[None, None], _typing.Tuple[int, _typing.Any]]:
         """Read variable."""
         # command and expected response
         cmd, ack = _const.CMD_READ_VARIABLE, _const.CMD_VARIABLE_VALUE
@@ -137,7 +141,8 @@ class BSMP:
 
             # unexpected variable size
             fmts = 'Unexpected BSMP variable size for command 0x{:02X}: {}!'
-            print(fmts.format(cmd, res.cmd))
+            logmsg = fmts.format(cmd, res.cmd)
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
             return None, None
 
         # anomalous response
@@ -210,9 +215,9 @@ class BSMP:
     # 0x3_
     def create_group_of_variables(
         self,
-        var_ids: typing.List[int],
+        var_ids: _typing.List[int],
         timeout: float
-    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[_typing.Optional[int], _typing.Optional[_typing.List[str]]]:
         """Create new group with given variable ids."""
         cmd, ack = \
             _const.CMD_CREATE_GROUP_OF_VARIABLES, _const.ACK_OK
@@ -236,9 +241,12 @@ class BSMP:
                 self.entities.add_group(var_ids)
                 return _const.ACK_OK, None
             # unexpected non-empty response payload
-            fmts = ('Unexpected BSMP non-empty resp payload '
-                    'for command 0x{:02X}: {}!')
-            print(fmts.format(cmd, res.cmd))
+            fmts = (
+                'Unexpected BSMP non-empty resp payload '
+                'for command 0x{:02X}: {}!'
+            )
+            logmsg = fmts.format(cmd, res.cmd)
+            LOGGER.warning(logmsg, extra={'to_logmon': True})
             return None, None
 
         # anomalous response
@@ -247,13 +255,13 @@ class BSMP:
     def remove_all_groups_of_variables(
         self,
         timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[str]]]:
         """Remove all groups."""
         cmd, ack = \
             _const.CMD_REMOVE_ALL_GROUPS_OF_VARIABLES, _const.ACK_OK
 
         # build payload
-        payload: typing.List[str] = []
+        payload: _typing.List[str] = []
 
         # send request package
         try:
@@ -279,7 +287,7 @@ class BSMP:
             block,
             timeout: float,
             print_error: bool = True
-    ) -> typing.Tuple[typing.Optional[int], typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[_typing.Optional[int], _typing.Optional[_typing.List[str]]]:
         """Read curve block."""
         # command and expected response
         cmd, ack = _const.CMD_REQUEST_CURVE_BLOCK, _const.CMD_CURVE_BLOCK
@@ -300,19 +308,41 @@ class BSMP:
             curve = self.entities.curves[curve_id]
             if len(data) % curve.type.size:
                 # unexpected curve size
-                fmts = ('Curve size is not multiple of curve.type.size!\n'
-                        ' received curce size: {}\n'
-                        ' curve.type.size: {}')
-                print(fmts.format(len(data), curve.type.size))
+                LOGGER.warning(
+                    'Curve size is not multiple of curve.type.size!',
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- received curve size : %d',
+                    len(data),
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- curve.type.size     : %d',
+                    curve.type.size,
+                    extra={'to_logmon': True},
+                )
                 return None, None
             cid = ord(res.payload[0])
             cblock = (ord(res.payload[1]) << 8) + ord(res.payload[2])
             if cid != curve_id or cblock != block:
                 # unexpected curve id or block number
-                fmts = ('Invalid curve id or block offset in response!\n'
-                        ' expected - curve_id:{}, block_offset:{}\n'
-                        ' received - curve_id:{}, block_offset:{}')
-                print(fmts.format(curve_id, block, cid, cblock))
+                LOGGER.warning(
+                    'Invalid curve id or block offset in response!',
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- expected, curve_id : %d, block_offset : %d',
+                    curve_id,
+                    block,
+                    extra={'to_logmon': True},
+                )
+                LOGGER.warning(
+                    '- received, curve_id : %d, block_offset : %d',
+                    cid,
+                    cblock,
+                    extra={'to_logmon': True},
+                )
                 return None, None
 
             # expected result
@@ -328,7 +358,7 @@ class BSMP:
             block,
             value,
             timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[str]]]:
         """Write to curve block."""
         # command and expected response
         cmd, ack = _const.CMD_CURVE_BLOCK, _const.ACK_OK
@@ -357,7 +387,7 @@ class BSMP:
         self,
         curve_id: int,
         timeout: float
-    ) -> typing.Tuple[int, typing.Optional[typing.List[str]]]:
+    ) -> _typing.Tuple[int, _typing.Optional[_typing.List[str]]]:
         """Recalculate curve checksum."""
         # command and expected response
         cmd, ack = \
@@ -388,7 +418,7 @@ class BSMP:
         timeout: float = _timeout_execute_function,
         read_flag: bool = True,
         print_error: bool = True
-    ) -> typing.Optional[typing.Tuple[int, typing.Optional[typing.Union[typing.List[str], str]]]]:
+    ) -> _typing.Optional[_typing.Tuple[int, _typing.Optional[_typing.Union[_typing.List[str], str]]]]:
         """Execute a function.
 
         parameter:
@@ -428,22 +458,25 @@ class BSMP:
             cmd, res.cmd, func_id=func_id, print_error=print_error)
 
     @staticmethod
-    def anomalous_response(cmd, ack: int, **kwargs) -> typing.Tuple[int, None]:
+    def anomalous_response(cmd, ack: int, **kwargs) -> _typing.Tuple[int, None]:
         """Print information about anomalous response."""
         # response with error
         if _const.ACK_OK < ack <= _const.ACK_RESOURCE_BUSY:
             if 'print_error' not in kwargs or kwargs['print_error']:
                 fmts = 'BSMP response (error) for command 0x{:02X}: 0x{:02X}!'
-                print(fmts.format(cmd, ack))
+                logmsg = fmts.format(cmd, ack)
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
                 for key, value in kwargs.items():
-                    print('{}: {}'.format(key, value))
+                    logmsg = ' - {}: {}'.format(key, value)
+                    LOGGER.warning(logmsg, extra={'to_logmon': True})
             return ack, None
 
         # unexpected response, raise Exception
         fmts = 'BSMP response (unexpected) for command 0x{:02X}: 0x{:02X}!'
         errmsg = fmts.format(cmd, ack)
         if 'print_error' not in kwargs or kwargs['print_error']:
-            print(errmsg)
+            LOGGER.warning(errmsg, extra={'to_logmon': True})
             for key, value in kwargs.items():
-                print('{}: {}'.format(key, value))
+                logmsg = ' - {}: {}'.format(key, value)
+                LOGGER.warning(logmsg, extra={'to_logmon': True})
         raise _SerialAnomResp(errmsg)
