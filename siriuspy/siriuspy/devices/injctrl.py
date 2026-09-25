@@ -130,14 +130,30 @@ class InjCtrl(_Device):
         #  ----- topup standby & warmup -----
         'TopUpLIWarmUpEnbl-Sel',
         'TopUpLIWarmUpEnbl-Sts',
+        'TopUpBOPSStandbyEnbl-Sel',
+        'TopUpBOPSStandbyEnbl-Sts',
         'TopUpBORFStandbyEnbl-Sel',
         'TopUpBORFStandbyEnbl-Sts',
         'TopUpBOInjKckrStandbyEnbl-Sel',
         'TopUpBOInjKckrStandbyEnbl-Sts',
         'TopUpBOEjeKckrStandbyEnbl-Sel',
         'TopUpBOEjeKckrStandbyEnbl-Sts',
+        'TopUpSIInjDpKckrStandbyEnbl-Sel',
+        'TopUpSIInjDpKckrStandbyEnbl-Sts',
+        'TopUpSIInjNLKckrStandbyEnbl-Sel',
+        'TopUpSIInjNLKckrStandbyEnbl-Sts',
         'TopUpTBInjSeptStandbyEnbl-Sel',
         'TopUpTBInjSeptStandbyEnbl-Sts',
+        'TopUpTSEjeSeptFStandbyEnbl-Sel',
+        'TopUpTSEjeSeptFStandbyEnbl-Sts',
+        'TopUpTSEjeSeptGStandbyEnbl-Sel',
+        'TopUpTSEjeSeptGStandbyEnbl-Sts',
+        'TopUpTSInjSeptFStandbyEnbl-Sel',
+        'TopUpTSInjSeptFStandbyEnbl-Sts',
+        'TopUpTSInjSeptG1StandbyEnbl-Sel',
+        'TopUpTSInjSeptG1StandbyEnbl-Sts',
+        'TopUpTSInjSeptG2StandbyEnbl-Sel',
+        'TopUpTSInjSeptG2StandbyEnbl-Sts',
     )
 
     class DEVICES:
@@ -695,6 +711,15 @@ class InjCtrl(_Device):
         self._enum_setter('TopUpLIWarmUpEnbl-Sel', value, self.OffOn)
 
     @property
+    def topup_standby_bo_ps(self):
+        """BO PS standby."""
+        return self['TopUpBOPSStandbyEnbl-Sts']
+
+    @topup_standby_bo_ps.setter
+    def topup_standby_bo_ps(self, value):
+        self._enum_setter('TopUpBOPSStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
     def topup_standby_bo_rf(self):
         """BO RF standby."""
         return self['TopUpBORFStandbyEnbl-Sts']
@@ -705,7 +730,7 @@ class InjCtrl(_Device):
 
     @property
     def topup_standby_bo_injkckr(self):
-        """BO InjKckcr standby."""
+        """BO InjKckr standby."""
         return self['TopUpBOInjKckrStandbyEnbl-Sts']
 
     @topup_standby_bo_injkckr.setter
@@ -714,12 +739,30 @@ class InjCtrl(_Device):
 
     @property
     def topup_standby_bo_ejekckr(self):
-        """BO EjeKckcr standby."""
+        """BO EjeKckr standby."""
         return self['TopUpBOEjeKckrStandbyEnbl-Sts']
 
     @topup_standby_bo_ejekckr.setter
     def topup_standby_bo_ejekckr(self, value):
         self._enum_setter('TopUpBOEjeKckrStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_si_injdpkckr(self):
+        """SI Inj DpKckr standby."""
+        return self['TopUpSIInjDpKckrStandbyEnbl-Sts']
+
+    @topup_standby_si_injdpkckr.setter
+    def topup_standby_si_injdpkckr(self, value):
+        self._enum_setter('TopUpSIInjDpKckrStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_si_injnlkckr(self):
+        """SI Inj NLKckr standby."""
+        return self['TopUpSIInjNLKckrStandbyEnbl-Sts']
+
+    @topup_standby_si_injnlkckr.setter
+    def topup_standby_si_injnlkckr(self, value):
+        self._enum_setter('TopUpSIInjNLKckrStandbyEnbl-Sel', value, self.OffOn)
 
     @property
     def topup_standby_tb_injsept(self):
@@ -729,6 +772,51 @@ class InjCtrl(_Device):
     @topup_standby_tb_injsept.setter
     def topup_standby_tb_injsept(self, value):
         self._enum_setter('TopUpTBInjSeptStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_ts_ejesept_f(self):
+        """TS EjeSeptF standby."""
+        return self['TopUpTSEjeSeptFStandbyEnbl-Sts']
+
+    @topup_standby_ts_ejesept_f.setter
+    def topup_standby_ts_ejesept_f(self, value):
+        self._enum_setter('TopUpTSEjeSeptFStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_ts_ejesept_g(self):
+        """TS EjeSeptG standby."""
+        return self['TopUpTSEjeSeptGStandbyEnbl-Sts']
+
+    @topup_standby_ts_ejesept_g.setter
+    def topup_standby_ts_ejesept_g(self, value):
+        self._enum_setter('TopUpTSEjeSeptGStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_ts_injsept_f(self):
+        """TS InjSeptF standby."""
+        return self['TopUpTSInjSeptFStandbyEnbl-Sts']
+
+    @topup_standby_ts_injsept_f.setter
+    def topup_standby_ts_injsept_f(self, value):
+        self._enum_setter('TopUpTSInjSeptFStandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_ts_injsept_g1(self):
+        """TS InjSeptG-1 standby."""
+        return self['TopUpTSInjSeptG1StandbyEnbl-Sts']
+
+    @topup_standby_ts_injsept_g1.setter
+    def topup_standby_ts_injsept_g1(self, value):
+        self._enum_setter('TopUpTSInjSeptG1StandbyEnbl-Sel', value, self.OffOn)
+
+    @property
+    def topup_standby_ts_injsept_g2(self):
+        """TS InjSeptG-2 standby."""
+        return self['TopUpTSInjSeptG2StandbyEnbl-Sts']
+
+    @topup_standby_ts_injsept_g2.setter
+    def topup_standby_ts_injsept_g2(self, value):
+        self._enum_setter('TopUpTSInjSeptG2StandbyEnbl-Sel', value, self.OffOn)
 
     # ----- injection system properties -----
 
