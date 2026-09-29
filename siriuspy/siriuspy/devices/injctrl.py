@@ -56,6 +56,8 @@ class InjCtrl(_Device):
         'BucketListStop-RB',
         'BucketListStep-SP',
         'BucketListStep-RB',
+        'AccumState-Sel',
+        'AccumState-Sts',
         'TopUpState-Sel',
         'TopUpState-Sts',
         'TopUpPeriod-SP',
@@ -415,6 +417,20 @@ class InjCtrl(_Device):
         self['BucketListAllowedMask-SP'] = _np.array(value, dtype=bool)
 
     # ----- injection mode properties -----
+
+    @property
+    def accum_state(self):
+        """Accum state (Off, Waiting, TurningOn, Injecting or TurningOff)."""
+        return self['AccumState-Sts']
+
+    @accum_state.setter
+    def accum_state(self, value):
+        self._enum_setter('AccumState-Sel', value, self.OffOn)
+
+    @property
+    def accum_state_str(self):
+        """Top-up state (Off, Waiting, TurningOn, Injecting or TurningOff)."""
+        return self.AccumSts._fields[self['AccumState-Sts']]
 
     @property
     def topup_state(self):
