@@ -113,6 +113,7 @@ class BiasFeedback:
         curr_tar = curr_avg / (1 - per / 2 / ltime)
         curr_end = curr_now / (1 + ahead_tim/ltime)
         dcurr = (curr_tar - curr_end) / nrpul
+        self.run_callbacks("GoalInjCurr-Mon", dcurr)
         return dcurr
 
     def get_bias_voltage(self, dcurr):

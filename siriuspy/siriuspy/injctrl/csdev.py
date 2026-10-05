@@ -639,5 +639,9 @@ def get_biasfb_database():
             'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
         'GPModPredInjCurrStd-Mon': {
             'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
+
+        # Missing comment
+        'GoalInjCurr-Mon': {
+            'type': 'float', 'value': 0.0, 'unit': 'mA'},
         }
     return {_ct.BIASFB_PROPTY_PREFIX+k: v for k, v in dbase.items()}
