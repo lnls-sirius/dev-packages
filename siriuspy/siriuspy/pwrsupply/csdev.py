@@ -791,6 +791,84 @@ class ETypes(_csdev.ETypes):
         'Bit20', 'Bit21', 'Bit22', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
+    SOFT_INTLCK_SWLSSIRIUS = (
+        'Falha no DCCT 1', 'Falha no DCCT 2',
+        'Alta diferenca entre DCCTs',
+        'Falha de leitura da corrente na carga do DCCT 1',
+        'Falha de leitura da corrente na carga do DCCT 2',
+        'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31',
+    )
+    HARD_INTLCK_SWLSSIRIUS = (
+        'Sobre-corrente na carga',
+        'Sobre-tensao no DC-Link',
+        'Sub-tensao no DC-Link',
+        'Contator K1 colado',
+        'Contator K2 colado',
+        'Abertura do contator K1',
+        'Abertura do contator K2',
+        'Interlock externo',
+        'Interlock da placa IIB',
+        'Interlock QDS',
+        'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31',
+    )
+    ALARMS_SWLSSIRIUS = ALARMS_FBP
+    IIB_ALARMS_SWLSSIRIUS = (
+        'Sobre-tensao de entrada',
+        'Sobre-tensao de saida',
+        'Sobre-corrente de entrada',
+        'Sobre-corrente de saida',
+        'Sobre-temperatura no dissipador da placa principal',
+        'Sobre-temperatura no dissipador do transformador',
+        'Sobre-temperatura no dissipador dos diodos',
+        'Sobre-temperatura no indutor de saida',
+        'Sobre-tensao dos drivers dos MOSFETs e placa auxiliar',
+        'Sobre-corrente nos drivers dos MOSFETs',
+        'Sobre-corrente na placa auxiliar',
+        'Alta corrente de fuga',
+        'Sobre-temperatura da placa IIB',
+        'Alta umidade relativa',
+        'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31',
+    )
+    IIB_INTLCK_SWLSSIRIUS = (
+        'Sobre-tensao de entrada',
+        'Sobre-tensao de saida',
+        'Sobre-corrente de entrada',
+        'Sobre-corrente de saida',
+        'Sobre-temperatura no dissipador da placa principal',
+        'Sobre-temperatura no dissipador do transformador',
+        'Sobre-temperatura no dissipador dos diodos',
+        'Sobre-temperatura no indutor de saida',
+        'Sobre-tensao dos drivers dos MOSFETs e placa auxiliar',
+        'Sobre-corrente nos drivers dos MOSFETs',
+        'Sobre-corrente na placa auxiliar',
+        'Alta corrente de fuga',
+        'Sobre-temperatura da placa IIB',
+        'Alta umidade relativa',
+        'Sobre-corrente no contator K1',
+        'Abertura do contator K1',
+        'Contator K1 colado',
+        'Abertura do contator K2',
+        'Contator K2 colado',
+        'Botao de emergencia',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31',
+    )
 
     CYCLE_TYPES = ['', ] * 5
     CYCLE_TYPES[_ConstPSBSMP.E_SIGGENTYPE_SINE] = 'Sine'
@@ -3012,6 +3090,170 @@ def _get_ps_REGATRON_DCLink_database():  # noqa: N802
     return dict()
 
 
+def _get_ps_SWLSSirius_propty_database():  # noqa: N802
+    propty_db = _get_ps_basic_propty_database()
+    db_ps = {
+        'IntlkSoftLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.SOFT_INTLCK_SWLSSIRIUS),
+            'value': _et.SOFT_INTLCK_SWLSSIRIUS,
+            'unit': 'interlock',
+        },
+        'IntlkHardLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.HARD_INTLCK_SWLSSIRIUS),
+            'value': _et.HARD_INTLCK_SWLSSIRIUS,
+            'unit': 'interlock',
+        },
+        'Alarms-Mon': {'type': 'int', 'value': 0},
+        'AlarmsLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.ALARMS_SWLSSIRIUS),
+            'value': _et.ALARMS_SWLSSIRIUS,
+        },
+        'Current1-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'Current2-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'CurrentError-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'DCLinkVoltage-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'V',
+        },
+        'FreqModulated-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'Hz',
+        },
+        'FreqModulatedCompensated-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'Hz',
+        },
+        'FreqModulatedFF-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'Hz',
+        },
+        'VoltageInputIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'V',
+        },
+        'VoltageOutputIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'V',
+        },
+        'CurrentInputIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'CurrentOutputIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'MainBoardHeatSinkTemperatureIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': 2,
+            'unit': 'C',
+        },
+        'TranformerHeatSinkTemperatureIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': 2,
+            'unit': 'C',
+        },
+        'DiodesHeatSinkTemperatureIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': 2,
+            'unit': 'C',
+        },
+        'OutputInductorTemperatureIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': 2,
+            'unit': 'C',
+        },
+        'AuxBoardDriverVoltageIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'V',
+        },
+        'DriverCurrentIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'AuxBoardCurrentIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'LeakCurrentIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': PS_CURRENT_PRECISION,
+            'unit': 'A',
+        },
+        'TemperatureIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'prec': 2,
+            'unit': 'C',
+        },
+        'RelativeHumidityIIB-Mon': {
+            'type': 'float',
+            'value': 0.0,
+            'unit': '%',
+        },
+        'IntlkIIB-Mon': {'type': 'int', 'value': 0, 'unit': 'interlock'},
+        'IntlkIIBLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_INTLCK_SWLSSIRIUS),
+            'value': _et.IIB_INTLCK_SWLSSIRIUS,
+            'unit': 'interlock',
+        },
+        'AlarmsIIB-Mon': {'type': 'int', 'value': 0},
+        'AlarmsIIBLabels-Cte': {
+            'type': 'string',
+            'count': len(_et.IIB_ALARMS_SWLSSIRIUS),
+            'value': _et.IIB_ALARMS_SWLSSIRIUS,
+        },
+    }
+    propty_db.update(db_ps)
+    return propty_db
+
+
 # --- Aux. ---
 
 
@@ -3070,6 +3312,7 @@ def _get_model_db(psmodel):
         'FOFB_PS': _get_ps_FOFB_propty_database,
         'APU': _get_id_apu_propty_database,
         'REGATRON_DCLink': _get_ps_REGATRON_DCLink_database,
+        'SWLSSirius': _get_ps_SWLSSirius_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]
