@@ -792,6 +792,41 @@ class EntitiesFAP_2P2S(EntitiesPS):
     )
 
 
+class EntitiesSWLSSirius(EntitiesPS):
+    """SWLSSirius-type power supply entities."""
+
+    _ps_variables = EntitiesPS._ps_variables + (
+        # --- SWLSSirius-specific variables
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 48, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 49, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 50, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 51, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 52, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+    )
+
+
 # --- Entities ACDC ---
 
 
