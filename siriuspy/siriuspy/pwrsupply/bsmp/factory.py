@@ -16,6 +16,7 @@ class PSBSMPFactory:
         'FAC_2P4S_ACDC': _cmd_bsmp.FAC_2P4S_ACDC,
         'FAP': _cmd_bsmp.FAP,
         'FAP_2P2S': _cmd_bsmp.FAP_2P2S,
+        'SWLSSirius': _cmd_bsmp.SWLSSirius,
         'FAP_4P': _cmd_bsmp.FAP_4P,
     }
 

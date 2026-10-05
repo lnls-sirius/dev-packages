@@ -23,6 +23,7 @@ class UDC:
         'FAP': _prucparms.PRUCParmsFAP,
         'FAP_4P': _prucparms.PRUCParmsFAP_4P,
         'FAP_2P2S': _prucparms.PRUCParmsFAP_2P2S,
+        'SWLSSirius': _prucparms.PRUCParmsSWLSSirius,
     }
 
     _soft_def = _np.zeros(_UDC_MAX_NR_DEV)
