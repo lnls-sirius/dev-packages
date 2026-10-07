@@ -1,6 +1,8 @@
 """Define PVs, constants and properties of Filling Pattern SoftIOCs."""
 
 from .. import csdev as _csdev
+from ..optics.constants import SI as _SI
+
 
 # --- Const class ---
 
@@ -9,7 +11,7 @@ class Const(_csdev.Const):
     """Const class defining Filling Pattern constants."""
 
     FP_MAX_ARR_SIZE = 40000
-    FP_HARM_NUM = 864
+    FP_HARM_NUM = _SI.harmonic_number
     FP_MAX_UPDT_TIME = 600  # [s]
     DEVNAME = 'SI-Glob:DI-FPMOsc'
 

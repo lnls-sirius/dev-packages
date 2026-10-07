@@ -1,8 +1,10 @@
 """Parameters of the IOCs of the AP discipline."""
 from copy import deepcopy as _dcopy
 
-_off = 0
-_on = 1
+from siriuspy.optics.constants import SI as _SI
+
+
+_SI_HARM_NR = _SI.harmonic_number
 
 
 def get_dict():
@@ -90,11 +92,11 @@ _si_bbb_l = [
     ['SI-Glob:DI-BbBProc-L:CSET3', [0.0]*31, 0.0],
     ['SI-Glob:DI-BbBProc-L:FB_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-L:CF_PATTERN', '', 0.0],
-    ['SI-Glob:DI-BbBProc-L:FB_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-L:CF_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-L:DRIVE0_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-L:DRIVE1_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-L:DRIVE2_MASK', [0]*864, 0.0],
+    ['SI-Glob:DI-BbBProc-L:FB_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-L:CF_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-L:DRIVE0_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-L:DRIVE1_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-L:DRIVE2_MASK', [0]*_SI_HARM_NR, 0.0],
     ['SI-Glob:DI-BbBProc-L:DRIVE0_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-L:DRIVE1_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-L:DRIVE2_PATTERN', '', 0.0],
@@ -128,17 +130,17 @@ _si_bbb_h = [
     ['SI-Glob:DI-BbBProc-H:CSET3', [0.0]*31, 0.0],
     ['SI-Glob:DI-BbBProc-H:FB_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-H:CF_PATTERN', '', 0.0],
-    ['SI-Glob:DI-BbBProc-H:FB_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-H:CF_MASK', [0]*864, 0.0],
+    ['SI-Glob:DI-BbBProc-H:FB_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-H:CF_MASK', [0]*_SI_HARM_NR, 0.0],
     ['SI-Glob:DI-BbBProc-H:CLEAN_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-H:CLEAN_ENABLE', 0, 0.0],
     ['SI-Glob:DI-BbBProc-H:CLEAN_PERIOD', 0.0, 0.0],
     ['SI-Glob:DI-BbBProc-H:CLEAN_SPAN', 0.0, 0.0],
     ['SI-Glob:DI-BbBProc-H:CLEAN_TUNE', 0.0, 0.0],
     ['SI-Glob:DI-BbBProc-H:CLEAN_AMPL', 0.0, 0.0],
-    ['SI-Glob:DI-BbBProc-H:DRIVE0_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-H:DRIVE1_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-H:DRIVE2_MASK', [0]*864, 0.0],
+    ['SI-Glob:DI-BbBProc-H:DRIVE0_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-H:DRIVE1_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-H:DRIVE2_MASK', [0]*_SI_HARM_NR, 0.0],
     ['SI-Glob:DI-BbBProc-H:DRIVE0_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-H:DRIVE1_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-H:DRIVE2_PATTERN', '', 0.0],
@@ -172,17 +174,17 @@ _si_bbb_v = [
     ['SI-Glob:DI-BbBProc-V:CSET3', [0.0]*31, 0.0],
     ['SI-Glob:DI-BbBProc-V:FB_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-V:CF_PATTERN', '', 0.0],
-    ['SI-Glob:DI-BbBProc-V:FB_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-V:CF_MASK', [0]*864, 0.0],
+    ['SI-Glob:DI-BbBProc-V:FB_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-V:CF_MASK', [0]*_SI_HARM_NR, 0.0],
     ['SI-Glob:DI-BbBProc-V:CLEAN_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-V:CLEAN_ENABLE', 0, 0.0],
     ['SI-Glob:DI-BbBProc-V:CLEAN_PERIOD', 0.0, 0.0],
     ['SI-Glob:DI-BbBProc-V:CLEAN_SPAN', 0.0, 0.0],
     ['SI-Glob:DI-BbBProc-V:CLEAN_TUNE', 0.0, 0.0],
     ['SI-Glob:DI-BbBProc-V:CLEAN_AMPL', 0.0, 0.0],
-    ['SI-Glob:DI-BbBProc-V:DRIVE0_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-V:DRIVE1_MASK', [0]*864, 0.0],
-    ['SI-Glob:DI-BbBProc-V:DRIVE2_MASK', [0]*864, 0.0],
+    ['SI-Glob:DI-BbBProc-V:DRIVE0_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-V:DRIVE1_MASK', [0]*_SI_HARM_NR, 0.0],
+    ['SI-Glob:DI-BbBProc-V:DRIVE2_MASK', [0]*_SI_HARM_NR, 0.0],
     ['SI-Glob:DI-BbBProc-V:DRIVE0_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-V:DRIVE1_PATTERN', '', 0.0],
     ['SI-Glob:DI-BbBProc-V:DRIVE2_PATTERN', '', 0.0],

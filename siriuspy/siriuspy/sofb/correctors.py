@@ -6,8 +6,11 @@ import traceback as _traceback
 
 import numpy as _np
 
+from mathphys import constants as _Const
+
 from .. import util as _util
 from ..epics import PV as _PV
+from ..optics.constants import SI as _SI, BO as _BO
 from ..thread import RepeaterThread as _Repeat
 from ..pwrsupply.csdev import Const as _PSConst
 from ..timesys.csdev import Const as _TIConst
@@ -466,7 +469,7 @@ class EpicsCorrectors(BaseCorrectors):
         if self.isring:
             self._corrs.append(RFCtrl(self.acc))
 
-        if self.acc == 'SI':
+        if self.acc == _SI:
             self.sync_kicks = self._csorb.CorrSync.Off
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
@@ -480,7 +483,7 @@ class EpicsCorrectors(BaseCorrectors):
         for cor in self._corrs:
             if not cor.connected:
                 return False
-        if self.acc == 'SI' and not self.timing.connected:
+        if self.acc == _SI and not self.timing.connected:
             return False
         return True
 
@@ -505,7 +508,7 @@ class EpicsCorrectors(BaseCorrectors):
             tout = timeout - (_time.time() - t0_)
             if tout <= 0 or not cor.wait_for_connection(tout):
                 return False
-        if self.acc != 'SI':
+        if self.acc != _SI:
             return True
         tout = timeout - (_time.time() - t0_)
         if tout <= 0 or not self.timing.wait_for_connection(tout):
@@ -521,7 +524,7 @@ class EpicsCorrectors(BaseCorrectors):
     def get_map2write(self):
         """Get the write methods of the class."""
         dbase = {"CorrConfig-Cmd": self.configure_correctors}
-        if self.acc == "SI":
+        if self.acc == _SI:
             dbase["CorrSync-Sel"] = self.set_corrs_mode
         return dbase
 
@@ -533,7 +536,7 @@ class EpicsCorrectors(BaseCorrectors):
         Will return 0 if all previous kick were implemented.
         Will return >0 indicating how many previous kicks were not implemented.
         """
-        if self.acc == "BO":
+        if self.acc == _BO:
             msg = "ERR: Cannot correct Orbit in Booster. Use Ramp Interface!"
             self._update_log(msg)
             _log.error(msg[5:])
@@ -589,7 +592,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def send_evt(self):
         """Send event method."""
-        if self.acc != "SI" or self.sync_kicks != self._csorb.CorrSync.Event:
+        if self.acc != _SI or self.sync_kicks != self._csorb.CorrSync.Event:
             return
         if not self.timing.connected:
             msg = "ERR: timing disconnected."
@@ -630,7 +633,7 @@ class EpicsCorrectors(BaseCorrectors):
                 # than zero not to take the inverse of 0. It will be 0 in case
                 # there is a failure to get the RF frequency from its PV.
                 rfv = corr_vals[-1]
-                circ = 1 / rfv * self._csorb.harm_number * 299792458
+                circ = 1 / rfv * self.acc.harmonic_number * _Const.light_speed
                 self.run_callbacks("KickRF-Mon", rfv)
                 self.run_callbacks("OrbLength-Mon", circ)
         except Exception as err:
@@ -702,13 +705,13 @@ class EpicsCorrectors(BaseCorrectors):
                 _log.error(msg[5:])
                 continue
             # Do not configure opmode in BO corrs because they are ramping.
-            if self.acc == "BO":
+            if self.acc == _BO:
                 corr.state = True
                 continue
             corr.configure()
         if not self.isring:
             return True
-        if self.acc == "SI" and self.sync_kicks != self._csorb.CorrSync.Off:
+        if self.acc == _SI and self.sync_kicks != self._csorb.CorrSync.Off:
             if not self.timing.configure():
                 msg = "ERR: Failed to configure timing"
                 self._update_log(msg)
@@ -717,7 +720,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def _update_status(self):
         status = 0b0000111
-        if self.acc == "SI":
+        if self.acc == _SI:
             status = 0b1111111
         elif self.isring:
             status = 0b0011111
@@ -731,13 +734,13 @@ class EpicsCorrectors(BaseCorrectors):
         )
         # Do not check mode of BO correctors because they are ramping.
         opmode_ok = True
-        if self.acc != "BO":
+        if self.acc != _BO:
             opmode_ok = all(corr.opmode_ok for corr in chcvs)
         status = _util.update_bit(status, bit_pos=1, bit_val=not opmode_ok)
         status = _util.update_bit(
             status, bit_pos=2, bit_val=not all(corr.state for corr in chcvs)
         )
-        if self.acc == "SI" and self.sync_kicks != self._csorb.CorrSync.Off:
+        if self.acc == _SI and self.sync_kicks != self._csorb.CorrSync.Off:
             tim_conn = self.timing.connected
             tim_conf = self.timing.is_ok
         else:

@@ -3,6 +3,7 @@ from copy import deepcopy as _dcopy
 
 import numpy as _np
 
+from siriuspy.optics.constants import SI as _SI
 from siriuspy.pwrsupply.csdev import \
     DEFAULT_WFM_FBP as _DEFAULT_WFM_FBP, \
     MAX_WFMSIZE_FBP as _MAX_WFMSIZE_FBP, \
@@ -11,9 +12,8 @@ from siriuspy.pwrsupply.csdev import \
 from siriuspy.clientconfigdb.types.as_diagnostics import _bpms
 
 
-_OFF = 0
-_ON = 1
 _SLOWREF = 0
+_SI_HARM_NR = _SI.harmonic_number
 
 
 def get_dict():
@@ -2714,7 +2714,7 @@ _pvs_si_septff = [
 _pvs_as_injection = [
     [
         'AS-Glob:AP-InjCtrl:BucketListAllowedMask-SP',
-        _np.ones(864, dtype=int),
+        _np.ones(_SI_HARM_NR, dtype=int),
         0.0
     ],
 ]

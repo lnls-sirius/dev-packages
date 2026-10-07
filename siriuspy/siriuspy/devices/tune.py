@@ -74,9 +74,11 @@ class TuneFrac(_Device):
 
     @rev_harmonic.setter
     def rev_harmonic(self, value):
+        """Revolution harmonic."""
         value = int(value)
-        if value <= 0:
-            raise ValueError('rev_harmonic must be positive')
+        hnumber = _SI.harmonic_number
+        if not 0 <= value <= hnumber:
+            raise ValueError(f'rev_harmonic must be in range [0, {hnumber}]')
         self['RevN-SP'] = value
 
     @property

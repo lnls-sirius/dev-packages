@@ -6,6 +6,11 @@ import numpy as _np
 from ..diagbeam.bpm.csdev import Const as _CSBPM
 from ..envars import VACA_PREFIX as LL_PREF
 from ..epics import PV as _PV
+from ..optics.constants import (
+    SI as _SI,
+    BO as _BO,
+    accelerators as _accelerators,
+)
 from ..search import HLTimeSearch as _HLTimesearch
 from ..timesys.csdev import Const as _TIConst
 from .base_class import BaseTimingConfig as _BaseTimingConfig
@@ -18,7 +23,8 @@ class BPM(_BaseTimingConfig):
 
     def __init__(self, name, callback=None):
         """."""
-        super().__init__(name[:2], callback)
+        acc = _accelerators[name[:2]]
+        super().__init__(acc, callback)
         self.has_news = True
 
         self._name = name
@@ -63,7 +69,7 @@ class BPM(_BaseTimingConfig):
             "SwPhaseSyncEn": _CSBPM.DsblEnbl.enabled,  # Enable Switching sync
             "TestDataEn": _CSBPM.DsblEnbl.disabled,
         }
-        if self._name.sec in {'SI', 'BO'}:
+        if self.acc in {_SI, _BO}:
             self._config_ok_vals["ACQChannel"] = _CSBPM.AcqChan.TbT
         pvs = {
             "SwMode": "SwMode-Sel",
@@ -187,7 +193,7 @@ class BPM(_BaseTimingConfig):
     @property
     def adcfreq(self):
         """."""
-        defv = 218446014.0 if self._csorb.acc == "BO" else 220870069.0
+        defv = 218446014.0 if self.acc == _BO else 220870069.0
         pvobj = self._config_pvs_rb["INFOClkFreq"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
@@ -195,7 +201,7 @@ class BPM(_BaseTimingConfig):
     @property
     def tbtrate(self):
         """."""
-        defv = 362 if self._csorb.acc == "BO" else 382
+        defv = 362 if self.acc == _BO else 382
         pvobj = self._config_pvs_rb["INFOTbTRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
@@ -208,7 +214,7 @@ class BPM(_BaseTimingConfig):
     @property
     def fofbrate(self):
         """."""
-        defv = (362 if self._csorb.acc == "BO" else 382) * 24
+        defv = (362 if self.acc == _BO else 382) * 24
         pvobj = self._config_pvs_rb["INFOFOFBRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
@@ -221,7 +227,7 @@ class BPM(_BaseTimingConfig):
     @property
     def monitrate(self):
         """."""
-        defv = (362 if self._csorb.acc == "BO" else 382) * 59904
+        defv = (362 if self.acc == _BO else 382) * 59904
         pvobj = self._config_pvs_rb["INFOMONITRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
@@ -234,7 +240,7 @@ class BPM(_BaseTimingConfig):
     @property
     def facqrate(self):
         """."""
-        defv = (362 if self._csorb.acc == "BO" else 382) * 603
+        defv = (362 if self.acc == _BO else 382) * 603
         pvobj = self._config_pvs_rb["INFOFAcqRate"]
         val = pvobj.value if pvobj.connected else defv
         return val if val else defv
