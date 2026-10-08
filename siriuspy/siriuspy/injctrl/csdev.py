@@ -640,7 +640,8 @@ def get_biasfb_database():
         'GPModPredInjCurrStd-Mon': {
             'type': 'float', 'count': 100, 'value': [0]*100, 'unit': 'mA'},
 
-        # Missing comment
+        # Calculated target injection current required to sustain Top-Up
+        # Used in Bias x InjCurr plots
         'TargetInjCurr-Mon': {
             'type': 'float', 'value': 0.0, 'unit': 'mA'},
         }
