@@ -116,6 +116,20 @@ class BiasFeedback:
         self.run_callbacks("TargetInjCurr-Mon", dcurr)
         return dcurr
 
+    @staticmethod
+    def get_delta_current(
+            topup_period=1,
+            nr_pulses=1,
+            target_current=200,
+            lifetime=9 * 3600
+        ):
+        """."""
+        ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, lifetime)
+        frac = (topup_period * 60) / ltime
+        dcurr = target_current * frac / (1 + frac)
+        dcurr /= nr_pulses
+        return dcurr
+
     def get_bias_voltage(self, dcurr):
         """."""
         dcurr = max(0, dcurr)
