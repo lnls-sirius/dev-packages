@@ -343,12 +343,20 @@ class FamBPMs(_DeviceSet):
         orby = _np.array(orby)
         return orbx, orby
 
-    def get_mturn_signals(self):
+    def get_mturn_signals(self, return_raw=False):
         """Get Multiturn signals matrices.
 
+        Args:
+            return_raw: Whether to return raw data from BPMs or pre-processed
+                data by cutting larger acquisitions to the size of the
+                smallest one and aranging them in numpy.ndarrays. Apart from
+                cutting the array sizes, no other processing is made when this
+                option is True. Defaults to True
         Returns:
-            list: Each component of the list is an numpy.ndarray with shape
-                (N, 160), containing the values for the signals acquired.
+            list: If return_raw is False, each component of the list is an
+                numpy.ndarray with shape (N, 160), containing the values for
+                the signals acquired. If return_raw is True, then a list of
+                lists of numpy.ndarrays is returned.
 
         """
         sigs = [[] for _ in self._mturn_signals2acq]
@@ -360,6 +368,9 @@ class FamBPMs(_DeviceSet):
                 name = 'mt_' + ('ampl' if sn in 'abcd' else 'pos') + sn
                 sigs[i].append(getattr(bpm, name))
             mini = min(mini, _np.min([s[-1].size for s in sigs]))
+
+        if return_raw:
+            return sigs
 
         for i, sig in enumerate(sigs):
             for j, s in enumerate(sig):
