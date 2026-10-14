@@ -351,9 +351,9 @@ class FamBPMs(_DeviceSet):
                 data by cutting larger acquisitions to the size of the
                 smallest one and aranging them in numpy.ndarrays. Apart from
                 cutting the array sizes, no other processing is made when this
-                option is True. Defaults to True
+                option is True. Defaults to False.
         Returns:
-            list: If return_raw is False, each component of the list is an
+            list: If return_raw is False, each component of the list is a
                 numpy.ndarray with shape (N, 160), containing the values for
                 the signals acquired. If return_raw is True, then a list of
                 lists of numpy.ndarrays is returned.
