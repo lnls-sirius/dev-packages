@@ -679,7 +679,7 @@ class FamBPMs(_DeviceSet):
             tsmp = self.get_mturn_timestamps()
             if tsmp.shape != tsmp0.shape:
                 return -2
-            errors = _np.array_equal(tsmp, tsmp0)
+            errors = _np.equal(tsmp, tsmp0)
             if not _np.any(errors):
                 return 0
             _time.sleep(0.1)
