@@ -1585,8 +1585,7 @@ class App(_Callback):
             cond &= bool(self._bias_feedback.loop_state)
             cond &= not self._bias_feedback.already_set
             if cond and self.currinfo_dev.connected:
-                self._update_target_injcurr()
-                dcur = self._topup_last_target_injcurr
+                dcur = self._get_and_update_target_injcurr()
                 self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
@@ -1684,7 +1683,7 @@ class App(_Callback):
             borf.disable_triggers()
         self._update_log('BO RF timing configured.')
 
-    def _update_target_injcurr(self):
+    def _get_and_update_target_injcurr(self):
         period = self._topup_period
         nr_pulses = self._topup_nrpulses
         target_current = self._target_current
@@ -1698,7 +1697,7 @@ class App(_Callback):
             ahead_time=_Const.BIASFB_AHEADSETIME,
         )
         self.run_callbacks('TopUpTgtInjCurr-Mon', dcur)
-        self._update_avg_injcurr(
+        self._get_and_update_ideal_injcurr(
             topup_period=period,
             nr_pulses=nr_pulses,
             target_avg_current=target_current,
@@ -1706,15 +1705,18 @@ class App(_Callback):
         )
         return dcur
 
+    def _get_and_update_ideal_injcurr(self, **kwargs):
         period = kwargs.get('topup_period', self._topup_period)
         target_current = kwargs.get('target_avg_current', self._target_current)
         nr_pulses = kwargs.get('nr_pulses', self._topup_nrpulses)
         lifetime = kwargs.get('lifetime', self.currinfo_dev.lifetime)
+        dcur = self._bias_feedback.get_ideal_delta_current_per_pulse(
             topup_period=period,
             nr_pulses=nr_pulses,
             target_avg_current=target_current,
             lifetime=lifetime,
         )
+        self.run_callbacks('TopUpIdealInjCurr-Mon', dcur)
         return dcur
 
     # --- auxiliary log methods ---

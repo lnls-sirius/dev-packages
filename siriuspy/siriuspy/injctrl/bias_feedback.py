@@ -116,7 +116,7 @@ class BiasFeedback:
         return dcurr
 
     @staticmethod
-    def get_avg_delta_current_per_pulse(
+    def get_ideal_delta_current_per_pulse(
         topup_period=1, nr_pulses=1, target_avg_current=200, lifetime=9 * 3600
     ):
         """."""
