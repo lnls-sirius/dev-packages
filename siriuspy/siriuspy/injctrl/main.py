@@ -92,7 +92,6 @@ class App(_Callback):
         now = _Time.now().timestamp()
         self._topup_next = now - (now % (24*60*60)) + 3*60*60
         self._topup_nrpulses = 1
-        self._topup_last_target_injcurr = 0.0
         self._topup_job = None
         self._accum_job = None
         self._beamdump_job = None
@@ -1698,7 +1697,6 @@ class App(_Callback):
             lifetime=lifetime,
             ahead_time=_Const.BIASFB_AHEADSETIME,
         )
-        self._topup_last_target_injcurr = dcur
         self.run_callbacks('TopUpTgtInjCurr-Mon', dcur)
         self._update_avg_injcurr(
             topup_period=period,
@@ -1706,6 +1704,7 @@ class App(_Callback):
             target_avg_current=target_current,
             lifetime=lifetime,
         )
+        return dcur
 
         period = kwargs.get('topup_period', self._topup_period)
         target_current = kwargs.get('target_avg_current', self._target_current)
@@ -1716,7 +1715,7 @@ class App(_Callback):
             target_avg_current=target_current,
             lifetime=lifetime,
         )
-        self.run_callbacks('TopUpAvgTgtInjCurr-Mon', dcur)
+        return dcur
 
     # --- auxiliary log methods ---
 
