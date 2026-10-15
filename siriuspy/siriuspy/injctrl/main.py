@@ -1693,7 +1693,7 @@ class App(_Callback):
         dcur = self._bias_feedback.get_delta_current_per_pulse(
             topup_period=period,
             nr_pulses=nr_pulses,
-            target_current=target_current,
+            target_avg_current=target_current,
             current_now=self.currinfo_dev.current,
             lifetime=lifetime,
             ahead_time=_Const.BIASFB_AHEADSETIME,
@@ -1703,20 +1703,17 @@ class App(_Callback):
         self._update_avg_injcurr(
             topup_period=period,
             nr_pulses=nr_pulses,
-            target_current=target_current,
+            target_avg_current=target_current,
             lifetime=lifetime,
         )
 
-    def _update_avg_injcurr(self, **kwargs):
-        lifetime = kwargs.get('lifetime', None)
-        if lifetime is None and self.currinfo_dev.connected:
-            lifetime = self.currinfo_dev.lifetime
-        else:
-            return
-        dcur = self._bias_feedback.get_avg_delta_current_per_pulse(
-            topup_period=kwargs.get('topup_period', self._topup_period),
-            nr_pulses=kwargs.get('nr_pulses', self._topup_nrpulses),
-            target_current=kwargs.get('target_current', self._target_current),
+        period = kwargs.get('topup_period', self._topup_period)
+        target_current = kwargs.get('target_avg_current', self._target_current)
+        nr_pulses = kwargs.get('nr_pulses', self._topup_nrpulses)
+        lifetime = kwargs.get('lifetime', self.currinfo_dev.lifetime)
+            topup_period=period,
+            nr_pulses=nr_pulses,
+            target_avg_current=target_current,
             lifetime=lifetime,
         )
         self.run_callbacks('TopUpAvgTgtInjCurr-Mon', dcur)
