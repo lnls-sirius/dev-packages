@@ -641,6 +641,8 @@ class App(_Callback):
         self.run_callbacks('TargetCurrent-RB', self._target_current)
         self._update_log(
             'Updated target current value: {}mA.'.format(value))
+        if self._topup_state_sts != _Const.TopUpSts.Off:
+            self._get_and_update_ideal_injcurr()
         return True
 
     def set_bucketlist_start(self, start):
@@ -786,7 +788,7 @@ class App(_Callback):
         self._topup_period = sec
         self._update_log('Changed top-up period to '+str(value)+'min.')
         self.run_callbacks('TopUpPeriod-RB', value)
-        self._update_avg_injcurr()
+        self._get_and_update_ideal_injcurr()
         return True
 
     def set_accum_period(self, value):
@@ -928,6 +930,7 @@ class App(_Callback):
                 return False
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topup_nrpulses)
+        self._get_and_update_ideal_injcurr()
         return True
 
     def cmd_injsys_turn_on(self, value=None, wait_finish=False):
@@ -1492,7 +1495,7 @@ class App(_Callback):
 
         # prepare subsystems state
         self._prepare_topup()
-
+        self._get_and_update_ideal_injcurr()
         self._bias_feedback.do_update_models = True
 
         while self._mode == _Const.InjMode.TopUp:
