@@ -82,15 +82,15 @@ def find_closest_corrs_ss(ss, nr_ch, nr_cv, inc_rf=False):
     """Find the closest correctors indices to a given sector indices in SOFB matrix."""
     nch = 6
     ncv = 8
-    idx_upstream = (ss-1)*nch
-    idx_downstream = (ss-1)*nch + 1
+    idx_upstream = (ss-1)*nch - 1
+    idx_downstream = (ss-1)*nch
     idcs_ch_up = idx_upstream - _np.arange(int(nr_ch/2))
     idcs_ch_dw = idx_downstream + _np.arange(int(nr_ch/2))
     idcs_ch = _np.sort(_np.concatenate((idcs_ch_up, idcs_ch_dw)))
     idcs_ch = _np.mod(idcs_ch, 120)
 
-    idx_upstream = (ss-1)*ncv
-    idx_downstream = (ss-1)*ncv + 1
+    idx_upstream = (ss-1)*ncv - 1
+    idx_downstream = (ss-1)*ncv
     idcs_cv_up = idx_upstream - _np.arange(int(nr_cv/2))
     idcs_cv_dw = idx_downstream + _np.arange(int(nr_cv/2))
     idcs_cv = _np.sort(_np.concatenate((idcs_cv_up, idcs_cv_dw)))
