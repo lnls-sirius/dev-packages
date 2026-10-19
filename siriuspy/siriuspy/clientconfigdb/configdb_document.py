@@ -157,6 +157,18 @@ class ConfigDBDocument():
                 new_name = cls._get_timestamp()
         return new_name
 
+    def to_dict(self):
+        """."""
+        return dict(name=self._name, info=self._info, value=self.value)
+
+    def from_dict(self, dic):
+        """."""
+        if dic.keys() ^ {'name', 'value', 'info'}:
+            raise ValueError("`dic` must have keys 'name', 'value', 'info'.")
+        self._name = dic('name')
+        self._value = dic('value')
+        self._info = dic('info')
+
     def _set_value(self, value):
         if self.check_valid_value(value):
             self._value = _dcopy(value)
