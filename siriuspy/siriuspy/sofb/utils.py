@@ -51,9 +51,9 @@ def si_calculate_bump(
         mat_s2r = get_matrix_ss_section(section_type)
         idcs = [(section_nr - 1) * 8 - 1, (section_nr - 1) * 8]
     else:
-        from apsuite.orbcorr.si_bumps import SiCalcBumps
+        from apsuite.orbcorr.si_bumps import SICalcBumps
 
-        bump = SiCalcBumps()
+        bump = SICalcBumps()
         _, _, mat_s2r = bump.calc_matrices(
             section_type=section_type,
             section_nr=section_nr,
