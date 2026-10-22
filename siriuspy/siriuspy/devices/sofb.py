@@ -769,6 +769,8 @@ class SISOFB(BOSOFB):
         'LoopState-Sel',
         'CorrSync-Sts',
         'CorrSync-Sel',
+        'LoopFreq-SP',
+        'LoopFreq-RB',
         'LoopPIDKpCH-SP',
         'LoopPIDKiCH-SP',
         'LoopPIDKdCH-SP',
@@ -841,6 +843,15 @@ class SISOFB(BOSOFB):
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
         return self.wait_orb_status_ok(timeout=timeout)
+
+    @property
+    def loop_freq(self):
+        """Loop frequency."""
+        return self['LoopFreq-RB']
+
+    @loop_freq.setter
+    def loop_freq(self, value):
+        self['LoopFreq-SP'] = value
 
     @property
     def loop_pid_ch_kp(self):
