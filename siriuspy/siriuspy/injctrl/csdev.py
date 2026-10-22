@@ -338,9 +338,9 @@ def get_injctrl_propty_database():
             'type': 'int', 'value': 1, 'unit': 'pulses',
             'lolim': _ct.MIN_BKT, 'hilim': _ct.MAX_BKT},
         'TopUpTgtInjCurr-Mon': {
-            'type': 'float', 'value': 0, 'unit': 'mA'},
+            'type': 'float', 'value': 0, 'unit': 'mA', 'prec': 3},
         'TopUpIdealInjCurr-Mon': {
-            'type': 'float', 'value': 0, 'unit': 'mA'},
+            'type': 'float', 'value': 0, 'unit': 'mA', 'prec': 3},
         # LI standby handler
         'TopUpLIWarmUpEnbl-Sel': {
             'type': 'enum', 'value': _ct.DsblEnbl.Enbl,
