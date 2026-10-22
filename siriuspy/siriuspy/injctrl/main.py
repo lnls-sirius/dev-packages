@@ -641,6 +641,8 @@ class App(_Callback):
         self.run_callbacks('TargetCurrent-RB', self._target_current)
         self._update_log(
             'Updated target current value: {}mA.'.format(value))
+        if self._topup_state_sts != _Const.TopUpSts.Off:
+            self._get_and_update_ideal_injcurr()
         return True
 
     def set_bucketlist_start(self, start):
@@ -786,6 +788,7 @@ class App(_Callback):
         self._topup_period = sec
         self._update_log('Changed top-up period to '+str(value)+'min.')
         self.run_callbacks('TopUpPeriod-RB', value)
+        self._get_and_update_ideal_injcurr()
         return True
 
     def set_accum_period(self, value):
@@ -927,6 +930,7 @@ class App(_Callback):
                 return False
         self._update_log('Changed top-up nr.pulses to '+str(value)+'.')
         self.run_callbacks('TopUpNrPulses-RB', self._topup_nrpulses)
+        self._get_and_update_ideal_injcurr()
         return True
 
     def cmd_injsys_turn_on(self, value=None, wait_finish=False):
@@ -1491,7 +1495,7 @@ class App(_Callback):
 
         # prepare subsystems state
         self._prepare_topup()
-
+        self._get_and_update_ideal_injcurr()
         self._bias_feedback.do_update_models = True
 
         while self._mode == _Const.InjMode.TopUp:
@@ -1584,14 +1588,7 @@ class App(_Callback):
             cond &= bool(self._bias_feedback.loop_state)
             cond &= not self._bias_feedback.already_set
             if cond and self.currinfo_dev.connected:
-                dcur = self._bias_feedback.get_delta_current_per_pulse(
-                    per=self._topup_period,
-                    nrpul=self._topup_nrpulses,
-                    curr_avg=self._target_current,
-                    curr_now=self.currinfo_dev.current,
-                    ltime=self.currinfo_dev.lifetime,
-                    ahead_tim=_Const.BIASFB_AHEADSETIME
-                )
+                dcur = self._get_and_update_target_injcurr()
                 self._update_log(f'BiasFB required InjCurr: {dcur:.3f}mA')
                 bias = self._bias_feedback.get_bias_voltage(dcur)
                 self.run_callbacks('MultBunBiasVolt-SP', bias)
@@ -1688,6 +1685,42 @@ class App(_Callback):
         else:
             borf.disable_triggers()
         self._update_log('BO RF timing configured.')
+
+    def _get_and_update_target_injcurr(self):
+        period = self._topup_period
+        nr_pulses = self._topup_nrpulses
+        target_current = self._target_current
+        lifetime = self.currinfo_dev.lifetime
+        dcur = self._bias_feedback.get_delta_current_per_pulse(
+            topup_period=period,
+            nr_pulses=nr_pulses,
+            target_avg_current=target_current,
+            current_now=self.currinfo_dev.current,
+            lifetime=lifetime,
+            ahead_time=_Const.BIASFB_AHEADSETIME,
+        )
+        self.run_callbacks('TopUpTgtInjCurr-Mon', dcur)
+        self._get_and_update_ideal_injcurr(
+            topup_period=period,
+            nr_pulses=nr_pulses,
+            target_avg_current=target_current,
+            lifetime=lifetime,
+        )
+        return dcur
+
+    def _get_and_update_ideal_injcurr(self, **kwargs):
+        period = kwargs.get('topup_period', self._topup_period)
+        target_current = kwargs.get('target_avg_current', self._target_current)
+        nr_pulses = kwargs.get('nr_pulses', self._topup_nrpulses)
+        lifetime = kwargs.get('lifetime', self.currinfo_dev.lifetime)
+        dcur = self._bias_feedback.get_ideal_delta_current_per_pulse(
+            topup_period=period,
+            nr_pulses=nr_pulses,
+            target_avg_current=target_current,
+            lifetime=lifetime,
+        )
+        self.run_callbacks('TopUpIdealInjCurr-Mon', dcur)
+        return dcur
 
     # --- auxiliary log methods ---
 
