@@ -550,8 +550,11 @@ class TLSOFB(_Device):
 
     def correct_orbit_manually(self, nr_iters=10, residue=5):
         """."""
-        self.cmd_turn_off_autocorr()
+        if self.autocorrsts:
+            raise RuntimeError('Autocorrection loop must be turned off.')
+
         for i in range(nr_iters):
+            self.wait_buffer()
             resx = self.orbx - self.refx
             resy = self.orby - self.refy
             resx = resx[self.bpmxenbl.nonzero()[0]]
@@ -560,7 +563,6 @@ class TLSOFB(_Device):
             resy = _np.sqrt(_np.sum(resy * resy) / resy.size)
             if resx < residue and resy < residue:
                 break
-            self.wait_buffer()
             self.cmd_calccorr()
             self.cmd_applycorr_all()
             self.wait_apply_delta_kick()
@@ -769,6 +771,8 @@ class SISOFB(BOSOFB):
         'LoopState-Sel',
         'CorrSync-Sts',
         'CorrSync-Sel',
+        'LoopFreq-SP',
+        'LoopFreq-RB',
         'LoopPIDKpCH-SP',
         'LoopPIDKiCH-SP',
         'LoopPIDKdCH-SP',
@@ -841,6 +845,15 @@ class SISOFB(BOSOFB):
             return False
         _time.sleep(0.6)  # Status PV updates at 2Hz
         return self.wait_orb_status_ok(timeout=timeout)
+
+    @property
+    def loop_freq(self):
+        """Loop frequency."""
+        return self['LoopFreq-RB']
+
+    @loop_freq.setter
+    def loop_freq(self, value):
+        self['LoopFreq-SP'] = value
 
     @property
     def loop_pid_ch_kp(self):
