@@ -553,6 +553,7 @@ class TLSOFB(_Device):
         if self.autocorrsts:
             raise RuntimeError('Autocorrection loop must be turned off.')
 
+        self.cmd_reset()
         for i in range(nr_iters):
             self.wait_buffer()
             resx = self.orbx - self.refx
