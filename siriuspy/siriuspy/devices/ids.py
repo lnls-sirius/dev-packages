@@ -2,11 +2,13 @@
 
 import inspect as _inspect
 import time as _time
+from threading import Thread as _Thread
 
 import numpy as _np
 
 from ..search import IDSearch as _IDSearch
 from .device import Device as _Device
+from .psconv import StrengthConv as _StrengthConv
 
 
 class _ParamPVs:
@@ -2722,3 +2724,223 @@ class IDParking:
         self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
         self._is_parking = False
         return False
+
+
+class IDOrchestra:
+    """Orchestrate multiple IDs."""
+
+    def __init__(self, log_callback=None):
+        self._log_callback = log_callback
+        self._idparkings = dict()
+
+    def add_id(self, devname):
+        if devname not in self._idparkings:
+            self._idparkings[devname] = IDParking(
+                devname, log_callback=self._log_callback)
+        return self._idparkings[devname]
+
+    def get_id(self, devname):
+        return self._idparkings.get(devname)
+
+    def cmd_park_all(self):
+        threads = list()
+        for p in self._idparkings.values():
+            t = _Thread(target=p.cmd_park_device, daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            try:
+                t.join()
+            except Exception:
+                pass
+        return True
+
+    def cmd_bmax_all(self):
+        threads = list()
+        for p in self._idparkings.values():
+            t = _Thread(target=p.cmd_bmax_device, daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            try:
+                t.join()
+            except Exception:
+                pass
+        return True
+
+    def cmd_move_to_kdeflection(self, kdeflection_target, timeout=None):
+        """Move all IDs to same deflection parameter K.
+
+        For each ID, convert the desired deflection parameter K to the
+        corresponding kparameter (gap/phase) using the excitation curves from
+        the control-system-constants, clamping to the ID's minimum/maximum
+        allowed K range.
+        """
+        threads = list()
+        for p in self._idparkings.values():
+            t = _Thread(
+                target=self._move_id_to_kdeflection,
+                args=(p, kdeflection_target, timeout),
+                daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            try:
+                t.join()
+            except Exception:
+                pass
+        return True
+
+    def _move_id_to_kdeflection(self, idparking, kdeflection_target,
+                                timeout=None):
+        try:
+            if idparking is None:
+                return False
+            device = idparking._device
+            if device is None:
+                return False
+
+            if kdeflection_target is None:
+                raise ValueError('kdeflection_target must be a float')
+            try:
+                kdeflection_target = float(kdeflection_target)
+            except Exception:
+                raise ValueError('kdeflection_target must be a float')
+
+            # Get polarization
+            try:
+                polarization = device.polarization_mon_str
+            except Exception:
+                try:
+                    polarization = device.polarization_mon
+                except Exception:
+                    polarization = None
+
+            # Create strength converter
+            try:
+                stg_conv = _StrengthConv(
+                    devname=str(device), proptype=None,
+                    polarization=polarization)
+            except Exception:
+                try:
+                    stg_conv = _StrengthConv(devname=str(device))
+                except Exception:
+                    return False
+
+            # Get kparameter limits
+            kparam_min = None
+            kparam_max = None
+            try:
+                kparam_min = device.kparameter_min
+            except Exception:
+                kparam_min = None
+            try:
+                kparam_max = device.kparameter_max
+            except Exception:
+                kparam_max = None
+
+            kparameter_min_2_kdeflection = None
+            kparameter_max_2_kdeflection = None
+            try:
+                if kparam_min is not None:
+                    kparameter_min_2_kdeflection = stg_conv.conv_current_2_strength(
+                        currents=kparam_min)
+            except Exception:
+                kparameter_min_2_kdeflection = None
+            try:
+                if kparam_max is not None:
+                    kparameter_max_2_kdeflection = stg_conv.conv_current_2_strength(
+                        currents=kparam_max)
+            except Exception:
+                kparameter_max_2_kdeflection = None
+
+            # Apply safety limits
+            kdef = float(kdeflection_target)
+            try:
+                if kparameter_min_2_kdeflection is not None and \
+                        kparameter_max_2_kdeflection is not None:
+                    kdeflection_min_lim = min(
+                        kparameter_max_2_kdeflection,
+                        kparameter_min_2_kdeflection)
+                    kdeflection_max_lim = max(
+                        kparameter_min_2_kdeflection,
+                        kparameter_max_2_kdeflection)
+                    kdef = min(kdeflection_max_lim,
+                               max(kdeflection_min_lim, kdef))
+                elif kparameter_max_2_kdeflection is not None:
+                    kdef = min(kparameter_max_2_kdeflection, kdef)
+                elif kparameter_min_2_kdeflection is not None:
+                    kdef = max(kparameter_min_2_kdeflection, kdef)
+            except Exception:
+                pass
+
+            # Convert K deflection to kparameter
+            try:
+                kparam_target = stg_conv.conv_strength_2_current(
+                    strengths=kdef)
+            except Exception:
+                return False
+
+            if kparam_target is None:
+                raise ValueError('kparam_target must be a float')
+            try:
+                kparam_target = float(kparam_target)
+            except Exception:
+                raise ValueError('kparam_target must be a float')
+
+            # Move using existing ID methods
+            try:
+                if hasattr(device, 'cmd_move_kparameter'):
+                    ret = device.cmd_move_kparameter(kparam_target, timeout=timeout)
+                    return ret
+            except Exception:
+                pass
+
+            try:
+                if hasattr(device, 'cmd_move'):
+                    ret = device.cmd_move(None, None, kparam_target, timeout=timeout)
+                    return ret
+            except Exception:
+                pass
+
+            try:
+                if hasattr(device, 'set_kparameter'):
+                    ret = device.set_kparameter(kparam_target, timeout=timeout)
+                    if ret:
+                        try:
+                            if hasattr(device, 'cmd_move_kparameter_start'):
+                                device.cmd_move_kparameter_start(timeout=timeout)
+                            elif hasattr(device, 'cmd_move_start'):
+                                device.cmd_move_start(timeout=timeout)
+                        except Exception:
+                            pass
+                    return ret
+            except Exception:
+                pass
+
+            try:
+                idparking._set_speeds()
+            except Exception:
+                pass
+            try:
+                idparking._stop_movements()
+            except Exception:
+                pass
+            try:
+                if hasattr(device, 'set_kparameter'):
+                    ret = device.set_kparameter(kparam_target, timeout=timeout)
+                    if ret:
+                        try:
+                            if hasattr(device, 'cmd_move_kparameter_start'):
+                                device.cmd_move_kparameter_start(timeout=timeout)
+                            elif hasattr(device, 'cmd_move_start'):
+                                device.cmd_move_start(timeout=timeout)
+                        except Exception:
+                            pass
+                    return ret
+            except Exception:
+                pass
+
+            return False
+        except Exception:
+            return False
