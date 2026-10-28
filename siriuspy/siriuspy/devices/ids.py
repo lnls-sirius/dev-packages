@@ -230,6 +230,22 @@ class IDBase(_Device):
             return self.parameters.PPARAM_PARKED
 
     @property
+    def pparameter_max(self):
+        """Return ID maximum pparameter value [mm]."""
+        try:
+            return self.parameters.PPARAM_MAX
+        except Exception:
+            return None
+
+    @property
+    def pparameter_min(self):
+        """Return ID minimum pparameter value [mm]."""
+        try:
+            return self.parameters.PPARAM_MIN
+        except Exception:
+            return None
+
+    @property
     def pparameter_speed_max(self):
         """Return max pparameter speed readback [mm/s]."""
         if self.PARAM_PVS.PPARAM_MAXVELO_RB is None:
@@ -383,6 +399,22 @@ class IDBase(_Device):
             return self.parameters.KPARAM_PARKED
 
     @property
+    def kparameter_max(self):
+        """Return ID maximum kparameter value [mm]."""
+        try:
+            return self.parameters.KPARAM_MAX
+        except Exception:
+            return None
+
+    @property
+    def kparameter_min(self):
+        """Return ID minimum kparameter value [mm]."""
+        try:
+            return self.parameters.KPARAM_MIN
+        except Exception:
+            return None
+
+    @property
     def kparameter_speed_max(self):
         """Return max kparameter speed readback [mm/s]."""
         return self[self.PARAM_PVS.KPARAM_MAXVELO_RB]
@@ -507,6 +539,22 @@ class IDBase(_Device):
             return self[self.PARAM_PVS.CPARAM_PARKED_CTE]
         else:
             return self.parameters.CPARAM_PARKED
+
+    @property
+    def cparameter_max(self):
+        """Return ID maximum cparameter value [mm]."""
+        try:
+            return self.parameters.CPARAM_MAX
+        except Exception:
+            return None
+
+    @property
+    def cparameter_min(self):
+        """Return ID minimum cparameter value [mm]."""
+        try:
+            return self.parameters.CPARAM_MIN
+        except Exception:
+            return None
 
     @property
     def cparameter_speed_max(self):
@@ -798,15 +846,43 @@ class IDBase(_Device):
         else:
             # composed pparam and kparam movement by IOC
             # first set param RBs for ETA computation and PVs consistency
-            if not self.set_pparameter(pparam):
-                return False
-            if not self.set_kparameter(kparam):
-                return False
-            if not self.set_cparameter(cparam):
-                return False
+            if pparam is not None:
+                if not self.set_pparameter(pparam):
+                    return False
+            if kparam is not None:
+                if not self.set_kparameter(kparam):
+                    return False
+            if cparam is not None:
+                if not self.set_cparameter(cparam):
+                    return False
             timeout = self.calc_move_timeout(None, None, timeout)
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
             return self.wait_move_config(pparam, cparam, kparam, timeout)
+
+    def cmd_move_max(self, timeout=None):
+        """Move ID to maximum config (Bmax)."""
+        pparam, cparam, kparam = (
+            self.pparameter_max,
+            self.cparameter_max,
+            self.kparameter_max,
+        )
+        if self.PARAM_PVS.START_PARKING_CMD is None:
+            return self.cmd_move(pparam, cparam, kparam, timeout)
+        else:
+            if pparam is not None:
+                if not self.set_pparameter(pparam):
+                    return False
+            if kparam is not None:
+                if not self.set_kparameter(kparam):
+                    return False
+            if cparam is not None:
+                if not self.set_cparameter(cparam):
+                    return False
+            timeout = self.calc_move_timeout(None, None, timeout)
+            self[self.PARAM_PVS.START_PARKING_CMD] = 1
+            return self.wait_move_config(pparam, cparam, kparam, timeout)
+
+    cmd_move_bmax = cmd_move_max
 
     def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
