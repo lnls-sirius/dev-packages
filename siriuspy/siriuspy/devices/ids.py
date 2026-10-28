@@ -2458,3 +2458,267 @@ class ID(IDBase):
             return UE44
         else:
             return None
+
+
+class IDParking:
+    """ID parking/orchestration helper."""
+
+    TIMEOUT_WAIT_FOR_CONNECTION = 5.0
+    _DEF_TIMEOUT = 8  # [s]
+
+    def __init__(self, devname=None, log_callback=None):
+        self._abort = False
+        self._is_parking = False
+        self._log_callback = log_callback
+
+        if devname is None:
+            raise ValueError('devname required')
+        device = ID(devname)
+        self._device = device
+        self.devname = devname
+
+    @property
+    def is_parking(self):
+        return self._is_parking
+
+    @property
+    def device(self):
+        return self._device
+
+    def log(self, msg):
+        if self._log_callback is not None:
+            try:
+                self._log_callback(msg)
+                return
+            except Exception:
+                pass
+        print(msg)
+
+    def abort_execution(self):
+        self._abort = True
+
+    def continue_execution(self):
+        if self._abort:
+            self._abort = False
+            self.log('ERR:Aborting {} parking.'.format(self.devname))
+            self._is_parking = False
+            return False
+        return True
+
+    def cmd_park_device(self, timeout=None):
+        self._is_parking = True
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
+        if not self._connections_checking():
+            return False
+        if not self._disable_beamline_ctrl(timeout=timeout):
+            return False
+        if not self._stop_movements(timeout=timeout):
+            return False
+        if not self._set_speeds(timeout=timeout):
+            return False
+        if not self._move_to_parked(timeout=timeout):
+            return False
+        self.log('Successfully parked {}.'.format(self.devname))
+        self._is_parking = False
+        return True
+
+    def cmd_bmax_device(self, timeout=None):
+        self._is_parking = True
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
+        if not self._connections_checking():
+            return False
+        if not self._stop_movements(timeout=timeout):
+            return False
+        if not self._set_speeds(timeout=timeout):
+            return False
+        if not self._move_to_bmax(timeout=timeout):
+            return False
+        self.log('Successfully moved {} to Bmax.'.format(self.devname))
+        self._is_parking = False
+        return True
+
+    def _connections_checking(self):
+        self.log('Checking {} connections...'.format(self.devname))
+        if not self.device.wait_for_connection(timeout=self.TIMEOUT_WAIT_FOR_CONNECTION):
+            self.log('ERR:{} not connected.'.format(self.devname))
+            self._is_parking = False
+            return False
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _disable_beamline_ctrl(self, timeout=None):
+        self.log('Stopping {} movement...'.format(self.devname))
+        try:
+            if hasattr(self.device, 'cmd_move_stop'):
+                try:
+                    self.device.cmd_move_stop(timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.cmd_move_stop()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            if hasattr(self.device, 'cmd_beamline_ctrl_disable'):
+                try:
+                    self.device.cmd_beamline_ctrl_disable(timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.cmd_beamline_ctrl_disable()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _stop_movements(self, timeout=None):
+        try:
+            if hasattr(self.device, 'cmd_move_stop'):
+                try:
+                    self.device.cmd_move_stop(timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.cmd_move_stop()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _set_speeds(self, timeout=None):
+        try:
+            if hasattr(self.device, 'pparameter_speed_max') and \
+                    self.device.pparameter_speed_max is not None and \
+                    hasattr(self.device, 'set_pparameter_speed'):
+                try:
+                    self.device.set_pparameter_speed(
+                        self.device.pparameter_speed_max, timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.set_pparameter_speed(
+                            self.device.pparameter_speed_max)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        try:
+            if hasattr(self.device, 'kparameter_speed_max') and \
+                    self.device.kparameter_speed_max is not None and \
+                    hasattr(self.device, 'set_kparameter_speed'):
+                try:
+                    self.device.set_kparameter_speed(
+                        self.device.kparameter_speed_max, timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.set_kparameter_speed(
+                            self.device.kparameter_speed_max)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _move_to_parked(self, timeout=None):
+        self.log('Sending {} to parked position...'.format(self.devname))
+        try:
+            if hasattr(self.device, 'cmd_move_park'):
+                try:
+                    if not self.device.cmd_move_park(timeout=timeout):
+                        self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+                except TypeError:
+                    if not self.device.cmd_move_park():
+                        self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+            if hasattr(self.device, 'cmd_move'):
+                try:
+                    p = self.device.pparameter_parked
+                    c = self.device.cparameter_parked
+                    k = self.device.kparameter_parked
+                    try:
+                        if not self.device.cmd_move(p, c, k, timeout=timeout):
+                            self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                    except TypeError:
+                        if not self.device.cmd_move(p, c, k):
+                            self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+        self._is_parking = False
+        return False
+
+    def _move_to_bmax(self, timeout=None):
+        self.log('Sending {} to Bmax position...'.format(self.devname))
+        try:
+            if hasattr(self.device, 'cmd_move_max'):
+                try:
+                    if not self.device.cmd_move_max(timeout=timeout):
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+                except TypeError:
+                    if not self.device.cmd_move_max():
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+            if hasattr(self.device, 'cmd_move_bmax'):
+                try:
+                    if not self.device.cmd_move_bmax(timeout=timeout):
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+                except TypeError:
+                    if not self.device.cmd_move_bmax():
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+            if hasattr(self.device, 'cmd_move'):
+                try:
+                    p = getattr(self.device, 'pparameter_max', None)
+                    c = getattr(self.device, 'cparameter_max', None)
+                    k = getattr(self.device, 'kparameter_max', None)
+                    try:
+                        if not self.device.cmd_move(p, c, k, timeout=timeout):
+                            self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                    except TypeError:
+                        if not self.device.cmd_move(p, c, k):
+                            self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+        self._is_parking = False
+        return False
