@@ -3,7 +3,7 @@
 import time as _time
 from threading import Thread as _Thread
 import numpy as _np
-from epics import PV as _PV
+from ..epics import PV as _PV
 from epics.ca import ChannelAccessGetFailure as _ChannelAccessGetFailure
 
 from ..envars import VACA_PREFIX as _vaca_prefix
