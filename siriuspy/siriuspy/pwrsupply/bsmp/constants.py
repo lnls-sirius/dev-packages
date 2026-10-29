@@ -663,6 +663,39 @@ class ConstFAP_2P2S(ConstPSBSMP):
     V_PS_ALARMS = 125
 
 
+class ConstSWLSSirius(ConstPSBSMP):
+    """Namespace for organizing power supply SWLSSirius BSMP constants."""
+
+    # --- SWLSSirius variables ---
+    V_PS_SOFT_INTERLOCKS = 31
+    V_PS_HARD_INTERLOCKS = 32
+    V_PS_ALARMS = 33
+    V_I_LOAD_MEAN = 34
+    V_I_LOAD_1 = 35
+    V_I_LOAD_2 = 36
+    V_I_LOAD_ERROR = 37
+    V_V_DCLINK = 38
+    V_FREQ_MODULATED = 39
+    V_FREQ_MODULATED_COMPENS = 40
+    V_FREQ_MODULATED_FF = 41
+    V_V_INPUT_IIB = 42
+    V_V_OUTPUT_IIB = 43
+    V_I_INPUT_IIB = 44
+    V_I_OUTPUT_IIB = 45
+    V_TEMP_HEATSINK_MAIN_BOARD_IIB = 46
+    V_TEMP_HEATSINK_TRANSFORMER_IIB = 47
+    V_TEMP_HEATSINK_DIODES_IIB = 48
+    V_TEMP_OUTPUT_INDUCTOR_IIB = 49
+    V_V_DRIVER_AND_AUX_BOARD_IIB = 50
+    V_I_DRIVER_IIB = 51
+    V_I_AUX_BOARD_IIB = 52
+    V_I_LEAKAGE_IIB = 53
+    V_TEMP_BOARD_IIB = 54
+    V_RELATIVE_HUMIDITY_IIB = 55
+    V_IIB_INTERLOCKS = 56
+    V_IIB_ALARMS = 57
+
+
 # --- Const ACDC ---
 
 class ConstFBP_DCLink(ConstPSBSMP):

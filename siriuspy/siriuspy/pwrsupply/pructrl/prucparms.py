@@ -207,3 +207,23 @@ class PRUCParmsFAP_2P2S:
     groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
+
+
+class PRUCParmsSWLSSirius:
+    """SWLSSirius-specific PRUC parameters.
+
+    Represent SWLSSirius
+    """
+
+    FREQ_SCAN = 5.0  # [Hz]
+
+    # PS model parms
+    model = _PSModelFactory.create('SWLSSirius')
+    CONST_PSBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_const.G_ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_const.G_READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_const.G_WRITE] = tuple(sorted(Entities.list_variables(2)))
