@@ -2,11 +2,13 @@
 
 import inspect as _inspect
 import time as _time
+from threading import Thread as _Thread
 
 import numpy as _np
 
 from ..search import IDSearch as _IDSearch
 from .device import Device as _Device
+from .psconv import StrengthConv as _StrengthConv
 
 
 class _ParamPVs:
@@ -230,6 +232,22 @@ class IDBase(_Device):
             return self.parameters.PPARAM_PARKED
 
     @property
+    def pparameter_max(self):
+        """Return ID maximum pparameter value [mm]."""
+        try:
+            return self.parameters.PPARAM_MAX
+        except Exception:
+            return None
+
+    @property
+    def pparameter_min(self):
+        """Return ID minimum pparameter value [mm]."""
+        try:
+            return self.parameters.PPARAM_MIN
+        except Exception:
+            return None
+
+    @property
     def pparameter_speed_max(self):
         """Return max pparameter speed readback [mm/s]."""
         if self.PARAM_PVS.PPARAM_MAXVELO_RB is None:
@@ -383,6 +401,22 @@ class IDBase(_Device):
             return self.parameters.KPARAM_PARKED
 
     @property
+    def kparameter_max(self):
+        """Return ID maximum kparameter value [mm]."""
+        try:
+            return self.parameters.KPARAM_MAX
+        except Exception:
+            return None
+
+    @property
+    def kparameter_min(self):
+        """Return ID minimum kparameter value [mm]."""
+        try:
+            return self.parameters.KPARAM_MIN
+        except Exception:
+            return None
+
+    @property
     def kparameter_speed_max(self):
         """Return max kparameter speed readback [mm/s]."""
         return self[self.PARAM_PVS.KPARAM_MAXVELO_RB]
@@ -507,6 +541,22 @@ class IDBase(_Device):
             return self[self.PARAM_PVS.CPARAM_PARKED_CTE]
         else:
             return self.parameters.CPARAM_PARKED
+
+    @property
+    def cparameter_max(self):
+        """Return ID maximum cparameter value [mm]."""
+        try:
+            return self.parameters.CPARAM_MAX
+        except Exception:
+            return None
+
+    @property
+    def cparameter_min(self):
+        """Return ID minimum cparameter value [mm]."""
+        try:
+            return self.parameters.CPARAM_MIN
+        except Exception:
+            return None
 
     @property
     def cparameter_speed_max(self):
@@ -798,15 +848,43 @@ class IDBase(_Device):
         else:
             # composed pparam and kparam movement by IOC
             # first set param RBs for ETA computation and PVs consistency
-            if not self.set_pparameter(pparam):
-                return False
-            if not self.set_kparameter(kparam):
-                return False
-            if not self.set_cparameter(cparam):
-                return False
+            if pparam is not None:
+                if not self.set_pparameter(pparam):
+                    return False
+            if kparam is not None:
+                if not self.set_kparameter(kparam):
+                    return False
+            if cparam is not None:
+                if not self.set_cparameter(cparam):
+                    return False
             timeout = self.calc_move_timeout(None, None, timeout)
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
             return self.wait_move_config(pparam, cparam, kparam, timeout)
+
+    def cmd_move_max(self, timeout=None):
+        """Move ID to maximum config (Bmax)."""
+        pparam, cparam, kparam = (
+            self.pparameter_max,
+            self.cparameter_max,
+            self.kparameter_max,
+        )
+        if self.PARAM_PVS.START_PARKING_CMD is None:
+            return self.cmd_move(pparam, cparam, kparam, timeout)
+        else:
+            if pparam is not None:
+                if not self.set_pparameter(pparam):
+                    return False
+            if kparam is not None:
+                if not self.set_kparameter(kparam):
+                    return False
+            if cparam is not None:
+                if not self.set_cparameter(cparam):
+                    return False
+            timeout = self.calc_move_timeout(None, None, timeout)
+            self[self.PARAM_PVS.START_PARKING_CMD] = 1
+            return self.wait_move_config(pparam, cparam, kparam, timeout)
+
+    cmd_move_bmax = cmd_move_max
 
     def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
@@ -2382,3 +2460,487 @@ class ID(IDBase):
             return UE44
         else:
             return None
+
+
+class IDParking:
+    """ID parking/orchestration helper."""
+
+    TIMEOUT_WAIT_FOR_CONNECTION = 5.0
+    _DEF_TIMEOUT = 8  # [s]
+
+    def __init__(self, devname=None, log_callback=None):
+        self._abort = False
+        self._is_parking = False
+        self._log_callback = log_callback
+
+        if devname is None:
+            raise ValueError('devname required')
+        device = ID(devname)
+        self._device = device
+        self.devname = devname
+
+    @property
+    def is_parking(self):
+        return self._is_parking
+
+    @property
+    def device(self):
+        return self._device
+
+    def log(self, msg):
+        if self._log_callback is not None:
+            try:
+                self._log_callback(msg)
+                return
+            except Exception:
+                pass
+        print(msg)
+
+    def abort_execution(self):
+        self._abort = True
+
+    def continue_execution(self):
+        if self._abort:
+            self._abort = False
+            self.log('ERR:Aborting {} parking.'.format(self.devname))
+            self._is_parking = False
+            return False
+        return True
+
+    def cmd_park_device(self, timeout=None):
+        self._is_parking = True
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
+        if not self._connections_checking():
+            return False
+        if not self._disable_beamline_ctrl(timeout=timeout):
+            return False
+        if not self._stop_movements(timeout=timeout):
+            return False
+        if not self._set_speeds(timeout=timeout):
+            return False
+        if not self._move_to_parked(timeout=timeout):
+            return False
+        self.log('Successfully parked {}.'.format(self.devname))
+        self._is_parking = False
+        return True
+
+    def cmd_bmax_device(self, timeout=None):
+        self._is_parking = True
+        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
+        if not self._connections_checking():
+            return False
+        if not self._stop_movements(timeout=timeout):
+            return False
+        if not self._set_speeds(timeout=timeout):
+            return False
+        if not self._move_to_bmax(timeout=timeout):
+            return False
+        self.log('Successfully moved {} to Bmax.'.format(self.devname))
+        self._is_parking = False
+        return True
+
+    def _connections_checking(self):
+        self.log('Checking {} connections...'.format(self.devname))
+        if not self.device.wait_for_connection(timeout=self.TIMEOUT_WAIT_FOR_CONNECTION):
+            self.log('ERR:{} not connected.'.format(self.devname))
+            self._is_parking = False
+            return False
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _disable_beamline_ctrl(self, timeout=None):
+        self.log('Stopping {} movement...'.format(self.devname))
+        try:
+            if hasattr(self.device, 'cmd_move_stop'):
+                try:
+                    self.device.cmd_move_stop(timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.cmd_move_stop()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            if hasattr(self.device, 'cmd_beamline_ctrl_disable'):
+                try:
+                    self.device.cmd_beamline_ctrl_disable(timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.cmd_beamline_ctrl_disable()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _stop_movements(self, timeout=None):
+        try:
+            if hasattr(self.device, 'cmd_move_stop'):
+                try:
+                    self.device.cmd_move_stop(timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.cmd_move_stop()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _set_speeds(self, timeout=None):
+        try:
+            if hasattr(self.device, 'pparameter_speed_max') and \
+                    self.device.pparameter_speed_max is not None and \
+                    hasattr(self.device, 'set_pparameter_speed'):
+                try:
+                    self.device.set_pparameter_speed(
+                        self.device.pparameter_speed_max, timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.set_pparameter_speed(
+                            self.device.pparameter_speed_max)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        try:
+            if hasattr(self.device, 'kparameter_speed_max') and \
+                    self.device.kparameter_speed_max is not None and \
+                    hasattr(self.device, 'set_kparameter_speed'):
+                try:
+                    self.device.set_kparameter_speed(
+                        self.device.kparameter_speed_max, timeout=timeout)
+                except TypeError:
+                    try:
+                        self.device.set_kparameter_speed(
+                            self.device.kparameter_speed_max)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        if not self.continue_execution():
+            return False
+        return True
+
+    def _move_to_parked(self, timeout=None):
+        self.log('Sending {} to parked position...'.format(self.devname))
+        try:
+            if hasattr(self.device, 'cmd_move_park'):
+                try:
+                    if not self.device.cmd_move_park(timeout=timeout):
+                        self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+                except TypeError:
+                    if not self.device.cmd_move_park():
+                        self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+            if hasattr(self.device, 'cmd_move'):
+                try:
+                    p = self.device.pparameter_parked
+                    c = self.device.cparameter_parked
+                    k = self.device.kparameter_parked
+                    try:
+                        if not self.device.cmd_move(p, c, k, timeout=timeout):
+                            self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                    except TypeError:
+                        if not self.device.cmd_move(p, c, k):
+                            self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
+        self._is_parking = False
+        return False
+
+    def _move_to_bmax(self, timeout=None):
+        self.log('Sending {} to Bmax position...'.format(self.devname))
+        try:
+            if hasattr(self.device, 'cmd_move_max'):
+                try:
+                    if not self.device.cmd_move_max(timeout=timeout):
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+                except TypeError:
+                    if not self.device.cmd_move_max():
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+            if hasattr(self.device, 'cmd_move_bmax'):
+                try:
+                    if not self.device.cmd_move_bmax(timeout=timeout):
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+                except TypeError:
+                    if not self.device.cmd_move_bmax():
+                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                        self._is_parking = False
+                        return False
+                    return True
+            if hasattr(self.device, 'cmd_move'):
+                try:
+                    p = getattr(self.device, 'pparameter_max', None)
+                    c = getattr(self.device, 'cparameter_max', None)
+                    k = getattr(self.device, 'kparameter_max', None)
+                    try:
+                        if not self.device.cmd_move(p, c, k, timeout=timeout):
+                            self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                    except TypeError:
+                        if not self.device.cmd_move(p, c, k):
+                            self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+                            self._is_parking = False
+                            return False
+                        return True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
+        self._is_parking = False
+        return False
+
+
+class IDOrchestra:
+    """Orchestrate multiple IDs."""
+
+    def __init__(self, log_callback=None):
+        self._log_callback = log_callback
+        self._idparkings = dict()
+
+    def add_id(self, devname):
+        if devname not in self._idparkings:
+            self._idparkings[devname] = IDParking(
+                devname, log_callback=self._log_callback)
+        return self._idparkings[devname]
+
+    def get_id(self, devname):
+        return self._idparkings.get(devname)
+
+    def cmd_park_all(self):
+        threads = list()
+        for p in self._idparkings.values():
+            t = _Thread(target=p.cmd_park_device, daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            try:
+                t.join()
+            except Exception:
+                pass
+        return True
+
+    def cmd_bmax_all(self):
+        threads = list()
+        for p in self._idparkings.values():
+            t = _Thread(target=p.cmd_bmax_device, daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            try:
+                t.join()
+            except Exception:
+                pass
+        return True
+
+    def cmd_move_to_kdeflection(self, kdeflection_target, timeout=None):
+        """Move all IDs to same deflection parameter K.
+
+        For each ID, convert the desired deflection parameter K to the
+        corresponding kparameter (gap/phase) using the excitation curves from
+        the control-system-constants, clamping to the ID's minimum/maximum
+        allowed K range.
+        """
+        threads = list()
+        for p in self._idparkings.values():
+            t = _Thread(
+                target=self._move_id_to_kdeflection,
+                args=(p, kdeflection_target, timeout),
+                daemon=True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            try:
+                t.join()
+            except Exception:
+                pass
+        return True
+
+    def _move_id_to_kdeflection(self, idparking, kdeflection_target,
+                                timeout=None):
+        try:
+            if idparking is None:
+                return False
+            device = idparking._device
+            if device is None:
+                return False
+
+            if kdeflection_target is None:
+                raise ValueError('kdeflection_target must be a float')
+            try:
+                kdeflection_target = float(kdeflection_target)
+            except Exception:
+                raise ValueError('kdeflection_target must be a float')
+
+            # Get polarization
+            try:
+                polarization = device.polarization_mon_str
+            except Exception:
+                try:
+                    polarization = device.polarization_mon
+                except Exception:
+                    polarization = None
+
+            # Create strength converter
+            try:
+                stg_conv = _StrengthConv(
+                    devname=str(device), proptype=None,
+                    polarization=polarization)
+            except Exception:
+                try:
+                    stg_conv = _StrengthConv(devname=str(device))
+                except Exception:
+                    return False
+
+            # Get kparameter limits
+            kparam_min = None
+            kparam_max = None
+            try:
+                kparam_min = device.kparameter_min
+            except Exception:
+                kparam_min = None
+            try:
+                kparam_max = device.kparameter_max
+            except Exception:
+                kparam_max = None
+
+            kparameter_min_2_kdeflection = None
+            kparameter_max_2_kdeflection = None
+            try:
+                if kparam_min is not None:
+                    kparameter_min_2_kdeflection = stg_conv.conv_current_2_strength(
+                        currents=kparam_min)
+            except Exception:
+                kparameter_min_2_kdeflection = None
+            try:
+                if kparam_max is not None:
+                    kparameter_max_2_kdeflection = stg_conv.conv_current_2_strength(
+                        currents=kparam_max)
+            except Exception:
+                kparameter_max_2_kdeflection = None
+
+            # Apply safety limits
+            kdef = float(kdeflection_target)
+            try:
+                if kparameter_min_2_kdeflection is not None and \
+                        kparameter_max_2_kdeflection is not None:
+                    kdeflection_min_lim = min(
+                        kparameter_max_2_kdeflection,
+                        kparameter_min_2_kdeflection)
+                    kdeflection_max_lim = max(
+                        kparameter_min_2_kdeflection,
+                        kparameter_max_2_kdeflection)
+                    kdef = min(kdeflection_max_lim,
+                               max(kdeflection_min_lim, kdef))
+                elif kparameter_max_2_kdeflection is not None:
+                    kdef = min(kparameter_max_2_kdeflection, kdef)
+                elif kparameter_min_2_kdeflection is not None:
+                    kdef = max(kparameter_min_2_kdeflection, kdef)
+            except Exception:
+                pass
+
+            # Convert K deflection to kparameter
+            try:
+                kparam_target = stg_conv.conv_strength_2_current(
+                    strengths=kdef)
+            except Exception:
+                return False
+
+            if kparam_target is None:
+                raise ValueError('kparam_target must be a float')
+            try:
+                kparam_target = float(kparam_target)
+            except Exception:
+                raise ValueError('kparam_target must be a float')
+
+            # Move using existing ID methods
+            try:
+                if hasattr(device, 'cmd_move_kparameter'):
+                    ret = device.cmd_move_kparameter(kparam_target, timeout=timeout)
+                    return ret
+            except Exception:
+                pass
+
+            try:
+                if hasattr(device, 'cmd_move'):
+                    ret = device.cmd_move(None, None, kparam_target, timeout=timeout)
+                    return ret
+            except Exception:
+                pass
+
+            try:
+                if hasattr(device, 'set_kparameter'):
+                    ret = device.set_kparameter(kparam_target, timeout=timeout)
+                    if ret:
+                        try:
+                            if hasattr(device, 'cmd_move_kparameter_start'):
+                                device.cmd_move_kparameter_start(timeout=timeout)
+                            elif hasattr(device, 'cmd_move_start'):
+                                device.cmd_move_start(timeout=timeout)
+                        except Exception:
+                            pass
+                    return ret
+            except Exception:
+                pass
+
+            try:
+                idparking._set_speeds()
+            except Exception:
+                pass
+            try:
+                idparking._stop_movements()
+            except Exception:
+                pass
+            try:
+                if hasattr(device, 'set_kparameter'):
+                    ret = device.set_kparameter(kparam_target, timeout=timeout)
+                    if ret:
+                        try:
+                            if hasattr(device, 'cmd_move_kparameter_start'):
+                                device.cmd_move_kparameter_start(timeout=timeout)
+                            elif hasattr(device, 'cmd_move_start'):
+                                device.cmd_move_start(timeout=timeout)
+                        except Exception:
+                            pass
+                    return ret
+            except Exception:
+                pass
+
+            return False
+        except Exception:
+            return False
