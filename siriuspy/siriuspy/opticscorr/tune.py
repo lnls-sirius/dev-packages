@@ -1,12 +1,16 @@
 """Main module of AS-AP-TuneCorr IOC."""
 
 import numpy as _np
-from epics import PV as _PV
+from ..epics import PV as _PV
+from ..epics.threading import CAThread as _Thread
+
+from time import time as _time, sleep as _sleep
+from functools import partial as _part
 
 from ..envars import VACA_PREFIX as _vaca_prefix
 from ..namesys import SiriusPVName as _SiriusPVName
 
-from .csdev import Const as _Const
+from .csdev import Const as _Const, ETypes as _ETypes
 from .base import BaseApp as _BaseApp
 
 
@@ -39,7 +43,7 @@ class TuneCorrApp(_BaseApp):
                 pvname,
                 callback=[self._callback_init_refkl,
                           self._callback_estimate_deltatune],
-                connection_timeout=0.05)
+                connection_timeout=self._DEF_CONN_TIMEOUT)
 
         self.map_pv2write.update({
             'DeltaTuneX-SP': self.set_dtune_x,
@@ -58,6 +62,10 @@ class TuneCorrApp(_BaseApp):
 
     def set_dtune_x(self, value):
         """Set DeltaTuneX."""
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = "ERR:Cant set DeltaTuneX! FB is on."
+            self._update_log(msg)
+            return False
         self._delta_tunex = value
         self.run_callbacks('DeltaTuneX-RB', value)
         self._calc_intstrength()
@@ -65,6 +73,10 @@ class TuneCorrApp(_BaseApp):
 
     def set_dtune_y(self, value):
         """Set DeltaTuneY."""
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = "ERR:Cant set DeltaTuneY! FB is on."
+            self._update_log(msg)
+            return False
         self._delta_tuney = value
         self.run_callbacks('DeltaTuneY-RB', value)
         self._calc_intstrength()
@@ -72,6 +84,10 @@ class TuneCorrApp(_BaseApp):
 
     def cmd_set_newref(self, value):
         """SetNewRefKL command."""
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = "ERR:Cant update reference! FB is on."
+            self._update_log(msg)
+            return False
         if self._update_ref():
             self._set_new_refkl_cmd_count += 1
             self.run_callbacks(
@@ -122,7 +138,9 @@ class TuneCorrApp(_BaseApp):
             method=method, grouping=grouping,
             delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
-        self.run_callbacks('Log-Mon', 'Calculated KL values.')
+        if self._loop_state == _Const.LoopState.Open:
+            msg = 'INFO:Calculated KL values.'
+            self._update_log(msg)
 
         for fam_idx, fam in enumerate(self._psfams):
             self._lastcalc_deltakl[fam] = lastcalc_deltakl[fam_idx]
@@ -134,14 +152,20 @@ class TuneCorrApp(_BaseApp):
             kls = {fam: self._psfam_refkl[fam]+self._lastcalc_deltakl[fam]
                    for fam in self._psfams}
             self._apply_intstrength(kls)
-            self.run_callbacks('Log-Mon', 'Applied correction.')
+
+            if self._loop_state == _Const.LoopState.Open:
+                msg = 'INFO:Applied correction.'
+                self._update_log(msg)
 
             if self._sync_corr == _Const.SyncCorr.On:
                 self._event_exttrig_cmd.put(0)
-                self.run_callbacks('Log-Mon', 'Generated trigger.')
+                if self._loop_state == _Const.LoopState.Open:
+                    msg = 'INFO:Generated trigger.'
+                    self._update_log(msg)
             return True
 
-        self.run_callbacks('Log-Mon', 'ERR: ApplyDelta-Cmd failed.')
+        msg = 'ERR:ApplyDelta-Cmd failed!'
+        self._update_log(msg)
         return False
 
     def _get_optics_param(self):
@@ -164,9 +188,8 @@ class TuneCorrApp(_BaseApp):
             for fam in self._psfams:
                 value = self._psfam_intstr_rb_pvs[fam].get()
                 if value is None:
-                    self.run_callbacks(
-                        'Log-Mon',
-                        'ERR: Received a None value from {}.'.format(fam))
+                    msg = 'ERR:Received a None value from {}.'.format(fam)
+                    self._update_log(msg)
                     return False
                 self._psfam_refkl[fam] = value
                 self.run_callbacks(
@@ -185,11 +208,12 @@ class TuneCorrApp(_BaseApp):
 
             self._estimate_current_deltatune()
 
-            self.run_callbacks('Log-Mon', 'Updated KL references.')
+            msg = 'INFO:Updated KL references.'
+            self._update_log(msg)
             return True
 
-        self.run_callbacks(
-            'Log-Mon', 'ERR: Some magnet family is disconnected.')
+        msg = 'ERR:Some magnet family is disconnected.'
+        self._update_log(msg)
         return False
 
     def _estimate_current_deltatune(self):
@@ -222,3 +246,297 @@ class TuneCorrApp(_BaseApp):
         fam = _SiriusPVName(pvname).dev
         self._psfam_intstr_rb[fam] = value
         self._estimate_current_deltatune()
+
+
+class SITuneCorrApp(TuneCorrApp):
+    """Main application for handling SI tune correction and feedback."""
+
+    _DEF_CONN_TIMEOUT_TUNE = 0.3  # [s]
+
+    def __init__(self):
+        """Class constructor."""
+        super().__init__(acc='SI')
+
+        self._tune_source = _Const.DEF_TUNESRC
+        self._ref_tunex = _Const.DEF_REF_TUNEX
+        self._ref_tuney = _Const.DEF_REF_TUNEY
+
+        self._loop_thread = None
+        self._loop_state = _Const.DEF_LOOPSTATE
+        self._loop_freq = _Const.DEF_LOOPFREQ
+        self._loop_max_tune_err = _Const.DEF_MAX_TUNE_ERR
+
+        self._loop_pid_errs = None  # created when feedback thread starts
+        self._loop_pid_gains = dict(
+            kp=_Const.DEF_PID_KP,
+            ki=_Const.DEF_PID_KI,
+            kd=_Const.DEF_PID_KD,
+        )
+
+        self.map_pv2write.update({
+            'TuneSrc-Sel': self.set_tune_source,
+            'RefTuneX-SP': _part(self.set_ref_tune, "x"),
+            'RefTuneY-SP': _part(self.set_ref_tune, "y"),
+            'LoopState-Sel': self.set_loop_state,
+            'LoopFreq-SP': self.set_loop_freq,
+            'LoopMaxTuneErr-SP': self.set_loop_max_tune_err,
+            'LoopPIDKp-SP': _part(self.set_loop_pid_gain, "kp"),
+            'LoopPIDKi-SP': _part(self.set_loop_pid_gain, "ki"),
+            'LoopPIDKd-SP': _part(self.set_loop_pid_gain, "kd"),
+        })
+
+        self._tune_x_pv.add_callback(_part(self._callback_update_tunes, 'x'))
+        self._tune_y_pv.add_callback(_part(self._callback_update_tunes, 'y'))
+
+    # --- set methods ---
+    def set_loop_state(self, value):
+        """Set loop state."""
+        if not 0 <= value < len(_ETypes.OPEN_CLOSED):
+            msg = "ERR:Invalid loop state!"
+            self._update_log(msg)
+            return False
+        if value == _Const.LoopState.Open:
+            msg = "INFO:Opening the Loop."
+            self._update_log(msg)
+            self._loop_state = value
+            return True
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = "ERR:Loop already closed."
+            self._update_log(msg)
+            return False
+        if not self._is_storedebeam:
+            msg = "ERR:Do not have stored beam!"
+            self._update_log(msg)
+            return False
+        if self._measuring_config:
+            msg = "ERR:Measurement in progress!"
+            self._update_log(msg)
+            return False
+        if self._loop_thread and self._loop_thread.is_alive():
+            msg = 'ERR:Loop still openning...'
+            self._update_log(msg)
+            return False
+        msg = "INFO:Closing the loop."
+        self._update_log(msg)
+        self._loop_state = value
+        self._loop_thread = _Thread(target=self._do_auto_corr, daemon=True)
+        self._loop_thread.start()
+        return True
+
+    def set_loop_freq(self, value):
+        """Set loop frequency."""
+        self._loop_freq = float(value)
+        self.run_callbacks('LoopFreq-RB', float(value))
+        return True
+
+    def set_tune_source(self, value):
+        """Set tune source."""
+        if self._loop_state == _Const.LoopState.Closed:
+            msg = 'ERR:Cant change tune source! FB is on.'
+            self._update_log(msg)
+            return False
+        if not 0 <= value < len(_ETypes.TUNE_SRC):
+            msg = "ERR:Invalid tune source!"
+            self._update_log(msg)
+            return False
+        self._tune_source = value
+        pvnames = _ETypes.TUNE_SRC_PVS[self._tune_source]
+        pvx, pvy = _SiriusPVName(pvnames[0]), _SiriusPVName(pvnames[1])
+        self._tune_x_pv.clear_callbacks()
+        self._tune_y_pv.clear_callbacks()
+        self._tune_x_pv = _PV(
+            pvx.substitute(prefix=_vaca_prefix),
+            connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
+            auto_monitor=True,
+            callback=_part(self._callback_update_tunes, 'x')
+        )
+        self._tune_y_pv = _PV(
+            pvy.substitute(prefix=_vaca_prefix),
+            connection_timeout=SITuneCorrApp._DEF_CONN_TIMEOUT_TUNE,
+            auto_monitor=True,
+            callback=_part(self._callback_update_tunes, 'y')
+        )
+        self.run_callbacks('TuneSrcPVList-Mon', (pvx, pvy))
+        self.run_callbacks('TuneSrc-Sts', value)
+        return True
+
+    def set_ref_tune(self, plane, value):
+        """."""
+        plane = plane.upper()
+        if plane == 'X':
+            self._ref_tunex = float(value)
+        elif plane == 'Y':
+            self._ref_tuney = float(value)
+        else:
+            return False
+        self.run_callbacks('RefTune'+plane+'-RB', float(value))
+        return True
+
+    def set_loop_max_tune_err(self, value):
+        """Set max tune error."""
+        self._loop_max_tune_err = float(value)
+        self.run_callbacks('LoopMaxTuneErr-RB', float(value))
+        return True
+
+    def set_loop_pid_gain(self, kparam, value):
+        """."""
+        kparam = kparam.lower()
+        self._loop_pid_gains[kparam] = float(value)
+        self.run_callbacks("LoopPID" + kparam.title() + "-RB", float(value))
+        return True
+
+    # --- pv initialization ---
+    def init_database(self):
+        """Set initial PV values."""
+        super().init_database()
+        self.init_feedback_pvs()
+
+    def init_feedback_pvs(self):
+        """Initialize feedback PVs."""
+        self.run_callbacks('LoopState-Sel', self._loop_state)
+        self.run_callbacks('LoopState-Sts', self._loop_state)
+        self.run_callbacks('LoopFreq-SP', self._loop_freq)
+        self.run_callbacks('LoopFreq-RB', self._loop_freq)
+        self.run_callbacks('LoopPIDKp-SP', self._loop_pid_gains['kp'])
+        self.run_callbacks('LoopPIDKp-RB', self._loop_pid_gains['kp'])
+        self.run_callbacks('LoopPIDKi-SP', self._loop_pid_gains['ki'])
+        self.run_callbacks('LoopPIDKi-RB', self._loop_pid_gains['ki'])
+        self.run_callbacks('LoopPIDKd-SP', self._loop_pid_gains['kd'])
+        self.run_callbacks('LoopPIDKd-RB', self._loop_pid_gains['kd'])
+        self.run_callbacks('LoopMaxTuneErr-SP', self._loop_max_tune_err)
+        self.run_callbacks('LoopMaxTuneErr-RB', self._loop_max_tune_err)
+
+        self.run_callbacks('TuneSrc-Sel', self._tune_source)
+        self.run_callbacks('TuneSrc-Sts', self._tune_source)
+        self.run_callbacks(
+            'TuneSrcPVList-Mon',
+            _ETypes.TUNE_SRC_PVS[self._tune_source]
+        )
+        self.run_callbacks('RefTuneX-SP', self._ref_tunex)
+        self.run_callbacks('RefTuneX-RB', self._ref_tunex)
+        self.run_callbacks('RefTuneY-SP', self._ref_tuney)
+        self.run_callbacks('RefTuneY-RB', self._ref_tuney)
+
+    # --- feedback methods ---
+    def _do_auto_corr(self):
+        """."""
+        self.run_callbacks("LoopState-Sts", _Const.LoopState.Closed)
+        msg = "INFO:Loop closed!"
+        self._update_log(msg)
+        self._update_ref()
+        zer = _np.zeros(len(self._psfams), dtype=float)
+        self._loop_pid_errs = [zer, zer.copy(), zer.copy()]
+
+        while self._loop_state == _Const.LoopState.Closed:
+            tplanned = 1.0/self._loop_freq
+            _t0 = _time()
+
+            if not self._is_storedebeam:
+                msg = 'ERR:Do not have stored beam!'
+                self._update_log(msg)
+                break
+
+            sts, (tunex, tuney) = self._get_tunes()
+            if not sts:
+                break
+
+            if not self._check_tunes(tunex, tuney):
+                break
+
+            self._process_pid(tunex, tuney)
+
+            sts = self._apply_corr()
+            if not sts:
+                msg = 'ERR:Could not apply the correction!'
+                self._update_log(msg)
+                break
+
+            self._do_sleep(_t0, tplanned)
+
+        if self._loop_state == _Const.LoopState.Closed:
+            self._loop_state = _Const.LoopState.Open
+            self.run_callbacks("LoopState-Sel", _Const.LoopState.Open)
+
+        msg = "INFO:Loop opened!"
+        self._update_log(msg)
+        self.run_callbacks("LoopState-Sts", _Const.LoopState.Open)
+
+    def _process_pid(self, tunex, tuney):
+        self._delta_tunex = self._ref_tunex - tunex
+        self._delta_tuney = self._ref_tuney - tuney
+
+        delta_kl_prev = _np.array([
+            self._lastcalc_deltakl[fam] for fam in self._psfams
+        ])
+
+        self._calc_intstrength()
+
+        e0 = _np.array([self._lastcalc_deltakl[fam] for fam in self._psfams])
+        e1 = self._loop_pid_errs[-1]
+        e2 = self._loop_pid_errs[-2]
+
+        interval = 1.0 / self._loop_freq
+
+        kp = self._loop_pid_gains['kp']
+        ki = self._loop_pid_gains['ki'] * interval
+        kd = self._loop_pid_gains['kd'] / interval
+
+        a0 = kp + ki + kd
+        a1 = -kp - 2*kd
+        a2 = kd
+
+        delta_kl = delta_kl_prev + a0*e0 + a1*e1 + a2*e2
+        for i, fam in enumerate(self._psfams):
+            self._lastcalc_deltakl[fam] = delta_kl[i]
+
+        self._loop_pid_errs.append(e0)
+        del self._loop_pid_errs[0]
+
+    def _callback_update_tunes(self, plane, pvname, value, **kws):
+        _ = (pvname, kws)
+        if plane == 'x':
+            self.run_callbacks('TuneX-Mon', value)
+            return True
+        elif plane == 'y':
+            self.run_callbacks('TuneY-Mon', value)
+            return True
+        return False
+
+    def _get_tunes(self):  # overload (from BaseApp)
+        tunex, tuney = 0.0, 0.0
+        sts = self._tune_x_pv.connected and self._tune_y_pv.connected
+        if sts:
+            tunex = self._tune_x_pv.value
+            tuney = self._tune_y_pv.value
+        else:
+            self._update_log('ERR:Could not get the tunes!')
+        return sts, (tunex, tuney)
+
+    def _check_tunes(self, tunex, tuney):
+        sts = self._check_tunes_reliability(tunex, tuney)
+        sts &= self._check_tunes_distortion(tunex, tuney)
+        return sts
+
+    def _check_tunes_reliability(self, tunex, tuney):
+        _ = (tunex, tuney)
+        return True
+
+    def _check_tunes_distortion(self, tunex, tuney):
+        stsx_ok = abs(tunex - self._ref_tunex) <= self._loop_max_tune_err
+        if not stsx_ok:
+            msg = 'WARN:Tune X is out of range!'
+            self._update_log(msg)
+        stsy_ok = abs(tuney - self._ref_tuney) <= self._loop_max_tune_err
+        if not stsy_ok:
+            msg = 'WARN:Tune Y is out of range!'
+            self._update_log(msg)
+        return stsx_ok and stsy_ok
+
+    def _do_sleep(self, time0, tplanned, do_warn=True):
+        ttook = _time() - time0
+        tsleep = tplanned - ttook
+        if tsleep > 0:
+            _sleep(tsleep)
+        elif do_warn:
+            msg = 'WARN:FB loop step took more than planned.'
+            self._update_log(msg)
