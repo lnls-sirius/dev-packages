@@ -19,6 +19,7 @@ class InjCtrl(_Device):
     TopUpSts = _Const.TopUpSts
     BiasFBModelTypes = _Const.BiasFBModelTypes
     IdleRun = _Const.IdleRunning
+    AccumSts = _Const.AccumSts
 
     PROPERTIES_DEFAULT = (
         'Mode-Sel',
@@ -482,6 +483,35 @@ class InjCtrl(_Device):
     def topup_nextinj_time(self):
         """Next topup scheduled injection Time object."""
         return Time.fromtimestamp(self['TopUpNextInj-Mon'])
+
+    @property
+    def accum_state(self):
+        """Accumulation state."""
+        return self['AccumState-Sts']
+
+    @accum_state.setter
+    def accum_state(self, value):
+        self._enum_setter('AccumState-Sel', value, self.OffOn)
+
+    def cmd_turn_on_accum(self, timeout=None):
+        """Turn on accumulation mode."""
+        self.accum_state = self.OffOn.On
+        return self.wait_accum_start(timeout=timeout)
+
+    def cmd_turn_off_accum(self, timeout=None):
+        """Turn off accumulation mode."""
+        self.accum_state = self.OffOn.Off
+        return self.wait_accum_finish(timeout=timeout)
+
+    def wait_accum_start(self, timeout=None):
+        """."""
+        return self.wait(
+            'AccumState-Sts', self.AccumSts.Injecting, timeout=timeout
+        )
+
+    def wait_accum_finish(self, timeout=None):
+        """."""
+        return self.wait('AccumState-Sts', self.AccumSts.Off, timeout=timeout)
 
     # ----- bias feedback properties -----
 
