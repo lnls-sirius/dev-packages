@@ -159,14 +159,14 @@ _amcfpgaevr_amcs_propts = [
     ['DelayRaw-SP', 1, 0.0],
     ]
 _amcfpgaevr_pvs = list()
-for dev in _amcfpgaevrs:
+for _dev in _amcfpgaevrs:
     # for AFC and RTM freq loops
-    for ppt, val, dly in _amcfpgaevr_propts:
-        _amcfpgaevr_pvs.append([dev+ppt, val, dly])
+    for _ppt, _val, _dly in _amcfpgaevr_propts:
+        _amcfpgaevr_pvs.append([_dev + _ppt, _val, _dly])
     # for AMCs
-    for amc in _amcfpgaevr_amcs:
-        for ppt, val, dly in _amcfpgaevr_amcs_propts:
-            _amcfpgaevr_pvs.append([dev+amc+ppt, val, dly])
+    for _amc in _amcfpgaevr_amcs:
+        for _ppt, _val, _dly in _amcfpgaevr_amcs_propts:
+            _amcfpgaevr_pvs.append([_dev + _amc + _ppt, _val, _dly])
 
 _bpms = [
     'TB-01:DI-BPM-1',
@@ -456,25 +456,25 @@ _bpm_propts = [
     [':PM_PolySUMArrayCoeff-SP', SI_BPM_POLY_SUM_COEFF, 0.0],
     [':PM_PolyQArrayCoeff-SP', SI_BPM_POLY_Q_COEFF, 0.0],
 ]
-for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
+for _phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
     _bpm_propts.extend([
-        [f':TRIGGER{phy_trig}Dir-Sel', 0, 0.0],
-        [f':TRIGGER{phy_trig}DirPol-Sel', 0, 0.0],
-        [f':TRIGGER{phy_trig}RcvLen-SP', 0, 0.0],
-        [f':TRIGGER{phy_trig}TrnLen-SP', 0, 0.0],
+        [f':TRIGGER{_phy_trig}Dir-Sel', 0, 0.0],
+        [f':TRIGGER{_phy_trig}DirPol-Sel', 0, 0.0],
+        [f':TRIGGER{_phy_trig}RcvLen-SP', 0, 0.0],
+        [f':TRIGGER{_phy_trig}TrnLen-SP', 0, 0.0],
     ])
-for acq_core in ['_GEN', '_PM']:
-    for log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
+for _acq_core in ['_GEN', '_PM']:
+    for _log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
         _bpm_propts.extend([
-            [f':TRIGGER{acq_core}{log_trig}RcvInSel-SP', 0, 0.0],
-            [f':TRIGGER{acq_core}{log_trig}RcvSrc-Sel', 0, 0.0],
-            [f':TRIGGER{acq_core}{log_trig}TrnOutSel-SP', 0, 0.0],
-            [f':TRIGGER{acq_core}{log_trig}TrnSrc-Sel', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}RcvInSel-SP', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}RcvSrc-Sel', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}TrnOutSel-SP', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}TrnSrc-Sel', 0, 0.0],
         ])
 _bpm_pvs = list()
-for dev in _bpms:
-    for ppt, val, dly in _bpm_propts:
-        _bpm_pvs.append([dev+ppt, val, dly])
+for _dev in _bpms:
+    for _ppt, _val, _dly in _bpm_propts:
+        _bpm_pvs.append([_dev + _ppt, _val, _dly])
 
 _scrns = [
     'TB-01:DI-{0:s}-1',
@@ -615,11 +615,14 @@ _scrn_propts = [
         [':UseSw-Sel', 1, 0.0],
     ]]
 _scrn_pvs = list()
-for dev in _scrns:
-    for pre, propts in zip(_scrn_devs, _scrn_propts):
-        dev2 = dev.format(pre)
-        for ppt, val, dly in propts:
-            _scrn_pvs.append([dev2+ppt, val, dly])
+for _dev in _scrns:
+    for _pre, _propts in zip(_scrn_devs, _scrn_propts):
+        _dev2 = _dev.format(_pre)
+        if _dev2.startswith('TB-04:DI-Scrn'):
+            # This screen has been disabled after TB septum chamber change
+            continue
+        for _ppt, _val, _dly in _propts:
+            _scrn_pvs.append([_dev2 + _ppt, _val, _dly])
 
 _scrns = [
     'TS-01:DI-ScrnCam',
@@ -630,139 +633,90 @@ _scrns = [
     'TS-04:DI-ScrnCam-3',
     ]
 _scrn_propts = [
-    [':ColorConv-Sel', 0, 0.0],
-    [':EnblMJPEG-Sel', 0, 0.0],
-    [':FastAcq-Sel', 0, 0.0],
-    [':SoftROIAutoCenterX-Sel', 0, 0.0],
-    [':SoftROIAutoCenterY-Sel', 0, 0.0],
-    [':SoftROIHeight-SP', 1024, 0.0],
-    [':SoftROIOffsetX-SP', 0, 0.0],
-    [':SoftROIOffsetY-SP', 0, 0.0],
-    [':SoftROIWidth-SP', 1280, 0.0],
+    # [':ColorConv-Sel', 0, 0.0],
+    # [':EnblMJPEG-Sel', 0, 0.0],
+    # [':FastAcq-Sel', 0, 0.0],
+    # [':SoftROIAutoCenterX-Sel', 0, 0.0],
+    # [':SoftROIAutoCenterY-Sel', 0, 0.0],
+    # [':SoftROIHeight-SP', 1024, 0.0],
+    # [':SoftROIOffsetX-SP', 0, 0.0],
+    # [':SoftROIOffsetY-SP', 0, 0.0],
+    # [':SoftROIWidth-SP', 1280, 0.0],
     ]
-for dev in _scrns:
-    for ppt, val, dly in _scrn_propts:
-        _scrn_pvs.append([dev+ppt, val, dly])
+for _dev in _scrns:
+    for _ppt, _val, _dly in _scrn_propts:
+        _scrn_pvs.append([_dev + _ppt, _val, _dly])
 
-_vlightcam_pvs = [
-    ['BO-50U:DI-VLightCam:Enbl-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:Gain-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:AcqMode-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:AcqPeriod-SP', 0.4, 0.0],
-    ['BO-50U:DI-VLightCam:AcqPeriodLowLim-SP', 0.083, 0.0],
-    ['BO-50U:DI-VLightCam:ExposureMode-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:ExposureTime-SP', 5000, 0.0],
-    ['BO-50U:DI-VLightCam:DataType-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:BlackLevel-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:TransformType-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:DebouncerPeriod-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:BwReserve-SP', 10, 0.0],
-    ['BO-50U:DI-VLightCam:BwReserveAccum-SP', 1, 0.0],
-    ['BO-50U:DI-VLightCam:TransmDelay-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:PacketSize-SP', 1500, 0.0],
-    ['BO-50U:DI-VLightCam:InterPacketDelay-SP', 1000, 0.0],
-    ['BO-50U:DI-VLightCam:SoftROIAutoCenterX-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:SoftROIAutoCenterY-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:SoftROIHeight-SP', 1024, 0.0],
-    ['BO-50U:DI-VLightCam:SoftROIOffsetX-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:SoftROIOffsetY-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:SoftROIWidth-SP', 1280, 0.0],
-    ['BO-50U:DI-VLightCam:AOIAutoCenterX-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:AOIAutoCenterY-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:AOIHeight-SP', 1024, 0.0],
-    ['BO-50U:DI-VLightCam:AOIOffsetX-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:AOIOffsetY-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:AOIWidth-SP', 1280, 0.0],
-    ['BO-50U:DI-VLightCam:CalPosCenterX-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:CalPosCenterY-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:CenterOffsetX-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:CenterOffsetY-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:ThetaOffset-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:ScaleFactorX-SP', 1, 0.0],
-    ['BO-50U:DI-VLightCam:ScaleFactorY-SP', 1, 0.0],
-    ['BO-50U:DI-VLightCam:EnblBGSubtraction-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:EnblOffsetScale-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:PixelOffset-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:PixelScale-SP', 1, 0.0],
-    ['BO-50U:DI-VLightCam:HighClip-SP', 65535, 0.0],
-    ['BO-50U:DI-VLightCam:LowClip-SP', 0, 0.0],
-    ['BO-50U:DI-VLightCam:EnblHighClip-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:EnblLowClip-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:DimFeiMarkEnbl-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:NDStatsMarkEnbl-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:CalCenterMarkEnbl-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:RealCenterMarkEnbl-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:EnblMJPEG-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:ColorConv-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:FastAcq-Sel', 0, 0.0],
-    ['BO-50U:DI-VLightCam:DimFeiMarkColor-SP', 255, 0.0],
-    ['BO-50U:DI-VLightCam:DimFeiMarkSize-SP', 10, 0.0],
-    ['BO-50U:DI-VLightCam:NDStatsMarkColor-SP', 255, 0.0],
-    ['BO-50U:DI-VLightCam:NDStatsMarkSize-SP', 10, 0.0],
-    ['BO-50U:DI-VLightCam:CalCenterMarkColor-SP', 255, 0.0],
-    ['BO-50U:DI-VLightCam:CalCenterMarkSize-SP', 10, 0.0],
-    ['BO-50U:DI-VLightCam:RealCenterMarkColor-SP', 255, 0.0],
-    ['BO-50U:DI-VLightCam:RealCenterMarkSize-SP', 10, 0.0],
-
-    ['SI-01C2FE:DI-VLightCam:Enbl-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:Gain-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AcqMode-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AcqPeriod-SP', 0.4, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AcqPeriodLowLim-SP', 0.083, 0.0],
-    ['SI-01C2FE:DI-VLightCam:ExposureMode-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:ExposureTime-SP', 5000, 0.0],
-    ['SI-01C2FE:DI-VLightCam:DataType-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:BlackLevel-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:TransformType-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:DebouncerPeriod-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:BwReserve-SP', 10, 0.0],
-    ['SI-01C2FE:DI-VLightCam:BwReserveAccum-SP', 1, 0.0],
-    ['SI-01C2FE:DI-VLightCam:TransmDelay-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:PacketSize-SP', 1500, 0.0],
-    ['SI-01C2FE:DI-VLightCam:InterPacketDelay-SP', 1000, 0.0],
-    ['SI-01C2FE:DI-VLightCam:SoftROIAutoCenterX-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:SoftROIAutoCenterY-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:SoftROIHeight-SP', 1024, 0.0],
-    ['SI-01C2FE:DI-VLightCam:SoftROIOffsetX-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:SoftROIOffsetY-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:SoftROIWidth-SP', 1280, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AOIAutoCenterX-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AOIAutoCenterY-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AOIHeight-SP', 1024, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AOIOffsetX-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AOIOffsetY-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:AOIWidth-SP', 1280, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CalPosCenterX-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CalPosCenterY-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CenterOffsetX-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CenterOffsetY-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:ThetaOffset-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:ScaleFactorX-SP', 1, 0.0],
-    ['SI-01C2FE:DI-VLightCam:ScaleFactorY-SP', 1, 0.0],
-    ['SI-01C2FE:DI-VLightCam:EnblBGSubtraction-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:EnblOffsetScale-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:PixelOffset-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:PixelScale-SP', 1, 0.0],
-    ['SI-01C2FE:DI-VLightCam:HighClip-SP', 65535, 0.0],
-    ['SI-01C2FE:DI-VLightCam:LowClip-SP', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:EnblHighClip-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:EnblLowClip-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:DimFeiMarkEnbl-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:NDStatsMarkEnbl-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CalCenterMarkEnbl-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:RealCenterMarkEnbl-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:EnblMJPEG-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:ColorConv-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:FastAcq-Sel', 0, 0.0],
-    ['SI-01C2FE:DI-VLightCam:DimFeiMarkColor-SP', 255, 0.0],
-    ['SI-01C2FE:DI-VLightCam:DimFeiMarkSize-SP', 10, 0.0],
-    ['SI-01C2FE:DI-VLightCam:NDStatsMarkColor-SP', 255, 0.0],
-    ['SI-01C2FE:DI-VLightCam:NDStatsMarkSize-SP', 10, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CalCenterMarkColor-SP', 255, 0.0],
-    ['SI-01C2FE:DI-VLightCam:CalCenterMarkSize-SP', 10, 0.0],
-    ['SI-01C2FE:DI-VLightCam:RealCenterMarkColor-SP', 255, 0.0],
-    ['SI-01C2FE:DI-VLightCam:RealCenterMarkSize-SP', 10, 0.0],
+# Currently these IOCs are disabled! [2026-10-31]
+_vlightcam_pvs = list()
+_vlightcams = [
+    'BO-50U:DI-VLightCam',
+    'SI-01C2FE:DI-VLightCam',
 ]
+_vlightcam_propts = [
+    # [':Enbl-Sel', 0, 0.0],
+    # [':Gain-SP', 0, 0.0],
+    # [':AcqMode-Sel', 0, 0.0],
+    # [':AcqPeriod-SP', 0.4, 0.0],
+    # [':AcqPeriodLowLim-SP', 0.083, 0.0],
+    # [':ExposureMode-Sel', 0, 0.0],
+    # [':ExposureTime-SP', 5000, 0.0],
+    # [':DataType-Sel', 0, 0.0],
+    # [':BlackLevel-SP', 0, 0.0],
+    # [':TransformType-Sel', 0, 0.0],
+    # [':DebouncerPeriod-SP', 0, 0.0],
+    # [':BwReserve-SP', 10, 0.0],
+    # [':BwReserveAccum-SP', 1, 0.0],
+    # [':TransmDelay-SP', 0, 0.0],
+    # [':PacketSize-SP', 1500, 0.0],
+    # [':InterPacketDelay-SP', 1000, 0.0],
+    # [':SoftROIAutoCenterX-Sel', 0, 0.0],
+    # [':SoftROIAutoCenterY-Sel', 0, 0.0],
+    # [':SoftROIHeight-SP', 1024, 0.0],
+    # [':SoftROIOffsetX-SP', 0, 0.0],
+    # [':SoftROIOffsetY-SP', 0, 0.0],
+    # [':SoftROIWidth-SP', 1280, 0.0],
+    # [':AOIAutoCenterX-Sel', 0, 0.0],
+    # [':AOIAutoCenterY-Sel', 0, 0.0],
+    # [':AOIHeight-SP', 1024, 0.0],
+    # [':AOIOffsetX-SP', 0, 0.0],
+    # [':AOIOffsetY-SP', 0, 0.0],
+    # [':AOIWidth-SP', 1280, 0.0],
+    # [':CalPosCenterX-SP', 0, 0.0],
+    # [':CalPosCenterY-SP', 0, 0.0],
+    # [':CenterOffsetX-SP', 0, 0.0],
+    # [':CenterOffsetY-SP', 0, 0.0],
+    # [':ThetaOffset-SP', 0, 0.0],
+    # [':ScaleFactorX-SP', 1, 0.0],
+    # [':ScaleFactorY-SP', 1, 0.0],
+    # [':EnblBGSubtraction-Sel', 0, 0.0],
+    # [':EnblOffsetScale-Sel', 0, 0.0],
+    # [':PixelOffset-SP', 0, 0.0],
+    # [':PixelScale-SP', 1, 0.0],
+    # [':HighClip-SP', 65535, 0.0],
+    # [':LowClip-SP', 0, 0.0],
+    # [':EnblHighClip-Sel', 0, 0.0],
+    # [':EnblLowClip-Sel', 0, 0.0],
+    # [':DimFeiMarkEnbl-Sel', 0, 0.0],
+    # [':NDStatsMarkEnbl-Sel', 0, 0.0],
+    # [':CalCenterMarkEnbl-Sel', 0, 0.0],
+    # [':RealCenterMarkEnbl-Sel', 0, 0.0],
+    # [':EnblMJPEG-Sel', 0, 0.0],
+    # [':ColorConv-Sel', 0, 0.0],
+    # [':FastAcq-Sel', 0, 0.0],
+    # [':DimFeiMarkColor-SP', 255, 0.0],
+    # [':DimFeiMarkSize-SP', 10, 0.0],
+    # [':NDStatsMarkColor-SP', 255, 0.0],
+    # [':NDStatsMarkSize-SP', 10, 0.0],
+    # [':CalCenterMarkColor-SP', 255, 0.0],
+    # [':CalCenterMarkSize-SP', 10, 0.0],
+    # [':RealCenterMarkColor-SP', 255, 0.0],
+    # [':RealCenterMarkSize-SP', 10, 0.0],
+]
+for _dev in _vlightcams:
+    for _ppt, _val, _dly in _vlightcam_propts:
+        _vlightcam_pvs.append([_dev + _ppt, _val, _dly])
+
 
 _dcct_pvs = [
     ['BO-35D:DI-DCCT:Abort-Cmd', 1, 0.0],
@@ -1265,25 +1219,25 @@ _fofbctrls = [
 _fofb_propts = [
     [':SYSIDBaseBPMId-SP', 0, 0],
 ]
-for phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
+for _phy_trig in range(AFC_ACQCORE_NR_PHY_TRIGGER):
     _fofb_propts.extend([
-        [f':TRIGGER{phy_trig}Dir-Sel', 0, 0.0],
-        [f':TRIGGER{phy_trig}DirPol-Sel', 0, 0.0],
-        [f':TRIGGER{phy_trig}RcvLen-SP', 0, 0.0],
-        [f':TRIGGER{phy_trig}TrnLen-SP', 0, 0.0],
+        [f':TRIGGER{_phy_trig}Dir-Sel', 0, 0.0],
+        [f':TRIGGER{_phy_trig}DirPol-Sel', 0, 0.0],
+        [f':TRIGGER{_phy_trig}RcvLen-SP', 0, 0.0],
+        [f':TRIGGER{_phy_trig}TrnLen-SP', 0, 0.0],
     ])
-for acq_core in ['_LAMP', '_SYSID']:
-    for log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
+for _acq_core in ['_LAMP', '_SYSID']:
+    for _log_trig in range(AFC_ACQCORE_NR_LOG_TRIGGER):
         _fofb_propts.extend([
-            [f':TRIGGER{acq_core}{log_trig}RcvInSel-SP', 0, 0.0],
-            [f':TRIGGER{acq_core}{log_trig}RcvSrc-Sel', 0, 0.0],
-            [f':TRIGGER{acq_core}{log_trig}TrnOutSel-SP', 0, 0.0],
-            [f':TRIGGER{acq_core}{log_trig}TrnSrc-Sel', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}RcvInSel-SP', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}RcvSrc-Sel', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}TrnOutSel-SP', 0, 0.0],
+            [f':TRIGGER{_acq_core}{_log_trig}TrnSrc-Sel', 0, 0.0],
         ])
 _fofb_pvs = list()
-for dev in _fofbctrls:
-    for ppt, val, dly in _fofb_propts:
-        _fofb_pvs.append([dev+ppt, val, dly])
+for _dev in _fofbctrls:
+    for _ppt, _val, _dly in _fofb_propts:
+        _fofb_pvs.append([_dev + _ppt, _val, _dly])
 
 
 # When using this type of configuration to set the machine,
@@ -1293,7 +1247,8 @@ for dev in _fofbctrls:
 
 _template_dict = {
     'pvs':
-        _li_diags + _amcfpgaevr_pvs + _bpm_pvs + _scrn_pvs + _vlightcam_pvs +
+        _li_diags + _amcfpgaevr_pvs + _bpm_pvs + _scrn_pvs +
+        # _vlightcam_pvs + # commented out becaus IOC is down.
         _dcct_pvs + _slit_pvs + _tune_pvs + _fofb_pvs
         # + _ict_pvs  # commented out becaus IOC is down.
         }
