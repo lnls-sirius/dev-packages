@@ -173,6 +173,8 @@ class Waveform:
         threshold_ratio=0.02,
         margin_pts=10,
         taper_ratio=0.1,
+        lower_lim=0.05,
+        upper_lim=0.95,
     ):
         """Filter high frequencies and smooth edge noise to zero.
 
@@ -196,7 +198,7 @@ class Waveform:
         # 1. Extract background gradient
         n = len(self._tim)
         indcs = _np.arange(n)
-        sel = (indcs < int(0.15 * n)) | (indcs > int(0.90 * n))
+        sel = (indcs < int(lower_lim * n)) | (indcs > int(upper_lim * n))
         pval = _np.polyfit(self._tim[sel], self._wfm[sel], 1)
         wfm_fit = _np.polyval(pval, self.tim)
         wfm = self.wfm - wfm_fit
