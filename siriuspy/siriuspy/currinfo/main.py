@@ -142,7 +142,7 @@ class _ASCurrInfoApp(_CurrInfoApp):
         if chg1 <= self.CHARGE_THRESHOLD:
             return
         name = acc + '-Glob:AP-CurrInfo:'
-        self.run_callbacks(name + 'TranspEff-Mon', eff)
+        # self.run_callbacks(name + 'TranspEff-Mon', eff)
         self.run_callbacks(name + 'TranspEffAvg-Mon', effave)
 
 
