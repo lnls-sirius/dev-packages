@@ -87,7 +87,9 @@ class _ASCurrInfoApp(_CurrInfoApp):
         if dtim <= interval:
             _time.sleep(interval - dtim)
         else:
-            _log.warning(f'IOC took {dtim*1000:.3f} ms in update loop.')
+            if dtim > 3 * interval:
+                wmsg = f'IOC took {dtim * 1000:.3f} ms in update loop.'
+                _log.warning(wmsg)
 
     def _get_measurement(self):
         try:
