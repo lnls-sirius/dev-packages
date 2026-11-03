@@ -343,12 +343,20 @@ class FamBPMs(_DeviceSet):
         orby = _np.array(orby)
         return orbx, orby
 
-    def get_mturn_signals(self):
+    def get_mturn_signals(self, return_raw=False):
         """Get Multiturn signals matrices.
 
+        Args:
+            return_raw: Whether to return raw data from BPMs or pre-processed
+                data by cutting larger acquisitions to the size of the
+                smallest one and aranging them in numpy.ndarrays. Apart from
+                cutting the array sizes, no other processing is made when this
+                option is True. Defaults to False.
         Returns:
-            list: Each component of the list is an numpy.ndarray with shape
-                (N, 160), containing the values for the signals acquired.
+            list: If return_raw is False, each component of the list is a
+                numpy.ndarray with shape (N, 160), containing the values for
+                the signals acquired. If return_raw is True, then a list of
+                lists of numpy.ndarrays is returned.
 
         """
         sigs = [[] for _ in self._mturn_signals2acq]
@@ -360,6 +368,9 @@ class FamBPMs(_DeviceSet):
                 name = 'mt_' + ('ampl' if sn in 'abcd' else 'pos') + sn
                 sigs[i].append(getattr(bpm, name))
             mini = min(mini, _np.min([s[-1].size for s in sigs]))
+
+        if return_raw:
+            return sigs
 
         for i, sig in enumerate(sigs):
             for j, s in enumerate(sig):
@@ -598,8 +609,7 @@ class FamBPMs(_DeviceSet):
 
     def update_mturn_initial_signals(self):
         """Call this method before acquisition to get orbit for comparison."""
-        sig = _np.array(self.get_mturn_signals())
-        self._initial_signals = sig if sig.shape[1] != 0 else None
+        self._initial_signals = self.get_mturn_signals(return_raw=True)
 
     def update_mturn_initial_timestamps(self):
         """Call this method before acquisition to get orbit for comparison."""
@@ -693,7 +703,6 @@ class FamBPMs(_DeviceSet):
 
         Returns:
             int|float: code describing what happened:
-                -2: size of signals is 0;
                 -1: initial signals were not defined;
                 =0: signals updated.
                 >0: timeout waiting BPMs. The returned value is a float of
@@ -707,23 +716,24 @@ class FamBPMs(_DeviceSet):
         if self._initial_signals is None:
             return -1
 
-        sig0 = self._initial_signals
+        sigs0 = self._initial_signals
         while timeout > 0:
             t00 = _time.time()
-            sig = _np.array(self.get_mturn_signals())
-            siz = min(sig.shape[1], sig0.shape[1])
-            if siz == 0:
-                return -2
-            errors = _np.all(_np.equal(sig[:, :siz], sig0[:, :siz]), axis=1)
-            if not _np.any(errors):
+            sigs1 = self.get_mturn_signals(return_raw=True)
+            for i, (sig1, sig0) in enumerate(zip(sigs1, sigs0)):
+                break_ = False
+                for j, (ss1, ss0) in enumerate(zip(sig1, sig0)):
+                    code = j + (i + 1) / 10
+                    break_ = _np.array_equal(ss1, ss0)
+                    if break_:
+                        break
+                if break_:
+                    break
+            else:
                 return 0
             _log.debug('Signals did not update yet. Trying again.')
             _time.sleep(0.1)
             timeout -= _time.time() - t00
-
-        bpm_idx = int(_np.nonzero(_np.any(errors, axis=0))[0][0])
-        code = bpm_idx + 1
-        code += (int(_np.nonzero(errors[:, bpm_idx])[0][0]) + 1) / 10
         return code
 
     def wait_update_mturn(self, timeout=10) -> int:
