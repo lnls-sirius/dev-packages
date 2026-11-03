@@ -288,18 +288,17 @@ class LICurrInfoApp(_ASCurrInfoApp):
         li2_chg = charge_data['LI_ICT2']['charge']
         tb1_chg = charge_data['TB_ICT1']['charge']
         tb2_chg = charge_data['TB_ICT2']['charge']
-        cth = self.CHARGE_THRESHOLD
-        li_eff = min(110, li2_chg / li1_chg * 100) if li1_chg > cth else 0
-        tb_eff = min(110, tb2_chg / tb1_chg * 100) if tb1_chg > cth else 0
-
         self.run_callbacks(self.LIICT1 + ':ChargeWfm-Mon', li1_chg)
         self.run_callbacks(self.LIICT2 + ':ChargeWfm-Mon', li2_chg)
         self.run_callbacks(self.TBICT1 + ':ChargeWfm-Mon', tb1_chg)
         self.run_callbacks(self.TBICT2 + ':ChargeWfm-Mon', tb2_chg)
-        self.run_callbacks('LI-Glob:AP-CurrInfo:TranspEff-Mon', li_eff)
-        self.run_callbacks('TB-Glob:AP-CurrInfo:TranspEff-Mon', tb_eff)
 
-        return True
+        if li1_chg >= self.CHARGE_THRESHOLD:
+            li_eff = min(110, li2_chg / li1_chg * 100)
+            self.run_callbacks('LI-Glob:AP-CurrInfo:TranspEff-Mon', li_eff)
+        if tb1_chg >= self.CHARGE_THRESHOLD:
+            tb_eff = min(110, tb2_chg / tb1_chg * 100)
+            self.run_callbacks('TB-Glob:AP-CurrInfo:TranspEff-Mon', tb_eff)
 
 
 class BOCurrInfoApp(_CurrInfoApp):
