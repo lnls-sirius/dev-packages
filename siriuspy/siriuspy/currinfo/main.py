@@ -11,11 +11,13 @@ from mathphys.functions import get_namedtuple as _get_namedtuple
 
 from ..callbacks import Callback as _Callback
 from ..clientarch import ClientArchiver as _ClientArch
-from ..envars import VACA_PREFIX as _vaca_prefix
+from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ..oscilloscope import Scopes as _Scopes
+from ..oscilloscope import WaveformUtils as _WaveformUtils
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
+
 from .csdev import Const as _Const, get_currinfo_database as _get_database
 
 
@@ -72,7 +74,8 @@ class _ASCurrInfoApp(_CurrInfoApp):
         super().__init__()
         self._pvs_database = _get_database(self.ACC)
         self._meas = None
-
+        self._wfms = None
+        self._thread = None
         self.osc_obj = self.OSC
 
     def process(self, interval):
@@ -159,9 +162,128 @@ class LICurrInfoApp(_ASCurrInfoApp):
     TBICT1 = 'TB-02:DI-ICT'
     TBICT2 = 'TB-04:DI-ICT'
 
+    # Gain values for allICT channel calculated charges.
+    # Obtained from oscilloscope waveform measurements.
+    #
+    # Comparision of measured data:
+    # 2026-08-11 (before ICT cables were modified)
+    # 2026-10-29 (current cables status)
+
+    LI_TB_WFM_GAINS = dict(
+        LI_ICT1=0.81603,
+        LI_ICT2=2.82038,
+        TB_ICT1=0.90499,
+        TB_ICT2=1.00000,
+    )
+
+    def _get_measurement(self):
+        try:
+            self._meas, self._wfms = self.osc_obj.acquire(
+                acq_meas=True,
+                acq_wfms=True
+            )
+        except Exception as err:
+            _log.error(str(err))
+
     def _update_pvs(self, *args):
         super()._update_pvs('LI', self.LIICT1, self.LIICT2)
         super()._update_pvs('TB', self.TBICT1, self.TBICT2)
+
+        # run process_wfm thread, if the case
+        if self._thread and self._thread.is_alive():
+            return
+        self._thread = _Thread(target=self._update_wfms, daemon=True)
+        self._thread.start()
+
+    def _create_wfm_ref_pulses(self):
+        """Create reference pulses for each ICT channel."""
+        wfms = self._wfms
+
+        ref_wfms = dict()
+        tb_ict2 = wfms['TB_ICT2']
+
+        # consts
+        wfm = _WaveformUtils.gen_uniform(wfms['LI_ICT1'])
+        wfm = wfm.normalize_integral()
+        ref_wfms['CONST'] = wfm
+
+        wfm0 = 1.0 * tb_ict2
+        wfm0 = wfm0.gen_filtered_and_zeroed_edges()
+        wfm0 = wfm0.normalize_integral()
+
+        # pulse LI ICT1
+        wfm = wfm0.gen_shifted(wfm_ref=wfms['LI_ICT1'])
+        # wfm = wfm.gen_filtered_and_zeroed_edges()
+        wfm = wfm.normalize_integral()
+        ref_wfms['LI_ICT1'] = wfm
+
+        # pulse LI ICT2
+        wfm = wfm0.gen_shifted(wfm_ref=wfms['LI_ICT2'])
+        # wfm = wfm.gen_filtered_and_zeroed_edges()
+        wfm = wfm.normalize_integral()
+        ref_wfms['LI_ICT2'] = wfm
+
+        # pulse TB ICT1
+        wfm = wfm0.gen_shifted(wfm_ref=wfms['TB_ICT1'])
+        # wfm = wfm.gen_filtered_and_zeroed_edges()
+        wfm = wfm.normalize_integral()
+        ref_wfms['TB_ICT1'] = wfm
+
+        # pulse TB ICT2
+        ref_wfms['TB_ICT2'] = wfm0
+
+        return ref_wfms
+
+    def _create_wfm_diff_pulses(self, ref_wfms):
+
+        wfms = self._wfms
+        diff_wfms = dict()
+
+        ref_const = ref_wfms['CONST']
+        for channel in wfms:
+            wfm = wfms[channel]
+            ref_wfm = ref_wfms[channel]
+            wfm_basis = [ref_wfm, ref_const]
+            coeffs, residues, wfm_fit, *_ = wfm.fit_linear_coeffs(wfm_basis)
+            diff_wfms[channel] = wfm - wfm_fit
+        return diff_wfms
+
+    def _calc_charges(self, ref_wfms, diff_wfms):
+        wfms = self._wfms
+        data = dict()
+        for channel in wfms:
+            wfm = wfms[channel]
+            wfm_basis = [
+                ref_wfms[channel],
+                ref_wfms['CONST'],
+                diff_wfms[channel]
+            ]
+            coeffs, residues, wfm_fit, *_ = wfm.fit_linear_coeffs(wfm_basis)
+            gain = self.LI_TB_WFM_GAINS.get(channel, 1.0)
+            data[channel] = {
+                'coeffs': coeffs,
+                'residues': residues,
+                'wfm_fit': wfm_fit,
+                'charge': coeffs[0] * gain,
+            }
+        return data
+
+    def _update_wfms(self):
+        """."""
+        if self._wfms is None:
+            return
+
+        try:
+            ref_wfms = self._create_wfm_ref_pulses()
+            diff_wfms = self._create_wfm_diff_pulses(ref_wfms)
+            charge_data = self._calc_charges(ref_wfms, diff_wfms)
+        except Exception as err:
+            _log.error(str(err))
+            return
+        print('LI ICT1 charge: {:.3f} nC'.format(charge_data['LI_ICT1']['charge']))
+        print('LI ICT2 charge: {:.3f} nC'.format(charge_data['LI_ICT2']['charge']))
+        print('TB ICT1 charge: {:.3f} nC'.format(charge_data['TB_ICT1']['charge']))
+        print('TB ICT2 charge: {:.3f} nC'.format(charge_data['TB_ICT2']['charge']))
 
 
 class BOCurrInfoApp(_CurrInfoApp):
@@ -182,7 +304,7 @@ class BOCurrInfoApp(_CurrInfoApp):
 
         # consts
         self._pvs_database = _get_database('BO')
-        self._prefix = _vaca_prefix + ('-' if _vaca_prefix else '')
+        self._prefix = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
         self._dcct = 'BO-35D:DI-DCCT'
 
         # initialize vars
@@ -351,7 +473,7 @@ class SICurrInfoApp(_CurrInfoApp):
         """Class constructor."""
         super().__init__()
         self._pvs_database = _get_database('SI')
-        self._prefix = _vaca_prefix + ('-' if _vaca_prefix else '')
+        self._prefix = _VACA_PREFIX + ('-' if _VACA_PREFIX else '')
 
         # initialize vars
         self._time0 = _time.time()
