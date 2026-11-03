@@ -63,7 +63,7 @@ def get_litbts_currinfo_database(acc):
     def_db = {'type': 'float', 'value': 0.0, 'unit': 'nC', 'prec': 4}
     pvs = [
         'Charge-Mon', 'ChargeWfm-Mon',
-        'ChargeAvg-Mon', 'ChargeStd-Mon'
+        'ChargeAvg-Mon', 'ChargeStd-Mon',
         'ChargeMin-Mon', 'ChargeMax-Mon',
     ]
 
