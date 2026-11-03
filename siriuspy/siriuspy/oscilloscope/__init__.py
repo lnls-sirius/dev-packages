@@ -1,4 +1,4 @@
 """Oscilloscope subpackage."""
 
-from .scopes import Scopes, ScopeSignals
-from .keysight import Keysight
+from .scopes import ScopeSignals, Keysight, Scopes
+from .waveform import Waveform, WaveformUtils
