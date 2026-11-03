@@ -14,6 +14,7 @@ from ..clientarch import ClientArchiver as _ClientArch
 from ..envars import VACA_PREFIX as _VACA_PREFIX
 from ..epics import PV as _PV, SiriusPVTimeSerie as _SiriusPVTimeSerie
 from ..oscilloscope import Scopes as _Scopes
+from ..oscilloscope import Waveform as _Waveform
 from ..oscilloscope import WaveformUtils as _WaveformUtils
 from ..pwrsupply.csdev import Const as _PSc
 from ..search import LLTimeSearch as _LLTimeSearch
@@ -180,10 +181,11 @@ class LICurrInfoApp(_ASCurrInfoApp):
 
     def _get_measurement(self):
         try:
-            self._meas, self._wfms = self.osc_obj.acquire(
+            self._meas, wfms = self.osc_obj.acquire(
                 acq_meas=True,
                 acq_wfms=True
             )
+            self._wfms = {chan: _Waveform(*wfms[chan]) for chan in wfms}
         except Exception as err:
             _log.error(str(err))
 
@@ -282,10 +284,22 @@ class LICurrInfoApp(_ASCurrInfoApp):
         except Exception as err:
             _log.error(str(err))
             return
-        print('LI ICT1 charge: {:.3f} nC'.format(charge_data['LI_ICT1']['charge']))
-        print('LI ICT2 charge: {:.3f} nC'.format(charge_data['LI_ICT2']['charge']))
-        print('TB ICT1 charge: {:.3f} nC'.format(charge_data['TB_ICT1']['charge']))
-        print('TB ICT2 charge: {:.3f} nC'.format(charge_data['TB_ICT2']['charge']))
+        li1_chg = charge_data['LI_ICT1']['charge']
+        li2_chg = charge_data['LI_ICT2']['charge']
+        tb1_chg = charge_data['TB_ICT1']['charge']
+        tb2_chg = charge_data['TB_ICT2']['charge']
+        cth = self.CHARGE_THRESHOLD
+        li_eff = min(110, li2_chg / li1_chg * 100) if li1_chg > cth else 0
+        tb_eff = min(110, tb2_chg / tb1_chg * 100) if tb1_chg > cth else 0
+
+        self.run_callbacks(self.LIICT1 + ':ChargeWfm-Mon', li1_chg)
+        self.run_callbacks(self.LIICT2 + ':ChargeWfm-Mon', li2_chg)
+        self.run_callbacks(self.TBICT1 + ':ChargeWfm-Mon', tb1_chg)
+        self.run_callbacks(self.TBICT2 + ':ChargeWfm-Mon', tb2_chg)
+        self.run_callbacks('LI-Glob:AP-CurrInfo:TranspEff-Mon', li_eff)
+        self.run_callbacks('TB-Glob:AP-CurrInfo:TranspEff-Mon', tb_eff)
+
+        return True
 
 
 class BOCurrInfoApp(_CurrInfoApp):
