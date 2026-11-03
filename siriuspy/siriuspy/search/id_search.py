@@ -29,6 +29,7 @@ class IDSearch:
         'SABIA': 'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
         'IPE': 'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
+        'SAGUI': 'SI-16SB:ID-APU58',
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
     }
@@ -288,6 +289,29 @@ class IDSearch:
                 24,
             ),
         ),
+        'SI-16SB:ID-APU58': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields,
+            (
+                58,
+                0,
+                29,
+                29,
+                0,
+                0.01,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                29,
+            ),
+        ),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields,
@@ -407,6 +431,9 @@ class IDSearch:
             ('horizontal', None)  # [mm]
         ],
         'SI-14SB:ID-IVU18': [
+            ('horizontal', None)  # [mm]
+        ],
+        'SI-16SB:ID-APU58': [
             ('horizontal', None)  # [mm]
         ],
         'SI-17SA:ID-PAPU50': [
@@ -597,6 +624,7 @@ class IDSearch:
                 IDFF_QN_LABELS[5],
             ],  # [A]
         },
+        'SI-16SB:ID-APU58': None,
         'SI-17SA:ID-PAPU50': {
             'polarizations': ('horizontal',),
             'pparameter': None,
