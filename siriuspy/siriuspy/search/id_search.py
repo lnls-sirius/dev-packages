@@ -19,7 +19,7 @@ class IDSearch:
     # static tables in our cs-constants server.
 
     # NOTE: see
-    # https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Insertion_Devices
+    # https://sirius-wiki.cnpem.br/en/Machine/storage_ring?#straight-sections-allocation
 
     _beamline2idname = {
         'CARNAUBA': 'SI-06SB:ID-VPU29',  # titular: VPU29
