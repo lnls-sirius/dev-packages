@@ -299,6 +299,8 @@ def get_tune_database(acc):
             'type': 'enum', 'enums': _et.INDIV_2KNOBS,
             'value': _ct.CorrGroup.TwoKnobs}
 
+        pvs_database['CalcDelta-Cmd'] = {'type': 'int', 'value': 0}
+
         pvs_database['SyncCorr-Sel'] = {
             'type': 'enum', 'enums': _et.OFF_ON, 'value': _ct.SyncCorr.Off}
         pvs_database['SyncCorr-Sts'] = {
