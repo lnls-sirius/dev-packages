@@ -1191,6 +1191,7 @@ class SISOFB(BOSOFB):
         n_bpms_outx=3,
         n_bpms_outy=3,
         minsingval=0.2,
+        bump_mat=None,
     ):
         """."""
         return _si_calculate_bump(
@@ -1204,6 +1205,7 @@ class SISOFB(BOSOFB):
             n_bpms_outx=n_bpms_outx,
             n_bpms_outy=n_bpms_outy,
             minsingval=minsingval,
+            bump_mat=bump_mat,
         )
 
     def find_closest_corrs_ssection(self, ss, nr_ch, nr_cv, inc_rf=False):
