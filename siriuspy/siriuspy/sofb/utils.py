@@ -2,9 +2,18 @@
 
 import numpy as _np
 
+SS_LENGTHS = {'SA': 7.0358, 'SB': 6.1758, 'SP': 6.1758}
+BPM_SEC_IDCS = {
+    'C1': [0, 1],
+    'C2': [2, 3],
+    'BC': [3, 4],
+    'SA': [-1, 0],
+    'SB': [-1, 0],
+    'SP': [-1, 0],
+}
+
 
 def get_matrix_ss_section(section_type):
-    SS_LENGTHS = {'SA': 7.0358, 'SB': 6.1758, 'SP': 6.1758}
     length = SS_LENGTHS[section_type]
     return _np.array([
         [1, -length / 2, 0, 0],
@@ -14,17 +23,32 @@ def get_matrix_ss_section(section_type):
     ])
 
 
+def get_bpm_indices(section_type=None, section_nr=None):
+    """Get BPMs indices to set orbit for bump.
+
+    Args:
+        section_type (str): Bump section (C1, C2, BC, SA, SB, SP).
+        Defaults to None.
+        section_nr (int): Section number. Defaults to None.
+
+    Returns:
+        1d numpy array: Indices of the BPMs where orbit bump will
+          be applied.
+
+    """
+    bdict = BPM_SEC_IDCS
+    sidx = section_nr - 1
+    bpm1_sec_index, bpm2_sec_index = (
+        bdict[section_type][0],
+        bdict[section_type][1],
+    )
+    idcs = _np.array([bpm1_sec_index, bpm2_sec_index]) + 8 * sidx
+    idcs = _np.r_[idcs, idcs + 160]
+    return idcs
+
+
 def si_calculate_bump(
-    orbx,
-    orby,
-    subsec,
-    agx=0,
-    agy=0,
-    psx=0,
-    psy=0,
-    n_bpms_outx=3,
-    n_bpms_outy=3,
-    minsingval=0.2,
+    orbx, orby, subsec, agx=0, agy=0, psx=0, psy=0, bump_mat=None
 ):
     """Calculate bumps on SA, SB, SP, BC, C2 and C1 subsections.
 
@@ -49,20 +73,11 @@ def si_calculate_bump(
     section_type = subsec[2:]
     if 'S' in section_type:
         mat_s2r = get_matrix_ss_section(section_type)
-        idcs = [(section_nr - 1) * 8 - 1, (section_nr - 1) * 8]
-    else:
-        from apsuite.orbcorr.si_bumps import SiCalcBumps
-
-        bump = SiCalcBumps()
-        _, _, mat_s2r = bump.calc_matrices(
-            section_type=section_type,
-            section_nr=section_nr,
-            n_bpms_outx=n_bpms_outx,
-            n_bpms_outy=n_bpms_outy,
-            use_ss_tfm=False,
-            minsingval=minsingval,
+    elif bump_mat is None:
+        raise ValueError(
+            'Bump matrix must be provided for BC, C1 and C2 sections.'
         )
-        idcs = bump.get_bpm_indices(section_type, section_nr - 1)
+    idcs = get_bpm_indices(section_type, section_nr)
 
     vec = _np.array([psx, agx, psy, agy])
     pos_bpm = _np.dot(mat_s2r, vec)
