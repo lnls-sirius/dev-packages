@@ -711,6 +711,19 @@ class FAP_2P2S(PSBSMP):
             self, slave_address, _etity_psbsmp.EntitiesFAP_2P2S(), pru=pru)
 
 
+class SWLSSirius(PSBSMP):
+    """BSMP with EntitiesSWLSSirius."""
+
+    IS_DCLINK = False
+    CONST = _const_psbsmp.ConstSWLSSirius
+
+    def __init__(self, slave_address: int, pru: _IOInterface):
+        """Init BSMP."""
+        PSBSMP.__init__(
+            self, slave_address, _etity_psbsmp.EntitiesSWLSSirius(), pru=pru
+        )
+
+
 # --- ACDC ---
 
 
