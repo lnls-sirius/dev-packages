@@ -2448,6 +2448,36 @@ class S3PW(IDBase):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
         )
 
+    @property
+    def centralcoil_waveform(self):
+        """Central coil sync waveform [A]."""
+        return self[self.PARAM_PVS.CENTRALC_SYNCWFM_RB]
+
+    @property
+    def centralcoil_slewrate(self):
+        """Central coil slew rate [A/s]."""
+        return self[self.PARAM_PVS.CENTRALC_SLEWRATE_RB]
+
+    @property
+    def centralcoil_current(self):
+        """Central coil current [A]."""
+        return self[self.PARAM_PVS.CENTRALC_CURRENT_MON]
+
+    @property
+    def centralcoil_dcct1(self):
+        """Central coil DCCT1 current [A]."""
+        return self[self.PARAM_PVS.CENTRALC_DCCT1_MON]
+
+    @property
+    def centralcoil_dcct2(self):
+        """Central coil DCCT2 current [A]."""
+        return self[self.PARAM_PVS.CENTRALC_DCCT2_MON]
+
+    @property
+    def centralcoil_loop_state_mon(self):
+        """Central coil loop state."""
+        return self[self.PARAM_PVS.CENTRALC_LOOP_STATE_MON]
+
     def cmd_centralcoil_powerenbl(self):
         """Command to enable central coil power supply."""
         self[self.PARAM_PVS.CENTRALC_PS_ENBL_CMD] = 1
@@ -2467,6 +2497,18 @@ class S3PW(IDBase):
     def cmd_centralcoil_reset_interlock(self):
         """Command to reset interlock of central coil power supply."""
         self[self.PARAM_PVS.CENTRALC_RESET_CMD] = 1
+
+    def set_centralcoil_current(self, current, timeout=None):
+        """Set central coil current [A]."""
+        return self._write_sp(self.PARAM_PVS.CENTRALC_CURRENT_SP, current, timeout)
+
+    def set_centralcoil_slewrate(self, slewrate, timeout=None):
+        """Set central coil slew rate [A/s]."""
+        return self._write_sp(self.PARAM_PVS.CENTRALC_SLEWRATE_SP, slewrate, timeout)
+
+    def set_centralcoil_syncwfm(self, wfm, timeout=None):
+        """Set central coil sync waveform [A]."""
+        return self._write_sp(self.PARAM_PVS.CENTRALC_SYNCWFM_SP, wfm, timeout)
 
     def set_centralcoil_opmode_slowref(self):
         """Set central coil power supply to slow ref mode."""
