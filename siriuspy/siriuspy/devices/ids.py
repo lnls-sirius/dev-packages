@@ -15,9 +15,9 @@ class _ParamPVs:
     # --- GENERAL ---
     PERIOD_LEN_CTE = None
     START_PARKING_CMD = None
-    IS_MOVING = 'Moving-Mon'
-    BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
-    BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
+    IS_MOVING = None
+    BLCTRL_ENBL_SEL = None
+    BLCTRL_ENBL_STS = None
     MOVE_ABORT = None
     RESET = None
 
@@ -108,6 +108,38 @@ class _ParamPVs:
     PITCH_OFFSET_VELO_MON = None
     PITCH_OFFSET_MIN_CTE = None
     PITCH_OFFSET_MAX_CTE = None
+
+    # --- ELECTROMAGNETIC DEVICES ---
+
+    # --- General ---
+    START_RAMP_CMD = None
+    PS_CLOSE_LOOP_CMD = None
+    PS_OPEN_LOOP_CMD = None
+    PULSE_SYNC_CMD = None
+    RESET_CMD = None
+    OPMODE_SEL = None
+    PS_LOOP_STATE_MON = None
+
+    # --- Coils ---
+    CENTRALC_PS_ENBL_CMD = None
+    CENTRALC_PS_DSBL_CMD = None
+    CENTRALC_CURRENT_SP = None
+    CENTRALC_SLEWRATE_SP = None
+    CENTRALC_SYNCWFM_SP = None
+    CENTRALC_SLEWRATE_RB = None
+    CENTRALC_CURRENT_MON = None
+    CENTRALC_DCCT1_MON = None
+    CENTRALC_DCCT2_MON = None
+
+    LATC_PS_ENBL_CMD = None
+    LATC_PS_DSBL_CMD = None
+    LATC_CURRENT_SP = None
+    LATC_SLEWRATE_SP = None
+    LATC_SYNCWFM_SP = None
+    LATC_SLEWRATE_RB = None
+    LATC_CURRENT_MON = None
+    LATC_DCCT1_MON = None
+    LATC_DCCT2_MON = None
 
     def __str__(self):
         """Print parameters."""
@@ -1044,6 +1076,9 @@ class IDFullMovCtrl(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
 
     PROPERTIES_DEFAULT = tuple(
         set(
@@ -1178,6 +1213,9 @@ class APU(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.KPARAM_SP = 'Phase-SP'
     PARAM_PVS.KPARAM_RB = 'Phase-SP'  # There is no Phase-RB!
     PARAM_PVS.KPARAM_MON = 'Phase-Mon'
@@ -1296,6 +1334,9 @@ class PAPU(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.KPARAM_SP = 'Phase-SP'
     PARAM_PVS.KPARAM_RB = 'Phase-RB'
@@ -1745,6 +1786,9 @@ class DELTA(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
@@ -2238,6 +2282,9 @@ class UE44(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
+    PARAM_PVS.IS_MOVING = 'Moving-Mon'
+    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
@@ -2268,7 +2315,6 @@ class UE44(IDBase):
     PARAM_PVS.CPARAM_CHANGE_CMD = 'CParamChange-Cmd'
 
     PARAM_PVS.POL_SEL = 'Pol-Sel'
-    # PARAM_PVS.POL_STS = 'Pol-Sts'
     PARAM_PVS.POL_MON = 'Pol-Mon'
     PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
 
@@ -2328,6 +2374,57 @@ class UE44(IDBase):
         return self['Offset-Mon']
 
 
+class S3PW(IDBase):
+    class DEVICES:
+        """Device names."""
+
+        S3PW_15SP = 'SI-15SP:ID-3PW'
+        ALL = (S3PW_15SP,)
+
+    PARAM_PVS = _ParamPVs()
+
+    PARAM_PVS.START_RAMP_CMD = None
+    PARAM_PVS.PS_CLOSE_LOOP_CMD = None
+    PARAM_PVS.PS_OPEN_LOOP_CMD = None
+    PARAM_PVS.PULSE_SYNC_CMD = None
+    PARAM_PVS.RESET_CMD = None
+    PARAM_PVS.OPMODE_SEL = None
+    PARAM_PVS.PS_LOOP_STATE_MON = None
+
+    PARAM_PVS.CENTRALC_CURRENT_SP = None
+    PARAM_PVS.CENTRALC_SLEWRATE_SP = None
+    PARAM_PVS.CENTRALC_SLEWRATE_RB = None
+    PARAM_PVS.CENTRALC_CURRENT_MON = None
+    PARAM_PVS.CENTRALC_DCCT1_MON = None
+    PARAM_PVS.CENTRALC_DCCT2_MON = None
+
+    PARAM_PVS.LATC_CURRENT_SP = None
+    PARAM_PVS.LATC_SLEWRATE_SP = None
+    PARAM_PVS.LATC_SLEWRATE_RB = None
+    PARAM_PVS.LATC_CURRENT_MON = None
+    PARAM_PVS.LATC_DCCT1_MON = None
+    PARAM_PVS.LATC_DCCT2_MON = None
+
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
+
+    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+        """."""
+        # check if device exists
+        if devname not in S3PW.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        # call base class constructor
+        super().__init__(
+            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+        )
+
+
 class ID(IDBase):
     """Insertion Device."""
 
@@ -2342,6 +2439,7 @@ class ID(IDBase):
         IVU = IVU.DEVICES
         VPU = VPU.DEVICES
         UE44 = UE44.DEVICES
+        S3PW = S3PW.DEVICES
         ALL = (
             APU.ALL
             + PAPU.ALL
@@ -2351,6 +2449,7 @@ class ID(IDBase):
             + IVU.ALL
             + VPU.ALL
             + UE44.ALL
+            + S3PW.ALL
         )
 
     def __new__(cls, devname, **kwargs):
@@ -2380,5 +2479,7 @@ class ID(IDBase):
             return VPU
         elif devname in UE44.DEVICES.ALL:
             return UE44
+        elif devname in S3PW.DEVICES.ALL:
+            return S3PW
         else:
             return None

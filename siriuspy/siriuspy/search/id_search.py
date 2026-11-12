@@ -29,6 +29,7 @@ class IDSearch:
         'SABIA': 'SI-10SB:ID-DELTA52',  # titular: 2 x DELTA52 (EPU50 prev.)
         'IPE': 'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
+        'SUSSUARANA': 'SI-15SP:ID-S3PW',  # titular: S3PW
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
     }
@@ -37,11 +38,11 @@ class IDSearch:
 
     _idparam_fields = (
         'PERIOD_LENGTH',  # [mm]
-        'KPARAM_MIN',  # [mm]
-        'KPARAM_MAX',  # [mm]
-        'KPARAM_PARKED',  # [mm]
-        'KPARAM_POL_CHANGE',  # [mm]
-        'KPARAM_TOL',  # [mm]
+        'KPARAM_MIN',  # [mm] or [A]
+        'KPARAM_MAX',  # [mm] or [A]
+        'KPARAM_PARKED',  # [mm] or [A]
+        'KPARAM_POL_CHANGE',  # [mm] or [A]
+        'KPARAM_TOL',  # [mm] or [A]
         'PPARAM_MIN',  # [mm]
         'PPARAM_MAX',  # [mm]
         'PPARAM_PARKED',  # [mm]
@@ -51,8 +52,8 @@ class IDSearch:
         'CPARAM_PARKED',  # [mm]
         'CPARAM_TOL',  # [mm]
         'CPARAM_POL_CHANGE',  # [mm]
-        'PARAM_TABLE_MIN',  # [mm]
-        'PARAM_TABLE_MAX',  # [mm]
+        'PARAM_TABLE_MIN',  # [mm] or [A]
+        'PARAM_TABLE_MAX',  # [mm] or [A]
     )
 
     _idname2params = {
@@ -288,6 +289,29 @@ class IDSearch:
                 24,
             ),
         ),
+        'SI-15SP:ID-S3PW': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields,
+            (
+                None,
+                0,
+                235,
+                0,
+                0,
+                0.1,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+                250,
+            ),
+        ),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields,
@@ -403,11 +427,11 @@ class IDSearch:
             ('free', None),  # [mm]
             ('transition', None),  # [mm]
         ],
-        'SI-11SP:ID-SIMUL': [
-            ('horizontal', None)  # [mm]
-        ],
         'SI-14SB:ID-IVU18': [
             ('horizontal', None)  # [mm]
+        ],
+        'SI-15SP:ID-S3PW': [
+            ('horizontal', None)  # [A]
         ],
         'SI-17SA:ID-PAPU50': [
             ('horizontal', None)  # [mm]
@@ -596,6 +620,22 @@ class IDSearch:
                 IDFF_QN_LABELS[4],
                 IDFF_QN_LABELS[5],
             ],  # [A]
+        },
+        'SI-15SP:ID-S3PW': {
+            'polarizations': ('horizontal',),
+            'pparameter': None,
+            'kparameter': 'SI-15SP:ID-S3PW:MeanDCCTCurrent-Mon',
+            'idffdevs': {
+                _type_ch: 'SI-15SP:BS-IDFF-CHCV',
+                _type_cv: 'SI-15SP:BS-IDFF-CHCV',
+                _type_qs: 'SI-15SP:BS-IDFF-QS',
+            },
+            IDFF_CH_LABELS[0]: 'SI-15SP:PS-CH-1:Current-SP',  # upstream
+            IDFF_CH_LABELS[1]: 'SI-15SP:PS-CH-2:Current-SP',  # downstream
+            IDFF_CV_LABELS[0]: 'SI-15SP:PS-CV-1:Current-SP',
+            IDFF_CV_LABELS[1]: 'SI-15SP:PS-CV-2:Current-SP',
+            IDFF_QS_LABELS[0]: 'SI-15SP:PS-QS-1:Current-SP',
+            IDFF_QS_LABELS[1]: 'SI-15SP:PS-QS-2:Current-SP',
         },
         'SI-17SA:ID-PAPU50': {
             'polarizations': ('horizontal',),
