@@ -2478,6 +2478,40 @@ class S3PW(IDBase):
         """Central coil loop state."""
         return self[self.PARAM_PVS.CENTRALC_LOOP_STATE_MON]
 
+    @property
+    def latcoil_waveform(self):
+        """Lateral coil sync waveform [A]."""
+        return self[self.PARAM_PVS.LATC_SYNCWFM_RB]
+
+    @property
+    def latcoil_slewrate(self):
+        """Lateral coil slew rate [A/s]."""
+        return self[self.PARAM_PVS.LATC_SLEWRATE_RB]
+
+    @property
+    def latcoil_current(self):
+        """Lateral coil current [A]."""
+        return self[self.PARAM_PVS.LATC_CURRENT_MON]
+
+    @property
+    def latcoil_dcct1(self):
+        """Lateral coil DCCT1 current [A]."""
+        return self[self.PARAM_PVS.LATC_DCCT1_MON]
+
+    @property
+    def latcoil_dcct2(self):
+        """Lateral coil DCCT2 current [A]."""
+        return self[self.PARAM_PVS.LATC_DCCT2_MON]
+
+    @property
+    def latcoil_loop_state_mon(self):
+        """Lateral coil loop state."""
+        return self[self.PARAM_PVS.LATC_LOOP_STATE_MON]
+
+    def cmd_pulsesynch(self):
+        """Command to enable pulse synch."""
+        self[self.PARAM_PVS.PULSE_SYNC_CMD] = 1
+
     def cmd_centralcoil_powerenbl(self):
         """Command to enable central coil power supply."""
         self[self.PARAM_PVS.CENTRALC_PS_ENBL_CMD] = 1
@@ -2498,6 +2532,26 @@ class S3PW(IDBase):
         """Command to reset interlock of central coil power supply."""
         self[self.PARAM_PVS.CENTRALC_RESET_CMD] = 1
 
+    def cmd_latcoil_powerenbl(self):
+        """Command to enable lateral coil power supply."""
+        self[self.PARAM_PVS.LATC_PS_ENBL_CMD] = 1
+
+    def cmd_latcoil_powerdsbl(self):
+        """Command to disable lateral coil power supply."""
+        self[self.PARAM_PVS.LATC_PS_DSBL_CMD] = 1
+
+    def cmd_latcoil_closeloop(self):
+        """Command to close loop of lateral coil power supply."""
+        self[self.PARAM_PVS.LATC_CLOSE_LOOP_CMD] = 1
+
+    def cmd_latcoil_openloop(self):
+        """Command to open loop of lateral coil power supply."""
+        self[self.PARAM_PVS.LATC_OPEN_LOOP_CMD] = 1
+
+    def cmd_latcoil_reset_interlock(self):
+        """Command to reset interlock of lateral coil power supply."""
+        self[self.PARAM_PVS.LATC_RESET_CMD] = 1
+
     def set_centralcoil_current(self, current, timeout=None):
         """Set central coil current [A]."""
         return self._write_sp(self.PARAM_PVS.CENTRALC_CURRENT_SP, current, timeout)
@@ -2509,6 +2563,18 @@ class S3PW(IDBase):
     def set_centralcoil_syncwfm(self, wfm, timeout=None):
         """Set central coil sync waveform [A]."""
         return self._write_sp(self.PARAM_PVS.CENTRALC_SYNCWFM_SP, wfm, timeout)
+
+    def set_latcoil_current(self, current, timeout=None):
+        """Set lateral coil current [A]."""
+        return self._write_sp(self.PARAM_PVS.LATC_CURRENT_SP, current, timeout)
+
+    def set_latcoil_slewrate(self, slewrate, timeout=None):
+        """Set lateral coil slew rate [A/s]."""
+        return self._write_sp(self.PARAM_PVS.LATC_SLEWRATE_SP, slewrate, timeout)
+
+    def set_latcoil_syncwfm(self, wfm, timeout=None):
+        """Set lateral coil sync waveform [A]."""
+        return self._write_sp(self.PARAM_PVS.LATC_SYNCWFM_SP, wfm, timeout)
 
     def set_centralcoil_opmode_slowref(self):
         """Set central coil power supply to slow ref mode."""
