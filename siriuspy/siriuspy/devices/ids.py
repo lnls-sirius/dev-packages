@@ -2448,6 +2448,26 @@ class S3PW(IDBase):
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
         )
 
+    def cmd_centralcoil_powerenbl(self):
+        """Command to enable central coil power supply."""
+        self[self.PARAM_PVS.CENTRALC_PS_ENBL_CMD] = 1
+
+    def cmd_centralcoil_powerdsbl(self):
+        """Command to disable central coil power supply."""
+        self[self.PARAM_PVS.CENTRALC_PS_DSBL_CMD] = 1
+
+    def cmd_centralcoil_closeloop(self):
+        """Command to close loop of central coil power supply."""
+        self[self.PARAM_PVS.CENTRALC_CLOSE_LOOP_CMD] = 1
+
+    def cmd_centralcoil_openloop(self):
+        """Command to open loop of central coil power supply."""
+        self[self.PARAM_PVS.CENTRALC_OPEN_LOOP_CMD] = 1
+
+    def cmd_centralcoil_reset_interlock(self):
+        """Command to reset interlock of central coil power supply."""
+        self[self.PARAM_PVS.CENTRALC_RESET_CMD] = 1
+
     def set_centralcoil_opmode_slowref(self):
         """Set central coil power supply to slow ref mode."""
         self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_SLOWREF
@@ -2456,9 +2476,36 @@ class S3PW(IDBase):
         """Set central coil power supply to slow ref synch mode."""
         self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_SLOWREFSYNCH
 
-    def set_centracoil_opmode_ramp_synch(self):
+    def set_centralcoil_opmode_ramp_synch(self):
         """Set central coil power supply to ramp waveform mode."""
         self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_RAMPWFM
+
+    def set_latcoil_opmode_slowref(self):
+        """Set lateral coil power supply to slow ref mode."""
+        self[self.PARAM_PVS.LATC_OPMODE_SEL] = self._CMD_SLOWREF
+
+    def set_latcoil_opmode_slowref_synch(self):
+        """Set lateral coil power supply to slow ref synch mode."""
+        self[self.PARAM_PVS.LATC_OPMODE_SEL] = self._CMD_SLOWREFSYNCH
+
+    def set_latcoil_opmode_ramp_synch(self):
+        """Set lateral coil power supply to ramp waveform mode."""
+        self[self.PARAM_PVS.LATC_OPMODE_SEL] = self._CMD_RAMPWFM
+
+    def set_coils_opmode_slowref(self):
+        """Set both central and lateral coil power supplies to slow ref mode."""
+        self.set_centralcoil_opmode_slowref()
+        self.set_latcoil_opmode_slowref()
+
+    def set_coils_opmode_slowref_synch(self):
+        """Set both central and lateral coil power supplies to slow ref synch mode."""
+        self.set_centralcoil_opmode_slowref_synch()
+        self.set_latcoil_opmode_slowref_synch()
+
+    def set_coils_opmode_ramp_synch(self):
+        """Set both central and lateral coil power supplies to ramp waveform mode."""
+        self.set_centralcoil_opmode_ramp_synch()
+        self.set_latcoil_opmode_ramp_synch()
 
 
 class ID(IDBase):
