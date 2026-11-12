@@ -2381,11 +2381,17 @@ class UE44(IDBase):
 
 
 class S3PW(IDBase):
+    """Superconducting three pole wiggler ID."""
+
     class DEVICES:
         """Device names."""
 
-        S3PW_15SP = 'SI-15SP:ID-3PW'
+        S3PW_15SP = 'SI-15SP:ID-S3PW'
         ALL = (S3PW_15SP,)
+
+    _CMD_SLOWREF = 3
+    _CMD_SLOWREFSYNCH = 4
+    _CMD_RAMPWFM = 6
 
     PARAM_PVS = _ParamPVs()
 
@@ -2441,6 +2447,18 @@ class S3PW(IDBase):
         super().__init__(
             devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
         )
+
+    def set_centralcoil_opmode_slowref(self):
+        """Set central coil power supply to slow ref mode."""
+        self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_SLOWREF
+
+    def set_centralcoil_opmode_slowref_synch(self):
+        """Set central coil power supply to slow ref synch mode."""
+        self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_SLOWREFSYNCH
+
+    def set_centracoil_opmode_ramp_synch(self):
+        """Set central coil power supply to ramp waveform mode."""
+        self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_RAMPWFM
 
 
 class ID(IDBase):
