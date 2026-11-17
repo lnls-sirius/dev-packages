@@ -639,35 +639,6 @@ class IDFFCtrlHardUE_LC(IDFFCtrlHardUE):
     IDFF_LC_LABELS = _IDSearch.IDFF_LC_LABELS
 
 
-class IDFFCtrlHardS3PW_CHCV(IDFFCtrlHard):
-    """ID Feedforward Control S3PW Device."""
-
-    class DEVICES:
-        """Device names."""
-
-        S3PW_11SP_HARD_CHCV = "SI-15SP:BS-IDFF-CHCV"
-        ALL = (S3PW_11SP_HARD_CHCV, )
-
-    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
-
-    IDFF_CH_LABELS = _IDSearch.IDFF_CH_LABELS
-    IDFF_CV_LABELS = _IDSearch.IDFF_CV_LABELS
-
-
-class IDFFCtrlHardS3PW_QS(IDFFCtrlHard):
-    """ID Feedforward Control S3PW Device."""
-
-    class DEVICES:
-        """Device names."""
-
-        S3PW_11SP_HARD_QS = "SI-15SP:BS-IDFF-QS"
-        ALL = (S3PW_11SP_HARD_QS, )
-
-    IDFFCtrlBase._add_devices(IDFFCtrlHard.DEVICES, DEVICES)
-
-    IDFF_QS_LABELS = _IDSearch.IDFF_QS_LABELS
-
-
 class IDFFCtrl(IDFFCtrlBase):
     """ID Feedforward Control Device."""
 

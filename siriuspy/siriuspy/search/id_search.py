@@ -624,11 +624,11 @@ class IDSearch:
         'SI-15SP:ID-S3PW': {
             'polarizations': ('horizontal',),
             'pparameter': None,
-            'kparameter': 'SI-15SP:ID-S3PW:MeanDCCTCurrent-Mon',
+            'kparameter': 'SI-15SP:ID-S3PW:PSCenCoilMeanDCCTCurrent-Mon',
             'idffdevs': {
-                _type_ch: 'SI-15SP:BS-IDFF-CHCV',
-                _type_cv: 'SI-15SP:BS-IDFF-CHCV',
-                _type_qs: 'SI-15SP:BS-IDFF-QS',
+                _type_ch: None,
+                _type_cv: None,
+                _type_qs: None,
             },
             IDFF_CH_LABELS[0]: 'SI-15SP:PS-CH-1:Current-SP',  # upstream
             IDFF_CH_LABELS[1]: 'SI-15SP:PS-CH-2:Current-SP',  # downstream
