@@ -106,7 +106,14 @@ class BeagleBone:
         if field is None:
             return self._dev2mirror[devname], updated
         else:
-            pvname = devname + ':' + field
+            if devname.dis != 'PS':
+                # special case, for power supplies that are not
+                # Magnet Power Supplies (PS discipline)
+                pvname = devname.substitute(
+                    propty=devname.propty_name + field
+                )
+            else:
+                pvname = devname.substitute(propty=field)
             return self._dev2mirror[devname][pvname], updated
 
     def write(self, devname, field, value):
@@ -209,7 +216,7 @@ class BeagleBone:
         strec = dict()
         strelims = dict()
         for psname in self.psnames:
-            if 'DCLink' in psname or psname.startswith('IT'):
+            if not self._strenames[psname] or psname.startswith('IT'):
                 strec[psname] = True
             else:
                 # NOTE: use 'Ref-Mon' proptype for all
@@ -220,7 +227,7 @@ class BeagleBone:
 
     def _update_strengths(self, psname):
         # t0_ = _time.time()
-        if 'DCLink' in psname or psname.startswith('IT'):
+        if not self._strenames[psname] or psname.startswith('IT'):
             return
         streconv = self._streconvs[psname]
         strelims = self._strelims[psname]

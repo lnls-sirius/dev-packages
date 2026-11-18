@@ -1,6 +1,7 @@
 """Controller classes."""
 
 from ...search import PSSearch as _PSSearch
+from ...namesys import SiriusPVName as _PVName
 
 
 class PSController:
@@ -68,10 +69,14 @@ class PSController:
 
     def read(self, devname, field):
         """Read pv value."""
-        pvname = devname + ':' + field
+        pvname = PSController._get_pvname(devname, field)
         if field == 'CtrlLoop-Sts':
-            sts = self._readers[devname + ':CtrlLoop-Sts']
-            sel = self._readers[devname + ':CtrlLoop-Sel']
+            sts = self._readers[
+                PSController._get_pvname(devname, 'CtrlLoop-Sts')
+            ]
+            sel = self._readers[
+                PSController._get_pvname(devname, 'CtrlLoop-Sel')
+            ]
             if sts.read() != sel.read():
                 sel.apply(sts.read())
 
@@ -84,7 +89,7 @@ class PSController:
         """Read non-ignored-field values from device."""
         values = dict()
         for field in self._fields_not_ignored:
-            pvname = devname + ':' + field
+            pvname = PSController._get_pvname(devname, field)
             value = self.read(devname, field)
             values[pvname] = value
         return values
@@ -93,7 +98,7 @@ class PSController:
         """Write value to pv."""
         priority_pvs = dict()
 
-        pvname = devname + ':' + field
+        pvname = PSController._get_pvname(devname, field)
         if pvname in self._writers:
             self._writers[pvname].execute(value)
 
@@ -123,7 +128,7 @@ class PSController:
 
             # ignore strength fields
             *_, prop = key.split(':')
-            if prop in PSController._FIELDS_IGNORED:
+            if prop.endswith((tuple(PSController._FIELDS_IGNORED))):
                 continue
 
             # initiliaze setpoint fields using corresponding readers
@@ -161,8 +166,8 @@ class PSController:
     def _get_fields(self):
         fields = set()
         for name in self._readers:
-            split = name.split(':')
-            fields.add(split[-1])
+            _, field = self._split_pvname(name)
+            fields.add(field)
         return fields
 
     def _update_setpoints(self, devname):
@@ -174,6 +179,34 @@ class PSController:
     def _get_readback_field(field):
         # NOTE: to be updated
         return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
+
+    @staticmethod
+    def _get_pvname(devname, field):
+        pvname = _PVName(devname)
+        if pvname.dis != 'PS':
+            # special case, for power supplies that are not
+            # Magnet Power Supplies (PS discipline)
+            pvname = pvname.substitute(propty=pvname.propty_name + field)
+        else:
+            pvname = pvname.substitute(propty=field)
+        return pvname
+
+    def _split_pvname(self, pvname):
+        if pvname.dis != 'PS':
+            # special case, for power supplies that are not
+            # Magnet Power Supplies (PS discipline)
+            devname, propty = '', ''
+            for name in self._devname2devid:
+                if pvname.startswith(name):
+                    devname = name
+                    propty = pvname.split(name)[1]
+            if not devname:
+                raise ValueError(
+                    'could not identify a proper device name in pvname'
+                )
+        else:
+            devname, propty = pvname.device_name, pvname.propty
+        return devname, propty
 
 
 class StandardPSController(PSController):
@@ -202,7 +235,7 @@ class StandardPSController(PSController):
         """Write value to pv."""
         priority_pvs = dict()
 
-        pvname = devname + ':' + field
+        pvname = PSController._get_pvname(devname, field)
         if pvname not in self._writers:
             return priority_pvs
 
@@ -253,14 +286,20 @@ class StandardPSController(PSController):
 
     def _get_siggen_arg_values(self, devname):
         """Get cfg_siggen args."""
-        args = [self._readers[devname + ':' + arg].read()
-                for arg in StandardPSController.PARMS_SIGGEN[:-1]]
+        args = [
+            self._readers[PSController._get_pvname(devname, arg)].read()
+            for arg in StandardPSController.PARMS_SIGGEN[:-1]
+        ]
         aux = StandardPSController.PARMS_SIGGEN[-1]
-        args.extend(self._readers[devname + ':' + aux].read())
+        args.extend(
+            self._readers[PSController._get_pvname(devname, aux)].read()
+        )
         return args
 
     def _get_wfm_arg_values(self, devname):
         """Get Wfm args."""
-        args = [self._readers[devname + ':' + arg].read()
-                for arg in StandardPSController.PARMS_WFM]
+        args = [
+            self._readers[PSController._get_pvname(devname, arg)].read()
+            for arg in StandardPSController.PARMS_WFM
+        ]
         return args
