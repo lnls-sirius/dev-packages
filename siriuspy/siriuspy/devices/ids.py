@@ -2662,16 +2662,7 @@ class IDOrchestra:
         return True
 
     def cmd_bmax_all(self):
-        threads = list()
-        for p in self._idparkings.values():
-            t = _Thread(target=p.cmd_bmax_device, daemon=True)
-            t.start()
-            threads.append(t)
-        for t in threads:
-            try:
-                t.join()
-            except Exception:
-                pass
+        self.cmd_move_to_kdeflection(kdeflection_target=20)
         return True
 
     def cmd_move_to_kdeflection(self, kdeflection_target, timeout=None):
@@ -2721,6 +2712,15 @@ class IDOrchestra:
                     polarization = device.polarization_mon
                 except Exception:
                     polarization = None
+
+            try:
+                if polarization is None:
+                    polarization = \
+                        _IDSearch.conv_idname_2_polarizations(
+                            idname=device.devname
+                        )[0]
+            except Exception:
+                polarization = None
 
             # Create strength converter
             try:
