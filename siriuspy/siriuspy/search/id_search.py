@@ -323,7 +323,6 @@ class IDSearch:
                 29,
                 0,
                 0.01,
-                29,
                 None,
                 None,
                 None,
@@ -334,6 +333,7 @@ class IDSearch:
                 None,
                 None,
                 0,
+                29,
             ),
         ),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
