@@ -2725,11 +2725,11 @@ class IDOrchestra:
             # Create strength converter
             try:
                 stg_conv = _StrengthConv(
-                    devname=str(device), proptype=None,
+                    devname=device.devname, proptype=None,
                     polarization=polarization)
             except Exception:
                 try:
-                    stg_conv = _StrengthConv(devname=str(device))
+                    stg_conv = _StrengthConv(devname=device.devname)
                 except Exception:
                     return False
 
