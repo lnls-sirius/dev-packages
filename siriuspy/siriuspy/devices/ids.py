@@ -861,31 +861,6 @@ class IDBase(_Device):
             self[self.PARAM_PVS.START_PARKING_CMD] = 1
             return self.wait_move_config(pparam, cparam, kparam, timeout)
 
-    def cmd_move_max(self, timeout=None):
-        """Move ID to maximum config (Bmax)."""
-        pparam, cparam, kparam = (
-            self.pparameter_max,
-            self.cparameter_max,
-            self.kparameter_max,
-        )
-        if self.PARAM_PVS.START_PARKING_CMD is None:
-            return self.cmd_move(pparam, cparam, kparam, timeout)
-        else:
-            if pparam is not None:
-                if not self.set_pparameter(pparam):
-                    return False
-            if kparam is not None:
-                if not self.set_kparameter(kparam):
-                    return False
-            if cparam is not None:
-                if not self.set_cparameter(cparam):
-                    return False
-            timeout = self.calc_move_timeout(None, None, timeout)
-            self[self.PARAM_PVS.START_PARKING_CMD] = 1
-            return self.wait_move_config(pparam, cparam, kparam, timeout)
-
-    cmd_move_bmax = cmd_move_max
-
     def cmd_move_pparameter(self, pparam=None, timeout=None):
         """Command to set and start pparam movement."""
         pparam = self.pparameter if pparam is None else pparam
@@ -2524,21 +2499,6 @@ class IDParking:
         self._is_parking = False
         return True
 
-    def cmd_bmax_device(self, timeout=None):
-        self._is_parking = True
-        timeout = timeout if timeout is not None else self._DEF_TIMEOUT
-        if not self._connections_checking():
-            return False
-        if not self._stop_movements(timeout=timeout):
-            return False
-        if not self._set_speeds(timeout=timeout):
-            return False
-        if not self._move_to_bmax(timeout=timeout):
-            return False
-        self.log('Successfully moved {} to Bmax.'.format(self.devname))
-        self._is_parking = False
-        return True
-
     def _connections_checking(self):
         self.log('Checking {} connections...'.format(self.devname))
         if not self.device.wait_for_connection(timeout=self.TIMEOUT_WAIT_FOR_CONNECTION):
@@ -2668,60 +2628,6 @@ class IDParking:
         except Exception:
             pass
         self.log('ERR:Failed to move {} to parked position.'.format(self.devname))
-        self._is_parking = False
-        return False
-
-    def _move_to_bmax(self, timeout=None):
-        self.log('Sending {} to Bmax position...'.format(self.devname))
-        try:
-            if hasattr(self.device, 'cmd_move_max'):
-                try:
-                    if not self.device.cmd_move_max(timeout=timeout):
-                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
-                        self._is_parking = False
-                        return False
-                    return True
-                except TypeError:
-                    if not self.device.cmd_move_max():
-                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
-                        self._is_parking = False
-                        return False
-                    return True
-            if hasattr(self.device, 'cmd_move_bmax'):
-                try:
-                    if not self.device.cmd_move_bmax(timeout=timeout):
-                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
-                        self._is_parking = False
-                        return False
-                    return True
-                except TypeError:
-                    if not self.device.cmd_move_bmax():
-                        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
-                        self._is_parking = False
-                        return False
-                    return True
-            if hasattr(self.device, 'cmd_move'):
-                try:
-                    p = getattr(self.device, 'pparameter_max', None)
-                    c = getattr(self.device, 'cparameter_max', None)
-                    k = getattr(self.device, 'kparameter_max', None)
-                    try:
-                        if not self.device.cmd_move(p, c, k, timeout=timeout):
-                            self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
-                            self._is_parking = False
-                            return False
-                        return True
-                    except TypeError:
-                        if not self.device.cmd_move(p, c, k):
-                            self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
-                            self._is_parking = False
-                            return False
-                        return True
-                except Exception:
-                    pass
-        except Exception:
-            pass
-        self.log('ERR:Failed to move {} to Bmax.'.format(self.devname))
         self._is_parking = False
         return False
 
