@@ -2318,7 +2318,7 @@ class UE44(IDBase):
     PARAM_PVS = _ParamPVs()
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
+    # PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
     PARAM_PVS.MOVE_ABORT = 'Abort-Cmd'
     PARAM_PVS.PPARAM_SP = 'PParam-SP'
     PARAM_PVS.PPARAM_RB = 'PParam-RB'
