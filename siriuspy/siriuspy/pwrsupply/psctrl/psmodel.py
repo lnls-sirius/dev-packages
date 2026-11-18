@@ -744,6 +744,47 @@ class PSModelFAP_2P2S(_PSModel):  # noqa: N801
         }
 
 
+class PSModelSWLSSirius(_PSModel):  # noqa: N801
+    """SWLSSirius power supply model."""
+
+    _n = 'SWLSSirius'
+    _c = _const_psbsmp.ConstSWLSSirius
+    _e = _etity_psbsmp.EntitiesSWLSSirius
+
+    _bsmp_variables = {
+        'Current-RB': _c.V_PS_SETPOINT,
+        'CurrentRef-Mon': _c.V_PS_REFERENCE,
+        'WfmSyncPulseCount-Mon': _c.V_COUNTER_SYNC_PULSE,
+        'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
+        'Alarms-Mon': _c.V_PS_ALARMS,
+        'Current-Mon': _c.V_I_LOAD_MEAN,
+        'Current1-Mon': _c.V_I_LOAD_1,
+        'Current2-Mon': _c.V_I_LOAD_2,
+        'CurrentError-Mon': _c.V_I_LOAD_ERROR,
+        'DCLinkVoltage-Mon': _c.V_V_DCLINK,
+        'FreqModulated-Mon': _c.V_FREQ_MODULATED,
+        'FreqModulatedCompensated-Mon': _c.V_FREQ_MODULATED_COMPENS,
+        'FreqModulatedFF-Mon': _c.V_FREQ_MODULATED_FF,
+        'VoltageInputIIB-Mon': _c.V_V_INPUT_IIB,
+        'VoltageOutputIIB-Mon': _c.V_V_OUTPUT_IIB,
+        'CurrentInputIIB-Mon': _c.V_I_INPUT_IIB,
+        'CurrentOutputIIB-Mon': _c.V_I_OUTPUT_IIB,
+        'MainBoardHeatSinkTemperatureIIB-Mon': _c.V_TEMP_HEATSINK_MAIN_BOARD_IIB,
+        'TranformerHeatSinkTemperatureIIB-Mon': _c.V_TEMP_HEATSINK_TRANSFORMER_IIB,
+        'DiodesHeatSinkTemperatureIIB-Mon': _c.V_TEMP_HEATSINK_DIODES_IIB,
+        'OutputInductorTemperatureIIB-Mon': _c.V_TEMP_OUTPUT_INDUCTOR_IIB,
+        'AuxBoardDriverVoltageIIB-Mon': _c.V_V_DRIVER_AND_AUX_BOARD_IIB,
+        'DriverCurrentIIB-Mon': _c.V_I_DRIVER_IIB,
+        'AuxBoardCurrentIIB-Mon': _c.V_I_AUX_BOARD_IIB,
+        'LeakCurrentIIB-Mon': _c.V_I_LEAKAGE_IIB,
+        'TemperatureIIB-Mon': _c.V_TEMP_OUTPUT_INDUCTOR_IIB,
+        'RelativeHumidityIIB-Mon': _c.V_RELATIVE_HUMIDITY_IIB,
+        'IntlkIIB-Mon': _c.V_IIB_INTERLOCKS,
+        'AlarmsIIB-Mon': _c.V_IIB_ALARMS,
+    }
+
+
 # --- ACDC ---
 
 
@@ -926,7 +967,8 @@ class PSModelFactory:
         'FAP': PSModelFAP,
         'FAP_2P2S': PSModelFAP_2P2S,
         'FAP_4P': PSModelFAP_4P,
-        }
+        'SWLSSirius': PSModelSWLSSirius,
+    }
 
     @staticmethod
     def create(psmodel):
