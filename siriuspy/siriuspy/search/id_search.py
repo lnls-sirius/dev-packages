@@ -19,7 +19,7 @@ class IDSearch:
     # static tables in our cs-constants server.
 
     # NOTE: see
-    # https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Insertion_Devices
+    # https://sirius-wiki.cnpem.br/en/Machine/storage_ring?#straight-sections-allocation
 
     _beamline2idname = {
         'CARNAUBA': 'SI-06SB:ID-VPU29',  # titular: VPU29
@@ -30,6 +30,7 @@ class IDSearch:
         'IPE': 'SI-11SP:ID-UE44',  # titular: 2 x APPLE-II
         'PAINEIRA': 'SI-14SB:ID-IVU18',  # titular: IVU18 (WIG18 prev.)
         'SUSSUARANA': 'SI-15SP:ID-S3PW',  # titular: S3PW
+        'SAGUI': 'SI-16SB:ID-APU58',
         'SAPUCAIA': 'SI-17SA:ID-APU22',  # titular: 2 x APU22 (PAPU50 prev.)
         'ARIRANHA': 'SI-20SB:ID-APU22',
     }
@@ -312,6 +313,29 @@ class IDSearch:
                 250,
             ),
         ),
+        'SI-16SB:ID-APU58': _get_namedtuple(
+            'IDParameters',
+            _idparam_fields,
+            (
+                58,
+                0,
+                29,
+                29,
+                0,
+                0.01,
+                29,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+            ),
+        ),
         'SI-17SA:ID-PAPU50': _get_namedtuple(
             'IDParameters',
             _idparam_fields,
@@ -432,6 +456,9 @@ class IDSearch:
         ],
         'SI-15SP:ID-S3PW': [
             ('horizontal', None)  # [A]
+        ],
+        'SI-16SB:ID-APU58': [
+            ('horizontal', None)  # [mm]
         ],
         'SI-17SA:ID-PAPU50': [
             ('horizontal', None)  # [mm]
@@ -637,6 +664,7 @@ class IDSearch:
             IDFF_QS_LABELS[0]: 'SI-15SP:PS-QS-1:Current-SP',
             IDFF_QS_LABELS[1]: 'SI-15SP:PS-QS-2:Current-SP',
         },
+        'SI-16SB:ID-APU58': None,
         'SI-17SA:ID-PAPU50': {
             'polarizations': ('horizontal',),
             'pparameter': None,

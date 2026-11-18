@@ -153,6 +153,7 @@ class Const(_csdev.Const):
         'IA-10RaBPM:TI-AMCFPGAEVR': 'IA-10RaBPM:TI-EVR',
         'IA-11RaBPM:TI-AMCFPGAEVR': 'IA-10RaBPM:TI-EVR',
         'IA-14RaBPM:TI-AMCFPGAEVR': 'IA-14RaDiag03:TI-EVE',
+        'IA-15RaBPM:TI-AMCFPGAEVR': 'IA-15RaBPM:TI-EVR',
     }
 
     __EVG_CONFIGS = None
