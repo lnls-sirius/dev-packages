@@ -2491,8 +2491,10 @@ class IDParking:
             return False
         if not self._stop_movements(timeout=timeout):
             return False
+        _time.sleep(0.5)
         if not self._set_speeds(timeout=timeout):
             return False
+        _time.sleep(0.5)
         if not self._move_to_parked(timeout=timeout):
             return False
         self.log('Successfully parked {}.'.format(self.devname))
