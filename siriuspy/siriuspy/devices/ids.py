@@ -7,7 +7,8 @@ import numpy as _np
 
 from ..search import IDSearch as _IDSearch
 from .device import Device as _Device
-
+from .device import DeviceSet as _DeviceSet
+from .pwrsupply import PowerSupply as _PwSupply
 
 class _ParamPVs:
     """."""
@@ -108,44 +109,6 @@ class _ParamPVs:
     PITCH_OFFSET_VELO_MON = None
     PITCH_OFFSET_MIN_CTE = None
     PITCH_OFFSET_MAX_CTE = None
-
-    # --- ELECTROMAGNETIC DEVICES ---
-
-    # --- General ---
-    PULSE_SYNC_CMD = None
-
-    # --- Coils ---
-    CENTRALC_PS_ENBL_CMD = None
-    CENTRALC_PS_DSBL_CMD = None
-    CENTRALC_CURRENT_SP = None
-    CENTRALC_SLEWRATE_SP = None
-    CENTRALC_SYNCWFM_SP = None
-    CENTRALC_SYNCWFM_RB = None
-    CENTRALC_SLEWRATE_RB = None
-    CENTRALC_CURRENT_MON = None
-    CENTRALC_DCCT1_MON = None
-    CENTRALC_DCCT2_MON = None
-    CENTRALC_LOOP_STATE_MON = None
-    CENTRALC_OPMODE_SEL = None
-    CENTRALC_CLOSE_LOOP_CMD = None
-    CENTRALC_OPEN_LOOP_CMD = None
-    CENTRALC_RESET_CMD = None
-
-    LATC_PS_ENBL_CMD = None
-    LATC_PS_DSBL_CMD = None
-    LATC_CURRENT_SP = None
-    LATC_SLEWRATE_SP = None
-    LATC_SYNCWFM_SP = None
-    LATC_SYNCWFM_RB = None
-    LATC_SLEWRATE_RB = None
-    LATC_CURRENT_MON = None
-    LATC_DCCT1_MON = None
-    LATC_DCCT2_MON = None
-    LATC_LOOP_STATE_MON = None
-    LATC_OPMODE_SEL = None
-    LATC_CLOSE_LOOP_CMD = None
-    LATC_OPEN_LOOP_CMD = None
-    LATC_RESET_CMD = None
 
     def __str__(self):
         """Print parameters."""
@@ -2381,54 +2344,12 @@ class UE44(IDBase):
         return self['Offset-Mon']
 
 
-class S3PW(IDBase):
-    """Superconducting three pole wiggler ID."""
+class S3PWMain(_Device):
 
-    class DEVICES:
-        """Device names."""
+    class _PARAM_PVS:
 
-        S3PW_15SP = 'SI-15SP:ID-S3PW'
-        ALL = (S3PW_15SP,)
-
-    _CMD_SLOWREF = 3
-    _CMD_SLOWREFSYNCH = 4
-    _CMD_RAMPWFM = 6
-
-    PARAM_PVS = _ParamPVs()
-
-    PARAM_PVS.PULSE_SYNC_CMD = 'SyncEnbl-Cmd'
-
-    PARAM_PVS.CENTRALC_PS_ENBL_CMD = 'PSCenCoilEnblPwr-Cmd'
-    PARAM_PVS.CENTRALC_PS_DSBL_CMD = 'PSCenCoilDsblPwr-Cmd'
-    PARAM_PVS.CENTRALC_CLOSE_LOOP_CMD = 'PSCenCoilCloseLoop-Cmd'
-    PARAM_PVS.CENTRALC_OPEN_LOOP_CMD = 'PSCenCoilOpenLoop-Cmd'
-    PARAM_PVS.CENTRALC_RESET_CMD = 'PSCenCoilIntlkRst-Cmd'
-    PARAM_PVS.CENTRALC_OPMODE_SEL = 'PSCenCoilOpMode-Sel'
-    PARAM_PVS.CENTRALC_CURRENT_SP = 'PSCenCoilSlowRef-SP'
-    PARAM_PVS.CENTRALC_SLEWRATE_SP = 'PSCenCoilSlewRate-SP'
-    PARAM_PVS.CENTRALC_SYNCWFM_SP = 'PSCenCoilSyncWfm-SP'
-    PARAM_PVS.CENTRALC_SYNCWFM_RB = 'PSCenCoilSyncWfm-RB'
-    PARAM_PVS.CENTRALC_SLEWRATE_RB = 'PSCenCoilSlewRate-RB'
-    PARAM_PVS.CENTRALC_CURRENT_MON = 'PSCenCoilMeanDCCTCurrent-Mon'
-    PARAM_PVS.CENTRALC_DCCT1_MON = 'PSCenCoilDCCT1Current-Mon'
-    PARAM_PVS.CENTRALC_DCCT2_MON = 'PSCenCoilDCCT2Current-Mon'
-    PARAM_PVS.CENTRALC_LOOP_STATE_MON = 'PSCenCoilLoopState-Mon'
-
-    PARAM_PVS.LATC_PS_ENBL_CMD = 'PSLatCoilEnblPwr-Cmd'
-    PARAM_PVS.LATC_PS_DSBL_CMD = 'PSLatCoilDsblPwr-Cmd'
-    PARAM_PVS.LATC_CLOSE_LOOP_CMD = 'PSLatCoilCloseLoop-Cmd'
-    PARAM_PVS.LATC_OPEN_LOOP_CMD = 'PSLatCoilOpenLoop-Cmd'
-    PARAM_PVS.LATC_RESET_CMD = 'PSLatCoilIntlkRst-Cmd'
-    PARAM_PVS.LATC_OPMODE_SEL = 'PSLatCoilOpMode-Sel'
-    PARAM_PVS.LATC_CURRENT_SP = 'PSLatCoilSlowRef-SP'
-    PARAM_PVS.LATC_SLEWRATE_SP = 'PSLatCoilSlewRate-SP'
-    PARAM_PVS.LATC_SYNCWFM_SP = 'PSLatCoilSyncWfm-SP'
-    PARAM_PVS.LATC_SYNCWFM_RB = 'PSLatCoilSyncWfm-RB'
-    PARAM_PVS.LATC_SLEWRATE_RB = 'PSLatCoilSlewRate-RB'
-    PARAM_PVS.LATC_CURRENT_MON = 'PSLatCoilMeanDCCTCurrent-Mon'
-    PARAM_PVS.LATC_DCCT1_MON = 'PSLatCoilDCCT1Current-Mon'
-    PARAM_PVS.LATC_DCCT2_MON = 'PSLatCoilDCCT2Current-Mon'
-    PARAM_PVS.LATC_LOOP_STATE_MON = 'PSLatCoilLoopState-Mon'
+        PULSE_SYNC_CMD = 'SyncEnbl-Cmd'
+    PARAM_PVS = _PARAM_PVS()
 
     PROPERTIES_DEFAULT = tuple(
         set(
@@ -2438,183 +2359,49 @@ class S3PW(IDBase):
         )
     )
 
-    def __init__(self, devname, props2init='all', auto_monitor_mon=True):
+    def cmd_pulsesynch(self):
+        """Command to enable pulse synch."""
+        self[self.PARAM_PVS.PULSE_SYNC_CMD] = 1
+
+class S3PW(_DeviceSet):
+    """Superconducting three pole wiggler ID."""
+
+    class DEVICES:
+        """Device names."""
+
+        S3PW_15SP = 'SI-15SP:ID-S3PW'
+        S3PW_CENCOIL = 'SI-15SP:ID-S3PW:PSCenCoil'
+        S3PW_LATCOIL = 'SI-15SP:ID-S3PW:PSLatCoil'
+        ALL = (S3PW_15SP, S3PW_CENCOIL, S3PW_LATCOIL)
+
+
+
+    def __init__(self, devname):
         """."""
         # check if device exists
         if devname not in S3PW.DEVICES.ALL:
             raise NotImplementedError(devname)
 
+        s3pw_main = S3PWMain(S3PW.DEVICES.S3PW_15SP)
+        ps_central = _PwSupply(S3PW.DEVICES.S3PW_CENCOIL)
+        ps_lateral = _PwSupply(S3PW.DEVICES.S3PW_LATCOIL)
+        devices = (s3pw_main, ps_central, ps_lateral)
         # call base class constructor
         super().__init__(
-            devname, props2init=props2init, auto_monitor_mon=auto_monitor_mon
+            devices=devices, devname=devname
         )
 
     @property
-    def centralcoil_waveform(self):
-        """Central coil sync waveform [A]."""
-        return self[self.PARAM_PVS.CENTRALC_SYNCWFM_RB]
+    def dev_s3pw_main(self):
+        return self.devices[0]
 
     @property
-    def centralcoil_slewrate(self):
-        """Central coil slew rate [A/s]."""
-        return self[self.PARAM_PVS.CENTRALC_SLEWRATE_RB]
+    def dev_ps_central(self):
+        return self.devices[1]
 
     @property
-    def centralcoil_current(self):
-        """Central coil current [A]."""
-        return self[self.PARAM_PVS.CENTRALC_CURRENT_MON]
-
-    @property
-    def centralcoil_dcct1(self):
-        """Central coil DCCT1 current [A]."""
-        return self[self.PARAM_PVS.CENTRALC_DCCT1_MON]
-
-    @property
-    def centralcoil_dcct2(self):
-        """Central coil DCCT2 current [A]."""
-        return self[self.PARAM_PVS.CENTRALC_DCCT2_MON]
-
-    @property
-    def centralcoil_loop_state_mon(self):
-        """Central coil loop state."""
-        return self[self.PARAM_PVS.CENTRALC_LOOP_STATE_MON]
-
-    @property
-    def latcoil_waveform(self):
-        """Lateral coil sync waveform [A]."""
-        return self[self.PARAM_PVS.LATC_SYNCWFM_RB]
-
-    @property
-    def latcoil_slewrate(self):
-        """Lateral coil slew rate [A/s]."""
-        return self[self.PARAM_PVS.LATC_SLEWRATE_RB]
-
-    @property
-    def latcoil_current(self):
-        """Lateral coil current [A]."""
-        return self[self.PARAM_PVS.LATC_CURRENT_MON]
-
-    @property
-    def latcoil_dcct1(self):
-        """Lateral coil DCCT1 current [A]."""
-        return self[self.PARAM_PVS.LATC_DCCT1_MON]
-
-    @property
-    def latcoil_dcct2(self):
-        """Lateral coil DCCT2 current [A]."""
-        return self[self.PARAM_PVS.LATC_DCCT2_MON]
-
-    @property
-    def latcoil_loop_state_mon(self):
-        """Lateral coil loop state."""
-        return self[self.PARAM_PVS.LATC_LOOP_STATE_MON]
-
-    def cmd_pulsesynch(self):
-        """Command to enable pulse synch."""
-        self[self.PARAM_PVS.PULSE_SYNC_CMD] = 1
-
-    def cmd_centralcoil_powerenbl(self):
-        """Command to enable central coil power supply."""
-        self[self.PARAM_PVS.CENTRALC_PS_ENBL_CMD] = 1
-
-    def cmd_centralcoil_powerdsbl(self):
-        """Command to disable central coil power supply."""
-        self[self.PARAM_PVS.CENTRALC_PS_DSBL_CMD] = 1
-
-    def cmd_centralcoil_closeloop(self):
-        """Command to close loop of central coil power supply."""
-        self[self.PARAM_PVS.CENTRALC_CLOSE_LOOP_CMD] = 1
-
-    def cmd_centralcoil_openloop(self):
-        """Command to open loop of central coil power supply."""
-        self[self.PARAM_PVS.CENTRALC_OPEN_LOOP_CMD] = 1
-
-    def cmd_centralcoil_reset_interlock(self):
-        """Command to reset interlock of central coil power supply."""
-        self[self.PARAM_PVS.CENTRALC_RESET_CMD] = 1
-
-    def cmd_latcoil_powerenbl(self):
-        """Command to enable lateral coil power supply."""
-        self[self.PARAM_PVS.LATC_PS_ENBL_CMD] = 1
-
-    def cmd_latcoil_powerdsbl(self):
-        """Command to disable lateral coil power supply."""
-        self[self.PARAM_PVS.LATC_PS_DSBL_CMD] = 1
-
-    def cmd_latcoil_closeloop(self):
-        """Command to close loop of lateral coil power supply."""
-        self[self.PARAM_PVS.LATC_CLOSE_LOOP_CMD] = 1
-
-    def cmd_latcoil_openloop(self):
-        """Command to open loop of lateral coil power supply."""
-        self[self.PARAM_PVS.LATC_OPEN_LOOP_CMD] = 1
-
-    def cmd_latcoil_reset_interlock(self):
-        """Command to reset interlock of lateral coil power supply."""
-        self[self.PARAM_PVS.LATC_RESET_CMD] = 1
-
-    def set_centralcoil_current(self, current, timeout=None):
-        """Set central coil current [A]."""
-        return self._write_sp(self.PARAM_PVS.CENTRALC_CURRENT_SP, current, timeout)
-
-    def set_centralcoil_slewrate(self, slewrate, timeout=None):
-        """Set central coil slew rate [A/s]."""
-        return self._write_sp(self.PARAM_PVS.CENTRALC_SLEWRATE_SP, slewrate, timeout)
-
-    def set_centralcoil_syncwfm(self, wfm, timeout=None):
-        """Set central coil sync waveform [A]."""
-        return self._write_sp(self.PARAM_PVS.CENTRALC_SYNCWFM_SP, wfm, timeout)
-
-    def set_latcoil_current(self, current, timeout=None):
-        """Set lateral coil current [A]."""
-        return self._write_sp(self.PARAM_PVS.LATC_CURRENT_SP, current, timeout)
-
-    def set_latcoil_slewrate(self, slewrate, timeout=None):
-        """Set lateral coil slew rate [A/s]."""
-        return self._write_sp(self.PARAM_PVS.LATC_SLEWRATE_SP, slewrate, timeout)
-
-    def set_latcoil_syncwfm(self, wfm, timeout=None):
-        """Set lateral coil sync waveform [A]."""
-        return self._write_sp(self.PARAM_PVS.LATC_SYNCWFM_SP, wfm, timeout)
-
-    def set_centralcoil_opmode_slowref(self):
-        """Set central coil power supply to slow ref mode."""
-        self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_SLOWREF
-
-    def set_centralcoil_opmode_slowref_synch(self):
-        """Set central coil power supply to slow ref synch mode."""
-        self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_SLOWREFSYNCH
-
-    def set_centralcoil_opmode_ramp_synch(self):
-        """Set central coil power supply to ramp waveform mode."""
-        self[self.PARAM_PVS.CENTRALC_OPMODE_SEL] = self._CMD_RAMPWFM
-
-    def set_latcoil_opmode_slowref(self):
-        """Set lateral coil power supply to slow ref mode."""
-        self[self.PARAM_PVS.LATC_OPMODE_SEL] = self._CMD_SLOWREF
-
-    def set_latcoil_opmode_slowref_synch(self):
-        """Set lateral coil power supply to slow ref synch mode."""
-        self[self.PARAM_PVS.LATC_OPMODE_SEL] = self._CMD_SLOWREFSYNCH
-
-    def set_latcoil_opmode_ramp_synch(self):
-        """Set lateral coil power supply to ramp waveform mode."""
-        self[self.PARAM_PVS.LATC_OPMODE_SEL] = self._CMD_RAMPWFM
-
-    def set_coils_opmode_slowref(self):
-        """Set both central and lateral coil power supplies to slow ref mode."""
-        self.set_centralcoil_opmode_slowref()
-        self.set_latcoil_opmode_slowref()
-
-    def set_coils_opmode_slowref_synch(self):
-        """Set both central and lateral coil power supplies to slow ref synch mode."""
-        self.set_centralcoil_opmode_slowref_synch()
-        self.set_latcoil_opmode_slowref_synch()
-
-    def set_coils_opmode_ramp_synch(self):
-        """Set both central and lateral coil power supplies to ramp waveform mode."""
-        self.set_centralcoil_opmode_ramp_synch()
-        self.set_latcoil_opmode_ramp_synch()
+    def dev_ps_lateral(self):
+        return self.devices[2]
 
 
 class ID(IDBase):

@@ -63,6 +63,9 @@ class _PSDev(_Device):
         'CycleAuxParam-SP',
         'CycleAuxParam-RB',
         'CycleEnbl-Mon',
+        'CtrlLoop-Sel',
+        'CtrlLoop-Sts',
+        'Reset-Cmd',
     )
     _properties_fbp = _properties_basicps + ('IDFFMode-Sel', 'IDFFMode-Sts')
     _properties_fc = (
@@ -347,6 +350,16 @@ class _PSDev(_Device):
         """."""
         self['PwrState-Sel'] = value
 
+    @property
+    def control_loop(self):
+        """."""
+        return self['CtrlLoop-Sts']
+
+    @control_loop.setter
+    def control_loop(self, value):
+        """."""
+        self['CtrlLoop-Sel'] = value
+
     def set_strength(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set strength and wait until it gets there."""
         self.strength = value
@@ -370,6 +383,10 @@ class _PSDev(_Device):
         """."""
         self.pwrstate = self.PWRSTATE.Off
         return self.wait('PwrState-Sts', self.PWRSTATE.Off, timeout=timeout)
+
+    def cmd_reset(self):
+        """."""
+        self['Reset-Cmd'] += 1
 
     @staticmethod
     def get_device_type(devname):
