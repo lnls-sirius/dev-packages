@@ -248,68 +248,92 @@ class _PSDev(_Device):
     @property
     def strength(self):
         """Return Strength RB."""
+        if self._strength_rb_propty is None:
+            return None
         return self[self._strength_rb_propty]
 
     @strength.setter
     def strength(self, value):
         """Set Strength SP."""
+        if self._strength_sp_propty is None:
+            raise NotImplementedError("There is no strength defined for this device.")
         self[self._strength_sp_propty] = value
 
     @property
     def strengthref_mon(self):
         """Return Strength Ref-Mon."""
+        if self._strength_propty is None:
+            return None
         return self[self._strength_propty + 'Ref-Mon']
 
     @property
     def strength_mon(self):
         """Return Strength Mon."""
+        if self._strength_mon_propty is None:
+            return None
         return self[self._strength_mon_propty]
 
     @property
     def strength_upper_ctrl_limit(self):
         """Return Strength SP upper control limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.upper_ctrl_limit
 
     @property
     def strength_lower_ctrl_limit(self):
         """Return Strength SP lower control limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.lower_ctrl_limit
 
     @property
     def strength_upper_alarm_limit(self):
         """Return Strength SP upper alarm limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.upper_alarm_limit
 
     @property
     def strength_lower_alarm_limit(self):
         """Return Strength SP lower alarm limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.lower_alarm_limit
 
     @property
     def strength_upper_warning_limit(self):
         """Return Strength SP upper warning limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.upper_warning_limit
 
     @property
     def strength_lower_warning_limit(self):
         """Return Strength SP lower warning limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.lower_warning_limit
 
     @property
     def strength_upper_disp_limit(self):
         """Return Strength SP upper display limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.upper_disp_limit
 
     @property
     def strength_lower_disp_limit(self):
         """Return Strength SP lower display limit."""
+        if self._strength_sp_propty is None:
+            return None
         strength_sp_pv = self.pv_object(self._strength_sp_propty)
         return strength_sp_pv.lower_disp_limit
 
@@ -350,11 +374,14 @@ class _PSDev(_Device):
     @staticmethod
     def get_device_type(devname):
         """."""
+        strength_propty = None
+        strength_units = None
         pstype = _PSSearch.conv_psname_2_pstype(devname)
         psmodel = _PSSearch.conv_psname_2_psmodel(devname)
         magfunc = _PSSearch.conv_psname_2_magfunc(devname)
-        strength_propty = _util.get_strength_label(magfunc)
-        strength_units = _util.get_strength_units(magfunc, pstype)
+        if magfunc != 'none':
+            strength_propty = _util.get_strength_label(magfunc)
+            strength_units = _util.get_strength_units(magfunc, pstype)
         is_linac = devname.sec.endswith('LI')
         is_pulsed = devname.dis == 'PU'
         is_fc = devname.dev == 'FCH' or devname.dev == 'FCV'
@@ -397,17 +424,22 @@ class _PSDev(_Device):
             properties += _PSDev._properties_basicps
 
         # strength properties
-        strength_sp_propty = self._strength_propty + '-SP'
-        strength_rb_propty = self._strength_propty + '-RB'
-        strength_mon_propty = self._strength_propty + '-Mon'
-        properties += (
-            strength_sp_propty,
-            strength_rb_propty,
-            strength_mon_propty,
-        )
-        if not self._is_linac and not self._is_pulsed:
-            strengthref_mon_propty = self._strength_propty + 'Ref-Mon'
-            properties += (strengthref_mon_propty,)
+        strength_sp_propty = None
+        strength_rb_propty = None
+        strength_mon_propty = None
+        if self._strength_propty is not None:
+            strength_sp_propty = self._strength_propty + '-SP'
+            strength_rb_propty = self._strength_propty + '-RB'
+            strength_mon_propty = self._strength_propty + '-Mon'
+
+            properties += (
+                strength_sp_propty,
+                strength_rb_propty,
+                strength_mon_propty,
+            )
+            if not self._is_linac and not self._is_pulsed:
+                strengthref_mon_propty = self._strength_propty + 'Ref-Mon'
+                properties += (strengthref_mon_propty,)
 
         ret = (
             strength_sp_propty,
