@@ -1090,10 +1090,10 @@ def get_ps_scopesourcemap(psname):
             'DCLink voltage [V]': 0xD004,
             'Output current mean [A]': 0xD006,
             'Output current error [A]': 0xD008,
-            'Output current diff. [A]': 0xD00A,
-            'Freq. Modulated [Hz]': 0xD00C,
-            'Freq. Modulated Compens. [Hz]': 0xD00E,
-            'Freq. Modulated FF [Hz]': 0xD040,
+            'Output current diff [A]': 0xD00A,
+            'Freq modulated [Hz]': 0xD00C,
+            'Freq modulated compens [Hz]': 0xD00E,
+            'Freq modulated FF [Hz]': 0xD040,
         }
     return dict()
 
