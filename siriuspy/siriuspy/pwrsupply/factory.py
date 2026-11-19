@@ -7,6 +7,7 @@ from copy import deepcopy as _deepcopy
 from ..search import PSSearch as _PSSearch
 from ..thread import LoopQueueThread as _LoopQueueThread
 from ..bsmp.serial import Channel as _Channel
+from ..namesys import SiriusPVName as _PVName
 
 from .csdev import get_ps_propty_database as _get_ps_propty_database
 from .beaglebone import BeagleBone as _BeagleBone
@@ -173,7 +174,8 @@ class BBBFactory:
             for device in devices:
                 devname = device[0]
                 if _Setpoint.match(field):
-                    setpoints[devname + ':' + field] = \
+                    pvname = BBBFactory._get_pvname(devname, field)
+                    setpoints[pvname] = \
                         _Setpoint(field, database[field])
         return setpoints
 
@@ -193,7 +195,7 @@ class BBBFactory:
                 writers.update(field_writers)
                 # corresponding readers
                 for devname, devid in devices:
-                    pvname = devname + ':' + field
+                    pvname = BBBFactory._get_pvname(devname, field)
                     dbase[pvname] = _deepcopy(database[field])
                     readers[pvname] = setpoints[pvname]
             elif _Constant.match(field) and \
@@ -204,13 +206,13 @@ class BBBFactory:
                     if field == 'TimestampBoot-Cte':
                         # update bootime in epics database with timestamp
                         database[field]['value'] = timestamp
-                    pvname = devname + ':' + field
+                    pvname = BBBFactory._get_pvname(devname, field)
                     readers[pvname] = _Constant(database[field]['value'])
                     dbase[pvname] = _deepcopy(database[field])
             else:
                 # readers for other fields
                 for devname, devid in devices:
-                    pvname = devname + ':' + field
+                    pvname = BBBFactory._get_pvname(devname, field)
                     dbase[pvname] = _deepcopy(database[field])
                     readers[pvname] = model.reader(
                         devid, field, pru_controller)
@@ -232,27 +234,24 @@ class BBBFactory:
     @staticmethod
     def _get_writers(
             model, field, devices, setpoints, pru_controller):
-        # NOTE: Each pwrsupply should have all variables independent
-        #       in the near future.
-        # if field in ('CycleType-Sel', 'CycleNrCycles-SP',
-        #              'CycleFreq-SP', 'CycleAmpl-SP',
-        #              'CycleOffset-SP', 'CycleAuxParam-SP'):
-        #     # Make one object for all devices (UDC-shared)
-        #     ids, sps = list(), list()
-        #     for devname, devid in devices:
-        #         pvname = devname + ':' + field
-        #         ids.append(devid)
-        #         sps.append(setpoints[pvname])
-        #     writer = model.writer(
-        #         ids, field, pru_controller, _Setpoints(sps))
-        #     return {device[0] + ':' + field: writer
-        #             for device in devices}
         writers = dict()
         for devname, devid in devices:
-            setpoint = setpoints[devname + ':' + field]
-            writers[devname + ':' + field] = model.writer(
+            pvname = BBBFactory._get_pvname(devname, field)
+            setpoint = setpoints[pvname]
+            writers[pvname] = model.writer(
                 [devid], field, pru_controller, setpoint)
         return writers
+
+    @staticmethod
+    def _get_pvname(devname, field):
+        pvname = _PVName(devname)
+        if pvname.dis != 'PS':
+            # special case, for power supplies that are not
+            # Magnet Power Supplies (PS discipline)
+            pvname = pvname.substitute(propty=pvname.propty_name + field)
+        else:
+            pvname = pvname.substitute(propty=field)
+        return pvname
 
 
 class PSBSMPFactory:
