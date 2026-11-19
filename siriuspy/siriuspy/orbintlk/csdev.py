@@ -101,7 +101,7 @@ class Const(_csdev.Const):
     ]
     FOUTSFIXED_RXENBL = {
         'CA-RaTim:TI-Fout-1': 0b01111111,
-        'CA-RaTim:TI-Fout-2': 0b01110101,
+        'CA-RaTim:TI-Fout-2': 0b01110111,
         'CA-RaTim:TI-Fout-3': 0b11111111,
         'CA-RaTim:TI-Fout-4': 0b11111111,
         'CA-RaTim:TI-Fout-5': 0b11111111,
