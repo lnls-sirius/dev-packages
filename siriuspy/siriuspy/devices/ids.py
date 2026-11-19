@@ -10,15 +10,16 @@ from .device import Device as _Device
 from .device import DeviceSet as _DeviceSet
 from .pwrsupply import PowerSupply as _PwSupply
 
+
 class _ParamPVs:
     """."""
 
     # --- GENERAL ---
     PERIOD_LEN_CTE = None
     START_PARKING_CMD = None
-    IS_MOVING = None
-    BLCTRL_ENBL_SEL = None
-    BLCTRL_ENBL_STS = None
+    IS_MOVING = 'Moving-Mon'
+    BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
+    BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     MOVE_ABORT = None
     RESET = None
 
@@ -1045,9 +1046,6 @@ class IDFullMovCtrl(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
-    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
 
     PROPERTIES_DEFAULT = tuple(
         set(
@@ -1183,9 +1181,6 @@ class APU(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
-    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.KPARAM_SP = 'Phase-SP'
     PARAM_PVS.KPARAM_RB = 'Phase-SP'  # There is no Phase-RB!
     PARAM_PVS.KPARAM_MON = 'Phase-Mon'
@@ -1304,9 +1299,6 @@ class PAPU(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
-    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.KPARAM_SP = 'Phase-SP'
     PARAM_PVS.KPARAM_RB = 'Phase-RB'
@@ -1756,9 +1748,6 @@ class DELTA(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
-    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
@@ -2252,9 +2241,6 @@ class UE44(IDBase):
 
     # --- PARAM_PVS ---
     PARAM_PVS = _ParamPVs()
-    PARAM_PVS.IS_MOVING = 'Moving-Mon'
-    PARAM_PVS.BLCTRL_ENBL_SEL = 'BeamLineCtrlEnbl-Sel'
-    PARAM_PVS.BLCTRL_ENBL_STS = 'BeamLineCtrlEnbl-Sts'
     PARAM_PVS.PERIOD_LEN_CTE = 'PeriodLength-Cte'
     PARAM_PVS.IS_MOVING = 'Moving-Mon'
     PARAM_PVS.START_PARKING_CMD = 'StartParking-Cmd'
@@ -2363,6 +2349,7 @@ class S3PWMain(_Device):
         """Command to enable pulse synch."""
         self[self.PARAM_PVS.PULSE_SYNC_CMD] = 1
 
+
 class S3PW(_DeviceSet):
     """Superconducting three pole wiggler ID."""
 
@@ -2373,8 +2360,6 @@ class S3PW(_DeviceSet):
         S3PW_CENCOIL = 'SI-15SP:ID-S3PW:PSCenCoil'
         S3PW_LATCOIL = 'SI-15SP:ID-S3PW:PSLatCoil'
         ALL = (S3PW_15SP, S3PW_CENCOIL, S3PW_LATCOIL)
-
-
 
     def __init__(self, devname):
         """."""

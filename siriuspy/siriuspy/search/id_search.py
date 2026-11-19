@@ -651,7 +651,7 @@ class IDSearch:
         'SI-15SP:ID-S3PW': {
             'polarizations': ('horizontal',),
             'pparameter': None,
-            'kparameter': 'SI-15SP:ID-S3PW:PSCenCoilMeanDCCTCurrent-Mon',
+            'kparameter': 'SI-15SP:ID-S3PW:PSCenCoilCurrent-Mon',
             'idffdevs': {
                 _type_ch: None,
                 _type_cv: None,
