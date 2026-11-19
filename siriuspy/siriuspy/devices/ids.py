@@ -2331,12 +2331,12 @@ class UE44(IDBase):
 
 
 class S3PWMain(_Device):
+    """Superconducting three pole wiggler ID (w/o pwrsupplies)."""
 
-    class _PARAM_PVS:
-
+    class _PARAM_PVS:  # noqa: N801
         PULSE_SYNC_CMD = 'SyncEnbl-Cmd'
-    PARAM_PVS = _PARAM_PVS()
 
+    PARAM_PVS = _PARAM_PVS()
     PROPERTIES_DEFAULT = tuple(
         set(
             value
