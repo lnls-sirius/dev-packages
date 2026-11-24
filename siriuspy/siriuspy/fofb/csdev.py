@@ -58,6 +58,8 @@ class HLFOFBConst(_csdev.Const):
     DEF_TIMESLEEP = 0.1  # [s]
     DEF_TIMEWAIT = 3  # [s]
     DEF_TIMEMINWAIT = 1  # [s]
+    DEF_LOOPGAIN_H = 0.24
+    DEF_LOOPGAIN_V = 0.24
     LOOPGAIN_RMP_TIME = 5  # [s]
     LOOPGAIN_RMP_FREQ = 2  # [steps/s]
     LOOPGAIN_RMP_NPTS = LOOPGAIN_RMP_TIME * LOOPGAIN_RMP_FREQ
@@ -162,22 +164,22 @@ class HLFOFBConst(_csdev.Const):
                 'type': 'enum', 'enums': _et.OPEN_CLOSED,
                 'value': self.LoopState.Open},
             'LoopGainH-SP': {
-                'type': 'float', 'value': 0.1200, 'prec': 4,
+                'type': 'float', 'value': self.DEF_LOOPGAIN_H, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-RB': {
-                'type': 'float', 'value': 0.1200, 'prec': 4,
+                'type': 'float', 'value': self.DEF_LOOPGAIN_H, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainH-Mon': {
                 'type': 'float', 'value': 0, 'prec': 4,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-SP': {
-                'type': 'float', 'value': 0.1660, 'prec': 4,
+                'type': 'float', 'value': self.DEF_LOOPGAIN_V, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-RB': {
-                'type': 'float', 'value': 0.1660, 'prec': 4,
+                'type': 'float', 'value': self.DEF_LOOPGAIN_V, 'prec': 4,
                 'lolim': -2**3, 'hilim': 2**3-1,
                 'unit': 'FOFB pre-accumulator gain.'},
             'LoopGainV-Mon': {
