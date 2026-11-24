@@ -1924,7 +1924,7 @@ class IVU(IDFullMovCtrl):
         """Device names."""
 
         IVU18_08SB = 'SI-08SB:ID-IVU18'
-        IVU18_11SP = "SI-11SP:ID-SIMUL"
+        IVU18_11SP = 'SI-11SP:ID-SIMUL'
         IVU18_14SB = 'SI-14SB:ID-IVU18'
         ALL = (IVU18_08SB, IVU18_11SP, IVU18_14SB)
 
@@ -2361,6 +2361,9 @@ class S3PW(_DeviceSet):
         S3PW_LATCOIL = 'SI-15SP:ID-S3PW:PSLatCoil'
         ALL = (S3PW_15SP, S3PW_CENCOIL, S3PW_LATCOIL)
 
+    _NR_PTS_WFM = 1024
+    _IMAX = 236
+
     def __init__(self, devname):
         """."""
         # check if device exists
@@ -2372,9 +2375,7 @@ class S3PW(_DeviceSet):
         ps_lateral = _PwSupply(S3PW.DEVICES.S3PW_LATCOIL)
         devices = (s3pw_main, ps_central, ps_lateral)
         # call base class constructor
-        super().__init__(
-            devices=devices, devname=devname
-        )
+        super().__init__(devices=devices, devname=devname)
 
     @property
     def dev_s3pw_main(self):
@@ -2387,6 +2388,60 @@ class S3PW(_DeviceSet):
     @property
     def dev_ps_lateral(self):
         return self.devices[2]
+
+    def set_waveform(self, centralwfm, latwfm):
+        """Set waveform for central and lateral coils."""
+        if (
+            len(centralwfm) != self._NR_PTS_WFM
+            or len(latwfm) != self._NR_PTS_WFM
+        ):
+            raise ValueError('Waveform must be a list of 1024 values.')
+        self.dev_ps_central.wfm = centralwfm
+        self.dev_ps_lateral.wfm = latwfm
+
+    def get_waveforms(self):
+        """Get waveforms for central and lateral coils."""
+        return self.dev_ps_central.wfm, self.dev_ps_lateral.wfm
+
+    def set_waveforms_freq(self, frequency):
+        """Set frequency for central and lateral coils."""
+        self.dev_ps_central.set_waveform_frequency(frequency)
+        self.dev_ps_lateral.set_waveform_frequency(frequency)
+
+    def get_waveforms_freq(self):
+        """Get frequency for central and lateral coils."""
+        return (
+            self.dev_ps_central.waveform_freq,
+            self.dev_ps_lateral.waveform_freq,
+        )
+
+    def calc_slew_rate_from_freq(self, frequency):
+        """Calculate slew rate from waveform frequency."""
+        if frequency <= 0:
+            raise ValueError('Frequency must be positive.')
+        slew_rate = self._IMAX/(self._NR_PTS_WFM * frequency)
+        return slew_rate
+
+    def calc_freq_from_slew_rate(self, slew_rate):
+        """Calculate waveform frequency from slew rate."""
+        if slew_rate <= 0:
+            raise ValueError('Slew rate must be positive.')
+        frequency = self._IMAX/(self._NR_PTS_WFM * slew_rate)
+        return frequency
+
+    def check_waveform_config(self):
+        """Check if waveform configuration is valid."""
+        wfm_freq_central, wfm_freq_lateral = self.get_waveforms_freq()
+        wfm_central, wfm_lateral = self.get_waveforms()
+        if len(wfm_central) != self._NR_PTS_WFM or len(wfm_lateral) != self._NR_PTS_WFM:
+            raise ValueError('Waveform must be a list of 1024 values.')
+        if wfm_freq_central != wfm_freq_lateral:
+            raise ValueError('Central and lateral waveforms must have the same frequency.')
+        else:
+            slew_rate = self.calc_slew_rate_from_freq(wfm_freq_central)
+            if slew_rate > 0.3:
+                raise ValueError('Slew rate exceeds maximum allowed value of 0.3 A/s.')
+        return True
 
 
 class ID(IDBase):
