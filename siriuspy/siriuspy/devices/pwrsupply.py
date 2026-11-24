@@ -48,6 +48,8 @@ class _PSDev(_Device):
         'Wfm-RB',
         'WfmRef-Mon',
         'Wfm-Mon',
+        'WfmFreq-SP',
+        'WfmFreq-RB',
         'ScopeSrcAddr-SP',
         'ScopeSrcAddr-RB',
         'ScopeDuration-SP',
@@ -360,6 +362,15 @@ class _PSDev(_Device):
         """."""
         self['CtrlLoop-Sel'] = value
 
+    @property
+    def waveform_freq(self):
+        """."""
+        return self['WfmFreq-RB']
+
+    @waveform_freq.setter
+    def waveform_freq(self, value):
+        self['WfmFreq-SP'] = value
+
     def set_strength(self, value, tol=0.2, timeout=10, wait_mon=False):
         """Set strength and wait until it gets there."""
         self.strength = value
@@ -373,6 +384,11 @@ class _PSDev(_Device):
         self.current = value
         pv2wait = 'Current-Mon' if wait_mon else 'Current-RB'
         return self.wait_float(pv2wait, value, abs_tol=tol, timeout=timeout)
+
+    def set_waveformfreq(self, value, tol=0.2, timeout=10):
+        """Set waveform frequency and wait until it gets there."""
+        self.waveform_freq = value
+        return self.wait_float('WfmFreq-RB', value, abs_tol=tol, timeout=timeout)
 
     def cmd_turn_on(self, timeout=_default_timeout):
         """."""
