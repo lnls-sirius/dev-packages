@@ -207,8 +207,9 @@ def get_time_intervals(
         t_start = [t_start]
         t_stop = [t_stop]
     else:
-        t_start = _np.arange(t_start, t_stop, int(interval))
-        t_stop = _np.r_[t_start[1:], t_stop]
+        t_mid = _np.arange(t_start, t_stop, int(interval))[1:]
+        t_start = _np.r_[t_start, t_mid]
+        t_stop = _np.r_[t_mid, t_stop]
     t_start = [Time(t, tzinfo=tzinfo) for t in t_start]
     t_stop = [Time(t, tzinfo=tzinfo) for t in t_stop]
     if return_isoformat:
