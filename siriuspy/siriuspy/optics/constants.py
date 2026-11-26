@@ -21,9 +21,13 @@ class Accelerator:
 class TLine(Accelerator):
     """Transport line."""
 
+    isring = False
+
 
 class Ring(Accelerator):
     """Ring."""
+
+    isring = True
 
     @_ClassProperty
     def circumference(cls):
@@ -75,3 +79,11 @@ class TS(TLine):
     sector = 'TS'
     beam_energy = 3  # [GeV]
     length = 26.8933  # [m]
+
+
+accelerators = {
+    'SI': SI,
+    'BO': BO,
+    'TB': TB,
+    'TS': TS,
+}

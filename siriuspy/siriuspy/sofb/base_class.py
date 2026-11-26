@@ -43,18 +43,13 @@ class BaseClass(_Callback):
 
     @property
     def acc(self):
-        """Accelerator name."""
+        """Accelerator class."""
         return self._csorb.acc
-
-    @property
-    def acc_idx(self):
-        """Accelerator index."""
-        return self._csorb.acc_idx
 
     @property
     def isring(self):
         """Ring accelerator status."""
-        return self._csorb.isring
+        return self.acc.isring
 
     @property
     def status(self):
@@ -113,6 +108,16 @@ class BaseTimingConfig(_Callback):
         self._config_pvs_sp = {}
         self._pvs = {}
         self.put_enable = True
+
+    @property
+    def acc(self):
+        """Accelerator class."""
+        return self._csorb.acc
+
+    @property
+    def isring(self):
+        """Ring accelerator status."""
+        return self.acc.isring
 
     @property
     def connected(self):

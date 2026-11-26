@@ -18,6 +18,7 @@ from .. import csdev as _csdev
 from ..epics import EpicsProperty as _EpicsProperty, \
     EpicsPropertiesList as _EpicsPropsList
 from ..namesys import SiriusPVName as _PVName
+from ..optics.constants import BO as _BO
 from ..pwrsupply.csdev import Const as _PSConst
 from ..timesys.csdev import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
@@ -730,7 +731,7 @@ class ConnSOFB(_EpicsPropsList):
 
     def get_deltakicks(self):
         """Get CH and CV delta kicks calculated by SOFB."""
-        bo_sofb_db = _SOFBRings(acc='BO')
+        bo_sofb_db = _SOFBRings(acc=_BO)
         rb_dic = self.readbacks
         ch_dkicks = rb_dic[ConnSOFB.IOC_PREFIX + ':DeltaKickCH-Mon']
         ch_names = bo_sofb_db.ch_names

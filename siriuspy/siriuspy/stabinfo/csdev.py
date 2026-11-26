@@ -3,6 +3,7 @@
 import os as _os
 
 from .. import csdev as _csdev
+from ..optics.constants import SI as _SI
 
 
 # --- Enumeration Types ---
@@ -23,7 +24,7 @@ class StabInfoConst(_csdev.Const):
 
     StabUnstab = _csdev.Const.register('StabUnstab', _et.STAB_UNSTAB)
 
-    SI_HARMNUM = 864
+    SI_HARMNUM = _SI.harmonic_number
 
     CURR_THRES = 5  # [mA]
 
