@@ -8,6 +8,8 @@ import numpy as _np
 
 from ..search import IDSearch as _IDSearch
 from .device import Device as _Device
+from .device import DeviceSet as _DeviceSet
+from .pwrsupply import PowerSupply as _PwSupply
 from .psconv import StrengthConv as _StrengthConv
 
 
@@ -1223,8 +1225,9 @@ class APU(IDBase):
         APU22_09SA = 'SI-09SA:ID-APU22'
         # APU58_11SP = 'SI-11SP:ID-APU58' # APU58 -> UE44
         APU22_17SA = 'SI-17SA:ID-APU22'
+        APU58_16SB = 'SI-16SB:ID-APU58'
         APU22_20SB = 'SI-20SB:ID-APU22'
-        ALL = (APU22_09SA, APU22_17SA, APU22_20SB)
+        ALL = (APU22_09SA, APU58_16SB, APU22_17SA, APU22_20SB)
 
     _CMD_MOVE_STOP, _CMD_MOVE_START = 1, 3
     _CMD_MOVE = 3
@@ -2321,7 +2324,6 @@ class UE44(IDBase):
     PARAM_PVS.CPARAM_CHANGE_CMD = 'CParamChange-Cmd'
 
     PARAM_PVS.POL_SEL = 'Pol-Sel'
-    # PARAM_PVS.POL_STS = 'Pol-Sts'
     PARAM_PVS.POL_MON = 'Pol-Mon'
     PARAM_PVS.POL_CHANGE_CMD = 'PolChange-Cmd'
 
@@ -2381,6 +2383,65 @@ class UE44(IDBase):
         return self['Offset-Mon']
 
 
+class S3PWMain(_Device):
+    """Superconducting three pole wiggler ID (w/o pwrsupplies)."""
+
+    class _PARAM_PVS:  # noqa: N801
+        PULSE_SYNC_CMD = 'SyncEnbl-Cmd'
+
+    PARAM_PVS = _PARAM_PVS()
+    PROPERTIES_DEFAULT = tuple(
+        set(
+            value
+            for key, value in _inspect.getmembers(PARAM_PVS)
+            if not key.startswith('_') and value is not None
+        )
+    )
+
+    def cmd_pulsesynch(self):
+        """Command to enable pulse synch."""
+        self[self.PARAM_PVS.PULSE_SYNC_CMD] = 1
+
+
+class S3PW(_DeviceSet):
+    """Superconducting three pole wiggler ID."""
+
+    class DEVICES:
+        """Device names."""
+
+        S3PW_15SP = 'SI-15SP:ID-S3PW'
+        S3PW_CENCOIL = 'SI-15SP:ID-S3PW:PSCenCoil'
+        S3PW_LATCOIL = 'SI-15SP:ID-S3PW:PSLatCoil'
+        ALL = (S3PW_15SP, S3PW_CENCOIL, S3PW_LATCOIL)
+
+    def __init__(self, devname):
+        """."""
+        # check if device exists
+        if devname not in S3PW.DEVICES.ALL:
+            raise NotImplementedError(devname)
+
+        s3pw_main = S3PWMain(S3PW.DEVICES.S3PW_15SP)
+        ps_central = _PwSupply(S3PW.DEVICES.S3PW_CENCOIL)
+        ps_lateral = _PwSupply(S3PW.DEVICES.S3PW_LATCOIL)
+        devices = (s3pw_main, ps_central, ps_lateral)
+        # call base class constructor
+        super().__init__(
+            devices=devices, devname=devname
+        )
+
+    @property
+    def dev_s3pw_main(self):
+        return self.devices[0]
+
+    @property
+    def dev_ps_central(self):
+        return self.devices[1]
+
+    @property
+    def dev_ps_lateral(self):
+        return self.devices[2]
+
+
 class ID(IDBase):
     """Insertion Device."""
 
@@ -2395,6 +2456,7 @@ class ID(IDBase):
         IVU = IVU.DEVICES
         VPU = VPU.DEVICES
         UE44 = UE44.DEVICES
+        S3PW = S3PW.DEVICES
         ALL = (
             APU.ALL
             + PAPU.ALL
@@ -2404,6 +2466,7 @@ class ID(IDBase):
             + IVU.ALL
             + VPU.ALL
             + UE44.ALL
+            + S3PW.ALL
         )
 
     def __new__(cls, devname, **kwargs):
@@ -2433,6 +2496,8 @@ class ID(IDBase):
             return VPU
         elif devname in UE44.DEVICES.ALL:
             return UE44
+        elif devname in S3PW.DEVICES.ALL:
+            return S3PW
         else:
             return None
 
