@@ -58,15 +58,20 @@ def get_litbts_currinfo_database(acc):
     devices = {
         'LI': ('LI-01:DI-ICT-1:', 'LI-01:DI-ICT-2:'),
         'TB': ('TB-02:DI-ICT:', 'TB-04:DI-ICT:'),
-        'TS': ('TS-01:DI-ICT:', 'TS-04:DI-ICT:')}
+        'TS': ('TS-01:DI-ICT:', 'TS-04:DI-ICT:')
+    }
     def_db = {'type': 'float', 'value': 0.0, 'unit': 'nC', 'prec': 4}
     pvs = [
-        'Charge-Mon', 'ChargeAvg-Mon', 'ChargeMin-Mon', 'ChargeMax-Mon',
-        'ChargeStd-Mon']
+        'Charge-Mon', 'ChargeWfm-Mon',
+        'ChargeAvg-Mon', 'ChargeStd-Mon',
+        'ChargeMin-Mon', 'ChargeMax-Mon',
+    ]
 
     for device in devices[acc]:
-        pvs_db.update({device+pv: _dcopy(def_db) for pv in pvs})
-        pvs_db[device+'PulseCount-Mon'] = {'type': 'int', 'value': 0}
+        chargedb = {device + pv: _dcopy(def_db) for pv in pvs}
+        pvs_db.update(chargedb)
+        pvname = device + 'PulseCount-Mon'
+        pvs_db[pvname] = {'type': 'int', 'value': 0}
 
     def_db = {'type': 'float', 'value': 0.0, 'unit': '%', 'prec': 2}
     pvs_db[pref + 'TranspEff-Mon'] = _dcopy(def_db)
