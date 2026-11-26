@@ -36,10 +36,11 @@ class CAXSlit(SlitBase):
     class DEVICES:
         """Devices names."""
 
-        CAX_A1 = "CAX:A:PP02"  # WBS1
-        CAX_B1 = "CAX:B:PP01"  # WBS2
+        CAX_A1 = "CAX:A:PP01"  # WBS1 - before mirror
+        CAX_A2 = "CAX:A:PP02"  # MBS1 - after mirror
+        CAX_B1 = "CAX:B:PP01"  # MBS2 - after mirror
 
-        ALL = (CAX_A1, CAX_B1)
+        ALL = (CAX_A1, CAX_A2, CAX_B1)
 
     def __init__(self, devname=None, props2init="all", **kwargs):
         """Init."""

@@ -24,6 +24,7 @@ from ..simul import SimPV as _PVSim, Simulation as _Simulation
 _DEF_TIMEOUT = 10  # s
 _TINY_INTERVAL = 0.050  # s
 
+
 class _PVNames(_SimpleNamespace):
     def __getattr__(self, name):
         """."""
