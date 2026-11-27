@@ -101,12 +101,12 @@ class BiasFeedback:
 
     @staticmethod
     def get_delta_current_per_pulse(
-        topup_period=1,
+        topup_period=1 * 60,  # [s]
         nr_pulses=1,
-        target_avg_current=200,
-        current_now=199.5,
-        lifetime=9 * 3600,
-        ahead_time=10,
+        target_avg_current=200,  # [mA]
+        current_now=199.5,  # [mA]
+        lifetime=9 * 3600,  # [s]
+        ahead_time=10,  # [s]
     ):
         """."""
         ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, lifetime)
@@ -117,11 +117,14 @@ class BiasFeedback:
 
     @staticmethod
     def get_ideal_delta_current_per_pulse(
-        topup_period=1, nr_pulses=1, target_avg_current=200, lifetime=9 * 3600
+        topup_period=1 * 60,  # [s]
+        nr_pulses=1,
+        target_avg_current=200,  # [mA]
+        lifetime=9 * 3600  # [s]
     ):
         """."""
         ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, lifetime)
-        frac = (topup_period * 60) / ltime
+        frac = topup_period / ltime
         dcurr = target_avg_current * frac / (1 + frac)
         dcurr /= nr_pulses
         return dcurr
