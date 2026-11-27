@@ -641,8 +641,7 @@ class App(_Callback):
         self.run_callbacks('TargetCurrent-RB', self._target_current)
         self._update_log(
             'Updated target current value: {}mA.'.format(value))
-        if self._topup_state_sts != _Const.TopUpSts.Off:
-            self._get_and_update_ideal_injcurr()
+        self._get_and_update_ideal_injcurr()
         return True
 
     def set_bucketlist_start(self, start):
