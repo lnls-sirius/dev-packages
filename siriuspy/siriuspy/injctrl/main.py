@@ -636,13 +636,11 @@ class App(_Callback):
         return True
 
     def set_target_current(self, value):
-        """Set the target injection current value ."""
+        """Set the target injection current value."""
         self._target_current = value
         self.run_callbacks('TargetCurrent-RB', self._target_current)
-        self._update_log(
-            'Updated target current value: {}mA.'.format(value))
-        if self._topup_state_sts != _Const.TopUpSts.Off:
-            self._get_and_update_ideal_injcurr()
+        self._update_log(f'Updated target current value: {value}mA.')
+        self._get_and_update_ideal_injcurr()
         return True
 
     def set_bucketlist_start(self, start):
