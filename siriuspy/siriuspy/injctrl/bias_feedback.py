@@ -120,7 +120,7 @@ class BiasFeedback:
         topup_period=1 * 60,  # [s]
         nr_pulses=1,
         target_avg_current=200,  # [mA]
-        lifetime=9 * 3600  # [s]
+        lifetime=9 * 3600,  # [s]
     ):
         """."""
         ltime = max(_Const.BIASFB_MINIMUM_LIFETIME, lifetime)
