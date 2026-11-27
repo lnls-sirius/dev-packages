@@ -46,7 +46,7 @@ class HLFOFBConst(_csdev.Const):
     """Const class defining High Level FOFB constants."""
 
     MIN_SING_VAL = 0.1
-    TIKHONOV_REG_CONST = 0
+    TIKHONOV_REG_CONST = 1
     SINGVALHW_THRS = 1e-14
     DEF_MAX_ORB_DISTORTION = 200  # [um]
     DEF_ACC_DECIMATION = 4600
