@@ -82,12 +82,12 @@ class StrengthConv(_DeviceSet):
     # TODO: Test changing default value of auto_monitor_mon
     # to see if conversion IOCs are improved.
 
-    def __init__(self, devname, proptype, auto_monitor_mon=False):
+    def __init__(self, devname, proptype, auto_monitor_mon=False, **kwargs):
         """."""
         devname = _SiriusPVName(devname)
 
         # get pwrsupply normalized
-        self._norm_mag = self._create_normalizer(devname)
+        self._norm_mag = self._create_normalizer(devname, **kwargs)
 
         # get devices that provide normalization current for strengths
         self._dev_dip, self._dev_fam = \
@@ -170,7 +170,7 @@ class StrengthConv(_DeviceSet):
         return kwargs
 
     @staticmethod
-    def _create_normalizer(psname):
+    def _create_normalizer(psname, **kwargs):
         if psname.sec == 'TB' and psname.dev == 'B':
             norm_mag = _NormalizerFactory.create('TB-Fam:MA-B')
         elif psname.sec == 'BO' and psname.dev == 'B':
@@ -181,7 +181,7 @@ class StrengthConv(_DeviceSet):
             norm_mag = _NormalizerFactory.create('SI-Fam:MA-B1B2')
         else:
             maname = psname.replace(':PS', ':MA').replace(':PU', ':PM')
-            norm_mag = _NormalizerFactory.create(maname)
+            norm_mag = _NormalizerFactory.create(maname, **kwargs)
         return norm_mag
 
     @staticmethod
